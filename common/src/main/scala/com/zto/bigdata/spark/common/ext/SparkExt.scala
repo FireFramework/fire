@@ -10,15 +10,18 @@ import com.zto.bigdata.spark.common.bean.{HBaseBaseBean, OGGBaseBean}
 import com.zto.bigdata.spark.common.db.HBaseOper
 import com.zto.bigdata.spark.common.udf.UDFs
 import com.zto.bigdata.spark.common.util._
+import org.apache.carbondata.core.util.path.CarbonTablePath
+import org.apache.carbondata.streaming.parser.CarbonStreamParser
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Result, Scan}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat
 import org.apache.kudu.spark.kudu._
 import org.apache.spark.rdd.{JdbcRDD, RDD}
-import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
+import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.sql.streaming.{OutputMode, StreamingQuery, Trigger}
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.{Accumulator, SparkConf, SparkContext}
 
@@ -38,6 +41,7 @@ object SparkExt {
     * @param spark
     */
   implicit class SparkSessionExt(spark: SparkSession) {
+
     import spark.implicits._
 
     // 获取单例的HBaseContext对象
@@ -523,22 +527,22 @@ object SparkExt {
       this.hbaseContext.bulkPut(tableName, rdd, insertEmpty)
     }
 
-    /**
-      * 批量load数据到hbase
-      *
-      * @param tableName
-      * HBase表名
-      * @param stagingDir
-      * 临时路径
-      * @param insertEmpty
-      * 是否将为空的字段写入到HBase
-      * @tparam T
-      */
-    /*def hbaseBulkLoadThinRows[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
-                                                                stagingDir: String, insertEmpty: Boolean = true): Unit = {
-      this.hbaseContext.bulkLoadThinRows(tableName, rdd, stagingDir, insertEmpty)
-    }*/
-
+    /*
+        /**
+          * 批量load数据到hbase
+          *
+          * @param tableName
+          * HBase表名
+          * @param stagingDir
+          * 临时路径
+          * @param insertEmpty
+          * 是否将为空的字段写入到HBase
+          * @tparam T
+          */
+        def hbaseBulkLoadThinRows[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
+                                                                    stagingDir: String, insertEmpty: Boolean = true): Unit = {
+          this.hbaseContext.bulkLoadThinRows(tableName, rdd, stagingDir, insertEmpty)
+        }*/
   }
 
   /**
@@ -1233,6 +1237,34 @@ object SparkExt {
         HBaseOper.insert(hbaseTableName, list)
         list.clear
       })
+    }
+
+    /**
+      * 将DataFrame数据打印到控制台
+      *
+      * @return
+      */
+    def writeStream2Console: Unit = {
+      dataFrame.writeStream.outputMode(OutputMode.Append()).format("console").start().awaitTermination()
+    }
+
+    /**
+      * 将DataFrame数据写入到carbondata表
+      *
+      * @return
+      */
+    def writeStream2Carbon(db: String = "default", tableName: String, tigger: Trigger = Trigger.ProcessingTime("5 seconds")): Unit = {
+      if (StringUtils.isBlank(db) || StringUtils.isBlank(tableName)) throw new IllegalArgumentException("carbondata的库名或表名不能为空！")
+      val carbonTable = CarbonEnv.getCarbonTable(Some(db), tableName)(dataFrame.sparkSession)
+
+      dataFrame.writeStream
+        .format("carbondata")
+        .trigger(tigger)
+        .option("checkpointLocation", CarbonTablePath.getStreamingCheckpointDir(carbonTable.getTablePath))
+        .option("dbName", db)
+        .option("tableName", tableName)
+        .option(CarbonStreamParser.CARBON_STREAM_PARSER, CarbonStreamParser.CARBON_STREAM_PARSER_ROW_PARSER)
+        .start().awaitTermination()
     }
 
     /**

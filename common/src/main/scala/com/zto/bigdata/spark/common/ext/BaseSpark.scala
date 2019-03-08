@@ -1,6 +1,8 @@
 package com.zto.bigdata.spark.common.ext
 
-import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils}
+import java.util.concurrent.Executors
+
+import com.zto.bigdata.spark.common.util.{DateFormatUtils, GlobalConstants, SparkUtils}
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
@@ -19,6 +21,7 @@ trait BaseSpark extends SparkListener with Serializable {
   var hbaseContext: HBaseContextExt = _
   val startTime = SparkUtils.currentTime
   var appName = this.getClass.getSimpleName.replace("$", "")
+  val threadPool = Executors.newFixedThreadPool(20)
 
   /**
     * 程序初始化方法，用于初始化必要的值
@@ -45,5 +48,40 @@ trait BaseSpark extends SparkListener with Serializable {
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
     if (this.hiveContext != null) this.hiveContext.clearCache
     GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
+  }
+
+  /**
+    * 以子线程方式执行函数调用
+    *
+    * @param fun
+    * 用于指定以多线程方式执行的函数
+    */
+  def runAsThread(fun: => Unit, debug: Boolean = false): Unit = {
+    this.threadPool.execute(new Runnable {
+      override def run(): Unit = {
+        fun
+        if(debug) println(s"--> ${GlobalConstants.Color.GREEN}Invoke ${fun.getClass.getName} as thread. Time: ${DateFormatUtils.formatCurrentDateTime()}. ${GlobalConstants.Color.DEFAULT}<--")
+      }
+    })
+  }
+
+  /**
+    * 以子线程方式循环执行函数调用
+    *
+    * @param fun
+    * 用于指定以多线程方式执行的函数
+    * @param delay
+    * 循环调用间隔时间（单位s）
+    */
+  def runAsThreadLoop(fun: => Unit, delay: Long = 10, debug: Boolean = false): Unit = {
+    this.threadPool.execute(new Runnable {
+      override def run(): Unit = {
+        while (true) {
+          if(debug) println(s"--> ${GlobalConstants.Color.GREEN}Loop invoke ${fun.getClass.getName} as thread. Delay is ${delay}s. Time: ${DateFormatUtils.formatCurrentDateTime()}. ${GlobalConstants.Color.DEFAULT}<--")
+          fun
+          Thread.sleep(delay * 1000)
+        }
+      }
+    })
   }
 }
