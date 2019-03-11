@@ -350,6 +350,46 @@ object SparkExt {
       else
         schemaDataset.select("data.after.*")
     }
+
+    /**
+      * 根据指定的javabean，构建Streaming类型的carbondata表
+      *
+      * @param tableName
+      * 表名
+      * @param tableSchema
+      * 表的schema信息，与javabean对应
+      * @return
+      */
+    def createCarbonStreamingTable(dbName: String, tableName: String, tableSchema: Class[_]): DataFrame = {
+      spark.sql(CarbondataUtils.buildCreateStreamingTableSQL(dbName, tableName, tableSchema))
+    }
+
+    /**
+      * 根据指定的javabean，构建carbondata的分区表sql
+      *
+      * @param tableName
+      * 表名
+      * @param tableSchema
+      * 表的schema信息，与javabean对应
+      * @return
+      */
+    def createCarbonTable(dbName: String, tableName: String, tableSchema: Class[_], partition: String = "ds"): DataFrame = {
+      spark.sql(CarbondataUtils.buildCreatePartitioinTableSQL(dbName, tableName, tableSchema, partition))
+    }
+
+    /**
+      * 构建drop表的语句
+      *
+      * @param dbName
+      * 数据库名
+      * @param tableName
+      * 表名
+      */
+    def dropCarbonTable(dbName: String = "default", tableName: String): Unit = {
+      spark.sql(CarbondataUtils.dropCarbonTable(dbName, tableName))
+    }
+
+
   }
 
   /**

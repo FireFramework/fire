@@ -22,9 +22,9 @@ object CarbondataUtils {
     * 是否创建成streaming表
     * @return
     */
-  def buildCreateTableSQL(tableName: String, tableSchema: Class[_], isStreaming: Boolean = false): String = {
+  def buildCreateTableSQL(dbName: String, tableName: String, tableSchema: Class[_], partition: String = "ds", isStreaming: Boolean = false): String = {
     val schema = ReflectionUtils.getAllFields(tableSchema).toScalaMap
-    val sql = new StringBuilder(s"CREATE TABLE IF NOT EXISTS ${tableName}(\n")
+    val sql = new StringBuilder(s"CREATE TABLE IF NOT EXISTS ${dbName}.${tableName}(\n")
     schema.foreach(t => {
       val fieldType = t._2.getType
       val field = t._2.getAnnotation(classOf[FieldName])
@@ -33,11 +33,52 @@ object CarbondataUtils {
     })
     val finallySQL = sql.substring(0, sql.length - 2) + ")" +
       s"""
-        |STORED BY 'carbondata'
-        |${if(isStreaming) "TBLPROPERTIES('streaming' = 'true')" else ""}
+         |${if (StringUtils.isNotBlank(partition) && !isStreaming) s"PARTITIONED BY ($partition String)" else ""}
+         |STORED BY 'carbondata'
+         |TBLPROPERTIES('carbon.column.compressor'='snappy'${if (isStreaming) ", 'streaming'='true'" else ""})
       """.stripMargin
     println(finallySQL)
     finallySQL
+  }
+
+  /**
+    * 根据指定的javabean，构建carbondata的streaming表sql
+    *
+    * @param tableName
+    * 表名
+    * @param tableSchema
+    * 表的schema信息，与javabean对应
+    * @return
+    */
+  def buildCreateStreamingTableSQL(dbName: String, tableName: String, tableSchema: Class[_]): String = {
+    this.buildCreateTableSQL(dbName, tableName, tableSchema, null, true)
+  }
+
+  /**
+    * 根据指定的javabean，构建carbondata的分区表sql
+    *
+    * @param tableName
+    * 表名
+    * @param tableSchema
+    * 表的schema信息，与javabean对应
+    * @return
+    */
+  def buildCreatePartitioinTableSQL(dbName: String, tableName: String, tableSchema: Class[_], partition: String = "ds"): String = {
+    this.buildCreateTableSQL(dbName, tableName, tableSchema, partition, false)
+  }
+
+  /**
+    * 构建drop表的语句
+    *
+    * @param dbName
+    * 数据库名
+    * @param tableName
+    * 表名
+    */
+  def dropCarbonTable(dbName: String = "default", tableName: String): String = {
+    s"""
+       |DROP TABLE IF EXISTS ${dbName}.${tableName}
+     """.stripMargin
   }
 
   /**
