@@ -3,10 +3,15 @@ package com.zto.bigdata.spark.common.ext
 import java.util.Properties
 
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.{FindClassUtils, GlobalConstants, SingletonFactory}
+import com.zto.bigdata.spark.common.util.{FindClassUtils, GlobalConstants, SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{ColumnName, DataFrame, Encoders, SparkSession}
+import org.apache.spark.sql.CarbonSession._
+import org.apache.spark.sql.functions.from_json
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 /**
@@ -69,7 +74,7 @@ trait BaseSparkStreaming extends BaseSpark {
       .set("spark.default.parallelism", "300")
       .set("spark.sql.broadcastTimeout", "3000")
       .set("spark.storage.memoryFraction", "0.4")
-      .set("spark.streaming.concurrentJobs", "2")
+      // .set("spark.streaming.concurrentJobs", "2")
       .set("spark.ui.timeline.tasks.maximum", "300")
       .set("spark.streaming.backpressure.enabled", "true")
       .set("spark.streaming.stopGracefullyOnShutdown", "true")
@@ -95,7 +100,7 @@ trait BaseSparkStreaming extends BaseSpark {
     } else {
       this.conf = conf
     }
-    this.spark = SparkSession.builder().config(this.conf).getOrCreate()
+    this.spark = SparkSession.builder().config(this.conf).getOrCreateCarbonSession(GlobalConstants.CarbonConf.storePath, GlobalConstants.CarbonConf.metaStorePath)
     this.sc = this.spark.sparkContext
     this.sc.setLogLevel("ERROR")
     this.sc.addSparkListener(new BaseSparkListener(this))
@@ -103,6 +108,44 @@ trait BaseSparkStreaming extends BaseSpark {
     this.hiveContext.registerAll()
     this.sqlContext = this.hiveContext
     this.hbaseContext = SingletonFactory.getHBaseContextInstance(sc)
+  }
+
+  /**
+    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
+    * @param rdd
+    *            DStream中的每个rdd
+    * @param schema
+    *              目标DataFrame类型的schema
+    * @param requireBefore
+    *                      是否需要before信息
+    * @return
+    */
+  def parseJson2DataFrameV(rdd: RDD[String], schema: Class[_], requireBefore: Boolean = false): DataFrame = {
+    val ds = this.spark.createDataset(rdd)(Encoders.STRING)
+    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema)).as("data"))
+    if (requireBefore)
+      df.select("data.*")
+    else
+      df.select("data.after.*")
+  }
+
+  /**
+    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
+    * @param rdd
+    *            DStream中的每个rdd
+    * @param schema
+    *              目标DataFrame类型的schema
+    * @param requireBefore
+    *                      是否需要before信息
+    * @return
+    */
+  def parseJson2DataFrame(rdd: RDD[ConsumerRecord[String, String]], schema: Class[_], requireBefore: Boolean = false): DataFrame = {
+    val ds = this.spark.createDataset(rdd.map(t => t.value()))(Encoders.STRING)
+    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema)).as("data"))
+    if (requireBefore)
+      df.select("data.*")
+    else
+      df.select("data.after.*")
   }
 
   /**
@@ -115,11 +158,15 @@ trait BaseSparkStreaming extends BaseSpark {
     * @return
     * kafka相关配置
     */
-  def kafkaParams(kafkaBrokers: String, groupId: String, offset: String = GlobalConstants.KafkaConf.offsetLargest) = {
-    Map[String, String](
-      "metadata.broker.list" -> kafkaBrokers,
+  def kafkaParams(kafkaBrokers: String, groupId: String, offset: String = GlobalConstants.KafkaConf.offsetLargest, commit: Boolean = true): Map[String, Object] = {
+    Map[String, Object](
+      "bootstrap.servers" -> kafkaBrokers,
+      "key.deserializer" -> classOf[StringDeserializer],
+      "value.deserializer" -> classOf[StringDeserializer],
       "group.id" -> groupId,
-      "auto.offset.reset" -> offset)
+      "auto.offset.reset" -> offset,
+      "enable.auto.commit" -> (commit: java.lang.Boolean)
+    )
   }
 
   /**

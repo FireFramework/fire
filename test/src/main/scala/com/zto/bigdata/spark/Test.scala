@@ -1,5 +1,6 @@
 package com.zto.bigdata.spark
 
+import java.util.UUID
 import java.util.concurrent.Executors
 
 object Test {

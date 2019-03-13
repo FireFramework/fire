@@ -1,8 +1,9 @@
 package com.zto.bigdata.spark.common.ext
 
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.{FindClassUtils, SingletonFactory}
+import com.zto.bigdata.spark.common.util.{FindClassUtils, GlobalConstants, SingletonFactory}
 import org.apache.commons.lang3.StringUtils
+import org.apache.spark.sql.CarbonSession._
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
@@ -38,7 +39,7 @@ class BaseSparkCore extends BaseSpark {
     } else {
       this.conf = conf
     }
-    this.spark = SparkSession.builder().config(this.conf).getOrCreate()
+    this.spark = SparkSession.builder().config(this.conf).getOrCreateCarbonSession(GlobalConstants.CarbonConf.storePath, GlobalConstants.CarbonConf.metaStorePath)
     this.sc = this.spark.sparkContext
     this.sc.setLogLevel("ERROR")
     // this.sc.addSparkListener(new BaseSparkListener(this))

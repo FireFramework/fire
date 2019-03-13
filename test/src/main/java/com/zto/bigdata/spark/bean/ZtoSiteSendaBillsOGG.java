@@ -5,13 +5,13 @@ package com.zto.bigdata.spark.bean;
  * Created by ChengLong on 2017-05-25.
  */
 public class ZtoSiteSendaBillsOGG extends OGGBaseBean {
-    public SiteSendMqDTO after;
+    public Senda after;
 
-    public SiteSendMqDTO getAfter() {
+    public Senda getAfter() {
         return after;
     }
 
-    public void setAfter(SiteSendMqDTO after) {
+    public void setAfter(Senda after) {
         this.after = after;
     }
 

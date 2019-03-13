@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark.carbondata
 
-import com.zto.bigdata.spark.bean.SiteSendMqDTO
+import com.zto.bigdata.spark.bean.Senda
 import com.zto.bigdata.spark.common.ext.BaseStructuredStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import org.apache.spark.sql.streaming.Trigger
@@ -19,13 +19,13 @@ object ShenzhouSync extends BaseStructuredStreaming {
   val tableName = "dw_sz_zto_site_senda_bills"
 
   def main(args: Array[String]): Unit = {
-    this.initCarbon("hdfs://appcluster/user/CarbonStore")
+    this.init()
     spark.sparkContext.setLogLevel("ERROR")
 
     if(args.length > 0) {
       spark.sql(s"DROP TABLE IF EXISTS ${tableName}")
       spark.dropCarbonTable("default", this.tableName)
-      spark.createCarbonStreamingTable("default", this.tableName, classOf[SiteSendMqDTO])
+      spark.createCarbonStreamingTable("default", this.tableName, classOf[Senda])
     }
 
     this.runAsThread(write2Carbondata)
@@ -37,7 +37,7 @@ object ShenzhouSync extends BaseStructuredStreaming {
     */
   def write2Carbondata: Unit = {
     val result = spark
-      .loadKafkaParseJson(brokers, mutable.HashMap[String, String]("subscribe" -> topicSet, "failOnDataLoss" -> "false", "startingOffsets" -> "latest"), classOf[SiteSendMqDTO])
+      .loadKafkaParseJson(brokers, mutable.HashMap[String, String]("subscribe" -> topicSet, "failOnDataLoss" -> "false", "startingOffsets" -> "latest"), classOf[Senda])
 
     result.repartition(200).writeStream2Carbon("default", tableName, Trigger.ProcessingTime("60 seconds"))
   }

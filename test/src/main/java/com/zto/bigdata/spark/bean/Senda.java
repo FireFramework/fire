@@ -12,7 +12,7 @@ import java.math.BigDecimal;
  * @author ChengLong
  * @date 2017年03月10日10:24:02
  */
-public class SiteSendMqDTO implements Serializable {
+public class Senda implements Serializable {
     /**
      * 单号<br>
      * 表字段 : zto_site_senda_bills.bill_code

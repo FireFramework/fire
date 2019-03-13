@@ -40,6 +40,10 @@ object GlobalConstants {
     val IMPALA_JDBC_DRIVER_NAME_KEY: String = "impala.jdbc.driver.class.name"
     val IMPALA_DAEMONS_URL = "impala.daemons.url"
     val KAFKA_BROKERS_URL = "kafka.brokers.url"
+
+    // carbondata相关配置
+    val CARBON_STORE_PATH = "carbon.storePath"
+    val CARBON_META_STORE_PATH = "carbon.metaStorePath "
   }
 
   /**
@@ -91,8 +95,9 @@ object GlobalConstants {
     * kafka相关配置
     */
   object KafkaConf extends Enumeration {
-    val offsetLargest = "largest"
-    val offsetSmallest = "smallest"
+    val offsetLargest = "latest"
+    val offsetSmallest = "earliest"
+    val offsetNone = "none"
   }
 
   /**
@@ -199,6 +204,14 @@ object GlobalConstants {
     val MULTI_NUMBER_PATTERN = "_\\d+$".r
     // 只能包含字母和下划线
     val NO_NUMBER = "^[A-Za-z_]+$".r
+  }
+
+  /**
+    * carbondata相关配置
+    */
+  object CarbonConf extends Enumeration {
+    val storePath = PropUtils.getString(PropKeys.CARBON_STORE_PATH)
+    val metaStorePath = PropUtils.getString(PropKeys.CARBON_META_STORE_PATH)
   }
 
 }

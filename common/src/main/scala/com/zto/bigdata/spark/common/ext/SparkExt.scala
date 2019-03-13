@@ -16,13 +16,17 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Result, Scan}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kudu.spark.kudu._
 import org.apache.spark.rdd.{JdbcRDD, RDD}
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.hive.HiveContext
-import org.apache.spark.sql.streaming.{OutputMode, StreamingQuery, Trigger}
+import org.apache.spark.sql.streaming.{OutputMode, Trigger}
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.streaming.{StreamingContext, Time}
 import org.apache.spark.streaming.dstream.DStream
+import org.apache.spark.streaming.kafka010.KafkaUtils
 import org.apache.spark.{Accumulator, SparkConf, SparkContext}
 
 import scala.collection.mutable.ListBuffer
@@ -385,10 +389,9 @@ object SparkExt {
       * @param tableName
       * 表名
       */
-    def dropCarbonTable(dbName: String = "default", tableName: String): Unit = {
+    def dropCarbonTable(dbName: String = "tmp", tableName: String): Unit = {
       spark.sql(CarbondataUtils.dropCarbonTable(dbName, tableName))
     }
-
 
   }
 
@@ -1293,7 +1296,7 @@ object SparkExt {
       *
       * @return
       */
-    def writeStream2Carbon(db: String = "default", tableName: String, tigger: Trigger = Trigger.ProcessingTime("5 seconds")): Unit = {
+    def writeStream2Carbon(db: String = "tmp", tableName: String, tigger: Trigger = Trigger.ProcessingTime("5 seconds")): Unit = {
       if (StringUtils.isBlank(db) || StringUtils.isBlank(tableName)) throw new IllegalArgumentException("carbondata的库名或表名不能为空！")
       val carbonTable = CarbonEnv.getCarbonTable(Some(db), tableName)(dataFrame.sparkSession)
 
@@ -1308,6 +1311,22 @@ object SparkExt {
     }
 
     /**
+      * 将DataFrame数据写入到carbondata表中
+      *
+      * @param db
+      * @param tableName
+      * @param partition
+      * @param saveMode
+      */
+    def write2Carbon(db: String = "tmp", tableName: String, partition: String = null, saveMode: SaveMode = SaveMode.Append): Unit = {
+      val dfWriter = dataFrame.write.format("carbondata")
+        .option("dbName", db)
+        .option("tableName", tableName)
+      if (StringUtils.isNotBlank(partition)) dfWriter.option("partitionColumns", partition)
+      dfWriter.mode(saveMode).save()
+    }
+
+    /**
       * 将DataFrame注册为临时表，并缓存表
       *
       * @param tableName
@@ -1319,6 +1338,56 @@ object SparkExt {
       dataFrame.sqlContext.cacheTable(tableName)
     }
 
+    /**
+      * 将DataFrame数据写入到streaming的carbondata表中
+      *
+      * @param dbName
+      * 数据库名
+      * @param tableName
+      * 表名
+      * @param time
+      * rdd时间
+      * @param saveMode
+      * 追加方式
+      */
+    def writeStreaming2Carbon(dbName: String = "tmp", tableName: String, time: Time, saveMode: SaveMode = SaveMode.Append): Unit = {
+      CarbonSparkStreamingFactory.getStreamSparkStreamingWriter(dataFrame.sparkSession, dbName, tableName)
+        .mode(saveMode)
+        .writeStreamData(dataFrame, time)
+    }
+  }
+
+  /**
+    * StreamingContext扩展
+    *
+    * @param ssc
+    */
+  implicit class StreamingContextExt(ssc: StreamingContext) {
+
+    import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
+    import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
+
+    /**
+      * 创建DStream流
+      *
+      * @param kafkaParams
+      * @param topics
+      * @return
+      * DStream
+      */
+    def createDirectStream(kafkaParams: Map[String, Object], topics: Set[String], level: StorageLevel = StorageLevel.MEMORY_AND_DISK_SER): DStream[ConsumerRecord[String, String]] = {
+      KafkaUtils.createDirectStream[String, String](
+        ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams)) //.map(t => (t.key(), t.value()))//.persist(level)
+    }
+
+    /**
+      * 开启streaming
+      */
+    def startAwaitTermination(): Unit = {
+      ssc.start()
+      ssc.awaitTermination()
+      ssc.sparkContext.stop()
+    }
   }
 
   /**

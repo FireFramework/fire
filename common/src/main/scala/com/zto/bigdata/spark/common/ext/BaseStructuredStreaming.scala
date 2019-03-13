@@ -1,7 +1,7 @@
 package com.zto.bigdata.spark.common.ext
 
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.{FindClassUtils, SingletonFactory}
+import com.zto.bigdata.spark.common.util.{FindClassUtils, GlobalConstants, SingletonFactory}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
@@ -23,25 +23,7 @@ class BaseStructuredStreaming extends BaseSpark {
     */
   override def init(beanDir: String = "", appName: String = "", conf: SparkConf = null): Unit = {
     this.buildConf(beanDir, conf, appName)
-    this.spark = SparkSession.builder().config(this.conf).getOrCreate()
-    this.initParams
-  }
-
-  /**
-    * 程序初始化方法，用于初始化carbondata上下文
-    *
-    * @param storePath
-    * carbondata表存储路径
-    * @param metaStorePath
-    * 元数据存储路径
-    * @param beanDir
-    * @param appName
-    * @param conf
-    */
-  def initCarbon(storePath: String,
-                 metaStorePath: String = null, beanDir: String = "", appName: String = "", conf: SparkConf = null): Unit = {
-    this.buildConf(beanDir, conf, appName)
-    this.spark = SparkSession.builder().config(this.conf).getOrCreateCarbonSession(storePath, metaStorePath)
+    this.spark = SparkSession.builder().config(this.conf).getOrCreateCarbonSession(GlobalConstants.CarbonConf.storePath, GlobalConstants.CarbonConf.metaStorePath)
     this.initParams
   }
 
