@@ -1,27 +1,23 @@
 package com.zto.bigdata.spark.common.ext
 
-import java.lang.reflect.{Field, Type}
-import java.math.BigDecimal
-import java.util
-
-import com.zto.bigdata.spark.common.anno.FieldName
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.db.HBaseOper
-import com.zto.bigdata.spark.common.ext.ScalaExt._
-import com.zto.bigdata.spark.common.util.{GlobalConstants, ReflectionUtils, SingletonFactory}
+import com.zto.bigdata.spark.common.util.GlobalConstants
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client._
-import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles
-import org.apache.hadoop.hbase.spark.{ByteArrayWrapper, FamiliesQualifiersValues, FamilyHFileWriteOptions, HBaseContext}
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import org.apache.hadoop.hbase.mapreduce.TableOutputFormat
+import org.apache.hadoop.hbase.spark.HBaseContext
 import org.apache.hadoop.hbase.util.Bytes
-import org.apache.hadoop.hbase.{HConstants, TableName}
+import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.streaming.dstream.DStream
 
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /**
@@ -223,99 +219,168 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
   }
 
   /**
-    * 将大批量的数据直接生成HFile并上传至相应的
-    * RegionServer中，适用于海量数据写入到HBase的场景
-    * 此种方式的优点是降低了RegionServer的cpu和内存开销
-    * 原理是Spark遵循HBase的HFile规范直接生成HFile，并
-    * 上传到RegionServer中
+    * 以spark 方式批量将rdd数据写入到hbase中
     *
-    * @param tableName
-    * HBase表名
     * @param rdd
-    * rdd数据集，类型为继承自HBaseBaseBean的自定义JavaBean
-    * @param stagingDir
-    * 用于存放Spark生成的HFile的临时本地路径，非HDFS路径
-    * 上传至RegionServer后会自动删除该HFile文件
+    *            类型为HBaseBaseBean子类的rdd
+    * @param tableName
+    *                  hbase表名
     * @param insertEmpty
-    * 对象中值为空的字段是否覆盖HBase中已有的field值
-    * 默认为覆盖
+    *                    为空的字段是否写入hbase
     * @tparam T
-    * 对象类型必须是HBaseBaseBean的子类
     */
-  /*def bulkLoadThinRows[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
-                                                         rdd: RDD[T],
-                                                         stagingDir: String, insertEmpty: Boolean = true): Unit = {
-
-    val hbaseTable = TableName.valueOf(tableName)
-    var map: collection.mutable.Map[String, Field] = null
-
-    /**
-      * 将自定义JavaBean转为HFile所需的格式
-      *
-      * @param bean
-      * RDD中的每条记录
-      * @return
-      */
-    def bean2QualifiersValues(bean: HBaseBaseBean[T]): (ByteArrayWrapper, FamiliesQualifiersValues) = {
-      val rowKey = if (StringUtils.isNotBlank(bean.getRowKey)) bean.getRowKey
-      else {
-        val tmpBean = bean.buildRowKey()
-        tmpBean.getRowKey
-      }
-
-      val familyQualifiersValues = new FamiliesQualifiersValues
-      if (map == null) {
-        map = ReflectionUtils.getAllFields(bean.getClass).toScalaMap
-      }
-
-      map.foreach(t => {
-        var fName: String = t._1
-        val field = t._2
-        val anno: FieldName = field.getAnnotation(classOf[FieldName])
-        var familyName: String = GlobalConstants.familyName
-        if (anno != null) {
-          if (!anno.disuse()) {
-            if (StringUtils.isNotBlank(anno.value)) fName = anno.value
-            if (StringUtils.isNotBlank(anno.family)) familyName = anno.family
-          }
-        }
-        field.setAccessible(true)
-        val fieldType: Type = field.getType
-        val objValue = field.get(bean)
-        if (objValue != null) {
-          val objValueStr: String = objValue.toString
-          val valueArray: Array[Byte] = if (fieldType eq classOf[String]) Bytes.toBytes(objValueStr)
-          else if (fieldType eq classOf[Integer]) Bytes.toBytes(Integer.parseInt(objValueStr))
-          else if (fieldType eq classOf[Double]) Bytes.toBytes(java.lang.Double.parseDouble(objValueStr))
-          else if (fieldType eq classOf[Long]) Bytes.toBytes(java.lang.Long.parseLong(objValueStr))
-          else if (fieldType eq classOf[BigDecimal]) Bytes.toBytes(new BigDecimal(objValueStr))
-          else if (fieldType eq classOf[Float]) Bytes.toBytes(java.lang.Float.parseFloat(objValueStr))
-          else if (fieldType eq classOf[Boolean]) Bytes.toBytes(java.lang.Boolean.parseBoolean(objValueStr))
-          else if (fieldType eq classOf[Short]) Bytes.toBytes(java.lang.Short.parseShort(objValueStr))
-          else null
-          familyQualifiersValues += (Bytes.toBytes(familyName), Bytes.toBytes(fName), valueArray)
-        } else {
-          if (insertEmpty) {
-            familyQualifiersValues += (Bytes.toBytes(familyName), Bytes.toBytes(fName), null)
-          }
-        }
+  def bulkPut2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true): Unit = {
+    rdd.mapPartitions(it => {
+      val putList = ListBuffer[(ImmutableBytesWritable, Put)]()
+      it.foreach(t => {
+        putList += Tuple2(new ImmutableBytesWritable(), HBaseOper.convert2Put(t, insertEmpty))
       })
-      (new ByteArrayWrapper(Bytes.toBytes(rowKey)), familyQualifiersValues)
-    }
+      putList.iterator
+    }).saveAsNewAPIHadoopDataset(this.getConfiguration(tableName))
+  }
 
-    this.bulkLoadThinRows[T](rdd,
-      hbaseTable,
-      record => bean2QualifiersValues(record),
-      stagingDir,
-      new util.HashMap[Array[Byte], FamilyHFileWriteOptions],
-      false,
-      HConstants.DEFAULT_MAX_FILE_SIZE)
+  /**
+    * 以spark 方式批量将DataFrame数据写入到hbase中
+    *
+    * @param df
+    *            spark的DataFrame
+    * @param tableName
+    *                  hbase表名
+    * @param insertEmpty
+    *                    为空的字段是否写入hbase
+    * @tparam T
+    */
+  def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String , insertEmpty: Boolean = true): Unit = {
+    val fields = df.schema.fields
+    df.rdd.mapPartitions(it => {
+      val putList = ListBuffer[(ImmutableBytesWritable, Put)]()
+      it.foreach(row => {
+        val put = new Put(Bytes.toBytes(buildRowKey(row)))
+        fields.foreach(field => {
+          val fieldName = field.name
+          val fieldIndex = row.fieldIndex(fieldName)
+          var fieldValue = ""
+          if (!row.isNullAt(fieldIndex)) {
+            fieldValue = row.get(fieldIndex).toString
+          }
+          put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), if(StringUtils.isNotBlank(fieldValue)) Bytes.toBytes(fieldValue) else null)
+        })
+        putList += Tuple2(new ImmutableBytesWritable, put)
+      })
+      putList.iterator
+    }).saveAsNewAPIHadoopDataset(this.getConfiguration(tableName))
+  }
 
-    val load = new LoadIncrementalHFiles(this.config)
-    val conn = ConnectionFactory.createConnection(this.config)
-    load.doBulkLoad(new Path(stagingDir), conn.getAdmin, conn.getTable(hbaseTable),
-      conn.getRegionLocator(hbaseTable))
-  }*/
+  /**
+    * 根据表名构建hadoop configuration
+    * @param tableName
+    *                  hbase表名
+    * @return
+    *         hadoop configuration
+    */
+  private def getConfiguration(tableName: String): Configuration = {
+    this.sc.hadoopConfiguration.set(TableOutputFormat.OUTPUT_TABLE, tableName)
+    val job = Job.getInstance(this.sc.hadoopConfiguration)
+    job.setOutputKeyClass(classOf[ImmutableBytesWritable])
+    job.setOutputValueClass(classOf[Result])
+    job.setOutputFormatClass(classOf[TableOutputFormat[ImmutableBytesWritable]])
+    job.getConfiguration()
+  }
+  /*
+    /**
+      * 将大批量的数据直接生成HFile并上传至相应的
+      * RegionServer中，适用于海量数据写入到HBase的场景
+      * 此种方式的优点是降低了RegionServer的cpu和内存开销
+      * 原理是Spark遵循HBase的HFile规范直接生成HFile，并
+      * 上传到RegionServer中
+      *
+      * @param tableName
+      * HBase表名
+      * @param rdd
+      * rdd数据集，类型为继承自HBaseBaseBean的自定义JavaBean
+      * @param stagingDir
+      * 用于存放Spark生成的HFile的临时本地路径，非HDFS路径
+      * 上传至RegionServer后会自动删除该HFile文件
+      * @param insertEmpty
+      * 对象中值为空的字段是否覆盖HBase中已有的field值
+      * 默认为覆盖
+      * @tparam T
+      * 对象类型必须是HBaseBaseBean的子类
+      */
+    def bulkLoadThinRows[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
+                                                           rdd: RDD[T],
+                                                           stagingDir: String, insertEmpty: Boolean = true): Unit = {
+
+      val hbaseTable = TableName.valueOf(tableName)
+      var map: collection.mutable.Map[String, Field] = null
+
+      /**
+        * 将自定义JavaBean转为HFile所需的格式
+        *
+        * @param bean
+        * RDD中的每条记录
+        * @return
+        */
+      def bean2QualifiersValues(bean: HBaseBaseBean[T]): (ByteArrayWrapper, FamiliesQualifiersValues) = {
+        val rowKey = if (StringUtils.isNotBlank(bean.getRowKey)) bean.getRowKey
+        else {
+          val tmpBean = bean.buildRowKey()
+          tmpBean.getRowKey
+        }
+
+        val familyQualifiersValues = new FamiliesQualifiersValues
+        if (map == null) {
+          map = ReflectionUtils.getAllFields(bean.getClass).toScalaMap
+        }
+
+        map.foreach(t => {
+          var fName: String = t._1
+          val field = t._2
+          val anno: FieldName = field.getAnnotation(classOf[FieldName])
+          var familyName: String = GlobalConstants.familyName
+          if (anno != null) {
+            if (!anno.disuse()) {
+              if (StringUtils.isNotBlank(anno.value)) fName = anno.value
+              if (StringUtils.isNotBlank(anno.family)) familyName = anno.family
+            }
+          }
+          field.setAccessible(true)
+          val fieldType: Type = field.getType
+          val objValue = field.get(bean)
+          if (objValue != null) {
+            val objValueStr: String = objValue.toString
+            val valueArray: Array[Byte] = if (fieldType eq classOf[String]) Bytes.toBytes(objValueStr)
+            else if (fieldType eq classOf[Integer]) Bytes.toBytes(Integer.parseInt(objValueStr))
+            else if (fieldType eq classOf[Double]) Bytes.toBytes(java.lang.Double.parseDouble(objValueStr))
+            else if (fieldType eq classOf[Long]) Bytes.toBytes(java.lang.Long.parseLong(objValueStr))
+            else if (fieldType eq classOf[BigDecimal]) Bytes.toBytes(new BigDecimal(objValueStr))
+            else if (fieldType eq classOf[Float]) Bytes.toBytes(java.lang.Float.parseFloat(objValueStr))
+            else if (fieldType eq classOf[Boolean]) Bytes.toBytes(java.lang.Boolean.parseBoolean(objValueStr))
+            else if (fieldType eq classOf[Short]) Bytes.toBytes(java.lang.Short.parseShort(objValueStr))
+            else null
+            familyQualifiersValues += (Bytes.toBytes(familyName), Bytes.toBytes(fName), valueArray)
+          } else {
+            if (insertEmpty) {
+              familyQualifiersValues += (Bytes.toBytes(familyName), Bytes.toBytes(fName), null)
+            }
+          }
+        })
+        (new ByteArrayWrapper(Bytes.toBytes(rowKey)), familyQualifiersValues)
+      }
+
+      this.bulkLoadThinRows[T](rdd,
+        hbaseTable,
+        record => bean2QualifiersValues(record),
+        stagingDir,
+        new util.HashMap[Array[Byte], FamilyHFileWriteOptions],
+        false,
+        HConstants.DEFAULT_MAX_FILE_SIZE)
+
+      val load = new LoadIncrementalHFiles(this.config)
+      val conn = ConnectionFactory.createConnection(this.config)
+      load.doBulkLoad(new Path(stagingDir), conn.getAdmin, conn.getTable(hbaseTable),
+        conn.getRegionLocator(hbaseTable))
+    }*/
 
   /*
     /**
