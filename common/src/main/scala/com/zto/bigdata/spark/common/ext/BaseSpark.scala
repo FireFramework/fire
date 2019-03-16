@@ -2,6 +2,7 @@ package com.zto.bigdata.spark.common.ext
 
 import java.util.concurrent.Executors
 
+import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
 import com.zto.bigdata.spark.common.util.{DateFormatUtils, GlobalConstants, SparkUtils}
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.{SQLContext, SparkSession}
@@ -22,6 +23,8 @@ trait BaseSpark extends SparkListener with Serializable {
   val startTime = SparkUtils.currentTime
   var appName = this.getClass.getSimpleName.replace("$", "")
   val threadPool = Executors.newFixedThreadPool(20)
+  val restfulRegister = new RestfulRegister(this.threadPool)
+  private val systemRestful = new SystemRestful(this)
 
   /**
     * 程序初始化方法，用于初始化必要的值
@@ -84,4 +87,6 @@ trait BaseSpark extends SparkListener with Serializable {
       }
     })
   }
+
+
 }

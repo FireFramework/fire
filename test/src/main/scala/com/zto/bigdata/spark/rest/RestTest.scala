@@ -1,8 +1,8 @@
-package com.zto.bigdata.spark.carbondata
+package com.zto.bigdata.spark.rest
 
 import com.zto.bigdata.spark.common.ext.BaseSparkCore
-import spark.{Request, Response, Route}
 import spark.Spark._
+import spark.{Request, Response, Route}
 
 object RestTest extends BaseSparkCore {
 
