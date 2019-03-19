@@ -21,7 +21,7 @@ object OrderDetailMain extends BaseSparkStreaming {
     this.init(20L, null, false)
 
     val ssc = new StreamingContext(this.sc, Seconds(90))
-    val kafkaDStream = this.ssc.createDirectStream(this.kafkaParams(this.brokers, this.appName, GlobalConstants.KafkaConf.offsetLargest, false), this.topics, StorageLevel.NONE)
+    val kafkaDStream = this.ssc.createDirectStream(this.kafkaParams(this.appName, this.brokers, GlobalConstants.KafkaConf.offsetLargest, false), this.topics, StorageLevel.NONE)
 
     kafkaDStream.map(t => t.value()).foreachRDD(rdd => {
       processRdd(rdd)

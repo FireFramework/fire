@@ -30,7 +30,7 @@ object RestTest2 extends BaseSparkStreaming {
   }
 
   def kafka: Unit = {
-    val dstream = this.ssc.createDirectStream(this.kafkaParams(this.brokers, this.appName + "2", GlobalConstants.KafkaConf.offsetLargest, false), this.topics, StorageLevel.NONE)
+    val dstream = this.ssc.createDirectStream(this.kafkaParams(this.appName + "2", this.brokers, GlobalConstants.KafkaConf.offsetLargest, false), this.topics, StorageLevel.NONE)
     dstream.foreachRDD((rdd, time) => {
       this.parseJson2DataFrame(rdd, classOf[Senda]).writeStreaming2Carbon("default", tableName, time)
     })

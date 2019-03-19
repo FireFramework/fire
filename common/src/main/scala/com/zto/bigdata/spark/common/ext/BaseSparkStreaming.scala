@@ -160,7 +160,7 @@ trait BaseSparkStreaming extends BaseSpark {
     * @return
     * kafka相关配置
     */
-  def kafkaParams(kafkaBrokers: String, groupId: String, offset: String = GlobalConstants.KafkaConf.offsetLargest, commit: Boolean = true): Map[String, Object] = {
+  def kafkaParams(groupId: String = this.appName, kafkaBrokers: String = GlobalConstants.kafkaBrokers, offset: String = GlobalConstants.KafkaConf.offsetLargest, commit: Boolean = true): Map[String, Object] = {
     Map[String, Object](
       "bootstrap.servers" -> kafkaBrokers,
       "key.deserializer" -> classOf[StringDeserializer],
