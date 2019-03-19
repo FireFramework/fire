@@ -79,6 +79,8 @@ trait BaseSparkStreaming extends BaseSpark {
       .set("spark.streaming.backpressure.enabled", "true")
       .set("spark.streaming.stopGracefullyOnShutdown", "true")
       // .set("spark.streaming.kafka.maxRatePerPartition", "10000") // 每个批次从每个partition中每秒中最大拉取的数据量
+      .set("spark.sql.parquet.writeLegacyFormat", "true")
+      .set("hive.metastore.uris", GlobalConstants.HiveConf.metaStoreUris)
     if (StringUtils.isNotBlank(beanDir)) {
       tmpConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerialization")
         .registerKryoClasses(FindClassUtils.listPackageClasses(beanDir).toScalaList.toArray)
@@ -100,7 +102,7 @@ trait BaseSparkStreaming extends BaseSpark {
     } else {
       this.conf = conf
     }
-    this.spark = SparkSession.builder().config(this.conf).getOrCreateCarbonSession(GlobalConstants.CarbonConf.storePath, GlobalConstants.CarbonConf.metaStorePath)
+    this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession(GlobalConstants.CarbonConf.storePath, GlobalConstants.CarbonConf.metaStorePath)
     this.sc = this.spark.sparkContext
     this.sc.setLogLevel("ERROR")
     this.sc.addSparkListener(new BaseSparkListener(this))

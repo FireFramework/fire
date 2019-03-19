@@ -34,6 +34,17 @@ object PropUtils {
   }
 
   /**
+    * 获取字符串，为空则取默认值
+    *
+    * @param key
+    * @return
+    */
+  def getString(key: String, default: String): String = {
+    val value = props.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value else default
+  }
+
+  /**
     * 获取整型数据
     *
     * @param key

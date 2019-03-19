@@ -54,7 +54,6 @@ object OrderDetailMain extends BaseSparkStreaming {
         // replicaOrder表批量插入操作
         val replicaOrderDF = hiveContext.sql(HiveQL.saveReplicaOrder(tableName))
         hbaseContext.bulkPutDF(hbaseTableReplicaOrder, replicaOrderDF, buildReplicaOrderRowKey)
-
         // replicaOrder表批量删除操作
         val replicaOrderRowKeyRDD = hiveContext.sql(HiveQL.deleteReplicaOrder(tableName)).rdd.map(row => row.getAs[String](0))
         hbaseContext.bulkDelete(hbaseTableReplicaOrder, replicaOrderRowKeyRDD)

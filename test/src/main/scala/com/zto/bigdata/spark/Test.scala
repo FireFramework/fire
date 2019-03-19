@@ -28,12 +28,5 @@ class Test1 {
 
 object Test {
   def main(args: Array[String]): Unit = {
-    val va = typeOf[Test1].member(newTermName("getRest"))//.asMethod.paramss.head
-    val ru = scala.reflect.runtime.universe
-    val rm = ru.runtimeMirror(getClass.getClassLoader)
-    val instanceMirror = rm.reflect(Test)
-    val methodSymbolHi = ru.typeOf[Test.type].decl(ru.TermName("getRest")).asMethod
-    val methodHi = instanceMirror.reflectMethod(methodSymbolHi)
-    methodHi()
   }
 }

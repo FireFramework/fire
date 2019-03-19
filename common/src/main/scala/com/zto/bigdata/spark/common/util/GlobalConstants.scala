@@ -11,6 +11,21 @@ import org.apache.spark.sql.SaveMode
 object GlobalConstants {
 
   /**
+    * 预定义的默认值，配置文件没有指明的情况下会取默认值
+    */
+  private[this] object DefaultVals extends Enumeration {
+    val clusterName = "batch"
+    // 默认的kafka broker地址
+    val kafkaBrokers = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092"
+    // 默认的zookeeper地址
+    val zkUrl = "192.168.25.38:2181,192.168.25.39:2181,192.168.25.40:2181,192.168.25.41:2181,192.168.25.42:2181"
+    // spark 默认的checkpoint地址
+    val sparkChkPointDir = "hdfs://nameservice1/user/spark/ckpoint/"
+    // hive metastore地址
+    val hiveMetaStoreUris = "thrift://192.168.25.36:9083"
+  }
+
+  /**
     * 对应conf.properties的key
     */
   private[this] object PropKeys extends Enumeration {
@@ -41,9 +56,15 @@ object GlobalConstants {
     val IMPALA_DAEMONS_URL = "impala.daemons.url"
     val KAFKA_BROKERS_URL = "kafka.brokers.url"
 
+    // spark相关配置
+    val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
+
     // carbondata相关配置
     val CARBON_STORE_PATH = "carbon.storePath"
-    val CARBON_META_STORE_PATH = "carbon.metaStorePath "
+    val CARBON_META_STORE_PATH = "carbon.metaStorePath"
+
+    // hive相关配置
+    val HIVE_METASTORE_URIS = "hive.metastore.uris"
   }
 
   /**
@@ -67,15 +88,15 @@ object GlobalConstants {
     */
   // object ClusterConf extends Enumeration {
   val CLUSTER_KEY = "cluster"
-  val CLUSERT_NAME = if (StringUtils.isBlank(PropUtils.getString(PropKeys.CLUSERT_NAME_URL))) "batch" else PropUtils.getString(PropKeys.CLUSERT_NAME_URL)
+  val CLUSERT_NAME = PropUtils.getString(PropKeys.CLUSERT_NAME_URL, DefaultVals.clusterName)
   val isCluster = if (CLUSTER_KEY.equalsIgnoreCase(PropUtils.getString(PropKeys.RUNMODEL_KEY))) true else false
   val isLocal = !isCluster
   // spark运行时日志记录表
   val sparkRuntimeLogTable = "spark_runtime_log"
   // kafka broker地址
-  val kafkaBrokers: String = if (StringUtils.isNotBlank(PropUtils.getString(PropKeys.KAFKA_BROKERS_URL))) PropUtils.getString(PropKeys.KAFKA_BROKERS_URL) else "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092"
+  val kafkaBrokers = PropUtils.getString(PropKeys.KAFKA_BROKERS_URL, DefaultVals.kafkaBrokers)
   // zookeeper地址
-  val zkUrl = if (StringUtils.isBlank(PropUtils.getString(PropKeys.ZK_URL))) "192.168.25.38:2181,192.168.25.39:2181,192.168.25.40:2181,192.168.25.41:2181,192.168.25.42:2181" else PropUtils.getString(PropKeys.ZK_URL)
+  val zkUrl = PropUtils.getString(PropKeys.ZK_URL, DefaultVals.zkUrl)
 
   // }
 
@@ -83,12 +104,12 @@ object GlobalConstants {
     * Spark相关常量配置
     */
   object SparkConf extends Enumeration {
-    val appName = if (StringUtils.isNotBlank(PropUtils.getString(PropKeys.APP_NAME_KEY))) PropUtils.getString(PropKeys.APP_NAME_KEY) else "spark"
+    val appName = PropUtils.getString(PropKeys.APP_NAME_KEY, "spark")
     val sparkConf = PropUtils.getString(PropKeys.SPARK_CONF_KEY)
     val logLevel = PropUtils.getString(PropKeys.LOG_LEVEL)
     val saveMode = if ("Overwrite".equalsIgnoreCase(PropUtils.getString(PropKeys.SAVE_MODE_KEY))) SaveMode.Overwrite else SaveMode.Append
     val parallelism = PropUtils.getInt(PropKeys.PARALLELISM_KEY)
-    val CHK_POINT_DIR_PREFIX = "hdfs://nameservice1/user/spark/ckpoint/"
+    val CHK_POINT_DIR_PREFIX = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
   }
 
   /**
@@ -104,7 +125,7 @@ object GlobalConstants {
     * hbase相关配置
     */
   // object HBaseConf extends Enumeration {
-  val familyName = if (StringUtils.isNotBlank(PropUtils.getString(PropKeys.FAMILY_KEY))) PropUtils.getString(PropKeys.FAMILY_KEY) else "info" // hbase默认的列族名称，如果使用FieldName指定，则会被覆盖
+  val familyName = PropUtils.getString(PropKeys.FAMILY_KEY, "info") // hbase默认的列族名称，如果使用FieldName指定，则会被覆盖
 
   val hbaseDurability = if (StringUtils.isBlank(PropUtils.getString(PropKeys.HbaseDurability_KEY))) Durability.USE_DEFAULT
   else {
@@ -131,7 +152,7 @@ object GlobalConstants {
     val kuduMaster = PropUtils.getString(PropKeys.KUDU_MASTER_URL)
     val impalaConnectionUrl: String = PropUtils.getString(PropKeys.IMPALA_CONNECTION_URL_KEY)
     val impalaJdbcDriverName: String = PropUtils.getString(PropKeys.IMPALA_JDBC_DRIVER_NAME_KEY)
-    val impalaDaemons: String = if (StringUtils.isNotBlank(PropUtils.getString(PropKeys.IMPALA_DAEMONS_URL))) PropUtils.getString(PropKeys.IMPALA_DAEMONS_URL) else ""
+    val impalaDaemons: String = PropUtils.getString(PropKeys.IMPALA_DAEMONS_URL, "")
   }
 
 
@@ -212,6 +233,14 @@ object GlobalConstants {
   object CarbonConf extends Enumeration {
     val storePath = PropUtils.getString(PropKeys.CARBON_STORE_PATH)
     val metaStorePath = PropUtils.getString(PropKeys.CARBON_META_STORE_PATH)
+  }
+
+  /**
+    * hive相关配置
+    */
+  object HiveConf extends Enumeration {
+    // hive metastore地址
+    val metaStoreUris = PropUtils.getString(PropKeys.HIVE_METASTORE_URIS, DefaultVals.hiveMetaStoreUris)
   }
 
 }
