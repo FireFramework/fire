@@ -104,7 +104,7 @@ trait BaseSparkStreaming extends BaseSpark {
     }
     this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession(GlobalConstants.CarbonConf.storePath, GlobalConstants.CarbonConf.metaStorePath)
     this.sc = this.spark.sparkContext
-    this.sc.setLogLevel("ERROR")
+    this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))
     this.hiveContext = this.spark.sqlContext
     this.hiveContext.registerAll()

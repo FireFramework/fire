@@ -14,7 +14,8 @@ object GlobalConstants {
     * 预定义的默认值，配置文件没有指明的情况下会取默认值
     */
   private[this] object DefaultVals extends Enumeration {
-    val clusterName = "batch"
+    // hbase集群名，用于区分不同的hbase-site.xml文件
+    val hbaseName = "batch"
     // 默认的kafka broker地址
     val kafkaBrokers = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092"
     // 默认的zookeeper地址
@@ -23,6 +24,8 @@ object GlobalConstants {
     val sparkChkPointDir = "hdfs://nameservice1/user/spark/ckpoint/"
     // hive metastore地址
     val hiveMetaStoreUris = "thrift://192.168.25.36:9083"
+    // 默认的日志级别
+    val logLevel = LogLevel.INFO
   }
 
   /**
@@ -43,13 +46,13 @@ object GlobalConstants {
     val ACQUIRE_INCREMENT_KEY = "acquireIncrement"
     val INITIAL_POOL_SIZE_KEY = "initialPoolSize"
     val MAX_IDLE_TIME_KEY = "maxIdleTime"
-    val LOG_LEVEL = "LogLevel"
+    val LOG_LEVEL = "spark.log.level"
     val SAVE_MODE_KEY = "saveMode"
     val PARALLELISM_KEY = "parallelism"
     val FAMILY_KEY = "family"
     val HbaseDurability_KEY = "HbaseDurability"
     val KUDU_MASTER_URL = "kudu.master"
-    val CLUSERT_NAME_URL = "clusert.name"
+    val HBASE_NAME_URL = "hbase.name"
     val ZK_URL = "zk.url"
     val IMPALA_CONNECTION_URL_KEY: String = "impala.connection.url"
     val IMPALA_JDBC_DRIVER_NAME_KEY: String = "impala.jdbc.driver.class.name"
@@ -58,6 +61,7 @@ object GlobalConstants {
 
     // spark相关配置
     val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
+    val SPARK_LOG_LEVEL = "spark.log.level"
 
     // carbondata相关配置
     val CARBON_STORE_PATH = "carbon.storePath"
@@ -86,19 +90,14 @@ object GlobalConstants {
   /**
     * 集群相关配置
     */
-  // object ClusterConf extends Enumeration {
   val CLUSTER_KEY = "cluster"
-  val CLUSERT_NAME = PropUtils.getString(PropKeys.CLUSERT_NAME_URL, DefaultVals.clusterName)
+  val HBASE_NAME = PropUtils.getString(PropKeys.HBASE_NAME_URL, DefaultVals.hbaseName)
   val isCluster = if (CLUSTER_KEY.equalsIgnoreCase(PropUtils.getString(PropKeys.RUNMODEL_KEY))) true else false
   val isLocal = !isCluster
-  // spark运行时日志记录表
-  val sparkRuntimeLogTable = "spark_runtime_log"
   // kafka broker地址
   val kafkaBrokers = PropUtils.getString(PropKeys.KAFKA_BROKERS_URL, DefaultVals.kafkaBrokers)
   // zookeeper地址
   val zkUrl = PropUtils.getString(PropKeys.ZK_URL, DefaultVals.zkUrl)
-
-  // }
 
   /**
     * Spark相关常量配置
@@ -106,7 +105,7 @@ object GlobalConstants {
   object SparkConf extends Enumeration {
     val appName = PropUtils.getString(PropKeys.APP_NAME_KEY, "spark")
     val sparkConf = PropUtils.getString(PropKeys.SPARK_CONF_KEY)
-    val logLevel = PropUtils.getString(PropKeys.LOG_LEVEL)
+    val logLevel = PropUtils.getString(PropKeys.LOG_LEVEL, DefaultVals.logLevel)
     val saveMode = if ("Overwrite".equalsIgnoreCase(PropUtils.getString(PropKeys.SAVE_MODE_KEY))) SaveMode.Overwrite else SaveMode.Append
     val parallelism = PropUtils.getInt(PropKeys.PARALLELISM_KEY)
     val CHK_POINT_DIR_PREFIX = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
@@ -198,20 +197,43 @@ object GlobalConstants {
   object PrintModule extends Enumeration {
     // 打印多值累加器开始
     def MULTI_ACC_START = println(s"[${GlobalConstants.Color.PINK}${DateFormatUtils.formatCurrentDateTime()}${GlobalConstants.Color.DEFAULT}]--- ${GlobalConstants.Color.GREEN}MultiAccumulators Start ... ${GlobalConstants.Color.DEFAULT}---------------------------------------------")
+
     // 打印多值多日期累加器开始
     def MULTI_ACC_DATE_TIME_START = println(s"[${GlobalConstants.Color.PINK}${DateFormatUtils.formatCurrentDateTime()}${GlobalConstants.Color.DEFAULT}]--- ${GlobalConstants.Color.GREEN}MultiDateTimeAccumulators Start ... ${GlobalConstants.Color.DEFAULT}---------------------------------------------")
+
     // 打印多值累加器结束
     def MULTI_ACC_END = println(s"------------------------ ${GlobalConstants.Color.GREEN}MultiAccumulators End   ... ${GlobalConstants.Color.DEFAULT}---------------------------------------------\n\n")
+
     // 打印多值多日期累加器结束
     def MULTI_ACC_DATE_TIME_END = println(s"------------------------ ${GlobalConstants.Color.GREEN}MultiDateTimeAccumulators End   ... ${GlobalConstants.Color.DEFAULT}---------------------------------------------\n\n")
+
     // 打印多值累加器清零
     def MULTI_ACC_CLEAR = println(s"------------------------ ${GlobalConstants.Color.RED}*********** 清零累加器 ***********${GlobalConstants.Color.DEFAULT}  ---------------------------------------------")
+
     // 打印多值累加器中的值
     def MULTI_ACC_VALUE(t: (String, Long)) = println(s"${t._1} : ${GlobalConstants.Color.YELLOW}${t._2}${GlobalConstants.Color.DEFAULT}")
+
     // 总耗时打印
     def END_TIME_COST(startTime: Long) = println(s"总耗时：${GlobalConstants.Color.RED}${SparkUtils.runTime(startTime)}${GlobalConstants.Color.DEFAULT} The end...${GlobalConstants.Color.DEFAULT}")
+
     // 实时相关
     def REAL_TIME_PROCESS_METHOD = s"${GlobalConstants.Color.RED}子类必须通过覆写process()方法实现具体逻辑${GlobalConstants.Color.DEFAULT}"
+  }
+
+  /**
+    * log相关常量
+    */
+  object logVal extends Enumeration {
+    // log info级别开始
+    val logInfoSplitStart = "--->[ "
+    // log info级别结束
+    val logInfoSplitEnd = " ]<---"
+    // log error级别开始
+    val logErrorSplitStart = "===>[ "
+    // log error级别结束
+    val logErrorSplitEnd = " ]<==="
+    val logStart = "<================================>"
+    val logEnd = "<================================>\n"
   }
 
   /**
@@ -225,6 +247,20 @@ object GlobalConstants {
     val MULTI_NUMBER_PATTERN = "_\\d+$".r
     // 只能包含字母和下划线
     val NO_NUMBER = "^[A-Za-z_]+$".r
+  }
+
+  /**
+    * 日志的级别
+    */
+  object LogLevel extends Enumeration {
+    val OFF = "OFF"
+    val FATAL = "FATAL"
+    val ERROR = "ERROR"
+    val WARN = "WARN"
+    val INFO = "INFO"
+    val DEBUG = "DEBUG"
+    val TRACE = "TRACE"
+    val ALL = "ALL"
   }
 
   /**

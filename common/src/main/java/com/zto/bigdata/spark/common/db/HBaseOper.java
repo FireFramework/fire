@@ -15,7 +15,6 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.spark.sql.RowFactory;
 import scala.Tuple2;
 import scala.collection.mutable.ListBuffer;
 
@@ -43,10 +42,10 @@ public class HBaseOper {
     static {
         conf = HBaseConfiguration.create();
         if (GlobalConstants.isCluster()) {
-            if ("batch".equalsIgnoreCase(GlobalConstants.CLUSERT_NAME())) {
+            if ("batch".equalsIgnoreCase(GlobalConstants.HBASE_NAME())) {
                 conf.addResource("hbase-site-batch.xml");
                 conf.set("hbase.zookeeper.quorum", "HZPL025041,HZPL025040,HZPL025042,HZPL025039,HZPL025038");
-            } else if ("streaming".equalsIgnoreCase(GlobalConstants.CLUSERT_NAME())) {
+            } else if ("streaming".equalsIgnoreCase(GlobalConstants.HBASE_NAME())) {
                 conf.addResource("hbase-site-streaming.xml");
                 conf.set("hbase.zookeeper.quorum", "HZPL025024,HZPL025027,HZPL025025,HZPL025023,HZPL025026");
             } else {

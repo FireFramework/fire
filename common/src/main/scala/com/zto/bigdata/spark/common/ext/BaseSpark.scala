@@ -3,10 +3,11 @@ package com.zto.bigdata.spark.common.ext
 import java.util.concurrent.Executors
 
 import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
-import com.zto.bigdata.spark.common.util.{DateFormatUtils, GlobalConstants, SparkUtils}
+import com.zto.bigdata.spark.common.util.{DateFormatUtils, GlobalConstants, LogUtils, SparkUtils}
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
+import org.slf4j.LoggerFactory
 
 /**
   * Spark通用父类
@@ -25,6 +26,8 @@ trait BaseSpark extends SparkListener with Serializable {
   val threadPool = Executors.newFixedThreadPool(20)
   val restfulRegister = new RestfulRegister(this.threadPool)
   private val systemRestful = new SystemRestful(this)
+  val log = LoggerFactory.getLogger(this.getClass)
+  val logger = new LogUtils(log)
 
   /**
     * 程序初始化方法，用于初始化必要的值
