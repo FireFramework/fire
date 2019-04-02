@@ -23,7 +23,7 @@ class BaseStructuredStreaming extends BaseSpark {
     */
   override def init(beanDir: String = "", appName: String = "", conf: SparkConf = null): Unit = {
     this.buildConf(beanDir, conf, appName)
-    this.spark = SparkSession.builder().config(this.conf).getOrCreateCarbonSession(GlobalConstants.CarbonConf.storePath, GlobalConstants.CarbonConf.metaStorePath)
+    this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
     this.initParams
   }
 
@@ -59,6 +59,7 @@ class BaseStructuredStreaming extends BaseSpark {
         .set("spark.storage.memoryFraction", "0.4")
         .set("spark.ui.timeline.tasks.maximum", "300")
         .set("spark.scheduler.listenerbus.eventqueue.size", "130000")
+        .set("hive.metastore.uris", GlobalConstants.HiveConf.metaStoreUris)
       if (StringUtils.isNotBlank(beanDir)) {
         this.conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerialization")
           .registerKryoClasses(FindClassUtils.listPackageClasses(beanDir).toScalaList.toArray)

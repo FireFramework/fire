@@ -15,7 +15,7 @@ object ShenzhouSync extends BaseStructuredStreaming {
   val brokers = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092"
   val topicSet = "thrall2, thrall3, thrall4, thrall5, thrall6, thrall7, thrall8, thrall9"
 
-  val warehouse = "hdfs://appcluster/user/spark/"
+  val dbName = "tmp"
   val tableName = "dw_sz_zto_site_senda_bills"
 
   def main(args: Array[String]): Unit = {
@@ -23,10 +23,12 @@ object ShenzhouSync extends BaseStructuredStreaming {
     spark.sparkContext.setLogLevel("ERROR")
 
     if(args.length > 0) {
-      spark.sql(s"DROP TABLE IF EXISTS ${tableName}")
-      spark.dropCarbonTable("default", this.tableName)
-      spark.createCarbonStreamingTable("default", this.tableName, classOf[Senda])
+      spark.sql(s"DROP TABLE IF EXISTS ${dbName}.${tableName}")
+      spark.dropCarbonTable(this.dbName, this.tableName)
+      spark.createCarbonStreamingTable(this.dbName, this.tableName, classOf[Senda])
     }
+
+    spark.conf.getAll.filter(kv => kv._1.contains("carbon")).foreach(x => println(x._1 + " " + x._2))
 
     this.runAsThread(write2Carbondata)
     this.runAsThreadLoop(this.printCount, 60, true)
@@ -39,14 +41,14 @@ object ShenzhouSync extends BaseStructuredStreaming {
     val result = spark
       .loadKafkaParseJson(brokers, mutable.HashMap[String, String]("subscribe" -> topicSet, "failOnDataLoss" -> "false", "startingOffsets" -> "latest"), classOf[Senda])
 
-    result.repartition(200).writeStream2Carbon("default", tableName, Trigger.ProcessingTime("60 seconds"))
+    result.repartition(200).writeStream2Carbon(this.dbName, this.tableName, Trigger.ProcessingTime("60 seconds"))
   }
 
   /**
     * 统计表中的记录数
     */
   def printCount: Unit = {
-    spark.sql(s"select count(1) from $tableName").show()
+    spark.sql(s"select count(1) from ${this.dbName}.$tableName").show()
   }
 
 }

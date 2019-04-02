@@ -41,7 +41,7 @@ class BaseSparkCore extends BaseSpark {
     } else {
       this.conf = conf
     }
-    this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession(GlobalConstants.CarbonConf.storePath, GlobalConstants.CarbonConf.metaStorePath)
+    this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
     this.sc = this.spark.sparkContext
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     // this.sc.addSparkListener(new BaseSparkListener(this))
