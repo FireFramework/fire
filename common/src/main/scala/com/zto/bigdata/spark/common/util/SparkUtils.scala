@@ -502,4 +502,32 @@ object SparkUtils {
     }).toMap
   }
 
+  /**
+    * 获取表的全名
+    *
+    * @param dbName
+    * 表所在的库名
+    * @param tableName
+    * 表名
+    * @return
+    * 库名.表名
+    */
+  def getFullTableName(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
+    val dbNameStr = if (StringUtils.isBlank(dbName)) GlobalConstants.SparkConf.defaultDB else dbName
+    s"$dbNameStr.$tableName"
+  }
+
+  /**
+    * 分割topic列表，返回set集合
+    * @param topics
+    *               多个topic以指定分隔符分割
+    * @return
+    */
+  def topicSplit(topics: String, splitStr: String = ","): Set[String] = {
+    if (StringUtils.isBlank(topics)) {
+      throw new IllegalArgumentException("topic不合法")
+    } else {
+      topics.split(splitStr).toSet
+    }
+  }
 }

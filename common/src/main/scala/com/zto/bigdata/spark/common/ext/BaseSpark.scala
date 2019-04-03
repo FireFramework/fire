@@ -62,12 +62,15 @@ trait BaseSpark extends SparkListener with Serializable {
     * @param fun
     * 用于指定以多线程方式执行的函数
     */
-  def runAsThread(fun: => Unit, debug: Boolean = false): Unit = {
-    this.threadPool.execute(new Runnable {
-      override def run(): Unit = {
-        fun
-        if(debug) println(s"--> ${GlobalConstants.Color.GREEN}Invoke ${fun.getClass.getName} as thread. Time: ${DateFormatUtils.formatCurrentDateTime()}. ${GlobalConstants.Color.DEFAULT}<--")
-      }
+  def runAsThread(fun: => Unit, threadCount: Int = 1, debug: Boolean = false): Unit = {
+    (1 to threadCount).foreach(_ => {
+      this.threadPool.execute(new Runnable {
+        override def run(): Unit = {
+          val startTime = System.currentTimeMillis()
+          fun
+          if (debug) println(s"--> ${GlobalConstants.Color.GREEN}Invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Time: ${DateFormatUtils.formatCurrentDateTime()}. TimeCost: ${System.currentTimeMillis() - startTime}. ${GlobalConstants.Color.DEFAULT}<--")
+        }
+      })
     })
   }
 
@@ -79,17 +82,19 @@ trait BaseSpark extends SparkListener with Serializable {
     * @param delay
     * 循环调用间隔时间（单位s）
     */
-  def runAsThreadLoop(fun: => Unit, delay: Long = 10, debug: Boolean = false): Unit = {
-    this.threadPool.execute(new Runnable {
-      override def run(): Unit = {
-        while (true) {
-          if(debug) println(s"--> ${GlobalConstants.Color.GREEN}Loop invoke ${fun.getClass.getName} as thread. Delay is ${delay}s. Time: ${DateFormatUtils.formatCurrentDateTime()}. ${GlobalConstants.Color.DEFAULT}<--")
-          fun
-          Thread.sleep(delay * 1000)
+  def runAsThreadLoop(fun: => Unit, delay: Long = 10, threadCount: Int = 1, debug: Boolean = false): Unit = {
+    (1 to threadCount).foreach(_ => {
+      this.threadPool.execute(new Runnable {
+        override def run(): Unit = {
+          while (true) {
+            val startTime = System.currentTimeMillis()
+            fun
+            if (debug) println(s"--> ${GlobalConstants.Color.GREEN}Loop invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Delay is ${delay}s. Time: ${DateFormatUtils.formatCurrentDateTime()}. TimeCost: ${System.currentTimeMillis() - startTime}. ${GlobalConstants.Color.DEFAULT}<--")
+            Thread.sleep(delay * 1000)
+          }
         }
-      }
+      })
     })
   }
-
 
 }

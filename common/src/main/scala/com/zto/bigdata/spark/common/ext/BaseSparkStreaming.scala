@@ -39,7 +39,7 @@ trait BaseSparkStreaming extends BaseSpark {
       this.ssc.remember(Seconds(Math.abs(seconds) * 10))
       this.process
     } else {
-      this.checkPointDir = GlobalConstants.SparkConf.CHK_POINT_DIR_PREFIX + this.appName
+      this.checkPointDir = GlobalConstants.SparkConf.chkPointDirPrefix + this.appName
       this.ssc = StreamingContext.getOrCreate(this.checkPointDir, createStreamingContext _)
       // 初始化Streaming
       def createStreamingContext(): StreamingContext = {

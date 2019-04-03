@@ -75,7 +75,7 @@ object CarbondataUtils {
     * @param tableName
     * 表名
     */
-  def dropCarbonTable(dbName: String = "tmp", tableName: String): String = {
+  def dropCarbonTable(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
     s"""
        |DROP TABLE IF EXISTS ${dbName}.${tableName}
      """.stripMargin

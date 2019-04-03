@@ -26,6 +26,8 @@ object GlobalConstants {
     val hiveMetaStoreUris = "thrift://192.168.25.36:9083"
     // 默认的日志级别
     val logLevel = LogLevel.INFO
+    // 默认的数据库名称
+    val dbName = "tmp"
   }
 
   /**
@@ -33,8 +35,8 @@ object GlobalConstants {
     */
   private[this] object PropKeys extends Enumeration {
     // 运行模式
-    val RUNMODEL_KEY = "runModel"
-    val APP_NAME_KEY = "appName"
+    val RUNMODEL_KEY = "spark.runModel"
+    val APP_NAME_KEY = "spark.appName"
     val SPARK_CONF_KEY = "SparkConf"
     // c3p0连接池相关配置
     val URL_KEY = "jdbcUrl"
@@ -47,8 +49,8 @@ object GlobalConstants {
     val INITIAL_POOL_SIZE_KEY = "initialPoolSize"
     val MAX_IDLE_TIME_KEY = "maxIdleTime"
     val LOG_LEVEL = "spark.log.level"
-    val SAVE_MODE_KEY = "saveMode"
-    val PARALLELISM_KEY = "parallelism"
+    val SAVE_MODE_KEY = "spark.saveMode"
+    val PARALLELISM_KEY = "spark.parallelism"
     val FAMILY_KEY = "family"
     val HbaseDurability_KEY = "HbaseDurability"
     val KUDU_MASTER_URL = "kudu.master"
@@ -57,7 +59,7 @@ object GlobalConstants {
     val IMPALA_CONNECTION_URL_KEY: String = "impala.connection.url"
     val IMPALA_JDBC_DRIVER_NAME_KEY: String = "impala.jdbc.driver.class.name"
     val IMPALA_DAEMONS_URL = "impala.daemons.url"
-    val KAFKA_BROKERS_URL = "kafka.brokers.url"
+    val KAFKA_BROKERS_URL = "spark.kafka.brokers.url"
 
     // spark相关配置
     val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
@@ -69,6 +71,8 @@ object GlobalConstants {
 
     // hive相关配置
     val HIVE_METASTORE_URIS = "hive.metastore.uris"
+    // 默认的库名
+    val SPARK_DEFAULT_DATABASE_NAME = "spark.default.database.name"
   }
 
   /**
@@ -108,7 +112,8 @@ object GlobalConstants {
     val logLevel = PropUtils.getString(PropKeys.LOG_LEVEL, DefaultVals.logLevel)
     val saveMode = if ("Overwrite".equalsIgnoreCase(PropUtils.getString(PropKeys.SAVE_MODE_KEY))) SaveMode.Overwrite else SaveMode.Append
     val parallelism = PropUtils.getInt(PropKeys.PARALLELISM_KEY)
-    val CHK_POINT_DIR_PREFIX = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
+    val chkPointDirPrefix = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
+    val defaultDB = PropUtils.getString(PropKeys.SPARK_DEFAULT_DATABASE_NAME, DefaultVals.dbName)
   }
 
   /**

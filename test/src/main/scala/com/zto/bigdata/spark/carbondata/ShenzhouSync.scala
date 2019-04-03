@@ -31,7 +31,7 @@ object ShenzhouSync extends BaseStructuredStreaming {
     spark.conf.getAll.filter(kv => kv._1.contains("carbon")).foreach(x => println(x._1 + " " + x._2))
 
     this.runAsThread(write2Carbondata)
-    this.runAsThreadLoop(this.printCount, 60, true)
+    this.runAsThreadLoop(this.printCount, 60, 1, true)
   }
 
   /**
