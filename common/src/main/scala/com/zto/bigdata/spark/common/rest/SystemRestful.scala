@@ -1,7 +1,9 @@
 package com.zto.bigdata.spark.common.rest
 
+import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.bigdata.spark.common.ext.BaseSpark
-import spark.Spark.stop
+import com.zto.bigdata.spark.common.util.SystemInfoUtils
 import spark._
 
 /**
@@ -27,11 +29,15 @@ class SystemRestful(val baseSpark: BaseSpark) {
   }*/
 
   {
-    this.baseSpark.restfulRegister.addRest(Rest(RequestMethod.GET.toString, s"/system/kill", kill))
+    // 接口注册
+    this.baseSpark.restfulRegister
+      .addRest(Rest(RequestMethod.GET.toString, s"/system/kill", kill))
+      .addRest(Rest(RequestMethod.GET.toString, s"/system/info", systemLoadInfo))
   }
 
   /**
     * 强制退出
+    *
     * @param request
     * @param response
     * @return
@@ -42,5 +48,16 @@ class SystemRestful(val baseSpark: BaseSpark) {
     Spark.stop()
     System.exit(0)
     ""
+  }
+
+  /**
+    * 获取driver所在服务器的负载信息
+    *
+    * @param request
+    * @param response
+    * @return
+    */
+  def systemLoadInfo(request: Request, response: Response): AnyRef = {
+    JSON.toJSONString(SystemInfoUtils.getSystemLoadInfo, SerializerFeature.PrettyFormat)
   }
 }

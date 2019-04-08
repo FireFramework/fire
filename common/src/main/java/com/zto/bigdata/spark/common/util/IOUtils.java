@@ -38,8 +38,10 @@ public class IOUtils {
         if (process != null && process.length > 0) {
             for (Process pro : process) {
                 try {
-                    pro.destroy();
-                    pro = null;
+                    if (pro != null) {
+                        pro.destroy();
+                        pro = null;
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                     continue;

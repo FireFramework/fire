@@ -13,16 +13,13 @@ import java.util.List;
 
 /**
  * 用于获取服务器负载信息，包括磁盘io、cpu负载、内存使用、网络使用等等
+ * 注：使用此工具需预先安装：sudo yum install sysstat
  *
  * @author ChengLong 2019-04-08 13:57:31
  */
 public class SystemInfoUtils {
     private static final float totalBandwidth = 80; // 设定带宽，Mbps
-    private static SystemLoadInfo systemLoadInfo;
-
-    private SystemInfoUtils() {
-        this.systemLoadInfo = new SystemLoadInfo();
-    }
+    private static SystemLoadInfo systemLoadInfo = new SystemLoadInfo();
 
     /**
      * 采集CPU使用率（兼容多核）
