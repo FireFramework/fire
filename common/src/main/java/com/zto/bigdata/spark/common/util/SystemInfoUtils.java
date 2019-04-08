@@ -29,7 +29,7 @@ public class SystemInfoUtils {
      *
      * @return
      */
-    public static SystemLoadInfo getCpuUsage() {
+    public static SystemLoadInfo getCpuInfo() {
         float cpuUsage = 0;
         Process pro1 = null;
         Process pro2 = null;
@@ -96,7 +96,7 @@ public class SystemInfoUtils {
      *
      * @return bean
      */
-    public static SystemLoadInfo getMemoryUsage() {
+    public static SystemLoadInfo getMemoryInfo() {
         float memUsage = 0.0f;
         float swapUsage = 0.0f;
         Process pro = null;
@@ -148,13 +148,12 @@ public class SystemInfoUtils {
     }
 
     /**
-     * @return bean
-     * %util： 在统计时间内所有处理IO时间，除以总共统计时间。例如，如果统计间隔1秒，该设备有0.8
+     * 采集磁盘IO使用率，在统计时间内所有处理IO时间，除以总共统计时间。例如，如果统计间隔1秒，该设备有0.8
      * 秒在处理IO，而0.2秒闲置，那么该设备的%util = 0.8/1 = 80%，所以该参数暗示了设备的繁忙程度
-     * @Purpose :采集磁盘IO使用率
-     * IO使用率体现的是使用率最高的分区
+     *
+     * @return bean
      */
-    public static SystemLoadInfo getIOUsage() {
+    public static SystemLoadInfo getIOInfo() {
         float ioUsage = 0.0f;
         Process pro = null;
         BufferedReader in = null;
@@ -218,9 +217,10 @@ public class SystemInfoUtils {
 
     /**
      * 将"cat /proc/net/dev"中所有信息封装入bean参数
+     *
      * @return bean
      */
-    public static SystemLoadInfo getNetUsage() {
+    public static SystemLoadInfo getNetInfo() {
         float netUsage = 0.0f;
         Process pro1 = null;
         Process pro2 = null;
@@ -468,10 +468,10 @@ public class SystemInfoUtils {
      * @return
      */
     public static SystemLoadInfo getSystemLoadInfo() {
-        SystemInfoUtils.getCpuUsage();
-        SystemInfoUtils.getMemoryUsage();
-        SystemInfoUtils.getNetUsage();
-        SystemInfoUtils.getIOUsage();
+        SystemInfoUtils.getCpuInfo();
+        SystemInfoUtils.getMemoryInfo();
+        SystemInfoUtils.getNetInfo();
+        SystemInfoUtils.getIOInfo();
         SystemInfoUtils.getUpTime();
         SystemInfoUtils.getIP();
         return SystemInfoUtils.systemLoadInfo;
