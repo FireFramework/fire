@@ -44,7 +44,7 @@ class BaseSparkCore extends BaseSpark {
     this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
     this.sc = this.spark.sparkContext
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
-    // this.sc.addSparkListener(new BaseSparkListener(this))
+    this.sc.addSparkListener(new BaseSparkListener(this))
     this.hiveContext = this.spark.sqlContext
     this.hiveContext.registerAll()
     this.sqlContext = this.hiveContext

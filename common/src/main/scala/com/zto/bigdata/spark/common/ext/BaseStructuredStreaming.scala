@@ -33,7 +33,7 @@ class BaseStructuredStreaming extends BaseSpark {
   private def initParams = {
     this.sc = this.spark.sparkContext
     this.sc.setLogLevel("ERROR")
-    // this.sc.addSparkListener(new BaseSparkListener(this))
+    this.sc.addSparkListener(new BaseSparkListener(this))
     this.hiveContext = this.spark.sqlContext
     this.hiveContext.registerAll()
     this.sqlContext = this.hiveContext
