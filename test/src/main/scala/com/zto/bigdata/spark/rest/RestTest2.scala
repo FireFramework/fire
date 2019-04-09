@@ -24,7 +24,7 @@ object RestTest2 extends BaseSparkStreaming {
       .addRest(Rest("get", "/count", this.rest))
       .addRest(Rest("post", "/count2", this.rest))
       .startRestServer
-    this.runAsThread(this.kafka)
+    // this.runAsThread(this.kafka)
   }
 
   def rest(request: Request, response: Response): AnyRef = {

@@ -3,7 +3,8 @@ package com.zto.bigdata.spark.common.rest
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.bigdata.spark.common.ext.BaseSpark
-import com.zto.bigdata.spark.common.util.SystemInfoUtils
+import com.zto.bigdata.spark.common.util.{GlobalConstants, SystemInfoUtils}
+import org.apache.commons.lang3.StringUtils
 import spark._
 
 /**
@@ -33,6 +34,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     this.baseSpark.restfulRegister
       .addRest(Rest(RequestMethod.GET.toString, s"/system/kill", kill))
       .addRest(Rest(RequestMethod.GET.toString, s"/system/info", systemLoadInfo))
+      .addRest(Rest(RequestMethod.POST.toString, s"/system/sql", sql))
   }
 
   /**
@@ -47,7 +49,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     this.baseSpark.threadPool.shutdownNow()
     Spark.stop()
     System.exit(0)
-    ""
+    GlobalConstants.Status.SUCCESS
   }
 
   /**
@@ -59,5 +61,20 @@ class SystemRestful(val baseSpark: BaseSpark) {
     */
   def systemLoadInfo(request: Request, response: Response): AnyRef = {
     JSON.toJSONString(SystemInfoUtils.getSystemLoadInfo, SerializerFeature.PrettyFormat)
+  }
+
+  /**
+    * 用于执行sql语句
+    *
+    * @param request
+    * @param response
+    * @return
+    */
+  def sql(request: Request, response: Response): AnyRef = {
+    val sql = request.queryString()
+    if (StringUtils.isNotBlank(sql) && this.baseSpark != null && this.baseSpark.spark != null) {
+      this.baseSpark.spark.sql(sql).show(false)
+    }
+    GlobalConstants.Status.SUCCESS
   }
 }

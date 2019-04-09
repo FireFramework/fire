@@ -284,4 +284,15 @@ object GlobalConstants {
     val metaStoreUris = PropUtils.getString(PropKeys.HIVE_METASTORE_URIS, DefaultVals.hiveMetaStoreUris)
   }
 
+  /**
+    * 预设状态
+    */
+  object Status extends Enumeration {
+    val SUCCESS = "SUCCESS"
+    val FAILED = "FAILED"
+    val ERROR = "ERROR"
+    val FINISHED = "FINISHED"
+    val RUNNING = "RUNNING"
+    val UNKNOWN = "UNKNOWN"
+  }
 }
