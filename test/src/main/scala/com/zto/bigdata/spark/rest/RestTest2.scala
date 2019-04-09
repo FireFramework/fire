@@ -8,6 +8,9 @@ import com.zto.bigdata.spark.common.util.GlobalConstants
 import org.apache.spark.storage.StorageLevel
 import spark.{Request, Response}
 
+/**
+  * 使用封装后的api
+  */
 object RestTest2 extends BaseSparkStreaming {
   val topics = Set("thrall2", "thrall3", "thrall4", "thrall5", "thrall6", "thrall7", "thrall8", "thrall9")
   val brokers = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092"
@@ -16,6 +19,7 @@ object RestTest2 extends BaseSparkStreaming {
 
   def main(args: Array[String]): Unit = {
     this.init(20L,null, false)
+    // 指定端口号，注册新的restful地址
     this.restfulRegister.port(10010)
       .addRest(Rest("get", "/count", this.rest))
       .addRest(Rest("post", "/count2", this.rest))
