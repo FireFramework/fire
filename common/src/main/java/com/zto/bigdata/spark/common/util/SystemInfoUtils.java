@@ -5,6 +5,7 @@ import com.zto.bigdata.spark.common.bean.SystemLoadInfo;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
@@ -453,10 +454,32 @@ public class SystemInfoUtils {
      *
      * @return
      */
-    public static SystemLoadInfo getIP() {
+    public static SystemLoadInfo getIpHostName() {
         systemLoadInfo.setIp(getIp());
         systemLoadInfo.setHostName(getHostName());
         return systemLoadInfo;
+    }
+
+    /**
+     * 获取当前进程的pid
+     *
+     * @return pid
+     */
+    public static String getPid() {
+        return ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
+    }
+
+    /**
+     * 判断当前运行环境是否为linux
+     * @return
+     */
+    public static boolean isLinux() {
+        String os = System.getProperty("os.name");
+        if (os.toLowerCase().startsWith("windows")) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /**
@@ -470,7 +493,7 @@ public class SystemInfoUtils {
         SystemInfoUtils.getNetInfo();
         SystemInfoUtils.getIOInfo();
         SystemInfoUtils.getUpTime();
-        SystemInfoUtils.getIP();
+        SystemInfoUtils.getIpHostName();
         return SystemInfoUtils.systemLoadInfo;
     }
 }

@@ -28,6 +28,8 @@ trait BaseSpark extends SparkListener with Serializable {
   private val systemRestful = new SystemRestful(this)
   val log = LoggerFactory.getLogger(this.getClass)
   val logger = new LogUtils(log)
+  var applicationId: String = _
+  var webUI: String = _
 
   /**
     * 程序初始化方法，用于初始化必要的值
@@ -68,7 +70,7 @@ trait BaseSpark extends SparkListener with Serializable {
         override def run(): Unit = {
           val startTime = System.currentTimeMillis()
           fun
-          if (debug) println(s"--> ${GlobalConstants.Color.GREEN}Invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Time: ${DateFormatUtils.formatCurrentDateTime()}. TimeCost: ${System.currentTimeMillis() - startTime}. ${GlobalConstants.Color.DEFAULT}<--")
+          if (debug) println(s"--> ${GlobalConstants.PS1.GREEN}Invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Time: ${DateFormatUtils.formatCurrentDateTime()}. TimeCost: ${System.currentTimeMillis() - startTime}. ${GlobalConstants.PS1.DEFAULT}<--")
         }
       })
     })
@@ -89,7 +91,7 @@ trait BaseSpark extends SparkListener with Serializable {
           while (true) {
             val startTime = System.currentTimeMillis()
             fun
-            if (debug) println(s"--> ${GlobalConstants.Color.GREEN}Loop invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Delay is ${delay}s. Time: ${DateFormatUtils.formatCurrentDateTime()}. TimeCost: ${System.currentTimeMillis() - startTime}. ${GlobalConstants.Color.DEFAULT}<--")
+            if (debug) println(s"--> ${GlobalConstants.PS1.GREEN}Loop invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Delay is ${delay}s. Time: ${DateFormatUtils.formatCurrentDateTime()}. TimeCost: ${System.currentTimeMillis() - startTime}. ${GlobalConstants.PS1.DEFAULT}<--")
             Thread.sleep(delay * 1000)
           }
         }

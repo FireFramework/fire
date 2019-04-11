@@ -12,9 +12,10 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil
 import org.apache.hadoop.hbase.util.{Base64, Bytes}
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
+import spark.{Request, Response}
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.reflect._
@@ -519,8 +520,9 @@ object SparkUtils {
 
   /**
     * 分割topic列表，返回set集合
+    *
     * @param topics
-    *               多个topic以指定分隔符分割
+    * 多个topic以指定分隔符分割
     * @return
     */
   def topicSplit(topics: String, splitStr: String = ","): Set[String] = {
@@ -529,5 +531,32 @@ object SparkUtils {
     } else {
       topics.split(splitStr).toSet
     }
+  }
+
+  /**
+    * 获取webui地址
+    *
+    * @param spark
+    * @return
+    */
+  def getWebUI(spark: SparkSession): String = {
+    val optConf = spark.conf.getOption("spark.org.apache.hadoop.yarn.server.webproxy.amfilter.AmIpFilter.param.PROXY_URI_BASES")
+
+    if (optConf.isDefined && StringUtils.isNotBlank(optConf.get)) {
+      optConf.get.replace("\\", "")
+        .replace(GlobalConstants.Strings.hostNamePrefix, GlobalConstants.Strings.ipPrefxi)
+    } else {
+      spark.sparkContext.uiWebUrl.get.replace(GlobalConstants.Strings.hostNamePrefix, GlobalConstants.Strings.ipPrefxi)
+    }
+  }
+
+  /**
+    * 获取applicationId
+    *
+    * @param spark
+    * @return
+    */
+  def getApplicationId(spark: SparkSession): String = {
+    spark.sparkContext.applicationId
   }
 }

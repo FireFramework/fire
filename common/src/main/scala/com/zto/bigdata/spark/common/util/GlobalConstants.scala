@@ -177,13 +177,36 @@ object GlobalConstants {
   /**
     * 颜色预定义
     */
-  object Color extends Enumeration {
+  object PS1 extends Enumeration {
+    // 颜色
     val GREEN = "\u001B[32m"
     val DEFAULT = "\u001B[0m"
     val RED = "\u001B[31m"
     val YELLOW = "\u001B[33m"
     val BLUE = "\u001B[34m"
+    val PURPLE = "\u001B[35m"
     val PINK = "\u001B[35m"
+
+    // 字体
+    val HIGH_LIGHT = "\u001B[1m"
+    val ITALIC = "\u001B[3m"
+    val UNDER_LINE = "\u001B[4m"
+    val FLICKER = "\u001B[5m"
+
+    /**
+      * 包裹处理
+      *
+      * @param str
+      * @param ps1
+      * @return
+      */
+    def wrap(str: String, ps1: String*): String = {
+      val printStr = new StringBuilder()
+      ps1.foreach(ps => {
+        printStr.append(ps)
+      })
+      printStr.append(str + DEFAULT).toString()
+    }
   }
 
   /**
@@ -201,34 +224,44 @@ object GlobalConstants {
     */
   object PrintModule extends Enumeration {
     // 打印多值累加器开始
-    def MULTI_ACC_START = println(s"[${GlobalConstants.Color.PINK}${DateFormatUtils.formatCurrentDateTime()}${GlobalConstants.Color.DEFAULT}]--- ${GlobalConstants.Color.GREEN}MultiAccumulators Start ... ${GlobalConstants.Color.DEFAULT}---------------------------------------------")
+    def MULTI_ACC_START = println(s"[${GlobalConstants.PS1.PINK}${DateFormatUtils.formatCurrentDateTime()}${GlobalConstants.PS1.DEFAULT}]--- ${GlobalConstants.PS1.GREEN}MultiAccumulators Start ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------")
 
     // 打印多值多日期累加器开始
-    def MULTI_ACC_DATE_TIME_START = println(s"[${GlobalConstants.Color.PINK}${DateFormatUtils.formatCurrentDateTime()}${GlobalConstants.Color.DEFAULT}]--- ${GlobalConstants.Color.GREEN}MultiDateTimeAccumulators Start ... ${GlobalConstants.Color.DEFAULT}---------------------------------------------")
+    def MULTI_ACC_DATE_TIME_START = println(s"[${GlobalConstants.PS1.PINK}${DateFormatUtils.formatCurrentDateTime()}${GlobalConstants.PS1.DEFAULT}]--- ${GlobalConstants.PS1.GREEN}MultiDateTimeAccumulators Start ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------")
 
     // 打印多值累加器结束
-    def MULTI_ACC_END = println(s"------------------------ ${GlobalConstants.Color.GREEN}MultiAccumulators End   ... ${GlobalConstants.Color.DEFAULT}---------------------------------------------\n\n")
+    def MULTI_ACC_END = println(s"------------------------ ${GlobalConstants.PS1.GREEN}MultiAccumulators End   ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------\n\n")
 
     // 打印多值多日期累加器结束
-    def MULTI_ACC_DATE_TIME_END = println(s"------------------------ ${GlobalConstants.Color.GREEN}MultiDateTimeAccumulators End   ... ${GlobalConstants.Color.DEFAULT}---------------------------------------------\n\n")
+    def MULTI_ACC_DATE_TIME_END = println(s"------------------------ ${GlobalConstants.PS1.GREEN}MultiDateTimeAccumulators End   ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------\n\n")
 
     // 打印多值累加器清零
-    def MULTI_ACC_CLEAR = println(s"------------------------ ${GlobalConstants.Color.RED}*********** 清零累加器 ***********${GlobalConstants.Color.DEFAULT}  ---------------------------------------------")
+    def MULTI_ACC_CLEAR = println(s"------------------------ ${GlobalConstants.PS1.RED}*********** 清零累加器 ***********${GlobalConstants.PS1.DEFAULT}  ---------------------------------------------")
 
     // 打印多值累加器中的值
-    def MULTI_ACC_VALUE(t: (String, Long)) = println(s"${t._1} : ${GlobalConstants.Color.YELLOW}${t._2}${GlobalConstants.Color.DEFAULT}")
+    def MULTI_ACC_VALUE(t: (String, Long)) = println(s"${t._1} : ${GlobalConstants.PS1.YELLOW}${t._2}${GlobalConstants.PS1.DEFAULT}")
 
     // 总耗时打印
-    def END_TIME_COST(startTime: Long) = println(s"总耗时：${GlobalConstants.Color.RED}${SparkUtils.runTime(startTime)}${GlobalConstants.Color.DEFAULT} The end...${GlobalConstants.Color.DEFAULT}")
+    def END_TIME_COST(startTime: Long) = println(s"总耗时：${GlobalConstants.PS1.RED}${SparkUtils.runTime(startTime)}${GlobalConstants.PS1.DEFAULT} The end...${GlobalConstants.PS1.DEFAULT}")
 
     // 实时相关
-    def REAL_TIME_PROCESS_METHOD = s"${GlobalConstants.Color.RED}子类必须通过覆写process()方法实现具体逻辑${GlobalConstants.Color.DEFAULT}"
+    def REAL_TIME_PROCESS_METHOD = s"${GlobalConstants.PS1.RED}子类必须通过覆写process()方法实现具体逻辑${GlobalConstants.PS1.DEFAULT}"
+  }
+
+  /**
+    * 常量字符串
+    */
+  object Strings extends Enumeration {
+    // 集群hostname前缀
+    val hostNamePrefix = "HZPL025"
+    // 集群ip前缀
+    val ipPrefxi = "192.168.25."
   }
 
   /**
     * log相关常量
     */
-  object logVal extends Enumeration {
+  object LogVal extends Enumeration {
     // log info级别开始
     val logInfoSplitStart = "--->[ "
     // log info级别结束
@@ -295,4 +328,5 @@ object GlobalConstants {
     val RUNNING = "RUNNING"
     val UNKNOWN = "UNKNOWN"
   }
+
 }

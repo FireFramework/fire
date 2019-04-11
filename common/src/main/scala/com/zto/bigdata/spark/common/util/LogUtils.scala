@@ -16,9 +16,9 @@ class LogUtils(logger: Logger) {
     * @param color 显示颜色
     * @return
     */
-  def wrapLogDebug(info: String, color: String = GlobalConstants.Color.BLUE): Unit = {
+  def wrapLogDebug(info: String, color: String = GlobalConstants.PS1.BLUE): Unit = {
     if (this.logger != null) {
-      this.logger.debug(color + GlobalConstants.logVal.logInfoSplitStart + info + GlobalConstants.logVal.logInfoSplitEnd + GlobalConstants.Color.DEFAULT)
+      this.logger.debug(color + GlobalConstants.LogVal.logInfoSplitStart + info + GlobalConstants.LogVal.logInfoSplitEnd + GlobalConstants.PS1.DEFAULT)
     }
   }
 
@@ -29,9 +29,9 @@ class LogUtils(logger: Logger) {
     * @param color 显示颜色
     * @return
     */
-  def wrapLogInfo(info: String, color: String = GlobalConstants.Color.GREEN): Unit = {
+  def wrapLogInfo(info: String, color: String = GlobalConstants.PS1.GREEN): Unit = {
     if (this.logger != null) {
-      this.logger.info(color + GlobalConstants.logVal.logInfoSplitStart + info + GlobalConstants.logVal.logInfoSplitEnd + GlobalConstants.Color.DEFAULT)
+      this.logger.info(color + GlobalConstants.LogVal.logInfoSplitStart + info + GlobalConstants.LogVal.logInfoSplitEnd + GlobalConstants.PS1.DEFAULT)
     }
   }
 
@@ -41,9 +41,9 @@ class LogUtils(logger: Logger) {
     * @param info 日志内容
     * @return
     */
-  def wrapLogWarn(info: String, color: String = GlobalConstants.Color.PINK): Unit = {
+  def wrapLogWarn(info: String, color: String = GlobalConstants.PS1.PINK): Unit = {
     if (this.logger != null) {
-      this.logger.error(color + GlobalConstants.logVal.logErrorSplitStart + info + GlobalConstants.logVal.logErrorSplitEnd + GlobalConstants.Color.DEFAULT)
+      this.logger.error(color + GlobalConstants.LogVal.logErrorSplitStart + info + GlobalConstants.LogVal.logErrorSplitEnd + GlobalConstants.PS1.DEFAULT)
     }
   }
 
@@ -53,9 +53,9 @@ class LogUtils(logger: Logger) {
     * @param info 日志内容
     * @return
     */
-  def wrapLogError(info: String, color: String = GlobalConstants.Color.RED): Unit = {
+  def wrapLogError(info: String, color: String = GlobalConstants.PS1.RED): Unit = {
     if (this.logger != null) {
-      this.logger.error(color + GlobalConstants.logVal.logErrorSplitStart + info + GlobalConstants.logVal.logErrorSplitEnd + GlobalConstants.Color.DEFAULT)
+      this.logger.error(color + GlobalConstants.LogVal.logErrorSplitStart + info + GlobalConstants.LogVal.logErrorSplitEnd + GlobalConstants.PS1.DEFAULT)
     }
   }
 
@@ -66,7 +66,7 @@ class LogUtils(logger: Logger) {
     */
   def logStart(logger: Logger): Unit = {
     if (this.logger != null) {
-      this.logger.info(GlobalConstants.logVal.logStart, GlobalConstants.Color.YELLOW)
+      this.logger.info(GlobalConstants.LogVal.logStart, GlobalConstants.PS1.YELLOW)
     }
   }
 
@@ -77,7 +77,7 @@ class LogUtils(logger: Logger) {
     */
   def logEnd(logger: Logger): Unit = {
     if (this.logger != null) {
-      this.logger.info(GlobalConstants.logVal.logEnd, GlobalConstants.Color.YELLOW)
+      this.logger.info(GlobalConstants.LogVal.logEnd, GlobalConstants.PS1.YELLOW)
     }
   }
 }

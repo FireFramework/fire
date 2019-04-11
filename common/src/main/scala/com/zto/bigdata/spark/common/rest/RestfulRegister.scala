@@ -2,6 +2,7 @@ package com.zto.bigdata.spark.common.rest
 
 import java.util.concurrent.ExecutorService
 
+import com.zto.bigdata.spark.common.util.{GlobalConstants, SystemInfoUtils}
 import spark.{Request, Response, Route, Spark}
 
 import scala.collection.mutable._
@@ -13,6 +14,7 @@ import scala.collection.mutable._
   */
 class RestfulRegister(val threadPool: ExecutorService) {
   private val restList = ListBuffer[Rest]()
+  private var port: Integer = _
 
   /**
     * 注册新的rest接口
@@ -35,6 +37,7 @@ class RestfulRegister(val threadPool: ExecutorService) {
     */
   def port(port: Int): this.type = {
     Spark.port(port)
+    this.port = port
     this
   }
 
@@ -42,10 +45,12 @@ class RestfulRegister(val threadPool: ExecutorService) {
     * 注册并以子线程方式开启rest服务
     */
   def startRestServer: Unit = {
+    val restPrefix = s"http://${SystemInfoUtils.getIp}:${this.port}"
+
     this.threadPool.execute(new Runnable {
       override def run(): Unit = {
         restList.foreach(rest => {
-          println(s"---------> start rest: ${rest.path} successfully. <---------")
+          println(s"---------> start rest: ${GlobalConstants.PS1.wrap(restPrefix + rest.path, GlobalConstants.PS1.BLUE, GlobalConstants.PS1.UNDER_LINE)} successfully. <---------")
           rest.method match {
             case "get" | "GET" => Spark.get(rest.path, new Route {
               override def handle(request: Request, response: Response): AnyRef = {

@@ -4,7 +4,8 @@ import com.zto.bigdata.spark.bean.Senda
 import com.zto.bigdata.spark.common.ext.BaseSparkStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.rest.Rest
-import com.zto.bigdata.spark.common.util.GlobalConstants
+import com.zto.bigdata.spark.common.util.{GlobalConstants, StringsUtils}
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.storage.StorageLevel
 import spark.{Request, Response}
 
@@ -14,17 +15,28 @@ import spark.{Request, Response}
 object RestTest2 extends BaseSparkStreaming {
   val topics = Set("thrall2", "thrall3", "thrall4", "thrall5", "thrall6", "thrall7", "thrall8", "thrall9")
   val brokers = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092"
-  val storePath = "hdfs://appcluster/user/CarbonStore"
   val tableName = "dw_sz_zto_site_senda_bills"
 
   def main(args: Array[String]): Unit = {
-    this.init(20L,null, false)
+    this.init(20L, null, false)
     // 指定端口号，注册新的restful地址
     this.restfulRegister.port(10010)
       .addRest(Rest("get", "/count", this.rest))
-      .addRest(Rest("post", "/count2", this.rest))
+      .addRest(Rest("get", "/ui", this.ui))
       .startRestServer
     // this.runAsThread(this.kafka)
+  }
+
+  def ui(request: Request, response: Response): AnyRef = {
+    val line = new StringBuilder()
+    val consoleLine = new StringBuilder()
+    this.webUI.split(",").foreach(url => {
+      line.append(StringsUtils.hrefTag(url) + StringsUtils.brTag(""))
+      consoleLine.append(url + "\n")
+    })
+
+    println(GlobalConstants.PS1.wrap(consoleLine.toString(), GlobalConstants.PS1.BLUE, GlobalConstants.PS1.UNDER_LINE))
+    line.toString()
   }
 
   def rest(request: Request, response: Response): AnyRef = {

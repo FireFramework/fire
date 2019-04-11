@@ -1,7 +1,7 @@
 package com.zto.bigdata.spark.common.ext
 
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.{FindClassUtils, GlobalConstants, SingletonFactory}
+import com.zto.bigdata.spark.common.util.{FindClassUtils, GlobalConstants, SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
@@ -32,12 +32,14 @@ class BaseStructuredStreaming extends BaseSpark {
     */
   private def initParams = {
     this.sc = this.spark.sparkContext
-    this.sc.setLogLevel("ERROR")
+    this.sc.setLogLevel(GlobalConstants.LogLevel.ERROR)
     this.sc.addSparkListener(new BaseSparkListener(this))
     this.hiveContext = this.spark.sqlContext
     this.hiveContext.registerAll()
     this.sqlContext = this.hiveContext
     this.hbaseContext = SingletonFactory.getHBaseContextInstance(sc)
+    this.applicationId = SparkUtils.getApplicationId(this.spark)
+    this.webUI = SparkUtils.getWebUI(this.spark)
     this.process
   }
 

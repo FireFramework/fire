@@ -1,7 +1,7 @@
 package com.zto.bigdata.spark.common.ext
 
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.{FindClassUtils, GlobalConstants, SingletonFactory}
+import com.zto.bigdata.spark.common.util.{FindClassUtils, GlobalConstants, SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.CarbonSession._
 import org.apache.spark.SparkConf
@@ -49,6 +49,8 @@ class BaseSparkCore extends BaseSpark {
     this.hiveContext.registerAll()
     this.sqlContext = this.hiveContext
     this.hbaseContext = SingletonFactory.getHBaseContextInstance(sc)
+    this.applicationId = SparkUtils.getApplicationId(this.spark)
+    this.webUI = SparkUtils.getWebUI(this.spark)
     this.process
   }
 
