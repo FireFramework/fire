@@ -446,6 +446,20 @@ public class Senda implements Serializable {
     @FieldName("bill_subsidy")
     private BigDecimal bill_subsidy;
 
+    /**
+     * 分区
+     */
+    @FieldName("ds")
+    private String ds;
+
+    public String getDs() {
+        return ds;
+    }
+
+    public void setDs(String ds) {
+        this.ds = ds;
+    }
+
     public String getBill_code() {
         return bill_code;
     }

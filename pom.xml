@@ -323,6 +323,7 @@
             <groupId>org.apache.carbondata</groupId>
             <artifactId>carbondata-spark2</artifactId>
             <version>1.5.0</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.sparkjava</groupId>

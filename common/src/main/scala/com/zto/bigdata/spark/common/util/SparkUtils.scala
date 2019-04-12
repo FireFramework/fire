@@ -529,7 +529,7 @@ object SparkUtils {
     if (StringUtils.isBlank(topics)) {
       throw new IllegalArgumentException("topic不合法")
     } else {
-      topics.split(splitStr).toSet
+      topics.split(splitStr).filter(topic => StringUtils.isNotBlank(topic)).map(topic => topic.trim).toSet
     }
   }
 
