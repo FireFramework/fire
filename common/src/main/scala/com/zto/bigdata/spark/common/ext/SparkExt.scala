@@ -175,7 +175,7 @@ object SparkExt {
       * 分区字段名称，默认ds
       * @return
       */
-    def addPartition(tableName: String, partition: String, partitionName: String = "ds") = {
+    def addPartition(tableName: String, partition: String, partitionName: String = GlobalConstants.SparkConf.partitionName) = {
       spark.sqlContext.addPartition(tableName, partition, partitionName)
     }
 
@@ -188,7 +188,7 @@ object SparkExt {
       * 分区
       * @return
       */
-    def dropPartition(tableName: String, partition: String, partitionName: String = "ds") = {
+    def dropPartition(tableName: String, partition: String, partitionName: String = GlobalConstants.SparkConf.partitionName) = {
       spark.sqlContext.dropPartition(tableName, partition, partitionName)
     }
 
@@ -256,7 +256,7 @@ object SparkExt {
       * 多个列，逗号分隔
       * @return
       */
-    def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = "ds") = {
+    def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = GlobalConstants.SparkConf.partitionName) = {
       spark.sqlContext.insertIntoPartition(srcTableName, destTableName, ds, cols, partitionName)
     }
 
@@ -268,7 +268,7 @@ object SparkExt {
       * @param querySQL
       * @return
       */
-    def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = "ds", overwrite: Boolean = false) = {
+    def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = GlobalConstants.SparkConf.partitionName, overwrite: Boolean = false) = {
       spark.sqlContext.insertIntoPartitionAsSelect(destTableName, ds, querySQL, partitionName, overwrite)
     }
 
@@ -279,7 +279,7 @@ object SparkExt {
       * @param querySQL
       * @return
       */
-    def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = "ds") = {
+    def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = GlobalConstants.SparkConf.partitionName) = {
       spark.sqlContext.insertIntoDymPartitionAsSelect(destTableName, querySQL, partitionName)
     }
 
@@ -377,7 +377,7 @@ object SparkExt {
       * 表的schema信息，与javabean对应
       * @return
       */
-    def createCarbonTable(dbName: String, tableName: String, tableSchema: Class[_], partition: String = "ds"): DataFrame = {
+    def createCarbonTable(dbName: String, tableName: String, tableSchema: Class[_], partition: String = GlobalConstants.SparkConf.partitionName): DataFrame = {
       spark.sql(CarbondataUtils.buildCreatePartitioinTableSQL(dbName, tableName, tableSchema, partition))
     }
 
@@ -947,7 +947,7 @@ object SparkExt {
     def addPartitions(tableName: String, partitions: String*) = {
       if (StringUtils.isNotBlank(tableName) && ParamUtils.isNotBlank(partitions)) {
         partitions.foreach(ds => {
-          this.addPartition(tableName, ds, "ds")
+          this.addPartition(tableName, ds, GlobalConstants.SparkConf.partitionName)
         })
       }
     }
@@ -963,7 +963,7 @@ object SparkExt {
       * 分区字段名称，默认ds
       * @return
       */
-    def addPartition(tableName: String, partition: String, partitionName: String = "ds") = {
+    def addPartition(tableName: String, partition: String, partitionName: String = GlobalConstants.SparkConf.partitionName) = {
       if (StringUtils.isNotBlank(tableName) && StringUtils.isNotBlank(partition) && StringUtils.isNotBlank(partitionName)) {
         sqlContext.sql(s"ALTER TABLE $tableName ADD IF NOT EXISTS partition($partitionName='$partition')")
       }
@@ -978,7 +978,7 @@ object SparkExt {
       * 分区
       * @return
       */
-    def dropPartition(tableName: String, partition: String, partitionName: String = "ds") = {
+    def dropPartition(tableName: String, partition: String, partitionName: String = GlobalConstants.SparkConf.partitionName) = {
       if (StringUtils.isNotBlank(tableName) && StringUtils.isNotBlank(partition)) {
         sqlContext.sql(s"ALTER TABLE $tableName DROP IF EXISTS partition($partitionName='$partition')")
       }
@@ -996,7 +996,7 @@ object SparkExt {
     def dropPartitions(tableName: String, partitions: String*) = {
       if (StringUtils.isNotBlank(tableName) && ParamUtils.isNotBlank(partitions)) {
         partitions.foreach(ds => {
-          this.dropPartition(tableName, ds, "ds")
+          this.dropPartition(tableName, ds, GlobalConstants.SparkConf.partitionName)
         })
       }
     }
@@ -1069,7 +1069,7 @@ object SparkExt {
       * 多个列，逗号分隔
       * @return
       */
-    def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = "ds") = {
+    def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = GlobalConstants.SparkConf.partitionName) = {
       sqlContext.sql(
         s"""
            |INSERT INTO TABLE $destTableName partition($partitionName='$ds')
@@ -1086,7 +1086,7 @@ object SparkExt {
       * @param querySQL
       * @return
       */
-    def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = "ds", overwrite: Boolean = false) = {
+    def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = GlobalConstants.SparkConf.partitionName, overwrite: Boolean = false) = {
       val overwriteVal = if (overwrite) "OVERWRITE" else "INTO"
       sqlContext.sql(
         s"""
@@ -1102,7 +1102,7 @@ object SparkExt {
       * @param querySQL
       * @return
       */
-    def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = "ds") = {
+    def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = GlobalConstants.SparkConf.partitionName) = {
       sqlContext.sql(
         s"""
            |INSERT INTO TABLE $destTableName partition($partitionName)

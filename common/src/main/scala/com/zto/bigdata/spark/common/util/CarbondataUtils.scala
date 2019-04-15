@@ -22,7 +22,7 @@ object CarbondataUtils {
     * 是否创建成streaming表
     * @return
     */
-  def buildCreateTableSQL(dbName: String, tableName: String, tableSchema: Class[_], partition: String = "ds", isStreaming: Boolean = false): String = {
+  def buildCreateTableSQL(dbName: String, tableName: String, tableSchema: Class[_], partition: String = GlobalConstants.SparkConf.partitionName, isStreaming: Boolean = false): String = {
     val schema = ReflectionUtils.getAllFields(tableSchema).toScalaMap
     val sql = new StringBuilder(s"CREATE TABLE IF NOT EXISTS ${dbName}.${tableName}(\n")
     schema.foreach(t => {
@@ -63,7 +63,7 @@ object CarbondataUtils {
     * 表的schema信息，与javabean对应
     * @return
     */
-  def buildCreatePartitioinTableSQL(dbName: String, tableName: String, tableSchema: Class[_], partition: String = "ds"): String = {
+  def buildCreatePartitioinTableSQL(dbName: String, tableName: String, tableSchema: Class[_], partition: String = GlobalConstants.SparkConf.partitionName): String = {
     this.buildCreateTableSQL(dbName, tableName, tableSchema, partition, false)
   }
 

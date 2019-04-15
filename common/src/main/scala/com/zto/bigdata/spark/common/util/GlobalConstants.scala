@@ -28,6 +28,8 @@ object GlobalConstants {
     val logLevel = LogLevel.INFO
     // 默认的数据库名称
     val dbName = "tmp"
+    // 默认的partition名称
+    val partitionName = "ds"
   }
 
   /**
@@ -73,6 +75,8 @@ object GlobalConstants {
     val HIVE_METASTORE_URIS = "hive.metastore.uris"
     // 默认的库名
     val SPARK_DEFAULT_DATABASE_NAME = "spark.default.database.name"
+    // 默认的分区名称
+    val SPARK_DEFAULT_TABLE_PARTITION_NAME = "spark.default.table.partition.name"
   }
 
   /**
@@ -114,6 +118,7 @@ object GlobalConstants {
     val parallelism = PropUtils.getInt(PropKeys.PARALLELISM_KEY)
     val chkPointDirPrefix = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
     val defaultDB = PropUtils.getString(PropKeys.SPARK_DEFAULT_DATABASE_NAME, DefaultVals.dbName)
+    val partitionName = PropUtils.getString(PropKeys.SPARK_DEFAULT_TABLE_PARTITION_NAME, DefaultVals.partitionName)
   }
 
   /**

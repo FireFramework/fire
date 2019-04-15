@@ -19,14 +19,14 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
   val tableName = "dw_sz_zto_site_senda_bills"
 
   def main(args: Array[String]): Unit = {
-    this.init(60L, null, false)
+    this.init(20L, null, false)
 
     if (args != null && args.length > 0) {
       this.spark.dropCarbonTable(this.dbName, this.tableName)
       this.spark.createCarbonTable(this.dbName, this.tableName, classOf[Senda])
     }
 
-    this.runAsThreadLoop(this.printCount, 20, 1,true)
+    // this.runAsThreadLoop(this.printCount, 60, 1,true)
     this.runAsThread(this.kafka)
   }
 
@@ -34,7 +34,7 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
     val dstream = this.ssc.createDirectStream(this.kafkaParams(this.appName + "2", this.brokers, GlobalConstants.KafkaConf.offsetLargest, false), this.topics, StorageLevel.NONE)
     dstream.foreachRDD((rdd, time) => {
       // this.parseJson2DataFrame(rdd, classOf[Senda]).writeStreaming2Carbon(GlobalConstants.SparkConf.defaultDB, tableName, time)
-      this.parseJson2DataFrame(rdd, classOf[Senda]).write2Carbon(this.dbName, tableName)
+      this.parseJson2DataFrame(rdd, classOf[Senda]).write2Carbon(this.dbName, tableName, GlobalConstants.SparkConf.partitionName)
     })
 
     this.ssc.startAwaitTermination()
