@@ -20,7 +20,7 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
   val tableName = "dw_sz_zto_site_senda_bills"
 
   def main(args: Array[String]): Unit = {
-    this.init(20L, null, false)
+    this.init(20L, false)
 
     if (args != null && args.length > 0) {
       this.spark.dropCarbonTable(this.dbName, this.tableName)

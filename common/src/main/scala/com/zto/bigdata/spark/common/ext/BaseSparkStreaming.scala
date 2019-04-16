@@ -3,6 +3,7 @@ package com.zto.bigdata.spark.common.ext
 import java.util.Properties
 
 import com.zto.bigdata.spark.common.ext.SparkExt._
+import com.zto.bigdata.spark.common.rest.Rest
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -13,37 +14,42 @@ import org.apache.spark.sql.{ColumnName, DataFrame, Encoders, SparkSession}
 import org.apache.spark.sql.CarbonSession._
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.streaming.{Seconds, StreamingContext}
+import spark.{Request, Response}
 
 /**
   * 实时平台Spark通用父类
   * Created by ChengLong on 2018-03-28.
   */
 trait BaseSparkStreaming extends BaseSpark {
-  var ssc: StreamingContext = _
   var checkPointDir: String = _
+  var batchDuration: Long = _
+  this.restfulRegister.addRest(Rest("get", "/system/restartStreaming", this.restartStreaming))
 
   /**
     * 程序初始化方法，用于初始化必要的值
     *
-    * @param seconds
+    * @param batchDuration
     * Streaming每个批次间隔时间
     */
-  def init(seconds: Long, beanDir: String, checkPoint: Boolean): Unit = {
-    val tmpConf = buildConf(beanDir, this.appName)
+  def init(batchDuration: Long, checkPoint: Boolean): Unit = {
+    val tmpConf = buildConf(this.appName)
     if (checkPoint) {
       tmpConf.set("spark.streaming.receiver.writeAheadLog.enable", "true")
     }
-    this.init(beanDir, this.appName, tmpConf)
+    if (this.sc == null) {
+      this.init(this.appName, tmpConf)
+    }
+    this.batchDuration = batchDuration
     if (!checkPoint) {
-      this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(seconds)))
-      this.ssc.remember(Seconds(Math.abs(seconds) * 10))
+      this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(batchDuration)))
+      this.ssc.remember(Seconds(Math.abs(batchDuration) * 10))
       this.process
     } else {
       this.checkPointDir = GlobalConstants.SparkConf.chkPointDirPrefix + this.appName
       this.ssc = StreamingContext.getOrCreate(this.checkPointDir, createStreamingContext _)
       // 初始化Streaming
       def createStreamingContext(): StreamingContext = {
-        this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(seconds)))
+        this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(batchDuration)))
         this.ssc.checkpoint(checkPointDir)
         this.process
         this.ssc
@@ -63,9 +69,9 @@ trait BaseSparkStreaming extends BaseSpark {
   /**
     * 构建内部使用的SparkConf对象
     */
-  private def buildConf(beanDir: String, appName: String): SparkConf = {
+  private def buildConf(appName: String): SparkConf = {
     val tmpAppName = if (StringUtils.isBlank(appName)) this.appName else appName
-    val tmpConf = new SparkConf()
+    new SparkConf()
       .setAppName(tmpAppName)
       .set("spark.speculation", "true")
       .set("spark.port.maxRetries", "200")
@@ -81,11 +87,6 @@ trait BaseSparkStreaming extends BaseSpark {
       // .set("spark.streaming.kafka.maxRatePerPartition", "10000") // 每个批次从每个partition中每秒中最大拉取的数据量
       .set("spark.sql.parquet.writeLegacyFormat", "true")
       .set("hive.metastore.uris", GlobalConstants.HiveConf.metaStoreUris)
-    if (StringUtils.isNotBlank(beanDir)) {
-      tmpConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerialization")
-        .registerKryoClasses(FindClassUtils.listPackageClasses(beanDir).toScalaList.toArray)
-    }
-    tmpConf
   }
 
   /**
@@ -96,9 +97,9 @@ trait BaseSparkStreaming extends BaseSpark {
     * @param conf
     * SparkConf配置信息
     */
-  override def init(beanDir: String = "", appName: String = "", conf: SparkConf = null): Unit = {
+  override def init(appName: String = "", conf: SparkConf = null): Unit = {
     if (conf == null) {
-      this.conf = this.buildConf(beanDir, appName)
+      this.conf = this.buildConf(appName)
     } else {
       this.conf = conf
     }
@@ -188,6 +189,20 @@ trait BaseSparkStreaming extends BaseSpark {
     kafkaProperties.put("retries", "3")
     kafkaProperties.put("serializer.class", "kafka.serializer.StringEncoder")
     kafkaProperties.put("metadata.broker.list", GlobalConstants.kafkaBrokers) // 声明kafka
+  }
+
+  /**
+    * 用于重置StreamingContext
+    * @param request
+    * @param response
+    * @return
+    */
+  def restartStreaming(request: Request, response: Response): AnyRef = {
+    val param = request.queryString()
+    this.batchDuration = if (StringUtils.isNotBlank(param)) param.toLong else this.batchDuration
+    this.ssc.stop(false, true)
+    this.init(this.batchDuration, false)
+    GlobalConstants.Status.SUCCESS
   }
 
 }

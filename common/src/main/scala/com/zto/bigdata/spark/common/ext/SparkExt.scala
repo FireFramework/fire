@@ -1386,7 +1386,7 @@ object SparkExt {
     def startAwaitTermination(): Unit = {
       ssc.start()
       ssc.awaitTermination()
-      ssc.sparkContext.stop()
+      ssc.stop(true, true)
     }
   }
 

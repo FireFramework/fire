@@ -21,7 +21,7 @@ class BaseSparkCore extends BaseSpark {
     * @param conf
     * Spark配置信息
     */
-  override def init(beanDir: String = "", appName: String = "", conf: SparkConf = null): Unit = {
+  override def init(appName: String = "", conf: SparkConf = null): Unit = {
     val tmpAppName = if (StringUtils.isBlank(appName)) this.appName else appName
     if (conf == null) {
       this.conf = new SparkConf()
@@ -34,10 +34,6 @@ class BaseSparkCore extends BaseSpark {
         .set("spark.scheduler.listenerbus.eventqueue.size", "130000")
         .set("spark.sql.parquet.writeLegacyFormat", "true")
         .set("hive.metastore.uris", GlobalConstants.HiveConf.metaStoreUris)
-      if (StringUtils.isNotBlank(beanDir)) {
-        this.conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerialization")
-          .registerKryoClasses(FindClassUtils.listPackageClasses(beanDir).toScalaList.toArray)
-      }
     } else {
       this.conf = conf
     }

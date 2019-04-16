@@ -18,7 +18,7 @@ object RestTest2 extends BaseSparkStreaming {
   val tableName = "dw_sz_zto_site_senda_bills"
 
   def main(args: Array[String]): Unit = {
-    this.init(20L, null, false)
+    this.init(20L, false)
     // 指定端口号，注册新的restful地址
     this.restfulRegister.port(10010)
       .addRest(Rest("get", "/count", this.rest))

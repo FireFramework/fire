@@ -21,8 +21,8 @@ class BaseStructuredStreaming extends BaseSpark {
     * @param conf
     * Spark配置信息
     */
-  override def init(beanDir: String = "", appName: String = "", conf: SparkConf = null): Unit = {
-    this.buildConf(beanDir, conf, appName)
+  override def init(appName: String = "", conf: SparkConf = null): Unit = {
+    this.buildConf(conf, appName)
     if (SystemInfoUtils.isWindows) {
       this.spark = SparkSession.builder().config(this.conf).master("local[*]").enableHiveSupport().getOrCreate()
     } else {
@@ -49,12 +49,11 @@ class BaseStructuredStreaming extends BaseSpark {
 
   /**
     * 构建spark-conf
-    * @param beanDir
     * @param conf
     * @param tmpAppName
     * @return
     */
-  private def buildConf(beanDir: String, conf: SparkConf, tmpAppName: String) = {
+  private def buildConf(conf: SparkConf, tmpAppName: String) = {
     val tmpAppName = if (StringUtils.isBlank(appName)) this.appName else appName
     if (conf == null) {
       this.conf = new SparkConf()
@@ -66,10 +65,6 @@ class BaseStructuredStreaming extends BaseSpark {
         .set("spark.ui.timeline.tasks.maximum", "300")
         .set("spark.scheduler.listenerbus.eventqueue.size", "130000")
         .set("hive.metastore.uris", GlobalConstants.HiveConf.metaStoreUris)
-      if (StringUtils.isNotBlank(beanDir)) {
-        this.conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerialization")
-          .registerKryoClasses(FindClassUtils.listPackageClasses(beanDir).toScalaList.toArray)
-      }
     } else {
       this.conf = conf
     }

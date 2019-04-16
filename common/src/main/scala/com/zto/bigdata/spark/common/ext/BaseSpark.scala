@@ -6,6 +6,7 @@ import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
 import com.zto.bigdata.spark.common.util._
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.{SQLContext, SparkSession}
+import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
 
@@ -17,6 +18,7 @@ trait BaseSpark extends SparkListener with Serializable {
   var conf: SparkConf = _
   var spark: SparkSession = _
   var sc: SparkContext = _
+  var ssc: StreamingContext = _
   var hiveContext: SQLContext = _
   var sqlContext: SQLContext = _
   var kuduContext: KuduContextExt = _
@@ -40,7 +42,7 @@ trait BaseSpark extends SparkListener with Serializable {
     * @param conf
     * Spark配置信息
     */
-  def init(beanDir: String = "", appName: String = "", conf: SparkConf = null): Unit
+  def init(appName: String = this.appName, conf: SparkConf = null): Unit
 
   /**
     * Spark处理过程

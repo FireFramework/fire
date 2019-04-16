@@ -18,7 +18,7 @@ object OrderDetailMain extends BaseSparkStreaming {
   val topics = Set("")
 
   def main(args: Array[String]): Unit = {
-    this.init(20L, null, false)
+    this.init(20L, false)
 
     val ssc = new StreamingContext(this.sc, Seconds(90))
     val kafkaDStream = this.ssc.createDirectStream(this.kafkaParams(this.appName, this.brokers, GlobalConstants.KafkaConf.offsetLargest, false), this.topics, StorageLevel.NONE)

@@ -57,7 +57,11 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @return
     */
   def kill(request: Request, response: Response): AnyRef = {
-    this.baseSpark.spark.stop()
+    if (this.baseSpark.ssc == null) {
+      this.baseSpark.spark.stop()
+    } else {
+      this.baseSpark.ssc.stop(true, false)
+    }
     this.baseSpark.threadPool.shutdownNow()
     Spark.stop()
     System.exit(0)
@@ -154,7 +158,12 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @return
     */
   def ui(request: Request, response: Response): AnyRef = {
-    this.baseSpark.sc.uiWebUrl.get
+    val line = new StringBuilder()
+    this.baseSpark.webUI.split(",").foreach(url => {
+      line.append(StringsUtils.hrefTag(url) + StringsUtils.brTag(""))
+    })
+
+    line.toString()
   }
 
   /**
