@@ -3,7 +3,7 @@ package com.zto.bigdata.spark.common.ext
 import java.util.concurrent.Executors
 
 import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
-import com.zto.bigdata.spark.common.util.{DateFormatUtils, GlobalConstants, LogUtils, SparkUtils}
+import com.zto.bigdata.spark.common.util._
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
@@ -30,6 +30,7 @@ trait BaseSpark extends SparkListener with Serializable {
   val logger = new LogUtils(log)
   var applicationId: String = _
   var webUI: String = _
+  PropUtils.load(this.appName)
 
   /**
     * 程序初始化方法，用于初始化必要的值

@@ -15,8 +15,8 @@ object ShenzhouSync extends BaseStructuredStreaming {
   val brokers = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092"
   val topicSet = "thrall2, thrall3, thrall4, thrall5, thrall6, thrall7, thrall8, thrall9"
 
-  val dbName = "tmp"
-  val tableName = "dw_sz_zto_site_senda_bills"
+  val dbName = "dw"
+  val tableName = "dw_sz_zto_site_senda_bills2"
 
   def main(args: Array[String]): Unit = {
     this.init()
@@ -27,8 +27,6 @@ object ShenzhouSync extends BaseStructuredStreaming {
       spark.dropCarbonTable(this.dbName, this.tableName)
       spark.createCarbonStreamingTable(this.dbName, this.tableName, classOf[Senda])
     }
-
-    spark.conf.getAll.filter(kv => kv._1.contains("carbon")).foreach(x => println(x._1 + " " + x._2))
 
     this.runAsThread(write2Carbondata)
     this.runAsThreadLoop(this.printCount, 60, 1, true)

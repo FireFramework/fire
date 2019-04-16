@@ -3,7 +3,7 @@ package com.zto.bigdata.spark.common.ext
 import java.util.Properties
 
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.{FindClassUtils, GlobalConstants, SingletonFactory, SparkUtils}
+import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -102,9 +102,13 @@ trait BaseSparkStreaming extends BaseSpark {
     } else {
       this.conf = conf
     }
-    this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
+    if (SystemInfoUtils.isWindows) {
+      this.spark = SparkSession.builder().config(this.conf).master("local[*]").enableHiveSupport().getOrCreate()
+    } else {
+      this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
+    }
     this.sc = this.spark.sparkContext
-    this.sc.setLogLevel(GlobalConstants.LogLevel.ERROR)
+    this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))
     this.hiveContext = this.spark.sqlContext
     this.hiveContext.registerAll()

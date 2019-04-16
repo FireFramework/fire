@@ -1,5 +1,6 @@
 package com.zto.bigdata.spark.common.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -349,6 +350,18 @@ public class FileUtils {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * 判断文件是否存在
+	 * @param file
+	 * @return
+	 */
+	public static boolean exists(String file) {
+		if (StringUtils.isBlank(file)) {
+			return false;
+		}
+		return new File(file).exists();
 	}
 
 	public static void main(String[] args) throws Exception {

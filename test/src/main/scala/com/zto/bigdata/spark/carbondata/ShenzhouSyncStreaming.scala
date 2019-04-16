@@ -4,6 +4,7 @@ import com.zto.bigdata.spark.bean.Senda
 import com.zto.bigdata.spark.common.ext.BaseSparkStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils}
+import groovy.util.ObservableMap.PropertyUpdatedEvent
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.storage.StorageLevel
 
@@ -34,7 +35,7 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
     val dstream = this.ssc.createDirectStream(this.kafkaParams(this.appName + "2", this.brokers, GlobalConstants.KafkaConf.offsetLargest, false), this.topics, StorageLevel.NONE)
     dstream.foreachRDD((rdd, time) => {
       // this.parseJson2DataFrame(rdd, classOf[Senda]).writeStreaming2Carbon(GlobalConstants.SparkConf.defaultDB, tableName, time)
-      this.parseJson2DataFrame(rdd, classOf[Senda]).write2Carbon(this.dbName, tableName, GlobalConstants.SparkConf.partitionName)
+      this.parseJson2DataFrame(rdd, classOf[Senda]).write2Carbon(this.dbName, tableName, null, SaveMode.Append)
     })
 
     this.ssc.startAwaitTermination()

@@ -6,6 +6,7 @@ import com.zto.bigdata.spark.common.bean.HBaseBaseBean;
 import com.zto.bigdata.spark.common.bean.MultiVersionsBean;
 import com.zto.bigdata.spark.common.util.GlobalConstants;
 import com.zto.bigdata.spark.common.util.ReflectionUtils;
+import com.zto.bigdata.spark.common.util.SystemInfoUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
@@ -41,7 +42,7 @@ public class HBaseOper {
 
     static {
         conf = HBaseConfiguration.create();
-        if (GlobalConstants.isCluster()) {
+        if (SystemInfoUtils.isLinux()) {
             if ("batch".equalsIgnoreCase(GlobalConstants.HBASE_NAME())) {
                 conf.addResource("hbase-site-batch.xml");
                 conf.set("hbase.zookeeper.quorum", "HZPL025041,HZPL025040,HZPL025042,HZPL025039,HZPL025038");
@@ -52,15 +53,16 @@ public class HBaseOper {
                 conf.addResource("hbase-site-old.xml");
                 conf.set("hbase.zookeeper.quorum", "hadoop10.zto:2181,hadoop11.zto:2181,hadoop12.zto:2181");
             }
-            conf.set("hbase.zookeeper.property.clientPort", "2181");
-            conf.set("zookeeper.znode.parent", "/hbase");
-            conf.set("hbase.rpc.timeout", "600000");
-            conf.set("hbase.snapshot.master.timeoutMillis", "600000");
-            conf.set("hbase.snapshot.region.timeout", "600000");
-            conf.set("hbase.snapshot.master.timeout.millis", "600000");
         } else {
             conf.addResource("hbase-site-test.xml");
+            conf.set("hbase.zookeeper.quorum", "SHTL009046110,SHTL009046111,SHTL009046109");
         }
+        conf.set("hbase.zookeeper.property.clientPort", "2181");
+        conf.set("zookeeper.znode.parent", "/hbase");
+        conf.set("hbase.rpc.timeout", "600000");
+        conf.set("hbase.snapshot.master.timeoutMillis", "600000");
+        conf.set("hbase.snapshot.region.timeout", "600000");
+        conf.set("hbase.snapshot.master.timeout.millis", "600000");
         try {
             connection = ConnectionFactory.createConnection(conf);
         } catch (IOException e) {

@@ -1,6 +1,5 @@
 package com.zto.bigdata.spark.common.util
 
-import java.io.InputStream
 import java.util.Properties
 
 import org.apache.commons.lang3.StringUtils
@@ -11,15 +10,20 @@ import org.apache.commons.lang3.StringUtils
   */
 object PropUtils {
   private val props = new Properties()
-  props.load(this.getClass.getClassLoader.getResourceAsStream("conf.properties"))
+  // 加载默认配置文件
+  this.load("default.properties")
 
   /**
     * 加载指定配置文件
     *
-    * @param inStream
+    * @param fileName
+    * 配置文件名称
     */
-  def load(inStream: InputStream): this.type = {
-    props.load(inStream)
+  def load(fileName: String): this.type = {
+    if (StringUtils.isNotBlank(fileName)) {
+      val fullName = if (fileName.endsWith(".properties")) fileName else s"$fileName.properties"
+      props.load(this.getClass.getClassLoader.getResourceAsStream(fullName))
+    }
     this
   }
 

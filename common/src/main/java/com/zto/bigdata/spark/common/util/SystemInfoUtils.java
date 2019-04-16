@@ -483,6 +483,14 @@ public class SystemInfoUtils {
     }
 
     /**
+     * 判断当前运行环境是否为windows
+     * @return
+     */
+    public static boolean isWindows() {
+        return !isLinux();
+    }
+
+    /**
      * 获取系统全部的负载信息，包括cpu、内存、磁盘io、网络等
      *
      * @return

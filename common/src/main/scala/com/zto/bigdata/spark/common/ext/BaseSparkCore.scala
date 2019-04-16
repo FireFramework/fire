@@ -1,7 +1,7 @@
 package com.zto.bigdata.spark.common.ext
 
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.{FindClassUtils, GlobalConstants, SingletonFactory, SparkUtils}
+import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.CarbonSession._
 import org.apache.spark.SparkConf
@@ -41,7 +41,11 @@ class BaseSparkCore extends BaseSpark {
     } else {
       this.conf = conf
     }
-    this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
+    if (SystemInfoUtils.isWindows) {
+      this.spark = SparkSession.builder().config(this.conf).master("local[*]").enableHiveSupport().getOrCreate()
+    } else {
+      this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
+    }
     this.sc = this.spark.sparkContext
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))
