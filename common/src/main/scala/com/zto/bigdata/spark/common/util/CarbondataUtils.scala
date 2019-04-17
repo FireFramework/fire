@@ -82,6 +82,42 @@ object CarbondataUtils {
   }
 
   /**
+    * 对指定的表执行minor compact
+    * @param dbName
+    * @param tableName
+    * @return
+    */
+  def minorCompact(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
+    s"""
+       |ALTER TABLE ${dbName}.${tableName} COMPACT 'MINOR'
+     """.stripMargin
+  }
+
+  /**
+    * 对指定的表执行minor major
+    * @param dbName
+    * @param tableName
+    * @return
+    */
+  def majorCompact(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
+    s"""
+       |ALTER TABLE ${dbName}.${tableName} COMPACT 'MAJOR'
+     """.stripMargin
+  }
+
+  /**
+    * 将普通的carbondata表转换为streaming表
+    * @param dbName
+    * @param tableName
+    * @return
+    */
+  def enableStreamingTable(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
+    s"""
+       |ALTER TABLE ${dbName}.${tableName} SET TBLPROPERTIES('streaming'='true')
+     """.stripMargin
+  }
+
+  /**
     * 给定java类型，获取对应的carbondata类型
     *
     * @param fieldType

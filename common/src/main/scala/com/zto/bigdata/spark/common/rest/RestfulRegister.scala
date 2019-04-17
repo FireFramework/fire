@@ -45,6 +45,9 @@ class RestfulRegister(val threadPool: ExecutorService) {
     * 注册并以子线程方式开启rest服务
     */
   def startRestServer: Unit = {
+    if (this.port == null) {
+      this.port(SystemInfoUtils.getRundomPort)
+    }
     val restPrefix = s"http://${SystemInfoUtils.getIp}:${this.port}"
 
     this.threadPool.execute(new Runnable {

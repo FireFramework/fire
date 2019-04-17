@@ -389,10 +389,39 @@ object SparkExt {
       * @param tableName
       * 表名
       */
-    def dropCarbonTable(dbName: String = "tmp", tableName: String): Unit = {
+    def dropCarbonTable(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): Unit = {
       spark.sql(CarbondataUtils.dropCarbonTable(dbName, tableName))
     }
 
+    /**
+      * 对指定的表执行minor compact
+      * @param dbName
+      * @param tableName
+      * @return
+      */
+    def minorCompact(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): Unit = {
+      spark.sql(CarbondataUtils.minorCompact(dbName, tableName))
+    }
+
+    /**
+      * 对指定的表执行minor major
+      * @param dbName
+      * @param tableName
+      * @return
+      */
+    def majorCompact(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): Unit = {
+      spark.sql(CarbondataUtils.majorCompact(dbName, tableName))
+    }
+
+    /**
+      * 将普通的carbondata表转换为streaming表
+      * @param dbName
+      * @param tableName
+      * @return
+      */
+    def enableStreamingTable(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): Unit = {
+      spark.sql(CarbondataUtils.enableStreamingTable(dbName, tableName))
+    }
   }
 
   /**
@@ -1312,6 +1341,7 @@ object SparkExt {
 
     /**
       * 将DataFrame数据写入到carbondata表中
+      * 注：不适用于streaming中调用
       *
       * @param db
       * @param tableName

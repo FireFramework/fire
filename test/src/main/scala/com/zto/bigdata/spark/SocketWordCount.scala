@@ -1,16 +1,9 @@
 package com.zto.bigdata.spark
 
-import com.zto.bigdata.spark.SocketWordCount.ssc
-import com.zto.bigdata.spark.bean.Senda
 import com.zto.bigdata.spark.common.ext.BaseSparkStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.rest.Rest
 import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils}
-import org.apache.commons.lang3.StringUtils
-import org.apache.spark.sql.SaveMode
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.streaming.{Seconds, StreamingContext}
-import spark.{Request, Response}
 
 /**
   * 以streaming方式写carbondata

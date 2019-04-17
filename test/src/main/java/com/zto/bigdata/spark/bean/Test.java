@@ -1,17 +1,16 @@
 package com.zto.bigdata.spark.bean;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.net.ServerSocket;
 
 public class Test {
-    public static void main(String[] args) {
-        List<String> list = Arrays.asList("1", "2", "3");
-        List<String> sub = list.subList(1, list.size());
-        Collections.shuffle(list);
-        for(String str : list) {
-            System.out.println(str);
-            break;
-        }
+    public static void main(String[] args) throws Exception {
+        ServerSocket s = new ServerSocket(0);
+        System.out.println("listening on port: " + s.getLocalPort());
+        System.out.println("listening on port: " + s.getLocalPort());
+        System.out.println("listening on port: " + s.getLocalPort());
+        ServerSocket s2 = new ServerSocket(0);
+        System.out.println("listening on port: " + s2.getLocalPort());
+        System.out.println("listening on port: " + s2.getLocalPort());
+        System.out.println("listening on port: " + s2.getLocalPort());
     }
 }

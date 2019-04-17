@@ -8,9 +8,11 @@ import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Random;
 
 /**
  * 用于获取服务器负载信息，包括磁盘io、cpu负载、内存使用、网络使用等等
@@ -461,6 +463,19 @@ public class SystemInfoUtils {
     }
 
     /**
+     * 随机获取系统未被使用的端口号
+     *
+     * @return
+     */
+    public static int getRundomPort() {
+        try {
+            return new ServerSocket(0).getLocalPort();
+        } catch (Exception e) {
+            return new Random().nextInt(65535);
+        }
+    }
+
+    /**
      * 获取当前进程的pid
      *
      * @return pid
@@ -471,6 +486,7 @@ public class SystemInfoUtils {
 
     /**
      * 判断当前运行环境是否为linux
+     *
      * @return
      */
     public static boolean isLinux() {
@@ -484,6 +500,7 @@ public class SystemInfoUtils {
 
     /**
      * 判断当前运行环境是否为windows
+     *
      * @return
      */
     public static boolean isWindows() {
