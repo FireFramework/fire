@@ -5,7 +5,7 @@ import java.util.Date
 
 import com.zto.bigdata.spark.common.util.{DateFormatUtils, NumberFormatUtils}
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{spark, SparkSession}
 
 /**
   * 通用的自定义UDF工具函数集合
@@ -16,43 +16,43 @@ object UDFs extends Serializable {
   /**
     * 批量注册udf函数
     *
-    * @param sqlContext
+    * @param spark
     */
-  def registerAll(sqlContext: SQLContext): Unit = {
+  def registerAll(spark: SparkSession): Unit = {
     // ==================== 日期相关 ====================
-    sqlContext.udf.register("addTimer", Timer.addTimer _)
-    sqlContext.udf.register("addYears", Timer.addYears _)
-    sqlContext.udf.register("addMons", Timer.addMons _)
-    sqlContext.udf.register("addDays", Timer.addDays _)
-    sqlContext.udf.register("addHours", Timer.addHours _)
-    sqlContext.udf.register("addMins", Timer.addMins _)
-    sqlContext.udf.register("addSecs", Timer.addSecs _)
-    sqlContext.udf.register("dateSchemaFormat", Timer.dateSchemaFormat _)
-    sqlContext.udf.register("dateStrSchemaFormat", Timer.dateStrSchemaFormat _)
-    sqlContext.udf.register("isSameDay", Timer.isSameDay _)
-    sqlContext.udf.register("isBig", Timer.isBig _)
-    sqlContext.udf.register("isSmall", Timer.isSmall _)
-    sqlContext.udf.register("isBetween", Timer.isBetween _)
-    sqlContext.udf.register("date", Timer.date _)
-    sqlContext.udf.register("interval", Timer.interval _)
-    sqlContext.udf.register("runTime", Timer.runTime _)
-    sqlContext.udf.register("truncateMinute", Timer.truncateMinute _)
-    sqlContext.udf.register("truncateHour", Timer.truncateHour _)
+    spark.udf.register("addTimer", Timer.addTimer _)
+    spark.udf.register("addYears", Timer.addYears _)
+    spark.udf.register("addMons", Timer.addMons _)
+    spark.udf.register("addDays", Timer.addDays _)
+    spark.udf.register("addHours", Timer.addHours _)
+    spark.udf.register("addMins", Timer.addMins _)
+    spark.udf.register("addSecs", Timer.addSecs _)
+    spark.udf.register("dateSchemaFormat", Timer.dateSchemaFormat _)
+    spark.udf.register("dateStrSchemaFormat", Timer.dateStrSchemaFormat _)
+    spark.udf.register("isSameDay", Timer.isSameDay _)
+    spark.udf.register("isBig", Timer.isBig _)
+    spark.udf.register("isSmall", Timer.isSmall _)
+    spark.udf.register("isBetween", Timer.isBetween _)
+    spark.udf.register("date", Timer.date _)
+    spark.udf.register("interval", Timer.interval _)
+    spark.udf.register("runTime", Timer.runTime _)
+    spark.udf.register("truncateMinute", Timer.truncateMinute _)
+    spark.udf.register("truncateHour", Timer.truncateHour _)
 
     // ==================== 字符串相关 ====================
-    sqlContext.udf.register("isNull", Str.isNull _)
-    sqlContext.udf.register("isNotNull", Str.isNotNull _)
-    sqlContext.udf.register("len", Str.len _)
-    sqlContext.udf.register("reverse", Str.reverse _)
-    sqlContext.udf.register("contains", Str.contains _)
+    spark.udf.register("isNull", Str.isNull _)
+    spark.udf.register("isNotNull", Str.isNotNull _)
+    spark.udf.register("len", Str.len _)
+    spark.udf.register("reverse", Str.reverse _)
+    spark.udf.register("contains", Str.contains _)
 
     // ==================== 数字相关 ====================
-    sqlContext.udf.register("floor", Num.floor _)
-    sqlContext.udf.register("long2Int", Num.Long2Int _)
-    sqlContext.udf.register("bigDecimal2Long", Num.bigDecimal2Long _)
-    sqlContext.udf.register("ifnull", Num.ifnull _)
-    sqlContext.udf.register("truncate", Num.truncate _)
-    sqlContext.udf.register("truncate_decimal", Num.truncate_decimal _)
+    spark.udf.register("floor", Num.floor _)
+    spark.udf.register("long2Int", Num.Long2Int _)
+    spark.udf.register("bigDecimal2Long", Num.bigDecimal2Long _)
+    spark.udf.register("ifnull", Num.ifnull _)
+    spark.udf.register("truncate", Num.truncate _)
+    spark.udf.register("truncate_decimal", Num.truncate_decimal _)
   }
 
   /**
@@ -408,7 +408,6 @@ object UDFs extends Serializable {
     def truncate_decimal(bigDecimal: java.math.BigDecimal, scale: Int): java.math.BigDecimal = {
       NumberFormatUtils.truncate_decimal(bigDecimal, scale)
     }
-
   }
 
 }

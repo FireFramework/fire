@@ -109,11 +109,11 @@ trait BaseSparkStreaming extends BaseSpark {
     } else {
       this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
     }
+    this.spark.registerAll()
     this.sc = this.spark.sparkContext
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))
     this.hiveContext = this.spark.sqlContext
-    this.hiveContext.registerAll()
     this.sqlContext = this.hiveContext
     this.hbaseContext = SingletonFactory.getHBaseContextInstance(sc)
     this.applicationId = SparkUtils.getApplicationId(this.spark)

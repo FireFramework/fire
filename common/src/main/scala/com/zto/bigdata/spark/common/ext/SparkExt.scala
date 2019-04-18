@@ -422,6 +422,16 @@ object SparkExt {
     def enableStreamingTable(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): Unit = {
       spark.sql(CarbondataUtils.enableStreamingTable(dbName, tableName))
     }
+
+    /**
+      * 批量注册自定义udf函数
+      *
+      * @return
+      */
+    def registerAll(): SparkSession = {
+      UDFs.registerAll(spark)
+      spark
+    }
   }
 
   /**
@@ -456,7 +466,7 @@ object SparkExt {
       */
     def createSQLContext: SQLContext = {
       if (GlobalConstants.isCluster) {
-        new HiveContext(sc).registerAll() //.set("hive.exec.compress.output", "true")
+        new HiveContext(sc) //.set("hive.exec.compress.output", "true")
           .set("hive.exec.dynamic.partition", "true")
           .set("hive.exec.dynamic.partition.mode", "nonstrict")
           .set("hive.exec.max.dynamic.partitions", "1000")
@@ -465,7 +475,7 @@ object SparkExt {
           .set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec")
           .set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec")
       } else {
-        new SQLContext(sc).registerAll()
+        new SQLContext(sc)
       }
     }
 
@@ -834,16 +844,6 @@ object SparkExt {
       */
     def set(key: String, value: String): SQLContext = {
       sqlContext.setConf(key, value)
-      sqlContext
-    }
-
-    /**
-      * 批量注册自定义udf函数
-      *
-      * @return
-      */
-    def registerAll(): SQLContext = {
-      UDFs.registerAll(sqlContext)
       sqlContext
     }
 

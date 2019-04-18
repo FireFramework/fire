@@ -38,7 +38,6 @@ object SingletonFactory {
       if(StringUtils.isNotBlank(sql)) {
         this.sqlContext.sql(sql)
       }
-      this.sqlContext.registerAll()
     }
     this.sqlContext
   }
