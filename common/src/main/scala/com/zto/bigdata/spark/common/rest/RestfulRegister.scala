@@ -2,8 +2,10 @@ package com.zto.bigdata.spark.common.rest
 
 import java.util.concurrent.ExecutorService
 
-import com.zto.bigdata.spark.common.util.{GlobalConstants, SystemInfoUtils}
+import com.zto.bigdata.spark.common.anno.Rest
+import com.zto.bigdata.spark.common.util.{GlobalConstants, ReflectionUtils, SystemInfoUtils}
 import spark.{Request, Response, Route, Spark}
+import com.zto.bigdata.spark.common.ext.SparkExt._
 
 import scala.collection.mutable._
 
@@ -13,7 +15,7 @@ import scala.collection.mutable._
   * @author ChengLong 2019-3-16 09:56:56
   */
 class RestfulRegister(val threadPool: ExecutorService) {
-  private val restList = ListBuffer[Rest]()
+  private val restList = ListBuffer[RestCase]()
   private var port: Integer = _
 
   /**
@@ -23,7 +25,7 @@ class RestfulRegister(val threadPool: ExecutorService) {
     * rest的封装信息
     * @return
     */
-  def addRest(rest: Rest): this.type = {
+  def addRest(rest: RestCase): this.type = {
     this.restList += rest
     this
   }
@@ -79,5 +81,29 @@ class RestfulRegister(val threadPool: ExecutorService) {
         })
       }
     })
+  }
+
+  /**
+    * 扫描@Rest，并注册
+    */
+  def registerRestful(): Unit = {
+    val restClassList = ReflectionUtils.scanAnnotation("com.zto", classOf[Rest])
+    if (restClassList != null && restClassList.size() > 0) {
+      restClassList.toScalaList.foreach(clazz => {
+        if (clazz != null) {
+          val methods = clazz.getDeclaredMethods
+          if (methods != null && methods.size > 0) {
+            methods.toArray.foreach(method => {
+              method.setAccessible(true)
+              val restAnno = method.getAnnotation(classOf[Rest])
+              if (restAnno != null) {
+                // this.addRest(RestCase(restAnno.method(), restAnno.value(), ))
+                println(method.getName)
+              }
+            })
+          }
+        }
+      })
+    }
   }
 }

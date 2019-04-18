@@ -9,8 +9,6 @@ import spark.{Request, Response}
   * rest的提交方式：GET/POST/PUT/DELETE等
   * @param path
   * rest服务地址
-  * @param funw
-  * rest的处理逻辑
   * @author ChengLong 2019-3-16 09:58:06
   */
-case class Rest(method: String, path: String, fun: (Request, Response) => AnyRef)
+case class RestCase(method: String, path: String, fun: (Request, Response) => AnyRef)

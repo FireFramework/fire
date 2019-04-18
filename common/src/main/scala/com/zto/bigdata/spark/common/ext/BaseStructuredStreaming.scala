@@ -22,6 +22,7 @@ class BaseStructuredStreaming extends BaseSpark {
     * Spark配置信息
     */
   override def init(appName: String = "", conf: SparkConf = null): Unit = {
+    PropUtils.load(this.appName)
     this.buildConf(conf, appName)
     if (SystemInfoUtils.isWindows) {
       this.spark = SparkSession.builder().config(this.conf).master("local[*]").enableHiveSupport().getOrCreate()

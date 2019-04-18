@@ -7,6 +7,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -409,5 +410,18 @@ public class FileUtils {
 			super(initialCapacity);
 			my_keys = new ArrayList(columnCount);
 		}
+	}
+
+	/**
+	 * 判断resource路径下的文件是否存在
+	 * @param fileName
+	 * @return
+	 */
+	public static boolean resourceFileExists(String fileName) {
+		URL path = FileUtils.class.getClassLoader().getResource(fileName);
+		if (path == null) {
+			return false;
+		}
+		return new File(path.getFile()).exists();
 	}
 }

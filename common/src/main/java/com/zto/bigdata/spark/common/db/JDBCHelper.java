@@ -1,6 +1,7 @@
 package com.zto.bigdata.spark.common.db;
 
 import com.zto.bigdata.spark.common.util.GlobalConstants;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.*;
 import java.util.LinkedList;
@@ -20,7 +21,9 @@ public class JDBCHelper {
 	static {
 		try {
 			String driverName = GlobalConstants.driverClass();
-			Class.forName(driverName);
+			if (StringUtils.isNotBlank(driverName)) {
+				Class.forName(driverName);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

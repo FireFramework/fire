@@ -3,7 +3,7 @@ package com.zto.bigdata.spark.rest
 import com.zto.bigdata.spark.bean.Senda
 import com.zto.bigdata.spark.common.ext.BaseSparkStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.rest.Rest
+import com.zto.bigdata.spark.common.rest.RestCase
 import com.zto.bigdata.spark.common.util.{GlobalConstants, StringsUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.storage.StorageLevel
@@ -21,8 +21,8 @@ object RestTest2 extends BaseSparkStreaming {
     this.init(20L, false)
     // 指定端口号，注册新的restful地址
     this.restfulRegister.port(10010)
-      .addRest(Rest("get", "/count", this.rest))
-      .addRest(Rest("get", "/ui", this.ui))
+      .addRest(RestCase("get", "/count", this.rest))
+      .addRest(RestCase("get", "/ui", this.ui))
       .startRestServer
     // this.runAsThread(this.kafka)
   }

@@ -3,7 +3,7 @@ package com.zto.bigdata.spark.common.ext
 import java.util.Properties
 
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.rest.Rest
+import com.zto.bigdata.spark.common.rest.RestCase
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -23,7 +23,7 @@ import spark.{Request, Response}
 trait BaseSparkStreaming extends BaseSpark {
   var checkPointDir: String = _
   var batchDuration: Long = _
-  this.restfulRegister.addRest(Rest("get", "/system/restartStreaming", this.restartStreaming))
+  this.restfulRegister.addRest(RestCase("get", "/system/restartStreaming", this.restartStreaming))
 
   /**
     * 程序初始化方法，用于初始化必要的值
@@ -98,6 +98,7 @@ trait BaseSparkStreaming extends BaseSpark {
     * SparkConf配置信息
     */
   override def init(appName: String = "", conf: SparkConf = null): Unit = {
+    PropUtils.load(this.appName)
     if (conf == null) {
       this.conf = this.buildConf(appName)
     } else {
@@ -200,7 +201,7 @@ trait BaseSparkStreaming extends BaseSpark {
   def restartStreaming(request: Request, response: Response): AnyRef = {
     val param = request.queryString()
     this.batchDuration = if (StringUtils.isNotBlank(param)) param.toLong else this.batchDuration
-    this.ssc.stop(false, true)
+    this.ssc.stop(false, false)
     this.init(this.batchDuration, false)
     GlobalConstants.Status.SUCCESS
   }

@@ -2,10 +2,10 @@ package com.zto.bigdata.spark.common.rest
 
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
+import com.zto.bigdata.spark.common.anno.Rest
 import com.zto.bigdata.spark.common.ext.BaseSpark
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.SparkContext
 import spark._
 
 import scala.util.parsing.json.JSONObject
@@ -17,36 +17,21 @@ import scala.util.parsing.json.JSONObject
   */
 class SystemRestful(val baseSpark: BaseSpark) {
 
-  /**
-    * 注册系统预定义的restful服务
-    */
-  /*def register: Unit = {
-    this.getClass.getDeclaredMethods.foreach(method => {
-      method.setAccessible(true)
-      val paramType = method.getGenericParameterTypes
-      if(paramType != null && paramType.length == 2) {
-        if(paramType(0) == classOf[spark.Request] && paramType(1) == classOf[spark.Request]) {
-          this.baseSpark.restfulRegister.addRest(Rest(RequestMethod.GET.toString, s"/system/${method.getName}", kill))
-        }
-      }
-    })
-  }*/
-
+  // 系统预定义接口注册
   {
-    // 接口注册
     this.baseSpark.restfulRegister
-      .addRest(Rest(RequestMethod.GET.toString, s"/system/kill", kill))
-      .addRest(Rest(RequestMethod.GET.toString, s"/system/info", systemLoadInfo))
-      .addRest(Rest(RequestMethod.GET.toString, s"/system/conf", conf))
-      .addRest(Rest(RequestMethod.GET.toString, s"/system/version", version))
-      .addRest(Rest(RequestMethod.GET.toString, s"/system/master", master))
-      .addRest(Rest(RequestMethod.GET.toString, s"/system/applicationId", applicationId))
-      .addRest(Rest(RequestMethod.GET.toString, s"/system/applicationAttemptId", applicationAttemptId))
-      .addRest(Rest(RequestMethod.GET.toString, s"/system/ui", ui))
-      .addRest(Rest(RequestMethod.GET.toString, s"/system/pid", pid))
-      .addRest(Rest(RequestMethod.GET.toString, s"/system/uptime", uptime))
-      .addRest(Rest(RequestMethod.GET.toString, s"/system/startTime", startTime))
-      .addRest(Rest(RequestMethod.POST.toString, s"/system/sql", sql))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/kill", kill))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/info", systemLoadInfo))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/conf", conf))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/version", version))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/master", master))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/applicationId", applicationId))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/applicationAttemptId", applicationAttemptId))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/ui", ui))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/pid", pid))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/uptime", uptime))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/startTime", startTime))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/sql", sql))
   }
 
   /**
@@ -56,6 +41,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest("/system/kill")
   def kill(request: Request, response: Response): AnyRef = {
     if (this.baseSpark.ssc == null) {
       this.baseSpark.spark.stop()
@@ -76,6 +62,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest("/system/systemLoadInfo")
   def systemLoadInfo(request: Request, response: Response): AnyRef = {
     JSON.toJSONString(SystemInfoUtils.getSystemLoadInfo, SerializerFeature.PrettyFormat)
   }
@@ -87,6 +74,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest(value = "/system/sql", method = "post")
   def sql(request: Request, response: Response): AnyRef = {
     val sql = request.queryString()
     if (StringUtils.isNotBlank(sql) && this.baseSpark != null && this.baseSpark.spark != null) {
@@ -102,6 +90,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest("/system/conf")
   def conf(request: Request, response: Response): AnyRef = {
     JSONObject(this.baseSpark.spark.conf.getAll)
   }
@@ -113,6 +102,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest("/system/version")
   def version(request: Request, response: Response): AnyRef = {
     this.baseSpark.sc.version
   }
@@ -124,6 +114,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest("/system/master")
   def master(request: Request, response: Response): AnyRef = {
     this.baseSpark.sc.master
   }
@@ -135,6 +126,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest("/system/applicationId")
   def applicationId(request: Request, response: Response): AnyRef = {
     this.baseSpark.sc.applicationId
   }
@@ -146,6 +138,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest("/system/applicationAttemptId")
   def applicationAttemptId(request: Request, response: Response): AnyRef = {
     this.baseSpark.sc.applicationAttemptId
   }
@@ -157,6 +150,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest("/system/ui")
   def ui(request: Request, response: Response): AnyRef = {
     val line = new StringBuilder()
     this.baseSpark.webUI.split(",").foreach(url => {
@@ -173,6 +167,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest("/system/pid")
   def pid(request: Request, response: Response): AnyRef = {
     SystemInfoUtils.getPid
   }
@@ -184,6 +179,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest("/system/startTime")
   def startTime(request: Request, response: Response): AnyRef = {
     DateFormatUtils.formatUnixDateTime(this.baseSpark.startTime * 1000)
   }
@@ -195,6 +191,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
+  @Rest("/system/uptime")
   def uptime(request: Request, response: Response): AnyRef = {
     SparkUtils.runTime(this.baseSpark.startTime)
   }

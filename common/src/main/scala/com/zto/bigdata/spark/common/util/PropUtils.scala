@@ -22,7 +22,9 @@ object PropUtils {
   def load(fileName: String): this.type = {
     if (StringUtils.isNotBlank(fileName)) {
       val fullName = if (fileName.endsWith(".properties")) fileName else s"$fileName.properties"
-      props.load(this.getClass.getClassLoader.getResourceAsStream(fullName))
+      if (FileUtils.resourceFileExists(fullName)) {
+        props.load(this.getClass.getClassLoader.getResourceAsStream(fullName))
+      }
     }
     this
   }

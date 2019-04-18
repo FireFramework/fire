@@ -32,7 +32,6 @@ trait BaseSpark extends SparkListener with Serializable {
   val logger = new LogUtils(log)
   var applicationId: String = _
   var webUI: String = _
-  PropUtils.load(this.appName)
 
   /**
     * 程序初始化方法，用于初始化必要的值
