@@ -1,7 +1,7 @@
 package com.zto.bigdata.spark.common.ext
 
 import java.sql.DriverManager
-import java.util.Properties
+import java.util.{Objects, Properties}
 
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.parser.ParserConfig
@@ -1384,6 +1384,21 @@ object SparkExt {
       CarbonSparkStreamingFactory.getStreamSparkStreamingWriter(dataFrame.sparkSession, dbName, tableName)
         .mode(saveMode)
         .writeStreamData(dataFrame, time)
+    }
+
+    /**
+      * 以merge的方式将数据写入到关系型数据库中
+      * @param dbName
+      * @param tableName
+      */
+    def saveToJDBC(dbName: String, tableName: String, saveMode: SaveMode = SaveMode.Append, url: String = GlobalConstants.rdburl, user: String = GlobalConstants.user, password: String = GlobalConstants.password): Unit = {
+      if (Objects.isNull(url) || Objects.isNull(user)) throw new IllegalArgumentException("jdbc参数不合法，可将信息放入到配置文件中。")
+      dataFrame.write.format("jdbc")
+        .option("dbtable", s"$dbName.$tableName")
+        .option("url", url)
+        .option("user", user)
+        .option("password", password)
+        .mode(saveMode).save()
     }
   }
 
