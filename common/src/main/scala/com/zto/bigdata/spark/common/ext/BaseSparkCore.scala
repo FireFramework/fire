@@ -39,7 +39,7 @@ class BaseSparkCore extends BaseSpark {
       this.conf = conf
     }
     if (SystemInfoUtils.isWindows) {
-      this.spark = SparkSession.builder().config(this.conf).master("local[*]").enableHiveSupport().getOrCreate()
+      this.spark = SparkSession.builder().config(this.conf).master("local[*]").getOrCreate()
     } else {
       this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
     }

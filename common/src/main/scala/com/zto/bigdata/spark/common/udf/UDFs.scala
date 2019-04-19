@@ -1,11 +1,10 @@
 package com.zto.bigdata.spark.common.udf
 
-import java.math.BigDecimal
 import java.util.Date
 
 import com.zto.bigdata.spark.common.util.{DateFormatUtils, NumberFormatUtils}
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.sql.{spark, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 /**
   * 通用的自定义UDF工具函数集合

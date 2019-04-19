@@ -19,7 +19,6 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
   val tableName = "dw_sz_zto_site_senda_bills3"
 
   def main(args: Array[String]): Unit = {
-    System.exit(0)
     this.restfulRegister.startRestServer
     this.init(30L, false)
 

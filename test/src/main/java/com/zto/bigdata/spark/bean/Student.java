@@ -2,6 +2,7 @@ package com.zto.bigdata.spark.bean;
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
@@ -9,6 +10,9 @@ public class Student extends HBaseBaseBean<Student> {
     private Long id;
     private String name;
     private Integer age;
+    private BigDecimal length;
+    private Boolean sex;
+    private String createTime;
 
     /**
      * rowkey的构建
@@ -26,7 +30,40 @@ public class Student extends HBaseBaseBean<Student> {
         this.age = age;
     }
 
+    public Student(Long id, String name, Integer age, BigDecimal length, Boolean sex, String createTime) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+        this.length = length;
+        this.sex = sex;
+        this.createTime = createTime;
+    }
+
     public Student() {
+    }
+
+    public String getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(String createTime) {
+        this.createTime = createTime;
+    }
+
+    public BigDecimal getLength() {
+        return length;
+    }
+
+    public void setLength(BigDecimal length) {
+        this.length = length;
+    }
+
+    public Boolean getSex() {
+        return sex;
+    }
+
+    public void setSex(Boolean sex) {
+        this.sex = sex;
     }
 
     public Long getId() {
