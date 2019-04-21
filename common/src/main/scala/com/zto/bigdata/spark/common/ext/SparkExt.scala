@@ -1325,7 +1325,7 @@ object SparkExt {
       *
       * @return
       */
-    def writeStream2Carbon(db: String = "tmp", tableName: String, tigger: Trigger = Trigger.ProcessingTime("5 seconds")): Unit = {
+    def writeStream2Carbon(db: String = GlobalConstants.SparkConf.defaultDB, tableName: String, tigger: Trigger = Trigger.ProcessingTime("5 seconds")): Unit = {
       if (StringUtils.isBlank(db) || StringUtils.isBlank(tableName)) throw new IllegalArgumentException("carbondata的库名或表名不能为空！")
       val carbonTable = CarbonEnv.getCarbonTable(Some(db), tableName)(dataFrame.sparkSession)
 
@@ -1348,7 +1348,7 @@ object SparkExt {
       * @param partition
       * @param saveMode
       */
-    def write2Carbon(db: String = "tmp", tableName: String, partition: String = null, saveMode: SaveMode = SaveMode.Append): Unit = {
+    def write2Carbon(db: String = GlobalConstants.SparkConf.defaultDB, tableName: String, partition: String = null, saveMode: SaveMode = SaveMode.Append): Unit = {
       val dfWriter = dataFrame.write.format("carbondata")
         .option("dbName", db)
         .option("tableName", tableName)
@@ -1380,7 +1380,7 @@ object SparkExt {
       * @param saveMode
       * 追加方式
       */
-    def writeStreaming2Carbon(dbName: String = "tmp", tableName: String, time: Time, saveMode: SaveMode = SaveMode.Append): Unit = {
+    def writeStreaming2Carbon(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String, time: Time, saveMode: SaveMode = SaveMode.Append): Unit = {
       CarbonSparkStreamingFactory.getStreamSparkStreamingWriter(dataFrame.sparkSession, dbName, tableName)
         .mode(saveMode)
         .writeStreamData(dataFrame, time)

@@ -1,5 +1,6 @@
 package com.zto.bigdata.spark.common.util
 
+import java.io.{FileInputStream, InputStream}
 import java.util.Properties
 
 import org.apache.commons.lang3.StringUtils
@@ -22,8 +23,17 @@ object PropUtils {
   def load(fileName: String): this.type = {
     if (StringUtils.isNotBlank(fileName)) {
       val fullName = if (fileName.endsWith(".properties")) fileName else s"$fileName.properties"
-      if (FileUtils.resourceFileExists(fullName)) {
-        props.load(this.getClass.getClassLoader.getResourceAsStream(fullName))
+      var resource: InputStream = null
+      try {
+        resource = FileUtils.resourceFileExists(fullName)
+        if (resource != null) {
+          println(s"--------------------- load ${fullName} ---------------------")
+          props.load(resource)
+        }
+      } finally {
+        if (resource != null) {
+          IOUtils.close(resource)
+        }
       }
     }
     this

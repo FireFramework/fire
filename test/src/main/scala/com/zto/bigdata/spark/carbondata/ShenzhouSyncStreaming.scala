@@ -3,7 +3,7 @@ package com.zto.bigdata.spark.carbondata
 import com.zto.bigdata.spark.bean.Senda
 import com.zto.bigdata.spark.common.ext.BaseSparkStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils, SystemInfoUtils}
+import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils}
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.storage.StorageLevel
 
@@ -15,19 +15,18 @@ import org.apache.spark.storage.StorageLevel
 object ShenzhouSyncStreaming extends BaseSparkStreaming {
   val topics = SparkUtils.topicSplit("thrall2, thrall3, thrall4, thrall5, thrall6, thrall7, thrall8, thrall9")
   val brokers = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092"
-  val dbName = "dw"
-  val tableName = "dw_sz_zto_site_senda_bills3"
+  val dbName = "tmp"
+  val tableName = "test_senda"
 
   def main(args: Array[String]): Unit = {
-    this.restfulRegister.startRestServer
     this.init(30L, false)
 
     if (args != null && args.length > 0) {
       this.spark.dropCarbonTable(this.dbName, this.tableName)
-      this.spark.createCarbonTable(this.dbName, this.tableName, classOf[Senda])
+      // this.spark.createCarbonTable(this.dbName, this.tableName, classOf[Senda])
     }
 
-    // this.runAsThreadLoop(this.printCount, 300, 1,true)
+    this.runAsThreadLoop(this.printCount, 60 * 60, 1,true)
     this.runAsThread(this.kafka)
   }
 

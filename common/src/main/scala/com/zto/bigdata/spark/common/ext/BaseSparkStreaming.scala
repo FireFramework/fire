@@ -23,7 +23,6 @@ import spark.{Request, Response}
 trait BaseSparkStreaming extends BaseSpark {
   var checkPointDir: String = _
   var batchDuration: Long = _
-  this.restfulRegister.addRest(RestCase("get", "/system/restartStreaming", this.restartStreaming))
 
   /**
     * 程序初始化方法，用于初始化必要的值
@@ -32,12 +31,14 @@ trait BaseSparkStreaming extends BaseSpark {
     * Streaming每个批次间隔时间
     */
   def init(batchDuration: Long, checkPoint: Boolean): Unit = {
+    PropUtils.load(this.appName)
     val tmpConf = buildConf(this.appName)
     if (checkPoint) {
       tmpConf.set("spark.streaming.receiver.writeAheadLog.enable", "true")
     }
     if (this.sc == null) {
       this.init(this.appName, tmpConf)
+      this.restfulRegister.addRest(RestCase("get", "/system/restartStreaming", this.restartStreaming))
     }
     this.batchDuration = batchDuration
     if (!checkPoint) {
@@ -98,7 +99,6 @@ trait BaseSparkStreaming extends BaseSpark {
     * SparkConf配置信息
     */
   override def init(appName: String = "", conf: SparkConf = null): Unit = {
-    PropUtils.load(this.appName)
     if (conf == null) {
       this.conf = this.buildConf(appName)
     } else {

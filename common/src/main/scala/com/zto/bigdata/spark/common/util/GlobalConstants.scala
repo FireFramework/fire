@@ -23,7 +23,7 @@ object GlobalConstants {
     // spark 默认的checkpoint地址
     val sparkChkPointDir = "hdfs://nameservice1/user/spark/ckpoint/"
     // hive metastore地址
-    val hiveMetaStoreUris = "thrift://192.168.25.36:9083"
+    val hiveMetaStoreUris = "thrift://192.168.25.180:9083"
     // 默认的日志级别
     val logLevel = LogLevel.INFO
     // 默认的数据库名称

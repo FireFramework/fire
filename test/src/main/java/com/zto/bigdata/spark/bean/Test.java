@@ -1,15 +1,16 @@
 package com.zto.bigdata.spark.bean;
 
-import com.zto.bigdata.spark.common.anno.Rest;
-import com.zto.bigdata.spark.common.util.ReflectionUtils;
+import com.zto.bigdata.spark.common.util.IOUtils;
 
-import java.util.List;
+import java.io.InputStream;
+import java.util.Properties;
 
 public class Test {
     public static void main(String[] args) throws Exception {
-        List<Class<?>> lists = ReflectionUtils.scanAnnotation("com.zto", Rest.class);
-        for (Class clazz : lists) {
-            System.out.println(clazz.getSimpleName());
-        }
+        InputStream resource = Test.class.getClassLoader().getResourceAsStream("default.properties");
+        Properties props = new Properties();
+        props.load(resource);
+        IOUtils.close(resource);
+        System.out.println(props.getProperty("spark.kafka.brokers.url"));
     }
 }
