@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark.common.util
 
-import java.io.{FileInputStream, InputStream}
+import java.io.InputStream
 import java.util.Properties
 
 import org.apache.commons.lang3.StringUtils

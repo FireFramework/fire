@@ -4,7 +4,6 @@ import com.zto.bigdata.spark.bean.Senda
 import com.zto.bigdata.spark.common.ext.BaseSparkStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils}
-import org.apache.spark.sql.SaveMode
 import org.apache.spark.storage.StorageLevel
 
 /**
@@ -26,7 +25,7 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
       // this.spark.createCarbonTable(this.dbName, this.tableName, classOf[Senda])
     }
 
-    this.runAsThreadLoop(this.printCount, 60 * 60, 1,true)
+    this.runAsSchedule(this.printCount, 60 * 60, 1,true)
     this.runAsThread(this.kafka)
   }
 

@@ -28,7 +28,7 @@ object ShenzhouSync extends BaseStructuredStreaming {
     }
 
     this.runAsThread(write2Carbondata)
-    this.runAsThreadLoop(this.printCount, 60, 1, true)
+    this.runAsSchedule(this.printCount, 60, 1, true)
   }
 
   /**

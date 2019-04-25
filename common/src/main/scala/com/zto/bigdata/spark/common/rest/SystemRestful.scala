@@ -49,6 +49,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
       this.baseSpark.ssc.stop(true, false)
     }
     this.baseSpark.threadPool.shutdownNow()
+    this.baseSpark.threadPoolSchedule.shutdownNow()
     Spark.stop()
     System.exit(0)
     ProcessUtil.execAndWaitFor(s"kill -9 ${SystemInfoUtils.getPid}")

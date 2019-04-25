@@ -14,11 +14,12 @@ public class ParamUtils {
 
     /**
      * 集合为空检查
+     *
      * @param collection
      * @return
      */
     public static boolean isNotBlank(Collection collection) {
-        if(collection == null || collection.size() == 0) {
+        if (collection == null || collection.size() == 0) {
             return false;
         }
         return true;
@@ -26,6 +27,7 @@ public class ParamUtils {
 
     /**
      * 集合为空检查
+     *
      * @param collection
      * @return
      */
@@ -35,11 +37,12 @@ public class ParamUtils {
 
     /**
      * map合法性检查
+     *
      * @param map
      * @return
      */
     public static boolean isNotBlank(Map map) {
-        if(map == null || map.size() == 0) {
+        if (map == null || map.size() == 0) {
             return false;
         }
         return true;
@@ -47,6 +50,7 @@ public class ParamUtils {
 
     /**
      * map合法性检查
+     *
      * @param map
      * @return
      */
@@ -57,15 +61,16 @@ public class ParamUtils {
 
     /**
      * 方法参数或数组合法性检查
+     *
      * @param params
      * @return
      */
     public static boolean isNotBlank(Object... params) {
-        if(params == null || params.length == 0) {
+        if (params == null || params.length == 0) {
             return false;
         }
-        for(Object param : params) {
-            if(param == null) {
+        for (Object param : params) {
+            if (param == null) {
                 return false;
             }
         }
@@ -74,6 +79,7 @@ public class ParamUtils {
 
     /**
      * 方法参数或数组合法性检查
+     *
      * @param params
      * @return
      */
@@ -83,13 +89,12 @@ public class ParamUtils {
 
     /**
      * 提前字符串中${}中的内容
-     * @param str
-     * 含有${}的字符串
-     * @return
-     * ${}中的内容列表
+     *
+     * @param str 含有${}的字符串
+     * @return ${}中的内容列表
      */
     public static Set<String> extractParams(String str) {
-        if(StringUtils.isBlank(str)) {
+        if (StringUtils.isBlank(str)) {
             return Collections.EMPTY_SET;
         }
         Matcher m = Pattern.compile("\\$\\{\\s*\\w+\\s*\\}").matcher(str);
@@ -105,5 +110,18 @@ public class ParamUtils {
             }
         }
         return paramSet;
+    }
+
+    /**
+     * 参数非空约束
+     *
+     * @param params
+     */
+    public void requireNonNull(Object... params) {
+        if (params != null && params.length > 0) {
+            for (Object param : params) {
+                Objects.requireNonNull(param, "参数不能为空");
+            }
+        }
     }
 }

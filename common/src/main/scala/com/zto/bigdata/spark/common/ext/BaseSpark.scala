@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark.common.ext
 
-import java.util.concurrent.Executors
+import java.util.concurrent.{Executors, TimeUnit}
 
 import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
 import com.zto.bigdata.spark.common.util._
@@ -25,7 +25,8 @@ trait BaseSpark extends SparkListener with Serializable {
   var hbaseContext: HBaseContextExt = _
   val startTime = SparkUtils.currentTime
   var appName = this.getClass.getSimpleName.replace("$", "")
-  val threadPool = Executors.newFixedThreadPool(20)
+  lazy val threadPool = Executors.newFixedThreadPool(20)
+  lazy val threadPoolSchedule = Executors.newScheduledThreadPool(10)
   val restfulRegister = new RestfulRegister(this.threadPool)
   private val systemRestful = new SystemRestful(this)
   val log = LoggerFactory.getLogger(this.getClass)
@@ -65,21 +66,18 @@ trait BaseSpark extends SparkListener with Serializable {
     *
     * @param fun
     * 用于指定以多线程方式执行的函数
+    * @param threadCount
+    * 表示开启多少个线程执行该fun任务
+    * @param debug
+    * true：打印运行日志
+    * false：不打印运行日志
     */
   def runAsThread(fun: => Unit, threadCount: Int = 1, debug: Boolean = false): Unit = {
-    (1 to threadCount).foreach(_ => {
-      this.threadPool.execute(new Runnable {
-        override def run(): Unit = {
-          val startTime = System.currentTimeMillis()
-          fun
-          if (debug) println(s"--> ${GlobalConstants.PS1.GREEN}Invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Time: ${DateFormatUtils.formatCurrentDateTime()}. TimeCost: ${System.currentTimeMillis() - startTime}. ${GlobalConstants.PS1.DEFAULT}<--")
-        }
-      })
-    })
+    ThreadUtils.runAsThread(this.threadPool, fun, threadCount, debug)
   }
 
   /**
-    * 以子线程方式循环执行函数调用
+    * 以子线程while循环方式循环执行函数调用
     *
     * @param fun
     * 用于指定以多线程方式执行的函数
@@ -87,18 +85,31 @@ trait BaseSpark extends SparkListener with Serializable {
     * 循环调用间隔时间（单位s）
     */
   def runAsThreadLoop(fun: => Unit, delay: Long = 10, threadCount: Int = 1, debug: Boolean = false): Unit = {
-    (1 to threadCount).foreach(_ => {
-      this.threadPool.execute(new Runnable {
-        override def run(): Unit = {
-          while (true) {
-            val startTime = System.currentTimeMillis()
-            fun
-            if (debug) println(s"--> ${GlobalConstants.PS1.GREEN}Loop invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Delay is ${delay}s. Time: ${DateFormatUtils.formatCurrentDateTime()}. TimeCost: ${System.currentTimeMillis() - startTime}. ${GlobalConstants.PS1.DEFAULT}<--")
-            Thread.sleep(delay * 1000)
-          }
-        }
-      })
-    })
+    ThreadUtils.runAsThreadLoop(this.threadPool, fun, delay, threadCount, debug)
+  }
+
+  /**
+    * 定时调度给定的函数
+    *
+    * @param fun
+    * 定时执行的任务函数引用
+    * @param initialDelay
+    * 第一次延迟执行的时长
+    * @param period
+    * 每隔指定的时长执行一次
+    * @param rate
+    * true：表示周期性的执行，不受上一个定时任务的约束
+    * false：表示当上一次周期性任务执行成功后，period后开始执行
+    * @param timeUnit
+    * 时间单位，默认分钟
+    * @param threadCount
+    * 表示开启多少个线程执行该fun任务
+    * @param debug
+    * true：打印运行日志
+    * false：不打印运行日志
+    */
+  def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, debug: Boolean = false): Unit = {
+    ThreadUtils.runAsSchedule(this.threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount, debug)
   }
 
 }
