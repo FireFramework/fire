@@ -13,11 +13,19 @@ object GlobalConstants {
   /**
     * 预定义的默认值，配置文件没有指明的情况下会取默认值
     */
-  private[this] object DefaultVals extends Enumeration {
+  object DefaultVals extends Enumeration {
     // hbase集群名，用于区分不同的hbase-site.xml文件
     val hbaseName = "batch"
+
     // 默认的kafka broker地址
     val kafkaBrokers = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092"
+    // 启动应用时默认的kafka消费位点
+    val kafkaStartingOffset = KafkaConf.offsetLargest
+    // 数据丢失时执行失败
+    val kafkaFailOnDataLoss = true
+    // enable.auto.commit
+    val kafkaEnableAutoCommit = false
+
     // 默认的zookeeper地址
     val zkUrl = "192.168.25.38:2181,192.168.25.39:2181,192.168.25.40:2181,192.168.25.41:2181,192.168.25.42:2181"
     // spark 默认的checkpoint地址
@@ -62,6 +70,14 @@ object GlobalConstants {
     val IMPALA_JDBC_DRIVER_NAME_KEY: String = "impala.jdbc.driver.class.name"
     val IMPALA_DAEMONS_URL = "impala.daemons.url"
     val KAFKA_BROKERS_URL = "spark.kafka.brokers.url"
+    // kafka的topic列表，以逗号分隔
+    val KAFKA_TOPICS = "spark.kafka.topics"
+    val KAFKA_STARTING_OFFSET = "spark.kafka.starting.offsets"
+    // 丢失数据是否失败
+    val KAFKA_FAIL_ON_DATA_LOSS = "spark.kafka.failOnDataLoss"
+    val KAFKA_ENABLE_AUTO_COMMIT = "spark.kafka.enable.auto.commit"
+    // group.id
+    val KAFKA_GROUP_ID = "spark.kafka.group.id"
 
     // spark相关配置
     val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
@@ -102,8 +118,6 @@ object GlobalConstants {
   val HBASE_NAME = PropUtils.getString(PropKeys.HBASE_NAME_URL, DefaultVals.hbaseName)
   val isCluster = if (CLUSTER_KEY.equalsIgnoreCase(PropUtils.getString(PropKeys.RUNMODEL_KEY))) true else false
   val isLocal = !isCluster
-  // kafka broker地址
-  val kafkaBrokers = PropUtils.getString(PropKeys.KAFKA_BROKERS_URL, DefaultVals.kafkaBrokers)
   // zookeeper地址
   val zkUrl = PropUtils.getString(PropKeys.ZK_URL, DefaultVals.zkUrl)
 
@@ -119,6 +133,17 @@ object GlobalConstants {
     val chkPointDirPrefix = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
     val defaultDB = PropUtils.getString(PropKeys.SPARK_DEFAULT_DATABASE_NAME, DefaultVals.dbName)
     val partitionName = PropUtils.getString(PropKeys.SPARK_DEFAULT_TABLE_PARTITION_NAME, DefaultVals.partitionName)
+    val kafkaTopics = PropUtils.getString(PropKeys.KAFKA_TOPICS, null)
+    // kafka broker地址
+    val kafkaBrokers = PropUtils.getString(PropKeys.KAFKA_BROKERS_URL, DefaultVals.kafkaBrokers)
+    // kafka消费位点
+    val kafkaStartingOffset = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, DefaultVals.kafkaStartingOffset)
+    // 丢失数据时是否失败
+    val kafkaFailOnDataLoss = PropUtils.getBoolean(PropKeys.KAFKA_FAIL_ON_DATA_LOSS, DefaultVals.kafkaFailOnDataLoss)
+    // enable.auto.commit
+    val kafkaEnableAutoCommit = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, DefaultVals.kafkaEnableAutoCommit)
+    // group.id
+    val kafkaGroupId = PropUtils.getString(PropKeys.KAFKA_GROUP_ID, "")
   }
 
   /**

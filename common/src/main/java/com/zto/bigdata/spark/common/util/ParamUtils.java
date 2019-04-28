@@ -115,13 +115,28 @@ public class ParamUtils {
     /**
      * 参数非空约束
      *
-     * @param params
+     * @param param   参数信息
+     * @param message 异常信息
      */
-    public void requireNonNull(Object... params) {
-        if (params != null && params.length > 0) {
-            for (Object param : params) {
-                Objects.requireNonNull(param, "参数不能为空");
-            }
+    public static void requireNonNull(Object param, String message) {
+        Objects.requireNonNull(param, message);
+    }
+
+    /**
+     * 参数非空约束（严格模式，进一步验证集合是否有元素）
+     *
+     * @param param   参数信息
+     * @param message 异常信息
+     */
+    public static void requireNonNullForce(Object param, String message) {
+        requireNonNull(param, message);
+        if (param instanceof String && StringUtils.isBlank((String) param)) {
+            throw new IllegalArgumentException(message);
+        } else if (param instanceof Collection && ((Collection) param).size() == 0) {
+            throw new IllegalArgumentException(message);
+        } else if (param instanceof Map && ((Map) param).size() == 0) {
+            throw new IllegalArgumentException(message);
         }
     }
+
 }

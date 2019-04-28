@@ -33,6 +33,14 @@ trait BaseSpark extends SparkListener with Serializable {
   val logger = new LogUtils(log)
   var applicationId: String = _
   var webUI: String = _
+  this.init
+
+  /**
+    * 初始化
+    */
+  private[this] def init: Unit = {
+    PropUtils.load(this.appName)
+  }
 
   /**
     * 程序初始化方法，用于初始化必要的值
@@ -112,4 +120,23 @@ trait BaseSpark extends SparkListener with Serializable {
     ThreadUtils.runAsSchedule(this.threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount, debug)
   }
 
+  /**
+    * 根据key获取配置信息
+    *
+    * @param key
+    * properties中的key
+    * @return
+    * 配置的值
+    */
+  def getConf(key: String): String = {
+    PropUtils.getString(key)
+  }
+
+  /**
+    * 获取appName
+    * @return
+    */
+  def getAppName: String = {
+    this.appName
+  }
 }

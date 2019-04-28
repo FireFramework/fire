@@ -22,7 +22,6 @@ class BaseSparkCore extends BaseSpark {
     * Spark配置信息
     */
   override def init(appName: String = "", conf: SparkConf = null): Unit = {
-    PropUtils.load(this.appName)
     val tmpAppName = if (StringUtils.isBlank(appName)) this.appName else appName
     if (conf == null) {
       this.conf = new SparkConf()

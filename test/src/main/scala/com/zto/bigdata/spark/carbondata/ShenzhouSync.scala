@@ -28,22 +28,19 @@ object ShenzhouSync extends BaseStructuredStreaming {
     }
 
     this.runAsThread(write2Carbondata)
-    this.runAsSchedule(this.printCount, 60, 1, true)
   }
 
   /**
     * 数据写入到carbondata中
     */
   def write2Carbondata: Unit = {
-    val result = spark.loadKafkaParseJson(brokers, mutable.HashMap[String, String]("subscribe" -> topicSet, "failOnDataLoss" -> "false", "startingOffsets" -> "latest"), classOf[Senda])
-    result.writeStream2Carbon(this.dbName, this.tableName, Trigger.ProcessingTime("5 seconds"))
-  }
-
-  /**
-    * 统计表中的记录数
-    */
-  def printCount: Unit = {
-    spark.sql(s"select count(1) from ${this.dbName}.$tableName").show()
+    val result = spark.loadKafkaParseJson(classOf[Senda])
+    result.printSchema()
+    result.select("before.area_bill_fee").printSchema()
+    println("=====================================")
+    result.select("after.bill_code").printSchema()
+    result.writeStream2Console
+    // result.writeStream2Carbon(this.dbName, this.tableName, Trigger.ProcessingTime("5 seconds"))
   }
 
 }

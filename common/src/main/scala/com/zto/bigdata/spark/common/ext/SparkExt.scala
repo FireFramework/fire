@@ -336,6 +336,8 @@ object SparkExt {
     /**
       * 消费kafka中的json数据，并解析成目标类型
       *
+      * @param schemaClass
+      * json对应的javabean类型
       * @param brokers
       * brokers地址
       * @param extraOptions
@@ -345,9 +347,15 @@ object SparkExt {
       * @return
       * 转换成json字符串后的Dataset
       */
-    def loadKafkaParseJson(brokers: String, extraOptions: mutable.HashMap[String, String], schemaClass: Class[_], requireBefore: Boolean = false): DataFrame = {
-      val kafkaDataset = this.loadKafka(brokers, extraOptions)
+    def loadKafkaParseJson(schemaClass: Class[_],
+                           brokers: String = GlobalConstants.SparkConf.kafkaBrokers,
+                           extraOptions: mutable.HashMap[String, String] = mutable.HashMap[String, String]("subscribe" -> GlobalConstants.SparkConf.kafkaTopics, "failOnDataLoss" -> GlobalConstants.SparkConf.kafkaFailOnDataLoss.toString, "startingOffsets" -> GlobalConstants.SparkConf.kafkaStartingOffset, "enable.auto.commit" -> GlobalConstants.SparkConf.kafkaEnableAutoCommit.toString),
+                           requireBefore: Boolean = false): DataFrame = {
+      ParamUtils.requireNonNullForce(brokers, "kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.url ]指定")
+      ParamUtils.requireNonNullForce(extraOptions, "kafka extraOptions不能为空")
+      ParamUtils.requireNonNullForce(extraOptions.getOrElse("subscribe", null), "topic不能为空，可在配置文件中[ spark.kafka.topics ]指定")
 
+      val kafkaDataset = this.loadKafka(brokers, extraOptions)
       val schemaDataset = kafkaDataset.select(from_json($"value", SparkUtils.buildSchema2Kafka(schemaClass, requireBefore)).as("data"))
       if (requireBefore)
         schemaDataset.select("data.*")
@@ -395,6 +403,7 @@ object SparkExt {
 
     /**
       * 对指定的表执行minor compact
+      *
       * @param dbName
       * @param tableName
       * @return
@@ -405,6 +414,7 @@ object SparkExt {
 
     /**
       * 对指定的表执行minor major
+      *
       * @param dbName
       * @param tableName
       * @return
@@ -415,6 +425,7 @@ object SparkExt {
 
     /**
       * 将普通的carbondata表转换为streaming表
+      *
       * @param dbName
       * @param tableName
       * @return
@@ -1388,6 +1399,7 @@ object SparkExt {
 
     /**
       * 以merge的方式将数据写入到关系型数据库中
+      *
       * @param dbName
       * @param tableName
       */
@@ -1420,9 +1432,25 @@ object SparkExt {
       * @return
       * DStream
       */
-    def createDirectStream(kafkaParams: Map[String, Object], topics: Set[String], level: StorageLevel = StorageLevel.MEMORY_AND_DISK_SER): DStream[ConsumerRecord[String, String]] = {
+    def createDirectStream(kafkaParams: Map[String, Object] = this.kafkaParams(), topics: Set[String] = SparkUtils.topicSplit(GlobalConstants.SparkConf.kafkaTopics), level: StorageLevel = StorageLevel.NONE): DStream[ConsumerRecord[String, String]] = {
       KafkaUtils.createDirectStream[String, String](
-        ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams)) //.map(t => (t.key(), t.value()))//.persist(level)
+        ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams))
+    }
+
+    /**
+      * kafka配置信息
+      *
+      * @param groupId
+      * 消费组
+      * @param offset
+      * offset位点，smallest、largest，默认为largest
+      * @return
+      * kafka相关配置
+      */
+    def kafkaParams(groupId: String = GlobalConstants.SparkConf.kafkaGroupId, kafkaBrokers: String = GlobalConstants.SparkConf.kafkaBrokers, offset: String = GlobalConstants.KafkaConf.offsetLargest, commit: Boolean = GlobalConstants.SparkConf.kafkaEnableAutoCommit): Map[String, Object] = {
+      // 如果配置文件中没有指定spark.kafka.group.id，则默认为appName
+      val kafkaGroupId = if (StringUtils.isNotBlank(groupId)) groupId else ssc.sparkContext.appName
+      SparkUtils.kafkaParams(kafkaGroupId, kafkaBrokers, offset)
     }
 
     /**

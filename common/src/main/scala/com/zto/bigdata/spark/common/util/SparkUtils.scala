@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil
 import org.apache.hadoop.hbase.util.{Base64, Bytes}
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
@@ -374,10 +375,14 @@ object SparkUtils {
     * @return
     */
   def buildSchema2Kafka(beanClazz: Class[_], requireBefore: Boolean = false): StructType = {
-    val schema = new StructType().add("table", StringType)
-      .add("after", StructType(SparkUtils.buildSchemaFromBean(beanClazz)))
-    if (requireBefore) schema.add("before", StructType(SparkUtils.buildSchemaFromBean(beanClazz)))
-    schema
+    if (requireBefore) {
+      new StructType().add("table", StringType)
+        .add("after", StructType(SparkUtils.buildSchemaFromBean(beanClazz)))
+        .add("before", StructType(SparkUtils.buildSchemaFromBean(beanClazz)))
+    } else {
+      new StructType().add("table", StringType)
+        .add("after", StructType(SparkUtils.buildSchemaFromBean(beanClazz)))
+    }
   }
 
   /**
@@ -526,11 +531,8 @@ object SparkUtils {
     * @return
     */
   def topicSplit(topics: String, splitStr: String = ","): Set[String] = {
-    if (StringUtils.isBlank(topics)) {
-      throw new IllegalArgumentException("topic不合法")
-    } else {
-      topics.split(splitStr).filter(topic => StringUtils.isNotBlank(topic)).map(topic => topic.trim).toSet
-    }
+    ParamUtils.requireNonNullForce(topics, "topic不能为空，请在配置文件中[ spark.kafka.topics ]配置")
+    topics.split(splitStr).filter(topic => StringUtils.isNotBlank(topic)).map(topic => topic.trim).toSet
   }
 
   /**
@@ -558,5 +560,26 @@ object SparkUtils {
     */
   def getApplicationId(spark: SparkSession): String = {
     spark.sparkContext.applicationId
+  }
+
+  /**
+    * kafka配置信息
+    *
+    * @param groupId
+    * 消费组
+    * @param offset
+    * smallest、largest
+    * @return
+    * kafka相关配置
+    */
+  def kafkaParams(groupId: String = GlobalConstants.SparkConf.kafkaGroupId, kafkaBrokers: String = GlobalConstants.SparkConf.kafkaBrokers, offset: String = GlobalConstants.KafkaConf.offsetLargest, commit: Boolean = GlobalConstants.SparkConf.kafkaEnableAutoCommit): Map[String, Object] = {
+    Map[String, Object](
+      "bootstrap.servers" -> kafkaBrokers,
+      "key.deserializer" -> classOf[StringDeserializer],
+      "value.deserializer" -> classOf[StringDeserializer],
+      "group.id" -> groupId,
+      "auto.offset.reset" -> offset,
+      "enable.auto.commit" -> (commit: java.lang.Boolean)
+    )
   }
 }

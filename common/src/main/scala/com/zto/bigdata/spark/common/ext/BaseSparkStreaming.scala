@@ -31,7 +31,6 @@ trait BaseSparkStreaming extends BaseSpark {
     * Streaming每个批次间隔时间
     */
   def init(batchDuration: Long, checkPoint: Boolean): Unit = {
-    PropUtils.load(this.appName)
     val tmpConf = buildConf(this.appName)
     if (checkPoint) {
       tmpConf.set("spark.streaming.receiver.writeAheadLog.enable", "true")
@@ -48,6 +47,7 @@ trait BaseSparkStreaming extends BaseSpark {
     } else {
       this.checkPointDir = GlobalConstants.SparkConf.chkPointDirPrefix + this.appName
       this.ssc = StreamingContext.getOrCreate(this.checkPointDir, createStreamingContext _)
+
       // 初始化Streaming
       def createStreamingContext(): StreamingContext = {
         this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(batchDuration)))
@@ -122,12 +122,13 @@ trait BaseSparkStreaming extends BaseSpark {
 
   /**
     * 解析DStream中每个rdd的json数据，并转为DataFrame类型
+    *
     * @param rdd
-    *            DStream中的每个rdd
+    * DStream中的每个rdd
     * @param schema
-    *              目标DataFrame类型的schema
+    * 目标DataFrame类型的schema
     * @param requireBefore
-    *                      是否需要before信息
+    * 是否需要before信息
     * @return
     */
   def parseJson2DataFrameV(rdd: RDD[String], schema: Class[_], requireBefore: Boolean = false): DataFrame = {
@@ -141,12 +142,13 @@ trait BaseSparkStreaming extends BaseSpark {
 
   /**
     * 解析DStream中每个rdd的json数据，并转为DataFrame类型
+    *
     * @param rdd
-    *            DStream中的每个rdd
+    * DStream中的每个rdd
     * @param schema
-    *              目标DataFrame类型的schema
+    * 目标DataFrame类型的schema
     * @param requireBefore
-    *                      是否需要before信息
+    * 是否需要before信息
     * @return
     */
   def parseJson2DataFrame(rdd: RDD[ConsumerRecord[String, String]], schema: Class[_], requireBefore: Boolean = false): DataFrame = {
@@ -164,19 +166,14 @@ trait BaseSparkStreaming extends BaseSpark {
     * @param groupId
     * 消费组
     * @param offset
-    * smallest、largest
+    * offset位点，smallest、largest，默认为largest
     * @return
     * kafka相关配置
     */
-  def kafkaParams(groupId: String = this.appName, kafkaBrokers: String = GlobalConstants.kafkaBrokers, offset: String = GlobalConstants.KafkaConf.offsetLargest, commit: Boolean = true): Map[String, Object] = {
-    Map[String, Object](
-      "bootstrap.servers" -> kafkaBrokers,
-      "key.deserializer" -> classOf[StringDeserializer],
-      "value.deserializer" -> classOf[StringDeserializer],
-      "group.id" -> groupId,
-      "auto.offset.reset" -> offset,
-      "enable.auto.commit" -> (commit: java.lang.Boolean)
-    )
+  def kafkaParams(groupId: String = GlobalConstants.SparkConf.kafkaGroupId, kafkaBrokers: String = GlobalConstants.SparkConf.kafkaBrokers, offset: String = GlobalConstants.KafkaConf.offsetLargest, commit: Boolean = GlobalConstants.SparkConf.kafkaEnableAutoCommit): Map[String, Object] = {
+    // 如果配置文件中没有指定spark.kafka.group.id，则默认为appName
+    val kafkaGroupId = if (StringUtils.isNotBlank(groupId)) groupId else this.appName
+    SparkUtils.kafkaParams(kafkaGroupId, kafkaBrokers, offset)
   }
 
   /**
@@ -189,11 +186,12 @@ trait BaseSparkStreaming extends BaseSpark {
     kafkaProperties.put("acks", "all")
     kafkaProperties.put("retries", "3")
     kafkaProperties.put("serializer.class", "kafka.serializer.StringEncoder")
-    kafkaProperties.put("metadata.broker.list", GlobalConstants.kafkaBrokers) // 声明kafka
+    kafkaProperties.put("metadata.broker.list", GlobalConstants.SparkConf.kafkaBrokers) // 声明kafka
   }
 
   /**
     * 用于重置StreamingContext
+    *
     * @param request
     * @param response
     * @return

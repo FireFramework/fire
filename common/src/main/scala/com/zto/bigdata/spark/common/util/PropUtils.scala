@@ -92,4 +92,15 @@ object PropUtils {
     val value = props.getProperty(key)
     if (StringUtils.isNotBlank(value)) value.toBoolean else false
   }
+
+  /**
+    * 获取布尔值数据
+    *
+    * @param key
+    * @return
+    */
+  def getBoolean(key: String, default: Boolean): Boolean = {
+    val value = this.getBoolean(key)
+    if (value != null) value else default
+  }
 }
