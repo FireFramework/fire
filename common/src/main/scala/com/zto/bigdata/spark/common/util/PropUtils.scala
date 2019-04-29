@@ -4,6 +4,7 @@ import java.io.InputStream
 import java.util.Properties
 
 import org.apache.commons.lang3.StringUtils
+import com.zto.bigdata.spark.common.ext.ScalaExt._
 
 /**
   * 读取配置文件工具类
@@ -102,5 +103,16 @@ object PropUtils {
   def getBoolean(key: String, default: Boolean): Boolean = {
     val value = this.getBoolean(key)
     if (value != null) value else default
+  }
+
+  /**
+    * 打印配置文件中的kv
+    */
+  def print(): Unit = {
+    println(GlobalConstants.PS1.YELLOW + "< -------------------------------------- 配置信息 -------------------------------------- >" + GlobalConstants.PS1.DEFAULT)
+    this.props.keySet().toScalaSet.foreach(key => {
+      println(">> " + GlobalConstants.PS1.PINK + key + " --> " + this.props.get(key) + GlobalConstants.PS1.DEFAULT)
+    })
+    println(GlobalConstants.PS1.YELLOW + "< -------------------------------------------------------------------------------------- >" + GlobalConstants.PS1.DEFAULT)
   }
 }

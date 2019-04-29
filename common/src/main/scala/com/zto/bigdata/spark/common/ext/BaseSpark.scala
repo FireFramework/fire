@@ -40,6 +40,7 @@ trait BaseSpark extends SparkListener with Serializable {
     */
   private[this] def init: Unit = {
     PropUtils.load(this.appName)
+    PropUtils.print()
   }
 
   /**
