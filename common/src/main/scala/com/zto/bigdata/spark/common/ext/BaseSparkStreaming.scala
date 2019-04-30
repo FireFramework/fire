@@ -74,7 +74,8 @@ trait BaseSparkStreaming extends BaseSpark {
     val tmpAppName = if (StringUtils.isBlank(appName)) this.appName else appName
     new SparkConf()
       .setAppName(tmpAppName)
-      .set("spark.speculation", "true")
+      // 开启后可能会导致streaming不稳定
+      // .set("spark.speculation", "true")
       .set("spark.port.maxRetries", "200")
       .set("spark.ui.retainedJobs", "500")
       .set("spark.ui.retailedStages", "300")
@@ -83,10 +84,12 @@ trait BaseSparkStreaming extends BaseSpark {
       .set("spark.storage.memoryFraction", "0.4")
       // .set("spark.streaming.concurrentJobs", "2")
       .set("spark.ui.timeline.tasks.maximum", "300")
+      .set("spark.sql.parquet.writeLegacyFormat", "true")
       .set("spark.streaming.backpressure.enabled", "true")
       .set("spark.streaming.stopGracefullyOnShutdown", "true")
+      // 解决cluster模式下不稳定的问题
+      .set("spark.streaming.kafka.consumer.cache.enabled", "false")
       // .set("spark.streaming.kafka.maxRatePerPartition", "10000") // 每个批次从每个partition中每秒中最大拉取的数据量
-      .set("spark.sql.parquet.writeLegacyFormat", "true")
       .set("hive.metastore.uris", GlobalConstants.HiveConf.metaStoreUris)
   }
 
@@ -107,7 +110,7 @@ trait BaseSparkStreaming extends BaseSpark {
     if (SystemInfoUtils.isWindows) {
       this.spark = SparkSession.builder().config(this.conf).master("local[*]").enableHiveSupport().getOrCreate()
     } else {
-      this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
+      this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreate()//.getOrCreateCarbonSession
     }
     this.spark.registerAll()
     this.sc = this.spark.sparkContext

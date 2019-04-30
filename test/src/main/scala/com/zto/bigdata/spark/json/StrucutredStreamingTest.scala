@@ -4,8 +4,6 @@ import com.zto.bigdata.spark.bean.Senda
 import com.zto.bigdata.spark.common.ext.BaseStructuredStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
 
-import scala.collection.mutable
-
 /**
   * 本示例用于演示structured streaming如何将kafka中的json数据解析为指定的DataFrame
   *
