@@ -2,17 +2,18 @@ package com.zto.bigdata.spark.common.ext
 
 import java.util.Properties
 
+import com.alibaba.fastjson.JSON
+import com.zto.bigdata.spark.common.bean.RestartParams
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.rest.RestCase
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{ColumnName, DataFrame, Encoders, SparkSession}
 import org.apache.spark.sql.CarbonSession._
 import org.apache.spark.sql.functions.from_json
+import org.apache.spark.sql.{ColumnName, DataFrame, Encoders, SparkSession}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import spark.{Request, Response}
 
@@ -23,6 +24,7 @@ import spark.{Request, Response}
 trait BaseSparkStreaming extends BaseSpark {
   var checkPointDir: String = _
   var batchDuration: Long = _
+  var externalConf: RestartParams = _
 
   /**
     * 程序初始化方法，用于初始化必要的值
@@ -37,11 +39,19 @@ trait BaseSparkStreaming extends BaseSpark {
     }
     if (this.sc == null) {
       this.init(this.appName, tmpConf)
-      this.restfulRegister.addRest(RestCase("get", "/system/restartStreaming", this.restartStreaming))
+      this.restfulRegister.addRest(RestCase("get", "/system/restartStreaming", this.restartStreaming)).startRestServer
     }
     this.batchDuration = batchDuration
     if (!checkPoint) {
-      this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(batchDuration)))
+      if (this.externalConf != null && this.externalConf.isRestartSparkContext) {
+        if (this.externalConf.getSparkConf != null && this.externalConf.getSparkConf.size() > 0) {
+          tmpConf.setAll(this.externalConf.getSparkConf.toScalaMap)
+        }
+        this.ssc = new StreamingContext(tmpConf, Seconds(Math.abs(batchDuration)))
+        this.sc = this.ssc.sparkContext
+      } else {
+        this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(batchDuration)))
+      }
       this.ssc.remember(Seconds(Math.abs(batchDuration) * 10))
       this.process
     } else {
@@ -89,7 +99,7 @@ trait BaseSparkStreaming extends BaseSpark {
       .set("spark.streaming.stopGracefullyOnShutdown", "true")
       // 解决cluster模式下不稳定的问题
       .set("spark.streaming.kafka.consumer.cache.enabled", "false")
-      // .set("spark.streaming.kafka.maxRatePerPartition", "10000") // 每个批次从每个partition中每秒中最大拉取的数据量
+      .set("spark.streaming.kafka.maxRatePerPartition", "100") // 每个批次从每个partition中每秒中最大拉取的数据量
       .set("hive.metastore.uris", GlobalConstants.HiveConf.metaStoreUris)
   }
 
@@ -110,7 +120,7 @@ trait BaseSparkStreaming extends BaseSpark {
     if (SystemInfoUtils.isWindows) {
       this.spark = SparkSession.builder().config(this.conf).master("local[*]").enableHiveSupport().getOrCreate()
     } else {
-      this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreate()//.getOrCreateCarbonSession
+      this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
     }
     this.spark.registerAll()
     this.sc = this.spark.sparkContext
@@ -193,7 +203,7 @@ trait BaseSparkStreaming extends BaseSpark {
   }
 
   /**
-    * 用于重置StreamingContext
+    * 用于重置StreamingContext（仅支持batch时间的修改）
     *
     * @param request
     * @param response
@@ -201,9 +211,11 @@ trait BaseSparkStreaming extends BaseSpark {
     */
   def restartStreaming(request: Request, response: Response): AnyRef = {
     val param = request.queryString()
-    this.batchDuration = if (StringUtils.isNotBlank(param)) param.toLong else this.batchDuration
-    this.ssc.stop(false, false)
-    this.init(this.batchDuration, false)
+    if (StringUtils.isNotBlank(param)) {
+      this.externalConf = JSON.parseObject(param, classOf[RestartParams])
+      this.ssc.stop(this.externalConf.isRestartSparkContext, this.externalConf.isStopGracefully)
+      this.init(this.externalConf.getBatchDuration, false)
+    }
     GlobalConstants.Status.SUCCESS
   }
 

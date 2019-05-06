@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.CarbonSession._
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
+import spark.Spark
 
 /**
   * 实时平台Spark通用父类

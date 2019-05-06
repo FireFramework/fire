@@ -4,11 +4,13 @@ import java.util.concurrent.{Executors, TimeUnit}
 
 import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
 import com.zto.bigdata.spark.common.util._
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
+import spark.Spark
 
 /**
   * Spark通用父类
@@ -27,7 +29,8 @@ trait BaseSpark extends SparkListener with Serializable {
   var appName = this.getClass.getSimpleName.replace("$", "")
   lazy val threadPool = Executors.newFixedThreadPool(20)
   lazy val threadPoolSchedule = Executors.newScheduledThreadPool(10)
-  val restfulRegister = new RestfulRegister(this.threadPool)
+  val restPort = SystemInfoUtils.getRundomPort
+  val restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
   private val systemRestful = new SystemRestful(this)
   val log = LoggerFactory.getLogger(this.getClass)
   val logger = new LogUtils(log)
@@ -40,6 +43,9 @@ trait BaseSpark extends SparkListener with Serializable {
     */
   private[this] def init: Unit = {
     PropUtils.load(this.appName)
+    if (StringUtils.isNotBlank(GlobalConstants.SparkConf.appName)) {
+      this.appName = GlobalConstants.SparkConf.appName
+    }
     PropUtils.print()
   }
 
@@ -139,5 +145,19 @@ trait BaseSpark extends SparkListener with Serializable {
     */
   def getAppName: String = {
     this.appName
+  }
+
+  /**
+    * 销毁
+    */
+  def destory: Unit = {
+    if (this.ssc == null) {
+      this.spark.stop()
+    } else {
+      this.ssc.stop(true, false)
+    }
+    this.threadPool.shutdownNow()
+    this.threadPoolSchedule.shutdownNow()
+    Spark.stop()
   }
 }

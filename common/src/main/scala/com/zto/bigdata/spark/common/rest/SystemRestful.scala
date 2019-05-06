@@ -6,6 +6,7 @@ import com.zto.bigdata.spark.common.anno.Rest
 import com.zto.bigdata.spark.common.ext.BaseSpark
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
+import org.apache.spark.sql.execution.command.CommandUtils
 import spark._
 
 import scala.util.parsing.json.JSONObject
@@ -32,6 +33,17 @@ class SystemRestful(val baseSpark: BaseSpark) {
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/uptime", uptime))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/startTime", startTime))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/sql", sql))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/executorMemory", executorMemory))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/executorInstances", executorInstances))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/executorCores", executorCores))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/driverCores", driverCores))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/driverMemory", driverMemory))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/driverMemoryOverhead", driverMemoryOverhead))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/driverHost", driverHost))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/driverPort", driverPort))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/executorMemoryOverhead", executorMemoryOverhead))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/memory", memory))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/cpu", cpu))
   }
 
   /**
@@ -43,16 +55,9 @@ class SystemRestful(val baseSpark: BaseSpark) {
     */
   @Rest("/system/kill")
   def kill(request: Request, response: Response): AnyRef = {
-    if (this.baseSpark.ssc == null) {
-      this.baseSpark.spark.stop()
-    } else {
-      this.baseSpark.ssc.stop(true, false)
-    }
-    this.baseSpark.threadPool.shutdownNow()
-    this.baseSpark.threadPoolSchedule.shutdownNow()
-    Spark.stop()
+    this.baseSpark.destory
+    ProcessUtil.executeCmds(s"yarn application -kill ${this.baseSpark.applicationId}", s"kill -9 ${SystemInfoUtils.getPid}")
     System.exit(0)
-    ProcessUtil.execAndWaitFor(s"kill -9 ${SystemInfoUtils.getPid}")
     GlobalConstants.Status.SUCCESS
   }
 
@@ -195,5 +200,128 @@ class SystemRestful(val baseSpark: BaseSpark) {
   @Rest("/system/uptime")
   def uptime(request: Request, response: Response): AnyRef = {
     SparkUtils.runTime(this.baseSpark.startTime)
+  }
+
+  /**
+    * 获取executor内存信息
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/executorMemory")
+  def executorMemory(request: Request, response: Response): AnyRef = {
+    this.baseSpark.sc.getConf.get("spark.executor.memory", "1")
+  }
+
+  /**
+    * 获取executor个数
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/executorInstances")
+  def executorInstances(request: Request, response: Response): AnyRef = {
+    this.baseSpark.sc.getConf.get("spark.executor.instances", "1")
+  }
+
+  /**
+    * 获取executor cpu数量
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/executorCores")
+  def executorCores(request: Request, response: Response): AnyRef = {
+    this.baseSpark.sc.getConf.get("spark.executor.cores", "1")
+  }
+
+  /**
+    * 获取driver cpu数量
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/driverCores")
+  def driverCores(request: Request, response: Response): AnyRef = {
+    this.baseSpark.sc.getConf.get("spark.driver.cores", "1")
+  }
+
+  /**
+    * 获取driver内存大小
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/driverMemory")
+  def driverMemory(request: Request, response: Response): AnyRef = {
+    this.baseSpark.sc.getConf.get("spark.driver.memory", "1")
+  }
+
+  /**
+    * 获取driver堆外内存大小
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/driverMemoryOverhead")
+  def driverMemoryOverhead(request: Request, response: Response): AnyRef = {
+    this.baseSpark.sc.getConf.get("spark.yarn.driver.memoryOverhead", "0")
+  }
+
+  /**
+    * 获取driver所在服务器ip
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/driverHost")
+  def driverHost(request: Request, response: Response): AnyRef = {
+    this.baseSpark.sc.getConf.get("spark.driver.host", "0")
+  }
+
+  /**
+    * 获取driver占用的端口号
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/driverPort")
+  def driverPort(request: Request, response: Response): AnyRef = {
+    this.baseSpark.sc.getConf.get("spark.driver.port", "0")
+  }
+
+  /**
+    * 获取堆外内存大小
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/executorMemoryOverhead")
+  def executorMemoryOverhead(request: Request, response: Response): AnyRef = {
+    this.baseSpark.sc.getConf.get("spark.yarn.executor.memoryOverhead", "0")
+  }
+
+  /**
+    * 获取当前任务的总内存
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/memory")
+  def memory(request: Request, response: Response): AnyRef = {
+    // driver的总内存大小 + executor的总内存大小
+    (this.driverMemory(request, response).toString.replace("g", "").toInt + this.driverMemoryOverhead(request, response).toString.replace("g", "").toInt + this.executorInstances(request, response).toString.toInt * (this.executorMemory(request, response).toString.replace("g", "").toInt + this.executorMemoryOverhead(request, response).toString.replace("g", "").toInt)).toString
+  }
+
+  /**
+    * 获取当前任务的总cpu数量
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/cpu")
+  def cpu(request: Request, response: Response): AnyRef = {
+    // executor总数 * 每个executor的cpu数 + driver的cpu数
+    (this.executorInstances(request, response).toString.toInt * this.executorCores(request, response).toString.toInt + this.driverCores(request, response).toString.toInt).toString
   }
 }

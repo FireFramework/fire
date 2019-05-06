@@ -23,20 +23,29 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
     }
 
     this.runAsSchedule(this.printCount, 60 * 60, 1, true)
-    this.runAsThread(this.kafka)
   }
 
-  def kafka: Unit = {
+
+  /**
+    * Spark处理过程
+    * 注：此方法会被自动调用，若需使用
+    * checkpoint中的数据，则子类必须复写该方法
+    */
+  override def process: Unit = {
     // 默认broker、topic、groupId等信息从该类同名的配置文件中读取，比如当前类名为Shenzhou，那么默认会从Shenzhou.properties中读取配置
     // 使用该方法需导入：import com.zto.bigdata.spark.common.ext.SparkExt._
     val dstream = this.ssc.createDirectStream()
     dstream.foreachRDD((rdd, time) => {
       // this.parseJson2DataFrame(rdd, classOf[Senda]).writeStreaming2Carbon(this.dbName, tableName, time)
       // 将json数据解析成Senda对象对应的类型
+      rdd.foreach(v => {
+        Thread.sleep(10)
+      })
       this.parseJson2DataFrame(rdd, classOf[Senda]).write2Carbon(this.dbName, tableName, null, SaveMode.Overwrite)
     })
 
-    this.ssc.startAwaitTermination()
+    this.ssc.start()
+    this.ssc.awaitTermination()
   }
 
 

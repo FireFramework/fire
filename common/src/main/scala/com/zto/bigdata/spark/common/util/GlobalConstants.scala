@@ -114,9 +114,8 @@ object GlobalConstants {
   /**
     * 集群相关配置
     */
-  val CLUSTER_KEY = "cluster"
   val HBASE_NAME = PropUtils.getString(PropKeys.HBASE_NAME_URL, DefaultVals.hbaseName)
-  val isCluster = if (CLUSTER_KEY.equalsIgnoreCase(PropUtils.getString(PropKeys.RUNMODEL_KEY))) true else false
+  val isCluster = SystemInfoUtils.isLinux
   val isLocal = !isCluster
   // zookeeper地址
   val zkUrl = PropUtils.getString(PropKeys.ZK_URL, DefaultVals.zkUrl)
@@ -125,7 +124,7 @@ object GlobalConstants {
     * Spark相关常量配置
     */
   object SparkConf extends Enumeration {
-    val appName = PropUtils.getString(PropKeys.APP_NAME_KEY, "spark")
+    val appName = PropUtils.getString(PropKeys.APP_NAME_KEY, "")
     val sparkConf = PropUtils.getString(PropKeys.SPARK_CONF_KEY)
     val logLevel = PropUtils.getString(PropKeys.LOG_LEVEL, DefaultVals.logLevel)
     val saveMode = if ("Overwrite".equalsIgnoreCase(PropUtils.getString(PropKeys.SAVE_MODE_KEY))) SaveMode.Overwrite else SaveMode.Append

@@ -13,7 +13,7 @@ import scala.collection.mutable
   */
 object ShenzhouSync extends BaseStructuredStreaming {
   val dbName = "tmp"
-  val tableName = "test_senda2"
+  val tableName = "test_senda6"
 
   def main(args: Array[String]): Unit = {
     this.init()
