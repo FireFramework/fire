@@ -1,11 +1,7 @@
 package com.zto.bigdata.spark.common.ext
 
-import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util._
-import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.CarbonSession._
 
 /**
   * Structured Streaming通用父类
@@ -16,48 +12,33 @@ class BaseStructuredStreaming extends BaseSpark {
   /**
     * 程序初始化方法，用于初始化必要的值
     *
-    * @param appName
-    * job名称
     * @param conf
     * Spark配置信息
+    * @param args main方法参数
     */
-  override def init(appName: String = "", conf: SparkConf = null): Unit = {
-    this.buildConf(conf, appName)
-    if (SystemInfoUtils.isWindows) {
-      this.spark = SparkSession.builder().config(this.conf).master("local[*]").enableHiveSupport().getOrCreate()
-    } else {
-      this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
-    }
-    this.spark.registerAll()
-    this.initParams
-  }
-
-  /**
-    * 初始化参数信息
-    */
-  private def initParams = {
-    this.sc = this.spark.sparkContext
-    this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
-    this.sc.addSparkListener(new BaseSparkListener(this))
-    this.hiveContext = this.spark.sqlContext
-    this.sqlContext = this.hiveContext
-    this.hbaseContext = SingletonFactory.getHBaseContextInstance(sc)
-    this.applicationId = SparkUtils.getApplicationId(this.spark)
-    this.webUI = SparkUtils.getWebUI(this.spark)
+  override def init(conf: SparkConf = null, args: Array[String] = null): Unit = {
+    super.init(conf, args)
     this.process
   }
 
   /**
-    * 构建spark-conf
-    * @param conf
-    * @param tmpAppName
-    * @return
+    * Spark处理过程
+    * 注：此方法会被自动调用
     */
-  private def buildConf(conf: SparkConf, tmpAppName: String) = {
-    val tmpAppName = if (StringUtils.isBlank(appName)) this.appName else appName
+  override def process: Unit = {}
+
+  /**
+    * 构建或合并SparkConf
+    *
+    * @param conf
+    * 在conf基础上构建
+    * @return
+    * 合并后的SparkConf对象
+    */
+  override def buildConf(conf: SparkConf): SparkConf = {
     if (conf == null) {
-      this.conf = new SparkConf()
-        .setAppName(tmpAppName)
+      new SparkConf()
+        .setAppName(this.appName)
         .set("spark.port.maxRetries", "200")
         .set("spark.default.parallelism", "1000")
         .set("spark.sql.broadcastTimeout", "3000")
@@ -66,13 +47,8 @@ class BaseStructuredStreaming extends BaseSpark {
         .set("spark.scheduler.listenerbus.eventqueue.size", "130000")
         .set("hive.metastore.uris", GlobalConstants.HiveConf.metaStoreUris)
     } else {
-      this.conf = conf
+      conf
     }
   }
 
-  /**
-    * Spark处理过程
-    * 注：此方法会被自动调用
-    */
-  override def process: Unit = {}
 }

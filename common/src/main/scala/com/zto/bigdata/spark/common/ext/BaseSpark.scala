@@ -5,6 +5,8 @@ import java.util.concurrent.{Executors, TimeUnit}
 import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
+import com.zto.bigdata.spark.common.ext.SparkExt._
+import org.apache.spark.sql.CarbonSession._
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
@@ -39,7 +41,7 @@ trait BaseSpark extends SparkListener with Serializable {
   this.init
 
   /**
-    * 初始化
+    * 初始化，系统启动时默认执行
     */
   private[this] def init: Unit = {
     PropUtils.load(this.appName)
@@ -52,12 +54,47 @@ trait BaseSpark extends SparkListener with Serializable {
   /**
     * 程序初始化方法，用于初始化必要的值
     *
-    * @param appName
-    * job名称
     * @param conf
-    * Spark配置信息
+    *             Spark配置信息
+    * @param args main方法参数
     */
-  def init(appName: String = this.appName, conf: SparkConf = null): Unit
+  def init(conf: SparkConf = null, args: Array[String] = null): Unit = {
+    this.createContext(conf)
+  }
+
+  /**
+    * 构建或合并SparkConf
+    * 注：不同的子类需根据需要复写该方法
+    *
+    * @param conf
+    * 在conf基础上构建
+    * @return
+    * 合并后的SparkConf对象
+    */
+  def buildConf(conf: SparkConf = null): SparkConf
+
+  /**
+    * 构建一系列context对象
+    */
+  def createContext(conf: SparkConf): Unit = {
+    val tmpConf = if (conf == null) this.buildConf(conf) else conf
+    tmpConf.setAll(PropUtils.toMap)
+    if (SystemInfoUtils.isWindows) {
+      this.spark = SparkSession.builder().config(tmpConf).master("local[*]").enableHiveSupport().getOrCreate()
+    } else {
+      this.spark = SparkSession.builder().config(tmpConf).enableHiveSupport().getOrCreateCarbonSession
+    }
+    this.spark.registerAll()
+    this.sc = this.spark.sparkContext
+    this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
+    this.sc.addSparkListener(new BaseSparkListener(this))
+    this.hiveContext = this.spark.sqlContext
+    this.sqlContext = this.hiveContext
+    this.hbaseContext = SingletonFactory.getHBaseContextInstance(sc)
+    this.applicationId = SparkUtils.getApplicationId(this.spark)
+    this.webUI = SparkUtils.getWebUI(this.spark)
+    this.conf = tmpConf
+  }
 
   /**
     * Spark处理过程
@@ -128,27 +165,7 @@ trait BaseSpark extends SparkListener with Serializable {
   }
 
   /**
-    * 根据key获取配置信息
-    *
-    * @param key
-    * properties中的key
-    * @return
-    * 配置的值
-    */
-  def getConf(key: String): String = {
-    PropUtils.getString(key)
-  }
-
-  /**
-    * 获取appName
-    * @return
-    */
-  def getAppName: String = {
-    this.appName
-  }
-
-  /**
-    * 销毁
+    * 资源回收与应用关闭
     */
   def destory: Unit = {
     if (this.ssc == null) {

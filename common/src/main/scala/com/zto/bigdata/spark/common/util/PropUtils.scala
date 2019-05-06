@@ -5,6 +5,7 @@ import java.util.Properties
 
 import org.apache.commons.lang3.StringUtils
 import com.zto.bigdata.spark.common.ext.ScalaExt._
+import scala.collection.mutable.Map
 
 /**
   * 读取配置文件工具类
@@ -114,5 +115,19 @@ object PropUtils {
       println(">> " + GlobalConstants.PS1.PINK + key + " --> " + this.props.get(key) + GlobalConstants.PS1.DEFAULT)
     })
     println(GlobalConstants.PS1.YELLOW + "< -------------------------------------------------------------------------------------- >" + GlobalConstants.PS1.DEFAULT)
+  }
+
+  /**
+    * 将配置信息转为Map
+    *
+    * @return
+    * confMap
+    */
+  def toMap: Map[String, String] = {
+    val confMap = scala.collection.mutable.Map[String, String]()
+    this.props.keySet().toScalaSet.foreach(key => {
+      confMap += (key.toString -> this.props.getProperty(key.toString))
+    })
+    confMap
   }
 }

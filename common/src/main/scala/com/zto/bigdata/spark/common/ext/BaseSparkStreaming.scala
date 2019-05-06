@@ -1,7 +1,5 @@
 package com.zto.bigdata.spark.common.ext
 
-import java.util.Properties
-
 import com.alibaba.fastjson.JSON
 import com.zto.bigdata.spark.common.bean.RestartParams
 import com.zto.bigdata.spark.common.ext.SparkExt._
@@ -11,9 +9,8 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.CarbonSession._
 import org.apache.spark.sql.functions.from_json
-import org.apache.spark.sql.{ColumnName, DataFrame, Encoders, SparkSession}
+import org.apache.spark.sql.{ColumnName, DataFrame, Encoders}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import spark.{Request, Response}
 
@@ -31,22 +28,34 @@ trait BaseSparkStreaming extends BaseSpark {
     *
     * @param batchDuration
     * Streaming每个批次间隔时间
+    * @param isCheckPoint
+    * 是否做checkpoint
     */
-  def init(batchDuration: Long, checkPoint: Boolean): Unit = {
-    val tmpConf = buildConf(this.appName)
-    if (checkPoint) {
-      tmpConf.set("spark.streaming.receiver.writeAheadLog.enable", "true")
-    }
+  def init(batchDuration: Long, isCheckPoint: Boolean): Unit = {
+    this.init(batchDuration, isCheckPoint, null)
+  }
+
+  /**
+    * 程序初始化方法，用于初始化必要的值
+    *
+    * @param batchDuration
+    * Streaming每个批次间隔时间
+    * @param isCheckPoint
+    * 是否做checkpoint
+    * @param conf
+    * 传入自己构建的sparkConf对象，可以为空
+    */
+  def init(batchDuration: Long, isCheckPoint: Boolean, conf: SparkConf): Unit = {
+    val tmpConf = buildConf(conf)
     if (this.sc == null) {
-      this.init(this.appName, tmpConf)
+      // 添加streaming相关的restful接口，并启动
       this.restfulRegister.addRest(RestCase("get", "/system/restartStreaming", this.restartStreaming)).startRestServer
+      this.init(tmpConf)
     }
     this.batchDuration = batchDuration
-    if (!checkPoint) {
+    if (!isCheckPoint) {
       if (this.externalConf != null && this.externalConf.isRestartSparkContext) {
-        if (this.externalConf.getSparkConf != null && this.externalConf.getSparkConf.size() > 0) {
-          tmpConf.setAll(this.externalConf.getSparkConf.toScalaMap)
-        }
+        // 重启SparkContext对象
         this.ssc = new StreamingContext(tmpConf, Seconds(Math.abs(batchDuration)))
         this.sc = this.ssc.sparkContext
       } else {
@@ -60,12 +69,56 @@ trait BaseSparkStreaming extends BaseSpark {
 
       // 初始化Streaming
       def createStreamingContext(): StreamingContext = {
-        this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(batchDuration)))
+        tmpConf.set("spark.streaming.receiver.writeAheadLog.enable", "true")
+        if (this.externalConf != null && this.externalConf.isRestartSparkContext) {
+          // 重启SparkContext对象
+          this.ssc = new StreamingContext(tmpConf, Seconds(Math.abs(batchDuration)))
+          this.sc = this.ssc.sparkContext
+        } else {
+          this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(batchDuration)))
+        }
         this.ssc.checkpoint(checkPointDir)
         this.process
         this.ssc
       }
     }
+    this.conf = tmpConf
+  }
+
+  /**
+    * 构建内部使用的SparkConf对象
+    */
+  override def buildConf(conf: SparkConf = null): SparkConf = {
+    val tmpConf = if (conf == null) {
+      new SparkConf()
+        .setAppName(this.appName)
+        // 开启后可能会导致streaming不稳定
+        // .set("spark.speculation", "true")
+        .set("spark.port.maxRetries", "200")
+        .set("spark.ui.retainedJobs", "500")
+        .set("spark.ui.retailedStages", "300")
+        .set("spark.default.parallelism", "300")
+        .set("spark.sql.broadcastTimeout", "3000")
+        .set("spark.storage.memoryFraction", "0.4")
+        .set("spark.streaming.concurrentJobs", "1")
+        .set("spark.ui.timeline.tasks.maximum", "300")
+        .set("spark.sql.parquet.writeLegacyFormat", "true")
+        .set("spark.streaming.backpressure.enabled", "true")
+        .set("spark.streaming.stopGracefullyOnShutdown", "true")
+        // 解决cluster模式下不稳定的问题
+        .set("spark.streaming.kafka.consumer.cache.enabled", "false")
+        .set("spark.streaming.kafka.maxRatePerPartition", "100") // 每个批次从每个partition中每秒中最大拉取的数据量
+        .set("hive.metastore.uris", GlobalConstants.HiveConf.metaStoreUris)
+    } else conf
+
+    // 若重启SparkContext对象，则设置restful传递过来的新的配置信息
+    if (this.externalConf != null && this.externalConf.isRestartSparkContext) {
+      if (this.externalConf.getSparkConf != null && this.externalConf.getSparkConf.size() > 0) {
+        tmpConf.setAll(this.externalConf.getSparkConf.toScalaMap)
+      }
+    }
+
+    tmpConf
   }
 
   /**
@@ -74,63 +127,12 @@ trait BaseSparkStreaming extends BaseSpark {
     * checkpoint中的数据，则子类必须复写该方法
     */
   override def process: Unit = {
-    if (StringUtils.isNotBlank(this.checkPointDir)) throw new IllegalArgumentException(GlobalConstants.PrintModule.REAL_TIME_PROCESS_METHOD)
-  }
-
-  /**
-    * 构建内部使用的SparkConf对象
-    */
-  private def buildConf(appName: String): SparkConf = {
-    val tmpAppName = if (StringUtils.isBlank(appName)) this.appName else appName
-    new SparkConf()
-      .setAppName(tmpAppName)
-      // 开启后可能会导致streaming不稳定
-      // .set("spark.speculation", "true")
-      .set("spark.port.maxRetries", "200")
-      .set("spark.ui.retainedJobs", "500")
-      .set("spark.ui.retailedStages", "300")
-      .set("spark.default.parallelism", "300")
-      .set("spark.sql.broadcastTimeout", "3000")
-      .set("spark.storage.memoryFraction", "0.4")
-      // .set("spark.streaming.concurrentJobs", "2")
-      .set("spark.ui.timeline.tasks.maximum", "300")
-      .set("spark.sql.parquet.writeLegacyFormat", "true")
-      .set("spark.streaming.backpressure.enabled", "true")
-      .set("spark.streaming.stopGracefullyOnShutdown", "true")
-      // 解决cluster模式下不稳定的问题
-      .set("spark.streaming.kafka.consumer.cache.enabled", "false")
-      .set("spark.streaming.kafka.maxRatePerPartition", "100") // 每个批次从每个partition中每秒中最大拉取的数据量
-      .set("hive.metastore.uris", GlobalConstants.HiveConf.metaStoreUris)
-  }
-
-  /**
-    * 程序初始化方法，用于初始化必要的值
-    *
-    * @param appName
-    * job名称，默认为类名称
-    * @param conf
-    * SparkConf配置信息
-    */
-  override def init(appName: String = "", conf: SparkConf = null): Unit = {
-    if (conf == null) {
-      this.conf = this.buildConf(appName)
-    } else {
-      this.conf = conf
+    try {
+      ParamUtils.requireNonNull(this.checkPointDir, "当开启checkPoint机制后，必须复写父类的process方法")
+      ParamUtils.requireNonNull(this.externalConf, "当需要热重启功能时，必须将对接kafka的代码写在process方法内")
+    } finally {
+      this.destory
     }
-    if (SystemInfoUtils.isWindows) {
-      this.spark = SparkSession.builder().config(this.conf).master("local[*]").enableHiveSupport().getOrCreate()
-    } else {
-      this.spark = SparkSession.builder().config(this.conf).enableHiveSupport().getOrCreateCarbonSession
-    }
-    this.spark.registerAll()
-    this.sc = this.spark.sparkContext
-    this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
-    this.sc.addSparkListener(new BaseSparkListener(this))
-    this.hiveContext = this.spark.sqlContext
-    this.sqlContext = this.hiveContext
-    this.hbaseContext = SingletonFactory.getHBaseContextInstance(sc)
-    this.applicationId = SparkUtils.getApplicationId(this.spark)
-    this.webUI = SparkUtils.getWebUI(this.spark)
   }
 
   /**
@@ -190,19 +192,6 @@ trait BaseSparkStreaming extends BaseSpark {
   }
 
   /**
-    * kafka相关配置
-    */
-  val kafkaProperties = new Properties();
-  {
-    kafkaProperties.put("zookeeper.connect", GlobalConstants.zkUrl) // 声明zk
-    kafkaProperties.put("key.serializer.class", "kafka.serializer.StringEncoder")
-    kafkaProperties.put("acks", "all")
-    kafkaProperties.put("retries", "3")
-    kafkaProperties.put("serializer.class", "kafka.serializer.StringEncoder")
-    kafkaProperties.put("metadata.broker.list", GlobalConstants.SparkConf.kafkaBrokers) // 声明kafka
-  }
-
-  /**
     * 用于重置StreamingContext（仅支持batch时间的修改）
     *
     * @param request
@@ -210,7 +199,15 @@ trait BaseSparkStreaming extends BaseSpark {
     * @return
     */
   def restartStreaming(request: Request, response: Response): AnyRef = {
-    val param = request.queryString()
+    // val param = request.queryString()
+    val param = if (StringUtils.isNotBlank(request.queryString()))
+      """
+        | {"batchDuration":10,"restartSparkContext":false,"stopGracefully": false,"sparkConf":{"spark.streaming.concurrentJobs":"2"}}
+      """.stripMargin
+    else
+      """
+        | {"batchDuration":20,"restartSparkContext":true,"stopGracefully": false,"sparkConf":{"spark.streaming.concurrentJobs":"2"}}
+      """.stripMargin
     if (StringUtils.isNotBlank(param)) {
       this.externalConf = JSON.parseObject(param, classOf[RestartParams])
       this.ssc.stop(this.externalConf.isRestartSparkContext, this.externalConf.isStopGracefully)
