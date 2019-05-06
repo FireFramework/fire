@@ -124,7 +124,7 @@ trait BaseSparkStreaming extends BaseSpark {
   /**
     * Spark处理过程
     * 注：此方法会被自动调用，若需使用
-    * checkpoint中的数据，则子类必须复写该方法
+    * checkpoint中的数据或支持restful热启动，则子类必须复写该方法
     */
   override def process: Unit = {
     try {
