@@ -199,15 +199,7 @@ trait BaseSparkStreaming extends BaseSpark {
     * @return
     */
   def restartStreaming(request: Request, response: Response): AnyRef = {
-    // val param = request.queryString()
-    val param = if (StringUtils.isNotBlank(request.queryString()))
-      """
-        | {"batchDuration":10,"restartSparkContext":false,"stopGracefully": false,"sparkConf":{"spark.streaming.concurrentJobs":"2"}}
-      """.stripMargin
-    else
-      """
-        | {"batchDuration":20,"restartSparkContext":true,"stopGracefully": false,"sparkConf":{"spark.streaming.concurrentJobs":"2"}}
-      """.stripMargin
+    val param = request.queryString()
     if (StringUtils.isNotBlank(param)) {
       this.externalConf = JSON.parseObject(param, classOf[RestartParams])
       this.ssc.stop(this.externalConf.isRestartSparkContext, this.externalConf.isStopGracefully)
