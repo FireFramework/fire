@@ -43,10 +43,10 @@ public class HBaseOper {
     static {
         conf = HBaseConfiguration.create();
         if (SystemInfoUtils.isLinux()) {
-            if ("batch".equalsIgnoreCase(GlobalConstants.HBASE_NAME())) {
+            if ("batch".equalsIgnoreCase(GlobalConstants.hbaseCluster())) {
                 conf.addResource("hbase-site-batch.xml");
                 conf.set("hbase.zookeeper.quorum", "HZPL025041,HZPL025040,HZPL025042,HZPL025039,HZPL025038");
-            } else if ("streaming".equalsIgnoreCase(GlobalConstants.HBASE_NAME())) {
+            } else if ("streaming".equalsIgnoreCase(GlobalConstants.hbaseCluster())) {
                 conf.addResource("hbase-site-streaming.xml");
                 conf.set("hbase.zookeeper.quorum", "HZPL025024,HZPL025027,HZPL025025,HZPL025023,HZPL025026");
             } else {

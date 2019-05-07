@@ -1,7 +1,5 @@
 package com.zto.bigdata.spark
 
-import java.lang.Thread
-
 import com.zto.bigdata.spark.common.ext.BaseSparkCore
 import com.zto.bigdata.spark.common.util.SparkUtils
 

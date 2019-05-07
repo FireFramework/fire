@@ -31,7 +31,7 @@ object GlobalConstants {
     // spark 默认的checkpoint地址
     val sparkChkPointDir = "hdfs://nameservice1/user/spark/ckpoint/"
     // hive metastore地址
-    val hiveMetaStoreUris = "thrift://192.168.25.180:9083"
+    val hiveCluster = "streaming"
     // 默认的日志级别
     val logLevel = LogLevel.INFO
     // 默认的数据库名称
@@ -64,7 +64,7 @@ object GlobalConstants {
     val FAMILY_KEY = "family"
     val HbaseDurability_KEY = "HbaseDurability"
     val KUDU_MASTER_URL = "kudu.master"
-    val HBASE_NAME_URL = "hbase.name"
+    val HBASE_CLUSTER_URL = "hbase.cluster"
     val ZK_URL = "zk.url"
     val IMPALA_CONNECTION_URL_KEY: String = "impala.connection.url"
     val IMPALA_JDBC_DRIVER_NAME_KEY: String = "impala.jdbc.driver.class.name"
@@ -85,10 +85,9 @@ object GlobalConstants {
 
     // carbondata相关配置
     val CARBON_STORE_PATH = "carbon.storePath"
-    val CARBON_META_STORE_PATH = "carbon.metaStorePath"
 
     // hive相关配置
-    val HIVE_METASTORE_URIS = "hive.metastore.uris"
+    val HIVE_CLUSTER = "hive.cluster"
     // 默认的库名
     val SPARK_DEFAULT_DATABASE_NAME = "spark.default.database.name"
     // 默认的分区名称
@@ -114,7 +113,7 @@ object GlobalConstants {
   /**
     * 集群相关配置
     */
-  val HBASE_NAME = PropUtils.getString(PropKeys.HBASE_NAME_URL, DefaultVals.hbaseName)
+  val hbaseCluster = PropUtils.getString(PropKeys.HBASE_CLUSTER_URL, DefaultVals.hbaseName)
   val isCluster = SystemInfoUtils.isLinux
   val isLocal = !isCluster
   // zookeeper地址
@@ -335,15 +334,38 @@ object GlobalConstants {
     */
   object CarbonConf extends Enumeration {
     val storePath = PropUtils.getString(PropKeys.CARBON_STORE_PATH)
-    val metaStorePath = PropUtils.getString(PropKeys.CARBON_META_STORE_PATH)
   }
 
   /**
     * hive相关配置
     */
   object HiveConf extends Enumeration {
-    // hive metastore地址
-    val metaStoreUris = PropUtils.getString(PropKeys.HIVE_METASTORE_URIS, DefaultVals.hiveMetaStoreUris)
+    // hive集群标识（batch/streaming/test）
+    val hiveCluster = PropUtils.getString(PropKeys.HIVE_CLUSTER, DefaultVals.hiveCluster)
+    // 离线hive集群
+    private val batchMetastore = "thrift://192.168.25.36:9083"
+    // 实时hive集群
+    private val streamingMetastore = "thrift://192.168.25.180:9083"
+    // 测试hive集群
+    private val testMetastore = "thrift://10.9.46.107:9083"
+
+    /**
+      * 根据hive集群名称获取metastore地址
+      *
+      * @return
+      * uri
+      */
+    def getMetastoreUrl: String = {
+      if (isCluster) {
+        if ("batch".equalsIgnoreCase(hiveCluster)) {
+          batchMetastore
+        } else {
+          streamingMetastore
+        }
+      } else {
+        testMetastore
+      }
+    }
   }
 
   /**

@@ -13,7 +13,7 @@ import com.zto.bigdata.spark.common.util.{GlobalConstants, PropUtils}
 object PropertiesTest extends BaseSparkCore {
 
   def main(args: Array[String]): Unit = {
-    println("hbase---------> " + GlobalConstants.HBASE_NAME)
+    println("hbase---------> " + GlobalConstants.hbaseCluster)
     this.init()
     println("--------------> ds = " + GlobalConstants.SparkConf.partitionName)
     println("--------------> test = " + PropUtils.getString("test"))

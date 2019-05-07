@@ -109,7 +109,7 @@ trait BaseSparkStreaming extends BaseSpark {
         // 解决cluster模式下不稳定的问题
         .set("spark.streaming.kafka.consumer.cache.enabled", "false")
         .set("spark.streaming.kafka.maxRatePerPartition", "100") // 每个批次从每个partition中每秒中最大拉取的数据量
-        .set("hive.metastore.uris", GlobalConstants.HiveConf.metaStoreUris)
+        .set("hive.metastore.uris", GlobalConstants.HiveConf.getMetastoreUrl)
     } else conf
 
     // 若重启SparkContext对象，则设置restful传递过来的新的配置信息
