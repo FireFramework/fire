@@ -131,7 +131,7 @@ trait BaseSparkStreaming extends BaseSpark {
       ParamUtils.requireNonNull(this.checkPointDir, "当开启checkPoint机制后，必须复写父类的process方法")
       ParamUtils.requireNonNull(this.externalConf, "当需要热重启功能时，必须将对接kafka的代码写在process方法内")
     } finally {
-      this.destory
+      this.destroy
     }
   }
 

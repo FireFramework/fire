@@ -55,7 +55,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
     */
   @Rest("/system/kill")
   def kill(request: Request, response: Response): AnyRef = {
-    this.baseSpark.destory
+    this.baseSpark.destroy
     ProcessUtil.executeCmds(s"yarn application -kill ${this.baseSpark.applicationId}", s"kill -9 ${SystemInfoUtils.getPid}")
     System.exit(0)
     GlobalConstants.Status.SUCCESS

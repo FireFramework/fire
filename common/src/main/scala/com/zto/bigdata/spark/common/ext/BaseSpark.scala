@@ -167,7 +167,7 @@ trait BaseSpark extends SparkListener with Serializable {
   /**
     * 资源回收与应用关闭
     */
-  def destory: Unit = {
+  def destroy: Unit = {
     if (this.ssc == null) {
       this.spark.stop()
     } else {
@@ -177,4 +177,5 @@ trait BaseSpark extends SparkListener with Serializable {
     this.threadPoolSchedule.shutdownNow()
     Spark.stop()
   }
+
 }
