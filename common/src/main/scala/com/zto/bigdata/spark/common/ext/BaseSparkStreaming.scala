@@ -51,7 +51,10 @@ trait BaseSparkStreaming extends BaseSpark {
     if (this.sc == null) {
       // 添加streaming相关的restful接口，并启动
       this.init(tmpConf)
-      this.restfulRegister.addRest(RestCase("get", "/system/restartStreaming", this.restartStreaming)).startRestServer
+      this.restfulRegister
+        .addRest(RestCase("get", "/system/restartStreaming", this.restartStreaming))
+        .addRest(RestCase("get", "/system/batchTime", this.batchTime))
+        .startRestServer
     }
     this.batchDuration = batchDuration
     if (!isCheckPoint) {
@@ -201,15 +204,25 @@ trait BaseSparkStreaming extends BaseSpark {
     */
   @Rest("/system/restartStreaming")
   def restartStreaming(request: Request, response: Response): AnyRef = {
-    if (this.ssc != null) {
-      val param = request.queryString()
-      if (StringUtils.isNotBlank(param)) {
-        this.externalConf = JSON.parseObject(param, classOf[RestartParams])
-        this.ssc.stop(this.externalConf.isRestartSparkContext, this.externalConf.isStopGracefully)
-        this.init(this.externalConf.getBatchDuration, false)
-      }
+    val param = request.queryString()
+    if (StringUtils.isNotBlank(param)) {
+      this.externalConf = JSON.parseObject(param, classOf[RestartParams])
+      this.ssc.stop(this.externalConf.isRestartSparkContext, this.externalConf.isStopGracefully)
+      this.init(this.externalConf.getBatchDuration, false)
     }
     GlobalConstants.Status.SUCCESS
+  }
+
+  /**
+    * 获取streaming的batch时间
+    *
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/batchTime")
+  def batchTime(request: Request, response: Response): AnyRef = {
+    this.batchDuration.toString
   }
 
 }

@@ -38,9 +38,6 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
     dstream.foreachRDD((rdd, time) => {
       // this.parseJson2DataFrame(rdd, classOf[Senda]).writeStreaming2Carbon(this.dbName, tableName, time)
       // 将json数据解析成Senda对象对应的类型
-      rdd.foreach(v => {
-        Thread.sleep(10)
-      })
       this.parseJson2DataFrame(rdd, classOf[Senda]).write2Carbon(this.dbName, tableName, null, SaveMode.Overwrite)
     })
 
