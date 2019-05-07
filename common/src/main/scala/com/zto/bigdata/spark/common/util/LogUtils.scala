@@ -43,7 +43,7 @@ class LogUtils(logger: Logger) {
     */
   def wrapLogWarn(info: String, color: String = GlobalConstants.PS1.PINK): Unit = {
     if (this.logger != null) {
-      this.logger.error(color + GlobalConstants.LogVal.logErrorSplitStart + info + GlobalConstants.LogVal.logErrorSplitEnd + GlobalConstants.PS1.DEFAULT)
+      this.logger.warn(color + GlobalConstants.LogVal.logErrorSplitStart + info + GlobalConstants.LogVal.logErrorSplitEnd + GlobalConstants.PS1.DEFAULT)
     }
   }
 

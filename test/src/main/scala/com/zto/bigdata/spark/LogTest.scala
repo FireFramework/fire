@@ -1,5 +1,7 @@
 package com.zto.bigdata.spark
 
+import java.lang.Thread
+
 import com.zto.bigdata.spark.common.ext.BaseSparkCore
 import com.zto.bigdata.spark.common.util.SparkUtils
 
@@ -12,11 +14,11 @@ object LogTest extends BaseSparkCore {
 
   def main(args: Array[String]): Unit = {
     this.init()
-    this.hiveContext.sql("show tables").show()
+    this.spark.sql("use tmp")
+    this.spark.sql("show tables").show()
     this.logger.wrapLogDebug("------------------->" + SparkUtils.runTime(this.startTime))
     this.logger.wrapLogInfo("------------------->" + SparkUtils.runTime(this.startTime))
     this.logger.wrapLogWarn("------------------->" + SparkUtils.runTime(this.startTime))
     this.logger.wrapLogError("------------------->" + SparkUtils.runTime(this.startTime))
-    this.spark.stop()
   }
 }

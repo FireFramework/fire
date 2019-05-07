@@ -43,7 +43,7 @@ object GlobalConstants {
   /**
     * 对应conf.properties的key
     */
-  private[this] object PropKeys extends Enumeration {
+  object PropKeys extends Enumeration {
     // 运行模式
     val RUNMODEL_KEY = "spark.runModel"
     val APP_NAME_KEY = "spark.appName"

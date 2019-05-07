@@ -6,7 +6,6 @@ import com.zto.bigdata.spark.common.anno.Rest
 import com.zto.bigdata.spark.common.ext.BaseSpark
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.sql.execution.command.CommandUtils
 import spark._
 
 import scala.util.parsing.json.JSONObject
@@ -44,6 +43,9 @@ class SystemRestful(val baseSpark: BaseSpark) {
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/executorMemoryOverhead", executorMemoryOverhead))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/memory", memory))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/cpu", cpu))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/topics", topics))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/brokers", brokers))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/groupId", groupId))
   }
 
   /**
@@ -323,5 +325,41 @@ class SystemRestful(val baseSpark: BaseSpark) {
   def cpu(request: Request, response: Response): AnyRef = {
     // executor总数 * 每个executor的cpu数 + driver的cpu数
     (this.executorInstances(request, response).toString.toInt * this.executorCores(request, response).toString.toInt + this.driverCores(request, response).toString.toInt).toString
+  }
+
+  /**
+    * 获取topics信息
+    *
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/topics")
+  def topics(request: Request, response: Response): AnyRef = {
+    PropUtils.getString(GlobalConstants.PropKeys.KAFKA_TOPICS, "")
+  }
+
+  /**
+    * 获取brokers信息
+    *
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/brokers")
+  def brokers(request: Request, response: Response): AnyRef = {
+    PropUtils.getString(GlobalConstants.PropKeys.KAFKA_BROKERS_URL, GlobalConstants.DefaultVals.kafkaBrokers)
+  }
+
+  /**
+    * 获取goupId信息
+    *
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/groupId")
+  def groupId(request: Request, response: Response): AnyRef = {
+    PropUtils.getString(GlobalConstants.PropKeys.KAFKA_GROUP_ID, this.baseSpark.appName)
   }
 }

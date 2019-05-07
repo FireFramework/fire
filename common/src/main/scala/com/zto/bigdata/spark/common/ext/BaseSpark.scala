@@ -2,12 +2,12 @@ package com.zto.bigdata.spark.common.ext
 
 import java.util.concurrent.{Executors, TimeUnit}
 
+import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
-import com.zto.bigdata.spark.common.ext.SparkExt._
-import org.apache.spark.sql.CarbonSession._
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
+import org.apache.spark.sql.CarbonSession._
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.{SparkConf, SparkContext}
@@ -110,6 +110,8 @@ trait BaseSpark extends SparkListener with Serializable {
     */
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
     if (this.hiveContext != null) this.hiveContext.clearCache
+    this.release()
+    logger.wrapLogWarn("完成用户资源回收")
     GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
   }
 
@@ -165,9 +167,18 @@ trait BaseSpark extends SparkListener with Serializable {
   }
 
   /**
-    * 资源回收与应用关闭
+    * 资源回收与清理，子类复写实现具体逻辑
+    * 注：该方法会在进行destroy之前自动被系统调用
+    *
+    * @param args
     */
-  def destroy: Unit = {
+  def release(args: Array[String] = null): Unit = {}
+
+  /**
+    * 资源回收与应用关闭
+    * 注：不允许子类覆盖
+    */
+  final def destroy: Unit = {
     if (this.ssc == null) {
       this.spark.stop()
     } else {
@@ -176,6 +187,7 @@ trait BaseSpark extends SparkListener with Serializable {
     this.threadPool.shutdownNow()
     this.threadPoolSchedule.shutdownNow()
     Spark.stop()
+    logger.wrapLogWarn("完成spark资源回收")
   }
 
 }

@@ -7,7 +7,10 @@ import org.apache.spark.scheduler._
   * Created by ChengLong on 2018-05-19.
   */
 class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener {
-  override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = this.baseSpark.onStageCompleted(stageCompleted)
+  override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
+    this.baseSpark.onStageCompleted(stageCompleted)
+    // this.baseSpark.logger.wrapLogWarn(s"${stageCompleted.stageInfo.stageId} ${stageCompleted.stageInfo.name} stage完成提交")
+  }
 
   override def onStageSubmitted(stageSubmitted: SparkListenerStageSubmitted): Unit = this.baseSpark.onStageSubmitted(stageSubmitted)
 

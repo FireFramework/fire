@@ -1,6 +1,7 @@
 package com.zto.bigdata.spark.common.ext
 
 import com.alibaba.fastjson.JSON
+import com.zto.bigdata.spark.common.anno.Rest
 import com.zto.bigdata.spark.common.bean.RestartParams
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.rest.RestCase
@@ -49,8 +50,8 @@ trait BaseSparkStreaming extends BaseSpark {
     val tmpConf = buildConf(conf)
     if (this.sc == null) {
       // 添加streaming相关的restful接口，并启动
-      this.restfulRegister.addRest(RestCase("get", "/system/restartStreaming", this.restartStreaming)).startRestServer
       this.init(tmpConf)
+      this.restfulRegister.addRest(RestCase("get", "/system/restartStreaming", this.restartStreaming)).startRestServer
     }
     this.batchDuration = batchDuration
     if (!isCheckPoint) {
@@ -198,12 +199,15 @@ trait BaseSparkStreaming extends BaseSpark {
     * @param response
     * @return
     */
+  @Rest("/system/restartStreaming")
   def restartStreaming(request: Request, response: Response): AnyRef = {
-    val param = request.queryString()
-    if (StringUtils.isNotBlank(param)) {
-      this.externalConf = JSON.parseObject(param, classOf[RestartParams])
-      this.ssc.stop(this.externalConf.isRestartSparkContext, this.externalConf.isStopGracefully)
-      this.init(this.externalConf.getBatchDuration, false)
+    if (this.ssc != null) {
+      val param = request.queryString()
+      if (StringUtils.isNotBlank(param)) {
+        this.externalConf = JSON.parseObject(param, classOf[RestartParams])
+        this.ssc.stop(this.externalConf.isRestartSparkContext, this.externalConf.isStopGracefully)
+        this.init(this.externalConf.getBatchDuration, false)
+      }
     }
     GlobalConstants.Status.SUCCESS
   }
