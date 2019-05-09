@@ -620,6 +620,19 @@ object SparkExt {
       this.hbaseContext.bulkPut(tableName, rdd, insertEmpty)
     }
 
+    /**
+      * 批量插入多个历史版本的数据
+      *
+      * @param tableName
+      * HBase表名
+      * 数据集合，继承自HBaseBaseBean
+      * @param insertEmpty
+      * 为空的字段是否写入
+      */
+    def hbaseBulkPutMultiVersions(tableName: String, insertEmpty: Boolean = true): Unit = {
+      this.hbaseContext.bulkPutMultiVersions(tableName, rdd, insertEmpty)
+    }
+
     /*
         /**
           * 批量load数据到hbase
