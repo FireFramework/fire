@@ -25,6 +25,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * HBase操作工具类，除了涵盖CRUD等常用操作外，还提供以下功能：
@@ -39,6 +40,7 @@ import java.util.*;
 public class HBaseOper {
     private static Configuration conf;
     private static Connection connection;
+    private static Gson gson = new Gson();
 
     static {
         conf = HBaseConfiguration.create();
@@ -190,7 +192,7 @@ public class HBaseOper {
         if (rs == null || clazz == null || rs.isEmpty()) {
             return null;
         }
-        Map<String, Field> fieldMap = getFieldNameMap(clazz);
+        Map<String, Field> fieldMap = getFieldNameMap(MultiVersionsBean.class);
         if (fieldMap == null || fieldMap.size() == 0) {
             throw new RuntimeException(clazz.getName() + " 中的field为空或没有使用@FieldName");
         }
@@ -198,7 +200,7 @@ public class HBaseOper {
         try {
             Cell[] cells = rs.rawCells();
             for (Cell cell : cells) {
-                T obj = clazz.newInstance();
+                MultiVersionsBean obj = new MultiVersionsBean();
                 String rowKey = new String(CellUtil.cloneRow(cell));
                 String family = new String(CellUtil.cloneFamily(cell));
                 String qualifier = new String(CellUtil.cloneQualifier(cell));
@@ -209,20 +211,6 @@ public class HBaseOper {
                     Type fieldType = field.getType();
                     if (fieldType == String.class) {
                         field.set(obj, Bytes.toString(value));
-                    } else if (fieldType == Integer.class) {
-                        field.set(obj, Bytes.toInt(value));
-                    } else if (fieldType == Double.class) {
-                        field.set(obj, Bytes.toDouble(value));
-                    } else if (fieldType == Long.class) {
-                        field.set(obj, Bytes.toLong(value));
-                    } else if (fieldType == BigDecimal.class) {
-                        field.set(obj, Bytes.toBigDecimal(value));
-                    } else if (fieldType == Float.class) {
-                        field.set(obj, Bytes.toFloat(value));
-                    } else if (fieldType == Boolean.class) {
-                        field.set(obj, Bytes.toBoolean(value));
-                    } else if (fieldType == Short.class) {
-                        field.set(obj, Bytes.toShort(value));
                     }
                 } else {
                     if (field != null) {
@@ -235,7 +223,7 @@ public class HBaseOper {
                 }
                 idField.setAccessible(true);
                 idField.set(obj, rowKey);
-                objList.add(obj);
+                objList.add(gson.fromJson(obj.getMultiFields(), clazz));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -335,7 +323,6 @@ public class HBaseOper {
         }
 
         List<T> objList = new ArrayList<T>();
-        Gson gson = new Gson();
         for (Result rs : rsArr) {
             if (rs.isEmpty()) {
                 continue;
@@ -805,6 +792,20 @@ public class HBaseOper {
     }
 
     /**
+     * 多版本数据的插入，会通过反射将所有列转为json保存
+     * 注：仅支持一个列族
+     *
+     * @param tableName 表名
+     * @param list      list中的数据必须是HBaseBaseBean的子类实例集合
+     */
+    public static <T extends HBaseBaseBean> void insertMultiVersions(String tableName, List<T> list) {
+        if (StringUtils.isNotBlank(tableName) && list != null && list.size() > 0) {
+            List multiBean = list.stream().map(bean -> new MultiVersionsBean(bean)).collect(Collectors.toList());
+            insert(tableName, multiBean);
+        }
+    }
+
+    /**
      * 通过反射获取字段数据，保存到HBase中
      * 注：仅支持一个列族
      *
@@ -1015,6 +1016,44 @@ public class HBaseOper {
             return null;
         }
         return hbaseMultiRow2Bean(rs, clazz);
+    }
+
+    /**
+     * 获取一条数据对应的所有历史版本，并转为自定义bean
+     *
+     * @param tableName 表名
+     * @param rowKey       HBase的get对象实例
+     * @param clazz     类类型
+     * @param <T>       泛型
+     * @return
+     */
+    public static <T extends HBaseBaseBean> List<T> getMultiVersions(String tableName, String rowKey, Class<T> clazz) {
+        return getMultiVersions(tableName, Integer.MAX_VALUE, rowKey, clazz);
+    }
+
+    /**
+     * 获取一条数据对应的多个历史版本，并转为自定义bean
+     *
+     * @param tableName    表名
+     * @param versionCount 获取的版本数
+     * @param rowKey       rowKey字符串
+     * @param clazz        类类型
+     * @param <T>          泛型
+     * @return
+     */
+    public static <T extends HBaseBaseBean> List<T> getMultiVersions(String tableName, Integer versionCount, String rowKey, Class<T> clazz) {
+        try {
+            Get get = new Get(rowKey.getBytes());
+            get.setMaxVersions(versionCount);
+            Result rs = get(tableName, get);
+            if (rs == null || rs.isEmpty()) {
+                return null;
+            }
+            return hbaseMultiRow2Bean(rs, clazz);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Collections.emptyList();
     }
 
     /**

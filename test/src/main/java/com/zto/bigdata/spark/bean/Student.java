@@ -1,9 +1,14 @@
 package com.zto.bigdata.spark.bean;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean;
+import com.zto.bigdata.spark.common.bean.MultiVersionsBean;
+import com.zto.bigdata.spark.common.util.DateFormatUtils;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class Student extends HBaseBaseBean<Student> {
@@ -20,7 +25,7 @@ public class Student extends HBaseBaseBean<Student> {
      */
     @Override
     public Student buildRowKey() {
-        this.rowKey = this.id + this.name;
+        this.rowKey = this.id.toString();
         return this;
     }
 
@@ -90,6 +95,11 @@ public class Student extends HBaseBaseBean<Student> {
         this.age = age;
     }
 
+    @Override
+    public String toString() {
+        return JSON.toJSONString(this, SerializerFeature.WriteNullListAsEmpty);
+    }
+
     public static List<Student> newStudentList() {
         return Arrays.asList(new Student(1L, "admin", 12),
                 new Student(1L, "admin", 12),
@@ -103,5 +113,37 @@ public class Student extends HBaseBaseBean<Student> {
                 new Student(9L, "streaming", 10),
                 new Student(10L, "sql", 12)
                 );
+    }
+
+    /**
+     * 构建student集合
+     * @return
+     */
+    public static List<Student> buildStudentList() {
+        List<Student> studentList = new LinkedList<>();
+        for (int i=1; i<=50; i++) {
+            Student stu = new Student(1L, "root", i, new BigDecimal(10.0 + i), true, DateFormatUtils.formatCurrentDateTime());
+            studentList.add(stu);
+        }
+
+        for (int i=1; i<=50; i++) {
+            Student stu = new Student(2L, "admin", i, new BigDecimal(20.0 + i), false, DateFormatUtils.formatCurrentDateTime());
+            studentList.add(stu);
+        }
+
+        return studentList;
+    }
+
+    /**
+     * 返回被多版本保证的Student对象
+     * @return
+     */
+    public static List<MultiVersionsBean> buildMultiVersionsStudent() {
+        List<Student> studentList = buildStudentList();
+        List<MultiVersionsBean> versionsBeanList = new LinkedList<>();
+        for (Student stu : studentList) {
+            versionsBeanList.add(new MultiVersionsBean(stu));
+        }
+        return versionsBeanList;
     }
 }
