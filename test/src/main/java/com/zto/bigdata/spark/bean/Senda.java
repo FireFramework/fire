@@ -2,8 +2,8 @@ package com.zto.bigdata.spark.bean;
 
 import com.alibaba.fastjson.JSON;
 import com.zto.bigdata.spark.common.anno.FieldName;
+import com.zto.bigdata.spark.common.bean.HBaseBaseBean;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
@@ -12,7 +12,14 @@ import java.math.BigDecimal;
  * @author ChengLong
  * @date 2017年03月10日10:24:02
  */
-public class Senda implements Serializable {
+public class Senda extends HBaseBaseBean<Senda> {
+
+    @Override
+    public Senda buildRowKey() {
+        this.rowKey = this.bill_code + "";
+        return this;
+    }
+
     /**
      * 单号<br>
      * 表字段 : zto_site_senda_bills.bill_code

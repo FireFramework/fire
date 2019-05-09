@@ -172,7 +172,7 @@ trait BaseSparkStreaming extends BaseSpark {
     */
   def parseJson2DataFrame(rdd: RDD[ConsumerRecord[String, String]], schema: Class[_], requireBefore: Boolean = false): DataFrame = {
     val ds = this.spark.createDataset(rdd.map(t => t.value()))(Encoders.STRING)
-    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema)).as("data"))
+    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, requireBefore)).as("data"))
     if (requireBefore)
       df.select("data.*")
     else
