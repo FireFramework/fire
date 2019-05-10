@@ -267,12 +267,13 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 以spark 方式批量将rdd数据写入到hbase中
     *
     * @param rdd
-    *            类型为HBaseBaseBean子类的rdd
+    * 类型为HBaseBaseBean子类的rdd
     * @param tableName
-    *                  hbase表名
+    * hbase表名
     * @param insertEmpty
-    *                    为空的字段是否写入hbase
+    * 为空的字段是否写入hbase
     * @tparam T
+    * 数据类型
     */
   def bulkPut2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true): Unit = {
     rdd.mapPartitions(it => {
@@ -288,14 +289,15 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 以spark 方式批量将DataFrame数据写入到hbase中
     *
     * @param df
-    *            spark的DataFrame
+    * spark的DataFrame
     * @param tableName
-    *                  hbase表名
+    * hbase表名
     * @param insertEmpty
-    *                    为空的字段是否写入hbase
+    * 为空的字段是否写入hbase
     * @tparam T
+    * JavaBean类型
     */
-  def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String , insertEmpty: Boolean = true): Unit = {
+  def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String, insertEmpty: Boolean = true): Unit = {
     val fields = df.schema.fields
     df.rdd.mapPartitions(it => {
       val putList = ListBuffer[(ImmutableBytesWritable, Put)]()
@@ -308,7 +310,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
           if (!row.isNullAt(fieldIndex)) {
             fieldValue = row.get(fieldIndex).toString
           }
-          put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), if(StringUtils.isNotBlank(fieldValue)) Bytes.toBytes(fieldValue) else null)
+          put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), if (StringUtils.isNotBlank(fieldValue)) Bytes.toBytes(fieldValue) else null)
         })
         putList += Tuple2(new ImmutableBytesWritable, put)
       })
@@ -318,10 +320,11 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
 
   /**
     * 根据表名构建hadoop configuration
+    *
     * @param tableName
-    *                  hbase表名
+    * HBase表名
     * @return
-    *         hadoop configuration
+    * hadoop configuration
     */
   private def getConfiguration(tableName: String): Configuration = {
     this.sc.hadoopConfiguration.set(TableOutputFormat.OUTPUT_TABLE, tableName)
@@ -331,6 +334,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     job.setOutputFormatClass(classOf[TableOutputFormat[ImmutableBytesWritable]])
     job.getConfiguration()
   }
+
   /*
     /**
       * 将大批量的数据直接生成HFile并上传至相应的

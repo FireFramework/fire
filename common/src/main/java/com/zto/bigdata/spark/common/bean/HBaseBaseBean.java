@@ -26,7 +26,7 @@ public abstract class HBaseBaseBean<T> implements Serializable {
      * 子类包名+类名
      */
     @FieldName(value = "className", disuse = true)
-    public final String className = this.getClass().getName();
+    public final String className = this.getClass().getSimpleName();
 
     /**
      * 构建业务需要，构建rowkey

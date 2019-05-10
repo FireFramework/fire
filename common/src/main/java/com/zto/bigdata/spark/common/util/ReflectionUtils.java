@@ -13,30 +13,34 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- * 反射工具类
+ * 反射工具类，获取各元素信息后缓存到map中
  * Created by ChengLong on 2017-03-30.
  */
 public class ReflectionUtils {
+    private static final Map<Class, Map<String, Field>> cacheFieldMap = new ConcurrentHashMap<>();
+    private static final Map<Class, Map<String, Method>> cacheMethodMap = new ConcurrentHashMap<>();
 
     /**
      * 获取所有公有字段，并返回Map
+     *
      * @param clazz
      * @return
      */
-    public static Map<String, Field> getFields(Class clazz) {
-        if(clazz == null) {
+    private static Map<String, Field> getFields(Class clazz) {
+        if (clazz == null) {
             return Collections.emptyMap();
         }
         Field[] fields = clazz.getFields();
-        if(ParamUtils.isBlank(fields)) {
+        if (ParamUtils.isBlank(fields)) {
             return Collections.emptyMap();
         }
         Map<String, Field> fieldMap = new HashMap<String, Field>(fields.length);
-        for(Field field: fields) {
+        for (Field field : fields) {
             fieldMap.put(field.getName(), field);
         }
         return fieldMap;
@@ -44,19 +48,20 @@ public class ReflectionUtils {
 
     /**
      * 获取所有声明字段，并返回Map
+     *
      * @param clazz
      * @return
      */
-    public static Map<String, Field> getDeclaredFields(Class clazz) {
-        if(clazz == null) {
+    private static Map<String, Field> getDeclaredFields(Class clazz) {
+        if (clazz == null) {
             return Collections.emptyMap();
         }
         Field[] fields = clazz.getDeclaredFields();
-        if(ParamUtils.isBlank(fields)) {
+        if (ParamUtils.isBlank(fields)) {
             return Collections.emptyMap();
         }
         Map<String, Field> fieldMap = new HashMap<String, Field>(fields.length);
-        for(Field field: fields) {
+        for (Field field : fields) {
             field.setAccessible(true);
             fieldMap.put(field.getName(), field);
         }
@@ -65,43 +70,76 @@ public class ReflectionUtils {
 
     /**
      * 获取所有字段，含私有和继承而来的，并返回Map
+     *
      * @param clazz
      * @return
      */
     public static Map<String, Field> getAllFields(Class clazz) {
-        Map<String, Field> fieldMap = new HashMap<String, Field>();
-        fieldMap.putAll(getFields(clazz));
-        fieldMap.putAll(getDeclaredFields(clazz));
-        return fieldMap;
+        if (!cacheFieldMap.containsKey(clazz)) {
+            Map<String, Field> fieldMap = new HashMap<>();
+            fieldMap.putAll(getFields(clazz));
+            fieldMap.putAll(getDeclaredFields(clazz));
+            cacheFieldMap.put(clazz, fieldMap);
+        }
+
+        return cacheFieldMap.get(clazz);
+    }
+
+    /**
+     * 根据成员变量名称获取Filed类型（从缓存中获取）
+     *
+     * @param clazz
+     * @param fieldName
+     * @return
+     */
+    public static Field getFieldByName(Class clazz, String fieldName) {
+        return getAllFields(clazz).get(fieldName);
     }
 
     /**
      * 获取所有方法，含私有和继承而来的，并返回Map
+     *
      * @param clazz
      * @return
      */
     public static Map<String, Method> getAllMethods(Class clazz) {
-        Map<String, Method> methodMap = new HashMap<String, Method>();
-        methodMap.putAll(getMethods(clazz));
-        methodMap.putAll(getDeclaredMethods(clazz));
-        return methodMap;
+        if (!cacheMethodMap.containsKey(clazz)) {
+            Map<String, Method> methodMap = new HashMap<String, Method>();
+            methodMap.putAll(getMethods(clazz));
+            methodMap.putAll(getDeclaredMethods(clazz));
+            cacheMethodMap.put(clazz, methodMap);
+        }
+
+        return cacheMethodMap.get(clazz);
+    }
+
+    /**
+     * 根据方法名称获取Method类型（从缓存中获取）
+     *
+     * @param clazz      类类型
+     * @param methodName 方法名称
+     * @return Method
+     */
+    public static Method getMethodByName(Class clazz, String methodName) {
+        return getAllMethods(clazz).get(methodName);
     }
 
     /**
      * 获取所有公有方法，并返回Map
+     *
      * @param clazz
      * @return
      */
-    public static Map<String, Method> getMethods(Class clazz) {
-        if(clazz == null) {
+    private static Map<String, Method> getMethods(Class clazz) {
+        if (clazz == null) {
             return Collections.emptyMap();
         }
         Method[] methods = clazz.getMethods();
-        if(ParamUtils.isBlank(methods)) {
+        if (ParamUtils.isBlank(methods)) {
             return Collections.emptyMap();
         }
         Map<String, Method> methodMap = new HashMap<String, Method>(methods.length);
-        for(Method method : methods) {
+        for (Method method : methods) {
             methodMap.put(method.getName(), method);
         }
         return methodMap;
@@ -109,19 +147,20 @@ public class ReflectionUtils {
 
     /**
      * 获取所有声明方法，并返回Map
+     *
      * @param clazz
      * @return
      */
-    public static Map<String, Method> getDeclaredMethods(Class clazz) {
-        if(clazz == null) {
+    private static Map<String, Method> getDeclaredMethods(Class clazz) {
+        if (clazz == null) {
             return Collections.emptyMap();
         }
         Method[] methods = clazz.getDeclaredMethods();
-        if(ParamUtils.isBlank(methods)) {
+        if (ParamUtils.isBlank(methods)) {
             return Collections.emptyMap();
         }
         Map<String, Method> methodMap = new HashMap<String, Method>(methods.length);
-        for(Method method : methods) {
+        for (Method method : methods) {
             method.setAccessible(true);
             methodMap.put(method.getName(), method);
         }
@@ -130,18 +169,22 @@ public class ReflectionUtils {
 
     /**
      * 获取指定field的类型
+     *
      * @param clazz
      * @param fieldName
      * @return
      */
     public static Class getFieldType(Class clazz, String fieldName) {
-        if(ParamUtils.isBlank(clazz, fieldName)) {
+        if (ParamUtils.isBlank(clazz, fieldName)) {
             return null;
         }
         try {
-            Field field = clazz.getDeclaredField(fieldName);
-            if(field != null) {
-                field.setAccessible(true);
+            Map<String, Field> fieldMap = getAllFields(clazz);
+            if (fieldMap == null) {
+                return null;
+            }
+            Field field = fieldMap.get(fieldName);
+            if (field != null) {
                 return field.getType();
             }
         } catch (Exception e) {
@@ -152,26 +195,25 @@ public class ReflectionUtils {
 
     /**
      * 获取指定的annotation
+     *
      * @param clazz
-     * @param scope
-     * annotation所在的位置
-     * @param memberName
-     * 成员名称，指定获取指定成员的Annotation实例
+     * @param scope      annotation所在的位置
+     * @param memberName 成员名称，指定获取指定成员的Annotation实例
      */
-    private static<T extends Annotation> Annotation getAnnotation(Class clazz, ElementType scope, String memberName, Class<T> annoClass) {
-        if(ParamUtils.isBlank(clazz, scope, memberName, annoClass)) {
-           return null;
+    private static <T extends Annotation> Annotation getAnnotation(Class clazz, ElementType scope, String memberName, Class<T> annoClass) {
+        if (ParamUtils.isBlank(clazz, scope, memberName, annoClass)) {
+            return null;
         }
         try {
-            if(ElementType.FIELD == scope) {
+            if (ElementType.FIELD == scope) {
                 Field field = clazz.getDeclaredField(memberName);
                 field.setAccessible(true);
                 return field.getAnnotation(annoClass);
-            } else if(ElementType.METHOD == scope) {
+            } else if (ElementType.METHOD == scope) {
                 Method method = clazz.getDeclaredMethod(memberName);
                 method.setAccessible(true);
                 return method.getAnnotation(annoClass);
-            } else if(ElementType.TYPE == scope) {
+            } else if (ElementType.TYPE == scope) {
                 return clazz.getAnnotation(annoClass);
             }
         } catch (Exception e) {
@@ -182,26 +224,25 @@ public class ReflectionUtils {
 
     /**
      * 获取指定的annotation
+     *
      * @param clazz
-     * @param scope
-     * annotation所在的位置
-     * @param memberName
-     * 成员名称，指定获取指定成员的Annotation实例
+     * @param scope      annotation所在的位置
+     * @param memberName 成员名称，指定获取指定成员的Annotation实例
      */
     private static Annotation[] getAnnotations(Class clazz, ElementType scope, String memberName) {
-        if(ParamUtils.isBlank(clazz, scope, memberName)) {
+        if (ParamUtils.isBlank(clazz, scope, memberName)) {
             return null;
         }
         try {
-            if(ElementType.FIELD == scope) {
+            if (ElementType.FIELD == scope) {
                 Field field = clazz.getDeclaredField(memberName);
                 field.setAccessible(true);
                 return field.getDeclaredAnnotations();
-            } else if(ElementType.METHOD == scope) {
+            } else if (ElementType.METHOD == scope) {
                 Method method = clazz.getDeclaredMethod(memberName);
                 method.setAccessible(true);
                 return method.getDeclaredAnnotations();
-            } else if(ElementType.TYPE == scope) {
+            } else if (ElementType.TYPE == scope) {
                 return clazz.getDeclaredAnnotations();
             }
         } catch (Exception e) {
@@ -212,17 +253,19 @@ public class ReflectionUtils {
 
     /**
      * 获取Field指定的annotation
+     *
      * @param clazz
      * @param fieldName
      * @param annoClass
      * @return
      */
-    public static<T extends Annotation> Annotation getFieldAnnotation(Class clazz, String fieldName, Class<T> annoClass) {
+    public static <T extends Annotation> Annotation getFieldAnnotation(Class clazz, String fieldName, Class<T> annoClass) {
         return getAnnotation(clazz, ElementType.FIELD, fieldName, annoClass);
     }
 
     /**
      * 获取Field所有annotation
+     *
      * @param clazz
      * @param fieldName
      * @return
@@ -233,17 +276,19 @@ public class ReflectionUtils {
 
     /**
      * 获取Method指定的annotation
+     *
      * @param clazz
      * @param methodName
      * @param annoClass
      * @return
      */
-    public static<T extends Annotation> Annotation getMethodAnnotation(Class clazz, String methodName, Class<T> annoClass) {
+    public static <T extends Annotation> Annotation getMethodAnnotation(Class clazz, String methodName, Class<T> annoClass) {
         return getAnnotation(clazz, ElementType.METHOD, methodName, annoClass);
     }
 
     /**
      * 获取Method所有annotation
+     *
      * @param clazz
      * @param methodName
      * @return
@@ -254,16 +299,18 @@ public class ReflectionUtils {
 
     /**
      * 获取类指定annotation
+     *
      * @param clazz
      * @param annoClass
      * @return
      */
-    public static<T extends Annotation> Annotation getClassAnnotation(Class clazz, Class<T> annoClass) {
+    public static <T extends Annotation> Annotation getClassAnnotation(Class clazz, Class<T> annoClass) {
         return getAnnotation(clazz, ElementType.TYPE, clazz.getName(), annoClass);
     }
 
     /**
      * 获取类所有annotation
+     *
      * @param clazz
      * @return
      */
@@ -273,19 +320,20 @@ public class ReflectionUtils {
 
     /**
      * 获取方法所有参数的所有annotation
+     *
      * @param clazz
      * @param methodName
      * @return
      */
     public static Annotation[][] getParamAnnotations(Class clazz, String methodName, Class<?>... parameterTypes) {
-        if(ParamUtils.isBlank(clazz, methodName)) {
+        if (ParamUtils.isBlank(clazz, methodName)) {
             return null;
         }
         try {
             Method method = clazz.getDeclaredMethod(methodName, parameterTypes);
             method.setAccessible(true);
             return method.getParameterAnnotations();
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -298,7 +346,7 @@ public class ReflectionUtils {
      * @return
      */
     public static List<Class<?>> getAllClassByPackageName(Package packageName) {
-        if(packageName == null) {
+        if (packageName == null) {
             throw new IllegalArgumentException("包不能为空");
         }
         return getAllClassByPackageName(packageName.getName());
@@ -307,12 +355,11 @@ public class ReflectionUtils {
     /**
      * 通过包名获取包内所有类
      *
-     * @param packageName
-     * 包名
+     * @param packageName 包名
      * @return
      */
     public static List<Class<?>> getAllClassByPackageName(String packageName) {
-        if(StringUtils.isBlank(packageName)) {
+        if (StringUtils.isBlank(packageName)) {
             throw new IllegalArgumentException("包名不能为空");
         }
         // 获取当前包下以及子包下所以的类
@@ -370,8 +417,7 @@ public class ReflectionUtils {
     /**
      * 从包package中获取所有的Class
      *
-     * @param packageName
-     * 包名
+     * @param packageName 包名
      * @return
      */
     private static List<Class<?>> getClasses(String packageName) {
@@ -495,10 +541,9 @@ public class ReflectionUtils {
     /**
      * 扫描指定包下所有包含指定annotation的类
      * 如果类、field或method有指定的annotation，则认为匹配成功
-     * @param packageName
-     * 包名
-     * @param annoClass
-     * 使用的annotation
+     *
+     * @param packageName 包名
+     * @param annoClass   使用的annotation
      * @return
      */
     public static List<Class<?>> scanAnnotation(Package packageName, Class<? extends Annotation> annoClass) {
@@ -508,34 +553,33 @@ public class ReflectionUtils {
     /**
      * 扫描指定包下所有包含指定annotation的类
      * 如果类、field或method有指定的annotation，则认为匹配成功
-     * @param packageName
-     * 包名
-     * @param annoClass
-     * 使用的annotation
+     *
+     * @param packageName 包名
+     * @param annoClass   使用的annotation
      * @return
      */
     public static List<Class<?>> scanAnnotation(String packageName, Class<? extends Annotation> annoClass) {
-        if(StringUtils.isBlank(packageName) || annoClass == null) {
+        if (StringUtils.isBlank(packageName) || annoClass == null) {
             throw new IllegalArgumentException("参数不合法");
         }
         List<Class<?>> classList = getAllClassByPackageName(packageName);
-        if(classList == null) {
+        if (classList == null) {
             return Collections.emptyList();
         }
 
         List<Class<?>> annoClassList = new LinkedList<>();
-        for(Class<?> clazz : classList) {
-            if(clazz != null) {
-                if(clazz.getAnnotation(annoClass) != null) {
+        for (Class<?> clazz : classList) {
+            if (clazz != null) {
+                if (clazz.getAnnotation(annoClass) != null) {
                     // 类上声明了该annotation
                     annoClassList.add(clazz);
                 } else {
                     // field中了annotation
                     Field[] fields = clazz.getDeclaredFields();
-                    if(fields != null && fields.length > 0) {
-                        for(Field field : fields) {
+                    if (fields != null && fields.length > 0) {
+                        for (Field field : fields) {
                             field.setAccessible(true);
-                            if(field.getAnnotation(annoClass) != null) {
+                            if (field.getAnnotation(annoClass) != null) {
                                 // 如果field中有指定的annotation
                                 annoClassList.add(clazz);
                             }
@@ -544,10 +588,10 @@ public class ReflectionUtils {
 
                     // method上声明了annotation
                     Method[] methods = clazz.getDeclaredMethods();
-                    if(methods != null && methods.length > 0) {
-                        for(Method method : methods) {
+                    if (methods != null && methods.length > 0) {
+                        for (Method method : methods) {
                             method.setAccessible(true);
-                            if(method.getAnnotation(annoClass) != null) {
+                            if (method.getAnnotation(annoClass) != null) {
                                 // 如果method中有指定的annotation
                                 annoClassList.add(clazz);
                             }

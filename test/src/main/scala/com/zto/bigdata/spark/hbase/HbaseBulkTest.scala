@@ -1,7 +1,5 @@
 package com.zto.bigdata.spark.hbase
 
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.bigdata.spark.bean.Student
 import com.zto.bigdata.spark.common.ext.BaseSparkCore
 import com.zto.bigdata.spark.common.ext.SparkExt._
@@ -23,17 +21,21 @@ object HbaseBulkTest extends BaseSparkCore {
     */
   override def process: Unit = {
     // 将rdd的数据写入到hbase中，rdd类型必须为HBaseBaseBean的子类
-    val rdd = this.sc.parallelize(Student.buildStudentList().toScalaList)
+    val rdd = this.spark.parallelize(Student.buildStudentList().toScalaList)
     rdd.hbaseBulkPut(this.tableName)
 
     // 使用rowKey读取hbase中的数据，rowKeyRdd类型为String
-    val rowKeyRdd = this.sc.parallelize(Seq(1.toString, 2.toString))
+    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString))
     val studentRDD = rowKeyRdd.hbaseBulkGet(this.tableName, classOf[Student])
+    studentRDD.foreach(println)
 
-    studentRDD.foreach(stu => {
-      println("--> " + stu)
-      println(JSON.toJSONString(stu, SerializerFeature.WriteNullListAsEmpty))
-    })
+    // 根据rowKey删除
+    rowKeyRdd.hbaseBulkDelete(this.tableName)
+
+    // scan操作
+    val scanRdd = this.spark.hbaseRDD(this.tableName, "1", "6", classOf[Student])
+    scanRdd.foreach(println)
+
     this.spark.stop()
   }
 }

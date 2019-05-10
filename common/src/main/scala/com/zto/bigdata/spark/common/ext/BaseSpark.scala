@@ -111,6 +111,8 @@ trait BaseSpark extends SparkListener with Serializable {
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
     if (this.hiveContext != null) this.hiveContext.clearCache
     this.release()
+    this.threadPool.shutdownNow()
+    this.threadPoolSchedule.shutdownNow()
     logger.wrapLogWarn("完成用户资源回收")
     GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
   }

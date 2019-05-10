@@ -16,13 +16,16 @@ object HBaseJavaApiTest {
 
   def main(args: Array[String]): Unit = {
     // ---------------- hbase表声明为一个版本时 ---------------- //
-    val list = new util.ArrayList[Student]()
-    list.add(new Student(1L, s"root", 12))
+/*    val list = new util.ArrayList[Student]()
+    list.add(new Student(1L, s"root1", 12))
+    list.add(new Student(2L, s"root2", 22))
     // 单版本插入（hbase表版本数为1）
     HBaseOper.insert(this.tableName, list)
     // 指定rowKey读取数据
-    val student = HBaseOper.get(this.tableName, "1")
+    val student = HBaseOper.get(this.tableName, "1", classOf[Student])
     println(student)
+    println(HBaseOper.get(this.tableName, "2", classOf[Student]))
+    println(HBaseOper.get(this.tableName, "3", classOf[Student]))*/
 
     // ---------------- hbase表声明为多个版本时 ---------------- //
     (1 to 60).foreach(x => {
@@ -32,7 +35,7 @@ object HBaseJavaApiTest {
       HBaseOper.insertMultiVersions(this.tableName, list)
     })
     // 多版本数据读取，指定6表示读取最近6个版本，若需读取全部版本，则此参数不填
-    val studentLists = HBaseOper.getMultiVersions(this.tableName, 6, "1", classOf[Student]).toScalaList
+    val studentLists = HBaseOper.getMultiVersions(this.tableName, "1", classOf[Student]).toScalaList
     studentLists.foreach(println)
   }
 

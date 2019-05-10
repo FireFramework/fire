@@ -443,6 +443,37 @@ object SparkExt {
       UDFs.registerAll(spark)
       spark
     }
+
+    /**
+      * scan数据，并转为RDD
+      *
+      * @param tableName
+      * HBase表名
+      * @param scan
+      * scan对象
+      * @param clazz
+      * @return
+      * 结果集
+      */
+    def hbaseRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): RDD[T] = {
+      this.hbaseContext.hbaseRDD(tableName, scan, clazz)
+    }
+
+    /**
+      * scan数据，并转为RDD
+      *
+      * @param tableName
+      * HBase表名
+      * @param startRow
+      * 开始
+      * @param stopRow
+      * 结束
+      * @param clazz
+      * @return
+      */
+    def hbaseRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): RDD[T] = {
+      this.hbaseContext.hbaseRDD(tableName, startRow, stopRow, clazz)
+    }
   }
 
   /**
@@ -562,37 +593,6 @@ object SparkExt {
       val hbaseDF = SingletonFactory.getSQLContextInstance(this.sc).createDataFrame(beanRDD, clazz)
       hbaseDF.registerTempTable(tableName)
       hbaseDF
-    }
-
-    /**
-      * scan数据，并转为RDD
-      *
-      * @param tableName
-      * HBase表名
-      * @param scan
-      * scan对象
-      * @param clazz
-      * @return
-      * 结果集
-      */
-    def hbaseRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): RDD[T] = {
-      this.hbaseContext.hbaseRDD(tableName, scan, clazz)
-    }
-
-    /**
-      * scan数据，并转为RDD
-      *
-      * @param tableName
-      * HBase表名
-      * @param startRow
-      * 开始
-      * @param stopRow
-      * 结束
-      * @param clazz
-      * @return
-      */
-    def hbaseRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): RDD[T] = {
-      this.hbaseContext.hbaseRDD(tableName, startRow, stopRow, clazz)
     }
   }
 

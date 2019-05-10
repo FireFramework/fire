@@ -3,7 +3,6 @@ package com.zto.bigdata.spark.bean;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean;
-import com.zto.bigdata.spark.common.bean.MultiVersionsBean;
 import com.zto.bigdata.spark.common.util.DateFormatUtils;
 
 import java.math.BigDecimal;
@@ -101,17 +100,18 @@ public class Student extends HBaseBaseBean<Student> {
     }
 
     public static List<Student> newStudentList() {
-        return Arrays.asList(new Student(1L, "admin", 12),
-                new Student(1L, "admin", 12),
-                new Student(2L, "root", 22),
-                new Student(3L, "scala", 11),
-                new Student(4L, "spark", 15),
-                new Student(5L, "java", 16),
-                new Student(6L, "hive", 17),
-                new Student(7L, "presto", 18),
-                new Student(8L, "flink", 19),
-                new Student(9L, "streaming", 10),
-                new Student(10L, "sql", 12)
+        String dateTime = DateFormatUtils.formatCurrentDateTime();
+        return Arrays.asList(new Student(1L, "admin", 12, new BigDecimal(12.1), true, dateTime),
+                new Student(1L, "admin", 12, new BigDecimal(12.1), true, dateTime),
+                new Student(2L, "root", 22, new BigDecimal(22), true, dateTime),
+                new Student(3L, "scala", 11, new BigDecimal(11), true, dateTime),
+                new Student(4L, "spark", 15, new BigDecimal(15), true, dateTime),
+                new Student(5L, "java", 16, new BigDecimal(16.1), true, dateTime),
+                new Student(6L, "hive", 17, new BigDecimal(17.1), true, dateTime),
+                new Student(7L, "presto", 18, new BigDecimal(18.1), true, dateTime),
+                new Student(8L, "flink", 19, new BigDecimal(19.1), true, dateTime),
+                new Student(9L, "streaming", 10, new BigDecimal(10.1), true, dateTime),
+                new Student(10L, "sql", 12, new BigDecimal(12.1), true, dateTime)
                 );
     }
 
@@ -121,29 +121,22 @@ public class Student extends HBaseBaseBean<Student> {
      */
     public static List<Student> buildStudentList() {
         List<Student> studentList = new LinkedList<>();
-        for (int i=1; i<=50; i++) {
+        for (int i=1; i<=3; i++) {
             Student stu = new Student(1L, "root", i, new BigDecimal(10.0 + i), true, DateFormatUtils.formatCurrentDateTime());
             studentList.add(stu);
         }
 
-        for (int i=1; i<=50; i++) {
+        for (int i=1; i<=3; i++) {
             Student stu = new Student(2L, "admin", i, new BigDecimal(20.0 + i), false, DateFormatUtils.formatCurrentDateTime());
+            studentList.add(stu);
+        }
+
+        for (int i=1; i<=3; i++) {
+            Student stu = new Student(3L, "spark", i, new BigDecimal(30.0 + i), false, DateFormatUtils.formatCurrentDateTime());
             studentList.add(stu);
         }
 
         return studentList;
     }
 
-    /**
-     * 返回被多版本保证的Student对象
-     * @return
-     */
-    public static List<MultiVersionsBean> buildMultiVersionsStudent() {
-        List<Student> studentList = buildStudentList();
-        List<MultiVersionsBean> versionsBeanList = new LinkedList<>();
-        for (Student stu : studentList) {
-            versionsBeanList.add(new MultiVersionsBean(stu));
-        }
-        return versionsBeanList;
-    }
 }
