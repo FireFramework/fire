@@ -18,7 +18,7 @@ import scala.reflect.ClassTag
   * @author ChengLong 2019-5-10 14:39:39
   */
 object HBaseSparkBridge {
-  val batchSize = 10000
+  val batchSize = 1000
 
   /**
     * 使用Java API的方式将DataFrame中的数据分多个批次插入到HBase中
