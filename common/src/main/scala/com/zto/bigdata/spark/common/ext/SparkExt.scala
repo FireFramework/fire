@@ -7,7 +7,7 @@ import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.parser.ParserConfig
 import com.zto.bigdata.spark.common.acc.{MultiAccumulators, MultiDateTimeAccumulators}
 import com.zto.bigdata.spark.common.bean.{HBaseBaseBean, OGGBaseBean}
-import com.zto.bigdata.spark.common.db.HBaseOper
+import com.zto.bigdata.spark.common.db.{HBaseOper, HBaseSparkBridge}
 import com.zto.bigdata.spark.common.udf.UDFs
 import com.zto.bigdata.spark.common.util._
 import org.apache.carbondata.core.util.path.CarbonTablePath
@@ -474,6 +474,71 @@ object SparkExt {
     def hbaseRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): RDD[T] = {
       this.hbaseContext.hbaseRDD(tableName, startRow, stopRow, clazz)
     }
+
+    /**
+      * Scan指定HBase表的数据，并映射为DataFrame
+      *
+      * @param tableName
+      * HBase表名
+      * @param scan
+      * scan对象
+      * @param clazz
+      * 目标类型
+      * @tparam T
+      * 目标类型
+      * @return
+      */
+    def hbaseScan2DF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): DataFrame = {
+      HBaseSparkBridge.hbaseScan2DF(this.spark, tableName, scan, clazz)
+    }
+
+    /**
+      * Scan指定HBase表的数据，并映射为DataFrame
+      *
+      * @param tableName
+      *                HBase表名
+      * @param startRow
+      *                开始主键
+      * @param stopRow 结束主键
+      * @param clazz
+      *                目标类型
+      * @tparam T
+      * 目标类型
+      * @return
+      */
+    def hbaseScan2DF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): DataFrame = {
+      HBaseSparkBridge.hbaseScan2DF(this.spark, tableName, startRow, stopRow, clazz)
+    }
+
+    /**
+      * 使用Java API的方式将DataFrame中的数据分多个批次插入到HBase中
+      *
+      * @param tableName
+      * HBase表名
+      * @param df
+      * DataFrame
+      * @param clazz
+      * JavaBean类型，为HBaseBaseBean的子类
+      * @param batchSize
+      * 批次大小
+      */
+    def hbaseInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], batchSize: Int = HBaseSparkBridge.batchSize): Unit = {
+      HBaseSparkBridge.hbaseInsertDF(tableName, df, clazz, batchSize)
+    }
+
+    /**
+      * 使用Java API的方式将RDD中的数据分多个批次插入到HBase中
+      *
+      * @param tableName
+      * HBase表名
+      * @param clazz
+      * JavaBean类型，为HBaseBaseBean的子类
+      * @param batchSize
+      * 批次大小
+      */
+    def hbaseInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[_], clazz: Class[T], batchSize: Int = HBaseSparkBridge.batchSize): Unit = {
+      HBaseSparkBridge.hbaseInsertRDD(tableName, rdd, clazz, batchSize)
+    }
   }
 
   /**
@@ -568,32 +633,6 @@ object SparkExt {
       accMap
     }
 
-    /**
-      * Scan指定HBase表的数据，并映射为DataFrame
-      *
-      * @param tableName
-      * HBase表名
-      * @param scan
-      * scan对象
-      * @param clazz
-      * 目标类型
-      * @tparam T
-      * 目标类型
-      * @return
-      */
-    def newAPIHadoopDataFrame[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], registerTmpTable: Boolean = true, cacheTable: Boolean = false): DataFrame = {
-      val hbaseConf = HBaseOper.getConfiguration
-      hbaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
-      hbaseConf.set(TableInputFormat.SCAN, SparkUtils.convertScanToString(scan))
-      // 将指定范围内的hbase数据转为rdd
-      val hbaseRDD = this.sc.newAPIHadoopRDD(hbaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result]).repartition(1200)
-      // 将hbaserdd转为自定义bean类型的rdd
-      val beanRDD = hbaseRDD.mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz))
-      // 使用spark sql对hbase中的数据进行sql分析
-      val hbaseDF = SingletonFactory.getSQLContextInstance(this.sc).createDataFrame(beanRDD, clazz)
-      hbaseDF.registerTempTable(tableName)
-      hbaseDF
-    }
   }
 
 
@@ -732,6 +771,19 @@ object SparkExt {
       dataFrame
     }
 
+    /**
+      * 使用Java API的方式将RDD中的数据分多个批次插入到HBase中
+      *
+      * @param tableName
+      * HBase表名
+      * @param clazz
+      * JavaBean类型，为HBaseBaseBean的子类
+      * @param batchSize
+      * 批次大小
+      */
+    def hbaseInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], batchSize: Int = HBaseSparkBridge.batchSize): Unit = {
+      HBaseSparkBridge.hbaseInsertRDD(tableName, rdd, clazz, batchSize)
+    }
   }
 
   /**
@@ -1315,24 +1367,17 @@ object SparkExt {
     }
 
     /**
-      * 将DataFrame保存到HBase中
+      * 使用Java API的方式将DataFrame中的数据分多个批次插入到HBase中
       *
-      * @tparam T
+      * @param tableName
+      * HBase表名
+      * @param clazz
+      * JavaBean类型，为HBaseBaseBean的子类
+      * @param batchSize
+      * 批次大小
       */
-    def insert2HBase[T <: HBaseBaseBean[T] : ClassTag](hbaseTableName: String, clazz: Class[T], saveBatch: Long = 1000): Unit = {
-      val encoder = Encoders.bean(clazz)
-      dataFrame.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))(encoder).foreachPartition(it => {
-        val list = ListBuffer[T]()
-        it.foreach(bean => {
-          list += bean
-          if (list.size >= saveBatch) {
-            HBaseOper.insert(hbaseTableName, list)
-            list.clear
-          }
-        })
-        HBaseOper.insert(hbaseTableName, list)
-        list.clear
-      })
+    def hbaseInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], batchSize: Int = HBaseSparkBridge.batchSize): Unit = {
+      HBaseSparkBridge.hbaseInsertDF(tableName, this.dataFrame, clazz, batchSize)
     }
 
     /**

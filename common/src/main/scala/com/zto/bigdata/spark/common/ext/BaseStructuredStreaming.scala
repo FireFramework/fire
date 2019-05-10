@@ -46,6 +46,7 @@ class BaseStructuredStreaming extends BaseSpark {
         .set("spark.storage.memoryFraction", "0.4")
         .set("spark.ui.timeline.tasks.maximum", "300")
         .set("spark.scheduler.listenerbus.eventqueue.size", "130000")
+        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .set("hive.metastore.uris", GlobalConstants.HiveConf.getMetastoreUrl)
     } else {
       conf

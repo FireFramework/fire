@@ -2,32 +2,28 @@ package com.zto.bigdata.spark.hbase
 
 import java.util
 
+import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.bigdata.spark.bean.Student
 import com.zto.bigdata.spark.common.db.HBaseOper
+import com.zto.bigdata.spark.common.ext.BaseSparkCore
 import com.zto.bigdata.spark.common.ext.SparkExt._
+import com.zto.bigdata.spark.common.util.SparkUtils
+import org.apache.spark.sql.Encoders
 
 /**
   * 在spark中使用java 同步 api 的方式读写hbase表
   *
   * @author ChengLong 2019-5-9 09:37:25
   */
-object HBaseJavaApiTest {
+object HBaseJavaApiTest extends BaseSparkCore {
   private val tableName = "zto_test_senda"
 
-  def main(args: Array[String]): Unit = {
-    // ---------------- hbase表声明为一个版本时 ---------------- //
-/*    val list = new util.ArrayList[Student]()
-    list.add(new Student(1L, s"root1", 12))
-    list.add(new Student(2L, s"root2", 22))
-    // 单版本插入（hbase表版本数为1）
-    HBaseOper.insert(this.tableName, list)
-    // 指定rowKey读取数据
-    val student = HBaseOper.get(this.tableName, "1", classOf[Student])
-    println(student)
-    println(HBaseOper.get(this.tableName, "2", classOf[Student]))
-    println(HBaseOper.get(this.tableName, "3", classOf[Student]))*/
-
-    // ---------------- hbase表声明为多个版本时 ---------------- //
+  /**
+    * 使用Java Api 方式对HBase多版本进行读写
+    * 注：适用于Java程序
+    */
+  def testJavaMultiVersion(): Unit = {
     (1 to 60).foreach(x => {
       val list = new util.ArrayList[Student]()
       list.add(new Student(1L, s"root_$x", x))
@@ -39,4 +35,59 @@ object HBaseJavaApiTest {
     studentLists.foreach(println)
   }
 
+  /**
+    * 使用Java API方式对版本数为1的表进行读写
+    * 注：适用于Java程序
+    */
+  def testJavaRW(): Unit = {
+    val list = new util.ArrayList[Student]()
+    list.add(new Student(1L, s"root1", 12))
+    list.add(new Student(2L, s"root2", 22))
+    // 单版本插入（hbase表版本数为1）
+    HBaseOper.insert(this.tableName, list)
+    // 指定rowKey读取数据
+    val student = HBaseOper.get(this.tableName, "1", classOf[Student])
+    println(student)
+    println(HBaseOper.get(this.tableName, "2", classOf[Student]))
+    println(HBaseOper.get(this.tableName, "3", classOf[Student]))
+  }
+
+  /**
+    * 使用Java API的方式将rdd中的数据写入到hbase中
+    */
+  def testSparkWrite(): Unit = {
+    // rdd数据写入到hbase中
+    val studentRDD = this.spark.parallelize(Student.buildStudentList().toScalaList)
+    studentRDD.hbaseInsertRDD(this.tableName, classOf[Student])
+    // dataFrame数据写入到hbase中
+    val df = this.spark.createDataFrame(studentRDD, classOf[Student])
+    df.hbaseInsertDF(this.tableName, classOf[Student])
+  }
+
+  /**
+    * spark scan HBase表记录
+    */
+  def testSparkScan(): Unit = {
+    val df = this.spark.hbaseScan2DF(this.tableName, "1", "5", classOf[Student])
+    df.show(false)
+  }
+
+  /**
+    * Spark处理过程
+    * 注：此方法会被自动调用
+    */
+  override def process: Unit = {
+    // java api方式进行单版本读写（适用于java程序）
+    this.testJavaRW()
+    // java api方式进行多版本表读写（适用于java程序）
+    this.testJavaMultiVersion()
+
+    this.testSparkWrite()
+    this.testSparkScan()
+  }
+
+  def main(args: Array[String]): Unit = {
+    this.init()
+    this.spark.stop()
+  }
 }

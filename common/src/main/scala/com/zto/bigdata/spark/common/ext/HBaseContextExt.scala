@@ -34,7 +34,7 @@ import scala.reflect.ClassTag
   * @author ChengLong 2018年4月10日 10:39:28
   */
 class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config: Configuration = HBaseOper.getConfiguration) extends HBaseContext(sc, config) {
-  val batchSize = 1000
+  val batchSize = 10000
 
   /**
     * 根据RDD[String]批量删除，rdd是rowkey的集合

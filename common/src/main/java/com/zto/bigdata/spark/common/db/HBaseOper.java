@@ -273,27 +273,6 @@ public class HBaseOper {
     }
 
     /**
-     * 批量插入一个批次10000条（插入后清空list）
-     *
-     * @param tableName hbase表名
-     * @param list      批量插入的数据
-     * @param <T>
-     * @return 返回插入的数量
-     */
-    public static <T extends HBaseBaseBean> Long insertBatch(String tableName, ListBuffer<T> list, Integer batch) {
-        if (batch == null) {
-            batch = 10000;
-        }
-        if (list != null && list.size() >= batch && StringUtils.isNotBlank(tableName)) {
-            int size = list.size();
-            HBaseOper.insert(tableName, list);
-            list.clear();
-            return Long.valueOf(size);
-        }
-        return 0L;
-    }
-
-    /**
      * 获取一行
      *
      * @param tableName    表名

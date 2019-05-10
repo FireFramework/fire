@@ -80,7 +80,7 @@ trait BaseSpark extends SparkListener with Serializable {
     val tmpConf = if (conf == null) this.buildConf(conf) else conf
     tmpConf.setAll(PropUtils.toMap)
     if (SystemInfoUtils.isWindows) {
-      this.spark = SparkSession.builder().config(tmpConf).master("local[*]").enableHiveSupport().getOrCreate()
+      this.spark = SparkSession.builder().config(tmpConf).master("local[*]")/*.enableHiveSupport()*/.getOrCreate()
     } else {
       this.spark = SparkSession.builder().config(tmpConf).enableHiveSupport().getOrCreateCarbonSession
     }
