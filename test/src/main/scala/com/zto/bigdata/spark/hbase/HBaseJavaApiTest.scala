@@ -2,14 +2,10 @@ package com.zto.bigdata.spark.hbase
 
 import java.util
 
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.bigdata.spark.bean.Student
 import com.zto.bigdata.spark.common.db.HBaseOper
 import com.zto.bigdata.spark.common.ext.BaseSparkCore
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.SparkUtils
-import org.apache.spark.sql.Encoders
 
 /**
   * 在spark中使用java 同步 api 的方式读写hbase表
