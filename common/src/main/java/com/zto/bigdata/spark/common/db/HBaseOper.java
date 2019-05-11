@@ -1419,6 +1419,25 @@ public class HBaseOper {
     }
 
     /**
+     * 将多版本结果映射到自定义bean中
+     *
+     * @param it  HBase查询结果集
+     * @param <T> 映射的目标Class类型
+     * @return 目标类型实例
+     */
+    public static <T extends HBaseBaseBean> List<T> hbaseMultiVersionRow2BeanList(scala.collection.Iterator<Tuple2<ImmutableBytesWritable, Result>> it, Class<T> clazz) {
+        List<T> beanList = new LinkedList<>();
+        try {
+            while (it.hasNext()) {
+                beanList.addAll(hbaseMultiRow2Bean(it.next()._2, clazz));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return beanList;
+    }
+
+    /**
      * 将Javabean转为put对象
      *
      * @param obj         对象

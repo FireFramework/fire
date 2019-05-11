@@ -3,7 +3,7 @@ package com.zto.bigdata.spark.hbase
 import java.util
 
 import com.zto.bigdata.spark.bean.Student
-import com.zto.bigdata.spark.common.db.HBaseOper
+import com.zto.bigdata.spark.common.db.{HBaseOper, HBaseSparkBridge}
 import com.zto.bigdata.spark.common.ext.BaseSparkCore
 import com.zto.bigdata.spark.common.ext.SparkExt._
 
@@ -54,18 +54,30 @@ object HBaseJavaApiTest extends BaseSparkCore {
   def testSparkWrite(): Unit = {
     // rdd数据写入到hbase中
     val studentRDD = this.spark.parallelize(Student.buildStudentList().toScalaList)
-    studentRDD.hbaseInsertRDD(this.tableName, classOf[Student])
+    studentRDD.hbaseInsertRDD(this.tableName, classOf[Student], multiVersion = true)
     // dataFrame数据写入到hbase中
-    val df = this.spark.createDataFrame(studentRDD, classOf[Student])
-    df.hbaseInsertDF(this.tableName, classOf[Student])
+    /*val df = this.spark.createDataFrame(studentRDD, classOf[Student])
+    df.hbaseInsertDF(this.tableName, classOf[Student], multiVersion = true)*/
   }
 
   /**
     * spark scan HBase表记录
     */
   def testSparkScan(): Unit = {
-    val df = this.spark.hbaseScan2DF(this.tableName, "1", "5", classOf[Student])
-    df.show(false)
+    val rdd = this.spark.hbaseScan2RDD2(this.tableName, "1", "3", classOf[Student], true, 10)
+    rdd.foreach(println)
+    println("===========df==========")
+    val df = this.spark.hbaseScan2DF2(this.tableName, "1", "3", classOf[Student], true, 10)
+    df.show(100, false)
+  }
+
+  /**
+    * 将get到的一个或多个版本映射为RDD或DataFrame
+    */
+  def testSparkGet(): Unit = {
+    val rowKeyRDD = this.spark.parallelize(Seq("3"))
+    val studentDF = rowKeyRDD.hbaseGet2DF(this.tableName, classOf[Student], true, 3)
+    studentDF.show(100, false)
   }
 
   /**
@@ -74,11 +86,12 @@ object HBaseJavaApiTest extends BaseSparkCore {
     */
   override def process: Unit = {
     // java api方式进行单版本读写（适用于java程序）
-    this.testJavaRW()
+    // this.testJavaRW()
     // java api方式进行多版本表读写（适用于java程序）
-    this.testJavaMultiVersion()
+    // this.testJavaMultiVersion()
 
-    this.testSparkWrite()
+    // this.testSparkWrite()
+    // this.testSparkGet()
     this.testSparkScan()
   }
 

@@ -24,9 +24,9 @@ import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.streaming.{OutputMode, Trigger}
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.streaming.{StreamingContext, Time}
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka010.KafkaUtils
+import org.apache.spark.streaming.{StreamingContext, Time}
 import org.apache.spark.{Accumulator, SparkConf, SparkContext}
 
 import scala.collection.mutable.ListBuffer
@@ -488,8 +488,8 @@ object SparkExt {
       * 目标类型
       * @return
       */
-    def hbaseScan2DF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): DataFrame = {
-      HBaseSparkBridge.hbaseScan2DF(this.spark, tableName, scan, clazz)
+    def hbaseScan2DF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+      HBaseSparkBridge.hbaseScan2DF(this.spark, tableName, scan, clazz, multiVersion, versions)
     }
 
     /**
@@ -506,8 +506,8 @@ object SparkExt {
       * 目标类型
       * @return
       */
-    def hbaseScan2DF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): DataFrame = {
-      HBaseSparkBridge.hbaseScan2DF(this.spark, tableName, startRow, stopRow, clazz)
+    def hbaseScan2DF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+      HBaseSparkBridge.hbaseScan2DF2(this.spark, tableName, startRow, stopRow, clazz, multiVersion, versions)
     }
 
     /**
@@ -521,9 +521,11 @@ object SparkExt {
       * JavaBean类型，为HBaseBaseBean的子类
       * @param batchSize
       * 批次大小
+      * @param multiVersion
+      * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
       */
-    def hbaseInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], batchSize: Int = HBaseSparkBridge.batchSize): Unit = {
-      HBaseSparkBridge.hbaseInsertDF(tableName, df, clazz, batchSize)
+    def hbaseInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+      HBaseSparkBridge.hbaseInsertDF(tableName, df, clazz, batchSize, multiVersion)
     }
 
     /**
@@ -535,9 +537,140 @@ object SparkExt {
       * JavaBean类型，为HBaseBaseBean的子类
       * @param batchSize
       * 批次大小
+      * @param multiVersion
+      * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
       */
-    def hbaseInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[_], clazz: Class[T], batchSize: Int = HBaseSparkBridge.batchSize): Unit = {
-      HBaseSparkBridge.hbaseInsertRDD(tableName, rdd, clazz, batchSize)
+    def hbaseInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[_], clazz: Class[T], batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+      HBaseSparkBridge.hbaseInsertRDD(tableName, rdd, clazz, batchSize, multiVersion)
+    }
+
+    /**
+      * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+      *
+      * @param tableName
+      * HBase表名
+      * @param scan
+      * scan对象
+      * 目标类型
+      * @return
+      */
+    def hbaseScan2HBaseRDD(tableName: String, scan: Scan, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
+      HBaseSparkBridge.hbaseScan2HBaseRDD(this.spark, tableName, scan, multiVersion, versions)
+    }
+
+    /**
+      * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+      *
+      * @param tableName
+      * HBase表名
+      * @param startRow
+      * rowKey开始位置
+      * @param stopRow
+      * rowKey结束位置
+      * 目标类型
+      * @return
+      */
+    def hbaseScan2HBaseRDD2(tableName: String, startRow: String, stopRow: String, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
+      HBaseSparkBridge.hbaseScan2HBaseRDD2(spark, tableName, startRow, stopRow, multiVersion, versions)
+    }
+
+    /**
+      * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+      *
+      * @param tableName
+      * HBase表名
+      * @param scan
+      * HBase scan对象
+      * @return
+      */
+    def hbaseScan2RDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+      HBaseSparkBridge.hbaseScan2RDD(spark, tableName, scan, clazz, multiVersion, versions)
+    }
+
+    /**
+      * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+      *
+      * @param tableName
+      * HBase表名
+      * @param startRow
+      * rowKey开始位置
+      * @param stopRow
+      * rowKey结束位置
+      * 目标类型
+      * @return
+      */
+    def hbaseScan2RDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+      HBaseSparkBridge.hbaseScan2RDD(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+    }
+
+    /**
+      * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+      *
+      * @param rowKeyRDD
+      * rdd中存放了待查询的rowKey集合
+      * @param tableName
+      * HBase表名
+      * @param clazz
+      * 目标类型
+      * @param multiVersion
+      * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+      * @tparam T
+      * 目标类型
+      * @return
+      */
+    def hbaseGet2RDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+      HBaseSparkBridge.hbaseGet2RDD(tableName, rowKeyRDD, clazz, multiVersion, versions)
+    }
+
+    /**
+      * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+      *
+      * @param rowKeyRDD
+      * rdd中存放了待查询的rowKey集合
+      * @param tableName
+      * HBase表名
+      * @param clazz
+      * 目标类型
+      * @param multiVersion
+      * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+      * @tparam T
+      * 目标类型
+      * @return
+      */
+    def hbaseGet2DF[T <: HBaseBaseBean[T] : ClassTag](rowKeyRDD: RDD[String], tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+      HBaseSparkBridge.hbaseGet2DF(tableName, rowKeyRDD, clazz, multiVersion, versions)
+    }
+
+    /**
+      * 根据RDD[String]批量删除
+      *
+      * @param tableName
+      * HBase表名
+      * @param rowKeyRDD
+      * 装有rowKey的rdd集合
+      * @param batchSize
+      * 批量删除的大小
+      */
+    def hbaseBulkDelete(tableName: String, rowKeyRDD: RDD[String], batchSize: Integer = this.hbaseContext.batchSize): Unit = {
+      this.hbaseContext.bulkDelete(tableName, rowKeyRDD, batchSize)
+    }
+
+
+    /**
+      * 根据rowKey集合批量获取数据
+      *
+      * @param tableName
+      * HBase表名
+      * @param clazz
+      * 获取后的记录转换为目标类型
+      * @param batchSize
+      * 批量的大小
+      * @tparam E
+      * @return
+      * 结果集
+      */
+    def hbaseBulkGet[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): RDD[HBaseBaseBean[E]] = {
+      this.hbaseContext.bulkGet(tableName, rowKeyRDD, clazz, batchSize)
     }
   }
 
@@ -727,6 +860,40 @@ object SparkExt {
     def hbaseBulkGet[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): RDD[HBaseBaseBean[E]] = {
       this.hbaseContext.bulkGet(tableName, rdd, clazz, batchSize)
     }
+
+    /**
+      * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+      *
+      * @param tableName
+      * HBase表名
+      * @param clazz
+      * 目标类型
+      * @param multiVersion
+      * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+      * @tparam T
+      * 目标类型
+      * @return
+      */
+    def hbaseGet2RDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+      HBaseSparkBridge.hbaseGet2RDD(tableName, rdd, clazz, multiVersion, versions)
+    }
+
+    /**
+      * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+      *
+      * @param tableName
+      * HBase表名
+      * @param clazz
+      * 目标类型
+      * @param multiVersion
+      * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+      * @tparam T
+      * 目标类型
+      * @return
+      */
+    def hbaseGet2DF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+      HBaseSparkBridge.hbaseGet2DF(tableName, rdd, clazz, multiVersion, versions)
+    }
   }
 
   /**
@@ -780,10 +947,13 @@ object SparkExt {
       * JavaBean类型，为HBaseBaseBean的子类
       * @param batchSize
       * 批次大小
+      * @param multiVersion
+      * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
       */
-    def hbaseInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], batchSize: Int = HBaseSparkBridge.batchSize): Unit = {
-      HBaseSparkBridge.hbaseInsertRDD(tableName, rdd, clazz, batchSize)
+    def hbaseInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+      HBaseSparkBridge.hbaseInsertRDD(tableName, rdd, clazz, batchSize, multiVersion)
     }
+
   }
 
   /**
@@ -1375,9 +1545,11 @@ object SparkExt {
       * JavaBean类型，为HBaseBaseBean的子类
       * @param batchSize
       * 批次大小
+      * @param multiVersion
+      * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
       */
-    def hbaseInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], batchSize: Int = HBaseSparkBridge.batchSize): Unit = {
-      HBaseSparkBridge.hbaseInsertDF(tableName, this.dataFrame, clazz, batchSize)
+    def hbaseInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+      HBaseSparkBridge.hbaseInsertDF(tableName, this.dataFrame, clazz, batchSize, multiVersion)
     }
 
     /**

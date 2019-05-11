@@ -103,6 +103,14 @@ trait BaseSpark extends SparkListener with Serializable {
   def process: Unit
 
   /**
+    * 资源回收与清理，子类复写实现具体逻辑
+    * 注：该方法会在进行destroy之前自动被系统调用
+    *
+    * @param args
+    */
+  def release(args: Array[String] = null): Unit = {}
+
+  /**
     * 打印总耗时
     *
     * @param applicationEnd
@@ -167,14 +175,6 @@ trait BaseSpark extends SparkListener with Serializable {
   def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, debug: Boolean = false): Unit = {
     ThreadUtils.runAsSchedule(this.threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount, debug)
   }
-
-  /**
-    * 资源回收与清理，子类复写实现具体逻辑
-    * 注：该方法会在进行destroy之前自动被系统调用
-    *
-    * @param args
-    */
-  def release(args: Array[String] = null): Unit = {}
 
   /**
     * 资源回收与应用关闭

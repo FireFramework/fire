@@ -199,9 +199,8 @@ trait BaseSparkStreaming extends BaseSpark {
   /**
     * 用于重置StreamingContext（仅支持batch时间的修改）
     *
-    * @param request
-    * @param response
     * @return
+    * 响应结果
     */
   @Rest("/system/restartStreaming")
   def restartStreaming(request: Request, response: Response): AnyRef = {
@@ -217,9 +216,8 @@ trait BaseSparkStreaming extends BaseSpark {
   /**
     * 获取streaming的batch时间
     *
-    * @param request
-    * @param response
     * @return
+    * streaming批次时间
     */
   @Rest("/system/batchTime")
   def batchTime(request: Request, response: Response): AnyRef = {
