@@ -582,4 +582,18 @@ object SparkUtils {
       "enable.auto.commit" -> (commit: java.lang.Boolean)
     )
   }
+
+  /**
+    * 获取spark任务的webUI地址信息
+    *
+    * @return
+    */
+  def getUI(webUI: String): String = {
+    val line = new StringBuilder()
+    webUI.split(",").foreach(url => {
+      line.append(StringsUtils.hrefTag(url) + StringsUtils.brTag(""))
+    })
+
+    line.toString()
+  }
 }

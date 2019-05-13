@@ -37,6 +37,7 @@ trait BaseSpark extends SparkListener with Serializable {
   val log = LoggerFactory.getLogger(this.getClass)
   val logger = new LogUtils(log)
   var applicationId: String = _
+  var batchDuration: Long = _
   var webUI: String = _
   this.init
 

@@ -21,7 +21,6 @@ import spark.{Request, Response}
   */
 trait BaseSparkStreaming extends BaseSpark {
   var checkPointDir: String = _
-  var batchDuration: Long = _
   var externalConf: RestartParams = _
 
   /**
@@ -53,7 +52,6 @@ trait BaseSparkStreaming extends BaseSpark {
       this.init(tmpConf)
       this.restfulRegister
         .addRest(RestCase("get", "/system/restartStreaming", this.restartStreaming))
-        .addRest(RestCase("get", "/system/batchTime", this.batchTime))
         .startRestServer
     }
     this.batchDuration = batchDuration
@@ -211,17 +209,6 @@ trait BaseSparkStreaming extends BaseSpark {
       this.init(this.externalConf.getBatchDuration, false)
     }
     GlobalConstants.Status.SUCCESS
-  }
-
-  /**
-    * 获取streaming的batch时间
-    *
-    * @return
-    * streaming批次时间
-    */
-  @Rest("/system/batchTime")
-  def batchTime(request: Request, response: Response): AnyRef = {
-    this.batchDuration.toString
   }
 
 }
