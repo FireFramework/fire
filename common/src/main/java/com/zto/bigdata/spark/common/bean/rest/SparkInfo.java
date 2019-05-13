@@ -7,6 +7,12 @@ import java.util.Map;
  * @author ChengLong 2019-5-13 10:27:33
  */
 public class SparkInfo {
+    // spark应用名称
+    private String appName;
+    // spark应用的类名
+    private String className;
+    // common包的版本号
+    private String commonVersion;
     // spark conf信息
     private Map<String, String> conf;
     // 当前spark版本
@@ -55,6 +61,30 @@ public class SparkInfo {
     private String groupId;
     // streaming批次时间
     private String batchDuration;
+
+    public String getAppName() {
+        return appName;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
+
+    public String getCommonVersion() {
+        return commonVersion;
+    }
+
+    public void setCommonVersion(String commonVersion) {
+        this.commonVersion = commonVersion;
+    }
 
     public Map<String, String> getConf() {
         return conf;
@@ -252,7 +282,7 @@ public class SparkInfo {
      * 计算cpu和内存总数
      */
     public void computeCpuMemory() {
-        this.memory = (Integer.parseInt(this.driverMemory.replace("g", "")) + Integer.parseInt(this.driverMemoryOverhead.replace("g", "")) + Integer.parseInt(this.executorInstances) * (Integer.parseInt(this.executorMemory.replace("g", "")) + Integer.parseInt(this.executorMemoryOverhead.replace("g", "")))) + "";
+        this.memory = (Integer.parseInt(this.driverMemory.replace("g", "")) + Integer.parseInt(this.driverMemoryOverhead.replace("g", "")) + Integer.parseInt(this.executorInstances) * (Integer.parseInt(this.executorMemory.replace("g", "")) + Integer.parseInt(this.executorMemoryOverhead.replace("g", "")))) + "g";
         this.cpu = (Integer.parseInt(this.executorInstances) * Integer.parseInt(this.executorCores) + Integer.parseInt(this.driverCores)) + "";
     }
 }

@@ -29,6 +29,7 @@ trait BaseSpark extends SparkListener with Serializable {
   var hbaseContext: HBaseContextExt = _
   val startTime = SparkUtils.currentTime
   var appName = this.getClass.getSimpleName.replace("$", "")
+  val className = this.getClass.getName.replace("$", "")
   lazy val threadPool = Executors.newFixedThreadPool(20)
   lazy val threadPoolSchedule = Executors.newScheduledThreadPool(10)
   val restPort = SystemInfoUtils.getRundomPort

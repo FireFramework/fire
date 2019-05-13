@@ -81,6 +81,9 @@ class SystemRestful(val baseSpark: BaseSpark) {
   @Rest("/system/sparkInfo")
   def sparkInfo(request: Request, response: Response): AnyRef = {
     val sparkInfo = new SparkInfo
+    sparkInfo.setAppName(this.baseSpark.appName)
+    sparkInfo.setClassName(this.baseSpark.className)
+    sparkInfo.setCommonVersion(PropUtils.getString("common.version", "1.0.0"))
     sparkInfo.setConf(this.baseSpark.spark.conf.getAll.toJavaMap)
     sparkInfo.setVersion(this.baseSpark.sc.version)
     sparkInfo.setMaster(this.baseSpark.sc.master)

@@ -6,6 +6,7 @@ import com.zto.bigdata.spark.bean.Student
 import com.zto.bigdata.spark.common.db.{HBaseOper, HBaseSparkBridge}
 import com.zto.bigdata.spark.common.ext.BaseSparkCore
 import com.zto.bigdata.spark.common.ext.SparkExt._
+import com.zto.bigdata.spark.common.util.PropUtils
 
 /**
   * 在spark中使用java 同步 api 的方式读写hbase表
@@ -92,7 +93,8 @@ object HBaseJavaApiTest extends BaseSparkCore {
 
     // this.testSparkWrite()
     // this.testSparkGet()
-    this.testSparkScan()
+    // this.testSparkScan()
+    println(PropUtils.getString("common.version", "为获取到"))
   }
 
   def main(args: Array[String]): Unit = {
