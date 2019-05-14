@@ -5,12 +5,11 @@ import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.bigdata.spark.common.anno.Rest
 import com.zto.bigdata.spark.common.bean.rest.SparkInfo
 import com.zto.bigdata.spark.common.ext.BaseSpark
+import com.zto.bigdata.spark.common.ext.ScalaExt._
+import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
-import com.zto.bigdata.spark.common.ext.ScalaExt._
 import spark._
-
-import scala.util.parsing.json.JSONObject
 
 /**
   * 系统预定义的restful服务
@@ -18,12 +17,13 @@ import scala.util.parsing.json.JSONObject
   * @author ChengLong 2019-3-16 10:16:38
   */
 class SystemRestful(val baseSpark: BaseSpark) {
+  private var sparkInfoBean: SparkInfo = _
 
   // 系统预定义接口注册
   {
     this.baseSpark.restfulRegister
-      .addRest(RestCase(RequestMethod.POST.toString, s"/system/sql", sql))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/kill", kill))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/sql", sql))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/loadInfo", loadInfo))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/sparkInfo", sparkInfo))
   }
@@ -65,10 +65,13 @@ class SystemRestful(val baseSpark: BaseSpark) {
   @Rest(value = "/system/sql", method = "post")
   def sql(request: Request, response: Response): AnyRef = {
     val sql = request.queryString()
-    if (StringUtils.isNotBlank(sql) && this.baseSpark != null && this.baseSpark.spark != null) {
-      this.baseSpark.spark.sql(sql).show(false)
+    if (StringUtils.isBlank(sql) || sql.contains("alert") || sql.contains("drop")  || sql.contains("ALERT") || sql.contains("DROP")) {
+      return "sql不合法，暂不支持drop或alert语句"
     }
-    GlobalConstants.Status.SUCCESS
+    if (this.baseSpark == null || this.baseSpark.spark == null) {
+      return "系统正在初始化，请稍后再试"
+    }
+    this.baseSpark.spark.sql(sql).limit(1000).showString()
   }
 
   /**
@@ -78,52 +81,43 @@ class SystemRestful(val baseSpark: BaseSpark) {
     * @param response
     * @return
     */
-  @Rest("/system/sparkInfo")
+  @Rest("/system/sparkInfoBean")
   def sparkInfo(request: Request, response: Response): AnyRef = {
-    val sparkInfo = new SparkInfo
-    sparkInfo.setAppName(this.baseSpark.appName)
-    sparkInfo.setClassName(this.baseSpark.className)
-    sparkInfo.setCommonVersion(PropUtils.getString("common.version", "1.0.0"))
-    sparkInfo.setConf(this.baseSpark.spark.conf.getAll.toJavaMap)
-    sparkInfo.setVersion(this.baseSpark.sc.version)
-    sparkInfo.setMaster(this.baseSpark.sc.master)
-    sparkInfo.setApplicationId(this.baseSpark.sc.applicationId)
-    sparkInfo.setApplicationAttemptId(this.baseSpark.sc.applicationAttemptId.getOrElse(""))
-    sparkInfo.setUi(this.baseSpark.webUI)
-    sparkInfo.setPid(SystemInfoUtils.getPid)
-    sparkInfo.setUptime(SparkUtils.runTime(this.baseSpark.startTime))
-    sparkInfo.setStartTime(DateFormatUtils.formatUnixDateTime(this.baseSpark.startTime * 1000))
-    sparkInfo.setExecutorMemory(this.baseSpark.sc.getConf.get("spark.executor.memory", "1"))
-    sparkInfo.setExecutorInstances(this.baseSpark.sc.getConf.get("spark.executor.instances", "1"))
-    sparkInfo.setExecutorCores(this.baseSpark.sc.getConf.get("spark.executor.cores", "1"))
-    sparkInfo.setDriverCores(this.baseSpark.sc.getConf.get("spark.driver.cores", "1"))
-    sparkInfo.setDriverMemory(this.baseSpark.sc.getConf.get("spark.driver.memory", "1"))
-    sparkInfo.setDriverMemoryOverhead(this.baseSpark.sc.getConf.get("spark.yarn.driver.memoryOverhead", "0"))
-    sparkInfo.setDriverHost(this.baseSpark.sc.getConf.get("spark.driver.host", "0"))
-    sparkInfo.setDriverPort(this.baseSpark.sc.getConf.get("spark.driver.port", "0"))
-    sparkInfo.setExecutorMemoryOverhead(this.baseSpark.sc.getConf.get("spark.yarn.executor.memoryOverhead", "0"))
-    sparkInfo.setTopics(PropUtils.getString(GlobalConstants.PropKeys.KAFKA_TOPICS, ""))
-    sparkInfo.setBrokers(PropUtils.getString(GlobalConstants.PropKeys.KAFKA_BROKERS_URL, GlobalConstants.DefaultVals.kafkaBrokers))
-    sparkInfo.setGroupId(PropUtils.getString(GlobalConstants.PropKeys.KAFKA_GROUP_ID, this.baseSpark.appName))
-    sparkInfo.setBatchDuration(this.baseSpark.batchDuration + "")
-    sparkInfo.computeCpuMemory()
+    val startTime = System.currentTimeMillis()
+    if (this.sparkInfoBean == null) {
+      this.sparkInfoBean = new SparkInfo
+      this.sparkInfoBean.setAppName(this.baseSpark.appName)
+      this.sparkInfoBean.setClassName(this.baseSpark.className)
+      this.sparkInfoBean.setCommonVersion(PropUtils.getString("common.version", "1.0.0"))
+      this.sparkInfoBean.setConf(this.baseSpark.spark.conf.getAll.toJavaMap)
+      this.sparkInfoBean.setVersion(this.baseSpark.sc.version)
+      this.sparkInfoBean.setMaster(this.baseSpark.sc.master)
+      this.sparkInfoBean.setApplicationId(this.baseSpark.sc.applicationId)
+      this.sparkInfoBean.setApplicationAttemptId(this.baseSpark.sc.applicationAttemptId.getOrElse(""))
+      this.sparkInfoBean.setUi(this.baseSpark.webUI)
+      this.sparkInfoBean.setPid(SystemInfoUtils.getPid)
+      this.sparkInfoBean.setStartTime(DateFormatUtils.formatUnixDateTime(this.baseSpark.startTime * 1000))
+      this.sparkInfoBean.setExecutorMemory(this.baseSpark.sc.getConf.get("spark.executor.memory", "1"))
+      this.sparkInfoBean.setExecutorInstances(this.baseSpark.sc.getConf.get("spark.executor.instances", "1"))
+      this.sparkInfoBean.setExecutorCores(this.baseSpark.sc.getConf.get("spark.executor.cores", "1"))
+      this.sparkInfoBean.setDriverCores(this.baseSpark.sc.getConf.get("spark.driver.cores", "1"))
+      this.sparkInfoBean.setDriverMemory(this.baseSpark.sc.getConf.get("spark.driver.memory", "1"))
+      this.sparkInfoBean.setDriverMemoryOverhead(this.baseSpark.sc.getConf.get("spark.yarn.driver.memoryOverhead", "0"))
+      this.sparkInfoBean.setDriverHost(this.baseSpark.sc.getConf.get("spark.driver.host", "0"))
+      this.sparkInfoBean.setDriverPort(this.baseSpark.sc.getConf.get("spark.driver.port", "0"))
+      this.sparkInfoBean.setRestPort(this.baseSpark.restPort.toString)
+      this.sparkInfoBean.setExecutorMemoryOverhead(this.baseSpark.sc.getConf.get("spark.yarn.executor.memoryOverhead", "0"))
+      this.sparkInfoBean.setTopics(PropUtils.getString(GlobalConstants.PropKeys.KAFKA_TOPICS, ""))
+      this.sparkInfoBean.setBrokers(PropUtils.getString(GlobalConstants.PropKeys.KAFKA_BROKERS_URL, GlobalConstants.DefaultVals.kafkaBrokers))
+      this.sparkInfoBean.setGroupId(PropUtils.getString(GlobalConstants.PropKeys.KAFKA_GROUP_ID, this.baseSpark.appName))
+      this.sparkInfoBean.computeCpuMemory()
+    }
+    this.sparkInfoBean.setUptime(SparkUtils.runTime(this.baseSpark.startTime))
+    this.sparkInfoBean.setBatchDuration(this.baseSpark.batchDuration + "")
+    this.sparkInfoBean.setTimestamp(DateFormatUtils.formatCurrentDateTime())
+    this.sparkInfoBean.setTimeCost(System.currentTimeMillis() - startTime)
 
-    JSON.toJSONString(sparkInfo, SerializerFeature.NotWriteRootClassName)
-  }
-
-
-  /**
-    * 获取spark任务的webUI地址信息
-    *
-    * @return
-    */
-  private def ui: String = {
-    val line = new StringBuilder()
-    this.baseSpark.webUI.split(",").foreach(url => {
-      line.append(StringsUtils.hrefTag(url) + StringsUtils.brTag(""))
-    })
-
-    line.toString()
+    JSON.toJSONString(this.sparkInfoBean, SerializerFeature.NotWriteRootClassName)
   }
 
 }

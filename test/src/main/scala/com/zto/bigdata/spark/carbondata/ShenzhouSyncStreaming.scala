@@ -33,7 +33,6 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
     * checkpoint中的数据，则子类必须复写该方法
     */
   override def process: Unit = {
-    println("版本号：" + PropUtils.getString("common.version", "未获取到"))
     // 默认broker、topic、groupId等信息从该类同名的配置文件中读取，比如当前类名为Shenzhou，那么默认会从Shenzhou.properties中读取配置
     // 使用该方法需导入：import com.zto.bigdata.spark.common.ext.SparkExt._
     val dstream = this.ssc.createDirectStream()

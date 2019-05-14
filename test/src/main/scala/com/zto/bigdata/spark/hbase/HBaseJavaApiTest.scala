@@ -2,8 +2,9 @@ package com.zto.bigdata.spark.hbase
 
 import java.util
 
+import com.amazonaws.services.cognitosync.model.Dataset
 import com.zto.bigdata.spark.bean.Student
-import com.zto.bigdata.spark.common.db.{HBaseOper, HBaseSparkBridge}
+import com.zto.bigdata.spark.common.db.HBaseOper
 import com.zto.bigdata.spark.common.ext.BaseSparkCore
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.PropUtils
@@ -92,9 +93,9 @@ object HBaseJavaApiTest extends BaseSparkCore {
     // this.testJavaMultiVersion()
 
     // this.testSparkWrite()
-    // this.testSparkGet()
+    this.testSparkGet()
     // this.testSparkScan()
-    println(PropUtils.getString("common.version", "为获取到"))
+
   }
 
   def main(args: Array[String]): Unit = {

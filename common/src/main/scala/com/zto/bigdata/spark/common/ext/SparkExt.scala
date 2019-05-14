@@ -23,6 +23,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.streaming.{OutputMode, Trigger}
+import org.apache.spark.sql.types.StringType
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka010.KafkaUtils
@@ -1642,12 +1643,36 @@ object SparkExt {
         .option("password", password)
         .mode(saveMode).save()
     }
+
+  }
+
+  /**
+    * Dataset扩展
+    *
+    * @param dataset
+    * dataset对象
+    */
+  implicit class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
+
+    /**
+      * 打印Dataset的值
+      *
+      * @param lines
+      * 打印的行数
+      * @return
+      */
+    def showString(lines: Int = 100): String = {
+      val showLines = if (lines <= 1000) lines else 1000
+      val showStringMethod = dataset.getClass.getDeclaredMethod("showString", classOf[Int], classOf[Int], classOf[Boolean])
+      showStringMethod.invoke(dataset, new Integer(showLines), new Integer(Int.MaxValue), new java.lang.Boolean(false)).toString
+    }
   }
 
   /**
     * StreamingContext扩展
     *
     * @param ssc
+    * StreamingContext对象
     */
   implicit class StreamingContextExt(ssc: StreamingContext) {
 

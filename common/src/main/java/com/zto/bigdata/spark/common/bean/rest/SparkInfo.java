@@ -1,5 +1,7 @@
 package com.zto.bigdata.spark.common.bean.rest;
 
+import com.zto.bigdata.spark.common.util.DateFormatUtils;
+
 import java.util.Map;
 
 /**
@@ -47,6 +49,8 @@ public class SparkInfo {
     private String driverHost;
     // driver占用的端口号
     private String driverPort;
+    // restful接口的端口号
+    private String restPort;
     // 申请的executor堆外内存大小
     private String executorMemoryOverhead;
     // 当前spark应用申请的总内存大小（driver+executor+总的堆外内存）
@@ -61,6 +65,10 @@ public class SparkInfo {
     private String groupId;
     // streaming批次时间
     private String batchDuration;
+    // 当前driver系统时间
+    private String timestamp = DateFormatUtils.formatCurrentDateTime();
+    // 接口耗时
+    private long timeCost;
 
     public String getAppName() {
         return appName;
@@ -276,6 +284,30 @@ public class SparkInfo {
 
     public void setBatchDuration(String batchDuration) {
         this.batchDuration = batchDuration;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public long getTimeCost() {
+        return timeCost;
+    }
+
+    public void setTimeCost(long timeCost) {
+        this.timeCost = timeCost;
+    }
+
+    public String getRestPort() {
+        return restPort;
+    }
+
+    public void setRestPort(String restPort) {
+        this.restPort = restPort;
     }
 
     /**
