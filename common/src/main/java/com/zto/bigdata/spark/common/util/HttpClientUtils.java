@@ -36,7 +36,6 @@ public class HttpClientUtils {
      *
      * @param url 地址
      * @return 调用结果
-     * @throws Exception
      */
     public String httpGetInvoke(String url) throws Exception {
         getMethod.setURI(new URI(url, true, "utf-8"));
@@ -55,18 +54,17 @@ public class HttpClientUtils {
      *
      * @param url 地址
      * @return 调用结果
-     * @throws Exception
      */
     public String httpPostInvoke(String url, String json) throws Exception {
         postMethod.setURI(new URI(url, true, "utf-8"));
         postMethod.addRequestHeader("Content-Type", "application/json");
-        if(json != null && StringUtils.isNotBlank(json.trim())) {
+        if (json != null && StringUtils.isNotBlank(json.trim())) {
             RequestEntity requestEntity = new StringRequestEntity(json, "application/json", "UTF-8");
             postMethod.setRequestHeader("Content-Length", String.valueOf(requestEntity.getContentLength()));
             postMethod.setRequestEntity(requestEntity);
         }
         httpClient.executeMethod(postMethod);
-        String responses= postMethod.getResponseBodyAsString();
+        String responses = postMethod.getResponseBodyAsString();
         return responses;
     }
 
@@ -85,4 +83,49 @@ public class HttpClientUtils {
         this.getMethod.releaseConnection();
         this.postMethod.releaseConnection();
     }
+
+    /**
+     * 发送一次get请求到指定的地址
+     *
+     * @param url 接口地址
+     * @return 调用结果
+     */
+    public static String httpGet(String url) {
+        String msg = "";
+        HttpClientUtils utils = null;
+        try {
+            utils = new HttpClientUtils();
+            msg = utils.httpGetInvoke(url);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (utils != null) {
+                utils.releaseConnection();
+            }
+            return msg;
+        }
+    }
+
+    /**
+     * 发送一次post请求到指定的地址
+     *
+     * @param url 接口地址
+     * @return 调用结果
+     */
+    public static String httpPost(String url, String json) {
+        String msg = "";
+        HttpClientUtils utils = null;
+        try {
+            utils = new HttpClientUtils();
+            msg = utils.httpPostInvoke(url, json);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (utils != null) {
+                utils.releaseConnection();
+            }
+            return msg;
+        }
+    }
+
 }
