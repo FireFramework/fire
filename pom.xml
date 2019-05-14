@@ -4,7 +4,7 @@
     <groupId>com.zto.bigdata.spark</groupId>
     <artifactId>spark2</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0</version>
+    <version>0.0.1-SNAPSHOT</version>
     <inceptionYear>2008</inceptionYear>
 
     <properties>
@@ -337,6 +337,17 @@
             <scope>${maven.scope}</scope>
         </dependency>
     </dependencies>
+    <distributionManagement>
+        <repository>
+            <id>ztoBigdataSpark</id>
+            <url>http://maven.dev.ztosys.com/nexus/content/repositories/releases</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>ztoBigdataSparkSnapshots</id>
+            <url>http://maven.dev.ztosys.com/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
     <build>
         <plugins>
             <!-- ensure that we use JDK 1.6 -->

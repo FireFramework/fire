@@ -15,7 +15,6 @@ import org.apache.carbondata.streaming.parser.CarbonStreamParser
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Result, Scan}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
-import org.apache.hadoop.hbase.mapreduce.TableInputFormat
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kudu.spark.kudu._
 import org.apache.spark.rdd.{JdbcRDD, RDD}
@@ -23,7 +22,6 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.streaming.{OutputMode, Trigger}
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka010.KafkaUtils
@@ -69,7 +67,9 @@ object SparkExt {
       * 执行一段Hive QL语句，注册为临时表，持久化到hive中
       *
       * @param sqlStr
+      * sql语句
       * @param tmpTableName
+      * 临时表名
       * @param saveMode
       * 持久化的模式，默认为Overwrite
       * @param cache
@@ -200,7 +200,6 @@ object SparkExt {
       * 表名
       * @param partitions
       * 分区
-      * @return
       */
     def dropPartitions(tableName: String, partitions: String*) = {
       spark.sqlContext.dropPartitions(tableName, partitions: _*)
@@ -406,8 +405,9 @@ object SparkExt {
       * 对指定的表执行minor compact
       *
       * @param dbName
+      * 数据库名
       * @param tableName
-      * @return
+      * 表名
       */
     def minorCompact(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): Unit = {
       spark.sql(CarbondataUtils.minorCompact(dbName, tableName))
