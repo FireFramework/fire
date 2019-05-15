@@ -15,7 +15,6 @@ object InsertDataFrame2Carbon extends BaseStructuredStreaming {
     this.init()
 
     val df = this.spark.table(this.tableName)
-    df.write2Carbon("default", "carbon_df_table", null)
 
     spark.sql("select count(1) from carbon_df_table").show()
     spark.sql("select * from carbon_df_table limit 10").show()

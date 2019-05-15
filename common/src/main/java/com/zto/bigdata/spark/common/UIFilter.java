@@ -1,6 +1,7 @@
 package com.zto.bigdata.spark.common;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -11,6 +12,8 @@ import java.util.StringTokenizer;
 
 /**
  * Spark web ui 访问控制器
+ * --driver-class-path /home/hadoop/project/filter.jar \
+ * --driver-java-options "-Dspark.ui.filters=com.zto.bigdata.spark.common.UIFilter -Dspark.com.zto.bigdata.spark.common.UIFilter.params='username=spark,password=bigdata,realm=20190515'" \
  *
  * @author ChengLong 2019-5-15 13:17:01
  */
@@ -21,7 +24,12 @@ public class UIFilter implements Filter {
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-
+        username = filterConfig.getInitParameter("username");
+        password = filterConfig.getInitParameter("password");
+        String paramRealm = filterConfig.getInitParameter("realm");
+        if (StringUtils.isNotBlank(paramRealm)) {
+            realm = paramRealm;
+        }
     }
 
     @Override

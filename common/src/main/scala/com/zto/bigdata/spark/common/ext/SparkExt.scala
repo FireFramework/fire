@@ -10,8 +10,6 @@ import com.zto.bigdata.spark.common.bean.{HBaseBaseBean, OGGBaseBean}
 import com.zto.bigdata.spark.common.db.{HBaseOper, HBaseSparkBridge}
 import com.zto.bigdata.spark.common.udf.UDFs
 import com.zto.bigdata.spark.common.util._
-import org.apache.carbondata.core.util.path.CarbonTablePath
-import org.apache.carbondata.streaming.parser.CarbonStreamParser
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Result, Scan}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
@@ -1554,51 +1552,6 @@ object SparkExt {
     }
 
     /**
-      * 将DataFrame数据打印到控制台
-      *
-      * @return
-      */
-    def writeStream2Console: Unit = {
-      dataFrame.writeStream.outputMode(OutputMode.Append()).format("console").start().awaitTermination()
-    }
-
-    /**
-      * 将DataFrame数据写入到carbondata表
-      *
-      * @return
-      */
-    def writeStream2Carbon(db: String = GlobalConstants.SparkConf.defaultDB, tableName: String, tigger: Trigger = Trigger.ProcessingTime("5 seconds")): Unit = {
-      if (StringUtils.isBlank(db) || StringUtils.isBlank(tableName)) throw new IllegalArgumentException("carbondata的库名或表名不能为空！")
-      val carbonTable = CarbonEnv.getCarbonTable(Some(db), tableName)(dataFrame.sparkSession)
-
-      dataFrame.writeStream
-        .format("carbondata")
-        .trigger(tigger)
-        .option("checkpointLocation", CarbonTablePath.getStreamingCheckpointDir(carbonTable.getTablePath))
-        .option("dbName", db)
-        .option("tableName", tableName)
-        .option(CarbonStreamParser.CARBON_STREAM_PARSER, CarbonStreamParser.CARBON_STREAM_PARSER_ROW_PARSER)
-        .start().awaitTermination()
-    }
-
-    /**
-      * 将DataFrame数据写入到carbondata表中
-      * 注：不适用于streaming中调用
-      *
-      * @param db
-      * @param tableName
-      * @param partition
-      * @param saveMode
-      */
-    def write2Carbon(db: String = GlobalConstants.SparkConf.defaultDB, tableName: String, partition: String = null, saveMode: SaveMode = SaveMode.Append): Unit = {
-      val dfWriter = dataFrame.write.format("carbondata")
-        .option("dbName", db)
-        .option("tableName", tableName)
-      if (StringUtils.isNotBlank(partition)) dfWriter.option("partitionColumns", partition)
-      dfWriter.mode(saveMode).save()
-    }
-
-    /**
       * 将DataFrame注册为临时表，并缓存表
       *
       * @param tableName
@@ -1608,24 +1561,6 @@ object SparkExt {
       if (StringUtils.isBlank(tableName)) throw new IllegalArgumentException("临时表名不能为空")
       dataFrame.registerTempTable(tableName)
       dataFrame.sqlContext.cacheTable(tableName)
-    }
-
-    /**
-      * 将DataFrame数据写入到streaming的carbondata表中
-      *
-      * @param dbName
-      * 数据库名
-      * @param tableName
-      * 表名
-      * @param time
-      * rdd时间
-      * @param saveMode
-      * 追加方式
-      */
-    def writeStreaming2Carbon(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String, time: Time, saveMode: SaveMode = SaveMode.Append): Unit = {
-      CarbonSparkStreamingFactory.getStreamSparkStreamingWriter(dataFrame.sparkSession, dbName, tableName)
-        .mode(saveMode)
-        .writeStreamData(dataFrame, time)
     }
 
     /**

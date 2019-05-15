@@ -31,7 +31,6 @@ object ShenzhouSync extends BaseStructuredStreaming {
     */
   def write2Carbondata: Unit = {
     val result = spark.loadKafkaParseJson(classOf[Senda])
-    result.writeStream2Carbon(this.dbName, this.tableName, Trigger.ProcessingTime("5 seconds"))
   }
 
 }

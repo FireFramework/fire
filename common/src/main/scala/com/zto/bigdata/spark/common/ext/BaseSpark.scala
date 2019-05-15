@@ -2,13 +2,11 @@ package com.zto.bigdata.spark.common.ext
 
 import java.util.concurrent.{Executors, TimeUnit}
 
-import com.alibaba.fastjson.JSON
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
-import org.apache.spark.sql.CarbonSession._
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.{SparkConf, SparkContext}
@@ -88,7 +86,7 @@ trait BaseSpark extends SparkListener with Serializable {
     if (SystemInfoUtils.isWindows) {
       this.spark = SparkSession.builder().config(tmpConf).master("local[*]") /*.enableHiveSupport()*/ .getOrCreate()
     } else {
-      this.spark = SparkSession.builder().config(tmpConf).enableHiveSupport().getOrCreateCarbonSession
+      this.spark = SparkSession.builder().config(tmpConf).enableHiveSupport().getOrCreate()
     }
     this.spark.registerAll()
     this.sc = this.spark.sparkContext

@@ -41,7 +41,7 @@ class BaseStructuredStreaming extends BaseSpark {
       new SparkConf()
         .setAppName(this.appName)
         .set("spark.port.maxRetries", "200")
-        .set("spark.ui.killEnable", "false")
+        .set("spark.ui.killEnabled", "false")
         .set("spark.default.parallelism", "1000")
         .set("spark.sql.broadcastTimeout", "3000")
         .set("spark.storage.memoryFraction", "0.4")

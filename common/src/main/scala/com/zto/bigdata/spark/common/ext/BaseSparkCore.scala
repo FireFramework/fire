@@ -34,7 +34,7 @@ class BaseSparkCore extends BaseSpark {
     if (conf == null) {
       new SparkConf()
         .setAppName(this.appName)
-        .set("spark.ui.killEnable", "false")
+        .set("spark.ui.killEnabled", "false")
         .set("spark.port.maxRetries", "200")
         .set("spark.default.parallelism", "1000")
         .set("spark.sql.broadcastTimeout", "3000")

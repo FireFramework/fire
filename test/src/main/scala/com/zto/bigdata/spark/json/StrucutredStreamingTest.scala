@@ -30,7 +30,6 @@ object StrucutredStreamingTest extends BaseStructuredStreaming {
     // 查询after中的字段
     result.select("bill_code").printSchema()
     // 将信息打印到控制台
-    result.writeStream2Console
   }
 
 }
