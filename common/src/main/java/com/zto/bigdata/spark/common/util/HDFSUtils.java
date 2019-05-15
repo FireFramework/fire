@@ -3,8 +3,6 @@ package com.zto.bigdata.spark.common.util;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
-import org.apache.hadoop.hdfs.DistributedFileSystem;
-import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -102,7 +100,7 @@ public class HDFSUtils {
      *
      * @param path
      */
-    public void delete(String path, boolean recursive) {
+    /*public void delete(String path, boolean recursive) {
         if (StringUtils.isBlank(path) || "/".equals(path)) {
             return;
         }
@@ -113,7 +111,7 @@ public class HDFSUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
     /**
      * 根据filter获取目录下的所有文件
@@ -158,7 +156,7 @@ public class HDFSUtils {
      * @param srcPath
      * @param dstPath
      */
-    public boolean rename(String srcPath, String dstPath) {
+    /*public boolean rename(String srcPath, String dstPath) {
         boolean flag = false;
         try {
             flag = this.fileSystem.rename(new Path(srcPath), new Path(dstPath));
@@ -167,7 +165,7 @@ public class HDFSUtils {
         } finally {
             return flag;
         }
-    }
+    }*/
 
     /**
      * 查找某个文件（非目录）在 HDFS集群的位置
@@ -200,7 +198,7 @@ public class HDFSUtils {
      *
      * @return DatanodeInfo[]
      */
-    public DatanodeInfo[] getHDFSNodes() {
+    /*public DatanodeInfo[] getHDFSNodes() {
         // 获取所有节点
         DatanodeInfo[] dataNodeStats = new DatanodeInfo[0];
         try {
@@ -212,7 +210,7 @@ public class HDFSUtils {
         } finally {
             return dataNodeStats;
         }
-    }
+    }*/
 
     /**
      * 文件上传至HDFS

@@ -98,6 +98,7 @@ trait BaseSparkStreaming extends BaseSpark {
         // .set("spark.speculation", "true")
         .set("spark.port.maxRetries", "200")
         .set("spark.ui.retainedJobs", "500")
+        .set("spark.ui.killEnable", "false")
         .set("spark.ui.retailedStages", "300")
         .set("spark.default.parallelism", "300")
         .set("spark.sql.broadcastTimeout", "3000")

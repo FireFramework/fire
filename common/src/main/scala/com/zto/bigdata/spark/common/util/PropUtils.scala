@@ -107,6 +107,20 @@ object PropUtils {
   }
 
   /**
+    * 使用map设置多个值
+    *
+    * @param map
+    * java map，存放多个配置信息
+    */
+  def setProperties(map: Map[String, String]): Unit = {
+    if (map != null) {
+      map.foreach(kv => {
+        this.props.setProperty(kv._1, kv._2)
+      })
+    }
+  }
+
+  /**
     * 打印配置文件中的kv
     */
   def print(): Unit = {

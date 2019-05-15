@@ -93,13 +93,14 @@ object HBaseJavaApiTest extends BaseSparkCore {
     // this.testJavaMultiVersion()
 
     // this.testSparkWrite()
-    this.testSparkGet()
+    // this.testSparkGet()
     // this.testSparkScan()
 
   }
 
   def main(args: Array[String]): Unit = {
     this.init()
+
     this.spark.stop()
   }
 }

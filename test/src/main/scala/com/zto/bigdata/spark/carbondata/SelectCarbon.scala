@@ -1,12 +1,11 @@
 package com.zto.bigdata.spark.carbondata
 
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.CarbonSession._
 
 object SelectCarbon {
 
   def main(args: Array[String]): Unit = {
-    val spark = SparkSession
+    /*val spark = SparkSession
       .builder()
       .appName("ShenzhouSync")
       .getOrCreateCarbonSession("hdfs://appcluster/user/CarbonStore")
@@ -20,6 +19,6 @@ object SelectCarbon {
           Thread.sleep(10000)
         }
       }
-    }).start()
+    }).start()*/
   }
 }

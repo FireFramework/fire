@@ -405,7 +405,7 @@ public class FileUtils {
     /**
      * 判断resource路径下的文件是否存在
      *
-     * @param fileName
+     * @param fileName 配置文件名称
      * @return null: 不存在，否则为存在
      */
     public static InputStream resourceFileExists(String fileName) {

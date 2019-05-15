@@ -2,6 +2,7 @@ package com.zto.bigdata.spark.common.ext
 
 import java.util.concurrent.{Executors, TimeUnit}
 
+import com.alibaba.fastjson.JSON
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
 import com.zto.bigdata.spark.common.util._
@@ -47,6 +48,9 @@ trait BaseSpark extends SparkListener with Serializable {
     */
   private[this] def init: Unit = {
     PropUtils.load(this.appName)
+    // 后续调用接口获取配置信息即可
+    /*val map = JSON.parseObject("{id: '10', name:'root'}", classOf[java.util.Map[String, String]]).toScalaMap
+    PropUtils.setProperties(map)*/
     if (StringUtils.isNotBlank(GlobalConstants.SparkConf.appName)) {
       this.appName = GlobalConstants.SparkConf.appName
     }
@@ -82,7 +86,7 @@ trait BaseSpark extends SparkListener with Serializable {
     val tmpConf = if (conf == null) this.buildConf(conf) else conf
     tmpConf.setAll(PropUtils.toMap)
     if (SystemInfoUtils.isWindows) {
-      this.spark = SparkSession.builder().config(tmpConf).master("local[*]")/*.enableHiveSupport()*/.getOrCreate()
+      this.spark = SparkSession.builder().config(tmpConf).master("local[*]") /*.enableHiveSupport()*/ .getOrCreate()
     } else {
       this.spark = SparkSession.builder().config(tmpConf).enableHiveSupport().getOrCreateCarbonSession
     }

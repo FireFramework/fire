@@ -3,7 +3,6 @@ package com.zto.bigdata.spark.carbondata
 import com.zto.bigdata.spark.bean.Senda
 import com.zto.bigdata.spark.common.ext.BaseSparkStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.PropUtils
 import org.apache.spark.sql.SaveMode
 
 /**
@@ -22,6 +21,7 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
       this.spark.dropCarbonTable(this.dbName, this.tableName)
       // this.spark.createCarbonTable(this.dbName, this.tableName, classOf[Senda])
     }
+    val rdd = this.spark.sparkContext.parallelize(1 to 10)
 
     this.runAsSchedule(this.printCount, 60 * 60, 1, true)
   }
@@ -39,7 +39,7 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
     dstream.foreachRDD((rdd, time) => {
       // this.parseJson2DataFrame(rdd, classOf[Senda]).writeStreaming2Carbon(this.dbName, tableName, time)
       // 将json数据解析成Senda对象对应的类型
-      this.parseJson2DataFrame(rdd, classOf[Senda]).write2Carbon(this.dbName, tableName, null, SaveMode.Overwrite)
+      println(this.parseJson2DataFrame(rdd, classOf[Senda]).count())//.write2Carbon(this.dbName, tableName, null, SaveMode.Overwrite)
     })
 
     this.ssc.start()
