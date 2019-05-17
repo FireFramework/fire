@@ -85,7 +85,6 @@ public class EncryptUtils {
             e.printStackTrace();
             return "";
         }
-
     }
 
     /**

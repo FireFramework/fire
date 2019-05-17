@@ -1,4 +1,4 @@
-package com.zto.bigdata.spark.common.bean.rest;
+package com.zto.bigdata.spark.common.bean.rest.spark;
 
 import com.zto.bigdata.spark.common.util.DateFormatUtils;
 

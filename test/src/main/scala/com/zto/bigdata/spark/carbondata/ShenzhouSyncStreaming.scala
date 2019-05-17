@@ -3,7 +3,6 @@ package com.zto.bigdata.spark.carbondata
 import com.zto.bigdata.spark.bean.Senda
 import com.zto.bigdata.spark.common.ext.BaseSparkStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import org.apache.spark.sql.SaveMode
 
 /**
   * 以streaming方式写carbondata
@@ -39,7 +38,9 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
     dstream.foreachRDD((rdd, time) => {
       // this.parseJson2DataFrame(rdd, classOf[Senda]).writeStreaming2Carbon(this.dbName, tableName, time)
       // 将json数据解析成Senda对象对应的类型
-      println(this.parseJson2DataFrame(rdd, classOf[Senda]).count())//.write2Carbon(this.dbName, tableName, null, SaveMode.Overwrite)
+      this.parseJson2DataFrame(rdd, classOf[Senda]).foreach(x => {
+        Thread.sleep(1000)
+      })
     })
 
     this.ssc.start()

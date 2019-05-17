@@ -35,8 +35,8 @@ public class StringsUtils {
     /**
      * 字符串拼接
      *
-     * @param strs
-     * @return
+     * @param strs 多个字符串
+     * @return 拼接结果
      */
     public static String append(String... strs) {
         StringBuilder sb = new StringBuilder("");

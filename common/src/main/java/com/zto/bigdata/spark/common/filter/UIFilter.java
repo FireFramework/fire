@@ -1,4 +1,4 @@
-package com.zto.bigdata.spark.common;
+package com.zto.bigdata.spark.common.filter;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
@@ -13,7 +13,7 @@ import java.util.StringTokenizer;
 /**
  * Spark web ui 访问控制器
  * --driver-class-path /home/hadoop/project/filter.jar \
- * --driver-java-options "-Dspark.ui.filters=com.zto.bigdata.spark.common.UIFilter -Dspark.com.zto.bigdata.spark.common.UIFilter.params='username=spark,password=bigdata,realm=20190515'" \
+ * --driver-java-options "-Dspark.ui.filters=com.zto.bigdata.spark.common.filter.UIFilter -Dspark.com.zto.bigdata.spark.common.filter.UIFilter.params='username=spark,password=bigdata,realm=20190515'" \
  *
  * @author ChengLong 2019-5-15 13:17:01
  */

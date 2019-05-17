@@ -3,7 +3,7 @@ package com.zto.bigdata.spark.common.rest
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.bigdata.spark.common.anno.Rest
-import com.zto.bigdata.spark.common.bean.rest.SparkInfo
+import com.zto.bigdata.spark.common.bean.rest.spark.SparkInfo
 import com.zto.bigdata.spark.common.ext.BaseSpark
 import com.zto.bigdata.spark.common.ext.ScalaExt._
 import com.zto.bigdata.spark.common.ext.SparkExt._
@@ -23,13 +23,15 @@ class SystemRestful(val baseSpark: BaseSpark) {
   {
     this.baseSpark.restfulRegister
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/kill", kill))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/cancelJob", cancelJob))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/cancelStage", cancelStage))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/sql", sql))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/loadInfo", loadInfo))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/sparkInfo", sparkInfo))
   }
 
   /**
-    * 强制退出
+    * 强制spark退出
     *
     * @param request
     * @param response
@@ -40,6 +42,38 @@ class SystemRestful(val baseSpark: BaseSpark) {
     this.baseSpark.destroy
     ProcessUtil.executeCmds(s"yarn application -kill ${this.baseSpark.applicationId}", s"kill -9 ${SystemInfoUtils.getPid}")
     System.exit(0)
+    GlobalConstants.Status.SUCCESS
+  }
+
+  /**
+    * 取消job的执行
+    *
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/cancelJob")
+  def cancelJob(request: Request, response: Response): AnyRef = {
+    val jobId = request.queryString()
+    if (StringUtils.isNotBlank(jobId)) {
+      this.baseSpark.sc.cancelJob(jobId.toInt, "被管控平台kill")
+    }
+    GlobalConstants.Status.SUCCESS
+  }
+
+  /**
+    * 取消stage的执行
+    *
+    * @param request
+    * @param response
+    * @return
+    */
+  @Rest("/system/cancelStage")
+  def cancelStage(request: Request, response: Response): AnyRef = {
+    val stageId = request.queryString()
+    if (StringUtils.isNotBlank(stageId)) {
+      this.baseSpark.sc.cancelStage(stageId.toInt, "被管控平台kill")
+    }
     GlobalConstants.Status.SUCCESS
   }
 

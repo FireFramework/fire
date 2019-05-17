@@ -95,7 +95,6 @@ object HBaseJavaApiTest extends BaseSparkCore {
     // this.testSparkWrite()
     // this.testSparkGet()
     // this.testSparkScan()
-
   }
 
   def main(args: Array[String]): Unit = {
