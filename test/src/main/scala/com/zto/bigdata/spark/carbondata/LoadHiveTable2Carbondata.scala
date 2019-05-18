@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark.carbondata
 
-import com.zto.bigdata.spark.common.ext.BaseSparkCore
+import com.zto.bigdata.spark.common.core.BaseSparkCore
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import org.apache.spark.sql.SaveMode
 

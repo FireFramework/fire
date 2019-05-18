@@ -4,7 +4,8 @@ import java.io.InputStream
 import java.util.Properties
 
 import org.apache.commons.lang3.StringUtils
-import com.zto.bigdata.spark.common.ext.ScalaExt._
+
+import scala.collection.JavaConversions
 import scala.collection.mutable.Map
 
 /**
@@ -125,7 +126,7 @@ object PropUtils {
     */
   def print(): Unit = {
     println(GlobalConstants.PS1.YELLOW + "< -------------------------------------- 配置信息 -------------------------------------- >" + GlobalConstants.PS1.DEFAULT)
-    this.props.keySet().toScalaSet.foreach(key => {
+    JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
       println(">> " + GlobalConstants.PS1.PINK + key + " --> " + this.props.get(key) + GlobalConstants.PS1.DEFAULT)
     })
     println(GlobalConstants.PS1.YELLOW + "< -------------------------------------------------------------------------------------- >" + GlobalConstants.PS1.DEFAULT)
@@ -139,7 +140,7 @@ object PropUtils {
     */
   def toMap: Map[String, String] = {
     val confMap = scala.collection.mutable.Map[String, String]()
-    this.props.keySet().toScalaSet.foreach(key => {
+    JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
       confMap += (key.toString -> this.props.getProperty(key.toString))
     })
     confMap

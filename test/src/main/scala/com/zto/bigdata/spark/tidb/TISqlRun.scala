@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark.tidb
 
-import com.zto.bigdata.spark.common.ext.BaseSparkCore
+import com.zto.bigdata.spark.common.core.BaseSparkCore
 import org.apache.spark.sql.SparkSession
 
 /**

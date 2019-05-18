@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark
 
-import com.zto.bigdata.spark.common.ext.BaseSparkStreaming
+import com.zto.bigdata.spark.common.core.BaseSparkStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils}
 import org.apache.spark.storage.StorageLevel

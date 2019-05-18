@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark.hbase
 
-import com.zto.bigdata.spark.common.ext.BaseSparkStreaming
+import com.zto.bigdata.spark.common.core.BaseSparkStreaming
 import com.zto.bigdata.spark.common.util.GlobalConstants
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Row

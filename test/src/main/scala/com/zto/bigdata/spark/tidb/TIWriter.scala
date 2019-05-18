@@ -1,8 +1,7 @@
 package com.zto.bigdata.spark.tidb
 
 import com.zto.bigdata.spark.bean.Student
-import com.zto.bigdata.spark.common.ext.BaseSparkCore
-import com.zto.bigdata.spark.common.ext.ScalaExt._
+import com.zto.bigdata.spark.common.core.BaseSparkCore
 import com.zto.bigdata.spark.common.util.SparkUtils
 import org.apache.spark.sql.SparkSession
 

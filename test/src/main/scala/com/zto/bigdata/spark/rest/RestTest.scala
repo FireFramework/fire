@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark.rest
 
-import com.zto.bigdata.spark.common.ext.BaseSparkCore
+import com.zto.bigdata.spark.common.core.BaseSparkCore
 import spark.Spark._
 import spark.{Request, Response, Route}
 

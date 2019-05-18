@@ -1,7 +1,7 @@
 package com.zto.bigdata.spark.json
 
 import com.zto.bigdata.spark.bean.Senda
-import com.zto.bigdata.spark.common.ext.BaseStructuredStreaming
+import com.zto.bigdata.spark.common.core.BaseStructuredStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
 
 /**

@@ -7,6 +7,7 @@ import com.zto.bigdata.spark.common.util.{GlobalConstants, ReflectionUtils, Syst
 import spark.{Request, Response, Route, Spark}
 import com.zto.bigdata.spark.common.ext.SparkExt._
 
+import scala.collection.JavaConversions
 import scala.collection.mutable._
 
 /**
@@ -89,11 +90,11 @@ class RestfulRegister(val threadPool: ExecutorService) {
   def registerRestful(): Unit = {
     val restClassList = ReflectionUtils.scanAnnotation("com.zto", classOf[Rest])
     if (restClassList != null && restClassList.size() > 0) {
-      restClassList.toScalaList.foreach(clazz => {
+      JavaConversions.asScalaBuffer(restClassList).foreach(clazz => {
         if (clazz != null) {
           val methods = clazz.getDeclaredMethods
           if (methods != null && methods.size > 0) {
-            methods.toArray.foreach(method => {
+            methods.foreach(method => {
               method.setAccessible(true)
               val restAnno = method.getAnnotation(classOf[Rest])
               if (restAnno != null) {

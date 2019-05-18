@@ -4,10 +4,12 @@ import java.util
 
 import com.amazonaws.services.cognitosync.model.Dataset
 import com.zto.bigdata.spark.bean.Student
+import com.zto.bigdata.spark.common.core.BaseSparkCore
 import com.zto.bigdata.spark.common.db.HBaseOper
-import com.zto.bigdata.spark.common.ext.BaseSparkCore
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.PropUtils
+
+import scala.collection.JavaConversions
 
 /**
   * 在spark中使用java 同步 api 的方式读写hbase表
@@ -29,8 +31,8 @@ object HBaseJavaApiTest extends BaseSparkCore {
       HBaseOper.insertMultiVersions(this.tableName, list)
     })
     // 多版本数据读取，指定6表示读取最近6个版本，若需读取全部版本，则此参数不填
-    val studentLists = HBaseOper.getMultiVersions(this.tableName, "1", classOf[Student]).toScalaList
-    studentLists.foreach(println)
+    val studentLists = HBaseOper.getMultiVersions(this.tableName, "1", classOf[Student])
+    JavaConversions.asScalaBuffer(studentLists).foreach(println)
   }
 
   /**
@@ -55,7 +57,7 @@ object HBaseJavaApiTest extends BaseSparkCore {
     */
   def testSparkWrite(): Unit = {
     // rdd数据写入到hbase中
-    val studentRDD = this.spark.parallelize(Student.buildStudentList().toScalaList)
+    val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
     studentRDD.hbaseInsertRDD(this.tableName, classOf[Student], multiVersion = true)
     // dataFrame数据写入到hbase中
     /*val df = this.spark.createDataFrame(studentRDD, classOf[Student])

@@ -1,7 +1,7 @@
 package com.zto.bigdata.spark.rest
 
 import com.zto.bigdata.spark.bean.Senda
-import com.zto.bigdata.spark.common.ext.BaseSparkStreaming
+import com.zto.bigdata.spark.common.core.BaseSparkStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.rest.RestCase
 import com.zto.bigdata.spark.common.util.{GlobalConstants, StringsUtils}

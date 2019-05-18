@@ -1,7 +1,7 @@
 package com.zto.bigdata.spark.carbondata
 
 import com.zto.bigdata.spark.bean.Senda
-import com.zto.bigdata.spark.common.ext.BaseStructuredStreaming
+import com.zto.bigdata.spark.common.core.BaseStructuredStreaming
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import org.apache.spark.sql.streaming.Trigger
 

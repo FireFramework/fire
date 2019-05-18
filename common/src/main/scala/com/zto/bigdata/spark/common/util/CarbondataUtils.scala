@@ -4,6 +4,8 @@ import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.anno.FieldName
 import org.apache.commons.lang3.StringUtils
 
+import scala.collection.JavaConversions
+
 /**
   * carbondata相关工具类
   *
@@ -23,7 +25,7 @@ object CarbondataUtils {
     * @return
     */
   def buildCreateTableSQL(dbName: String, tableName: String, tableSchema: Class[_], partition: String = GlobalConstants.SparkConf.partitionName, isStreaming: Boolean = false): String = {
-    val schema = ReflectionUtils.getAllFields(tableSchema).toScalaMap
+    val schema = JavaConversions.mapAsScalaMap(ReflectionUtils.getAllFields(tableSchema))
     val sql = new StringBuilder(s"CREATE TABLE IF NOT EXISTS ${dbName}.${tableName}(\n")
     schema.foreach(t => {
       val fieldType = t._2.getType

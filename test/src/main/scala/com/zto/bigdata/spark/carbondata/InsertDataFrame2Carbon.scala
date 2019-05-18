@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark.carbondata
 
-import com.zto.bigdata.spark.common.ext.BaseStructuredStreaming
+import com.zto.bigdata.spark.common.core.BaseStructuredStreaming
 import org.apache.spark.sql.SaveMode
 import com.zto.bigdata.spark.common.ext.SparkExt._
 

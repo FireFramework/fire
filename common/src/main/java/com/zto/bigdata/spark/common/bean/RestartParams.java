@@ -14,6 +14,8 @@ public class RestartParams {
     private boolean restartSparkContext;
     // 是否等待数据全部处理完成再重启
     private boolean stopGracefully;
+    // 是否做checkPoint
+    private boolean isCheckPoint;
     // 附加的conf信息
     private Map<String, String> sparkConf;
 
@@ -52,10 +54,19 @@ public class RestartParams {
         this.stopGracefully = stopGracefully;
     }
 
-    public RestartParams(long batchDuration, boolean restartSparkContext, boolean stopGracefully, Map<String, String> sparkConf) {
+    public boolean isCheckPoint() {
+        return isCheckPoint;
+    }
+
+    public void setCheckPoint(boolean checkPoint) {
+        isCheckPoint = checkPoint;
+    }
+
+    public RestartParams(long batchDuration, boolean restartSparkContext, boolean stopGracefully, boolean isCheckPoint, Map<String, String> sparkConf) {
         this.batchDuration = batchDuration;
         this.restartSparkContext = restartSparkContext;
         this.stopGracefully = stopGracefully;
+        this.isCheckPoint = isCheckPoint;
         this.sparkConf = sparkConf;
     }
 }

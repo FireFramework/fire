@@ -18,6 +18,7 @@ import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
 import spark.{Request, Response}
 
+import scala.collection.JavaConversions
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.reflect._
 
@@ -457,7 +458,7 @@ object SparkUtils {
     var rowKey = ""
     val arrays = ArrayBuffer[(Array[Byte], Array[Byte], Array[Byte])]()
 
-    ReflectionUtils.getAllFields(clazz).toScalaMap.foreach(t => {
+    JavaConversions.mapAsScalaMap(ReflectionUtils.getAllFields(clazz)).foreach(t => {
       val key = t._1
       val field = t._2
       val objValue = field.get(obj)

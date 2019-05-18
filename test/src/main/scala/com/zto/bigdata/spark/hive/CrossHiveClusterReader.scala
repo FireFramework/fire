@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark.hive
 
-import com.zto.bigdata.spark.common.ext.BaseSparkCore
+import com.zto.bigdata.spark.common.core.BaseSparkCore
 import com.zto.bigdata.spark.common.util.SparkUtils
 
 object CrossHiveClusterReader extends BaseSparkCore {

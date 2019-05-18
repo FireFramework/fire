@@ -3,7 +3,6 @@ package com.zto.bigdata.spark.common.db
 import java.util
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
-import com.zto.bigdata.spark.common.ext.ScalaExt._
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{SingletonFactory, SparkUtils}
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
@@ -12,6 +11,7 @@ import org.apache.hadoop.hbase.mapreduce.TableInputFormat
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 
+import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
@@ -37,9 +37,9 @@ object HBaseSparkBridge {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
+  def hbaseInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
     df.mapPartitions(row => SparkUtils.sparkRowToBean(row, clazz))(Encoders.bean(clazz)).foreachPartition(it => {
-      this.multiBatchInsert(tableName, it, batchSize, multiVersion)
+      this.multiBatchInsert(tableName, it, insertEmpty, batchSize, multiVersion)
     })
   }
 
@@ -57,9 +57,9 @@ object HBaseSparkBridge {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseInsertDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, ds: Dataset[E], clazz: Class[E], batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
+  def hbaseInsertDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, ds: Dataset[E], clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
     ds.foreachPartition(it => {
-      this.multiBatchInsert(tableName, it, batchSize, multiVersion)
+      this.multiBatchInsert(tableName, it, insertEmpty, batchSize, multiVersion)
     })
   }
 
@@ -75,9 +75,9 @@ object HBaseSparkBridge {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[_], clazz: Class[T], batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+  def hbaseInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[_], clazz: Class[T], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
     val dataFrame = rdd.sparkContext.createSQLContext.createDataFrame(rdd, clazz)
-    HBaseSparkBridge.hbaseInsertDF(tableName, dataFrame, clazz, batchSize, multiVersion)
+    HBaseSparkBridge.hbaseInsertDF(tableName, dataFrame, clazz, insertEmpty, batchSize, multiVersion)
   }
 
   /**
@@ -162,7 +162,7 @@ object HBaseSparkBridge {
   def hbaseScan2RDD[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
     val hbaseRDD = this.hbaseScan2HBaseRDD(spark, tableName, scan, multiVersion, versions)
     if (multiVersion) {
-      hbaseRDD.mapPartitions(it => HBaseOper.hbaseMultiVersionRow2BeanList(it, clazz).toScalaList.iterator)
+      hbaseRDD.mapPartitions(it => JavaConversions.asScalaBuffer(HBaseOper.hbaseMultiVersionRow2BeanList(it, clazz)).iterator)
     } else {
       hbaseRDD.mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz))
     }
@@ -247,8 +247,7 @@ object HBaseSparkBridge {
           getList.clear()
         }
       }
-
-      beanList.toScalaList.iterator
+      JavaConversions.asScalaIterator(beanList.iterator())
     })
   }
 
@@ -279,30 +278,40 @@ object HBaseSparkBridge {
     * hbase表名
     * @param iterator
     * 数据集迭代器
+    * @param insertEmpty
+    * 为空的字段是否插入，默认为true
     * @param batchSize
     * 批次大小
     * @tparam E HBaseBaseBean的子类
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def multiBatchInsert[E <: HBaseBaseBean[E] : ClassTag](tableName: String, iterator: Iterator[E], batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
+  def multiBatchInsert[E <: HBaseBaseBean[E] : ClassTag](tableName: String, iterator: Iterator[E], insertEmpty: Boolean = true, batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
     val list = ListBuffer[E]()
     iterator.foreach(bean => {
       list += bean
       if (list.size >= batchSize) {
         if (multiVersion) {
-          HBaseOper.insertMultiVersions(tableName, list.toJavaList)
+          HBaseOper.insertMultiVersions(tableName, JavaConversions.seqAsJavaList(list))
         } else {
-          HBaseOper.insert(tableName, list)
+          if (insertEmpty) {
+            HBaseOper.insert(tableName, list)
+          } else {
+            HBaseOper.insertIgnoreNull(tableName, list)
+          }
         }
         list.clear()
       }
     })
     if (list.size > 0) {
       if (multiVersion) {
-        HBaseOper.insertMultiVersions(tableName, list.toJavaList)
+        HBaseOper.insertMultiVersions(tableName, JavaConversions.seqAsJavaList(list))
       } else {
-        HBaseOper.insert(tableName, list)
+        if (insertEmpty) {
+          HBaseOper.insert(tableName, list)
+        } else {
+          HBaseOper.insertIgnoreNull(tableName, list)
+        }
       }
     }
     list.clear()

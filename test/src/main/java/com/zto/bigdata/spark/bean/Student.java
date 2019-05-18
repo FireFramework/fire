@@ -43,6 +43,13 @@ public class Student extends HBaseBaseBean<Student> {
         this.createTime = createTime;
     }
 
+    public Student(Long id, String name, Integer age, BigDecimal length) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+        this.length = length;
+    }
+
     public Student() {
     }
 
@@ -121,19 +128,43 @@ public class Student extends HBaseBaseBean<Student> {
      */
     public static List<Student> buildStudentList() {
         List<Student> studentList = new LinkedList<>();
-        for (int i=1; i<=3; i++) {
-            Student stu = new Student(1L, "root", i, new BigDecimal(10.0 + i), true, DateFormatUtils.formatCurrentDateTime());
-            studentList.add(stu);
-        }
+        try {
+            for (int i=1; i<=1; i++) {
+                Thread.sleep(100);
+                Student stu = new Student(1L, "root", i + 1, new BigDecimal(1 + i), true, DateFormatUtils.formatCurrentDateTime());
+                studentList.add(stu);
+            }
 
-        for (int i=1; i<=3; i++) {
-            Student stu = new Student(2L, "admin", i, new BigDecimal(20.0 + i), false, DateFormatUtils.formatCurrentDateTime());
-            studentList.add(stu);
-        }
+            for (int i=1; i<=2; i++) {
+                Thread.sleep(100);
+                Student stu = new Student(2L, "admin", i + 2, new BigDecimal(2019.05180919 + i), false, DateFormatUtils.formatCurrentDateTime());
+                studentList.add(stu);
+            }
 
-        for (int i=1; i<=3; i++) {
-            Student stu = new Student(3L, "spark", i, new BigDecimal(30.0 + i), false, DateFormatUtils.formatCurrentDateTime());
-            studentList.add(stu);
+            for (int i=1; i<=3; i++) {
+                Thread.sleep(100);
+                Student stu = new Student(3L, "spark", i + 3, new BigDecimal(33.1415926 + i));
+                studentList.add(stu);
+            }
+
+            for (int i=1; i<=3; i++) {
+                Thread.sleep(100);
+                Student stu = new Student(4L, "flink", i + 4, new BigDecimal(4.2 + i), true, DateFormatUtils.formatCurrentDateTime());
+                studentList.add(stu);
+            }
+
+            for (int i=1; i<=3; i++) {
+                Thread.sleep(100);
+                Student stu = new Student(5L, "hadoop", i + 5, new BigDecimal(5.5 + i), false, DateFormatUtils.formatCurrentDateTime());
+                studentList.add(stu);
+            }
+            for (int i=1; i<=3; i++) {
+                Thread.sleep(100);
+                Student stu = new Student(6L, "hbase", i + 6, new BigDecimal(66.66 + i), true, DateFormatUtils.formatCurrentDateTime());
+                studentList.add(stu);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return studentList;
