@@ -2,7 +2,7 @@ package com.zto.bigdata.spark.common.ext
 
 import com.zto.bigdata.spark.common.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.bigdata.spark.common.db.HBaseOper
-import com.zto.bigdata.spark.common.util.GlobalConstants
+import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.TableName
@@ -14,7 +14,7 @@ import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.apache.spark.streaming.dstream.DStream
 
 import scala.collection.mutable.ListBuffer
@@ -125,14 +125,13 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @tparam T
     * 数据类型为HBaseBaseBean的子类
     */
-  def bulkPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true): Unit = {
+  def bulkPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
     this.bulkPut[T](rdd,
       TableName.valueOf(tableName),
       (putRecord: T) => {
-        HBaseOper.convert2Put(putRecord, insertEmpty)
+        HBaseOper.convert2Put(if (multiVersion) new MultiVersionsBean(putRecord) else putRecord, insertEmpty)
       })
   }
-
 
   /**
     * 批量写入，将自定义的JavaBean数据集批量并行写入
@@ -150,53 +149,9 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @tparam T
     * 对象类型必须是HBaseBaseBean的子类
     */
-  def bulkPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean): Unit = {
+  def bulkPutSeq[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean, multiVersion: Boolean = false): Unit = {
     val rdd = this.sc.parallelize(seq, math.max(1, math.min(seq.length / 2, GlobalConstants.SparkConf.parallelism)))
-    this.bulkPut(tableName, rdd, insertEmpty)
-  }
-
-  /**
-    * 批量写入多个版本的数据，将自定义的JavaBean数据集批量并行写入
-    * 到HBase的指定表中。内部会将自定义JavaBean的相应
-    * 字段一一映射为Put对象，并完成一次写入
-    *
-    * @param tableName
-    * HBase表名
-    * @param rdd
-    * 数据集合，数类型需继承自HBaseBaseBean
-    * @param insertEmpty
-    * 对象中值为空的字段是否覆盖HBase中已有的field值
-    * 默认为覆盖
-    * @tparam T
-    * 数据类型为HBaseBaseBean的子类
-    */
-  def bulkPutMultiVersions[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true): Unit = {
-    this.bulkPut[T](rdd,
-      TableName.valueOf(tableName),
-      (putRecord: T) => {
-        HBaseOper.convert2Put(new MultiVersionsBean(putRecord), insertEmpty)
-      })
-  }
-
-  /**
-    * 批量写入多个历史版本，将自定义的JavaBean数据集批量并行写入
-    * 到HBase的指定表中。内部会将自定义JavaBean的相应
-    * 字段一一映射为Put对象，并完成一次写入。如果数据量
-    * 较大，推荐使用。数据量过小则推荐使用HBaseOper
-    *
-    * @param tableName
-    * HBase表名
-    * @param seq
-    * 数据集，类型为HBaseBaseBean的子类
-    * @param insertEmpty
-    * 对象中值为空的字段是否覆盖HBase中已有的field值
-    * 默认为覆盖
-    * @tparam T
-    * 对象类型必须是HBaseBaseBean的子类
-    */
-  def bulkPutMultiVersions[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean): Unit = {
-    val rdd = this.sc.parallelize(seq, math.max(1, math.min(seq.length / 2, GlobalConstants.SparkConf.parallelism)))
-    this.bulkPutMultiVersions(tableName, rdd, insertEmpty)
+    this.bulkPut(tableName, rdd, insertEmpty, multiVersion)
   }
 
   /**
@@ -244,6 +199,45 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
   }
 
   /**
+    * 批量写入，将自定义的JavaBean数据集批量并行写入
+    * 到HBase的指定表中。内部会将自定义JavaBean的相应
+    * 字段一一映射为Put对象，并完成一次写入
+    *
+    * @param tableName
+    * HBase表名
+    * @param dataFrame
+    * dataFrame实例，数类型需继承自HBaseBaseBean
+    * @param insertEmpty
+    * 对象中值为空的字段是否覆盖HBase中已有的field值
+    * 默认为覆盖
+    * @tparam T
+    * 数据类型为HBaseBaseBean的子类
+    */
+  def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    val rdd = dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
+    this.bulkPut[T](tableName, rdd, insertEmpty, multiVersion)
+  }
+
+  /**
+    * 批量写入，将自定义的JavaBean数据集批量并行写入
+    * 到HBase的指定表中。内部会将自定义JavaBean的相应
+    * 字段一一映射为Put对象，并完成一次写入
+    *
+    * @param tableName
+    * HBase表名
+    * @param dataset
+    * dataFrame实例，数类型需继承自HBaseBaseBean
+    * @param insertEmpty
+    * 对象中值为空的字段是否覆盖HBase中已有的field值
+    * 默认为覆盖
+    * @tparam T
+    * 数据类型为HBaseBaseBean的子类
+    */
+  def bulkPutDataset[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    this.bulkPut[T](tableName, dataset.rdd, insertEmpty, multiVersion)
+  }
+
+  /**
     * 用于已经映射为指定类型的DStream实时
     * 批量写入至HBase表中
     *
@@ -275,7 +269,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @tparam T
     * 数据类型
     */
-  def bulkPut2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true): Unit = {
+  def hadoopPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true): Unit = {
     rdd.mapPartitions(it => {
       val putList = ListBuffer[(ImmutableBytesWritable, Put)]()
       it.foreach(t => {
@@ -283,6 +277,31 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
       })
       putList.iterator
     }).saveAsNewAPIHadoopDataset(this.getConfiguration(tableName))
+  }
+
+  /**
+    * 使用spark API的方式将DataFrame中的数据分多个批次插入到HBase中
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * JavaBean类型，为HBaseBaseBean的子类
+    */
+  def hadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[E], insertEmpty: Boolean = true): Unit = {
+    val rdd = dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
+    this.hadoopPut[E](tableName, rdd, insertEmpty)
+  }
+
+  /**
+    * 使用spark API的方式将DataFrame中的数据分多个批次插入到HBase中
+    *
+    * @param tableName
+    * HBase表名
+    * @param dataset
+    * JavaBean类型，待插入到hbase的数据集
+    */
+  def hadoopPutDataset[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], insertEmpty: Boolean = true): Unit = {
+    this.hadoopPut[E](tableName, dataset.rdd, insertEmpty)
   }
 
   /**
@@ -297,7 +316,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @tparam T
     * JavaBean类型
     */
-  def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String, insertEmpty: Boolean = true): Unit = {
+  def hadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String, insertEmpty: Boolean = true): Unit = {
     val fields = df.schema.fields
     df.rdd.mapPartitions(it => {
       val putList = ListBuffer[(ImmutableBytesWritable, Put)]()

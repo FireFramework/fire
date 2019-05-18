@@ -37,26 +37,6 @@ object SparkExt {
 
 
   /**
-    * HBaseContext相关扩展
-    *
-    * @param rdd
-    * rdd
-    */
-  implicit class RDDHBaseExtBridge[T <: HBaseBaseBean[T] : ClassTag](rdd: RDD[T]) extends RDDHBaseExt[T](rdd) {
-
-  }
-
-  /**
-    * String类型的RDD扩展
-    *
-    * @param rdd
-    * rdd
-    */
-  implicit class RDDStringExtBridge(rdd: RDD[String]) extends RDDStringExt(rdd) {
-
-  }
-
-  /**
     * RDD相关的扩展
     *
     * @param rdd
@@ -116,15 +96,6 @@ object SparkExt {
 
   }
 
-  /**
-    * DStream扩展
-    *
-    * @param stream
-    * stream对象
-    */
-  implicit class DStreamHBaseExtBridge[T <: HBaseBaseBean[T] : ClassTag](stream: DStream[T]) extends DStreamHBaseExt[T](stream) {
-
-  }
 
   /**
     * DStream扩展
