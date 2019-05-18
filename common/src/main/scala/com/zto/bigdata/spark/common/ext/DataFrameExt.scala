@@ -1,0 +1,228 @@
+package com.zto.bigdata.spark.common.ext
+
+import java.util.{Objects, Properties}
+
+import com.zto.bigdata.spark.common.bean.HBaseBaseBean
+import com.zto.bigdata.spark.common.db.HBaseSparkBridge
+import com.zto.bigdata.spark.common.util._
+import org.apache.commons.lang3.StringUtils
+import org.apache.spark.sql._
+import com.zto.bigdata.spark.common.ext.SparkExt._
+import org.apache.spark.sql.hive.HiveContext
+
+import scala.reflect._
+
+/**
+  * DataFrame扩展
+  *
+  * @param dataFrame
+  * dataFrame实例
+  */
+class DataFrameExt(dataFrame: DataFrame) {
+
+  // 获取单例的HBaseContext对象
+  private lazy val hbaseContext: HBaseContextExt = SingletonFactory.getHBaseContextInstance(dataFrame.sparkSession.sparkContext)
+
+  /**
+    * 注册为临时表的同时缓存表
+    *
+    * @param tmpTableName
+    * 临时表名
+    * @return
+    * 生成的DataFrame
+    */
+  def registerTempTableForCache(tmpTableName: String): DataFrame = {
+    if (StringUtils.isNotBlank(tmpTableName)) {
+      dataFrame.registerTempTable(tmpTableName)
+      dataFrame.sqlContext.asInstanceOf[HiveContext].cacheTable(tmpTableName)
+    }
+    dataFrame
+  }
+
+  /**
+    * 注册为临时表的同时缓存表，并持久化打Hive中
+    *
+    * @param tmpTableName
+    * 临时表名，与持久化到Hive中的表名一致
+    * @param saveMode
+    * 默认为Overwrite
+    * @param cache
+    * 默认cache数据
+    * @return
+    * 生成的DataFrame
+    */
+  def registerTempTableForPersistent(tmpTableName: String, saveMode: SaveMode = GlobalConstants.SparkConf.saveMode, cache: Boolean = true): DataFrame = {
+    if (StringUtils.isNotBlank(tmpTableName)) {
+      dataFrame.write.mode(saveMode).saveAsTable(tmpTableName)
+      dataFrame.registerTempTable(tmpTableName)
+      if (cache) dataFrame.sqlContext.asInstanceOf[HiveContext].cacheTable(tmpTableName)
+    }
+    dataFrame
+  }
+
+  /**
+    * 保存Hive表
+    *
+    * @param saveMode
+    * 保存模式，默认为Overwrite
+    * @param partitionName
+    * 分区字段
+    * @param tableName
+    * 表名
+    * @return
+    * 生成的DataFrame
+    */
+  def saveAsHiveTable(tableName: String, partitionName: String, saveMode: SaveMode = GlobalConstants.SparkConf.saveMode): DataFrame = {
+    if (StringUtils.isNotBlank(tableName)) {
+      if (StringUtils.isNotBlank(partitionName)) {
+        dataFrame.write.mode(saveMode).partitionBy(partitionName).save(tableName)
+      } else {
+        dataFrame.write.mode(saveMode).saveAsTable(tableName)
+      }
+    }
+    dataFrame
+  }
+
+  /**
+    * 将DataFrame数据保存到关系型数据库中
+    *
+    * @param tableName
+    * 关系型数据库表名
+    * @return
+    */
+  def saveAsJDBCTable(tableName: String): Unit = {
+    val props = new Properties()
+    props.setProperty("user", GlobalConstants.user)
+    props.setProperty("password", GlobalConstants.password)
+    props.setProperty("driver", GlobalConstants.driverClass)
+    dataFrame.write.mode(SaveMode.Append).jdbc(GlobalConstants.rdburl, tableName, props)
+  }
+
+  /**
+    * 将DataFrame转为List[Bean]，仅限少量数据
+    *
+    * @param beanClass
+    * 类类型
+    * @return
+    * list
+    */
+  def toBeanList[T: ClassTag](beanClass: Class[T]): List[T] = {
+    this.dataFrame.map(row => SparkUtils.kuduRowToBean(row, beanClass))(Encoders.bean(beanClass)).collect().toList
+  }
+
+  def toBean[T: ClassTag](beanClass: Class[T]): T = {
+    this.toBeanList(beanClass).head
+  }
+
+  /**
+    * 批量写入，将自定义的JavaBean数据集批量并行写入
+    * 到HBase的指定表中。内部会将自定义JavaBean的相应
+    * 字段一一映射为Put对象，并完成一次写入
+    *
+    * @param tableName
+    * HBase表名
+    * @param insertEmpty
+    * 对象中值为空的字段是否覆盖HBase中已有的field值
+    * 默认为覆盖
+    * @tparam T
+    * 数据类型为HBaseBaseBean的子类
+    */
+  def hbaseBulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    this.hbaseContext.bulkPutDF[T](tableName, dataFrame, clazz, insertEmpty, multiVersion)
+  }
+
+  /**
+    * 以spark 方式批量将DataFrame数据写入到hbase中
+    *
+    * @param tableName
+    * hbase表名
+    * @param insertEmpty
+    * 为空的字段是否写入hbase
+    * @tparam T
+    * JavaBean类型
+    */
+  def hbaseHadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, buildRowKey: (Row) => String, insertEmpty: Boolean = true): Unit = {
+    this.hbaseContext.hadoopPutDFRow[T](tableName, dataFrame, buildRowKey, insertEmpty)
+  }
+
+
+  /**
+    * 使用spark API的方式将DataFrame中的数据分多个批次插入到HBase中
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * JavaBean类型，为HBaseBaseBean的子类
+    */
+  def hbaseHadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], insertEmpty: Boolean = true): Unit = {
+    this.hbaseContext.hadoopPutDF[E](tableName, dataFrame, clazz, insertEmpty)
+  }
+
+
+  /*
+    /**
+      * 批量load数据到hbase
+      *
+      * @param tableName
+      * HBase表名
+      * @param stagingDir
+      * 临时路径
+      * @param insertEmpty
+      * 是否将为空的字段写入到HBase
+      * @tparam T
+      */
+    def hbaseBulkLoadThinRows[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
+                                                                stagingDir: String, insertEmpty: Boolean = true): Unit = {
+      this.hbaseContext.bulkLoadThinRows(tableName, rdd, stagingDir, insertEmpty)
+    }*/
+
+
+
+
+  /**
+    * 使用Java API的方式将DataFrame中的数据分多个批次插入到HBase中
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * JavaBean类型，为HBaseBaseBean的子类
+    * @param batchSize
+    * 批次大小
+    * @param multiVersion
+    * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+    */
+  def hbaseInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+    HBaseSparkBridge.hbaseInsertDF(tableName, this.dataFrame, clazz, insertEmpty, batchSize, multiVersion)
+  }
+
+  /**
+    * 将DataFrame注册为临时表，并缓存表
+    *
+    * @param tableName
+    * 临时表名
+    */
+  def dataFrameRegisterAndCache(tableName: String): Unit = {
+    if (StringUtils.isBlank(tableName)) throw new IllegalArgumentException("临时表名不能为空")
+    dataFrame.registerTempTable(tableName)
+    dataFrame.sqlContext.cacheTable(tableName)
+  }
+
+  /**
+    * 以merge的方式将数据写入到关系型数据库中
+    *
+    * @param dbName
+    * 数据库名
+    * @param tableName
+    * 表名
+    */
+  def saveToJDBC(dbName: String, tableName: String, saveMode: SaveMode = SaveMode.Append, url: String = GlobalConstants.rdburl, user: String = GlobalConstants.user, password: String = GlobalConstants.password): Unit = {
+    if (Objects.isNull(url) || Objects.isNull(user)) throw new IllegalArgumentException("jdbc参数不合法，可将信息放入到配置文件中。")
+    dataFrame.write.format("jdbc")
+      .option("dbtable", s"$dbName.$tableName")
+      .option("url", url)
+      .option("user", user)
+      .option("password", password)
+      .mode(saveMode).save()
+  }
+
+}
