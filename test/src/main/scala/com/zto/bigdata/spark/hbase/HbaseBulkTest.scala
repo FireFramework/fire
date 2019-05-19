@@ -141,9 +141,9 @@ object HbaseBulkTest extends BaseSparkCore {
     // this.testBulkPutRDD
     // this.testBulkPutDF
     // this.testBulkPutDataset
-    this.testHbaseHadoopPutDataset
+    /*this.testHbaseHadoopPutDataset
     this.testBulkDelete
-    this.testBulkGet
+    this.testBulkGet*/
     // this.testBulkScan
   }
 

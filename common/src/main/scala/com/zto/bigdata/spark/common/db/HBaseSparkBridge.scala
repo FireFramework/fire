@@ -5,6 +5,7 @@ import java.util
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{SingletonFactory, SparkUtils}
+import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat
@@ -37,7 +38,7 @@ object HBaseSparkBridge {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
+  def hbaseOperInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
     df.mapPartitions(row => SparkUtils.sparkRowToBean(row, clazz))(Encoders.bean(clazz)).foreachPartition(it => {
       this.multiBatchInsert(tableName, it, insertEmpty, batchSize, multiVersion)
     })
@@ -57,7 +58,7 @@ object HBaseSparkBridge {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseInsertDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, ds: Dataset[E], clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
+  def hbaseOperInsertDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, ds: Dataset[E], clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
     ds.foreachPartition(it => {
       this.multiBatchInsert(tableName, it, insertEmpty, batchSize, multiVersion)
     })
@@ -68,16 +69,15 @@ object HBaseSparkBridge {
     *
     * @param tableName
     * HBase表名
-    * @param clazz
-    * JavaBean类型，为HBaseBaseBean的子类
     * @param batchSize
     * 批次大小
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[_], clazz: Class[T], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
-    val dataFrame = rdd.sparkContext.createSQLContext.createDataFrame(rdd, clazz)
-    HBaseSparkBridge.hbaseInsertDF(tableName, dataFrame, clazz, insertEmpty, batchSize, multiVersion)
+  def hbaseOperInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+    rdd.foreachPartition(it => {
+      this.multiBatchInsert(tableName, it, insertEmpty, batchSize, multiVersion)
+    })
   }
 
   /**
@@ -93,8 +93,8 @@ object HBaseSparkBridge {
     * 目标类型
     * @return
     */
-  def hbaseScan2DF[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
-    val beanRDD = this.hbaseScan2RDD(spark, tableName, scan, clazz, multiVersion, versions)
+  def hbaseOperScanDF[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    val beanRDD = this.hbaseOperScanRDD(spark, tableName, scan, clazz, multiVersion, versions)
     // 将rdd转为DataFrame
     spark.createDataFrame(beanRDD, clazz)
   }
@@ -109,7 +109,7 @@ object HBaseSparkBridge {
     * 目标类型
     * @return
     */
-  def hbaseScan2HBaseRDD(spark: SparkSession, tableName: String, scan: Scan, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
+  def hbaseHadoopScanRDD(spark: SparkSession, tableName: String, scan: Scan, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
     if (multiVersion) scan.setMaxVersions(versions)
     val hbaseConf = HBaseOper.getConfiguration
     hbaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
@@ -130,8 +130,8 @@ object HBaseSparkBridge {
     * 目标类型
     * @return
     */
-  def hbaseScan2HBaseRDD2(spark: SparkSession, tableName: String, startRow: String, stopRow: String, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
-    this.hbaseScan2HBaseRDD(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), multiVersion, versions)
+  def hbaseHadoopScanRDD2(spark: SparkSession, tableName: String, startRow: String, stopRow: String, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
+    this.hbaseHadoopScanRDD(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), multiVersion, versions)
   }
 
   /**
@@ -146,8 +146,8 @@ object HBaseSparkBridge {
     * 目标类型
     * @return
     */
-  def hbaseScan2RDD2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
-    this.hbaseScan2RDD(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+  def hbaseOperScanRDD2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+    this.hbaseOperScanRDD(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
   }
 
   /**
@@ -159,13 +159,15 @@ object HBaseSparkBridge {
     * HBase scan对象
     * @return
     */
-  def hbaseScan2RDD[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
-    val hbaseRDD = this.hbaseScan2HBaseRDD(spark, tableName, scan, multiVersion, versions)
-    if (multiVersion) {
-      hbaseRDD.mapPartitions(it => JavaConversions.asScalaBuffer(HBaseOper.hbaseMultiVersionRow2BeanList(it, clazz)).iterator)
-    } else {
-      hbaseRDD.mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz))
-    }
+  def hbaseOperScanRDD[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+    val hbaseRDD = this.hbaseHadoopScanRDD(spark, tableName, scan, multiVersion, versions)
+    hbaseRDD.mapPartitions(it => {
+      if (multiVersion) {
+        JavaConversions.asScalaBuffer(HBaseOper.hbaseMultiVersionRow2BeanList(it, clazz)).iterator
+      } else {
+        HBaseOper.hbaseRow2BeanList(it, clazz)
+      }
+    })
   }
 
   /**
@@ -182,8 +184,8 @@ object HBaseSparkBridge {
     * 目标类型
     * @return
     */
-  def hbaseScan2DF2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
-    this.hbaseScan2DF(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+  def hbaseOperScanDF2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    this.hbaseOperScanDF(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
   }
 
   /**
@@ -201,7 +203,7 @@ object HBaseSparkBridge {
     * 目标类型
     * @return
     */
-  def hbaseGet2RDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+  def hbaseOperGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
     rowKeyRDD.mapPartitions(it => {
       val beanList = new util.LinkedList[T]()
       val getList = new util.LinkedList[Get]()
@@ -266,9 +268,102 @@ object HBaseSparkBridge {
     * 目标类型
     * @return
     */
-  def hbaseGet2DF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+  def hbaseOperGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
     val sqlContext = SingletonFactory.getSQLContextInstance(rowKeyRDD.sparkContext)
-    sqlContext.createDataFrame(hbaseGet2RDD(tableName, rowKeyRDD, clazz, multiVersion, versions), clazz)
+    sqlContext.createDataFrame(hbaseOperGetRDD(tableName, rowKeyRDD, clazz, multiVersion, versions), clazz)
+  }
+
+  /**
+    * 使用hbase java api方式插入一个集合的数据到hbase表中
+    *
+    * @param tableName
+    * hbase表名
+    * @param seq
+    * HBaseBaseBean的子类集合
+    * @param insertEmpty
+    * 是否插入为空的字段
+    * @param multiVersion
+    * 是否以多版本形式插入
+    */
+  def hbaseOperInsertList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    if (multiVersion) {
+      HBaseOper.insertMultiVersions(tableName, JavaConversions.seqAsJavaList(seq))
+    } else {
+      if (insertEmpty) {
+        HBaseOper.insert(tableName, JavaConversions.seqAsJavaList(seq))
+      } else {
+        HBaseOper.insertIgnoreNull(tableName, seq.toList)
+      }
+    }
+  }
+
+  /**
+    * 根据rowKey查询数据，并转为List[T]
+    *
+    * @param tableName
+    * hbase表名
+    * @param seq
+    * rowKey集合
+    * @param clazz
+    * 目标类型
+    * @param multiVersion
+    * 是否get多版本
+    * @param versions
+    * get的版本数
+    * @return
+    * List[T]
+    */
+  def hbaseOperGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[Get], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Seq[T] = {
+    val beanList = if (multiVersion) {
+      HBaseOper.getMultiVersions(tableName, JavaConversions.seqAsJavaList(seq), clazz)
+    } else {
+      HBaseOper.get(tableName, JavaConversions.seqAsJavaList(seq), clazz)
+    }
+
+    JavaConversions.asScalaBuffer(beanList)
+  }
+
+  /**
+    * 根据rowKey查询数据，并转为List[T]
+    *
+    * @param tableName
+    * hbase表名
+    * @param seq
+    * rowKey集合
+    * @param clazz
+    * 目标类型
+    * @param multiVersion
+    * 是否get多版本
+    * @param versions
+    * get的版本数
+    * @return
+    * List[T]
+    */
+  def hbaseOperGetList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[String], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Seq[T] = {
+    val getList = ListBuffer[Get]()
+    seq.foreach(rowKey => {
+      if (StringUtils.isNotBlank(rowKey)) {
+        val get = new Get(rowKey.getBytes)
+        if (multiVersion) {
+          get.setMaxVersions(versions)
+        }
+        getList += get
+      }
+    })
+
+    this.hbaseOperGetList[T](tableName, getList, clazz, multiVersion, versions)
+  }
+
+  /**
+    * 根据rowKey集合批量删除记录
+    *
+    * @param tableName
+    * hbase表名
+    * @param rowKeys
+    * rowKey集合
+    */
+  def hbaseOperDelete(tableName: String, rowKeys: Seq[String]): Unit = {
+    HBaseOper.deleteRow(tableName, JavaConversions.seqAsJavaList(rowKeys))
   }
 
   /**
@@ -286,7 +381,7 @@ object HBaseSparkBridge {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def multiBatchInsert[E <: HBaseBaseBean[E] : ClassTag](tableName: String, iterator: Iterator[E], insertEmpty: Boolean = true, batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
+  private def multiBatchInsert[E <: HBaseBaseBean[E] : ClassTag](tableName: String, iterator: Iterator[E], insertEmpty: Boolean = true, batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
     val list = ListBuffer[E]()
     iterator.foreach(bean => {
       list += bean
@@ -316,4 +411,5 @@ object HBaseSparkBridge {
     }
     list.clear()
   }
+
 }

@@ -840,11 +840,26 @@ public class HBaseOper {
      */
     public static void deleteRow(String tableName, String... rowKey) {
         try {
-            if (StringUtils.isNotBlank(tableName) && rowKey != null && rowKey.length > 0) {
+            List<String> rowKeyList = Arrays.asList(rowKey);
+            deleteRow(tableName, rowKeyList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 根据多个rowkey删除对应的整行记录
+     *
+     * @param tableName 表名
+     * @param rowKeyList    rowKey集合
+     */
+    public static void deleteRow(String tableName, List<String> rowKeyList) {
+        try {
+            if (StringUtils.isNotBlank(tableName) && rowKeyList != null && rowKeyList.size() > 0) {
                 TableName tbName = TableName.valueOf(tableName);
                 Table table = connection.getTable(tbName);
-                List<Delete> deletes = new ArrayList<Delete>(rowKey.length);
-                for (String key : rowKey) {
+                List<Delete> deletes = new ArrayList<Delete>(rowKeyList.size());
+                for (String key : rowKeyList) {
                     Delete delete = new Delete(key.getBytes());
                     deletes.add(delete);
                 }
@@ -855,6 +870,7 @@ public class HBaseOper {
             e.printStackTrace();
         }
     }
+
 
     /**
      * 判断表是否存在

@@ -33,8 +33,8 @@ class DataFrameExt(dataFrame: DataFrame) {
     */
   def registerTempTableForCache(tmpTableName: String): DataFrame = {
     if (StringUtils.isNotBlank(tmpTableName)) {
-      dataFrame.registerTempTable(tmpTableName)
-      dataFrame.sqlContext.asInstanceOf[HiveContext].cacheTable(tmpTableName)
+      dataFrame.createOrReplaceTempView(tmpTableName)
+      dataFrame.sqlContext.cacheTable(tmpTableName)
     }
     dataFrame
   }
@@ -54,8 +54,8 @@ class DataFrameExt(dataFrame: DataFrame) {
   def registerTempTableForPersistent(tmpTableName: String, saveMode: SaveMode = GlobalConstants.SparkConf.saveMode, cache: Boolean = true): DataFrame = {
     if (StringUtils.isNotBlank(tmpTableName)) {
       dataFrame.write.mode(saveMode).saveAsTable(tmpTableName)
-      dataFrame.registerTempTable(tmpTableName)
-      if (cache) dataFrame.sqlContext.asInstanceOf[HiveContext].cacheTable(tmpTableName)
+      dataFrame.createOrReplaceTempView(tmpTableName)
+      if (cache) dataFrame.sqlContext.cacheTable(tmpTableName)
     }
     dataFrame
   }
@@ -96,22 +96,6 @@ class DataFrameExt(dataFrame: DataFrame) {
     props.setProperty("password", GlobalConstants.password)
     props.setProperty("driver", GlobalConstants.driverClass)
     dataFrame.write.mode(SaveMode.Append).jdbc(GlobalConstants.rdburl, tableName, props)
-  }
-
-  /**
-    * 将DataFrame转为List[Bean]，仅限少量数据
-    *
-    * @param beanClass
-    * 类类型
-    * @return
-    * list
-    */
-  def toBeanList[T: ClassTag](beanClass: Class[T]): List[T] = {
-    this.dataFrame.map(row => SparkUtils.kuduRowToBean(row, beanClass))(Encoders.bean(beanClass)).collect().toList
-  }
-
-  def toBean[T: ClassTag](beanClass: Class[T]): T = {
-    this.toBeanList(beanClass).head
   }
 
   /**
@@ -191,8 +175,8 @@ class DataFrameExt(dataFrame: DataFrame) {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
-    HBaseSparkBridge.hbaseInsertDF(tableName, this.dataFrame, clazz, insertEmpty, batchSize, multiVersion)
+  def hbaseOperInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+    HBaseSparkBridge.hbaseOperInsertDF(tableName, this.dataFrame, clazz, insertEmpty, batchSize, multiVersion)
   }
 
   /**
@@ -203,7 +187,7 @@ class DataFrameExt(dataFrame: DataFrame) {
     */
   def dataFrameRegisterAndCache(tableName: String): Unit = {
     if (StringUtils.isBlank(tableName)) throw new IllegalArgumentException("临时表名不能为空")
-    dataFrame.registerTempTable(tableName)
+    dataFrame.createOrReplaceTempView(tableName)
     dataFrame.sqlContext.cacheTable(tableName)
   }
 

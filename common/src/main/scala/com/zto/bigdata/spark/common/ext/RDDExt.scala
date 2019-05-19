@@ -121,8 +121,8 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * 目标类型
     * @return
     */
-  def hbaseGet2RDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
-    HBaseSparkBridge.hbaseGet2RDD(tableName, rdd.asInstanceOf[RDD[String]], clazz, multiVersion, versions)
+  def hbaseOperGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+    HBaseSparkBridge.hbaseOperGetRDD(tableName, rdd.asInstanceOf[RDD[String]], clazz, multiVersion, versions)
   }
 
   /**
@@ -138,8 +138,8 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * 目标类型
     * @return
     */
-  def hbaseGet2DF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
-    HBaseSparkBridge.hbaseGet2DF(tableName, rdd.asInstanceOf[RDD[String]], clazz, multiVersion, versions)
+  def hbaseOperGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    HBaseSparkBridge.hbaseOperGetDF(tableName, rdd.asInstanceOf[RDD[String]], clazz, multiVersion, versions)
   }
 
   /**
@@ -147,15 +147,13 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     *
     * @param tableName
     * HBase表名
-    * @param clazz
-    * JavaBean类型，为HBaseBaseBean的子类
     * @param batchSize
     * 批次大小
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
-    HBaseSparkBridge.hbaseInsertRDD(tableName, rdd, clazz, insertEmpty, batchSize, multiVersion)
+  def hbaseOperInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+    HBaseSparkBridge.hbaseOperInsertRDD[T](tableName, rdd.asInstanceOf[RDD[T]], insertEmpty, batchSize, multiVersion)
   }
 
 }

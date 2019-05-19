@@ -17,7 +17,6 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
     this.init(30L, false)
 
     if (args != null && args.length > 0) {
-      this.spark.dropCarbonTable(this.dbName, this.tableName)
       // this.spark.createCarbonTable(this.dbName, this.tableName, classOf[Senda])
     }
     val rdd = this.spark.sparkContext.parallelize(1 to 10)
@@ -52,6 +51,6 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
     * 统计表中的记录数
     */
   def printCount: Unit = {
-    spark.minorCompact(this.dbName, this.tableName)
+
   }
 }

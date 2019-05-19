@@ -251,9 +251,9 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @tparam T
     * 对象类型必须是HBaseBaseBean的子类
     */
-  def streamBulkPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], insertEmpty: Boolean = true): Unit = {
+  def streamBulkPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
     this.streamBulkPut[T](dstream, TableName.valueOf(tableName), (putRecord: T) => {
-      HBaseOper.convert2Put(putRecord, insertEmpty)
+      HBaseOper.convert2Put(if (multiVersion) new MultiVersionsBean(putRecord) else putRecord, insertEmpty)
     })
   }
 

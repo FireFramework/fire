@@ -18,11 +18,6 @@ object ShenzhouSync extends BaseStructuredStreaming {
   def main(args: Array[String]): Unit = {
     this.init()
 
-    if(args.length > 0) {
-      spark.dropCarbonTable(this.dbName, this.tableName)
-      spark.createCarbonStreamingTable(this.dbName, this.tableName, classOf[Senda])
-    }
-
     this.runAsThread(write2Carbondata)
   }
 

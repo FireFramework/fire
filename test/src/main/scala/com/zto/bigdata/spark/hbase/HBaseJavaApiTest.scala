@@ -58,7 +58,7 @@ object HBaseJavaApiTest extends BaseSparkCore {
   def testSparkWrite(): Unit = {
     // rdd数据写入到hbase中
     val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
-    studentRDD.hbaseInsertRDD(this.tableName, classOf[Student], multiVersion = true)
+    studentRDD.hbaseOperInsertRDD(this.tableName, multiVersion = true)
     // dataFrame数据写入到hbase中
     /*val df = this.spark.createDataFrame(studentRDD, classOf[Student])
     df.hbaseInsertDF(this.tableName, classOf[Student], multiVersion = true)*/
@@ -68,10 +68,10 @@ object HBaseJavaApiTest extends BaseSparkCore {
     * spark scan HBase表记录
     */
   def testSparkScan(): Unit = {
-    val rdd = this.spark.hbaseScan2RDD2(this.tableName, "1", "3", classOf[Student], true, 10)
+    val rdd = this.spark.hbaseOperScanRDD2(this.tableName, "1", "3", classOf[Student], true, 10)
     rdd.foreach(println)
     println("===========df==========")
-    val df = this.spark.hbaseScan2DF2(this.tableName, "1", "3", classOf[Student], true, 10)
+    val df = this.spark.hbaseOperScanDF2(this.tableName, "1", "3", classOf[Student], true, 10)
     df.show(100, false)
   }
 
@@ -80,7 +80,7 @@ object HBaseJavaApiTest extends BaseSparkCore {
     */
   def testSparkGet(): Unit = {
     val rowKeyRDD = this.spark.parallelize(Seq("3"))
-    val studentDF = rowKeyRDD.hbaseGet2DF(this.tableName, classOf[Student], true, 3)
+    val studentDF = rowKeyRDD.hbaseOperGetDF(this.tableName, classOf[Student], true, 3)
     studentDF.show(100, false)
   }
 

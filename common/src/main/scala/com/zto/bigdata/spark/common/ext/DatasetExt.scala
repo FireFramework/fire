@@ -1,6 +1,7 @@
 package com.zto.bigdata.spark.common.ext
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
+import com.zto.bigdata.spark.common.db.HBaseSparkBridge
 import com.zto.bigdata.spark.common.util.SingletonFactory
 import org.apache.spark.sql._
 
@@ -56,5 +57,21 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
     */
   def hbaseHadoopPutDataset[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true): Unit = {
     this.hbaseContext.hadoopPutDataset[T](tableName, dataset.asInstanceOf[Dataset[T]], insertEmpty)
+  }
+
+  /**
+    * 使用Java API的方式将Dataset中的数据分多个批次插入到HBase中
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * JavaBean类型，为HBaseBaseBean的子类
+    * @param batchSize
+    * 批次大小
+    * @param multiVersion
+    * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+    */
+  def hbaseOperInsertDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+    HBaseSparkBridge.hbaseOperInsertDS[E](tableName, dataset.asInstanceOf[Dataset[E]], clazz, insertEmpty, batchSize, multiVersion)
   }
 }
