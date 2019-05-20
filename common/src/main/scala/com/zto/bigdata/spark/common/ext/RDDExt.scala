@@ -4,7 +4,7 @@ import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.db.HBaseSparkBridge
 import com.zto.bigdata.spark.common.util.SingletonFactory
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, Dataset}
 
 import scala.reflect.{ClassTag, classTag}
 
@@ -22,7 +22,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     */
   def printEachPartition: Unit = {
     rdd.foreachPartition(it => {
-      it.foreach(item => print(item + " "))
+      it.foreach(item => println(item + " "))
     })
   }
 
@@ -123,6 +123,23 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     */
   def hbaseOperGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
     HBaseSparkBridge.hbaseOperGetRDD(tableName, rdd.asInstanceOf[RDD[String]], clazz, multiVersion, versions)
+  }
+
+  /**
+    * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * 目标类型
+    * @param multiVersion
+    * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+    * @tparam T
+    * 目标类型
+    * @return
+    */
+  def hbaseOperGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    HBaseSparkBridge.hbaseOperGetDS[T](tableName, rdd.asInstanceOf[RDD[String]], clazz, multiVersion, versions)
   }
 
   /**

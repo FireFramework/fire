@@ -755,6 +755,23 @@ class SparkSessionExt(spark: SparkSession) {
   }
 
   /**
+    * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * 目标类型
+    * @param multiVersion
+    * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+    * @tparam T
+    * 目标类型
+    * @return
+    */
+  def hbaseOperGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    rdd.hbaseOperGetDS[T](tableName, clazz, multiVersion, versions)
+  }
+
+  /**
     * 使用hbase java api方式插入一个集合的数据到hbase表中
     *
     * @param tableName
