@@ -23,7 +23,7 @@ object TIWriter extends BaseSparkCore {
 
     val rowKeyRDD = this.sc.parallelize(Seq("1001", "2010", "20012"))
     // 读取hbase数据，并转为Student类型的DataFrame
-    val studentDF = rowKeyRDD.hbaseBulkGet(this.tableName, classOf[Student])
+    val studentDF = rowKeyRDD.hbaseBulkGetRDD(this.tableName, classOf[Student])
 
     this.spark.stop()
   }

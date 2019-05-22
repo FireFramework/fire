@@ -313,6 +313,8 @@ object GlobalConstants {
     val MULTI_NUMBER_PATTERN = "_\\d+$".r
     // 只能包含字母和下划线
     val NO_NUMBER = "^[A-Za-z_]+$".r
+    // 匹配applicationId，兼容后缀为4位或5位数字
+    val APPLICATION_ID = "application_\\d{13}_\\d{4,5}".r
   }
 
   /**

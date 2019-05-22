@@ -28,8 +28,8 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) {
     * @param tableName
     * HBase表名
     */
-  def hbaseBulkStreamPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    this.hbaseContext.streamBulkPut(tableName, stream.asInstanceOf[DStream[T]], insertEmpty, multiVersion)
+  def hbaseBulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    this.hbaseContext.bulkPutStream(tableName, stream.asInstanceOf[DStream[T]], insertEmpty, multiVersion)
   }
 
 }

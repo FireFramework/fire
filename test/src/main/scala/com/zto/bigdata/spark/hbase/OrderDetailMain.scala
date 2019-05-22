@@ -45,7 +45,7 @@ object OrderDetailMain extends BaseSparkStreaming {
 
         // mainorder表批量删除操作
         val mainOrderRowKeyRDD = hiveContext.sql(HiveQL.deleteMainOrder(tableName)).rdd.mapPartitions(it => buildOrderMainRowKey(it))
-        hbaseContext.bulkDelete(hbaseTableOrderMain, mainOrderRowKeyRDD)
+        hbaseContext.bulkDeleteRDD(hbaseTableOrderMain, mainOrderRowKeyRDD)
       }
     })
 
@@ -56,7 +56,7 @@ object OrderDetailMain extends BaseSparkStreaming {
         hbaseContext.hadoopPutDFRow(hbaseTableReplicaOrder, replicaOrderDF, buildReplicaOrderRowKey)
         // replicaOrder表批量删除操作
         val replicaOrderRowKeyRDD = hiveContext.sql(HiveQL.deleteReplicaOrder(tableName)).rdd.map(row => row.getAs[String](0))
-        hbaseContext.bulkDelete(hbaseTableReplicaOrder, replicaOrderRowKeyRDD)
+        hbaseContext.bulkDeleteRDD(hbaseTableReplicaOrder, replicaOrderRowKeyRDD)
       }
     })
 

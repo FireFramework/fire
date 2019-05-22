@@ -7,6 +7,7 @@ import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
+import org.apache.hadoop.hbase.filter.{Filter, FilterList}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat
 import org.apache.spark.rdd.RDD
@@ -99,6 +100,44 @@ object HBaseSparkBridge {
     spark.createDataFrame(beanRDD, clazz)
   }
 
+
+  /**
+    * Scan指定HBase表的数据，并映射为Dataset
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * @param clazz
+    * 目标类型
+    * @tparam T
+    * 目标类型
+    * @return
+    */
+  def hbaseOperScanDS[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    val beanRDD = this.hbaseOperScanRDD(spark, tableName, scan, clazz, multiVersion, versions)
+    // 将rdd转为DataFrame
+    spark.createDataset(beanRDD)(Encoders.bean(clazz))
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为Dataset
+    *
+    * @param tableName
+    *                HBase表名
+    * @param startRow
+    *                开始主键
+    * @param stopRow 结束主键
+    * @param clazz
+    *                目标类型
+    * @tparam T
+    * 目标类型
+    * @return
+    */
+  def hbaseOperScanDS2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    this.hbaseOperScanDS[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+  }
+
   /**
     * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
     *
@@ -109,7 +148,7 @@ object HBaseSparkBridge {
     * 目标类型
     * @return
     */
-  def hbaseHadoopScanRDD(spark: SparkSession, tableName: String, scan: Scan, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
+  def hbaseHadoopScanRS(spark: SparkSession, tableName: String, scan: Scan, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
     if (multiVersion) scan.setMaxVersions(versions)
     val hbaseConf = HBaseOper.getConfiguration
     hbaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
@@ -130,8 +169,54 @@ object HBaseSparkBridge {
     * 目标类型
     * @return
     */
-  def hbaseHadoopScanRDD2(spark: SparkSession, tableName: String, startRow: String, stopRow: String, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
-    this.hbaseHadoopScanRDD(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), multiVersion, versions)
+  def hbaseHadoopScanRS2(spark: SparkSession, tableName: String, startRow: String, stopRow: String, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
+    this.hbaseHadoopScanRS(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanRDD[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+    val rdd = this.hbaseHadoopScanRS(spark, tableName, scan, multiVersion, versions)
+    rdd.mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz))
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param startRow
+    * rowKey开始位置
+    * @param stopRow
+    * rowKey结束位置
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanRDD2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+    this.hbaseHadoopScanRDD[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanDF[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    val rdd = this.hbaseHadoopScanRDD[T](spark, tableName, scan, clazz, multiVersion, versions)
+    spark.createDataFrame(rdd, clazz)
   }
 
   /**
@@ -146,8 +231,55 @@ object HBaseSparkBridge {
     * 目标类型
     * @return
     */
-  def hbaseOperScanRDD2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
-    this.hbaseOperScanRDD(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+  def hbaseHadoopScanDF2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    this.hbaseHadoopScanDF[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanDS[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    val rdd = this.hbaseHadoopScanRDD[T](spark, tableName, scan, clazz, multiVersion, versions)
+    spark.createDataset(rdd)(Encoders.bean(clazz))
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+    *
+    * @param tableName
+    * HBase表名
+    * @param startRow
+    * rowKey开始位置
+    * @param stopRow
+    * rowKey结束位置
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanDS2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    this.hbaseHadoopScanDS[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+    *
+    * @param tableName
+    * HBase表名
+    * @param startRow
+    * rowKey开始位置
+    * @param stopRow
+    * rowKey结束位置
+    * 目标类型
+    * @return
+    */
+  def hbaseOperScanDF2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    this.hbaseOperScanDF(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
   }
 
   /**
@@ -160,7 +292,7 @@ object HBaseSparkBridge {
     * @return
     */
   def hbaseOperScanRDD[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
-    val hbaseRDD = this.hbaseHadoopScanRDD(spark, tableName, scan, multiVersion, versions)
+    val hbaseRDD = this.hbaseHadoopScanRS(spark, tableName, scan, multiVersion, versions)
     hbaseRDD.mapPartitions(it => {
       if (multiVersion) {
         JavaConversions.asScalaBuffer(HBaseOper.hbaseMultiVersionRow2BeanList(it, clazz)).iterator
@@ -171,7 +303,33 @@ object HBaseSparkBridge {
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为DataFrame
+    * Scan指定HBase表的数据，并映射为List
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * hbase scan对象
+    * @param clazz
+    * 目标类型
+    * @tparam T
+    * 目标类型
+    * @return
+    */
+  def hbaseOperScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Seq[T] = {
+    scan.setMaxVersions(versions)
+    val list = if (multiVersion) {
+      HBaseOper.scanMultiVersions(tableName, scan, clazz)
+    } else {
+      HBaseOper.scan(tableName, scan, clazz)
+    }
+    if (list == null) {
+      return null
+    }
+    JavaConversions.asScalaBuffer(list)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为List
     *
     * @param tableName
     *                HBase表名
@@ -184,8 +342,13 @@ object HBaseSparkBridge {
     * 目标类型
     * @return
     */
-  def hbaseOperScanDF2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
-    this.hbaseOperScanDF(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+  def hbaseOperScanList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE, operator: FilterList.Operator = null, filters: Filter = null): Seq[T] = {
+    val scan = new Scan(startRow.getBytes, stopRow.getBytes)
+    if (filters != null) {
+      val filterList = new FilterList(operator, filters)
+      scan.setFilter(filterList)
+    }
+    this.hbaseOperScanList[T](tableName, scan, clazz, multiVersion, versions)
   }
 
   /**
@@ -382,8 +545,51 @@ object HBaseSparkBridge {
     * @param rowKeys
     * rowKey集合
     */
-  def hbaseOperDelete(tableName: String, rowKeys: Seq[String]): Unit = {
+  def hbaseOperDeleteList(tableName: String, rowKeys: Seq[String]): Unit = {
     HBaseOper.deleteRow(tableName, JavaConversions.seqAsJavaList(rowKeys))
+  }
+
+  /**
+    * 根据RDD[RowKey]批量删除记录
+    *
+    * @param tableName
+    * hbase表名
+    * @param rowKeyRDD
+    * rowKey集合
+    * @param batchSize
+    * 一次删除多少条
+    */
+  def hbaseOperDeleteRDD(tableName: String, rowKeyRDD: RDD[String], batchSize: Int = this.batchSize): Unit = {
+    rowKeyRDD.foreachPartition(it => {
+      val rowKeyList = ListBuffer[String]()
+      it.foreach(rowKey => {
+        if (StringUtils.isNotBlank(rowKey)) {
+          rowKeyList += rowKey
+        }
+        if (rowKeyList.size >= batchSize) {
+          HBaseOper.deleteRow(tableName, JavaConversions.seqAsJavaList(rowKeyList))
+          rowKeyList.clear()
+        }
+      })
+      if (rowKeyList.size > 0) {
+        HBaseOper.deleteRow(tableName, JavaConversions.seqAsJavaList(rowKeyList))
+        rowKeyList.clear()
+      }
+    })
+  }
+
+  /**
+    * 根据Dataset[RowKey]批量删除记录
+    *
+    * @param tableName
+    * hbase表名
+    * @param dataSet
+    * rowKey集合
+    * @param batchSize
+    * 一次删除多少条
+    */
+  def hbaseOperDeleteDS(tableName: String, dataSet: Dataset[String], batchSize: Int = this.batchSize): Unit = {
+    this.hbaseOperDeleteRDD(tableName, dataSet.rdd, batchSize)
   }
 
   /**

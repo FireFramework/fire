@@ -2,12 +2,10 @@ package com.zto.bigdata.spark.hbase
 
 import java.util
 
-import com.amazonaws.services.cognitosync.model.Dataset
 import com.zto.bigdata.spark.bean.Student
 import com.zto.bigdata.spark.common.core.BaseSparkCore
 import com.zto.bigdata.spark.common.db.HBaseOper
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.PropUtils
 import org.apache.spark.sql.Encoders
 
 import scala.collection.JavaConversions
@@ -164,6 +162,7 @@ object HBaseJavaApiTest extends BaseSparkCore {
     val studentDS = this.spark.hbaseOperGetDS(this.tableName1, getRDD, classOf[Student])
     studentDS.show(100, false)
   }
+
 
   /**
     * Spark处理过程

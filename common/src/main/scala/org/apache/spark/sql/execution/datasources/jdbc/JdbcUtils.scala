@@ -465,7 +465,6 @@ object JdbcUtils extends Logging {
 
     case StringType =>
       (rs: ResultSet, row: InternalRow, pos: Int) =>
-        // TODO(davies): use getBytes for better performance, if the encoding is UTF-8
         row.update(pos, UTF8String.fromString(rs.getString(pos + 1)))
 
     case TimestampType =>

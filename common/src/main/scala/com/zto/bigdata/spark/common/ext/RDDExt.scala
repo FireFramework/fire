@@ -65,8 +65,20 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param batchSize
     * 批量删除的大小
     */
-  def hbaseBulkDelete(tableName: String, batchSize: Integer = this.hbaseContext.batchSize): Unit = {
-    this.hbaseContext.bulkDelete(tableName, rdd.asInstanceOf[RDD[String]], batchSize)
+  def hbaseBulkDeleteRDD(tableName: String, batchSize: Integer = this.hbaseContext.batchSize): Unit = {
+    this.hbaseContext.bulkDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]], batchSize)
+  }
+
+  /**
+    * 根据RDD[RowKey]批量删除记录
+    *
+    * @param tableName
+    * rowKey集合
+    * @param batchSize
+    * 一次删除多少条
+    */
+  def hbaseOperDeleteRDD(tableName: String, batchSize: Int = this.hbaseContext.batchSize): Unit = {
+    HBaseSparkBridge.hbaseOperDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]], batchSize)
   }
 
   /**
@@ -81,8 +93,44 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @return
     * 结果集
     */
-  def hbaseBulkGet[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): RDD[HBaseBaseBean[E]] = {
-    this.hbaseContext.bulkGet(tableName, rdd.asInstanceOf[RDD[String]], clazz, batchSize)
+  def hbaseBulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): RDD[E] = {
+    this.hbaseContext.bulkGetRDD(tableName, rdd.asInstanceOf[RDD[String]], clazz, batchSize)
+  }
+
+  /**
+    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * 获取后的记录转换为目标类型（自定义的JavaBean类型）
+    * @param batchSize
+    * 用于指定一次获取多少条记录，默认1000条
+    * @tparam E
+    * 自定义JavaBean类型，必须继承自HBaseBaseBean
+    * @return
+    * 自定义JavaBean的对象结果集
+    */
+  def hbaseBulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): DataFrame = {
+    this.hbaseContext.bulkGetDF[E](tableName, rdd.asInstanceOf[RDD[String]], clazz, batchSize)
+  }
+
+  /**
+    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * 获取后的记录转换为目标类型（自定义的JavaBean类型）
+    * @param batchSize
+    * 用于指定一次获取多少条记录，默认1000条
+    * @tparam E
+    * 自定义JavaBean类型，必须继承自HBaseBaseBean
+    * @return
+    * 自定义JavaBean的对象结果集
+    */
+  def hbaseBulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): Dataset[E] = {
+    this.hbaseContext.bulkGetDS[E](tableName, rdd.asInstanceOf[RDD[String]], clazz, batchSize)
   }
 
   /**
@@ -94,8 +142,8 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param insertEmpty
     * 为空的字段是否写入
     */
-  def hbaseBulkPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    this.hbaseContext.bulkPut(tableName, rdd.asInstanceOf[RDD[T]], insertEmpty, multiVersion)
+  def hbaseBulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    this.hbaseContext.bulkPutRDD(tableName, rdd.asInstanceOf[RDD[T]], insertEmpty, multiVersion)
   }
 
   /**

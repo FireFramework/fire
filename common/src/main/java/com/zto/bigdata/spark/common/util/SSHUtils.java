@@ -123,7 +123,6 @@ public class SSHUtils {
                 }
             }
         } finally {
-            // TODO: handle finally clause
             channel.disconnect();
         }
         return result;

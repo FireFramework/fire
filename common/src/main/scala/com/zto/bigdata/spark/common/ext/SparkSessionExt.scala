@@ -7,6 +7,7 @@ import com.zto.bigdata.spark.common.udf.UDFs
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
+import org.apache.hadoop.hbase.filter.{Filter, FilterList}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -371,19 +372,6 @@ class SparkSessionExt(spark: SparkSession) {
   }
 
   /**
-    * 使用bulk方式批量插入数据
-    *
-    * @param tableName
-    * HBase表名
-    * 数据集合，继承自HBaseBaseBean
-    * @param insertEmpty
-    * 为空的字段是否写入
-    */
-  def hbaseBulkPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    rdd.hbaseBulkPut(tableName, insertEmpty, multiVersion)
-  }
-
-  /**
     * scan数据，并转为RDD
     *
     * @param tableName
@@ -395,8 +383,8 @@ class SparkSessionExt(spark: SparkSession) {
     * @return
     * clazz类型的rdd
     */
-  def hbaseBulkScan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): RDD[T] = {
-    this.hbaseContext.bulkScan(tableName, scan, clazz)
+  def hbaseBulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): RDD[T] = {
+    this.hbaseContext.bulkScanRDD(tableName, scan, clazz)
   }
 
   /**
@@ -413,8 +401,8 @@ class SparkSessionExt(spark: SparkSession) {
     * @return
     * clazz类型的rdd
     */
-  def hbaseBulkScan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): RDD[T] = {
-    this.hbaseContext.bulkScan(tableName, startRow, stopRow, clazz)
+  def hbaseBulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): RDD[T] = {
+    this.hbaseContext.bulkScanRDD(tableName, startRow, stopRow, clazz)
   }
 
   /**
@@ -430,7 +418,7 @@ class SparkSessionExt(spark: SparkSession) {
     * clazz类型的rdd
     */
   def hbaseBulkScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): DataFrame = {
-    val rdd = this.hbaseContext.bulkScan(tableName, scan, clazz)
+    val rdd = this.hbaseContext.bulkScanRDD(tableName, scan, clazz)
     this.spark.createDataFrame(rdd, clazz)
   }
 
@@ -453,6 +441,54 @@ class SparkSessionExt(spark: SparkSession) {
   }
 
   /**
+    * 使用bulk方式scan数据，并转为Dataset
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * @param clazz
+    * 对应的返回值类型
+    * @return
+    * clazz类型的rdd
+    */
+  def hbaseBulkScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): Dataset[T] = {
+    val rdd = this.hbaseContext.bulkScanRDD(tableName, scan, clazz)
+    this.spark.createDataset(rdd)(Encoders.bean(clazz))
+  }
+
+  /**
+    * 使用bulk方式scan数据，并转为DataFrame
+    *
+    * @param tableName
+    * HBase表名
+    * @param startRow
+    * 开始
+    * @param stopRow
+    * 结束
+    * @param clazz
+    * 对应的返回值类型
+    * @return
+    * clazz类型的rdd
+    */
+  def hbaseBulkScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): Dataset[T] = {
+    this.hbaseBulkScanDS[T](tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz)
+  }
+
+  /**
+    * 使用bulk方式批量插入数据
+    *
+    * @param tableName
+    * HBase表名
+    * 数据集合，继承自HBaseBaseBean
+    * @param insertEmpty
+    * 为空的字段是否写入
+    */
+  def hbaseBulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    rdd.hbaseBulkPutRDD(tableName, insertEmpty, multiVersion)
+  }
+
+  /**
     * 批量写入，将自定义的JavaBean数据集批量并行写入
     * 到HBase的指定表中。内部会将自定义JavaBean的相应
     * 字段一一映射为Put对象，并完成一次写入
@@ -467,80 +503,6 @@ class SparkSessionExt(spark: SparkSession) {
     */
   def hbaseBulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
     dataFrame.hbaseBulkPutDF[T](tableName, clazz, insertEmpty, multiVersion)
-  }
-
-  /**
-    * 以spark 方式批量将DataFrame数据写入到hbase中
-    *
-    * @param tableName
-    * hbase表名
-    * @param insertEmpty
-    * 为空的字段是否写入hbase
-    * @tparam T
-    * JavaBean类型
-    */
-  def hbaseHadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, buildRowKey: (Row) => String, insertEmpty: Boolean = true): Unit = {
-    dataFrame.hbaseHadoopPutDFRow[T](tableName, buildRowKey, insertEmpty)
-  }
-
-  /**
-    * 批量写入，将自定义的JavaBean数据集批量并行写入
-    * 到HBase的指定表中。内部会将自定义JavaBean的相应
-    * 字段一一映射为Put对象，并完成一次写入
-    *
-    * @param tableName
-    * HBase表名
-    * @param dataset
-    * dataFrame实例，数类型需继承自HBaseBaseBean
-    * @param insertEmpty
-    * 对象中值为空的字段是否覆盖HBase中已有的field值
-    * 默认为覆盖
-    * @tparam T
-    * 数据类型为HBaseBaseBean的子类
-    */
-  def hbaseBulkPutDataset[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    dataset.hbaseBulkPutDataset[T](tableName, insertEmpty, multiVersion)
-  }
-
-  /**
-    * DStrea数据实时写入
-    *
-    * @param tableName
-    * HBase表名
-    */
-  def hbaseBulkStreamPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    dstream.hbaseBulkStreamPut[T](tableName, insertEmpty, multiVersion)
-  }
-
-  /**
-    * 根据RDD[String]批量删除
-    *
-    * @param tableName
-    * HBase表名
-    * @param rowKeyRDD
-    * 装有rowKey的rdd集合
-    * @param batchSize
-    * 批量删除的大小
-    */
-  def hbaseBulkDelete(tableName: String, rowKeyRDD: RDD[String], batchSize: Integer = this.hbaseContext.batchSize): Unit = {
-    rowKeyRDD.hbaseBulkDelete(tableName, batchSize)
-  }
-
-
-  /**
-    * 根据rowKey集合批量获取数据
-    *
-    * @param tableName
-    * HBase表名
-    * @param clazz
-    * 获取后的记录转换为目标类型
-    * @param batchSize
-    * 批量的大小
-    * @return
-    * 结果集
-    */
-  def hbaseBulkGet[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): RDD[HBaseBaseBean[E]] = {
-    rowKeyRDD.hbaseBulkGet[E](tableName, clazz, batchSize)
   }
 
   /**
@@ -573,10 +535,151 @@ class SparkSessionExt(spark: SparkSession) {
     * @param dataset
     * JavaBean类型，待插入到hbase的数据集
     */
-  def hbaseHadoopPutDataset[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], insertEmpty: Boolean = true): Unit = {
-    dataset.hbaseHadoopPutDataset[E](tableName, insertEmpty)
+  def hbaseHadoopPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], insertEmpty: Boolean = true): Unit = {
+    dataset.hbaseHadoopPutDS[E](tableName, insertEmpty)
   }
 
+  /**
+    * 以spark 方式批量将DataFrame数据写入到hbase中
+    *
+    * @param tableName
+    * hbase表名
+    * @param insertEmpty
+    * 为空的字段是否写入hbase
+    * @tparam T
+    * JavaBean类型
+    */
+  def hbaseHadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, buildRowKey: (Row) => String, insertEmpty: Boolean = true): Unit = {
+    dataFrame.hbaseHadoopPutDFRow[T](tableName, buildRowKey, insertEmpty)
+  }
+
+  /**
+    * 批量写入，将自定义的JavaBean数据集批量并行写入
+    * 到HBase的指定表中。内部会将自定义JavaBean的相应
+    * 字段一一映射为Put对象，并完成一次写入
+    *
+    * @param tableName
+    * HBase表名
+    * @param dataset
+    * dataFrame实例，数类型需继承自HBaseBaseBean
+    * @param insertEmpty
+    * 对象中值为空的字段是否覆盖HBase中已有的field值
+    * 默认为覆盖
+    * @tparam T
+    * 数据类型为HBaseBaseBean的子类
+    */
+  def hbaseBulkPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    dataset.hbaseBulkPutDS[T](tableName, insertEmpty, multiVersion)
+  }
+
+  /**
+    * DStrea数据实时写入
+    *
+    * @param tableName
+    * HBase表名
+    */
+  def hbaseBulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    dstream.hbaseBulkPutStream[T](tableName, insertEmpty, multiVersion)
+  }
+
+  /**
+    * 根据RDD[String]批量删除
+    *
+    * @param tableName
+    * HBase表名
+    * @param rowKeyRDD
+    * 装有rowKey的rdd集合
+    * @param batchSize
+    * 批量删除的大小
+    */
+  def hbaseBulkDeleteRDD(tableName: String, rowKeyRDD: RDD[String], batchSize: Integer = this.hbaseContext.batchSize): Unit = {
+    rowKeyRDD.hbaseBulkDeleteRDD(tableName, batchSize)
+  }
+
+  /**
+    * 根据Dataset[String]批量删除，Dataset是rowkey的集合
+    * 类型为String
+    *
+    * @param tableName
+    * HBase表名
+    * @param batchSize
+    * 批量删除的大小，默认为1000条
+    */
+  def hbaseBulkDeleteDS(tableName: String, dataSet: Dataset[String], batchSize: Integer = this.hbaseContext.batchSize): Unit = {
+    dataSet.hbaseBulkDeleteDS(tableName, batchSize)
+  }
+
+  /**
+    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
+    * 内部实现是将rowkey集合转为RDD[String]，推荐在数据量较大
+    * 时使用。数据量较小请优先使用HBaseOper
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * 具体类型
+    * @param seq
+    * rowKey集合
+    * @tparam E
+    * 自定义JavaBean类型，必须继承自HBaseBaseBean
+    * @return
+    * 自定义JavaBean的对象结果集
+    */
+  def hbaseBulkGetSeq[E <: HBaseBaseBean[E] : ClassTag](tableName: String, seq: Seq[String], clazz: Class[E]): RDD[E] = {
+    this.hbaseContext.bulkGetSeq[E](tableName, seq, clazz)
+  }
+
+  /**
+    * 根据rowKey集合批量获取数据
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * 获取后的记录转换为目标类型
+    * @param batchSize
+    * 批量的大小
+    * @return
+    * 结果集
+    */
+  def hbaseBulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): RDD[E] = {
+    rowKeyRDD.hbaseBulkGetRDD[E](tableName, clazz, batchSize)
+  }
+
+  /**
+    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * 获取后的记录转换为目标类型（自定义的JavaBean类型）
+    * @param batchSize
+    * 用于指定一次获取多少条记录，默认1000条
+    * @tparam E
+    * 自定义JavaBean类型，必须继承自HBaseBaseBean
+    * @return
+    * 自定义JavaBean的对象结果集
+    */
+  def hbaseBulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): DataFrame = {
+    rowKeyRDD.hbaseBulkGetDF[E](tableName, clazz, batchSize)
+  }
+
+  /**
+    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * 获取后的记录转换为目标类型（自定义的JavaBean类型）
+    * @param batchSize
+    * 用于指定一次获取多少条记录，默认1000条
+    * @tparam E
+    * 自定义JavaBean类型，必须继承自HBaseBaseBean
+    * @return
+    * 自定义JavaBean的对象结果集
+    */
+  def hbaseBulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): Dataset[E] = {
+    rowKeyRDD.hbaseBulkGetDS[E](tableName, clazz, batchSize)
+  }
 
   /**
     * Scan指定HBase表的数据，并映射为DataFrame
@@ -611,6 +714,57 @@ class SparkSessionExt(spark: SparkSession) {
     */
   def hbaseOperScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
     HBaseSparkBridge.hbaseOperScanDF2(this.spark, tableName, startRow, stopRow, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为Dataset
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * @param clazz
+    * 目标类型
+    * @tparam T
+    * 目标类型
+    * @return
+    */
+  def hbaseOperScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    HBaseSparkBridge.hbaseOperScanDS[T](spark, tableName, scan, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为Dataset
+    *
+    * @param tableName
+    *                HBase表名
+    * @param startRow
+    *                开始主键
+    * @param stopRow 结束主键
+    * @param clazz
+    *                目标类型
+    * @tparam T
+    * 目标类型
+    * @return
+    */
+  def hbaseOperScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    HBaseSparkBridge.hbaseOperScanDS2[T](spark, tableName, startRow, stopRow, clazz, multiVersion, versions)
+  }
+
+  /**
+    * 使用hbase java api方式插入一个集合的数据到hbase表中
+    *
+    * @param tableName
+    * hbase表名
+    * @param seq
+    * HBaseBaseBean的子类集合
+    * @param insertEmpty
+    * 是否插入为空的字段
+    * @param multiVersion
+    * 是否以多版本形式插入
+    */
+  def hbaseOperInsertList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    HBaseSparkBridge.hbaseOperInsertList[T](tableName, seq, insertEmpty, multiVersion)
   }
 
   /**
@@ -671,8 +825,8 @@ class SparkSessionExt(spark: SparkSession) {
     * 目标类型
     * @return
     */
-  def hbaseHadoopScanRDD(tableName: String, scan: Scan, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
-    HBaseSparkBridge.hbaseHadoopScanRDD(this.spark, tableName, scan, multiVersion, versions)
+  def hbaseHadoopScanRS(tableName: String, scan: Scan, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
+    HBaseSparkBridge.hbaseHadoopScanRS(this.spark, tableName, scan, multiVersion, versions)
   }
 
   /**
@@ -687,8 +841,98 @@ class SparkSessionExt(spark: SparkSession) {
     * 目标类型
     * @return
     */
-  def hbaseHadoopScanRDD2(tableName: String, startRow: String, stopRow: String, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
-    HBaseSparkBridge.hbaseHadoopScanRDD2(spark, tableName, startRow, stopRow, multiVersion, versions)
+  def hbaseHadoopScanRS2(tableName: String, startRow: String, stopRow: String, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
+    HBaseSparkBridge.hbaseHadoopScanRS2(spark, tableName, startRow, stopRow, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+    HBaseSparkBridge.hbaseHadoopScanRDD[T](spark, tableName, scan, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param startRow
+    * rowKey开始位置
+    * @param stopRow
+    * rowKey结束位置
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+    HBaseSparkBridge.hbaseHadoopScanRDD2[T](spark, tableName, startRow, stopRow, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    HBaseSparkBridge.hbaseHadoopScanDF[T](this.spark, tableName, scan, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+    *
+    * @param tableName
+    * HBase表名
+    * @param startRow
+    * rowKey开始位置
+    * @param stopRow
+    * rowKey结束位置
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    HBaseSparkBridge.hbaseHadoopScanDF2[T](this.spark, tableName, startRow, stopRow, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    HBaseSparkBridge.hbaseHadoopScanDS[T](this.spark, tableName, scan, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+    *
+    * @param tableName
+    * HBase表名
+    * @param startRow
+    * rowKey开始位置
+    * @param stopRow
+    * rowKey结束位置
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    HBaseSparkBridge.hbaseHadoopScanDS2[T](this.spark, tableName, startRow, stopRow, clazz, multiVersion)
   }
 
   /**
@@ -718,6 +962,41 @@ class SparkSessionExt(spark: SparkSession) {
     */
   def hbaseOperScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
     HBaseSparkBridge.hbaseOperScanRDD(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为List
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * hbase scan对象
+    * @param clazz
+    * 目标类型
+    * @tparam T
+    * 目标类型
+    * @return
+    */
+  def hbaseOperScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Seq[T] = {
+    HBaseSparkBridge.hbaseOperScanList[T](tableName, scan, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为List
+    *
+    * @param tableName
+    *                HBase表名
+    * @param startRow
+    *                开始主键
+    * @param stopRow 结束主键
+    * @param clazz
+    *                目标类型
+    * @tparam T
+    * 目标类型
+    * @return
+    */
+  def hbaseOperScanList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE, operator: FilterList.Operator = null, filters: Filter = null): Seq[T] = {
+    HBaseSparkBridge.hbaseOperScanList2[T](tableName, startRow, stopRow, clazz, multiVersion, versions)
   }
 
   /**
@@ -772,22 +1051,6 @@ class SparkSessionExt(spark: SparkSession) {
   }
 
   /**
-    * 使用hbase java api方式插入一个集合的数据到hbase表中
-    *
-    * @param tableName
-    * hbase表名
-    * @param seq
-    * HBaseBaseBean的子类集合
-    * @param insertEmpty
-    * 是否插入为空的字段
-    * @param multiVersion
-    * 是否以多版本形式插入
-    */
-  def hbaseOperInsertList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    HBaseSparkBridge.hbaseOperInsertList[T](tableName, seq, insertEmpty, multiVersion)
-  }
-
-  /**
     * 根据rowKey查询数据，并转为List[T]
     *
     * @param tableName
@@ -835,8 +1098,33 @@ class SparkSessionExt(spark: SparkSession) {
     * @param rowKeys
     * rowKey集合
     */
-  def hbaseOperDelete(tableName: String, rowKeys: Seq[String]): Unit = {
-    HBaseSparkBridge.hbaseOperDelete(tableName, rowKeys)
+  def hbaseOperDeleteList(tableName: String, rowKeys: Seq[String]): Unit = {
+    HBaseSparkBridge.hbaseOperDeleteList(tableName, rowKeys)
   }
 
+  /**
+    * 根据RDD[RowKey]批量删除记录
+    *
+    * @param tableName
+    * rowKey集合
+    * @param rowKeyRDD
+    * rowKey的rdd集合
+    * @param batchSize
+    * 一次删除多少条
+    */
+  def hbaseOperDeleteRDD(tableName: String, rowKeyRDD: RDD[String], batchSize: Int = this.hbaseContext.batchSize): Unit = {
+    rowKeyRDD.hbaseOperDeleteRDD(tableName, batchSize)
+  }
+
+  /**
+    * 根据Dataset[RowKey]批量删除记录
+    *
+    * @param tableName
+    * rowKey集合
+    * @param batchSize
+    * 一次删除多少条
+    */
+  def hbaseOperDeleteDS(tableName: String, dataset: Dataset[String], batchSize: Int = this.hbaseContext.batchSize): Unit = {
+    dataset.hbaseOperDeleteDS(tableName, batchSize)
+  }
 }

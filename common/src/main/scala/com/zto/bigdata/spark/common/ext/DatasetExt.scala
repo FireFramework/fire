@@ -45,8 +45,33 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
     * @tparam T
     * 数据类型为HBaseBaseBean的子类
     */
-  def hbaseBulkPutDataset[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    this.hbaseContext.bulkPutDataset[T](tableName, dataset.asInstanceOf[Dataset[T]], insertEmpty, multiVersion)
+  def hbaseBulkPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    this.hbaseContext.bulkPutDS[T](tableName, dataset.asInstanceOf[Dataset[T]], insertEmpty, multiVersion)
+  }
+
+  /**
+    * 根据Dataset[String]批量删除，Dataset是rowkey的集合
+    * 类型为String
+    *
+    * @param tableName
+    * HBase表名
+    * @param batchSize
+    * 批量删除的大小，默认为1000条
+    */
+  def hbaseBulkDeleteDS(tableName: String, batchSize: Integer = this.hbaseContext.batchSize): Unit = {
+    this.hbaseContext.bulkDeleteDS(tableName, dataset.asInstanceOf[Dataset[String]], batchSize)
+  }
+
+  /**
+    * 根据Dataset[RowKey]批量删除记录
+    *
+    * @param tableName
+    * rowKey集合
+    * @param batchSize
+    * 一次删除多少条
+    */
+  def hbaseOperDeleteDS(tableName: String, batchSize: Int = this.hbaseContext.batchSize): Unit = {
+    HBaseSparkBridge.hbaseOperDeleteDS(tableName, dataset.asInstanceOf[Dataset[String]], batchSize)
   }
 
   /**
@@ -55,8 +80,8 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
     * @param tableName
     * HBase表名
     */
-  def hbaseHadoopPutDataset[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true): Unit = {
-    this.hbaseContext.hadoopPutDataset[T](tableName, dataset.asInstanceOf[Dataset[T]], insertEmpty)
+  def hbaseHadoopPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true): Unit = {
+    this.hbaseContext.hadoopPutDS[T](tableName, dataset.asInstanceOf[Dataset[T]], insertEmpty)
   }
 
   /**

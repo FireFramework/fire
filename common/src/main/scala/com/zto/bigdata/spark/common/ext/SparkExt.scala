@@ -103,7 +103,7 @@ object SparkExt {
     * @param stream
     * stream对象
     */
-  implicit class DStreamExtBridge[T: ClassTag](stream: DStream[T]) extends DStreamExt(stream) {
+  implicit class DStreamExtBridge[T: ClassTag](stream: DStream[T]) extends DStreamExt[T](stream) {
 
   }
 

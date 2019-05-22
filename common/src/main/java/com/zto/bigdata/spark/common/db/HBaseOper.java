@@ -191,7 +191,7 @@ public class HBaseOper {
      */
     public static <T extends HBaseBaseBean> void insert(String tableName, List<T> list) {
         if (list != null && list.size() > 0) {
-            List<Put> putList = new ArrayList<>(list.size());
+            List<Put> putList = new LinkedList<>();
             for (Object obj : list) {
                 Put put = convert2Put((T) obj, true);
                 if (put != null) {
@@ -225,7 +225,7 @@ public class HBaseOper {
      */
     public static <T extends HBaseBaseBean> void insert(String tableName, ListBuffer<T> list) {
         if (list != null && list.size() > 0) {
-            List<Put> putList = new ArrayList<>(list.size());
+            List<Put> putList = new LinkedList<>();
             scala.collection.Iterator<T> it = list.iterator();
             while (it.hasNext()) {
                 Put put = convert2Put((T) it.next(), true);
@@ -259,7 +259,7 @@ public class HBaseOper {
      */
     public static <T extends HBaseBaseBean> void insertIgnoreNull(String tableName, scala.collection.immutable.List<T> list) {
         if (list != null && list.size() > 0) {
-            List<Put> putList = new ArrayList<>(list.size());
+            List<Put> putList = new LinkedList<>();
             scala.collection.Iterator<T> it = list.iterator();
             while (it.hasNext()) {
                 Put put = convert2Put((T) it.next(), false);
@@ -475,7 +475,7 @@ public class HBaseOper {
         if (rsArr == null || rsArr.length == 0) {
             return Collections.emptyList();
         }
-        List<String> rowKeyList = new ArrayList<String>(getList.size());
+        List<String> rowKeyList = new LinkedList<>();
         try {
             byte[] row = null;
             for (Result rs : rsArr) {
@@ -544,7 +544,7 @@ public class HBaseOper {
             Table table = null;
             try {
                 table = connection.getTable(TableName.valueOf(tableName));
-                List<Get> gets = new ArrayList<Get>(rowKey.length);
+                List<Get> gets = new LinkedList<>();
                 for (String key : rowKey) {
                     Get get = new Get(key.getBytes());
                     get.setMaxVersions(versionCount);
@@ -657,7 +657,7 @@ public class HBaseOper {
         if (table != null && scan != null && clazz != null) {
             ResultScanner rsScanner = null;
             try {
-                List<T> list = new ArrayList<T>();
+                List<T> list = new LinkedList<>();
                 rsScanner = table.getScanner(scan);
                 for (Result rs : rsScanner) {
                     T obj = hbaseRow2Bean(rs, clazz);
@@ -698,7 +698,7 @@ public class HBaseOper {
         if (table != null && scan != null && clazz != null) {
             ResultScanner rsScanner = null;
             try {
-                List<T> list = new ArrayList<T>();
+                List<T> list = new LinkedList<>();
                 scan.setMaxVersions();
                 rsScanner = table.getScanner(scan);
                 for (Result rs : rsScanner) {
@@ -739,7 +739,7 @@ public class HBaseOper {
         if (table != null && clazz != null) {
             ResultScanner rsScanner = null;
             try {
-                List<T> list = new ArrayList<T>();
+                List<T> list = new LinkedList<>();
                 Scan scan = new Scan();
                 rsScanner = table.getScanner(scan);
                 for (Result rs : rsScanner) {
@@ -790,7 +790,7 @@ public class HBaseOper {
                     scan.setFilter(filterList);
                 }
                 rsScanner = table.getScanner(scan);
-                List<T> list = new ArrayList<T>();
+                List<T> list = new LinkedList<>();
                 if (rsScanner != null) {
                     for (Result rs : rsScanner) {
                         T obj = hbaseRow2Bean(rs, clazz);
@@ -817,6 +817,78 @@ public class HBaseOper {
         }
         return null;
     }
+
+    /**
+     * 表多版本扫描，将查询后的数据封装到List中
+     *
+     * @param tableName 表名
+     * @param scan  scan对象
+     * @param clazz     类型
+     * @param <T>       目标泛型类型
+     * @return 指定类型的List
+     */
+    public static <T extends HBaseBaseBean> List<T> scanMultiVersions(String tableName, Scan scan, Class<T> clazz) {
+        if (StringUtils.isBlank(tableName) || scan == null || clazz == null) {
+            return null;
+        }
+        Table table = getTable(tableName);
+        ResultScanner rsScanner = null;
+        try {
+            rsScanner = table.getScanner(scan);
+            List<T> list = new LinkedList<>();
+            if (rsScanner != null) {
+                for (Result rs : rsScanner) {
+                    List<T> objList = hbaseMultiRow2Bean(rs, clazz);
+                    if (objList != null && objList.size() > 0) {
+                        list.addAll(objList);
+                    }
+                }
+            }
+            return list;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (rsScanner != null) {
+                rsScanner.close();
+            }
+            if (table != null) {
+                try {
+                    table.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 表多版本扫描，将查询后的数据封装到List中
+     *
+     * @param tableName 表名
+     * @param startRow  开始行
+     * @param stopRow   结束行
+     * @param clazz     类型
+     * @param operator  条件and或or
+     * @param filters   过滤器
+     * @param <T>       目标泛型类型
+     * @return 指定类型的List
+     */
+    public static <T extends HBaseBaseBean> List<T> scanMultiVersions(String tableName, String startRow, String stopRow, Class<T> clazz, Integer versionCount, FilterList.Operator operator, Filter... filters) {
+        if (StringUtils.isBlank(tableName) || StringUtils.isBlank(startRow) || StringUtils.isBlank(stopRow) || clazz == null) {
+            return null;
+        }
+        if (versionCount == null) {
+            versionCount = Integer.MAX_VALUE;
+        }
+        Scan scan = HBaseOper.buildScan(startRow, stopRow, null);
+        if (operator != null && filters != null && filters.length > 0) {
+            scan.setFilter(new FilterList(operator, filters));
+        }
+        scan.setMaxVersions(versionCount);
+        return scanMultiVersions(tableName, scan, clazz);
+    }
+
 
     /**
      * 表扫描，将查询后的数据封装到List中
@@ -850,15 +922,15 @@ public class HBaseOper {
     /**
      * 根据多个rowkey删除对应的整行记录
      *
-     * @param tableName 表名
-     * @param rowKeyList    rowKey集合
+     * @param tableName  表名
+     * @param rowKeyList rowKey集合
      */
     public static void deleteRow(String tableName, List<String> rowKeyList) {
         try {
             if (StringUtils.isNotBlank(tableName) && rowKeyList != null && rowKeyList.size() > 0) {
                 TableName tbName = TableName.valueOf(tableName);
                 Table table = connection.getTable(tbName);
-                List<Delete> deletes = new ArrayList<Delete>(rowKeyList.size());
+                List<Delete> deletes = new LinkedList<>();
                 for (String key : rowKeyList) {
                     Delete delete = new Delete(key.getBytes());
                     deletes.add(delete);
@@ -1236,7 +1308,7 @@ public class HBaseOper {
      * @param fieldMap 字段映射信息
      */
     private static <T extends HBaseBaseBean> List<T> multiCell2Field(Result rs, Class<T> clazz, Map<String, Field> fieldMap) {
-        List<T> objList = new ArrayList<>();
+        List<T> objList = new LinkedList<>();
         try {
             Cell[] cells = rs.rawCells();
             for (Cell cell : cells) {
@@ -1360,7 +1432,7 @@ public class HBaseOper {
             throw new RuntimeException(clazz.getName() + " 中的field为空或没有使用@FieldName");
         }
 
-        List<T> objList = new ArrayList<>(rsArr.length);
+        List<T> objList = new LinkedList<>();
         for (Result rs : rsArr) {
             if (rs.isEmpty()) {
                 continue;
@@ -1389,7 +1461,7 @@ public class HBaseOper {
             throw new RuntimeException(MultiVersionsBean.class.getName() + " 中的field为空或没有使用@FieldName");
         }
 
-        List<T> objList = new ArrayList<>();
+        List<T> objList = new LinkedList<>();
         for (Result rs : rsArr) {
             if (rs.isEmpty()) {
                 continue;

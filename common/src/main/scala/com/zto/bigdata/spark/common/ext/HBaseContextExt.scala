@@ -2,7 +2,7 @@ package com.zto.bigdata.spark.common.ext
 
 import com.zto.bigdata.spark.common.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.bigdata.spark.common.db.HBaseOper
-import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils}
+import com.zto.bigdata.spark.common.util.{GlobalConstants, SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.TableName
@@ -14,7 +14,7 @@ import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.sql.{DataFrame, Dataset, Encoders, Row}
 import org.apache.spark.streaming.dstream.DStream
 
 import scala.collection.mutable.ListBuffer
@@ -47,9 +47,24 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @param batchSize
     * 批量删除的大小，默认为1000条
     */
-  def bulkDelete(tableName: String, rdd: RDD[String], batchSize: Integer = this.batchSize): Unit = {
+  def bulkDeleteRDD(tableName: String, rdd: RDD[String], batchSize: Integer = this.batchSize): Unit = {
     val rowKeyRDD = rdd.filter(rowkey => StringUtils.isNotBlank(rowkey)).map(rowKey => Bytes.toBytes(rowKey))
     this.bulkDelete[Array[Byte]](rowKeyRDD, TableName.valueOf(tableName), rec => new Delete(rec), batchSize)
+  }
+
+  /**
+    * 根据Dataset[String]批量删除，Dataset是rowkey的集合
+    * 类型为String
+    *
+    * @param dataset
+    * 类型为String的Dataset集合
+    * @param tableName
+    * HBase表名
+    * @param batchSize
+    * 批量删除的大小，默认为1000条
+    */
+  def bulkDeleteDS(tableName: String, dataset: Dataset[String], batchSize: Integer = this.batchSize): Unit = {
+    this.bulkDeleteRDD(tableName, dataset.rdd, batchSize)
   }
 
   /**
@@ -61,9 +76,9 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @param seq
     * 待删除的rowKey集合
     */
-  def bulkDelete(tableName: String, seq: Seq[String]): Unit = {
+  def bulkDeleteList(tableName: String, seq: Seq[String]): Unit = {
     val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, GlobalConstants.SparkConf.parallelism)))
-    this.bulkDelete(tableName, rdd)
+    this.bulkDeleteRDD(tableName, rdd)
   }
 
   /**
@@ -82,11 +97,55 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @return
     * 自定义JavaBean的对象结果集
     */
-  def bulkGet[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], batchSize: Integer = this.batchSize): RDD[HBaseBaseBean[E]] = {
+  def bulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], batchSize: Integer = this.batchSize): RDD[E] = {
     val rowKeyRDD = rdd.filter(StringUtils.isNotBlank(_)).map(rowKey => Bytes.toBytes(rowKey))
-    this.bulkGet[Array[Byte], HBaseBaseBean[E]](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
+    this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
       HBaseOper.hbaseRow2Bean(result, clazz)
     }).filter(bean => bean != null)
+  }
+
+  /**
+    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
+    *
+    * @param tableName
+    * HBase表名
+    * @param rdd
+    * rowKey集合，类型为RDD[String]
+    * @param clazz
+    * 获取后的记录转换为目标类型（自定义的JavaBean类型）
+    * @param batchSize
+    * 用于指定一次获取多少条记录，默认1000条
+    * @tparam E
+    * 自定义JavaBean类型，必须继承自HBaseBaseBean
+    * @return
+    * 自定义JavaBean的对象结果集
+    */
+  def bulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], batchSize: Integer = this.batchSize): DataFrame = {
+    val resultRdd = this.bulkGetRDD[E](tableName, rdd, clazz, batchSize)
+    val sqlContext = SingletonFactory.getSQLContextInstance(this.sc)
+    sqlContext.createDataFrame(resultRdd, clazz)
+  }
+
+  /**
+    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
+    *
+    * @param tableName
+    * HBase表名
+    * @param rdd
+    * rowKey集合，类型为RDD[String]
+    * @param clazz
+    * 获取后的记录转换为目标类型（自定义的JavaBean类型）
+    * @param batchSize
+    * 用于指定一次获取多少条记录，默认1000条
+    * @tparam E
+    * 自定义JavaBean类型，必须继承自HBaseBaseBean
+    * @return
+    * 自定义JavaBean的对象结果集
+    */
+  def bulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], batchSize: Integer = this.batchSize): Dataset[E] = {
+    val resultRdd = this.bulkGetRDD[E](tableName, rdd, clazz, batchSize)
+    val sqlContext = SingletonFactory.getSQLContextInstance(this.sc)
+    sqlContext.createDataset(resultRdd)(Encoders.bean(clazz))
   }
 
   /**
@@ -105,9 +164,9 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @return
     * 自定义JavaBean的对象结果集
     */
-  def bulkGet[E <: HBaseBaseBean[E] : ClassTag](tableName: String, seq: Seq[String], clazz: Class[E]): RDD[HBaseBaseBean[E]] = {
+  def bulkGetSeq[E <: HBaseBaseBean[E] : ClassTag](tableName: String, seq: Seq[String], clazz: Class[E]): RDD[E] = {
     val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, GlobalConstants.SparkConf.parallelism)))
-    this.bulkGet(tableName, rdd, clazz)
+    this.bulkGetRDD(tableName, rdd, clazz)
   }
 
   /**
@@ -125,7 +184,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @tparam T
     * 数据类型为HBaseBaseBean的子类
     */
-  def bulkPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+  def bulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
     this.bulkPut[T](rdd,
       TableName.valueOf(tableName),
       (putRecord: T) => {
@@ -151,7 +210,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     */
   def bulkPutSeq[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean, multiVersion: Boolean = false): Unit = {
     val rdd = this.sc.parallelize(seq, math.max(1, math.min(seq.length / 2, GlobalConstants.SparkConf.parallelism)))
-    this.bulkPut(tableName, rdd, insertEmpty, multiVersion)
+    this.bulkPutRDD(tableName, rdd, insertEmpty, multiVersion)
   }
 
   /**
@@ -169,7 +228,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @return
     * scan获取到的结果集，类型为RDD[T]
     */
-  def bulkScan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): RDD[T] = {
+  def bulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): RDD[T] = {
     if (scan.getCaching == -1) {
       scan.setCaching(this.batchSize)
     }
@@ -193,9 +252,9 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @return
     * scan获取到的结果集，类型为RDD[T]
     */
-  def bulkScan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): RDD[T] = {
+  def bulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): RDD[T] = {
     val scan = new Scan(Bytes.toBytes(startRow), Bytes.toBytes(stopRow))
-    this.bulkScan(tableName, scan, clazz)
+    this.bulkScanRDD(tableName, scan, clazz)
   }
 
   /**
@@ -215,7 +274,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     */
   def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
     val rdd = dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
-    this.bulkPut[T](tableName, rdd, insertEmpty, multiVersion)
+    this.bulkPutRDD[T](tableName, rdd, insertEmpty, multiVersion)
   }
 
   /**
@@ -233,8 +292,8 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @tparam T
     * 数据类型为HBaseBaseBean的子类
     */
-  def bulkPutDataset[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    this.bulkPut[T](tableName, dataset.rdd, insertEmpty, multiVersion)
+  def bulkPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    this.bulkPutRDD[T](tableName, dataset.rdd, insertEmpty, multiVersion)
   }
 
   /**
@@ -251,7 +310,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @tparam T
     * 对象类型必须是HBaseBaseBean的子类
     */
-  def streamBulkPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+  def bulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
     this.streamBulkPut[T](dstream, TableName.valueOf(tableName), (putRecord: T) => {
       HBaseOper.convert2Put(if (multiVersion) new MultiVersionsBean(putRecord) else putRecord, insertEmpty)
     })
@@ -300,7 +359,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @param dataset
     * JavaBean类型，待插入到hbase的数据集
     */
-  def hadoopPutDataset[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], insertEmpty: Boolean = true): Unit = {
+  def hadoopPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], insertEmpty: Boolean = true): Unit = {
     this.hadoopPut[E](tableName, dataset.rdd, insertEmpty)
   }
 
