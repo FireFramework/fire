@@ -33,7 +33,6 @@ object HbaseBulkTest extends BaseSparkCore {
     // 方式一：将rdd的数据写入到hbase中，rdd类型必须为HBaseBaseBean的子类
     val rdd = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
     // rdd.hbaseBulkPutRDD(this.tableName1)
-
     // 方式二：使用this.spark.hbaseBulkPut将rdd中的数据写入到hbase
     // this.spark.hbaseBulkPut(this.tableName, rdd)
 

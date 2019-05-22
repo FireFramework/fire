@@ -152,7 +152,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param tableName
     * HBase表名
     */
-  def hbaseHadoopPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true): Unit = {
+  def hbaseHadoopPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true): Unit = {
     this.hbaseContext.hadoopPut(tableName, rdd.asInstanceOf[RDD[T]], insertEmpty)
   }
 
@@ -217,8 +217,8 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseOperInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
-    HBaseSparkBridge.hbaseOperInsertRDD[T](tableName, rdd.asInstanceOf[RDD[T]], insertEmpty, batchSize, multiVersion)
+  def hbaseOperPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+    HBaseSparkBridge.hbaseOperPutRDD[T](tableName, rdd.asInstanceOf[RDD[T]], insertEmpty, batchSize, multiVersion)
   }
 
 }

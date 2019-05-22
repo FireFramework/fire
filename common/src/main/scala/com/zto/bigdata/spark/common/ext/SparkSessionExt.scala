@@ -488,7 +488,7 @@ class SparkSessionExt(spark: SparkSession) {
     rdd.hbaseBulkPutRDD(tableName, insertEmpty, multiVersion)
   }
 
-  /**
+  /**hbaseOperInsertList
     * 批量写入，将自定义的JavaBean数据集批量并行写入
     * 到HBase的指定表中。内部会将自定义JavaBean的相应
     * 字段一一映射为Put对象，并完成一次写入
@@ -511,8 +511,8 @@ class SparkSessionExt(spark: SparkSession) {
     * @param tableName
     * HBase表名
     */
-  def hbaseHadoopPut[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[E], insertEmpty: Boolean = true): Unit = {
-    rdd.hbaseHadoopPut(tableName, insertEmpty)
+  def hbaseHadoopPutRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[E], insertEmpty: Boolean = true): Unit = {
+    rdd.hbaseHadoopPutRDD(tableName, insertEmpty)
   }
 
   /**
@@ -763,8 +763,8 @@ class SparkSessionExt(spark: SparkSession) {
     * @param multiVersion
     * 是否以多版本形式插入
     */
-  def hbaseOperInsertList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    HBaseSparkBridge.hbaseOperInsertList[T](tableName, seq, insertEmpty, multiVersion)
+  def hbaseOperPutList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    HBaseSparkBridge.hbaseOperPutList[T](tableName, seq, insertEmpty, multiVersion)
   }
 
   /**
@@ -777,8 +777,8 @@ class SparkSessionExt(spark: SparkSession) {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseOperInsertRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
-    rdd.hbaseOperInsertRDD[T](tableName, insertEmpty, batchSize, multiVersion)
+  def hbaseOperPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+    rdd.hbaseOperPutRDD[T](tableName, insertEmpty, batchSize, multiVersion)
   }
 
   /**
@@ -795,8 +795,8 @@ class SparkSessionExt(spark: SparkSession) {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseOperInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
-    df.hbaseOperInsertDF(tableName, clazz, insertEmpty, batchSize, multiVersion)
+  def hbaseOperPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+    df.hbaseOperPutDF(tableName, clazz, insertEmpty, batchSize, multiVersion)
   }
 
   /**
@@ -811,8 +811,8 @@ class SparkSessionExt(spark: SparkSession) {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseOperInsertDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
-    dataset.hbaseOperInsertDS[E](tableName, clazz, insertEmpty, batchSize, multiVersion)
+  def hbaseOperPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+    dataset.hbaseOperPutDS[E](tableName, clazz, insertEmpty, batchSize, multiVersion)
   }
 
   /**

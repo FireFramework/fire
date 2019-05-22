@@ -60,7 +60,7 @@ object HBaseJavaApiTest extends BaseSparkCore {
   def testSparkWrite(): Unit = {
     // rdd数据写入到hbase中
     val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
-    studentRDD.hbaseOperInsertRDD(this.tableName1)
+    studentRDD.hbaseOperPutRDD(this.tableName1)
     // dataFrame数据写入到hbase中
     /*val df = this.spark.createDataFrame(studentRDD, classOf[Student])
     df.hbaseInsertDF(this.tableName1, classOf[Student])*/
@@ -92,7 +92,7 @@ object HBaseJavaApiTest extends BaseSparkCore {
     */
   def testHbaseOperInsertList(): Unit = {
     val studentList = Student.buildStudentList()
-    this.spark.hbaseOperInsertList(this.tableName1, JavaConversions.asScalaBuffer(studentList))
+    this.spark.hbaseOperPutList(this.tableName1, JavaConversions.asScalaBuffer(studentList))
   }
 
   /**
@@ -102,7 +102,7 @@ object HBaseJavaApiTest extends BaseSparkCore {
   def testHbaseOperInsertRDD(): Unit = {
     val studentList = Student.buildStudentList()
     val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(studentList), 2)
-    studentRDD.hbaseOperInsertRDD(this.tableName2)
+    studentRDD.hbaseOperPutRDD(this.tableName2)
   }
 
   /**
@@ -111,7 +111,7 @@ object HBaseJavaApiTest extends BaseSparkCore {
   def testHbaseOperInsertDF(): Unit = {
     val studentList = Student.buildStudentList()
     val studentDF = this.spark.createDataFrame(studentList, classOf[Student])
-    studentDF.hbaseOperInsertDF(this.tableName3, classOf[Student])
+    studentDF.hbaseOperPutDF(this.tableName3, classOf[Student])
   }
 
   /**
@@ -121,7 +121,7 @@ object HBaseJavaApiTest extends BaseSparkCore {
   def testHbaseOperInsertDS(): Unit = {
     val studentList = Student.buildStudentList()
     val studentDS = this.spark.createDataset(JavaConversions.asScalaBuffer(studentList))(Encoders.bean(classOf[Student]))
-    studentDS.hbaseOperInsertDS(this.tableName4, classOf[Student])
+    studentDS.hbaseOperPutDS(this.tableName4, classOf[Student])
   }
 
   /**

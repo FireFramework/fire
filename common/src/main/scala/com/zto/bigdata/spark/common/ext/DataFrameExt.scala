@@ -175,8 +175,8 @@ class DataFrameExt(dataFrame: DataFrame) {
     * @param multiVersion
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
-  def hbaseOperInsertDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
-    HBaseSparkBridge.hbaseOperInsertDF(tableName, this.dataFrame, clazz, insertEmpty, batchSize, multiVersion)
+  def hbaseOperPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+    HBaseSparkBridge.hbaseOperPutDF(tableName, this.dataFrame, clazz, insertEmpty, batchSize, multiVersion)
   }
 
   /**
