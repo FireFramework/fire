@@ -141,10 +141,41 @@ object HBaseJavaApiTest extends BaseSparkCore {
     * 使用HBaseOper scan数据，并以DataFrame方式返回
     */
   def testHbaseOperScanDS: Unit = {
-    val dataSet = this.spark.hbaseOperScanDS2(this.tableName4, "1", "6", classOf[Student])
+    val dataSet = this.spark.hbaseOperScanDS2(this.tableName1, "1", "6", classOf[Student])
     dataSet.show(100, false)
+
+    val dataSet2 = this.spark.hbaseOperScanDS2(this.tableName2, "1", "6", classOf[Student])
+    dataSet2.show(100, false)
+
+    val dataSet3 = this.spark.hbaseOperScanDS2(this.tableName3, "1", "6", classOf[Student])
+    dataSet3.show(100, false)
   }
 
+  /**
+    * 根据指定的rowKey list，批量删除指定的记录
+    */
+  def testHbaseOperDeleteList: Unit = {
+    val rowKeyList = Seq(1.toString, 2.toString, 5.toString, 8.toString)
+    this.spark.hbaseOperDeleteList(this.tableName1, rowKeyList)
+  }
+
+  /**
+    * 根据指定的rowKey rdd，批量删除指定的记录
+    */
+  def testHbaseOperDeleteRDD: Unit = {
+    val rowKeyList = Seq(1.toString, 2.toString, 5.toString, 8.toString)
+    val rowKeyRDD = this.spark.parallelize(rowKeyList)
+    rowKeyRDD.hbaseOperDeleteRDD(this.tableName2)
+  }
+
+  /**
+    * 根据指定的rowKey dataset，批量删除指定的记录
+    */
+  def testHbaseOperDeleteDS: Unit = {
+    val rowKeyList = Seq(1.toString, 2.toString, 5.toString, 8.toString)
+    val rowKeyDS = this.spark.createDataset(rowKeyList)(Encoders.STRING)
+    rowKeyDS.hbaseOperDeleteDS(this.tableName3)
+  }
 
   /**
     * Spark处理过程
@@ -161,9 +192,14 @@ object HBaseJavaApiTest extends BaseSparkCore {
     this.testHbaseOperPutDF()
     this.testHbaseOperPutDS()*/
 
-    this.testHbaseOperScanList
-    this.testHbaseOperScanRDD
-    this.testHbaseOperScanDF
+    // this.testHbaseOperScanList
+    // this.testHbaseOperScanRDD
+    // this.testHbaseOperScanDF
+
+    this.testHbaseOperDeleteList
+    this.testHbaseOperDeleteRDD
+    this.testHbaseOperDeleteDS
+
     this.testHbaseOperScanDS
   }
 

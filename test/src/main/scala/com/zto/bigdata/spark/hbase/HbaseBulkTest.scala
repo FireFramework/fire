@@ -34,6 +34,8 @@ object HbaseBulkTest extends BaseSparkCore {
     // 方式一：将rdd的数据写入到hbase中，rdd类型必须为HBaseBaseBean的子类
     val rdd = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
     rdd.hbaseBulkPutRDD(this.tableName1)
+    rdd.hbaseBulkPutRDD(this.tableName2)
+    rdd.hbaseBulkPutRDD(this.tableName3)
     // 方式二：使用this.spark.hbaseBulkPut将rdd中的数据写入到hbase
     // this.spark.hbaseBulkPutRDD(this.tableName1, rdd)
 
@@ -147,21 +149,34 @@ object HbaseBulkTest extends BaseSparkCore {
   def testHbaseBulkScanDS: Unit = {
     // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为Dataset[Student]
     println("============scanDS===========")
-    val scanDS = this.spark.hbaseBulkScanDS(this.tableName2, HBaseOper.buildScan("1", "6"), classOf[Student])
+    val scanDS = this.spark.hbaseBulkScanDS(this.tableName1, HBaseOper.buildScan("1", "6"), classOf[Student])
     scanDS.show(100, false)
   }
 
   /**
     * 使用bulk方式批量删除指定的rowKey对应的数据
     */
-  def testBulkDelete: Unit = {
+  def testHBaseBulkDeleteRDD: Unit = {
     // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
-    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 5.toString))
+    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 5.toString, 8.toString))
     // 根据rowKey删除
-    rowKeyRdd.hbaseBulkDeleteRDD(this.tableName2)
+    rowKeyRdd.hbaseBulkDeleteRDD(this.tableName1)
 
-    // 方式二：使用this.spark.hbaseBulkDelete
-    // this.spark.hbaseBulkDelete(this.tableName, rowKeyRdd)
+    // 方式二：使用this.spark.hbaseBulkDeleteRDD
+    // this.spark.hbaseBulkDeleteRDD(this.tableName1, rowKeyRdd)
+  }
+
+  /**
+    * 使用bulk方式批量删除指定的rowKey对应的数据
+    */
+  def testHBaseBulkDeleteDS: Unit = {
+    // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
+    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 5.toString, 8.toString))
+    // 根据rowKey删除
+    this.spark.createDataset(rowKeyRdd)(Encoders.STRING).hbaseBulkDeleteDS(this.tableName2)
+
+    // 方式二：使用this.spark.hbaseBulkDeleteDS
+    // this.spark.hbaseBulkDeleteDS(this.tableName1, rowKeyRdd)
   }
 
 
@@ -170,7 +185,7 @@ object HbaseBulkTest extends BaseSparkCore {
     * 注：此方法会被自动调用
     */
   override def process: Unit = {
-    // this.testHbaseBulkPutRDD
+    this.testHbaseBulkPutRDD
     // this.testHbaseBulkPutDF
     // this.testHbaseBulkPutDS
 
@@ -179,9 +194,12 @@ object HbaseBulkTest extends BaseSparkCore {
     // this.testHBaseBulkGetDS
     // this.testHBaseBulkGetSeq
 
-    this.testHbaseBulkScanRDD
-    this.testHbaseBulkScanDF
-    this.testHbaseBulkScanDS
+    // this.testHBaseBulkDeleteRDD
+    // this.testHBaseBulkDeleteDS
+
+    // this.testHbaseBulkScanRDD
+    // this.testHbaseBulkScanDF
+    // this.testHbaseBulkScanDS
 
     /*this.testHbaseHadoopPutDataset
     this.testBulkDelete
