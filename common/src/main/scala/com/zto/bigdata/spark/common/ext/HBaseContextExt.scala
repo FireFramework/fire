@@ -253,8 +253,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * scan获取到的结果集，类型为RDD[T]
     */
   def bulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): RDD[T] = {
-    val scan = new Scan(Bytes.toBytes(startRow), Bytes.toBytes(stopRow))
-    this.bulkScanRDD(tableName, scan, clazz)
+    this.bulkScanRDD(tableName, HBaseOper.buildScan(startRow, stopRow), clazz)
   }
 
   /**

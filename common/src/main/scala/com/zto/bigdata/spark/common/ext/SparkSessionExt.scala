@@ -437,7 +437,7 @@ class SparkSessionExt(spark: SparkSession) {
     * clazz类型的rdd
     */
   def hbaseBulkScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): DataFrame = {
-    this.hbaseBulkScanDF[T](tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz)
+    this.hbaseBulkScanDF[T](tableName, HBaseOper.buildScan(startRow, stopRow), clazz)
   }
 
   /**
@@ -472,7 +472,7 @@ class SparkSessionExt(spark: SparkSession) {
     * clazz类型的rdd
     */
   def hbaseBulkScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): Dataset[T] = {
-    this.hbaseBulkScanDS[T](tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz)
+    this.hbaseBulkScanDS[T](tableName, HBaseOper.buildScan(startRow, stopRow), clazz)
   }
 
   /**
@@ -961,7 +961,7 @@ class SparkSessionExt(spark: SparkSession) {
     * @return
     */
   def hbaseOperScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
-    HBaseSparkBridge.hbaseOperScanRDD(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+    HBaseSparkBridge.hbaseOperScanRDD(spark, tableName, HBaseOper.buildScan(startRow, stopRow), clazz, multiVersion, versions)
   }
 
   /**

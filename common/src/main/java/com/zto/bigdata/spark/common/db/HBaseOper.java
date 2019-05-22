@@ -881,7 +881,7 @@ public class HBaseOper {
         if (versionCount == null) {
             versionCount = Integer.MAX_VALUE;
         }
-        Scan scan = HBaseOper.buildScan(startRow, stopRow, null);
+        Scan scan = HBaseOper.buildScan(startRow, stopRow);
         if (operator != null && filters != null && filters.length > 0) {
             scan.setFilter(new FilterList(operator, filters));
         }
@@ -1211,6 +1211,17 @@ public class HBaseOper {
      *
      * @param startRow 指定起始rowkey
      * @param stopRow  指定结束rowkey
+     * @return scan实例
+     */
+    public static Scan buildScan(String startRow, String stopRow) {
+        return buildScan(startRow, stopRow, null);
+    }
+
+    /**
+     * 构建Scan对象
+     *
+     * @param startRow 指定起始rowkey
+     * @param stopRow  指定结束rowkey
      * @param filter   过滤器
      * @return scan实例
      */
@@ -1325,7 +1336,9 @@ public class HBaseOper {
                 }
                 idField.setAccessible(true);
                 idField.set(obj, rowKey);
-                objList.add(gson.fromJson(obj.getMultiFields(), clazz));
+                if (StringUtils.isNotBlank(obj.getMultiFields())) {
+                    objList.add(gson.fromJson(obj.getMultiFields(), clazz));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

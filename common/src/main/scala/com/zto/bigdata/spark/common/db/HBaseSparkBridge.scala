@@ -135,7 +135,7 @@ object HBaseSparkBridge {
     * @return
     */
   def hbaseOperScanDS2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
-    this.hbaseOperScanDS[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+    this.hbaseOperScanDS[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow), clazz, multiVersion, versions)
   }
 
   /**
@@ -170,7 +170,7 @@ object HBaseSparkBridge {
     * @return
     */
   def hbaseHadoopScanRS2(spark: SparkSession, tableName: String, startRow: String, stopRow: String, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
-    this.hbaseHadoopScanRS(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), multiVersion, versions)
+    this.hbaseHadoopScanRS(spark, tableName, HBaseOper.buildScan(startRow, stopRow), multiVersion, versions)
   }
 
   /**
@@ -201,7 +201,7 @@ object HBaseSparkBridge {
     * @return
     */
   def hbaseHadoopScanRDD2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
-    this.hbaseHadoopScanRDD[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+    this.hbaseHadoopScanRDD[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow), clazz, multiVersion, versions)
   }
 
   /**
@@ -232,7 +232,7 @@ object HBaseSparkBridge {
     * @return
     */
   def hbaseHadoopScanDF2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
-    this.hbaseHadoopScanDF[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+    this.hbaseHadoopScanDF[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow), clazz, multiVersion, versions)
   }
 
   /**
@@ -263,7 +263,7 @@ object HBaseSparkBridge {
     * @return
     */
   def hbaseHadoopScanDS2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
-    this.hbaseHadoopScanDS[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+    this.hbaseHadoopScanDS[T](spark, tableName, HBaseOper.buildScan(startRow, stopRow), clazz, multiVersion, versions)
   }
 
   /**
@@ -279,7 +279,7 @@ object HBaseSparkBridge {
     * @return
     */
   def hbaseOperScanDF2[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
-    this.hbaseOperScanDF(spark, tableName, HBaseOper.buildScan(startRow, stopRow, null), clazz, multiVersion, versions)
+    this.hbaseOperScanDF(spark, tableName, HBaseOper.buildScan(startRow, stopRow), clazz, multiVersion, versions)
   }
 
   /**
@@ -316,8 +316,8 @@ object HBaseSparkBridge {
     * @return
     */
   def hbaseOperScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Seq[T] = {
-    scan.setMaxVersions(versions)
     val list = if (multiVersion) {
+      scan.setMaxVersions(versions)
       HBaseOper.scanMultiVersions(tableName, scan, clazz)
     } else {
       HBaseOper.scan(tableName, scan, clazz)
@@ -372,27 +372,29 @@ object HBaseSparkBridge {
       val getList = new util.LinkedList[Get]()
 
       it.foreach(rowKey => {
-        val get = new Get(rowKey.getBytes)
-        if (multiVersion) {
-          // 多版本表记录
-          get.setMaxVersions(versions)
-          getList.add(get)
-          if (getList.size >= this.batchSize) {
-            val resultList = HBaseOper.getMultiVersions(tableName, getList, clazz)
-            if (resultList != null && resultList.size() > 0) {
-              beanList.addAll(resultList)
+        if (StringUtils.isNotBlank(rowKey)) {
+          val get = new Get(rowKey.getBytes)
+          if (multiVersion) {
+            // 多版本表记录
+            get.setMaxVersions(versions)
+            getList.add(get)
+            if (getList.size >= this.batchSize) {
+              val resultList = HBaseOper.getMultiVersions(tableName, getList, clazz)
+              if (resultList != null && resultList.size() > 0) {
+                beanList.addAll(resultList)
+              }
+              getList.clear()
             }
-            getList.clear()
-          }
-        } else {
-          // 单版本表记录
-          getList.add(get)
-          if (getList.size >= this.batchSize) {
-            val resultList = HBaseOper.get(tableName, getList, clazz)
-            if (resultList != null && resultList.size() > 0) {
-              beanList.addAll(resultList)
+          } else {
+            // 单版本表记录
+            getList.add(get)
+            if (getList.size >= this.batchSize) {
+              val resultList = HBaseOper.get(tableName, getList, clazz)
+              if (resultList != null && resultList.size() > 0) {
+                beanList.addAll(resultList)
+              }
+              getList.clear()
             }
-            getList.clear()
           }
         }
       })
@@ -498,6 +500,7 @@ object HBaseSparkBridge {
     */
   def hbaseOperGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[Get], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Seq[T] = {
     val beanList = if (multiVersion) {
+      seq.foreach(get => get.setMaxVersions(versions))
       HBaseOper.getMultiVersions(tableName, JavaConversions.seqAsJavaList(seq), clazz)
     } else {
       HBaseOper.get(tableName, JavaConversions.seqAsJavaList(seq), clazz)

@@ -130,36 +130,36 @@ public class Student extends HBaseBaseBean<Student> {
         List<Student> studentList = new LinkedList<>();
         try {
             for (int i=1; i<=1; i++) {
-                Thread.sleep(100);
+                Thread.sleep(500);
                 Student stu = new Student(1L, "root", i + 1, new BigDecimal(1 + i), true, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
 
             for (int i=1; i<=2; i++) {
-                Thread.sleep(100);
+                Thread.sleep(500);
                 Student stu = new Student(2L, "admin", i + 2, new BigDecimal(2019.05180919 + i), false, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
 
             for (int i=1; i<=3; i++) {
-                Thread.sleep(100);
+                Thread.sleep(500);
                 Student stu = new Student(3L, "spark", i + 3, new BigDecimal(33.1415926 + i));
                 studentList.add(stu);
             }
 
             for (int i=1; i<=3; i++) {
-                Thread.sleep(100);
+                Thread.sleep(500);
                 Student stu = new Student(4L, "flink", i + 4, new BigDecimal(4.2 + i), true, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
 
             for (int i=1; i<=3; i++) {
-                Thread.sleep(100);
+                Thread.sleep(500);
                 Student stu = new Student(5L, "hadoop", i + 5, new BigDecimal(5.5 + i), false, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
             for (int i=1; i<=3; i++) {
-                Thread.sleep(100);
+                Thread.sleep(500);
                 Student stu = new Student(6L, "hbase", i + 6, new BigDecimal(66.66 + i), true, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
