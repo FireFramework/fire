@@ -3,7 +3,6 @@ package com.zto.bigdata.spark.common.db
 import java.util
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
-import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}

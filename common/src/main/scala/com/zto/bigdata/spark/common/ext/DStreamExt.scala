@@ -1,13 +1,9 @@
 package com.zto.bigdata.spark.common.ext
 
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.parser.ParserConfig
-import com.zto.bigdata.spark.common.bean.{HBaseBaseBean, OGGBaseBean}
+import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.util.SingletonFactory
-import org.apache.commons.lang3.StringUtils
 import org.apache.spark.streaming.dstream.DStream
 
-import scala.collection.mutable.ListBuffer
 import scala.reflect._
 
 /**

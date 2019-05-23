@@ -5,7 +5,6 @@ import com.zto.bigdata.spark.common.db.{HBaseOper, HBaseSparkBridge}
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.udf.UDFs
 import com.zto.bigdata.spark.common.util._
-import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
 import org.apache.hadoop.hbase.filter.{Filter, FilterList}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
@@ -15,8 +14,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.streaming.dstream.DStream
 
-import scala.collection.mutable.ListBuffer
-import scala.collection.{JavaConversions, mutable}
+import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**

@@ -5,7 +5,6 @@ import com.zto.bigdata.spark.common.anno.Rest
 import com.zto.bigdata.spark.common.bean.RestartParams
 import com.zto.bigdata.spark.common.bean.rest.ResultMsg
 import com.zto.bigdata.spark.common.enu.ErrorCode
-import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.rest.{RequestMethod, RestCase}
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils

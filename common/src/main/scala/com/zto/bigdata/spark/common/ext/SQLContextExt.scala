@@ -3,11 +3,11 @@ package com.zto.bigdata.spark.common.ext
 import java.util.Properties
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
+import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{GlobalConstants, ParamUtils, SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.sql.{DataFrame, SQLContext, SaveMode}
-import com.zto.bigdata.spark.common.ext.SparkExt._
 import org.apache.kudu.spark.kudu._
+import org.apache.spark.sql.{DataFrame, SQLContext, SaveMode}
 
 /**
   * SQLContext与HiveContext扩展

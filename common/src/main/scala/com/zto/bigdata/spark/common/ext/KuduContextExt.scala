@@ -10,11 +10,10 @@ import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kudu.client.{CreateTableOptions, KuduTable}
-import org.apache.kudu.spark.kudu.KuduContext
+import org.apache.kudu.spark.kudu.{KuduContext, _}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SQLContext}
-import org.apache.kudu.spark.kudu._
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer

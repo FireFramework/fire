@@ -7,8 +7,6 @@ import com.zto.bigdata.spark.common.db.HBaseSparkBridge
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql._
-import com.zto.bigdata.spark.common.ext.SparkExt._
-import org.apache.spark.sql.hive.HiveContext
 
 import scala.reflect._
 

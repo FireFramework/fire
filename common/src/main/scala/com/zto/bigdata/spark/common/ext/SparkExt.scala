@@ -1,6 +1,5 @@
 package com.zto.bigdata.spark.common.ext
 
-import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.streaming.StreamingContext

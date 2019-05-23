@@ -3,13 +3,13 @@ package com.zto.bigdata.spark.common.ext
 import java.sql.DriverManager
 
 import com.zto.bigdata.spark.common.acc.{MultiAccumulators, MultiDateTimeAccumulators}
+import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.{JdbcRDD, RDD}
 import org.apache.spark.sql._
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{Accumulator, SparkContext}
-import com.zto.bigdata.spark.common.ext.SparkExt._
 
 import scala.reflect._
 
