@@ -10,7 +10,7 @@ import scala.collection.JavaConversions
 
 /**
   * 本示例用于演示spark中使用bulk api完成HBase的读写
-  * bulk api相较于java api，在速度上会更快，但目前暂不支持多版本读写
+  * 注：bulk api相较于java api，在速度上会更快，但目前暂不支持多版本读写
   *
   * @author ChengLong 2019-5-18 09:20:52
   */
@@ -34,10 +34,8 @@ object HbaseBulkTest extends BaseSparkCore {
     // 方式一：将rdd的数据写入到hbase中，rdd类型必须为HBaseBaseBean的子类
     val rdd = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
     rdd.hbaseBulkPutRDD(this.tableName1)
-    rdd.hbaseBulkPutRDD(this.tableName2)
-    rdd.hbaseBulkPutRDD(this.tableName3)
     // 方式二：使用this.spark.hbaseBulkPut将rdd中的数据写入到hbase
-    // this.spark.hbaseBulkPutRDD(this.tableName1, rdd)
+    this.spark.hbaseBulkPutRDD(this.tableName1, rdd)
 
     // 第二个参数指定false表示不插入为null的字段到hbase中
     // rdd.hbaseBulkPutRDD(this.tableName2, insertEmpty = false)

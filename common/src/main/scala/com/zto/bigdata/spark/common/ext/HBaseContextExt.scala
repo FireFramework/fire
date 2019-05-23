@@ -16,6 +16,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Encoders, Row}
 import org.apache.spark.streaming.dstream.DStream
+import org.apache.spark.sql.types._
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -364,6 +365,8 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
 
   /**
     * 以spark 方式批量将DataFrame数据写入到hbase中
+    * 注：此方法与hbaseHadoopPutDF不同之处在于，它不强制要求该DataFrame一定要与HBaseBaseBean的子类对应
+    * 但需要指定rowKey的构建规则，相对与hbaseHadoopPutDF来说，少了中间的两次转换，性能会更高
     *
     * @param df
     * spark的DataFrame
@@ -383,11 +386,32 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
         fields.foreach(field => {
           val fieldName = field.name
           val fieldIndex = row.fieldIndex(fieldName)
-          var fieldValue = ""
+          val dataType = field.dataType.getClass.getSimpleName
+          var fieldValue: Any = null
           if (!row.isNullAt(fieldIndex)) {
-            fieldValue = row.get(fieldIndex).toString
+            fieldValue = row.get(fieldIndex)
+            if (dataType.contains("StringType")) {
+              put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), Bytes.toBytes(fieldValue.asInstanceOf[java.lang.String]))
+            } else if (dataType.contains("IntegerType")) {
+              put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), Bytes.toBytes(fieldValue.asInstanceOf[java.lang.Integer]))
+            } else if (dataType.contains("DoubleType")) {
+              put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), Bytes.toBytes(fieldValue.asInstanceOf[java.lang.Double]))
+            } else if (dataType.contains("LongType")) {
+              put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), Bytes.toBytes(fieldValue.asInstanceOf[java.lang.Long]))
+            } else if (dataType.contains("DecimalType")) {
+              put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), Bytes.toBytes(fieldValue.asInstanceOf[java.math.BigDecimal]))
+            } else if (dataType.contains("FloatType")) {
+              put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), Bytes.toBytes(fieldValue.asInstanceOf[java.lang.Float]))
+            } else if (dataType.contains("BooleanType")) {
+              put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), Bytes.toBytes(fieldValue.asInstanceOf[java.lang.Boolean]))
+            } else if (dataType.contains("ShortType")) {
+              put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), Bytes.toBytes(fieldValue.asInstanceOf[java.lang.Short]))
+            } else if (dataType.contains("NullType") && insertEmpty) {
+              put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), null)
+            }
+          } else if (insertEmpty) {
+            put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), null)
           }
-          put.addColumn(Bytes.toBytes("info"), Bytes.toBytes(fieldName), if (StringUtils.isNotBlank(fieldValue)) Bytes.toBytes(fieldValue) else null)
         })
         putList += Tuple2(new ImmutableBytesWritable, put)
       })
@@ -404,8 +428,9 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * hadoop configuration
     */
   private def getConfiguration(tableName: String): Configuration = {
-    this.sc.hadoopConfiguration.set(TableOutputFormat.OUTPUT_TABLE, tableName)
-    val job = Job.getInstance(this.sc.hadoopConfiguration)
+    val hadoopConfiguration = HBaseOper.getConfiguration
+    hadoopConfiguration.set(TableOutputFormat.OUTPUT_TABLE, tableName)
+    val job = Job.getInstance(hadoopConfiguration)
     job.setOutputKeyClass(classOf[ImmutableBytesWritable])
     job.setOutputValueClass(classOf[Result])
     job.setOutputFormatClass(classOf[TableOutputFormat[ImmutableBytesWritable]])

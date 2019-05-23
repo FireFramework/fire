@@ -1,10 +1,7 @@
 package com.zto.bigdata.spark.hbase
 
-import java.util
-
 import com.zto.bigdata.spark.bean.Student
 import com.zto.bigdata.spark.common.core.BaseSparkCore
-import com.zto.bigdata.spark.common.db.HBaseOper
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import org.apache.hadoop.hbase.client.Get
 import org.apache.spark.sql.Encoders
@@ -13,11 +10,12 @@ import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
 
 /**
-  * 在spark中使用java 同步 api 的方式读写hbase表
+  * 在spark中使用java 同步 api (HBaseOper) 的方式读写hbase表
+  * 注：适用于少量数据的实时读写，更轻量
   *
   * @author ChengLong 2019-5-9 09:37:25
   */
-object HBaseJavaApiTest extends BaseSparkCore {
+object HBaseOperTest extends BaseSparkCore {
   private val tableName1 = "zto_test_senda"
   private val tableName2 = "zto_test_senda2"
   private val tableName3 = "zto_test_senda3"
@@ -143,12 +141,6 @@ object HBaseJavaApiTest extends BaseSparkCore {
   def testHbaseOperScanDS: Unit = {
     val dataSet = this.spark.hbaseOperScanDS2(this.tableName1, "1", "6", classOf[Student])
     dataSet.show(100, false)
-
-    val dataSet2 = this.spark.hbaseOperScanDS2(this.tableName2, "1", "6", classOf[Student])
-    dataSet2.show(100, false)
-
-    val dataSet3 = this.spark.hbaseOperScanDS2(this.tableName3, "1", "6", classOf[Student])
-    dataSet3.show(100, false)
   }
 
   /**
