@@ -135,12 +135,8 @@ trait BaseSparkStreaming extends BaseSpark {
     * 2. 支持streaming热重启（可在不关闭streaming任务的前提下修改batch时间）
     */
   override def process: Unit = {
-    try {
-      ParamUtils.requireNonNull(this.checkPointDir, "当开启checkPoint机制后，必须复写父类的process方法")
-      ParamUtils.requireNonNull(this.externalConf, "当需要热重启功能时，必须将对接kafka的代码写在process方法内")
-    } finally {
-      this.destroy
-    }
+    ParamUtils.requireNull(this.checkPointDir, "当开启checkPoint机制时，必须将对接kafka的代码写在process方法内")
+    ParamUtils.requireNull(this.externalConf, "当需要使用热重启功能时，必须将对接kafka的代码写在process方法内")
   }
 
   /**

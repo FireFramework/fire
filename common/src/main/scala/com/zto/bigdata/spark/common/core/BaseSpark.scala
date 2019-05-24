@@ -122,12 +122,21 @@ trait BaseSpark extends SparkListener with Serializable {
     * 整个job执行结束后执行
     */
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
-    if (this.hiveContext != null) this.hiveContext.clearCache
-    this.release()
-    this.threadPool.shutdownNow()
-    this.threadPoolSchedule.shutdownNow()
-    logger.wrapLogWarn("完成用户资源回收")
-    GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
+    try {
+      if (this.hiveContext != null) this.hiveContext.clearCache
+      this.release()
+      logger.wrapLogWarn("完成用户资源回收...")
+      if (!this.threadPool.isShutdown) {
+        this.threadPool.shutdownNow()
+      }
+      if (!this.threadPoolSchedule.isShutdown) {
+        this.threadPoolSchedule.shutdownNow()
+      }
+    } finally {
+      logger.wrapLogWarn("完成系统资源回收...")
+      GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
+      System.exit(0)
+    }
   }
 
   /**
@@ -191,8 +200,12 @@ trait BaseSpark extends SparkListener with Serializable {
     } else {
       this.ssc.stop(true, false)
     }
-    this.threadPool.shutdownNow()
-    this.threadPoolSchedule.shutdownNow()
+    if (!this.threadPool.isShutdown) {
+      this.threadPool.shutdownNow()
+    }
+    if (!this.threadPoolSchedule.isShutdown) {
+      this.threadPoolSchedule.shutdownNow()
+    }
     Spark.stop()
     logger.wrapLogWarn("完成spark资源回收")
   }

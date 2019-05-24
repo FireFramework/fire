@@ -123,6 +123,18 @@ public class ParamUtils {
     }
 
     /**
+     * 参数必须为空约束
+     *
+     * @param param   参数信息
+     * @param message 异常信息
+     */
+    public static void requireNull(Object param, String message) {
+        if (param != null) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    /**
      * 参数非空约束（严格模式，进一步验证集合是否有元素）
      *
      * @param param   参数信息
