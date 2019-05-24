@@ -338,6 +338,8 @@ class SparkSessionExt(spark: SparkSession) {
     * brokers地址
     * @param extraOptions
     * 消费kafka额外的参数
+    * @param fieldNameUpper
+    * 字段名称是否为大写
     * @param requireBefore
     * 是否解析before信息
     * @return
@@ -346,6 +348,7 @@ class SparkSessionExt(spark: SparkSession) {
   def loadKafkaParseJson(schemaClass: Class[_],
                          brokers: String = GlobalConstants.SparkConf.kafkaBrokers,
                          extraOptions: mutable.HashMap[String, String] = mutable.HashMap[String, String]("subscribe" -> GlobalConstants.SparkConf.kafkaTopics, "failOnDataLoss" -> GlobalConstants.SparkConf.kafkaFailOnDataLoss.toString, "startingOffsets" -> GlobalConstants.SparkConf.kafkaStartingOffset, "enable.auto.commit" -> GlobalConstants.SparkConf.kafkaEnableAutoCommit.toString),
+                         fieldNameUpper: Boolean = false,
                          requireBefore: Boolean = false): DataFrame = {
     ParamUtils.requireNonNullForce(brokers, "kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.url ]指定")
     ParamUtils.requireNonNullForce(extraOptions, "kafka extraOptions不能为空")
@@ -486,7 +489,7 @@ class SparkSessionExt(spark: SparkSession) {
     rdd.hbaseBulkPutRDD(tableName, insertEmpty, multiVersion)
   }
 
-  /**hbaseOperInsertList
+  /** hbaseOperInsertList
     * 批量写入，将自定义的JavaBean数据集批量并行写入
     * 到HBase的指定表中。内部会将自定义JavaBean的相应
     * 字段一一映射为Put对象，并完成一次写入

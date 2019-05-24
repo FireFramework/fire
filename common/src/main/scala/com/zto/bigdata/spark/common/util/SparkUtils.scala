@@ -332,7 +332,7 @@ object SparkUtils {
     *
     * @return StructField集合
     */
-  def buildSchemaFromBean(beanClazz: Class[_]): List[StructField] = {
+  def buildSchemaFromBean(beanClazz: Class[_], upper: Boolean = false): List[StructField] = {
     val fieldMap = ReflectionUtils.getAllFields(beanClazz)
     val strutFields = new ListBuffer[StructField]()
     import scala.collection.JavaConversions._
@@ -348,6 +348,7 @@ object SparkUtils {
         if (StringUtils.isNotBlank(anno.value)) {
           fieldName = anno.value
         }
+        if (upper) fieldName = fieldName.toUpperCase
         nullable = anno.nullable()
         anno.disuse()
       }
@@ -371,18 +372,20 @@ object SparkUtils {
     *
     * @param beanClazz
     * json数据对应的java bean类型
+    * @param fieldNameUpper
+    * 字段名称是否为大写
     * @param requireBefore
     * 是否解析before信息
     * @return
     */
-  def buildSchema2Kafka(beanClazz: Class[_], requireBefore: Boolean = false): StructType = {
+  def buildSchema2Kafka(beanClazz: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): StructType = {
     if (requireBefore) {
       new StructType().add("table", StringType)
-        .add("after", StructType(SparkUtils.buildSchemaFromBean(beanClazz)))
-        .add("before", StructType(SparkUtils.buildSchemaFromBean(beanClazz)))
+        .add("after", StructType(SparkUtils.buildSchemaFromBean(beanClazz, fieldNameUpper)))
+        .add("before", StructType(SparkUtils.buildSchemaFromBean(beanClazz, fieldNameUpper)))
     } else {
       new StructType().add("table", StringType)
-        .add("after", StructType(SparkUtils.buildSchemaFromBean(beanClazz)))
+        .add("after", StructType(SparkUtils.buildSchemaFromBean(beanClazz, fieldNameUpper)))
     }
   }
 
