@@ -2,7 +2,9 @@ package com.zto.bigdata.spark.common.ext
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.util.SingletonFactory
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.streaming.dstream.DStream
+import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges}
 
 import scala.reflect._
 
@@ -28,4 +30,14 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) {
     this.hbaseContext.bulkPutStream(tableName, stream.asInstanceOf[DStream[T]], insertEmpty, multiVersion)
   }
 
+
+  /**
+    * 维护kafka的offset
+    */
+  def kafkaCommitOffsets[T <: ConsumerRecord[String, String]]: Unit = {
+    stream.asInstanceOf[DStream[T]].foreachRDD { rdd =>
+      val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
+      stream.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
+    }
+  }
 }

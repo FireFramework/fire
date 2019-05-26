@@ -42,8 +42,10 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
       })
     })
 
-    this.ssc.start()
-    this.ssc.awaitTermination()
+    // 维护kafka offset
+    dstream.kafkaCommitOffsets
+
+    this.ssc.startAwaitTermination()
   }
 
 
