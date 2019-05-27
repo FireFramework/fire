@@ -350,7 +350,7 @@ class SparkSessionExt(spark: SparkSession) {
                          extraOptions: mutable.HashMap[String, String] = mutable.HashMap[String, String]("subscribe" -> GlobalConstants.SparkConf.kafkaTopics, "failOnDataLoss" -> GlobalConstants.SparkConf.kafkaFailOnDataLoss.toString, "startingOffsets" -> GlobalConstants.SparkConf.kafkaStartingOffset, "enable.auto.commit" -> GlobalConstants.SparkConf.kafkaEnableAutoCommit.toString),
                          fieldNameUpper: Boolean = false,
                          requireBefore: Boolean = false): DataFrame = {
-    ParamUtils.requireNonNullForce(brokers, "kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.url ]指定")
+    ParamUtils.requireNonNullForce(brokers, "kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name ]指定")
     ParamUtils.requireNonNullForce(extraOptions, "kafka extraOptions不能为空")
     ParamUtils.requireNonNullForce(extraOptions.getOrElse("subscribe", null), "topic不能为空，可在配置文件中[ spark.kafka.topics ]指定")
 

@@ -18,7 +18,7 @@ class BaseStructuredStreaming extends BaseSpark {
     */
   override def init(conf: SparkConf = null, args: Array[String] = null): Unit = {
     super.init(conf, args)
-    this.restfulRegister.startRestServer
+    if (SystemInfoUtils.isLinux) this.restfulRegister.startRestServer
     this.process
   }
 

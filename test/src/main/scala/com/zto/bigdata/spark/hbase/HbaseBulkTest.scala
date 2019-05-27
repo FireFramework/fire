@@ -183,7 +183,7 @@ object HbaseBulkTest extends BaseSparkCore {
     * 注：此方法会被自动调用
     */
   override def process: Unit = {
-    this.testHbaseBulkPutRDD
+    // this.testHbaseBulkPutRDD
     // this.testHbaseBulkPutDF
     // this.testHbaseBulkPutDS
 
@@ -197,7 +197,7 @@ object HbaseBulkTest extends BaseSparkCore {
 
     // this.testHbaseBulkScanRDD
     // this.testHbaseBulkScanDF
-    // this.testHbaseBulkScanDS
+    this.testHbaseBulkScanDS
 
     /*this.testHbaseHadoopPutDataset
     this.testBulkDelete

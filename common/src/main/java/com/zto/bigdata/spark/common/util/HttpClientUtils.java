@@ -1,6 +1,9 @@
 package com.zto.bigdata.spark.common.util;
 
-import org.apache.commons.httpclient.*;
+import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +23,7 @@ public class HttpClientUtils {
     public static String doGet(String url) throws Exception {
         byte[] responseBody = null;
         GetMethod getMethod = null;
+        HttpClient httpClient = new HttpClient();
         try {
             getMethod = new GetMethod();
             // 设置 get 请求超时为 5 秒
@@ -28,7 +32,6 @@ public class HttpClientUtils {
             getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler());
 
             getMethod.setURI(new URI(url, true, "utf-8"));
-            HttpClient httpClient = new HttpClient();
             int statusCode = httpClient.executeMethod(getMethod);
             // 判断访问的状态码
             if (statusCode != HttpStatus.SC_OK) {
@@ -42,6 +45,7 @@ public class HttpClientUtils {
             if (getMethod != null) {
                 getMethod.releaseConnection();
             }
+            httpClient.getHttpConnectionManager().closeIdleConnections(0);
         }
         return new String(responseBody, "utf-8");
     }
@@ -55,6 +59,7 @@ public class HttpClientUtils {
     public static String doPost(String url, String json) throws Exception {
         String responses = "";
         PostMethod postMethod = null;
+        HttpClient httpClient = new HttpClient();
         try {
             postMethod = new PostMethod();
             postMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 3000);
@@ -66,7 +71,6 @@ public class HttpClientUtils {
                 postMethod.setRequestHeader("Content-Length", String.valueOf(requestEntity.getContentLength()));
                 postMethod.setRequestEntity(requestEntity);
             }
-            HttpClient httpClient = new HttpClient();
             httpClient.executeMethod(postMethod);
             responses = postMethod.getResponseBodyAsString();
         } catch (Exception e) {
@@ -75,6 +79,7 @@ public class HttpClientUtils {
             if (postMethod != null) {
                 postMethod.releaseConnection();
             }
+            httpClient.getHttpConnectionManager().closeIdleConnections(0);
         }
         return responses;
     }
@@ -88,8 +93,8 @@ public class HttpClientUtils {
     public static String doPut(String url, String json) throws Exception {
         String resStr = null;
         PutMethod putMethod = null;
+        HttpClient htpClient = new HttpClient();
         try {
-            HttpClient htpClient = new HttpClient();
             putMethod = new PutMethod();
             putMethod.setURI(new URI(url, true, "utf-8"));
             putMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 3000);
@@ -111,6 +116,7 @@ public class HttpClientUtils {
             if (putMethod != null) {
                 putMethod.releaseConnection();
             }
+            htpClient.getHttpConnectionManager().closeIdleConnections(0);
         }
         return resStr;
     }

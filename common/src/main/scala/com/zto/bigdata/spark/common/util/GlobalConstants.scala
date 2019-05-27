@@ -18,7 +18,9 @@ object GlobalConstants {
     val hbaseName = "batch"
 
     // 默认的kafka broker地址
-    val kafkaBrokers = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092"
+    val kafkaBrokers = "192.168.25.80:9092,192.168.25.81:9092,192.168.25.82:9092,192.168.25.129:9092,192.168.25.130:9092,192.168.25.131:9092"
+    // 默认的broker名称
+    val kafkaBrokersName = "bigdata"
     // 启动应用时默认的kafka消费位点
     val kafkaStartingOffset = KafkaConf.offsetLargest
     // 数据丢失时执行失败
@@ -69,7 +71,7 @@ object GlobalConstants {
     val IMPALA_CONNECTION_URL_KEY: String = "impala.connection.url"
     val IMPALA_JDBC_DRIVER_NAME_KEY: String = "impala.jdbc.driver.class.name"
     val IMPALA_DAEMONS_URL = "impala.daemons.url"
-    val KAFKA_BROKERS_URL = "spark.kafka.brokers.url"
+    val KAFKA_BROKERS_NAME = "spark.kafka.brokers.name"
     // kafka的topic列表，以逗号分隔
     val KAFKA_TOPICS = "spark.kafka.topics"
     val KAFKA_STARTING_OFFSET = "spark.kafka.starting.offsets"
@@ -82,9 +84,6 @@ object GlobalConstants {
     // spark相关配置
     val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
     val SPARK_LOG_LEVEL = "spark.log.level"
-
-    // carbondata相关配置
-    val CARBON_STORE_PATH = "carbon.storePath"
 
     // hive相关配置
     val HIVE_CLUSTER = "hive.cluster"
@@ -132,8 +131,21 @@ object GlobalConstants {
     val defaultDB = PropUtils.getString(PropKeys.SPARK_DEFAULT_DATABASE_NAME, DefaultVals.dbName)
     val partitionName = PropUtils.getString(PropKeys.SPARK_DEFAULT_TABLE_PARTITION_NAME, DefaultVals.partitionName)
     val kafkaTopics = PropUtils.getString(PropKeys.KAFKA_TOPICS, null)
-    // kafka broker地址
-    val kafkaBrokers = PropUtils.getString(PropKeys.KAFKA_BROKERS_URL, DefaultVals.kafkaBrokers)
+    // 大数据kafka地址
+    private val bigdataKafkaUrl = "192.168.25.80:9092,192.168.25.81:9092,192.168.25.82:9092,192.168.25.129:9092,192.168.25.130:9092,192.168.25.131:9092"
+    // zms kafka地址
+    private val zmsKafkaUrl = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092,192.168.1.173:9092,192.168.5.29:9092,192.168.5.30:9092"
+
+    // 根据名称获取kafka broker地址
+    val kafkaBrokers = {
+      val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME, DefaultVals.kafkaBrokersName)
+      if ("bigdata".equalsIgnoreCase(brokerName)) {
+        bigdataKafkaUrl
+      } else {
+        zmsKafkaUrl
+      }
+    }
+
     // kafka消费位点
     val kafkaStartingOffset = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, DefaultVals.kafkaStartingOffset)
     // 丢失数据时是否失败
@@ -329,13 +341,6 @@ object GlobalConstants {
     val DEBUG = "DEBUG"
     val TRACE = "TRACE"
     val ALL = "ALL"
-  }
-
-  /**
-    * carbondata相关配置
-    */
-  object CarbonConf extends Enumeration {
-    val storePath = PropUtils.getString(PropKeys.CARBON_STORE_PATH)
   }
 
   /**

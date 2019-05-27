@@ -197,7 +197,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
         this.sparkInfoBean.setRestPort(this.baseSpark.restPort.toString)
         this.sparkInfoBean.setExecutorMemoryOverhead(this.baseSpark.sc.getConf.get("spark.yarn.executor.memoryOverhead", "0"))
         this.sparkInfoBean.setTopics(PropUtils.getString(GlobalConstants.PropKeys.KAFKA_TOPICS, ""))
-        this.sparkInfoBean.setBrokers(PropUtils.getString(GlobalConstants.PropKeys.KAFKA_BROKERS_URL, GlobalConstants.DefaultVals.kafkaBrokers))
+        this.sparkInfoBean.setBrokers(GlobalConstants.SparkConf.kafkaBrokers)
         this.sparkInfoBean.setGroupId(PropUtils.getString(GlobalConstants.PropKeys.KAFKA_GROUP_ID, this.baseSpark.appName))
         this.sparkInfoBean.computeCpuMemory()
       }

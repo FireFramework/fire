@@ -53,9 +53,11 @@ trait BaseSparkStreaming extends BaseSpark {
     if (this.sc == null) {
       // 添加streaming相关的restful接口，并启动
       this.init(tmpConf)
-      this.restfulRegister
-        .addRest(RestCase(RequestMethod.POST.toString, "/system/restartStreaming", this.restartStreaming))
-        .startRestServer
+      if (SystemInfoUtils.isLinux) {
+        this.restfulRegister
+          .addRest(RestCase(RequestMethod.POST.toString, "/system/restartStreaming", this.restartStreaming))
+          .startRestServer
+      }
     }
     this.batchDuration = batchDuration
     if (!isCheckPoint) {
