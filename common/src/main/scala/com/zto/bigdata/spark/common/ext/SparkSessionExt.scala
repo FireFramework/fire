@@ -8,6 +8,7 @@ import com.zto.bigdata.spark.common.util._
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
 import org.apache.hadoop.hbase.filter.{Filter, FilterList}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
@@ -1128,4 +1129,39 @@ class SparkSessionExt(spark: SparkSession) {
   def hbaseOperDeleteDS(tableName: String, dataset: Dataset[String], batchSize: Int = this.hbaseContext.batchSize): Unit = {
     dataset.hbaseOperDeleteDS(tableName, batchSize)
   }
+
+  /**
+    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
+    *
+    * @param rdd
+    * DStream中的每个rdd
+    * @param schema
+    * 目标DataFrame类型的schema
+    * @param fieldNameUpper
+    * 字段名称是否为大写
+    * @param requireBefore
+    * 是否需要before信息
+    * @return
+    */
+  def kafkaJson2DFV(rdd: RDD[String], schema: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): DataFrame = {
+    rdd.kafkaJson2DFV(schema, fieldNameUpper, requireBefore)
+  }
+
+  /**
+    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
+    *
+    * @param rdd
+    * DStream中的每个rdd
+    * @param schema
+    * 目标DataFrame类型的schema
+    * @param fieldNameUpper
+    * 字段名称是否为大写
+    * @param requireBefore
+    * 是否需要before信息
+    * @return
+    */
+  def kafkaJson2DF(rdd: RDD[ConsumerRecord[String, String]], schema: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): DataFrame = {
+    rdd.kafkaJson2DF(schema, fieldNameUpper, requireBefore)
+  }
+
 }

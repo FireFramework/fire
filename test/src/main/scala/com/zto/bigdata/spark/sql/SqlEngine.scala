@@ -21,7 +21,7 @@ object SqlEngine extends BaseSparkStreaming {
     val dstream = this.ssc.createDirectStream(this.kafkaParams(this.appName, this.brokers, GlobalConstants.KafkaConf.offsetLargest, false), this.topics, StorageLevel.NONE)
     dstream.foreachRDD((rdd, time) => {
       // this.parseJson2DataFrame(rdd, classOf[Senda]).writeStreaming2Carbon(this.dbName, tableName, time)
-      this.parseJson2DataFrame(rdd, classOf[Senda]).createOrReplaceTempView("tmp")
+      this.spark.kafkaJson2DF(rdd, classOf[Senda]).createOrReplaceTempView("tmp")
       this.spark.sql("select count(1) from tmp").show
       this.spark.sql("select bill_code from tmp limit 2").show(false)
     })

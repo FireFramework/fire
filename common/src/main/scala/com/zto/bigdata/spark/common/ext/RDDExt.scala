@@ -2,9 +2,11 @@ package com.zto.bigdata.spark.common.ext
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.db.HBaseSparkBridge
-import com.zto.bigdata.spark.common.util.SingletonFactory
+import com.zto.bigdata.spark.common.util.{SingletonFactory, SparkUtils}
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Dataset}
+import org.apache.spark.sql.functions.from_json
+import org.apache.spark.sql._
 
 import scala.reflect.{ClassTag, classTag}
 
@@ -14,6 +16,8 @@ import scala.reflect.{ClassTag, classTag}
   * @author ChengLong 2019-5-18 10:28:31
   */
 class RDDExt[T: ClassTag](rdd: RDD[T]) {
+  // 获取单例的SQLContext对象
+  private lazy val sqlContext: SQLContext = SingletonFactory.getSQLContextInstance(rdd.sparkContext)
   // 获取单例的HBaseContext对象
   private lazy val hbaseContext: HBaseContextExt = SingletonFactory.getHBaseContextInstance(rdd.sparkContext)
 
@@ -221,4 +225,43 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     HBaseSparkBridge.hbaseOperPutRDD[T](tableName, rdd.asInstanceOf[RDD[T]], insertEmpty, batchSize, multiVersion)
   }
 
+  /**
+    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
+    *
+    * @param schema
+    * 目标DataFrame类型的schema
+    * @param fieldNameUpper
+    * 字段名称是否为大写
+    * @param requireBefore
+    * 是否需要before信息
+    * @return
+    */
+  def kafkaJson2DFV(schema: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): DataFrame = {
+    val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[String]])(Encoders.STRING)
+    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, requireBefore, fieldNameUpper)).as("data"))
+    if (requireBefore)
+      df.select("data.*")
+    else
+      df.select("data.after.*")
+  }
+
+  /**
+    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
+    *
+    * @param schema
+    * 目标DataFrame类型的schema
+    * @param fieldNameUpper
+    * 字段名称是否为大写
+    * @param requireBefore
+    * 是否需要before信息
+    * @return
+    */
+  def kafkaJson2DF(schema: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): DataFrame = {
+    val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()))(Encoders.STRING)
+    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, fieldNameUpper, requireBefore)).as("data"))
+    if (requireBefore)
+      df.select("data.*")
+    else
+      df.select("data.after.*")
+  }
 }

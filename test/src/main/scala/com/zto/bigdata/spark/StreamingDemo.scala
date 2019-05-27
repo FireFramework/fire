@@ -23,14 +23,14 @@ object StreamingDemo extends BaseSparkStreaming {
     val dstream = this.ssc.createDirectStream()
     dstream.foreachRDD(rdd => {
       // 将json数据解析成Senda对象对应的类型
-      this.parseJson2DataFrame(rdd, classOf[Senda]).count()
+      this.spark.kafkaJson2DF(rdd, classOf[Senda]).count()
     })
 
     // 方式二：代码中指定
     // 定制化从指定的kafka、topic读取数据，需提供groupId、kafka的broker地址、topic列表以逗号分隔
     val dstream2 = this.ssc.createDirectStream(this.kafkaParams("group.id", "指定kafka broker地址", GlobalConstants.KafkaConf.offsetLargest, false), SparkUtils.topicSplit("kafka的topic列表"))
     dstream2.foreachRDD(rdd => {
-      this.parseJson2DataFrame(rdd, classOf[Senda]).count
+      this.spark.kafkaJson2DF(rdd, classOf[Senda]).count
     })
 
     this.ssc.startAwaitTermination()

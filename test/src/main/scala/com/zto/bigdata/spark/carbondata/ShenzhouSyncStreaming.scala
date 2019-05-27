@@ -37,7 +37,7 @@ object ShenzhouSyncStreaming extends BaseSparkStreaming {
     dstream.foreachRDD((rdd, time) => {
       // this.parseJson2DataFrame(rdd, classOf[Senda]).writeStreaming2Carbon(this.dbName, tableName, time)
       // 将json数据解析成Senda对象对应的类型
-      this.parseJson2DataFrame(rdd, classOf[Senda]).foreach(x => {
+      this.spark.kafkaJson2DF(rdd, classOf[Senda]).foreach(x => {
         Thread.sleep(1000)
       })
     })

@@ -142,50 +142,6 @@ trait BaseSparkStreaming extends BaseSpark {
   }
 
   /**
-    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
-    *
-    * @param rdd
-    * DStream中的每个rdd
-    * @param schema
-    * 目标DataFrame类型的schema
-    * @param fieldNameUpper
-    * 字段名称是否为大写
-    * @param requireBefore
-    * 是否需要before信息
-    * @return
-    */
-  def parseJson2DataFrameV(rdd: RDD[String], schema: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): DataFrame = {
-    val ds = this.spark.createDataset(rdd)(Encoders.STRING)
-    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, requireBefore, fieldNameUpper)).as("data"))
-    if (requireBefore)
-      df.select("data.*")
-    else
-      df.select("data.after.*")
-  }
-
-  /**
-    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
-    *
-    * @param rdd
-    * DStream中的每个rdd
-    * @param schema
-    * 目标DataFrame类型的schema
-    * @param fieldNameUpper
-    * 字段名称是否为大写
-    * @param requireBefore
-    * 是否需要before信息
-    * @return
-    */
-  def parseJson2DataFrame(rdd: RDD[ConsumerRecord[String, String]], schema: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): DataFrame = {
-    val ds = this.spark.createDataset(rdd.map(t => t.value()))(Encoders.STRING)
-    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, fieldNameUpper, requireBefore)).as("data"))
-    if (requireBefore)
-      df.select("data.*")
-    else
-      df.select("data.after.*")
-  }
-
-  /**
     * kafka配置信息
     *
     * @param groupId
