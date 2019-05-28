@@ -23,29 +23,8 @@
     </properties>
     <modules>
         <module>common</module>
-        <module>test</module>
+        <!--<module>test</module>-->
     </modules>
-
-    <repositories>
-        <repository>
-            <id>hbase</id>
-            <name>hbase</name>
-            <url>https://repository.cloudera.com/content/repositories/releases/</url>
-        </repository>
-        <repository>
-            <id>cloudera</id>
-            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-        </repository>
-
-        <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>central</id>
-            <name>Central Repository</name>
-            <url>https://repo.maven.apache.org/maven2</url>
-        </repository>
-    </repositories>
 
     <pluginRepositories>
         <pluginRepository>

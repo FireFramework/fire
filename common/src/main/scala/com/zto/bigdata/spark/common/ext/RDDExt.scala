@@ -40,9 +40,8 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   /**
     * 将rdd转为DataFrame
     */
-  def rdd2DataFrame(): DataFrame = {
-    lazy val hiveContext = SingletonFactory.getSQLContextInstance(rdd.sparkContext)
-    hiveContext.createDataFrame(rdd, classTag[T].runtimeClass)
+  def toDF(): DataFrame = {
+    this.sqlContext.createDataFrame(rdd, classTag[T].runtimeClass)
   }
 
   /**
@@ -53,11 +52,10 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @return
     * DataFrame
     */
-  def rddRegisterTableAndCache(tableName: String): DataFrame = {
-    lazy val hiveContext = SingletonFactory.getSQLContextInstance(rdd.sparkContext)
-    val dataFrame = this.rdd2DataFrame()
+  def createOrReplaceTempView(tableName: String, cache: Boolean = false): DataFrame = {
+    val dataFrame = this.toDF()
     dataFrame.createOrReplaceTempView(tableName)
-    hiveContext.cacheTable(tableName)
+    if (cache) this.sqlContext.cacheTable(tableName)
     dataFrame
   }
 

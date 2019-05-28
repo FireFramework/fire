@@ -8,11 +8,7 @@ import com.zto.bigdata.spark.common.enu.ErrorCode
 import com.zto.bigdata.spark.common.rest.{RequestMethod, RestCase}
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.SparkConf
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.functions.from_json
-import org.apache.spark.sql.{ColumnName, DataFrame, Encoders}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import spark.{Request, Response}
 
@@ -114,7 +110,7 @@ trait BaseSparkStreaming extends BaseSpark {
         .set("spark.streaming.backpressure.enabled", "true")
         .set("spark.streaming.stopGracefullyOnShutdown", "true")
         // 解决cluster模式下不稳定的问题
-        .set("spark.streaming.kafka.maxRatePerPartition", "100") // 每个批次从每个partition中每秒中最大拉取的数据量
+        // .set("spark.streaming.kafka.maxRatePerPartition", "100") // 每个批次从每个partition中每秒中最大拉取的数据量
         .set("spark.streaming.kafka.consumer.cache.enabled", "false")
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .set("hive.metastore.uris", GlobalConstants.HiveConf.getMetastoreUrl)
