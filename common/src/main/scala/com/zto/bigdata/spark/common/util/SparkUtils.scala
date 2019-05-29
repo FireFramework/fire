@@ -374,13 +374,23 @@ object SparkUtils {
     * json数据对应的java bean类型
     * @param fieldNameUpper
     * 字段名称是否为大写
-    * @param requireBefore
-    * 是否解析before信息
+    * @param parseAll
+    * 是否解析所有字段信息
     * @return
     */
-  def buildSchema2Kafka(beanClazz: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): StructType = {
-    if (requireBefore) {
-      new StructType().add("table", StringType)
+  def buildSchema2Kafka(beanClazz: Class[_], parseAll: Boolean = false, fieldNameUpper: Boolean = false): StructType = {
+    if (parseAll) {
+      new StructType()
+        .add("table", StringType)
+        .add("op_type", StringType)
+        .add("op_ts", StringType)
+        .add("current_ts", StringType)
+        // .add("pos", LongType)
+        .add("gtid", StringType)
+        .add("logFile", StringType)
+        .add("offset", StringType)
+        .add("schema", StringType)
+        .add("when", StringType)
         .add("after", StructType(SparkUtils.buildSchemaFromBean(beanClazz, fieldNameUpper)))
         .add("before", StructType(SparkUtils.buildSchemaFromBean(beanClazz, fieldNameUpper)))
     } else {

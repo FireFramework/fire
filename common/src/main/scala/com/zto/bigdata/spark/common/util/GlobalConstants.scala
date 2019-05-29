@@ -139,7 +139,6 @@ object GlobalConstants {
     def kafkaTopics(number: String = ""): String = {
       val key = PropKeys.KAFKA_TOPICS + number.replace("1", "")
       val topics = PropUtils.getString(key, null)
-      println(s"topics-$number: " + key + " " + topics)
       ParamUtils.requireNonNullForce(topics, "配置未找到：" + key)
       topics
     }
@@ -157,7 +156,6 @@ object GlobalConstants {
     val kafkaEnableAutoCommit = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, DefaultVals.kafkaEnableAutoCommit)
     // group.id
     def kafkaGroupId(number: String = ""): String = {
-      println(s"groupId-$number: key = " + PropKeys.KAFKA_GROUP_ID + number.replace("1", "") + "value " + PropUtils.getString(PropKeys.KAFKA_GROUP_ID + number.replace("1", ""), ""))
       PropUtils.getString(PropKeys.KAFKA_GROUP_ID + number.replace("1", ""), "")
     }
 
@@ -165,7 +163,6 @@ object GlobalConstants {
     // 根据名称获取kafka broker地址
     def kafkaBrokers(number: String = "") = {
       val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME + number.replace("1", ""), DefaultVals.kafkaBrokersName)
-      println(s"brokerName-$number: key= " + PropKeys.KAFKA_BROKERS_NAME + number.replace("1", "") + " value= " + brokerName)
       if ("bigdata".equalsIgnoreCase(brokerName)) {
         bigdataKafkaUrl
       } else {

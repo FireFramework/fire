@@ -230,14 +230,14 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * 目标DataFrame类型的schema
     * @param fieldNameUpper
     * 字段名称是否为大写
-    * @param requireBefore
-    * 是否需要before信息
+    * @param parseAll
+    * 是否需要解析所有字段信息
     * @return
     */
-  def kafkaJson2DFV(schema: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): DataFrame = {
+  def kafkaJson2DFV(schema: Class[_], parseAll: Boolean = false, fieldNameUpper: Boolean = false): DataFrame = {
     val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[String]])(Encoders.STRING)
-    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, requireBefore, fieldNameUpper)).as("data"))
-    if (requireBefore)
+    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, parseAll, fieldNameUpper)).as("data"))
+    if (parseAll)
       df.select("data.*")
     else
       df.select("data.after.*")
@@ -250,14 +250,14 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * 目标DataFrame类型的schema
     * @param fieldNameUpper
     * 字段名称是否为大写
-    * @param requireBefore
-    * 是否需要before信息
+    * @param parseAll
+    * 是否解析所有字段信息
     * @return
     */
-  def kafkaJson2DF(schema: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): DataFrame = {
+  def kafkaJson2DF(schema: Class[_], parseAll: Boolean = false, fieldNameUpper: Boolean = false): DataFrame = {
     val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()))(Encoders.STRING)
-    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, fieldNameUpper, requireBefore)).as("data"))
-    if (requireBefore)
+    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, parseAll, fieldNameUpper)).as("data"))
+    if (parseAll)
       df.select("data.*")
     else
       df.select("data.after.*")

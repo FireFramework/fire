@@ -341,8 +341,8 @@ class SparkSessionExt(spark: SparkSession) {
     * 消费kafka额外的参数
     * @param fieldNameUpper
     * 字段名称是否为大写
-    * @param requireBefore
-    * 是否解析before信息
+    * @param parseAll
+    * 是否解析所有字段信息
     * @return
     * 转换成json字符串后的Dataset
     */
@@ -350,14 +350,14 @@ class SparkSessionExt(spark: SparkSession) {
                          brokers: String = GlobalConstants.SparkConf.kafkaBrokers(),
                          extraOptions: mutable.HashMap[String, String] = mutable.HashMap[String, String]("subscribe" -> GlobalConstants.SparkConf.kafkaTopics(), "failOnDataLoss" -> GlobalConstants.SparkConf.kafkaFailOnDataLoss.toString, "startingOffsets" -> GlobalConstants.SparkConf.kafkaStartingOffset, "enable.auto.commit" -> GlobalConstants.SparkConf.kafkaEnableAutoCommit.toString),
                          fieldNameUpper: Boolean = false,
-                         requireBefore: Boolean = false): DataFrame = {
+                         parseAll: Boolean = false): DataFrame = {
     ParamUtils.requireNonNullForce(brokers, "kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name ]指定")
     ParamUtils.requireNonNullForce(extraOptions, "kafka extraOptions不能为空")
     ParamUtils.requireNonNullForce(extraOptions.getOrElse("subscribe", null), "topic不能为空，可在配置文件中[ spark.kafka.topics ]指定")
 
     val kafkaDataset = this.loadKafka(brokers, extraOptions)
-    val schemaDataset = kafkaDataset.select(from_json($"value", SparkUtils.buildSchema2Kafka(schemaClass, requireBefore)).as("data"))
-    if (requireBefore)
+    val schemaDataset = kafkaDataset.select(from_json($"value", SparkUtils.buildSchema2Kafka(schemaClass, parseAll)).as("data"))
+    if (parseAll)
       schemaDataset.select("data.*")
     else
       schemaDataset.select("data.after.*")
