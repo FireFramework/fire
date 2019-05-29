@@ -30,7 +30,37 @@ class StreamingContextExt(ssc: StreamingContext) {
     * @return
     * DStream
     */
-  def createDirectStream(kafkaParams: Map[String, Object] = this.kafkaParams(), topics: Set[String] = SparkUtils.topicSplit(GlobalConstants.SparkConf.kafkaTopics), level: StorageLevel = StorageLevel.NONE): DStream[ConsumerRecord[String, String]] = {
+  def createDirectStream(kafkaParams: Map[String, Object] = this.kafkaParams(), topics: Set[String] = SparkUtils.topicSplit(GlobalConstants.SparkConf.kafkaTopics()), level: StorageLevel = StorageLevel.NONE): DStream[ConsumerRecord[String, String]] = {
+    KafkaUtils.createDirectStream[String, String](
+      ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams))
+  }
+
+  /**
+    * 创建DStream流，匹配后缀为2的配置
+    *
+    * @param kafkaParams
+    * kafka参数
+    * @param topics
+    * topic列表
+    * @return
+    * DStream
+    */
+  def createDirectStream2(kafkaParams: Map[String, Object] = this.kafkaParams(GlobalConstants.SparkConf.kafkaGroupId("2"), GlobalConstants.SparkConf.kafkaBrokers("2")), topics: Set[String] = SparkUtils.topicSplit(GlobalConstants.SparkConf.kafkaTopics("2")), level: StorageLevel = StorageLevel.NONE): DStream[ConsumerRecord[String, String]] = {
+    KafkaUtils.createDirectStream[String, String](
+      ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams))
+  }
+
+  /**
+    * 创建DStream流，匹配后缀为3的配置
+    *
+    * @param kafkaParams
+    * kafka参数
+    * @param topics
+    * topic列表
+    * @return
+    * DStream
+    */
+  def createDirectStream3(kafkaParams: Map[String, Object] = this.kafkaParams(GlobalConstants.SparkConf.kafkaGroupId("3"), GlobalConstants.SparkConf.kafkaBrokers("3")), topics: Set[String] = SparkUtils.topicSplit(GlobalConstants.SparkConf.kafkaTopics("3")), level: StorageLevel = StorageLevel.NONE): DStream[ConsumerRecord[String, String]] = {
     KafkaUtils.createDirectStream[String, String](
       ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams))
   }
@@ -45,7 +75,7 @@ class StreamingContextExt(ssc: StreamingContext) {
     * @return
     * kafka相关配置
     */
-  def kafkaParams(groupId: String = GlobalConstants.SparkConf.kafkaGroupId, kafkaBrokers: String = GlobalConstants.SparkConf.kafkaBrokers, offset: String = GlobalConstants.SparkConf.kafkaStartingOffset, commit: Boolean = GlobalConstants.SparkConf.kafkaEnableAutoCommit): Map[String, Object] = {
+  def kafkaParams(groupId: String = GlobalConstants.SparkConf.kafkaGroupId(), kafkaBrokers: String = GlobalConstants.SparkConf.kafkaBrokers(), offset: String = GlobalConstants.SparkConf.kafkaStartingOffset, commit: Boolean = GlobalConstants.SparkConf.kafkaEnableAutoCommit): Map[String, Object] = {
     // 如果配置文件中没有指定spark.kafka.group.id，则默认为appName
     val kafkaGroupId = if (StringUtils.isNotBlank(groupId)) groupId else ssc.sparkContext.appName
     SparkUtils.kafkaParams(kafkaGroupId, kafkaBrokers, offset)

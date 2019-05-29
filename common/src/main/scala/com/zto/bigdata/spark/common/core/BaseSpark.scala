@@ -123,15 +123,9 @@ trait BaseSpark extends SparkListener with Serializable {
     */
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
     try {
-      if (this.hiveContext != null) this.hiveContext.clearCache
       this.release()
       logger.wrapLogWarn("完成用户资源回收...")
-      if (!this.threadPool.isShutdown) {
-        this.threadPool.shutdownNow()
-      }
-      if (!this.threadPoolSchedule.isShutdown) {
-        this.threadPoolSchedule.shutdownNow()
-      }
+      this.destroy
     } finally {
       logger.wrapLogWarn("完成系统资源回收...")
       GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
@@ -195,10 +189,11 @@ trait BaseSpark extends SparkListener with Serializable {
     * 注：不允许子类覆盖
     */
   final def destroy: Unit = {
-    if (this.ssc == null) {
+    if (this.sqlContext != null) this.sqlContext.clearCache
+    if (this.ssc == null && !this.sc.isStopped) {
       this.spark.stop()
     } else {
-      this.ssc.stop(true, false)
+      this.ssc.stop(!this.sc.isStopped, false)
     }
     if (!this.threadPool.isShutdown) {
       this.threadPool.shutdownNow()

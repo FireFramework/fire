@@ -130,21 +130,24 @@ object GlobalConstants {
     val chkPointDirPrefix = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
     val defaultDB = PropUtils.getString(PropKeys.SPARK_DEFAULT_DATABASE_NAME, DefaultVals.dbName)
     val partitionName = PropUtils.getString(PropKeys.SPARK_DEFAULT_TABLE_PARTITION_NAME, DefaultVals.partitionName)
-    val kafkaTopics = PropUtils.getString(PropKeys.KAFKA_TOPICS, null)
+
+    /**
+      * 获取topic列表
+      * @param number
+      * @return
+      */
+    def kafkaTopics(number: String = ""): String = {
+      val key = PropKeys.KAFKA_TOPICS + number.replace("1", "")
+      val topics = PropUtils.getString(key, null)
+      println(s"topics-$number: " + key + " " + topics)
+      ParamUtils.requireNonNullForce(topics, "配置未找到：" + key)
+      topics
+    }
+
     // 大数据kafka地址
     private val bigdataKafkaUrl = "192.168.25.80:9092,192.168.25.81:9092,192.168.25.82:9092,192.168.25.129:9092,192.168.25.130:9092,192.168.25.131:9092"
     // zms kafka地址
     private val zmsKafkaUrl = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092,192.168.1.173:9092,192.168.5.29:9092,192.168.5.30:9092"
-
-    // 根据名称获取kafka broker地址
-    val kafkaBrokers = {
-      val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME, DefaultVals.kafkaBrokersName)
-      if ("bigdata".equalsIgnoreCase(brokerName)) {
-        bigdataKafkaUrl
-      } else {
-        zmsKafkaUrl
-      }
-    }
 
     // kafka消费位点
     val kafkaStartingOffset = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, DefaultVals.kafkaStartingOffset)
@@ -153,7 +156,22 @@ object GlobalConstants {
     // enable.auto.commit
     val kafkaEnableAutoCommit = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, DefaultVals.kafkaEnableAutoCommit)
     // group.id
-    val kafkaGroupId = PropUtils.getString(PropKeys.KAFKA_GROUP_ID, "")
+    def kafkaGroupId(number: String = ""): String = {
+      println(s"groupId-$number: key = " + PropKeys.KAFKA_GROUP_ID + number.replace("1", "") + "value " + PropUtils.getString(PropKeys.KAFKA_GROUP_ID + number.replace("1", ""), ""))
+      PropUtils.getString(PropKeys.KAFKA_GROUP_ID + number.replace("1", ""), "")
+    }
+
+
+    // 根据名称获取kafka broker地址
+    def kafkaBrokers(number: String = "") = {
+      val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME + number.replace("1", ""), DefaultVals.kafkaBrokersName)
+      println(s"brokerName-$number: key= " + PropKeys.KAFKA_BROKERS_NAME + number.replace("1", "") + " value= " + brokerName)
+      if ("bigdata".equalsIgnoreCase(brokerName)) {
+        bigdataKafkaUrl
+      } else {
+        zmsKafkaUrl
+      }
+    }
   }
 
   /**

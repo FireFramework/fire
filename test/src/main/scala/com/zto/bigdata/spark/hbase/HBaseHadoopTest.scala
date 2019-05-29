@@ -102,7 +102,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
     val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 5.toString, 8.toString))
     // 根据rowKey删除
-    rowKeyRdd.hbaseBulkDeleteRDD(null)
+    rowKeyRdd.hbaseBulkDeleteRDD(this.tableName1)
 
     // 方式二：使用this.spark.hbaseBulkDeleteRDD
     // this.spark.hbaseBulkDeleteRDD(this.tableName1, rowKeyRdd)
