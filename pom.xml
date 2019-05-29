@@ -8,8 +8,8 @@
     <inceptionYear>2008</inceptionYear>
 
     <properties>
-        <maven.scope>provided</maven.scope>
-        <!--<maven.scope>compile</maven.scope>-->
+        <!--<maven.scope>provided</maven.scope>-->
+        <maven.scope>compile</maven.scope>
         <scala.version>2.11.12</scala.version>
         <spark.version>2.3.2</spark.version>
         <hadoop.version>2.6.0-cdh5.12.1</hadoop.version>
@@ -23,7 +23,7 @@
     </properties>
     <modules>
         <module>common</module>
-        <!--<module>test</module>-->
+        <module>test</module>
     </modules>
 
     <pluginRepositories>

@@ -96,6 +96,19 @@ object HBaseHadoopTest extends BaseSparkCore {
   }
 
   /**
+    * 使用bulk方式批量删除指定的rowKey对应的数据
+    */
+  def testHBaseBulkDeleteRDD: Unit = {
+    // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
+    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 5.toString, 8.toString))
+    // 根据rowKey删除
+    rowKeyRdd.hbaseBulkDeleteRDD(null)
+
+    // 方式二：使用this.spark.hbaseBulkDeleteRDD
+    // this.spark.hbaseBulkDeleteRDD(this.tableName1, rowKeyRdd)
+  }
+
+  /**
     * Spark处理过程
     * 注：此方法会被自动调用
     */
@@ -103,11 +116,12 @@ object HBaseHadoopTest extends BaseSparkCore {
     /*this.testHbaseHadoopPutRDD
     this.testHbaseHadoopPutDF
     this.testHbaseHadoopPutDS*/
-    this.testHbaseHadoopPutDFRow
+    // this.testHbaseHadoopPutDFRow
 
     // this.testHBaseHadoopScanRDD
     // this.testHBaseHadoopScanDF
-    this.testHBaseHadoopScanDS
+    // this.testHBaseHadoopScanDS
+    this.testHBaseBulkDeleteRDD
   }
 
   def main(args: Array[String]): Unit = {

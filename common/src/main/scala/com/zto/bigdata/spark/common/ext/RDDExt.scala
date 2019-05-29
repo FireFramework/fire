@@ -2,7 +2,7 @@ package com.zto.bigdata.spark.common.ext
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.db.HBaseSparkBridge
-import com.zto.bigdata.spark.common.util.{SingletonFactory, SparkUtils}
+import com.zto.bigdata.spark.common.util.{ParamUtils, SingletonFactory, SparkUtils}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.from_json
@@ -67,7 +67,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param batchSize
     * 批量删除的大小
     */
-  def hbaseBulkDeleteRDD(tableName: String, batchSize: Integer = this.hbaseContext.batchSize): Unit = {
+  def hbaseBulkDeleteRDD[T<: String : ClassTag](tableName: String, batchSize: Integer = this.hbaseContext.batchSize): Unit = {
     this.hbaseContext.bulkDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]], batchSize)
   }
 
