@@ -29,31 +29,10 @@ class DataFrameExt(dataFrame: DataFrame) {
     * @return
     * 生成的DataFrame
     */
-  def registerTempTableForCache(tmpTableName: String): DataFrame = {
+  def createOrReplaceTempViewCache(tmpTableName: String): DataFrame = {
     if (StringUtils.isNotBlank(tmpTableName)) {
       dataFrame.createOrReplaceTempView(tmpTableName)
       dataFrame.sqlContext.cacheTable(tmpTableName)
-    }
-    dataFrame
-  }
-
-  /**
-    * 注册为临时表的同时缓存表，并持久化打Hive中
-    *
-    * @param tmpTableName
-    * 临时表名，与持久化到Hive中的表名一致
-    * @param saveMode
-    * 默认为Overwrite
-    * @param cache
-    * 默认cache数据
-    * @return
-    * 生成的DataFrame
-    */
-  def registerTempTableForPersistent(tmpTableName: String, saveMode: SaveMode = GlobalConstants.SparkConf.saveMode, cache: Boolean = true): DataFrame = {
-    if (StringUtils.isNotBlank(tmpTableName)) {
-      dataFrame.write.mode(saveMode).saveAsTable(tmpTableName)
-      dataFrame.createOrReplaceTempView(tmpTableName)
-      if (cache) dataFrame.sqlContext.cacheTable(tmpTableName)
     }
     dataFrame
   }
