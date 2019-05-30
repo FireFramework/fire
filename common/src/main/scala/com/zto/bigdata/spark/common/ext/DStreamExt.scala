@@ -36,8 +36,12 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) {
     */
   def kafkaCommitOffsets[T <: ConsumerRecord[String, String]]: Unit = {
     stream.asInstanceOf[DStream[T]].foreachRDD { rdd =>
-      val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
-      stream.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
+      try {
+        val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
+        stream.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
+      } catch {
+        case e: Exception => e.printStackTrace()
+      }
     }
   }
 }
