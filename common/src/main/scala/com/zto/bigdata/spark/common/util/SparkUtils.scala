@@ -593,7 +593,10 @@ object SparkUtils {
       "value.deserializer" -> classOf[StringDeserializer],
       "group.id" -> groupId,
       "auto.offset.reset" -> offset,
-      "enable.auto.commit" -> (commit: java.lang.Boolean)
+      "enable.auto.commit" -> (commit: java.lang.Boolean),
+      "session.timeout.ms" -> (300000: java.lang.Integer),
+      "request.timeout.ms" -> (400000: java.lang.Integer),
+      "max.poll.interval.ms" -> (600000: java.lang.Integer)
     )
   }
 
