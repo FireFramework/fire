@@ -55,16 +55,17 @@ trait BaseSparkStreaming extends BaseSpark {
           .startRestServer
       }
     }
-    this.batchDuration = batchDuration
+    // 判断是否为热重启，batchDuration优先级分别为 [ 代码<配置文件<热重启 ]
+    this.batchDuration = SparkUtils.overrideBatchDuration(batchDuration, this.externalConf != null && this.externalConf.getBatchDuration != null)
     if (!isCheckPoint) {
       if (this.externalConf != null && this.externalConf.isRestartSparkContext) {
         // 重启SparkContext对象
-        this.ssc = new StreamingContext(tmpConf, Seconds(Math.abs(batchDuration)))
+        this.ssc = new StreamingContext(tmpConf, Seconds(Math.abs(this.batchDuration)))
         this.sc = this.ssc.sparkContext
       } else {
-        this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(batchDuration)))
+        this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(this.batchDuration)))
       }
-      this.ssc.remember(Seconds(Math.abs(batchDuration) * 10))
+      this.ssc.remember(Seconds(Math.abs(this.batchDuration) * 10))
       this.process
     } else {
       this.checkPointDir = GlobalConstants.SparkConf.chkPointDirPrefix + this.appName
@@ -75,10 +76,10 @@ trait BaseSparkStreaming extends BaseSpark {
         tmpConf.set("spark.streaming.receiver.writeAheadLog.enable", "true")
         if (this.externalConf != null && this.externalConf.isRestartSparkContext) {
           // 重启SparkContext对象
-          this.ssc = new StreamingContext(tmpConf, Seconds(Math.abs(batchDuration)))
+          this.ssc = new StreamingContext(tmpConf, Seconds(Math.abs(this.batchDuration)))
           this.sc = this.ssc.sparkContext
         } else {
-          this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(batchDuration)))
+          this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(this.batchDuration)))
         }
         this.ssc.checkpoint(checkPointDir)
         this.process

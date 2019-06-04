@@ -84,6 +84,8 @@ object GlobalConstants {
     // spark相关配置
     val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
     val SPARK_LOG_LEVEL = "spark.log.level"
+    // spark streaming批次时间
+    val SPARK_STREAMING_BATCH_DURATION = "spark.streaming.batch.duration"
 
     // hive相关配置
     val HIVE_CLUSTER = "hive.cluster"
@@ -130,6 +132,7 @@ object GlobalConstants {
     val chkPointDirPrefix = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
     val defaultDB = PropUtils.getString(PropKeys.SPARK_DEFAULT_DATABASE_NAME, DefaultVals.dbName)
     val partitionName = PropUtils.getString(PropKeys.SPARK_DEFAULT_TABLE_PARTITION_NAME, DefaultVals.partitionName)
+    val batchDuration = PropUtils.getLong(PropKeys.SPARK_STREAMING_BATCH_DURATION, -1)
 
     /**
       * 获取topic列表

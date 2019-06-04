@@ -35,7 +35,7 @@ trait BaseSpark extends SparkListener with Serializable {
   lazy val threadPoolSchedule = Executors.newScheduledThreadPool(10)
   val restPort = SystemInfoUtils.getRundomPort
   val restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
-  Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
+  Logger.getLogger("org.apache.kafka.clients").setLevel(Level.WARN)
   Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
   private val systemRestful = new SystemRestful(this)
   val log = LoggerFactory.getLogger(this.getClass)

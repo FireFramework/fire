@@ -601,6 +601,24 @@ object SparkUtils {
   }
 
   /**
+    * 使用配置文件中的spark.streaming.batch.duration覆盖传参的batchDuration
+    *
+    * @param batchDuration
+    *                   代码中指定的批次时间
+    * @param hotRestart 是否热重启，热重启优先级最高
+    * @return
+    * 被配置文件覆盖后的批次时间
+    */
+  def overrideBatchDuration(batchDuration: Long, hotRestart: Boolean): Long = {
+    if (hotRestart) return batchDuration
+    if (GlobalConstants.SparkConf.batchDuration == -1) {
+      batchDuration
+    } else {
+      Math.abs(GlobalConstants.SparkConf.batchDuration)
+    }
+  }
+
+  /**
     * 获取spark任务的webUI地址信息
     *
     * @return
