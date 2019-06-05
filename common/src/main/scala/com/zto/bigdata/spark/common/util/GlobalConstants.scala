@@ -2,6 +2,7 @@ package com.zto.bigdata.spark.common.util
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.Durability
+import org.apache.rocketmq.spark.ConsumerStrategy
 import org.apache.spark.sql.SaveMode
 
 /**
@@ -27,6 +28,15 @@ object GlobalConstants {
     val kafkaFailOnDataLoss = true
     // enable.auto.commit
     val kafkaEnableAutoCommit = false
+
+    // 启动应用时默认的rocket消费位点
+    val rocketStartingOffset = RocketConf.rocketOffsetLargest
+    // 数据丢失时执行失败
+    val rocketFailOnDataLoss = true
+    // enable.auto.commit
+    val rocketEnableAutoCommit = false
+    // 订阅的tag
+    val rocketConsumerTag = "*"
 
     // 默认的zookeeper地址
     val zkUrl = "192.168.25.38:2181,192.168.25.39:2181,192.168.25.40:2181,192.168.25.41:2181,192.168.25.42:2181"
@@ -74,9 +84,11 @@ object GlobalConstants {
     val KAFKA_BROKERS_NAME = "spark.kafka.brokers.name"
     // kafka的topic列表，以逗号分隔
     val KAFKA_TOPICS = "spark.kafka.topics"
+    // kafka起始消费位点
     val KAFKA_STARTING_OFFSET = "spark.kafka.starting.offsets"
     // 丢失数据是否失败
     val KAFKA_FAIL_ON_DATA_LOSS = "spark.kafka.failOnDataLoss"
+    // 是否自动维护offset
     val KAFKA_ENABLE_AUTO_COMMIT = "spark.kafka.enable.auto.commit"
     // group.id
     val KAFKA_GROUP_ID = "spark.kafka.group.id"
@@ -93,6 +105,22 @@ object GlobalConstants {
     val SPARK_DEFAULT_DATABASE_NAME = "spark.default.database.name"
     // 默认的分区名称
     val SPARK_DEFAULT_TABLE_PARTITION_NAME = "spark.default.table.partition.name"
+
+    // rocketMQ相关配置
+    // rocketMQ name server
+    val ROCKET_BROKERS_NAME = "spark.rocket.brokers.name"
+    // rocketMQ topic信息，多个以逗号分隔
+    val ROCKET_TOPICS = "spark.rocket.topics"
+    // rocketMQ groupId
+    val ROCKET_GROUP_ID = "spark.rocket.group.id"
+    // 丢失数据是否失败
+    val ROCKET_FAIL_ON_DATA_LOSS = "spark.rocket.failOnDataLoss"
+    // 是否自动维护offset
+    val ROCKET_ENABLE_AUTO_COMMIT = "spark.rocket.enable.auto.commit"
+    // RocketMQ起始消费位点
+    val ROCKET_STARTING_OFFSET = "spark.rocket.starting.offsets"
+    // rocketMq订阅的tag
+    val ROCKET_CONSUMER_TAG = "consumer.tag"
   }
 
   /**
@@ -133,18 +161,15 @@ object GlobalConstants {
     val defaultDB = PropUtils.getString(PropKeys.SPARK_DEFAULT_DATABASE_NAME, DefaultVals.dbName)
     val partitionName = PropUtils.getString(PropKeys.SPARK_DEFAULT_TABLE_PARTITION_NAME, DefaultVals.partitionName)
     val batchDuration = PropUtils.getLong(PropKeys.SPARK_STREAMING_BATCH_DURATION, -1)
+  }
 
-    /**
-      * 获取topic列表
-      * @param number
-      * @return
-      */
-    def kafkaTopics(number: String = ""): String = {
-      val key = PropKeys.KAFKA_TOPICS + number.replace("1", "")
-      val topics = PropUtils.getString(key, null)
-      ParamUtils.requireNonNullForce(topics, "配置未找到：" + key)
-      topics
-    }
+  /**
+    * kafka相关配置
+    */
+  object KafkaConf extends Enumeration {
+    val offsetLargest = "latest"
+    val offsetSmallest = "earliest"
+    val offsetNone = "none"
 
     // 大数据kafka地址
     private val bigdataKafkaUrl = "192.168.25.80:9092,192.168.25.81:9092,192.168.25.82:9092,192.168.25.129:9092,192.168.25.130:9092,192.168.25.131:9092"
@@ -157,13 +182,28 @@ object GlobalConstants {
     val kafkaFailOnDataLoss = PropUtils.getBoolean(PropKeys.KAFKA_FAIL_ON_DATA_LOSS, DefaultVals.kafkaFailOnDataLoss)
     // enable.auto.commit
     val kafkaEnableAutoCommit = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, DefaultVals.kafkaEnableAutoCommit)
-    // group.id
+
+    /**
+      * 配置文件中的groupId
+      *
+      * @param number
+      * 序列
+      * @return
+      * 配置信息
+      */
     def kafkaGroupId(number: String = ""): String = {
       PropUtils.getString(PropKeys.KAFKA_GROUP_ID + number.replace("1", ""), "")
     }
 
 
-    // 根据名称获取kafka broker地址
+    /**
+      * 根据名称获取kafka broker地址
+      *
+      * @param number
+      * 序列
+      * @return
+      * 配置信息
+      */
     def kafkaBrokers(number: String = "") = {
       val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME + number.replace("1", ""), DefaultVals.kafkaBrokersName)
       if ("bigdata".equalsIgnoreCase(brokerName)) {
@@ -172,15 +212,97 @@ object GlobalConstants {
         zmsKafkaUrl
       }
     }
+
+    /**
+      * 获取topic列表
+      *
+      * @param number
+      * @return
+      */
+    def kafkaTopics(number: String = ""): String = {
+      val key = PropKeys.KAFKA_TOPICS + number.replace("1", "")
+      val topics = PropUtils.getString(key, null)
+      ParamUtils.requireNonNullForce(topics, "配置未找到：" + key)
+      topics
+    }
   }
 
   /**
-    * kafka相关配置
+    * rocketMQ相关配置
     */
-  object KafkaConf extends Enumeration {
-    val offsetLargest = "latest"
-    val offsetSmallest = "earliest"
-    val offsetNone = "none"
+  object RocketConf extends Enumeration {
+    val rocketOffsetLargest = "latest"
+    val rocketOffsetSmallest = "earliest"
+    val rocketConsumerTag = "*"
+
+
+    /**
+      * 获取消费位点
+      * @return
+      */
+    def rocketStartingOffset: ConsumerStrategy = {
+      val offset = PropUtils.getString(PropKeys.ROCKET_STARTING_OFFSET, DefaultVals.rocketStartingOffset)
+      if (rocketOffsetLargest.equalsIgnoreCase(offset)) {
+        ConsumerStrategy.lastest
+      } else {
+        ConsumerStrategy.earliest
+      }
+    }
+    // 丢失数据时是否失败
+    val rocketFailOnDataLoss = PropUtils.getBoolean(PropKeys.ROCKET_FAIL_ON_DATA_LOSS, DefaultVals.rocketFailOnDataLoss)
+    // enable.auto.commit
+    val rocketEnableAutoCommit = PropUtils.getBoolean(PropKeys.ROCKET_ENABLE_AUTO_COMMIT, DefaultVals.rocketEnableAutoCommit)
+
+    /**
+      * 获取rocketMQ name server 地址
+      *
+      * @param number
+      * 序列
+      * @return
+      * 配置信息
+      */
+    def rocketNameServer(number: String = ""): String = {
+      PropUtils.getString(PropKeys.ROCKET_BROKERS_NAME + number.replace("1", ""), "")
+    }
+
+    /**
+      * 获取rocketMQ 订阅的tag
+      *
+      * @param number
+      * 序列
+      * @return
+      * 配置信息
+      */
+    def rocketConsumerTag(number: String = ""): String = {
+      PropUtils.getString(PropKeys.ROCKET_CONSUMER_TAG + number.replace("1", ""), "")
+    }
+
+    /**
+      * 获取groupId
+      *
+      * @param number
+      * 序列
+      * @return
+      * 配置信息
+      */
+    def rocketGroupId(number: String = ""): String = {
+      PropUtils.getString(PropKeys.ROCKET_GROUP_ID + number.replace("1", ""), "")
+    }
+
+    /**
+      * 获取rocket topic列表
+      *
+      * @param number
+      * 序列
+      * @return
+      * 配置信息
+      */
+    def rocketTopics(number: String = ""): String = {
+      val key = PropKeys.ROCKET_TOPICS + number.replace("1", "")
+      val topics = PropUtils.getString(key, null)
+      ParamUtils.requireNonNullForce(topics, "配置未找到：" + key)
+      topics
+    }
   }
 
   /**
@@ -255,8 +377,11 @@ object GlobalConstants {
       * 包裹处理
       *
       * @param str
+      * 原字符串
       * @param ps1
+      * ps1
       * @return
+      * wrap后的字符串
       */
     def wrap(str: String, ps1: String*): String = {
       val printStr = new StringBuilder()

@@ -3,6 +3,7 @@ package com.zto.bigdata.spark.common.util
 import java.lang.reflect.Field
 import java.sql.ResultSet
 import java.text.NumberFormat
+import java.util
 import java.util.{Date, Locale}
 
 import com.zto.bigdata.spark.common.anno.FieldName
@@ -13,12 +14,13 @@ import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil
 import org.apache.hadoop.hbase.util.{Base64, Bytes}
 import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.rocketmq.spark.RocketMQConfig
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
 import spark.{Request, Response}
 
-import scala.collection.JavaConversions
+import scala.collection.{JavaConversions, mutable}
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.reflect._
 
@@ -586,7 +588,7 @@ object SparkUtils {
     * @return
     * kafka相关配置
     */
-  def kafkaParams(groupId: String = GlobalConstants.SparkConf.kafkaGroupId(), kafkaBrokers: String = GlobalConstants.SparkConf.kafkaBrokers(), offset: String = GlobalConstants.SparkConf.kafkaStartingOffset, commit: Boolean = GlobalConstants.SparkConf.kafkaEnableAutoCommit): Map[String, Object] = {
+  def kafkaParams(groupId: String = GlobalConstants.KafkaConf.kafkaGroupId(), kafkaBrokers: String = GlobalConstants.KafkaConf.kafkaBrokers(), offset: String = GlobalConstants.KafkaConf.kafkaStartingOffset, commit: Boolean = GlobalConstants.KafkaConf.kafkaEnableAutoCommit): Map[String, Object] = {
     Map[String, Object](
       "bootstrap.servers" -> kafkaBrokers,
       "key.deserializer" -> classOf[StringDeserializer],
@@ -598,6 +600,23 @@ object SparkUtils {
       "request.timeout.ms" -> (400000: java.lang.Integer),
       "max.poll.interval.ms" -> (600000: java.lang.Integer)
     )
+  }
+
+  /**
+    * rocketMQ配置信息
+    *
+    * @param groupId
+    * 消费组
+    * @return
+    * rocketMQ相关配置
+    */
+  def rocketParams(groupId: String = GlobalConstants.RocketConf.rocketGroupId(), rocketNameServer: String = GlobalConstants.RocketConf.rocketNameServer(), tag: String = GlobalConstants.RocketConf.rocketConsumerTag()): java.util.Map[String, String] = {
+    val optionParams = new java.util.HashMap[String, String]()
+    optionParams.put(RocketMQConfig.NAME_SERVER_ADDR, rocketNameServer)
+    optionParams.put(RocketMQConfig.MAX_PULL_SPEED_PER_PARTITION, "5000")
+    optionParams.put(RocketMQConfig.CONSUMER_GROUP, groupId)
+    optionParams.put(RocketMQConfig.CONSUMER_TAG, tag)
+    optionParams
   }
 
   /**

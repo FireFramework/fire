@@ -1,12 +1,18 @@
 package com.zto.bigdata.spark.common.ext
 
+import java.util
+
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.rocketmq.common.message.MessageExt
+import org.apache.rocketmq.spark.{ConsumerStrategy, LocationStrategy, RocketMqUtils}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.streaming.dstream.DStream
+import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.KafkaUtils
+
+import scala.collection.{JavaConversions, mutable}
 
 /**
   * StreamingContext扩展
@@ -30,7 +36,7 @@ class StreamingContextExt(ssc: StreamingContext) {
     * @return
     * DStream
     */
-  def createDirectStream(kafkaParams: Map[String, Object] = this.kafkaParams(), topics: Set[String] = SparkUtils.topicSplit(GlobalConstants.SparkConf.kafkaTopics()), level: StorageLevel = StorageLevel.NONE): DStream[ConsumerRecord[String, String]] = {
+  def createDirectStream(kafkaParams: Map[String, Object] = this.kafkaParams(), topics: Set[String] = SparkUtils.topicSplit(GlobalConstants.KafkaConf.kafkaTopics()), level: StorageLevel = StorageLevel.NONE): DStream[ConsumerRecord[String, String]] = {
     KafkaUtils.createDirectStream[String, String](
       ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams))
   }
@@ -45,7 +51,7 @@ class StreamingContextExt(ssc: StreamingContext) {
     * @return
     * DStream
     */
-  def createDirectStream2(kafkaParams: Map[String, Object] = this.kafkaParams(GlobalConstants.SparkConf.kafkaGroupId("2"), GlobalConstants.SparkConf.kafkaBrokers("2")), topics: Set[String] = SparkUtils.topicSplit(GlobalConstants.SparkConf.kafkaTopics("2")), level: StorageLevel = StorageLevel.NONE): DStream[ConsumerRecord[String, String]] = {
+  def createDirectStream2(kafkaParams: Map[String, Object] = this.kafkaParams(GlobalConstants.KafkaConf.kafkaGroupId("2"), GlobalConstants.KafkaConf.kafkaBrokers("2")), topics: Set[String] = SparkUtils.topicSplit(GlobalConstants.KafkaConf.kafkaTopics("2")), level: StorageLevel = StorageLevel.NONE): DStream[ConsumerRecord[String, String]] = {
     KafkaUtils.createDirectStream[String, String](
       ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams))
   }
@@ -60,7 +66,7 @@ class StreamingContextExt(ssc: StreamingContext) {
     * @return
     * DStream
     */
-  def createDirectStream3(kafkaParams: Map[String, Object] = this.kafkaParams(GlobalConstants.SparkConf.kafkaGroupId("3"), GlobalConstants.SparkConf.kafkaBrokers("3")), topics: Set[String] = SparkUtils.topicSplit(GlobalConstants.SparkConf.kafkaTopics("3")), level: StorageLevel = StorageLevel.NONE): DStream[ConsumerRecord[String, String]] = {
+  def createDirectStream3(kafkaParams: Map[String, Object] = this.kafkaParams(GlobalConstants.KafkaConf.kafkaGroupId("3"), GlobalConstants.KafkaConf.kafkaBrokers("3")), topics: Set[String] = SparkUtils.topicSplit(GlobalConstants.KafkaConf.kafkaTopics("3")), level: StorageLevel = StorageLevel.NONE): DStream[ConsumerRecord[String, String]] = {
     KafkaUtils.createDirectStream[String, String](
       ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams))
   }
@@ -75,10 +81,47 @@ class StreamingContextExt(ssc: StreamingContext) {
     * @return
     * kafka相关配置
     */
-  def kafkaParams(groupId: String = GlobalConstants.SparkConf.kafkaGroupId(), kafkaBrokers: String = GlobalConstants.SparkConf.kafkaBrokers(), offset: String = GlobalConstants.SparkConf.kafkaStartingOffset, commit: Boolean = GlobalConstants.SparkConf.kafkaEnableAutoCommit): Map[String, Object] = {
+  def kafkaParams(groupId: String = GlobalConstants.KafkaConf.kafkaGroupId(), kafkaBrokers: String = GlobalConstants.KafkaConf.kafkaBrokers(), offset: String = GlobalConstants.KafkaConf.kafkaStartingOffset, commit: Boolean = GlobalConstants.KafkaConf.kafkaEnableAutoCommit): Map[String, Object] = {
     // 如果配置文件中没有指定spark.kafka.group.id，则默认为appName
     val kafkaGroupId = if (StringUtils.isNotBlank(groupId)) groupId else ssc.sparkContext.appName
     SparkUtils.kafkaParams(kafkaGroupId, kafkaBrokers, offset)
+  }
+
+  /**
+    * 构建RocketMQ拉取消息的DStream流
+    *
+    * @param rocketParam
+    * rocketMQ相关消费参数
+    * @param groupId
+    * groupId
+    * @param topics
+    * topic列表
+    * @param consumerStrategy
+    * 从何处开始消费
+    * @param autoCommit
+    * 是否自动提交
+    * @return
+    * rocketMQ DStream
+    */
+  def createRocketPullStream(rocketParam: java.util.Map[String, String] = this.rocketParams(), groupId: String = GlobalConstants.RocketConf.rocketGroupId(), topics: String = GlobalConstants.RocketConf.rocketTopics(), consumerStrategy: ConsumerStrategy = GlobalConstants.RocketConf.rocketStartingOffset, autoCommit: Boolean = GlobalConstants.RocketConf.rocketEnableAutoCommit): InputDStream[MessageExt] = {
+    RocketMqUtils.createMQPullStream(this.ssc, groupId, JavaConversions.asJavaCollection(topics.split(",").toList),
+      consumerStrategy,
+      autoCommit, forceSpecial = false, failOnDataLoss = false,
+      LocationStrategy.PreferConsistent, rocketParam)
+  }
+
+  /**
+    * rocket配置信息
+    *
+    * @param groupId
+    * 消费组
+    * @return
+    * kafka相关配置
+    */
+  def rocketParams(groupId: String = GlobalConstants.RocketConf.rocketGroupId(), rocketNameServer: String = GlobalConstants.RocketConf.rocketNameServer(), tag: String = GlobalConstants.RocketConf.rocketConsumerTag()): java.util.Map[String, String] = {
+    // 如果配置文件中没有指定spark.rocket.group.id，则默认为appName
+    val rocketGroupId = if (StringUtils.isNotBlank(groupId)) groupId else ssc.sparkContext.appName
+    SparkUtils.rocketParams(rocketGroupId, rocketNameServer, tag)
   }
 
   /**

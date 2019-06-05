@@ -1,5 +1,6 @@
 package com.zto.bigdata.spark.common.ext
 
+import com.alibaba.rocketmq.common.message.MessageExt
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.util.SingletonFactory
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -41,6 +42,22 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) {
         stream.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
       } catch {
         case e: Exception => e.printStackTrace()
+      }
+    }
+  }
+
+  /**
+    * 维护RocketMQ的offset
+    */
+  def rocketCommitOffsets[T <: MessageExt]: Unit = {
+    stream.asInstanceOf[DStream[T]].foreachRDD { rdd =>
+      if (!rdd.isEmpty()) {
+        try {
+          val offsetRanges = rdd.asInstanceOf[org.apache.rocketmq.spark.HasOffsetRanges].offsetRanges
+          stream.asInstanceOf[org.apache.rocketmq.spark.CanCommitOffsets].commitAsync(offsetRanges)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
       }
     }
   }
