@@ -347,8 +347,8 @@ class SparkSessionExt(spark: SparkSession) {
     * 转换成json字符串后的Dataset
     */
   def loadKafkaParseJson(schemaClass: Class[_],
-                         brokers: String = GlobalConstants.SparkConf.kafkaBrokers(),
-                         extraOptions: mutable.HashMap[String, String] = mutable.HashMap[String, String]("subscribe" -> GlobalConstants.SparkConf.kafkaTopics(), "failOnDataLoss" -> GlobalConstants.SparkConf.kafkaFailOnDataLoss.toString, "startingOffsets" -> GlobalConstants.SparkConf.kafkaStartingOffset, "enable.auto.commit" -> GlobalConstants.SparkConf.kafkaEnableAutoCommit.toString),
+                         brokers: String = GlobalConstants.KafkaConf.kafkaBrokers(),
+                         extraOptions: mutable.HashMap[String, String] = mutable.HashMap[String, String]("subscribe" -> GlobalConstants.KafkaConf.kafkaTopics(), "failOnDataLoss" -> GlobalConstants.KafkaConf.kafkaFailOnDataLoss.toString, "startingOffsets" -> GlobalConstants.KafkaConf.kafkaStartingOffset, "enable.auto.commit" -> GlobalConstants.KafkaConf.kafkaEnableAutoCommit.toString),
                          fieldNameUpper: Boolean = false,
                          parseAll: Boolean = false): DataFrame = {
     ParamUtils.requireNonNullForce(brokers, "kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name ]指定")

@@ -3,11 +3,47 @@
     <parent>
         <artifactId>spark2</artifactId>
         <groupId>com.zto.bigdata.spark</groupId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.0.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>common</artifactId>
     <inceptionYear>2008</inceptionYear>
+
+    <properties>
+        <rocketmq.version>4.0.0-incubating</rocketmq.version>
+    </properties>
+
+    <packaging>jar</packaging>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>3.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>3.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-client</artifactId>
+            <version>${rocketmq.version}</version>
+            <scope>${maven.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.rocketmq</groupId>
+            <artifactId>rocketmq-common</artifactId>
+            <version>3.2.6</version>
+            <scope>${maven.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-spark</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -26,18 +62,4 @@
             </resource>
         </resources>
     </build>
-
-    <packaging>jar</packaging>
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi</artifactId>
-            <version>3.8</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>3.8</version>
-        </dependency>
-    </dependencies>
 </project>

@@ -75,6 +75,17 @@ object PropUtils {
   }
 
   /**
+    * 获取整型数据
+    *
+    * @param key
+    * @return
+    */
+  def getInt(key: String, default: Int): Int = {
+    val value = props.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toInt else default
+  }
+
+  /**
     * 获取长整型数据
     *
     * @param key
@@ -83,6 +94,17 @@ object PropUtils {
   def getLong(key: String): Long = {
     val value = props.getProperty(key)
     if (StringUtils.isNotBlank(value)) value.toLong else -1L
+  }
+
+  /**
+    * 获取长整型数据
+    *
+    * @param key
+    * @return
+    */
+  def getLong(key: String, default: Long): Long = {
+    val value = props.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toLong else default
   }
 
   /**
