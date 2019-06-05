@@ -120,7 +120,7 @@ object GlobalConstants {
     // RocketMQ起始消费位点
     val ROCKET_STARTING_OFFSET = "spark.rocket.starting.offsets"
     // rocketMq订阅的tag
-    val ROCKET_CONSUMER_TAG = "consumer.tag"
+    val ROCKET_CONSUMER_TAG = "spark.rocket.consumer.tag"
   }
 
   /**
@@ -240,8 +240,8 @@ object GlobalConstants {
       * 获取消费位点
       * @return
       */
-    def rocketStartingOffset: ConsumerStrategy = {
-      val offset = PropUtils.getString(PropKeys.ROCKET_STARTING_OFFSET, DefaultVals.rocketStartingOffset)
+    def rocketStartingOffset(number: String = ""): ConsumerStrategy = {
+      val offset = PropUtils.getString(PropKeys.ROCKET_STARTING_OFFSET + number.replace("1", ""), DefaultVals.rocketStartingOffset)
       if (rocketOffsetLargest.equalsIgnoreCase(offset)) {
         ConsumerStrategy.lastest
       } else {
@@ -262,7 +262,10 @@ object GlobalConstants {
       * 配置信息
       */
     def rocketNameServer(number: String = ""): String = {
-      PropUtils.getString(PropKeys.ROCKET_BROKERS_NAME + number.replace("1", ""), "")
+      val key = PropKeys.ROCKET_BROKERS_NAME + number.replace("1", "")
+      val brokerName = PropUtils.getString(key, "")
+      ParamUtils.requireNonNullForce(brokerName, "配置未找到：" + key)
+      brokerName
     }
 
     /**
@@ -274,7 +277,7 @@ object GlobalConstants {
       * 配置信息
       */
     def rocketConsumerTag(number: String = ""): String = {
-      PropUtils.getString(PropKeys.ROCKET_CONSUMER_TAG + number.replace("1", ""), "")
+      PropUtils.getString(PropKeys.ROCKET_CONSUMER_TAG + number.replace("1", ""), "*")
     }
 
     /**
@@ -286,7 +289,10 @@ object GlobalConstants {
       * 配置信息
       */
     def rocketGroupId(number: String = ""): String = {
-      PropUtils.getString(PropKeys.ROCKET_GROUP_ID + number.replace("1", ""), "")
+      val key = PropKeys.ROCKET_GROUP_ID + number.replace("1", "")
+      val groupId = PropUtils.getString(key, "")
+      ParamUtils.requireNonNullForce(groupId, "配置未找到：" + key)
+      groupId
     }
 
     /**

@@ -103,7 +103,53 @@ class StreamingContextExt(ssc: StreamingContext) {
     * @return
     * rocketMQ DStream
     */
-  def createRocketPullStream(rocketParam: java.util.Map[String, String] = this.rocketParams(), groupId: String = GlobalConstants.RocketConf.rocketGroupId(), topics: String = GlobalConstants.RocketConf.rocketTopics(), consumerStrategy: ConsumerStrategy = GlobalConstants.RocketConf.rocketStartingOffset, autoCommit: Boolean = GlobalConstants.RocketConf.rocketEnableAutoCommit): InputDStream[MessageExt] = {
+  def createRocketPullStream(rocketParam: java.util.Map[String, String] = this.rocketParams(), groupId: String = GlobalConstants.RocketConf.rocketGroupId(), topics: String = GlobalConstants.RocketConf.rocketTopics(), consumerStrategy: ConsumerStrategy = GlobalConstants.RocketConf.rocketStartingOffset(), autoCommit: Boolean = GlobalConstants.RocketConf.rocketEnableAutoCommit): InputDStream[MessageExt] = {
+    RocketMqUtils.createMQPullStream(this.ssc, groupId, JavaConversions.asJavaCollection(topics.split(",").toList),
+      consumerStrategy,
+      autoCommit, forceSpecial = false, failOnDataLoss = false,
+      LocationStrategy.PreferConsistent, rocketParam)
+  }
+
+  /**
+    * 构建RocketMQ拉取消息的DStream流
+    *
+    * @param rocketParam
+    * rocketMQ相关消费参数
+    * @param groupId
+    * groupId
+    * @param topics
+    * topic列表
+    * @param consumerStrategy
+    * 从何处开始消费
+    * @param autoCommit
+    * 是否自动提交
+    * @return
+    * rocketMQ DStream
+    */
+  def createRocketPullStream2(rocketParam: java.util.Map[String, String] = this.rocketParams(GlobalConstants.RocketConf.rocketGroupId("2"), GlobalConstants.RocketConf.rocketNameServer("2"), GlobalConstants.RocketConf.rocketConsumerTag("2")), groupId: String = GlobalConstants.RocketConf.rocketGroupId("2"), topics: String = GlobalConstants.RocketConf.rocketTopics("2"), consumerStrategy: ConsumerStrategy = GlobalConstants.RocketConf.rocketStartingOffset("2"), autoCommit: Boolean = GlobalConstants.RocketConf.rocketEnableAutoCommit): InputDStream[MessageExt] = {
+    RocketMqUtils.createMQPullStream(this.ssc, groupId, JavaConversions.asJavaCollection(topics.split(",").toList),
+      consumerStrategy,
+      autoCommit, forceSpecial = false, failOnDataLoss = false,
+      LocationStrategy.PreferConsistent, rocketParam)
+  }
+
+  /**
+    * 构建RocketMQ拉取消息的DStream流
+    *
+    * @param rocketParam
+    * rocketMQ相关消费参数
+    * @param groupId
+    * groupId
+    * @param topics
+    * topic列表
+    * @param consumerStrategy
+    * 从何处开始消费
+    * @param autoCommit
+    * 是否自动提交
+    * @return
+    * rocketMQ DStream
+    */
+  def createRocketPullStream3(rocketParam: java.util.Map[String, String] = this.rocketParams(GlobalConstants.RocketConf.rocketGroupId("3"), GlobalConstants.RocketConf.rocketNameServer("3"), GlobalConstants.RocketConf.rocketConsumerTag("3")), groupId: String = GlobalConstants.RocketConf.rocketGroupId("3"), topics: String = GlobalConstants.RocketConf.rocketTopics("3"), consumerStrategy: ConsumerStrategy = GlobalConstants.RocketConf.rocketStartingOffset("3"), autoCommit: Boolean = GlobalConstants.RocketConf.rocketEnableAutoCommit): InputDStream[MessageExt] = {
     RocketMqUtils.createMQPullStream(this.ssc, groupId, JavaConversions.asJavaCollection(topics.split(",").toList),
       consumerStrategy,
       autoCommit, forceSpecial = false, failOnDataLoss = false,
