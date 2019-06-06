@@ -192,10 +192,9 @@ class DataFrameExt(dataFrame: DataFrame) {
   /**
     * 将DataFrame映射为指定JavaBean类型的RDD
     * @param clazz
-    * @tparam E
     * @return
     */
-  def toRDD[E <: HBaseBaseBean[E] : ClassTag](clazz: Class[E]): RDD[E] = {
+  def toRDD[E <: Object : ClassTag](clazz: Class[E]): RDD[E] = {
     this.dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
   }
 }
