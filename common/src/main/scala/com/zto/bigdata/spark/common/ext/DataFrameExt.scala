@@ -6,6 +6,7 @@ import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.db.HBaseSparkBridge
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 
 import scala.reflect._
@@ -188,4 +189,13 @@ class DataFrameExt(dataFrame: DataFrame) {
       .mode(saveMode).save()
   }
 
+  /**
+    * 将DataFrame映射为指定JavaBean类型的RDD
+    * @param clazz
+    * @tparam E
+    * @return
+    */
+  def toRDD[E <: HBaseBaseBean[E] : ClassTag](clazz: Class[E]): RDD[E] = {
+    this.dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
+  }
 }
