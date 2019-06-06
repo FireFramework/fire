@@ -339,24 +339,27 @@ class SparkSessionExt(spark: SparkSession) {
     * brokers地址
     * @param extraOptions
     * 消费kafka额外的参数
-    * @param fieldNameUpper
-    * 字段名称是否为大写
     * @param parseAll
     * 是否解析所有字段信息
+    * @param isMySQL
+    * 是否为mysql解析的消息
+    * @param fieldNameUpper
+    * 字段名称是否为大写
     * @return
     * 转换成json字符串后的Dataset
     */
   def loadKafkaParseJson(schemaClass: Class[_],
                          brokers: String = GlobalConstants.KafkaConf.kafkaBrokers(),
                          extraOptions: mutable.HashMap[String, String] = mutable.HashMap[String, String]("subscribe" -> GlobalConstants.KafkaConf.kafkaTopics(), "failOnDataLoss" -> GlobalConstants.KafkaConf.kafkaFailOnDataLoss.toString, "startingOffsets" -> GlobalConstants.KafkaConf.kafkaStartingOffset, "enable.auto.commit" -> GlobalConstants.KafkaConf.kafkaEnableAutoCommit.toString),
-                         fieldNameUpper: Boolean = false,
-                         parseAll: Boolean = false): DataFrame = {
+                         parseAll: Boolean = false,
+                         isMySQL: Boolean = true,
+                         fieldNameUpper: Boolean = false): DataFrame = {
     ParamUtils.requireNonNullForce(brokers, "kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name ]指定")
     ParamUtils.requireNonNullForce(extraOptions, "kafka extraOptions不能为空")
     ParamUtils.requireNonNullForce(extraOptions.getOrElse("subscribe", null), "topic不能为空，可在配置文件中[ spark.kafka.topics ]指定")
 
     val kafkaDataset = this.loadKafka(brokers, extraOptions)
-    val schemaDataset = kafkaDataset.select(from_json($"value", SparkUtils.buildSchema2Kafka(schemaClass, parseAll)).as("data"))
+    val schemaDataset = kafkaDataset.select(from_json($"value", SparkUtils.buildSchema2Kafka(schemaClass, parseAll, isMySQL, fieldNameUpper)).as("data"))
     if (parseAll)
       schemaDataset.select("data.*")
     else
@@ -1133,35 +1136,35 @@ class SparkSessionExt(spark: SparkSession) {
   /**
     * 解析DStream中每个rdd的json数据，并转为DataFrame类型
     *
-    * @param rdd
-    * DStream中的每个rdd
     * @param schema
     * 目标DataFrame类型的schema
+    * @param isMySQL
+    * 是否为mysql解析的消息
     * @param fieldNameUpper
     * 字段名称是否为大写
-    * @param requireBefore
-    * 是否需要before信息
+    * @param parseAll
+    * 是否需要解析所有字段信息
     * @return
     */
-  def kafkaJson2DFV(rdd: RDD[String], schema: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): DataFrame = {
-    rdd.kafkaJson2DFV(schema, fieldNameUpper, requireBefore)
+  def kafkaJson2DFV(rdd: RDD[String], schema: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): DataFrame = {
+    rdd.kafkaJson2DFV(schema, parseAll, isMySQL, fieldNameUpper)
   }
 
   /**
     * 解析DStream中每个rdd的json数据，并转为DataFrame类型
     *
-    * @param rdd
-    * DStream中的每个rdd
     * @param schema
     * 目标DataFrame类型的schema
+    * @param isMySQL
+    * 是否为mysql解析的消息
     * @param fieldNameUpper
     * 字段名称是否为大写
-    * @param requireBefore
-    * 是否需要before信息
+    * @param parseAll
+    * 是否解析所有字段信息
     * @return
     */
-  def kafkaJson2DF(rdd: RDD[ConsumerRecord[String, String]], schema: Class[_], fieldNameUpper: Boolean = false, requireBefore: Boolean = false): DataFrame = {
-    rdd.kafkaJson2DF(schema, fieldNameUpper, requireBefore)
+  def kafkaJson2DF(rdd: RDD[ConsumerRecord[String, String]], schema: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): DataFrame = {
+    rdd.kafkaJson2DF(schema, parseAll, isMySQL, fieldNameUpper)
   }
 
 }

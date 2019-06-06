@@ -374,15 +374,17 @@ object SparkUtils {
     *
     * @param beanClazz
     * json数据对应的java bean类型
+    * @param isMySQL
+    * 是否为mysql解析的消息
     * @param fieldNameUpper
     * 字段名称是否为大写
     * @param parseAll
     * 是否解析所有字段信息
     * @return
     */
-  def buildSchema2Kafka(beanClazz: Class[_], parseAll: Boolean = false, fieldNameUpper: Boolean = false): StructType = {
+  def buildSchema2Kafka(beanClazz: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): StructType = {
     if (parseAll) {
-      new StructType()
+      val structTypes = new StructType()
         .add("table", StringType)
         .add("op_type", StringType)
         .add("op_ts", StringType)
@@ -395,6 +397,7 @@ object SparkUtils {
         .add("when", StringType)
         .add("after", StructType(SparkUtils.buildSchemaFromBean(beanClazz, fieldNameUpper)))
         .add("before", StructType(SparkUtils.buildSchemaFromBean(beanClazz, fieldNameUpper)))
+      if (isMySQL) structTypes.add("pos", LongType) else structTypes.add("pos", StringType)
     } else {
       new StructType().add("table", StringType)
         .add("after", StructType(SparkUtils.buildSchemaFromBean(beanClazz, fieldNameUpper)))
