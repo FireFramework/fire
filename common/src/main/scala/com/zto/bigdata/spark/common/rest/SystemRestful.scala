@@ -31,6 +31,12 @@ class SystemRestful(val baseSpark: BaseSpark) {
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/sql", sql))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/loadInfo", loadInfo))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/sparkInfo", sparkInfo))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/count", count))
+  }
+
+  @Rest("/system/count")
+  def count(request: Request, response: Response): AnyRef = {
+    this.baseSpark.count.value + ""
   }
 
   /**

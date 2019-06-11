@@ -8,9 +8,10 @@ import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
+import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd, SparkListenerApplicationStart}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.util.LongAccumulator
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
 import spark.Spark
@@ -36,8 +37,10 @@ trait BaseSpark extends SparkListener with Serializable {
   val restPort = SystemInfoUtils.getRundomPort
   val restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
   Logger.getLogger("org.apache.kafka.clients").setLevel(Level.WARN)
+  Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
   Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
   private val systemRestful = new SystemRestful(this)
+  lazy val count: LongAccumulator = this.sc.longAccumulator("common-count")
   val log = LoggerFactory.getLogger(this.getClass)
   val logger = new LogUtils(log)
   var applicationId: String = _

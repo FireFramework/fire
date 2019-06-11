@@ -1,6 +1,7 @@
 package com.zto.bigdata.spark.common.util;
 
 import com.zto.bigdata.spark.common.bean.SystemLoadInfo;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
+
+import static com.zto.bigdata.spark.common.util.ProcessUtil.executeCmdForLine;
 
 /**
  * 用于获取服务器负载信息，包括磁盘io、cpu负载、内存使用、网络使用等等
@@ -385,6 +388,19 @@ public class SystemInfoUtils {
             IOUtils.close(pro, pro2);
         }
         return systemLoadInfo;
+    }
+
+    /**
+     * 获取当前主机的平均负载
+     * @return
+     * eg: 0.64, 0.33, 0.30
+     */
+    public static String getLoadAverage() {
+        String loadMsg = executeCmdForLine("uptime");
+        if(StringUtils.isNotBlank(loadMsg) && loadMsg.contains("load average")) {
+            return loadMsg.substring(loadMsg.lastIndexOf("load average")).replace("load average: ","");
+        }
+        return "";
     }
 
     /**
