@@ -1,8 +1,9 @@
-package com.zto.bigdata.spark.common.ext
+package com.zto.bigdata.spark.common.ext.core
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.db.{HBaseOper, HBaseSparkBridge}
 import com.zto.bigdata.spark.common.ext.SparkExt._
+import com.zto.bigdata.spark.common.ext.module.HBaseContextExt
 import com.zto.bigdata.spark.common.udf.UDFs
 import com.zto.bigdata.spark.common.util._
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}

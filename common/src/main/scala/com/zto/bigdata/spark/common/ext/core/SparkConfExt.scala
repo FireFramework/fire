@@ -1,4 +1,4 @@
-package com.zto.bigdata.spark.common.ext
+package com.zto.bigdata.spark.common.ext.core
 
 import com.zto.bigdata.spark.common.util.GlobalConstants
 import org.apache.commons.lang3.StringUtils

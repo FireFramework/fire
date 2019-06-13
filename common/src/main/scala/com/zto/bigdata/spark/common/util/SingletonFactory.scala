@@ -4,7 +4,7 @@ import java.util.Properties
 
 import com.zto.bigdata.spark.common.db.HBaseOper
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.ext.{HBaseContextExt, KuduContextExt}
+import com.zto.bigdata.spark.common.ext.module.{HBaseContextExt, KuduContextExt}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kudu.spark.kudu.KuduContext
 import org.apache.spark.SparkContext

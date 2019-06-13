@@ -1,6 +1,4 @@
-package com.zto.bigdata.spark.common.ext
-
-import java.util
+package com.zto.bigdata.spark.common.ext.core
 
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
@@ -12,7 +10,7 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.KafkaUtils
 
-import scala.collection.{JavaConversions, mutable}
+import scala.collection.JavaConversions
 
 /**
   * StreamingContext扩展

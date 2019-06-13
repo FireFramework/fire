@@ -1,9 +1,10 @@
-package com.zto.bigdata.spark.common.ext
+package com.zto.bigdata.spark.common.ext.core
 
 import java.util.Properties
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.ext.SparkExt._
+import com.zto.bigdata.spark.common.ext.module.KuduContextExt
 import com.zto.bigdata.spark.common.util.{GlobalConstants, ParamUtils, SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kudu.spark.kudu._
@@ -142,10 +143,10 @@ class SQLContextExt(sqlContext: SQLContext) {
     */
   def loadDBTable(table: String): DataFrame = {
     val props = new Properties()
-    props.setProperty("user", GlobalConstants.user)
-    props.setProperty("password", GlobalConstants.password)
-    props.setProperty("driver", GlobalConstants.driverClass)
-    sqlContext.read.jdbc(GlobalConstants.rdburl, table, props)
+    props.setProperty("user", GlobalConstants.JdbcConf.user)
+    props.setProperty("password", GlobalConstants.JdbcConf.password)
+    props.setProperty("driver", GlobalConstants.JdbcConf.driverClass)
+    sqlContext.read.jdbc(GlobalConstants.JdbcConf.url, table, props)
   }
 
   /**
@@ -159,10 +160,10 @@ class SQLContextExt(sqlContext: SQLContext) {
     */
   def loadOracleData(tableName: String, predicates: Array[String]): DataFrame = {
     val props = new Properties()
-    props.setProperty("user", GlobalConstants.user)
-    props.setProperty("password", GlobalConstants.password)
-    props.setProperty("driver", GlobalConstants.driverClass)
-    sqlContext.read.jdbc(GlobalConstants.rdburl, tableName, predicates, props)
+    props.setProperty("user", GlobalConstants.JdbcConf.user)
+    props.setProperty("password", GlobalConstants.JdbcConf.password)
+    props.setProperty("driver", GlobalConstants.JdbcConf.driverClass)
+    sqlContext.read.jdbc(GlobalConstants.JdbcConf.url, tableName, predicates, props)
   }
 
   /**

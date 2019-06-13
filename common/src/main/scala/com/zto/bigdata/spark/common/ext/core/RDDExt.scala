@@ -1,12 +1,16 @@
-package com.zto.bigdata.spark.common.ext
+package com.zto.bigdata.spark.common.ext.core
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.db.HBaseSparkBridge
-import com.zto.bigdata.spark.common.util.{ParamUtils, SingletonFactory, SparkUtils}
+import com.zto.bigdata.spark.common.ext.module.HBaseContextExt
+import com.zto.bigdata.spark.common.util.{SingletonFactory, SparkUtils}
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.rocketmq.common.message.MessageExt
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql._
+import org.apache.spark.sql.functions.from_json
+import org.apache.spark.streaming.dstream.InputDStream
+import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges}
 
 import scala.reflect.{ClassTag, classTag}
 
@@ -265,5 +269,28 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
       df.select("data.*")
     else
       df.select("data.after.*")
+  }
+
+  /**
+    * 清空RDD的缓存
+    */
+  def uncache: Unit = {
+    rdd.unpersist()
+  }
+
+  /**
+    * 维护RocketMQ的offset
+    */
+  def kafkaCommitOffsets(stream: InputDStream[ConsumerRecord[String, String]]): Unit = {
+    val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
+    stream.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
+  }
+
+  /**
+    * 维护RocketMQ的offset
+    */
+  def rocketCommitOffsets(stream: InputDStream[MessageExt]): Unit = {
+    val offsetRanges = rdd.asInstanceOf[org.apache.rocketmq.spark.HasOffsetRanges].offsetRanges
+    stream.asInstanceOf[org.apache.rocketmq.spark.CanCommitOffsets].commitAsync(offsetRanges)
   }
 }

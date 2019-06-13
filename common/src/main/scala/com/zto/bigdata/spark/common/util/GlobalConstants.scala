@@ -28,6 +28,10 @@ object GlobalConstants {
     val kafkaFailOnDataLoss = true
     // enable.auto.commit
     val kafkaEnableAutoCommit = false
+    // 默认的事务隔离级别
+    val jdbcIsolationLevel = "READ_UNCOMMITTED"
+    // 数据库批量操作的记录数
+    val jdbcBatchSize = 1000
 
     // 启动应用时默认的rocket消费位点
     val rocketStartingOffset = RocketConf.rocketOffsetLargest
@@ -61,15 +65,18 @@ object GlobalConstants {
     val APP_NAME_KEY = "spark.appName"
     val SPARK_CONF_KEY = "SparkConf"
     // c3p0连接池相关配置
-    val URL_KEY = "jdbcUrl"
-    val DRIVER_CLASS_KEY = "driverClass"
-    val USER_KEY = "user"
-    val PASSWORD_KEY = "password"
-    val MAX_POOL_SIZE_KEY = "maxPoolSize"
-    val MIN_POOL_SIZE_KEY = "minPoolSize"
-    val ACQUIRE_INCREMENT_KEY = "acquireIncrement"
-    val INITIAL_POOL_SIZE_KEY = "initialPoolSize"
-    val MAX_IDLE_TIME_KEY = "maxIdleTime"
+    val SPARK_DB_JDBC_URL_KEY = "spark.db.jdbc.url"
+    val SPARK_DB_JDBC_DRIVER_KEY = "spark.db.jdbc.driver"
+    val SPARK_DB_JDBC_USER_KEY = "spark.db.jdbc.user"
+    val SPARK_DB_JDBC_PASSWORD_KEY = "spark.db.jdbc.password"
+    val SPARK_DB_JDBC_ISOLATION_LEVEL = "spark.db.jdbc.isolation.level"
+    val SPARK_DB_JDBC_MAX_POOL_SIZE_KEY = "spark.db.jdbc.maxPoolSize"
+    val SPARK_DB_JDBC_MIN_POOL_SIZE_KEY = "spark.db.jdbc.minPoolSize"
+    val SPARK_DB_JDBC_ACQUIRE_INCREMENT_KEY = "spark.db.jdbc.acquireIncrement"
+    val SPARK_DB_JDBC_INITIAL_POOL_SIZE_KEY = "spark.db.jdbc.initialPoolSize"
+    val SPARK_DB_JDBC_MAX_IDLE_TIME_KEY = "spark.db.jdbc.maxIdleTime"
+    val SPARK_DB_JDBC_BATCH_SIZE = "spark.db.jdbc.batch.size"
+
     val LOG_LEVEL = "spark.log.level"
     val SAVE_MODE_KEY = "spark.saveMode"
     val PARALLELISM_KEY = "spark.parallelism"
@@ -124,20 +131,28 @@ object GlobalConstants {
   }
 
   /**
-    * 关系型数据库相关配置
+    * 关系型数据库连接池相关配置
     */
-  // object RDBMSConf extends Enumeration {
-  val rdburl = PropUtils.getString(PropKeys.URL_KEY)
-  val driverClass = PropUtils.getString(PropKeys.DRIVER_CLASS_KEY)
-  val user = PropUtils.getString(PropKeys.USER_KEY)
-  val password = PropUtils.getString(PropKeys.PASSWORD_KEY)
-  val maxPoolSize = PropUtils.getInt(PropKeys.MAX_POOL_SIZE_KEY)
-  val minPoolSize = PropUtils.getInt(PropKeys.MIN_POOL_SIZE_KEY)
-  val acquireIncrement = PropUtils.getInt(PropKeys.ACQUIRE_INCREMENT_KEY)
-  val initialPoolSize = PropUtils.getInt(PropKeys.INITIAL_POOL_SIZE_KEY)
-  val maxIdleTime = PropUtils.getInt(PropKeys.MAX_IDLE_TIME_KEY)
-
-  // }
+  object JdbcConf extends Enumeration {
+    val url = PropUtils.getString(PropKeys.SPARK_DB_JDBC_URL_KEY)
+    val driverClass = PropUtils.getString(PropKeys.SPARK_DB_JDBC_DRIVER_KEY)
+    val user = PropUtils.getString(PropKeys.SPARK_DB_JDBC_USER_KEY)
+    val password = PropUtils.getString(PropKeys.SPARK_DB_JDBC_PASSWORD_KEY)
+    // 事务的隔离级别：NONE, READ_COMMITTED, READ_UNCOMMITTED, REPEATABLE_READ, SERIALIZABLE，默认为READ_UNCOMMITTED
+    val isolationLevel = PropUtils.getString(PropKeys.SPARK_DB_JDBC_ISOLATION_LEVEL, DefaultVals.jdbcIsolationLevel)
+    // 批量操作的记录数
+    val batchSize = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_BATCH_SIZE, DefaultVals.jdbcBatchSize)
+    // 连接池最小连接数
+    val minPoolSize = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MIN_POOL_SIZE_KEY, 1)
+    // 连接池初始化连接数
+    val initialPoolSize = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_INITIAL_POOL_SIZE_KEY, 1)
+    // 连接池最大连接数
+    val maxPoolSize = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_POOL_SIZE_KEY, 3)
+    // 连接池每次自增连接数
+    val acquireIncrement = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_ACQUIRE_INCREMENT_KEY, 1)
+    // 多久释放没有用到的连接
+    val maxIdleTime = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_IDLE_TIME_KEY, 30)
+  }
 
   /**
     * 集群相关配置

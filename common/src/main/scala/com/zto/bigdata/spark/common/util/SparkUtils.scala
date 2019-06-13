@@ -7,8 +7,8 @@ import java.util
 import java.util.{Date, Locale}
 
 import com.zto.bigdata.spark.common.anno.FieldName
-import com.zto.bigdata.spark.common.ext.KuduContextExt
 import com.zto.bigdata.spark.common.ext.SparkExt._
+import com.zto.bigdata.spark.common.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil

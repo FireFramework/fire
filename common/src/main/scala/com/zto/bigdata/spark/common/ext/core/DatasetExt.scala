@@ -1,7 +1,8 @@
-package com.zto.bigdata.spark.common.ext
+package com.zto.bigdata.spark.common.ext.core
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.db.HBaseSparkBridge
+import com.zto.bigdata.spark.common.ext.module.HBaseContextExt
 import com.zto.bigdata.spark.common.util.SingletonFactory
 import org.apache.spark.sql._
 
@@ -98,5 +99,12 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
     */
   def hbaseOperPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
     HBaseSparkBridge.hbaseOperPutDS[E](tableName, dataset.asInstanceOf[Dataset[E]], clazz, insertEmpty, batchSize, multiVersion)
+  }
+
+  /**
+    * 清空RDD的缓存
+    */
+  def uncache: Unit = {
+    dataset.unpersist
   }
 }

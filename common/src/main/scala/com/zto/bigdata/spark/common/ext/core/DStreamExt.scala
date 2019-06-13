@@ -1,9 +1,11 @@
-package com.zto.bigdata.spark.common.ext
+package com.zto.bigdata.spark.common.ext.core
 
 import com.alibaba.rocketmq.common.message.MessageExt
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
+import com.zto.bigdata.spark.common.ext.module.HBaseContextExt
 import com.zto.bigdata.spark.common.util.SingletonFactory
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges}
 
@@ -31,6 +33,12 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) {
     this.hbaseContext.bulkPutStream(tableName, stream.asInstanceOf[DStream[T]], insertEmpty, multiVersion)
   }
 
+  /**
+    * 清空RDD的缓存
+    */
+  def uncache: Unit = {
+    stream.persist(StorageLevel.NONE)
+  }
 
   /**
     * 维护kafka的offset

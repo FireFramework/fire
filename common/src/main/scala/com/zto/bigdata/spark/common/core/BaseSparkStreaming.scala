@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import spark.{Request, Response}
+import com.zto.bigdata.spark.common.ext.SparkExt._
 
 import scala.collection.JavaConversions
 

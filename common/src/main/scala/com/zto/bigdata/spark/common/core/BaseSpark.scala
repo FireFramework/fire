@@ -1,14 +1,14 @@
 package com.zto.bigdata.spark.common.core
 
-import java.util.concurrent.{Executors, TimeUnit}
+import java.util.concurrent.{ExecutorService, Executors, ScheduledExecutorService, TimeUnit}
 
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.ext.{HBaseContextExt, KuduContextExt}
+import com.zto.bigdata.spark.common.ext.module.{HBaseContextExt, KuduContextExt}
 import com.zto.bigdata.spark.common.rest.{RestfulRegister, SystemRestful}
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd, SparkListenerApplicationStart}
+import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.util.LongAccumulator
@@ -41,8 +41,8 @@ trait BaseSpark extends SparkListener with Serializable {
   Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
   private val systemRestful = new SystemRestful(this)
   lazy val count: LongAccumulator = this.sc.longAccumulator("common-count")
-  val log = LoggerFactory.getLogger(this.getClass)
-  val logger = new LogUtils(log)
+  val logger = LoggerFactory.getLogger(this.getClass)
+  // val logger = new LogUtils(log)
   var applicationId: String = _
   var batchDuration: Long = _
   var webUI: String = _
@@ -150,8 +150,8 @@ trait BaseSpark extends SparkListener with Serializable {
     * true：打印运行日志
     * false：不打印运行日志
     */
-  def runAsThread(fun: => Unit, threadCount: Int = 1, debug: Boolean = false): Unit = {
-    ThreadUtils.runAsThread(this.threadPool, fun, threadCount, debug)
+  def runAsThread(fun: => Unit, threadCount: Int = 1, debug: Boolean = false, threadPool: ExecutorService = this.threadPool): Unit = {
+    ThreadUtils.runAsThread(threadPool, fun, threadCount, debug)
   }
 
   /**
@@ -162,8 +162,8 @@ trait BaseSpark extends SparkListener with Serializable {
     * @param delay
     * 循环调用间隔时间（单位s）
     */
-  def runAsThreadLoop(fun: => Unit, delay: Long = 10, threadCount: Int = 1, debug: Boolean = false): Unit = {
-    ThreadUtils.runAsThreadLoop(this.threadPool, fun, delay, threadCount, debug)
+  def runAsThreadLoop(fun: => Unit, delay: Long = 10, threadCount: Int = 1, debug: Boolean = false, threadPool: ExecutorService = this.threadPool): Unit = {
+    ThreadUtils.runAsThreadLoop(threadPool, fun, delay, threadCount, debug)
   }
 
   /**
@@ -186,8 +186,8 @@ trait BaseSpark extends SparkListener with Serializable {
     * true：打印运行日志
     * false：不打印运行日志
     */
-  def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, debug: Boolean = false): Unit = {
-    ThreadUtils.runAsSchedule(this.threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount, debug)
+  def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, debug: Boolean = false, threadPoolSchedule: ScheduledExecutorService = this.threadPoolSchedule): Unit = {
+    ThreadUtils.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount, debug)
   }
 
   /**

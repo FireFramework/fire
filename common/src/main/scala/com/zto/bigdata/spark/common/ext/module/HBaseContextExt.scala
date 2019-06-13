@@ -1,4 +1,4 @@
-package com.zto.bigdata.spark.common.ext
+package com.zto.bigdata.spark.common.ext.module
 
 import com.zto.bigdata.spark.common.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.bigdata.spark.common.db.HBaseOper

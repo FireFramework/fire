@@ -1,9 +1,10 @@
-package com.zto.bigdata.spark.common.ext
+package com.zto.bigdata.spark.common.ext.core
 
 import java.sql.DriverManager
 
 import com.zto.bigdata.spark.common.acc.{MultiAccumulators, MultiDateTimeAccumulators}
 import com.zto.bigdata.spark.common.ext.SparkExt._
+import com.zto.bigdata.spark.common.ext.module.HBaseContextExt
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.{JdbcRDD, RDD}
@@ -91,8 +92,8 @@ class SparkContextExt(sc: SparkContext) {
     new JdbcRDD(
       sc,
       () => {
-        Class.forName(GlobalConstants.driverClass).newInstance()
-        DriverManager.getConnection(GlobalConstants.rdburl, GlobalConstants.user, GlobalConstants.password)
+        Class.forName(GlobalConstants.JdbcConf.driverClass).newInstance()
+        DriverManager.getConnection(GlobalConstants.JdbcConf.url, GlobalConstants.JdbcConf.user, GlobalConstants.JdbcConf.password)
       },
       sql,
       lowerBound, upperBound, numPartitions,

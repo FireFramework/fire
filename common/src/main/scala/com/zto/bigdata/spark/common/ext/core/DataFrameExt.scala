@@ -1,13 +1,15 @@
-package com.zto.bigdata.spark.common.ext
+package com.zto.bigdata.spark.common.ext.core
 
 import java.util.{Objects, Properties}
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.db.HBaseSparkBridge
+import com.zto.bigdata.spark.common.ext.module.HBaseContextExt
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
+import org.apache.spark.storage.StorageLevel
 
 import scala.reflect._
 
@@ -70,10 +72,12 @@ class DataFrameExt(dataFrame: DataFrame) {
     */
   def saveAsJDBCTable(tableName: String): Unit = {
     val props = new Properties()
-    props.setProperty("user", GlobalConstants.user)
-    props.setProperty("password", GlobalConstants.password)
-    props.setProperty("driver", GlobalConstants.driverClass)
-    dataFrame.write.mode(SaveMode.Append).jdbc(GlobalConstants.rdburl, tableName, props)
+    props.setProperty("user", GlobalConstants.JdbcConf.user)
+    props.setProperty("password", GlobalConstants.JdbcConf.password)
+    props.setProperty("driver", GlobalConstants.JdbcConf.driverClass)
+    props.setProperty("batchsize", GlobalConstants.JdbcConf.batchSize.toString)
+    props.setProperty("isolationLevel", GlobalConstants.JdbcConf.isolationLevel.toUpperCase)
+    dataFrame.write.mode(SaveMode.Append).jdbc(GlobalConstants.JdbcConf.url, tableName, props)
   }
 
   /**
@@ -179,7 +183,7 @@ class DataFrameExt(dataFrame: DataFrame) {
     * @param tableName
     * 表名
     */
-  def saveToJDBC(dbName: String, tableName: String, saveMode: SaveMode = SaveMode.Append, url: String = GlobalConstants.rdburl, user: String = GlobalConstants.user, password: String = GlobalConstants.password): Unit = {
+  def saveToJDBC(dbName: String, tableName: String, saveMode: SaveMode = SaveMode.Append, url: String = GlobalConstants.JdbcConf.url, user: String = GlobalConstants.JdbcConf.user, password: String = GlobalConstants.JdbcConf.password): Unit = {
     if (Objects.isNull(url) || Objects.isNull(user)) throw new IllegalArgumentException("jdbc参数不合法，可将信息放入到配置文件中。")
     dataFrame.write.format("jdbc")
       .option("dbtable", s"$dbName.$tableName")
@@ -196,5 +200,12 @@ class DataFrameExt(dataFrame: DataFrame) {
     */
   def toRDD[E <: Object : ClassTag](clazz: Class[E]): RDD[E] = {
     this.dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
+  }
+
+  /**
+    * 清空RDD的缓存
+    */
+  def uncache: Unit = {
+    dataFrame.unpersist()
   }
 }

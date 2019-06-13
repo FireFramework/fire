@@ -1,15 +1,18 @@
-package com.zto.bigdata.spark.common.util
+package com.zto.bigdata.spark.common.ext.module
 
 import com.zto.bigdata.spark.common.bean.TimeCost
-import org.apache.commons.lang3.StringUtils
+import com.zto.bigdata.spark.common.util.GlobalConstants
 import org.slf4j.Logger
 
 /**
-  * String 相关的工具类
+  * 日志扩展
   *
-  * @author ChengLong 2018-11-1 09:56:33
+  * @param logger
+  * 日志记录器
+  * @author ChengLong 2019-6-12 10:32:38
   */
-class LogUtils(logger: Logger) {
+class LoggerExt(logger: Logger) {
+
   var timeCost: TimeCost = _
 
   /**
@@ -29,14 +32,10 @@ class LogUtils(logger: Logger) {
     * @param msg
     * 错误信息
     */
-  def logger(sink: String, action: String = "timecost", msg: String = "success"): Unit = {
+  def log(sink: String, action: String = "timecost", msg: String = "success", throwable: Throwable = null): Unit = {
     if (this.timeCost == null) this.mark
     this.timeCost.info(sink, action, msg)
-    if (StringUtils.isBlank(msg) || "success".equalsIgnoreCase(msg)) {
-      logger.info(this.timeCost.toString)
-    } else {
-      logger.error(this.timeCost.toString)
-    }
+    if (throwable == null) logger.info(this.timeCost.toString) else logger.error(this.timeCost.toString, throwable)
   }
 
   /**

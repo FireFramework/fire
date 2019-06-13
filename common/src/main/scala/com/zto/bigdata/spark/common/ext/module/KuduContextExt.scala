@@ -1,4 +1,4 @@
-package com.zto.bigdata.spark.common.ext
+package com.zto.bigdata.spark.common.ext.module
 
 import java.lang.reflect.Field
 import java.sql._
@@ -6,11 +6,11 @@ import java.util
 
 import com.zto.bigdata.spark.common.anno.FieldName
 import com.zto.bigdata.spark.common.bean.KuduBaseBean
-import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kudu.client.{CreateTableOptions, KuduTable}
 import org.apache.kudu.spark.kudu.{KuduContext, _}
+import com.zto.bigdata.spark.common.ext.SparkExt._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SQLContext}

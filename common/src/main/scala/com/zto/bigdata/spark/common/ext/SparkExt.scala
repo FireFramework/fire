@@ -1,10 +1,13 @@
 package com.zto.bigdata.spark.common.ext
 
+import com.zto.bigdata.spark.common.ext.core._
+import com.zto.bigdata.spark.common.ext.module.LoggerExt
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.{SparkConf, SparkContext}
+import org.slf4j.Logger
 
 import scala.reflect._
 
@@ -106,4 +109,13 @@ object SparkExt {
 
   }
 
+  /**
+    * 日志扩展
+    *
+    * @param logger
+    * 日志记录器
+    */
+  implicit class LoggerExtBridge(logger: Logger) extends LoggerExt(logger) {
+
+  }
 }
