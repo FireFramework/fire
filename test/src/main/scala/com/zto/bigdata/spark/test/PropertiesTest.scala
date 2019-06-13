@@ -17,6 +17,5 @@ object PropertiesTest extends BaseSparkCore {
     this.init()
     println("--------------> ds = " + GlobalConstants.SparkConf.partitionName)
     println("--------------> test = " + PropUtils.getString("test"))
-    println("--------------> broker = " + GlobalConstants.SparkConf.kafkaBrokers())
   }
 }

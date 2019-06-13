@@ -121,16 +121,6 @@ class SparkSessionExt(spark: SparkSession) {
   }
 
   /**
-    * 批量清空多张缓存表
-    *
-    * @param tables
-    * 多个表名
-    */
-  def uncacheTables(tables: String*): Unit = {
-    spark.sqlContext.uncacheTables(tables: _*)
-  }
-
-  /**
     * 批量缓存多张表
     *
     * @param tables
@@ -1168,4 +1158,42 @@ class SparkSessionExt(spark: SparkSession) {
     rdd.kafkaJson2DF(schema, parseAll, isMySQL, fieldNameUpper)
   }
 
+  /**
+    * 清理 RDD、DataFrame、Dataset、DStream、TableName 缓存
+    * 等同于uncache
+    * @param any
+    * RDD、DataFrame、Dataset、DStream、TableName
+    */
+  def unpersist(any: Any*): Unit = {
+    this.uncache(any: _*)
+  }
+
+  /**
+    * 清理 RDD、DataFrame、Dataset、DStream、TableName 缓存
+    * 等同于unpersist
+    * @param any
+    * RDD、DataFrame、Dataset、DStream、TableName
+    */
+  def uncache(any: Any*): Unit = {
+    if (any != null && any.size > 0) {
+      any.foreach(elem => {
+        if (elem != null) {
+          if (elem.isInstanceOf[String]) {
+            val tableName = elem.asInstanceOf[String]
+            if (this.spark.sqlContext.isCached(tableName)) {
+              this.spark.sqlContext.uncacheTables(tableName)
+            }
+          } else if (elem.isInstanceOf[Dataset[_]]) {
+            elem.asInstanceOf[Dataset[_]].uncache
+          } else if (elem.isInstanceOf[DataFrame]) {
+            elem.asInstanceOf[DataFrame].uncache
+          } else if (elem.isInstanceOf[RDD[_]]) {
+            elem.asInstanceOf[RDD[_]].uncache
+          } else if (elem.isInstanceOf[DStream[_]]) {
+            elem.asInstanceOf[DStream[_]].uncache
+          }
+        }
+      })
+    }
+  }
 }

@@ -83,7 +83,12 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 使用Spark的方式scan海量数据，并将结果集映射为DataFrame
     */
   def testHBaseHadoopScanDF: Unit = {
-    val studentDF = this.spark.hbaseHadoopScanDF2(this.tableName3, "1", "6", classOf[Student])
+    val studentDF = this.spark.hbaseHadoopScanDF2(this.tableName1, "1", "6", classOf[Student])
+    studentDF.count()
+    studentDF.createOrReplaceTempViewCache("test")
+    studentDF.cache()
+
+    this.spark.uncache("test", studentDF, studentDF.rdd.cache(), "test3")
     studentDF.show(100, false)
   }
 
@@ -119,9 +124,9 @@ object HBaseHadoopTest extends BaseSparkCore {
     // this.testHbaseHadoopPutDFRow
 
     // this.testHBaseHadoopScanRDD
-    // this.testHBaseHadoopScanDF
+    this.testHBaseHadoopScanDF
     // this.testHBaseHadoopScanDS
-    this.testHBaseBulkDeleteRDD
+    // this.testHBaseBulkDeleteRDD
   }
 
   def main(args: Array[String]): Unit = {

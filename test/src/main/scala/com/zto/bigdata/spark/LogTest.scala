@@ -14,9 +14,5 @@ object LogTest extends BaseSparkCore {
     this.init()
     this.spark.sql("use tmp")
     this.spark.sql("show tables").show()
-    this.logger.wrapLogDebug("------------------->" + SparkUtils.runTime(this.startTime))
-    this.logger.wrapLogInfo("------------------->" + SparkUtils.runTime(this.startTime))
-    this.logger.wrapLogWarn("------------------->" + SparkUtils.runTime(this.startTime))
-    this.logger.wrapLogError("------------------->" + SparkUtils.runTime(this.startTime))
   }
 }
