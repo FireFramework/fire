@@ -55,7 +55,7 @@ class DataFrameExt(dataFrame: DataFrame) {
   def saveAsHiveTable(tableName: String, partitionName: String, saveMode: SaveMode = GlobalConstants.SparkConf.saveMode): DataFrame = {
     if (StringUtils.isNotBlank(tableName)) {
       if (StringUtils.isNotBlank(partitionName)) {
-        dataFrame.write.mode(saveMode).partitionBy(partitionName).save(tableName)
+        dataFrame.write.mode(saveMode).partitionBy(partitionName).saveAsTable(tableName)
       } else {
         dataFrame.write.mode(saveMode).saveAsTable(tableName)
       }
