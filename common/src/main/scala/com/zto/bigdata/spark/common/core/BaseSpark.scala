@@ -135,7 +135,6 @@ trait BaseSpark extends SparkListener with Serializable {
     } finally {
       logger.wrapLogWarn("完成系统资源回收...")
       GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
-      System.exit(0)
     }
   }
 
@@ -198,7 +197,7 @@ trait BaseSpark extends SparkListener with Serializable {
     if (this.sqlContext != null) this.sqlContext.clearCache
     if (this.ssc == null && !this.sc.isStopped) {
       this.spark.stop()
-    } else {
+    } else if (this.ssc != null) {
       this.ssc.stop(!this.sc.isStopped, false)
     }
     if (!this.threadPool.isShutdown) {
