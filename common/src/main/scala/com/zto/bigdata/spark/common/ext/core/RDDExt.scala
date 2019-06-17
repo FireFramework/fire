@@ -9,7 +9,7 @@ import org.apache.rocketmq.common.message.MessageExt
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
-import org.apache.spark.streaming.dstream.InputDStream
+import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges}
 
 import scala.reflect.{ClassTag, classTag}
@@ -281,7 +281,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   /**
     * 维护RocketMQ的offset
     */
-  def kafkaCommitOffsets(stream: InputDStream[ConsumerRecord[String, String]]): Unit = {
+  def kafkaCommitOffsets(stream: DStream[ConsumerRecord[String, String]]): Unit = {
     val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
     stream.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
   }
