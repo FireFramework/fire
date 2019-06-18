@@ -4,10 +4,11 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import com.zto.bigdata.spark.common.util.{GlobalConstants, ParamUtils}
+import com.zto.bigdata.spark.common.util.{GlobalConstants, ParamUtils, SparkUtils}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
+import scala.reflect.ClassTag
 
 /**
   * 数据库连接池（c3p0）工具类
@@ -163,6 +164,29 @@ object JdbcOper extends Serializable {
       }
     }
     retVal
+  }
+
+  /**
+    * 执行查询操作，以JavaBean方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T]): List[T] = {
+    val listBuffer = ListBuffer[T]()
+
+    this.executeQuery(sql, params, new QueryCallback {
+      override def process(rs: ResultSet): Int = {
+        listBuffer ++= SparkUtils.dbResultSet2Bean(rs, clazz)
+        listBuffer.size
+      }
+    })
+
+    listBuffer.toList
   }
 
   /**

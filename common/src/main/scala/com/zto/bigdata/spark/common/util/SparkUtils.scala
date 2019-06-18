@@ -1,7 +1,7 @@
 package com.zto.bigdata.spark.common.util
 
 import java.lang.reflect.Field
-import java.sql.ResultSet
+import java.sql.{ResultSet, SQLException}
 import java.text.NumberFormat
 import java.util
 import java.util.{Date, Locale}
@@ -123,17 +123,18 @@ object SparkUtils {
       field.setAccessible(true)
       val fieldType = field.getType
       val anno = field.getAnnotation(classOf[FieldName])
-      val fieldName = if (anno != null) anno.value() else field.getName
-
-      if (fieldType eq classOf[String]) field.set(obj, row.getString(fieldName))
-      else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getInt(fieldName))
-      else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getDouble(fieldName))
-      else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getLong(fieldName))
-      else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getBigDecimal(fieldName))
-      else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getFloat(fieldName))
-      else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getBoolean(fieldName))
-      else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getShort(fieldName))
-      else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getDate(fieldName))
+      val fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
+      if (this.containsColumn(row, fieldName)) {
+        if (fieldType eq classOf[String]) field.set(obj, row.getString(fieldName))
+        else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getInt(fieldName))
+        else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getDouble(fieldName))
+        else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getLong(fieldName))
+        else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getBigDecimal(fieldName))
+        else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getFloat(fieldName))
+        else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getBoolean(fieldName))
+        else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getShort(fieldName))
+        else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getDate(fieldName))
+      }
     })
     obj
   }
@@ -158,15 +159,17 @@ object SparkUtils {
           val anno = field.getAnnotation(classOf[FieldName])
           if (!(anno != null && anno.disuse())) {
             val fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
-            if (fieldType eq classOf[String]) field.set(obj, rs.getString(fieldName))
-            else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, rs.getInt(fieldName))
-            else if (fieldType eq classOf[java.lang.Double]) field.set(obj, rs.getDouble(fieldName))
-            else if (fieldType eq classOf[java.lang.Long]) field.set(obj, rs.getLong(fieldName))
-            else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, rs.getBigDecimal(fieldName))
-            else if (fieldType eq classOf[java.lang.Float]) field.set(obj, rs.getFloat(fieldName))
-            else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, rs.getBoolean(fieldName))
-            else if (fieldType eq classOf[java.lang.Short]) field.set(obj, rs.getShort(fieldName))
-            else if (fieldType eq classOf[Date]) field.set(obj, rs.getDate(fieldName))
+            if (this.containsColumn(rs, fieldName)) {
+              if (fieldType eq classOf[String]) field.set(obj, rs.getString(fieldName))
+              else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, rs.getInt(fieldName))
+              else if (fieldType eq classOf[java.lang.Double]) field.set(obj, rs.getDouble(fieldName))
+              else if (fieldType eq classOf[java.lang.Long]) field.set(obj, rs.getLong(fieldName))
+              else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, rs.getBigDecimal(fieldName))
+              else if (fieldType eq classOf[java.lang.Float]) field.set(obj, rs.getFloat(fieldName))
+              else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, rs.getBoolean(fieldName))
+              else if (fieldType eq classOf[java.lang.Short]) field.set(obj, rs.getShort(fieldName))
+              else if (fieldType eq classOf[Date]) field.set(obj, rs.getDate(fieldName))
+            }
           }
         })
         list += obj
@@ -175,6 +178,27 @@ object SparkUtils {
       case e: Exception => e.printStackTrace()
     }
     list
+  }
+
+  /**
+    * 判断指定的结果集中是否包含指定的列名
+    *
+    * @param rs
+    * 关系型数据库查询结果集
+    * @param columnName
+    * 列名
+    * @return
+    * true: 存在 false：不存在
+    */
+  def containsColumn(rs: ResultSet, columnName: String): Boolean = {
+    try {
+      if (rs.findColumn(columnName) > 0) {
+        return true
+      }
+    } catch {
+      case e: Exception => return false
+    }
+    false
   }
 
   /**
