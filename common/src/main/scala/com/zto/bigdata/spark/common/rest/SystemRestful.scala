@@ -183,7 +183,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
         this.sparkInfoBean = new SparkInfo
         this.sparkInfoBean.setAppName(this.baseSpark.appName)
         this.sparkInfoBean.setClassName(this.baseSpark.className)
-        this.sparkInfoBean.setCommonVersion(PropUtils.getString("common.version", "1.0.0"))
+        this.sparkInfoBean.setCommonVersion(PropUtils.getString("spark.common.version", "1.0.0"))
         this.sparkInfoBean.setConf(JavaConversions.mapAsJavaMap(this.baseSpark.spark.conf.getAll))
         this.sparkInfoBean.setVersion(this.baseSpark.sc.version)
         this.sparkInfoBean.setMaster(this.baseSpark.sc.master)

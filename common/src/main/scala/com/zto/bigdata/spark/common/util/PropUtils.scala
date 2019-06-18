@@ -2,8 +2,10 @@ package com.zto.bigdata.spark.common.util
 
 import java.io.InputStream
 import java.util.Properties
+import java.util.concurrent.atomic.AtomicBoolean
 
 import org.apache.commons.lang3.StringUtils
+import org.apache.spark.SparkEnv
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.Map
@@ -14,6 +16,8 @@ import scala.collection.mutable.Map
   */
 object PropUtils {
   private val props = new Properties()
+  // 用于判断是否merge过
+  private val isMerge = new AtomicBoolean(false)
   // 加载默认配置文件
   this.load("default.properties")
 
@@ -43,13 +47,26 @@ object PropUtils {
   }
 
   /**
+    * 根据key获取配置信息
+    *
+    * @param key
+    * 配置的key
+    * @return
+    * 配置的value
+    */
+  def getProperty(key: String): String = {
+    if (!this.isMerge.get) this.mergeSparkConf
+    this.props.getProperty(key)
+  }
+
+  /**
     * 获取字符串
     *
     * @param key
     * @return
     */
   def getString(key: String): String = {
-    props.getProperty(key)
+    this.getProperty(key)
   }
 
   /**
@@ -59,7 +76,7 @@ object PropUtils {
     * @return
     */
   def getString(key: String, default: String): String = {
-    val value = props.getProperty(key)
+    val value = this.getProperty(key)
     if (StringUtils.isNotBlank(value)) value else default
   }
 
@@ -70,7 +87,7 @@ object PropUtils {
     * @return
     */
   def getInt(key: String): Int = {
-    val value = props.getProperty(key)
+    val value = this.getProperty(key)
     if (StringUtils.isNotBlank(value)) value.toInt else -1
   }
 
@@ -81,7 +98,7 @@ object PropUtils {
     * @return
     */
   def getInt(key: String, default: Int): Int = {
-    val value = props.getProperty(key)
+    val value = this.getProperty(key)
     if (StringUtils.isNotBlank(value)) value.toInt else default
   }
 
@@ -92,7 +109,7 @@ object PropUtils {
     * @return
     */
   def getLong(key: String): Long = {
-    val value = props.getProperty(key)
+    val value = this.getProperty(key)
     if (StringUtils.isNotBlank(value)) value.toLong else -1L
   }
 
@@ -103,7 +120,7 @@ object PropUtils {
     * @return
     */
   def getLong(key: String, default: Long): Long = {
-    val value = props.getProperty(key)
+    val value = this.getProperty(key)
     if (StringUtils.isNotBlank(value)) value.toLong else default
   }
 
@@ -114,7 +131,7 @@ object PropUtils {
     * @return
     */
   def getBoolean(key: String): Boolean = {
-    val value = props.getProperty(key)
+    val value = this.getProperty(key)
     if (StringUtils.isNotBlank(value)) value.toBoolean else false
   }
 
@@ -166,5 +183,18 @@ object PropUtils {
       confMap += (key.toString -> this.props.getProperty(key.toString))
     })
     confMap
+  }
+
+  /**
+    * 合并SparkConf中的配置信息
+    */
+  def mergeSparkConf: Unit = {
+    val env = SparkEnv.get
+    if (env != null && env.conf != null) {
+      env.conf.getAll.foreach(t => {
+        this.props.setProperty(t._1, t._2)
+      })
+      this.isMerge.set(true)
+    }
   }
 }

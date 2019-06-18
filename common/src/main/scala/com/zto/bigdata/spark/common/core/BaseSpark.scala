@@ -12,7 +12,7 @@ import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.util.LongAccumulator
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
 import org.slf4j.LoggerFactory
 import spark.Spark
 
@@ -30,7 +30,8 @@ trait BaseSpark extends SparkListener with Serializable {
   var kuduContext: KuduContextExt = _
   var hbaseContext: HBaseContextExt = _
   val startTime = SparkUtils.currentTime
-  var appName = this.getClass.getSimpleName.replace("$", "")
+  val driverClass = this.getClass.getSimpleName.replace("$", "")
+  var appName = this.driverClass
   val className = this.getClass.getName.replace("$", "")
   lazy val threadPool = Executors.newFixedThreadPool(20)
   lazy val threadPoolSchedule = Executors.newScheduledThreadPool(10)
@@ -42,7 +43,6 @@ trait BaseSpark extends SparkListener with Serializable {
   private val systemRestful = new SystemRestful(this)
   lazy val count: LongAccumulator = this.sc.longAccumulator("common-count")
   val logger = LoggerFactory.getLogger(this.getClass)
-  // val logger = new LogUtils(log)
   var applicationId: String = _
   var batchDuration: Long = _
   var webUI: String = _
@@ -90,6 +90,7 @@ trait BaseSpark extends SparkListener with Serializable {
   def createContext(conf: SparkConf): Unit = {
     val tmpConf = if (conf == null) this.buildConf(conf) else conf
     tmpConf.setAll(PropUtils.toMap)
+    tmpConf.set("spark.driver.class", this.driverClass)
     if (SystemInfoUtils.isWindows) {
       this.spark = SparkSession.builder().config(tmpConf).master("local[*]") /*.enableHiveSupport()*/ .getOrCreate()
     } else {

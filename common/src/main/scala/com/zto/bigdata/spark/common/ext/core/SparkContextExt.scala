@@ -47,7 +47,7 @@ class SparkContextExt(sc: SparkContext) {
     * @return
     */
   def createSQLContext: SQLContext = {
-    if (GlobalConstants.isCluster) {
+    if (SparkUtils.isCluster) {
       new HiveContext(sc)
         .set("hive.exec.dynamic.partition", "true")
         .set("hive.exec.dynamic.partition.mode", "nonstrict")

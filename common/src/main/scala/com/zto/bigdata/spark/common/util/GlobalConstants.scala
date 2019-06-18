@@ -82,12 +82,12 @@ object GlobalConstants {
     val PARALLELISM_KEY = "spark.parallelism"
     val FAMILY_KEY = "family"
     val HbaseDurability_KEY = "HbaseDurability"
-    val KUDU_MASTER_URL = "kudu.master"
-    val HBASE_CLUSTER_URL = "hbase.cluster"
+    val KUDU_MASTER_URL = "spark.kudu.master"
+    val HBASE_CLUSTER_URL = "spark.hbase.cluster"
     val ZK_URL = "zk.url"
-    val IMPALA_CONNECTION_URL_KEY: String = "impala.connection.url"
-    val IMPALA_JDBC_DRIVER_NAME_KEY: String = "impala.jdbc.driver.class.name"
-    val IMPALA_DAEMONS_URL = "impala.daemons.url"
+    val IMPALA_CONNECTION_URL_KEY: String = "spark.impala.connection.url"
+    val IMPALA_JDBC_DRIVER_NAME_KEY: String = "spark.impala.jdbc.driver.class.name"
+    val IMPALA_DAEMONS_URL = "spark.impala.daemons.url"
     val KAFKA_BROKERS_NAME = "spark.kafka.brokers.name"
     // kafka的topic列表，以逗号分隔
     val KAFKA_TOPICS = "spark.kafka.topics"
@@ -107,7 +107,7 @@ object GlobalConstants {
     val SPARK_STREAMING_BATCH_DURATION = "spark.streaming.batch.duration"
 
     // hive相关配置
-    val HIVE_CLUSTER = "hive.cluster"
+    val HIVE_CLUSTER = "spark.hive.cluster"
     // 默认的库名
     val SPARK_DEFAULT_DATABASE_NAME = "spark.default.database.name"
     // 默认的分区名称
@@ -153,15 +153,6 @@ object GlobalConstants {
     // 多久释放没有用到的连接
     val maxIdleTime = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_IDLE_TIME_KEY, 30)
   }
-
-  /**
-    * 集群相关配置
-    */
-  val hbaseCluster = PropUtils.getString(PropKeys.HBASE_CLUSTER_URL, DefaultVals.hbaseName)
-  val isCluster = SystemInfoUtils.isLinux
-  val isLocal = !isCluster
-  // zookeeper地址
-  val zkUrl = PropUtils.getString(PropKeys.ZK_URL, DefaultVals.zkUrl)
 
   /**
     * Spark相关常量配置
@@ -527,7 +518,7 @@ object GlobalConstants {
       * uri
       */
     def getMetastoreUrl: String = {
-      if (isCluster) {
+      if (SparkUtils.isCluster) {
         if ("batch".equalsIgnoreCase(hiveCluster)) {
           batchMetastore
         } else {
@@ -538,6 +529,9 @@ object GlobalConstants {
       }
     }
   }
+
+  // hbase集群名称
+  lazy val hbaseCluster = PropUtils.getString(PropKeys.HBASE_CLUSTER_URL, DefaultVals.hbaseName)
 
   /**
     * 预设状态

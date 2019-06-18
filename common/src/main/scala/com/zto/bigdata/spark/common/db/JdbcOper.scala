@@ -69,7 +69,7 @@ object JdbcOper extends Serializable {
     * @return
     * 影响的记录数
     */
-  def executeUpdate(sql: String, params: Array[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
+  def executeUpdate(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
     this.logger.mark
     var retVal: Long = 0L
     var conn: Connection = connection
@@ -125,7 +125,7 @@ object JdbcOper extends Serializable {
     * @return
     * 影响的记录数
     */
-  def executeBatch(sql: String, paramsList: ListBuffer[Array[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+  def executeBatch(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
     this.logger.mark
     var retVal: Array[Int] = null
     var conn: Connection = connection
@@ -175,7 +175,7 @@ object JdbcOper extends Serializable {
     * @param callback
     * 查询回调
     */
-  def executeQuery(sql: String, params: Array[Any], callback: QueryCallback): Unit = {
+  def executeQuery(sql: String, params: Seq[Any], callback: QueryCallback): Unit = {
     this.logger.mark
     var conn: Connection = null
     var stat: PreparedStatement = null

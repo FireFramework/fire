@@ -15,6 +15,7 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil
 import org.apache.hadoop.hbase.util.{Base64, Bytes}
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.rocketmq.spark.RocketMQConfig
+import org.apache.spark.SparkEnv
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
@@ -653,4 +654,72 @@ object SparkUtils {
 
     line.toString()
   }
+
+  /**
+    * 用于判断当前是否为executor
+    *
+    * @return true: executor false: driver
+    */
+  def isExecutor: Boolean = {
+    val executorId = this.getExecutorId
+    if ("driver".equalsIgnoreCase(executorId)) {
+      false
+    } else {
+      true
+    }
+  }
+
+  /**
+    * 获取当前executor id
+    *
+    * @return
+    * executor id或driver
+    */
+  def getExecutorId: String = {
+    SparkEnv.get.executorId
+  }
+
+  /**
+    * 用于判断当前是否为driver
+    *
+    * @return true: driver false: executor
+    */
+  def isDriver: Boolean = {
+    !this.isExecutor
+  }
+
+  /**
+    * 是否是集群模式
+    *
+    * @return
+    * true: 集群模式  false：本地模式
+    */
+  def isCluster: Boolean = {
+    SystemInfoUtils.isLinux
+  }
+
+  /**
+    * 是否是本地模式
+    *
+    * @return
+    * true: 本地模式  false：集群模式
+    */
+  def isLocal: Boolean = {
+    !isCluster
+  }
+
+  /**
+    * 获取conf信息
+    *
+    * @param key
+    * 配置的key
+    * @param default
+    * 配置为空则返回default
+    * @return
+    * 配置的value
+    */
+  def getConf(key: String, default: String = ""): String = {
+    SparkEnv.get.conf.get(key, default)
+  }
+
 }

@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark.common.ext.core
 
-import com.zto.bigdata.spark.common.util.GlobalConstants
+import com.zto.bigdata.spark.common.util.{GlobalConstants, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkConf
 
@@ -66,7 +66,7 @@ class SparkConfExt(sparkConf: SparkConf) {
     */
   def buildConf(): SparkConf = {
     sparkConf.setAppName(GlobalConstants.SparkConf.appName)
-    if (GlobalConstants.isLocal) {
+    if (SparkUtils.isLocal) {
       sparkConf.setMaster("local[10]")
     }
 

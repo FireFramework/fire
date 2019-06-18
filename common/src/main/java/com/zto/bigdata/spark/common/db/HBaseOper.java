@@ -43,32 +43,45 @@ public class HBaseOper {
     private static Configuration conf;
     private static Connection connection;
     private static Gson gson = new Gson();
+    private static Map<String, String> hbaseCluster;
     private static final Map<Class, Map<String, Field>> cacheFieldMap = new ConcurrentHashMap<>();
 
     static {
-        Map<String, String> hbaseCluster = ImmutableMap.<String, String>builder()
+        hbaseCluster = ImmutableMap.<String, String>builder()
                 .put("old", "hadoop10.zto:2181,hadoop11.zto:2181,hadoop12.zto:2181")
                 .put("batch", "HZPL025041,HZPL025040,HZPL025042,HZPL025039,HZPL025038")
                 .put("streaming", "HZPL025024,HZPL025027,HZPL025025,HZPL025023,HZPL025026")
                 .put("test", "SHTL009046110,SHTL009046111,SHTL009046109").build();
 
         conf = HBaseConfiguration.create();
-        if (SystemInfoUtils.isLinux()) {
-            conf.set("hbase.zookeeper.quorum", hbaseCluster.get(GlobalConstants.hbaseCluster()));
-        } else {
-            conf.set("hbase.zookeeper.quorum", hbaseCluster.get("test"));
+    }
+
+    /**
+     * 根据conf信息获取一个单例的连接
+     *
+     * @return hbase connection
+     */
+    public static Connection getConnection() {
+        if (connection == null) {
+            if (SystemInfoUtils.isLinux()) {
+                conf.set("hbase.zookeeper.quorum", hbaseCluster.get(GlobalConstants.hbaseCluster()));
+            } else {
+                conf.set("hbase.zookeeper.quorum", hbaseCluster.get("test"));
+            }
+            conf.set("hbase.zookeeper.property.clientPort", "2181");
+            conf.set("zookeeper.znode.parent", "/hbase");
+            conf.set("hbase.rpc.timeout", "600000");
+            conf.set("hbase.snapshot.master.timeoutMillis", "600000");
+            conf.set("hbase.snapshot.region.timeout", "600000");
+            conf.set("hbase.snapshot.master.timeout.millis", "600000");
+            try {
+                connection = ConnectionFactory.createConnection(conf);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        conf.set("hbase.zookeeper.property.clientPort", "2181");
-        conf.set("zookeeper.znode.parent", "/hbase");
-        conf.set("hbase.rpc.timeout", "600000");
-        conf.set("hbase.snapshot.master.timeoutMillis", "600000");
-        conf.set("hbase.snapshot.region.timeout", "600000");
-        conf.set("hbase.snapshot.master.timeout.millis", "600000");
-        try {
-            connection = ConnectionFactory.createConnection(conf);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+        return connection;
     }
 
     /**
@@ -95,7 +108,7 @@ public class HBaseOper {
                 Put put = new Put(rowKey.getBytes());
                 put.addColumn(family.getBytes(), qualifier.getBytes(), value.getBytes());
                 TableName tbName = TableName.valueOf(tableName);
-                Table table = connection.getTable(tbName);
+                Table table = getConnection().getTable(tbName);
                 table.put(put);
                 table.close();
             } catch (Exception e) {
@@ -114,7 +127,7 @@ public class HBaseOper {
         if (isExists(tableName) && put != null) {
             try {
                 TableName tbName = TableName.valueOf(tableName);
-                Table table = connection.getTable(tbName);
+                Table table = getConnection().getTable(tbName);
                 table.put(put);
                 table.close();
             } catch (Exception e) {
@@ -134,7 +147,7 @@ public class HBaseOper {
             Table table = null;
             try {
                 TableName tbName = TableName.valueOf(tableName);
-                table = connection.getTable(tbName);
+                table = getConnection().getTable(tbName);
                 table.put(putList);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -284,7 +297,7 @@ public class HBaseOper {
         if (isExists(tableName) && StringUtils.isNotBlank(rowKey)) {
             Table table = null;
             try {
-                table = connection.getTable(TableName.valueOf(tableName));
+                table = getConnection().getTable(TableName.valueOf(tableName));
                 Get get = new Get(rowKey.getBytes());
                 get.setMaxVersions(versionCount);
                 return table.get(get);
@@ -329,7 +342,7 @@ public class HBaseOper {
         if (isExists(tableName) && get != null) {
             Table table = null;
             try {
-                table = connection.getTable(TableName.valueOf(tableName));
+                table = getConnection().getTable(TableName.valueOf(tableName));
                 return table.get(get);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -357,7 +370,7 @@ public class HBaseOper {
         if (isExists(tableName) && getList != null && getList.size() > 0) {
             Table table = null;
             try {
-                table = connection.getTable(TableName.valueOf(tableName));
+                table = getConnection().getTable(TableName.valueOf(tableName));
                 return table.get(getList);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -543,7 +556,7 @@ public class HBaseOper {
         if (isExists(tableName) && rowKey != null && rowKey.length > 0) {
             Table table = null;
             try {
-                table = connection.getTable(TableName.valueOf(tableName));
+                table = getConnection().getTable(TableName.valueOf(tableName));
                 List<Get> gets = new LinkedList<>();
                 for (String key : rowKey) {
                     Get get = new Get(key.getBytes());
@@ -822,7 +835,7 @@ public class HBaseOper {
      * 表多版本扫描，将查询后的数据封装到List中
      *
      * @param tableName 表名
-     * @param scan  scan对象
+     * @param scan      scan对象
      * @param clazz     类型
      * @param <T>       目标泛型类型
      * @return 指定类型的List
@@ -929,7 +942,7 @@ public class HBaseOper {
         try {
             if (StringUtils.isNotBlank(tableName) && rowKeyList != null && rowKeyList.size() > 0) {
                 TableName tbName = TableName.valueOf(tableName);
-                Table table = connection.getTable(tbName);
+                Table table = getConnection().getTable(tbName);
                 List<Delete> deletes = new LinkedList<>();
                 for (String key : rowKeyList) {
                     Delete delete = new Delete(key.getBytes());
@@ -955,7 +968,7 @@ public class HBaseOper {
         Admin admin = null;
         Boolean isExist = false;
         try {
-            admin = connection.getAdmin();
+            admin = getConnection().getAdmin();
             isExist = admin.tableExists(TableName.valueOf(tableName));
         } catch (Exception e) {
             e.printStackTrace();
@@ -974,7 +987,7 @@ public class HBaseOper {
     private static void createTable(String tableName, String... columnFamilys) {
         Admin admin = null;
         try {
-            admin = connection.getAdmin();
+            admin = getConnection().getAdmin();
             TableName tbName = TableName.valueOf(tableName);
             if (!admin.tableExists(tbName)) {
                 // 新建一个students表的描述
@@ -1003,7 +1016,7 @@ public class HBaseOper {
     private static void dropTable(String tableName) {
         Admin admin = null;
         try {
-            admin = connection.getAdmin();
+            admin = getConnection().getAdmin();
             TableName tbName = TableName.valueOf(tableName);
             if (admin.tableExists(tbName)) {
                 admin.disableTable(tbName);
@@ -1024,7 +1037,7 @@ public class HBaseOper {
     private static void enableTable(String tableName) {
         Admin admin = null;
         try {
-            admin = connection.getAdmin();
+            admin = getConnection().getAdmin();
             TableName tbName = TableName.valueOf(tableName);
             if (admin.tableExists(tbName) && !admin.isTableEnabled(tbName)) {
                 admin.enableTable(tbName);
@@ -1044,7 +1057,7 @@ public class HBaseOper {
     private static void disable(String tableName) {
         Admin admin = null;
         try {
-            admin = connection.getAdmin();
+            admin = getConnection().getAdmin();
             TableName tbName = TableName.valueOf(tableName);
             if (admin.tableExists(tbName) && admin.isTableEnabled(tbName)) {
                 admin.disableTable(tbName);
@@ -1064,7 +1077,7 @@ public class HBaseOper {
     private static void truncate(String tableName) {
         Admin admin = null;
         try {
-            admin = connection.getAdmin();
+            admin = getConnection().getAdmin();
             TableName tbName = TableName.valueOf(tableName);
             if (admin.tableExists(tbName)) {
                 if (admin.isTableEnabled(tbName)) {
@@ -1095,7 +1108,7 @@ public class HBaseOper {
                 }
                 try {
                     TableName tbName = TableName.valueOf(tableName);
-                    Table table = connection.getTable(tbName);
+                    Table table = getConnection().getTable(tbName);
                     table.delete(delete);
                     table.close();
                 } catch (Exception e) {
@@ -1154,7 +1167,7 @@ public class HBaseOper {
                     }
                 }
                 TableName tbName = TableName.valueOf(tableName);
-                Table table = connection.getTable(tbName);
+                Table table = getConnection().getTable(tbName);
                 table.delete(delete);
                 table.close();
             }
@@ -1186,7 +1199,7 @@ public class HBaseOper {
     private static Table getTable(String tableName) {
         try {
             if (isExists(tableName)) {
-                return connection.getTable(TableName.valueOf(tableName));
+                return getConnection().getTable(TableName.valueOf(tableName));
             }
         } catch (Exception e) {
             e.printStackTrace();
