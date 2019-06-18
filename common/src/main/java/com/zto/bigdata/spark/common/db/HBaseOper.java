@@ -53,7 +53,6 @@ public class HBaseOper {
                 .put("streaming", "HZPL025024,HZPL025027,HZPL025025,HZPL025023,HZPL025026")
                 .put("test", "SHTL009046110,SHTL009046111,SHTL009046109").build();
 
-        conf = HBaseConfiguration.create();
     }
 
     /**
@@ -63,19 +62,8 @@ public class HBaseOper {
      */
     public static Connection getConnection() {
         if (connection == null) {
-            if (SystemInfoUtils.isLinux()) {
-                conf.set("hbase.zookeeper.quorum", hbaseCluster.get(GlobalConstants.hbaseCluster()));
-            } else {
-                conf.set("hbase.zookeeper.quorum", hbaseCluster.get("test"));
-            }
-            conf.set("hbase.zookeeper.property.clientPort", "2181");
-            conf.set("zookeeper.znode.parent", "/hbase");
-            conf.set("hbase.rpc.timeout", "600000");
-            conf.set("hbase.snapshot.master.timeoutMillis", "600000");
-            conf.set("hbase.snapshot.region.timeout", "600000");
-            conf.set("hbase.snapshot.master.timeout.millis", "600000");
             try {
-                connection = ConnectionFactory.createConnection(conf);
+                connection = ConnectionFactory.createConnection(getConfiguration());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -90,6 +78,20 @@ public class HBaseOper {
      * @return HBase Configuration对象
      */
     public static Configuration getConfiguration() {
+        if (conf == null) {
+            conf = HBaseConfiguration.create();
+            if (SystemInfoUtils.isLinux()) {
+                conf.set("hbase.zookeeper.quorum", hbaseCluster.get(GlobalConstants.hbaseCluster()));
+            } else {
+                conf.set("hbase.zookeeper.quorum", hbaseCluster.get("test"));
+            }
+            conf.set("hbase.zookeeper.property.clientPort", "2181");
+            conf.set("zookeeper.znode.parent", "/hbase");
+            conf.set("hbase.rpc.timeout", "600000");
+            conf.set("hbase.snapshot.master.timeoutMillis", "600000");
+            conf.set("hbase.snapshot.region.timeout", "600000");
+            conf.set("hbase.snapshot.master.timeout.millis", "600000");
+        }
         return conf;
     }
 
