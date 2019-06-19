@@ -12,8 +12,7 @@ import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.util.LongAccumulator
-import org.apache.spark.{Logging, SparkConf, SparkContext, SparkEnv}
-import org.slf4j.LoggerFactory
+import org.apache.spark.{Logging, SparkConf, SparkContext}
 import spark.Spark
 
 /**
@@ -42,7 +41,6 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
   private val systemRestful = new SystemRestful(this)
   lazy val count: LongAccumulator = this.sc.longAccumulator("common-count")
-  val logger = LoggerFactory.getLogger(this.getClass)
   var applicationId: String = _
   var batchDuration: Long = _
   var webUI: String = _

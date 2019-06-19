@@ -3,6 +3,7 @@ package com.zto.bigdata.spark.common.bean;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.zto.bigdata.spark.common.util.DateFormatUtils;
+import com.zto.bigdata.spark.common.util.SparkUtils;
 import com.zto.bigdata.spark.common.util.SystemInfoUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.TaskContext;
@@ -190,25 +191,27 @@ public class TimeCost implements Serializable {
     public TimeCost info(String sink, String action, String msg) {
         this.sink = sink;
         this.action = action;
-        this.taskInfo = TaskContext.get();
-        if (this.taskInfo != null) {
-            this.taskId = this.taskInfo.taskAttemptId();
-            this.stageId = this.taskInfo.stageId();
-            this.partitionId = this.taskInfo.partitionId();
-            TaskMetrics taskMetrics = this.taskInfo.taskMetrics();
-            if (taskMetrics != null) {
-                this.executorCpuTime = taskMetrics.executorCpuTime();
-                this.executorRunTime = taskMetrics.executorRunTime();
-                this.jvmGCTime = taskMetrics.jvmGCTime();
-                this.executorDeserializeCpuTime = taskMetrics.executorDeserializeCpuTime();
-                this.executorDeserializeTime = taskMetrics.executorDeserializeTime();
-                this.bytesRead = taskMetrics.inputMetrics().bytesRead();
-                this.recordsRead = taskMetrics.inputMetrics().recordsRead();
-                this.memoryBytesSpilled = taskMetrics.memoryBytesSpilled();
-                this.bytesWritten = taskMetrics.outputMetrics().bytesWritten();
-                this.recordsWritten = taskMetrics.outputMetrics().recordsWritten();
-                this.peakExecutionMemory = taskMetrics.peakExecutionMemory();
-                this.resultSize = taskMetrics.resultSize();
+        if (SparkUtils.isExecutor()) {
+            this.taskInfo = TaskContext.get();
+            if (this.taskInfo != null) {
+                this.taskId = this.taskInfo.taskAttemptId();
+                this.stageId = this.taskInfo.stageId();
+                this.partitionId = this.taskInfo.partitionId();
+                TaskMetrics taskMetrics = this.taskInfo.taskMetrics();
+                if (taskMetrics != null) {
+                    this.executorCpuTime = taskMetrics.executorCpuTime();
+                    this.executorRunTime = taskMetrics.executorRunTime();
+                    this.jvmGCTime = taskMetrics.jvmGCTime();
+                    this.executorDeserializeCpuTime = taskMetrics.executorDeserializeCpuTime();
+                    this.executorDeserializeTime = taskMetrics.executorDeserializeTime();
+                    this.bytesRead = taskMetrics.inputMetrics().bytesRead();
+                    this.recordsRead = taskMetrics.inputMetrics().recordsRead();
+                    this.memoryBytesSpilled = taskMetrics.memoryBytesSpilled();
+                    this.bytesWritten = taskMetrics.outputMetrics().bytesWritten();
+                    this.recordsWritten = taskMetrics.outputMetrics().recordsWritten();
+                    this.peakExecutionMemory = taskMetrics.peakExecutionMemory();
+                    this.resultSize = taskMetrics.resultSize();
+                }
             }
         }
         this.timeCost = System.currentTimeMillis() - this.start;

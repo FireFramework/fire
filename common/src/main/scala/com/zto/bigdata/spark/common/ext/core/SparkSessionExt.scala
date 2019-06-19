@@ -1247,7 +1247,7 @@ class SparkSessionExt(spark: SparkSession) {
     * @return
     * 影响的记录数
     */
-  def jdbcBatch(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
     JdbcOper.executeBatch(sql, paramsList, connection, commit, closeConnection)
   }
 

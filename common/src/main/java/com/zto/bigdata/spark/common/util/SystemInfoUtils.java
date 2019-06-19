@@ -26,6 +26,8 @@ import static com.zto.bigdata.spark.common.util.ProcessUtil.executeCmdForLine;
 public class SystemInfoUtils {
     private static final float totalBandwidth = 80; // 设定带宽，Mbps
     private static SystemLoadInfo systemLoadInfo = new SystemLoadInfo();
+    private static String ip;
+    private static String hostname;
 
     /**
      * 采集CPU使用率（兼容多核）
@@ -447,11 +449,13 @@ public class SystemInfoUtils {
      * @return ip地址
      */
     public static String getIp() {
-        InetAddress inetAddress = getHostLANAddress();
-        if (inetAddress != null) {
-            return inetAddress.getHostAddress();
+        if (StringUtils.isBlank(ip)) {
+            InetAddress inetAddress = getHostLANAddress();
+            if (inetAddress != null) {
+                ip = inetAddress.getHostAddress();
+            }
         }
-        return "";
+        return ip;
     }
 
     /**
@@ -460,11 +464,13 @@ public class SystemInfoUtils {
      * @return hostname
      */
     public static String getHostName() {
-        InetAddress inetAddress = getHostLANAddress();
-        if (inetAddress != null) {
-            return inetAddress.getHostName();
+        if (StringUtils.isBlank(hostname)) {
+            InetAddress inetAddress = getHostLANAddress();
+            if (inetAddress != null) {
+                hostname = inetAddress.getHostName();
+            }
         }
-        return "";
+        return hostname;
     }
 
     /**

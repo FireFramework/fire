@@ -12,7 +12,6 @@ import org.apache.spark.Logging
   * @author ChengLong 2019-6-12 10:32:38
   */
 class LoggerExt(logger: Logging) extends Logging {
-
   var timeCost: TimeCost = _
 
   /**
@@ -88,21 +87,4 @@ class LoggerExt(logger: Logging) extends Logging {
     }
   }
 
-  /**
-    * log开始分割
-    */
-  def logStart: Unit = {
-    if (this.logger != null) {
-      this.wrapLogInfo(GlobalConstants.LogVal.logStart, GlobalConstants.PS1.YELLOW)
-    }
-  }
-
-  /**
-    * log结束分割
-    */
-  def logEnd: Unit = {
-    if (this.logger != null) {
-      this.wrapLogInfo(GlobalConstants.LogVal.logEnd, GlobalConstants.PS1.YELLOW)
-    }
-  }
 }
