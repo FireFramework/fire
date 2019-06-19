@@ -6,7 +6,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{Logging, SparkConf, SparkContext}
 import org.slf4j.Logger
 
 import scala.reflect._
@@ -115,7 +115,7 @@ object SparkExt {
     * @param logger
     * 日志记录器
     */
-  implicit class LoggerExtBridge(logger: Logger) extends LoggerExt(logger) {
+  implicit class LoggerExtBridge(logger: Logging) extends LoggerExt(logger) {
 
   }
 }

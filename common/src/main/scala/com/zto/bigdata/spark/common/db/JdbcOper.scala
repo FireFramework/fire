@@ -5,7 +5,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{GlobalConstants, ParamUtils, SparkUtils}
-import org.slf4j.LoggerFactory
+import org.apache.spark.Logging
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -16,14 +16,13 @@ import scala.reflect.ClassTag
   *
   * @author ChengLong 2016-11-15 16:55:37
   */
-object JdbcOper extends Serializable {
+object JdbcOper extends Logging with Serializable {
   private lazy val cpds: ComboPooledDataSource = new ComboPooledDataSource(true)
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   try {
     // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
     if (ParamUtils.isNotBlank(GlobalConstants.JdbcConf.url, GlobalConstants.JdbcConf.user)) {
-      this.logger.wrapLogInfo("初始化数据库连接池")
+      this.wrapLogInfo("初始化数据库连接池")
       cpds.setJdbcUrl(GlobalConstants.JdbcConf.url)
       cpds.setDriverClass(GlobalConstants.JdbcConf.driverClass)
       cpds.setUser(GlobalConstants.JdbcConf.user)
@@ -33,7 +32,7 @@ object JdbcOper extends Serializable {
       cpds.setAcquireIncrement(GlobalConstants.JdbcConf.acquireIncrement)
       cpds.setInitialPoolSize(GlobalConstants.JdbcConf.initialPoolSize)
       cpds.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime)
-      this.logger.wrapLogInfo(s"数据库连接池初始化成功：url: ${GlobalConstants.JdbcConf.url} driver: ${GlobalConstants.JdbcConf.driverClass} ")
+      this.wrapLogInfo(s"数据库连接池初始化成功：url: ${GlobalConstants.JdbcConf.url} driver: ${GlobalConstants.JdbcConf.driverClass} ")
     }
   } catch {
     case ex: Exception => ex.printStackTrace()
@@ -49,7 +48,7 @@ object JdbcOper extends Serializable {
     try {
       return cpds.getConnection()
     } catch {
-      case ex: Exception => this.logger.error("获取数据库连接出现异常", ex)
+      case ex: Exception => this.logError("获取数据库连接出现异常", ex)
         null
     }
   }
@@ -71,7 +70,7 @@ object JdbcOper extends Serializable {
     * 影响的记录数
     */
   def executeUpdate(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
-    this.logger.mark
+    this.mark
     var retVal: Long = 0L
     var conn: Connection = connection
     var stat: PreparedStatement = null
@@ -92,10 +91,10 @@ object JdbcOper extends Serializable {
       }
       retVal = stat.executeUpdate
       if (commit) conn.commit()
-      this.logger.log("db", "update", s"sql->$sql 影响记录数：$retVal")
+      this.log("db", "update", s"sql->$sql 影响记录数：$retVal")
     }
     catch {
-      case e: Exception => this.logger.log("db", "update", s"sql->$sql result->fail", e)
+      case e: Exception => this.log("db", "update", s"sql->$sql result->fail", e)
     } finally {
       if (conn != null && closeConnection)
         conn.close()
@@ -103,7 +102,7 @@ object JdbcOper extends Serializable {
         try {
           stat.close()
         } catch {
-          case e: SQLException => this.logger.log("db", "释放连接", s"sql->$sql", e)
+          case e: SQLException => this.log("db", "释放连接", s"sql->$sql", e)
         }
       }
     }
@@ -127,7 +126,7 @@ object JdbcOper extends Serializable {
     * 影响的记录数
     */
   def executeBatch(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
-    this.logger.mark
+    this.mark
     var retVal: Array[Int] = null
     var conn: Connection = connection
     var stat: PreparedStatement = null
@@ -150,16 +149,16 @@ object JdbcOper extends Serializable {
       // 执行批量更新
       retVal = stat.executeBatch
       if (commit) conn.commit()
-      this.logger.log("db", "executeBatch", s"sql->$sql 影响记录数：$retVal")
+      this.log("db", "executeBatch", s"sql->$sql 影响记录数：$retVal")
     } catch {
-      case e: Exception => this.logger.log("db", "executeBatch", s"sql->$sql result->fail", e)
+      case e: Exception => this.log("db", "executeBatch", s"sql->$sql result->fail", e)
     } finally {
       if (conn != null && closeConnection) conn.close()
       if (stat != null) {
         try {
           stat.close()
         } catch {
-          case e: SQLException => this.logger.log("db", "释放连接", sql, e)
+          case e: SQLException => this.log("db", "释放连接", sql, e)
         }
       }
     }
@@ -200,7 +199,7 @@ object JdbcOper extends Serializable {
     * 查询回调
     */
   def executeQuery(sql: String, params: Seq[Any], callback: QueryCallback): Unit = {
-    this.logger.mark
+    this.mark
     var conn: Connection = null
     var stat: PreparedStatement = null
     var rs: ResultSet = null
@@ -219,16 +218,16 @@ object JdbcOper extends Serializable {
       if (rs != null) {
         count = callback.process(rs)
       }
-      this.logger.log("db", "query", s"sql->$sql result->success 查询记录数：$count")
+      this.log("db", "query", s"sql->$sql result->success 查询记录数：$count")
     } catch {
-      case e: Exception => this.logger.log("db", "query", s"sql->$sql result->fail", e)
+      case e: Exception => this.log("db", "query", s"sql->$sql result->fail", e)
     } finally {
       if (conn != null) conn.close()
       if (rs != null) {
         try {
           rs.close()
         } catch {
-          case e: SQLException => this.logger.log("db", "释放连接", s"sql->$sql", e)
+          case e: SQLException => this.log("db", "释放连接", s"sql->$sql", e)
         }
       }
       if (stat != null) {

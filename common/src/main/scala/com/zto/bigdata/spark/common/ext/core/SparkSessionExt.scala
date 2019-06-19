@@ -1,7 +1,9 @@
 package com.zto.bigdata.spark.common.ext.core
 
+import java.sql.Connection
+
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
-import com.zto.bigdata.spark.common.db.{HBaseOper, HBaseSparkBridge}
+import com.zto.bigdata.spark.common.db.{HBaseOper, HBaseSparkBridge, JdbcOper, QueryCallback}
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.ext.module.HBaseContextExt
 import com.zto.bigdata.spark.common.udf.UDFs
@@ -16,7 +18,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.streaming.dstream.DStream
 
-import scala.collection.mutable
+import scala.collection.{JavaConversions, mutable}
 import scala.reflect.ClassTag
 
 /**
@@ -307,57 +309,6 @@ class SparkSessionExt(spark: SparkSession) {
   }
 
   /**
-    * 消费kafka中的json数据，并解析成json字符串
-    *
-    * @param brokers
-    * brokers地址
-    * @param extraOptions
-    * 消费kafka额外的参数
-    * @return
-    * 转换成json字符串后的Dataset
-    */
-  def loadKafka(brokers: String, extraOptions: mutable.HashMap[String, String]): Dataset[(String, String)] = {
-    val kafkaDF = spark.readStream.format("kafka").option("kafka.bootstrap.servers", brokers).options(extraOptions).load()
-    kafkaDF.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING) as value").as[(String, String)]
-  }
-
-  /**
-    * 消费kafka中的json数据，并解析成目标类型
-    *
-    * @param schemaClass
-    * json对应的javabean类型
-    * @param brokers
-    * brokers地址
-    * @param extraOptions
-    * 消费kafka额外的参数
-    * @param parseAll
-    * 是否解析所有字段信息
-    * @param isMySQL
-    * 是否为mysql解析的消息
-    * @param fieldNameUpper
-    * 字段名称是否为大写
-    * @return
-    * 转换成json字符串后的Dataset
-    */
-  def loadKafkaParseJson(schemaClass: Class[_],
-                         brokers: String = GlobalConstants.KafkaConf.kafkaBrokers(),
-                         extraOptions: mutable.HashMap[String, String] = mutable.HashMap[String, String]("subscribe" -> GlobalConstants.KafkaConf.kafkaTopics(), "failOnDataLoss" -> GlobalConstants.KafkaConf.kafkaFailOnDataLoss.toString, "startingOffsets" -> GlobalConstants.KafkaConf.kafkaStartingOffset, "enable.auto.commit" -> GlobalConstants.KafkaConf.kafkaEnableAutoCommit.toString),
-                         parseAll: Boolean = false,
-                         isMySQL: Boolean = true,
-                         fieldNameUpper: Boolean = false): DataFrame = {
-    ParamUtils.requireNonNullForce(brokers, "kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name ]指定")
-    ParamUtils.requireNonNullForce(extraOptions, "kafka extraOptions不能为空")
-    ParamUtils.requireNonNullForce(extraOptions.getOrElse("subscribe", null), "topic不能为空，可在配置文件中[ spark.kafka.topics ]指定")
-
-    val kafkaDataset = this.loadKafka(brokers, extraOptions)
-    val schemaDataset = kafkaDataset.select(from_json($"value", SparkUtils.buildSchema2Kafka(schemaClass, parseAll, isMySQL, fieldNameUpper)).as("data"))
-    if (parseAll)
-      schemaDataset.select("data.*")
-    else
-      schemaDataset.select("data.after.*")
-  }
-
-  /**
     * 批量注册自定义udf函数
     *
     * @return
@@ -366,6 +317,8 @@ class SparkSessionExt(spark: SparkSession) {
     UDFs.registerAll(spark)
     spark
   }
+
+  // ----------------------------------- HBase Bulk API ----------------------------------- //
 
   /**
     * scan数据，并转为RDD
@@ -502,54 +455,6 @@ class SparkSessionExt(spark: SparkSession) {
   }
 
   /**
-    * 使用Spark API的方式将RDD中的数据分多个批次插入到HBase中
-    *
-    * @param tableName
-    * HBase表名
-    */
-  def hbaseHadoopPutRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[E], insertEmpty: Boolean = true): Unit = {
-    rdd.hbaseHadoopPutRDD(tableName, insertEmpty)
-  }
-
-  /**
-    * 使用spark API的方式将DataFrame中的数据分多个批次插入到HBase中
-    *
-    * @param tableName
-    * HBase表名
-    * @param clazz
-    * JavaBean类型，为HBaseBaseBean的子类
-    */
-  def hbaseHadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[E], insertEmpty: Boolean = true): Unit = {
-    dataFrame.hbaseHadoopPutDF(tableName, clazz, insertEmpty)
-  }
-
-  /**
-    * 使用spark API的方式将DataFrame中的数据分多个批次插入到HBase中
-    *
-    * @param tableName
-    * HBase表名
-    * @param dataset
-    * JavaBean类型，待插入到hbase的数据集
-    */
-  def hbaseHadoopPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], insertEmpty: Boolean = true): Unit = {
-    dataset.hbaseHadoopPutDS[E](tableName, insertEmpty)
-  }
-
-  /**
-    * 以spark 方式批量将DataFrame数据写入到hbase中
-    *
-    * @param tableName
-    * hbase表名
-    * @param insertEmpty
-    * 为空的字段是否写入hbase
-    * @tparam T
-    * JavaBean类型
-    */
-  def hbaseHadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, buildRowKey: (Row) => String, insertEmpty: Boolean = true): Unit = {
-    dataFrame.hbaseHadoopPutDFRow[T](tableName, buildRowKey, insertEmpty)
-  }
-
-  /**
     * 批量写入，将自定义的JavaBean数据集批量并行写入
     * 到HBase的指定表中。内部会将自定义JavaBean的相应
     * 字段一一映射为Put对象，并完成一次写入
@@ -676,6 +581,178 @@ class SparkSessionExt(spark: SparkSession) {
   def hbaseBulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): Dataset[E] = {
     rowKeyRDD.hbaseBulkGetDS[E](tableName, clazz, batchSize)
   }
+
+  // ----------------------------------- HBase Spark API ----------------------------------- //
+
+  /**
+    * 使用Spark API的方式将RDD中的数据分多个批次插入到HBase中
+    *
+    * @param tableName
+    * HBase表名
+    */
+  def hbaseHadoopPutRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[E], insertEmpty: Boolean = true): Unit = {
+    rdd.hbaseHadoopPutRDD(tableName, insertEmpty)
+  }
+
+  /**
+    * 使用spark API的方式将DataFrame中的数据分多个批次插入到HBase中
+    *
+    * @param tableName
+    * HBase表名
+    * @param clazz
+    * JavaBean类型，为HBaseBaseBean的子类
+    */
+  def hbaseHadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[E], insertEmpty: Boolean = true): Unit = {
+    dataFrame.hbaseHadoopPutDF(tableName, clazz, insertEmpty)
+  }
+
+  /**
+    * 使用spark API的方式将DataFrame中的数据分多个批次插入到HBase中
+    *
+    * @param tableName
+    * HBase表名
+    * @param dataset
+    * JavaBean类型，待插入到hbase的数据集
+    */
+  def hbaseHadoopPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], insertEmpty: Boolean = true): Unit = {
+    dataset.hbaseHadoopPutDS[E](tableName, insertEmpty)
+  }
+
+  /**
+    * 以spark 方式批量将DataFrame数据写入到hbase中
+    *
+    * @param tableName
+    * hbase表名
+    * @param insertEmpty
+    * 为空的字段是否写入hbase
+    * @tparam T
+    * JavaBean类型
+    */
+  def hbaseHadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, buildRowKey: (Row) => String, insertEmpty: Boolean = true): Unit = {
+    dataFrame.hbaseHadoopPutDFRow[T](tableName, buildRowKey, insertEmpty)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanRS(tableName: String, scan: Scan, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
+    HBaseSparkBridge.hbaseHadoopScanRS(this.spark, tableName, scan, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+    *
+    * @param tableName
+    * HBase表名
+    * @param startRow
+    * rowKey开始位置
+    * @param stopRow
+    * rowKey结束位置
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanRS2(tableName: String, startRow: String, stopRow: String, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
+    HBaseSparkBridge.hbaseHadoopScanRS2(spark, tableName, startRow, stopRow, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+    HBaseSparkBridge.hbaseHadoopScanRDD[T](spark, tableName, scan, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param startRow
+    * rowKey开始位置
+    * @param stopRow
+    * rowKey结束位置
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+    HBaseSparkBridge.hbaseHadoopScanRDD2[T](spark, tableName, startRow, stopRow, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    HBaseSparkBridge.hbaseHadoopScanDF[T](this.spark, tableName, scan, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+    *
+    * @param tableName
+    * HBase表名
+    * @param startRow
+    * rowKey开始位置
+    * @param stopRow
+    * rowKey结束位置
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    HBaseSparkBridge.hbaseHadoopScanDF2[T](this.spark, tableName, startRow, stopRow, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(T]
+    *
+    * @param tableName
+    * HBase表名
+    * @param scan
+    * scan对象
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    HBaseSparkBridge.hbaseHadoopScanDS[T](this.spark, tableName, scan, clazz, multiVersion, versions)
+  }
+
+  /**
+    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+    *
+    * @param tableName
+    * HBase表名
+    * @param startRow
+    * rowKey开始位置
+    * @param stopRow
+    * rowKey结束位置
+    * 目标类型
+    * @return
+    */
+  def hbaseHadoopScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
+    HBaseSparkBridge.hbaseHadoopScanDS2[T](this.spark, tableName, startRow, stopRow, clazz, multiVersion)
+  }
+
+  // ----------------------------------- HBase Oper API ----------------------------------- //
 
   /**
     * Scan指定HBase表的数据，并映射为DataFrame
@@ -809,126 +886,6 @@ class SparkSessionExt(spark: SparkSession) {
     */
   def hbaseOperPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], clazz: Class[E], insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
     dataset.hbaseOperPutDS[E](tableName, clazz, insertEmpty, batchSize, multiVersion)
-  }
-
-  /**
-    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * scan对象
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanRS(tableName: String, scan: Scan, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
-    HBaseSparkBridge.hbaseHadoopScanRS(this.spark, tableName, scan, multiVersion, versions)
-  }
-
-  /**
-    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
-    *
-    * @param tableName
-    * HBase表名
-    * @param startRow
-    * rowKey开始位置
-    * @param stopRow
-    * rowKey结束位置
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanRS2(tableName: String, startRow: String, stopRow: String, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[(ImmutableBytesWritable, Result)] = {
-    HBaseSparkBridge.hbaseHadoopScanRS2(spark, tableName, startRow, stopRow, multiVersion, versions)
-  }
-
-  /**
-    * Scan指定HBase表的数据，并映射为RDD[(T]
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * scan对象
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
-    HBaseSparkBridge.hbaseHadoopScanRDD[T](spark, tableName, scan, clazz, multiVersion, versions)
-  }
-
-  /**
-    * Scan指定HBase表的数据，并映射为RDD[T]
-    *
-    * @param tableName
-    * HBase表名
-    * @param startRow
-    * rowKey开始位置
-    * @param stopRow
-    * rowKey结束位置
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
-    HBaseSparkBridge.hbaseHadoopScanRDD2[T](spark, tableName, startRow, stopRow, clazz, multiVersion, versions)
-  }
-
-  /**
-    * Scan指定HBase表的数据，并映射为RDD[(T]
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * scan对象
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
-    HBaseSparkBridge.hbaseHadoopScanDF[T](this.spark, tableName, scan, clazz, multiVersion, versions)
-  }
-
-  /**
-    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
-    *
-    * @param tableName
-    * HBase表名
-    * @param startRow
-    * rowKey开始位置
-    * @param stopRow
-    * rowKey结束位置
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
-    HBaseSparkBridge.hbaseHadoopScanDF2[T](this.spark, tableName, startRow, stopRow, clazz, multiVersion, versions)
-  }
-
-  /**
-    * Scan指定HBase表的数据，并映射为RDD[(T]
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * scan对象
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
-    HBaseSparkBridge.hbaseHadoopScanDS[T](this.spark, tableName, scan, clazz, multiVersion, versions)
-  }
-
-  /**
-    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
-    *
-    * @param tableName
-    * HBase表名
-    * @param startRow
-    * rowKey开始位置
-    * @param stopRow
-    * rowKey结束位置
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
-    HBaseSparkBridge.hbaseHadoopScanDS2[T](this.spark, tableName, startRow, stopRow, clazz, multiVersion)
   }
 
   /**
@@ -1124,6 +1081,59 @@ class SparkSessionExt(spark: SparkSession) {
     dataset.hbaseOperDeleteDS(tableName, batchSize)
   }
 
+  // ----------------------------------- Kafka 相关API ----------------------------------- //
+
+  /**
+    * 消费kafka中的json数据，并解析成json字符串
+    *
+    * @param brokers
+    * brokers地址
+    * @param extraOptions
+    * 消费kafka额外的参数
+    * @return
+    * 转换成json字符串后的Dataset
+    */
+  def loadKafka(brokers: String, extraOptions: mutable.HashMap[String, String]): Dataset[(String, String)] = {
+    val kafkaDF = spark.readStream.format("kafka").option("kafka.bootstrap.servers", brokers).options(extraOptions).load()
+    kafkaDF.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING) as value").as[(String, String)]
+  }
+
+  /**
+    * 消费kafka中的json数据，并解析成目标类型
+    *
+    * @param schemaClass
+    * json对应的javabean类型
+    * @param brokers
+    * brokers地址
+    * @param extraOptions
+    * 消费kafka额外的参数
+    * @param parseAll
+    * 是否解析所有字段信息
+    * @param isMySQL
+    * 是否为mysql解析的消息
+    * @param fieldNameUpper
+    * 字段名称是否为大写
+    * @return
+    * 转换成json字符串后的Dataset
+    */
+  def loadKafkaParseJson(schemaClass: Class[_],
+                         brokers: String = GlobalConstants.KafkaConf.kafkaBrokers(),
+                         extraOptions: mutable.HashMap[String, String] = mutable.HashMap[String, String]("subscribe" -> GlobalConstants.KafkaConf.kafkaTopics(), "failOnDataLoss" -> GlobalConstants.KafkaConf.kafkaFailOnDataLoss.toString, "startingOffsets" -> GlobalConstants.KafkaConf.kafkaStartingOffset, "enable.auto.commit" -> GlobalConstants.KafkaConf.kafkaEnableAutoCommit.toString),
+                         parseAll: Boolean = false,
+                         isMySQL: Boolean = true,
+                         fieldNameUpper: Boolean = false): DataFrame = {
+    ParamUtils.requireNonNullForce(brokers, "kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name ]指定")
+    ParamUtils.requireNonNullForce(extraOptions, "kafka extraOptions不能为空")
+    ParamUtils.requireNonNullForce(extraOptions.getOrElse("subscribe", null), "topic不能为空，可在配置文件中[ spark.kafka.topics ]指定")
+
+    val kafkaDataset = this.loadKafka(brokers, extraOptions)
+    val schemaDataset = kafkaDataset.select(from_json($"value", SparkUtils.buildSchema2Kafka(schemaClass, parseAll, isMySQL, fieldNameUpper)).as("data"))
+    if (parseAll)
+      schemaDataset.select("data.*")
+    else
+      schemaDataset.select("data.after.*")
+  }
+
   /**
     * 解析DStream中每个rdd的json数据，并转为DataFrame类型
     *
@@ -1161,6 +1171,7 @@ class SparkSessionExt(spark: SparkSession) {
   /**
     * 清理 RDD、DataFrame、Dataset、DStream、TableName 缓存
     * 等同于uncache
+    *
     * @param any
     * RDD、DataFrame、Dataset、DStream、TableName
     */
@@ -1171,6 +1182,7 @@ class SparkSessionExt(spark: SparkSession) {
   /**
     * 清理 RDD、DataFrame、Dataset、DStream、TableName 缓存
     * 等同于unpersist
+    *
     * @param any
     * RDD、DataFrame、Dataset、DStream、TableName
     */
@@ -1196,4 +1208,121 @@ class SparkSessionExt(spark: SparkSession) {
       })
     }
   }
+
+  // ----------------------------------- 关系型数据库API ----------------------------------- //
+
+  /**
+    * 关系型数据库插入、删除、更新操作
+    *
+    * @param sql
+    * 待执行的sql语句
+    * @param params
+    * sql中的参数
+    * @param connection
+    * 传递已有的数据库连接
+    * @param commit
+    * 是否自动提交事务，默认为自动提交
+    * @param closeConnection
+    * 是否关闭connection，默认关闭
+    * @return
+    * 影响的记录数
+    */
+  def jdbcUpdate(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
+    JdbcOper.executeUpdate(sql, params, connection, commit, closeConnection)
+  }
+
+  /**
+    * 关系型数据库批量插入、删除、更新操作
+    *
+    * @param sql
+    * 待执行的sql语句
+    * @param paramsList
+    * sql的参数列表
+    * @param connection
+    * 传递已有的数据库连接
+    * @param commit
+    * 是否自动提交事务，默认为自动提交
+    * @param closeConnection
+    * 是否关闭connection，默认关闭
+    * @return
+    * 影响的记录数
+    */
+  def jdbcBatch(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+    JdbcOper.executeBatch(sql, paramsList, connection, commit, closeConnection)
+  }
+
+  /**
+    * 执行查询操作，以JavaBean方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQuery[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T]): List[T] = {
+    JdbcOper.executeQuery[T](sql, params, clazz)
+  }
+
+  /**
+    * 执行查询操作，以RDD方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T]): RDD[T] = {
+    val rsList = JdbcOper.executeQuery[T](sql, params, clazz)
+    this.sc.parallelize(rsList, 10)
+  }
+
+
+  /**
+    * 执行查询操作，以DataFrame方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T]): DataFrame = {
+    val rsList = JdbcOper.executeQuery[T](sql, params, clazz)
+    this.spark.createDataFrame(JavaConversions.seqAsJavaList(rsList), clazz)
+  }
+
+  /**
+    * 执行查询操作，以Dataset方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQueryDS[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T]): Dataset[T] = {
+    val rsList = JdbcOper.executeQuery[T](sql, params, clazz)
+    this.spark.createDataset[T](JavaConversions.seqAsJavaList(rsList))(Encoders.bean(clazz))
+  }
+
+  /**
+    * 执行查询操作，并在QueryCallback对结果集进行处理
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param callback
+    * 查询回调
+    */
+  def jdbcQuery(sql: String, params: Seq[Any], callback: QueryCallback): Unit = {
+    JdbcOper.executeQuery(sql, params, callback)
+  }
+
 }

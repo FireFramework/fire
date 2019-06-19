@@ -174,7 +174,7 @@ trait BaseSparkStreaming extends BaseSpark {
       msg.buildSuccess("重启StreamingContext成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        logger.wrapLogError("重启StreamingContext失败：" + e.getMessage)
+        this.wrapLogError("重启StreamingContext失败：" + e.getMessage)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {

@@ -10,6 +10,7 @@ import com.zto.bigdata.spark.common.enu.ErrorCode
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
+import org.apache.spark.Logging
 import spark._
 
 import scala.collection.JavaConversions
@@ -19,7 +20,7 @@ import scala.collection.JavaConversions
   *
   * @author ChengLong 2019-3-16 10:16:38
   */
-class SystemRestful(val baseSpark: BaseSpark) {
+class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   private var sparkInfoBean: SparkInfo = _
 
   // 系统预定义接口注册
@@ -56,7 +57,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
       msg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.baseSpark.logger.wrapLogError("kill job失败：" + e.getMessage)
+        this.wrapLogError("kill job失败：" + e.getMessage)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {
@@ -82,7 +83,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
       msg.buildSuccess("kill job 成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.baseSpark.logger.wrapLogError("kill job失败：" + e.getMessage)
+        this.wrapLogError("kill job失败：" + e.getMessage)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {
@@ -108,7 +109,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
       msg.buildSuccess("kill stage 成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.baseSpark.logger.wrapLogError("kill stage失败：" + e.getMessage)
+        this.wrapLogError("kill stage失败：" + e.getMessage)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {
@@ -130,7 +131,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
       msg.buildSuccess(SystemInfoUtils.getSystemLoadInfo, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.baseSpark.logger.wrapLogError("获取driver所在主机负载信息失败：" + e.getMessage)
+        this.wrapLogError("获取driver所在主机负载信息失败：" + e.getMessage)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {
@@ -159,7 +160,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
       msg.buildSuccess(this.baseSpark.spark.sql(sql).limit(1000).showString(), ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.baseSpark.logger.wrapLogError("执行用户SQL失败：" + e.getMessage)
+        this.wrapLogError("执行用户SQL失败：" + e.getMessage)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {
@@ -214,7 +215,7 @@ class SystemRestful(val baseSpark: BaseSpark) {
       msg.buildSuccess(this.sparkInfoBean, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.baseSpark.logger.wrapLogError("获取spark info信息失败：" + e.getMessage)
+        this.wrapLogError("获取spark info信息失败：" + e.getMessage)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {
