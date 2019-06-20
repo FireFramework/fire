@@ -70,6 +70,26 @@ object PropUtils {
   }
 
   /**
+    * 获取拼接后数值的配置字符串
+    *
+    * @param key    配置的前缀
+    * @param number 拼接到key后的数值后缀
+    * @return
+    * 对应的配置信息
+    */
+  def getString(key: String, number: Int = 0, default: String = ""): String = {
+    if (number == null || number <= 1) {
+      var value = this.getProperty(key)
+      if (StringUtils.isBlank(value)) {
+        value = this.getString(key + "1", default)
+      }
+      value
+    } else {
+      this.getString(key + number, default)
+    }
+  }
+
+  /**
     * 获取字符串，为空则取默认值
     *
     * @param key
@@ -103,6 +123,19 @@ object PropUtils {
   }
 
   /**
+    * 获取拼接后数值的配置整数
+    *
+    * @param key    配置的前缀
+    * @param number 拼接到key后的数值后缀
+    * @return
+    * 对应的配置信息
+    */
+  def getInt(key: String, number: Int = 0, default: Int): Int = {
+    val value = this.getString(key, number, default + "")
+    if (StringUtils.isNotBlank(value)) value.toInt else default
+  }
+
+  /**
     * 获取长整型数据
     *
     * @param key
@@ -121,6 +154,19 @@ object PropUtils {
     */
   def getLong(key: String, default: Long): Long = {
     val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toLong else default
+  }
+
+  /**
+    * 获取拼接后数值的配置长整数
+    *
+    * @param key    配置的前缀
+    * @param number 拼接到key后的数值后缀
+    * @return
+    * 对应的配置信息
+    */
+  def getLong(key: String, number: Int = 0, default: Long): Long = {
+    val value = this.getString(key, number, default + "")
     if (StringUtils.isNotBlank(value)) value.toLong else default
   }
 
@@ -144,6 +190,19 @@ object PropUtils {
   def getBoolean(key: String, default: Boolean): Boolean = {
     val value = this.getBoolean(key)
     if (value != null) value else default
+  }
+
+  /**
+    * 获取拼接后数值的配置布尔值
+    *
+    * @param key    配置的前缀
+    * @param number 拼接到key后的数值后缀
+    * @return
+    * 对应的配置信息
+    */
+  def getBoolean(key: String, number: Int = 0, default: Boolean): Boolean = {
+    val value = this.getString(key, number, default + "")
+    if (StringUtils.isNotBlank(value)) value.toBoolean else default
   }
 
   /**

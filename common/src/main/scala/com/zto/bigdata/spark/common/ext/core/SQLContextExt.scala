@@ -141,12 +141,12 @@ class SQLContextExt(sqlContext: SQLContext) {
     * @return
     * DataFrame
     */
-  def loadDBTable(table: String): DataFrame = {
+  def loadDBTable(table: String, num: Int = 1): DataFrame = {
     val props = new Properties()
-    props.setProperty("user", GlobalConstants.JdbcConf.user)
-    props.setProperty("password", GlobalConstants.JdbcConf.password)
-    props.setProperty("driver", GlobalConstants.JdbcConf.driverClass)
-    sqlContext.read.jdbc(GlobalConstants.JdbcConf.url, table, props)
+    props.setProperty("user", GlobalConstants.JdbcConf.user(num))
+    props.setProperty("password", GlobalConstants.JdbcConf.password(num))
+    props.setProperty("driver", GlobalConstants.JdbcConf.driverClass(num))
+    sqlContext.read.jdbc(GlobalConstants.JdbcConf.url(num), table, props)
   }
 
   /**
@@ -158,12 +158,12 @@ class SQLContextExt(sqlContext: SQLContext) {
     * 条件
     * @return
     */
-  def loadOracleData(tableName: String, predicates: Array[String]): DataFrame = {
+  def loadOracleData(tableName: String, predicates: Array[String], num: Int = 1): DataFrame = {
     val props = new Properties()
-    props.setProperty("user", GlobalConstants.JdbcConf.user)
-    props.setProperty("password", GlobalConstants.JdbcConf.password)
-    props.setProperty("driver", GlobalConstants.JdbcConf.driverClass)
-    sqlContext.read.jdbc(GlobalConstants.JdbcConf.url, tableName, predicates, props)
+    props.setProperty("user", GlobalConstants.JdbcConf.user(num))
+    props.setProperty("password", GlobalConstants.JdbcConf.password(num))
+    props.setProperty("driver", GlobalConstants.JdbcConf.driverClass(num))
+    sqlContext.read.jdbc(GlobalConstants.JdbcConf.url(num), tableName, predicates, props)
   }
 
   /**

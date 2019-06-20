@@ -86,14 +86,14 @@ class SparkContextExt(sc: SparkContext) {
     * @return
     * RDD
     */
-  def loadDBToBean[T: ClassManifest](sql: String, day1: String, day2: String, clazz: Class[T], numPartitions: Int = GlobalConstants.SparkConf.parallelism): RDD[T] = {
+  def loadDBToBean[T: ClassManifest](sql: String, day1: String, day2: String, clazz: Class[T], numPartitions: Int = GlobalConstants.SparkConf.parallelism, num: Int = 1): RDD[T] = {
     val lowerBound = DateFormatUtils.formatDateTime(day1).getTime / 1000
     val upperBound = DateFormatUtils.formatDateTime(day2).getTime / 1000
     new JdbcRDD(
       sc,
       () => {
-        Class.forName(GlobalConstants.JdbcConf.driverClass).newInstance()
-        DriverManager.getConnection(GlobalConstants.JdbcConf.url, GlobalConstants.JdbcConf.user, GlobalConstants.JdbcConf.password)
+        Class.forName(GlobalConstants.JdbcConf.driverClass(num)).newInstance()
+        DriverManager.getConnection(GlobalConstants.JdbcConf.url(num), GlobalConstants.JdbcConf.user(num), GlobalConstants.JdbcConf.password(num))
       },
       sql,
       lowerBound, upperBound, numPartitions,

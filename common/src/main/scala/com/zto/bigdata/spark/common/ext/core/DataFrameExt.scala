@@ -70,14 +70,41 @@ class DataFrameExt(dataFrame: DataFrame) {
     * 关系型数据库表名
     * @return
     */
-  def saveAsJDBCTable(tableName: String): Unit = {
-    val props = new Properties()
-    props.setProperty("user", GlobalConstants.JdbcConf.user)
-    props.setProperty("password", GlobalConstants.JdbcConf.password)
-    props.setProperty("driver", GlobalConstants.JdbcConf.driverClass)
-    props.setProperty("batchsize", GlobalConstants.JdbcConf.batchSize.toString)
-    props.setProperty("isolationLevel", GlobalConstants.JdbcConf.isolationLevel.toUpperCase)
-    dataFrame.write.mode(SaveMode.Append).jdbc(GlobalConstants.JdbcConf.url, tableName, props)
+  def jdbcSparkSave(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, num: Int = 1): Unit = {
+    val props = if (jdbcProps == null || jdbcProps.size() == 0) {
+      val defaultProps = new Properties()
+      defaultProps.setProperty("user", GlobalConstants.JdbcConf.user(num))
+      defaultProps.setProperty("password", GlobalConstants.JdbcConf.password(num))
+      defaultProps.setProperty("driver", GlobalConstants.JdbcConf.driverClass(num))
+      defaultProps.setProperty("batchsize", GlobalConstants.JdbcConf.batchSize(num).toString)
+      defaultProps.setProperty("isolationLevel", GlobalConstants.JdbcConf.isolationLevel(num).toUpperCase)
+      defaultProps
+    } else {
+      jdbcProps
+    }
+    dataFrame.write.mode(saveMode).jdbc(GlobalConstants.JdbcConf.url(num), tableName, props)
+  }
+
+  /**
+    * 将DataFrame数据保存到配置的第二个数据源中
+    *
+    * @param tableName
+    * 关系型数据库表名
+    * @return
+    */
+  def jdbcSparkSave2(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null): Unit = {
+    this.jdbcSparkSave(tableName, saveMode, jdbcProps, 2)
+  }
+
+  /**
+    * 将DataFrame数据保存到配置的第三个数据源中
+    *
+    * @param tableName
+    * 关系型数据库表名
+    * @return
+    */
+  def jdbcSparkSave3(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null): Unit = {
+    this.jdbcSparkSave(tableName, saveMode, jdbcProps, 3)
   }
 
   /**
@@ -173,24 +200,6 @@ class DataFrameExt(dataFrame: DataFrame) {
     if (StringUtils.isBlank(tableName)) throw new IllegalArgumentException("临时表名不能为空")
     dataFrame.createOrReplaceTempView(tableName)
     dataFrame.sqlContext.cacheTable(tableName)
-  }
-
-  /**
-    * 以merge的方式将数据写入到关系型数据库中
-    *
-    * @param dbName
-    * 数据库名
-    * @param tableName
-    * 表名
-    */
-  def saveToJDBC(dbName: String, tableName: String, saveMode: SaveMode = SaveMode.Append, url: String = GlobalConstants.JdbcConf.url, user: String = GlobalConstants.JdbcConf.user, password: String = GlobalConstants.JdbcConf.password): Unit = {
-    if (Objects.isNull(url) || Objects.isNull(user)) throw new IllegalArgumentException("jdbc参数不合法，可将信息放入到配置文件中。")
-    dataFrame.write.format("jdbc")
-      .option("dbtable", s"$dbName.$tableName")
-      .option("url", url)
-      .option("user", user)
-      .option("password", password)
-      .mode(saveMode).save()
   }
 
   /**

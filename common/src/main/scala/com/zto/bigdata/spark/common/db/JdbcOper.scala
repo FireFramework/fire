@@ -17,23 +17,28 @@ import scala.reflect.ClassTag
   * @author ChengLong 2016-11-15 16:55:37
   */
 object JdbcOper extends Logging with Serializable {
-  private lazy val cpds: ComboPooledDataSource = new ComboPooledDataSource(true)
+  private lazy val connPoolMap = collection.mutable.Map[String, ComboPooledDataSource]()
+  private val jdbcPoolKey = "cpds"
 
   try {
-    // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
-    if (ParamUtils.isNotBlank(GlobalConstants.JdbcConf.url, GlobalConstants.JdbcConf.user)) {
-      this.wrapLogInfo("初始化数据库连接池")
-      cpds.setJdbcUrl(GlobalConstants.JdbcConf.url)
-      cpds.setDriverClass(GlobalConstants.JdbcConf.driverClass)
-      cpds.setUser(GlobalConstants.JdbcConf.user)
-      cpds.setPassword(GlobalConstants.JdbcConf.password)
-      cpds.setMaxPoolSize(GlobalConstants.JdbcConf.maxPoolSize)
-      cpds.setMinPoolSize(GlobalConstants.JdbcConf.minPoolSize)
-      cpds.setAcquireIncrement(GlobalConstants.JdbcConf.acquireIncrement)
-      cpds.setInitialPoolSize(GlobalConstants.JdbcConf.initialPoolSize)
-      cpds.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime)
-      this.wrapLogInfo(s"数据库连接池初始化成功：url: ${GlobalConstants.JdbcConf.url} driver: ${GlobalConstants.JdbcConf.driverClass} ")
-    }
+    (1 to 9).foreach(i => {
+      // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
+      if (ParamUtils.isNotBlank(GlobalConstants.JdbcConf.url(i), GlobalConstants.JdbcConf.user(i))) {
+        this.wrapLogInfo(s"初始化数据库连接池[ $i ]")
+        val cpds = new ComboPooledDataSource(true)
+        cpds.setJdbcUrl(GlobalConstants.JdbcConf.url(i))
+        cpds.setDriverClass(GlobalConstants.JdbcConf.driverClass(i))
+        cpds.setUser(GlobalConstants.JdbcConf.user(i))
+        cpds.setPassword(GlobalConstants.JdbcConf.password(i))
+        cpds.setMaxPoolSize(GlobalConstants.JdbcConf.maxPoolSize(i))
+        cpds.setMinPoolSize(GlobalConstants.JdbcConf.minPoolSize(i))
+        cpds.setAcquireIncrement(GlobalConstants.JdbcConf.acquireIncrement(i))
+        cpds.setInitialPoolSize(GlobalConstants.JdbcConf.initialPoolSize(i))
+        cpds.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime(i))
+        this.wrapLogInfo(s"数据库连接池[ $i ]初始化成功：url: ${GlobalConstants.JdbcConf.url(i)} driver: ${GlobalConstants.JdbcConf.driverClass(i)} ")
+        this.connPoolMap += (s"cpds$i" -> cpds)
+      }
+    })
   } catch {
     case ex: Exception => ex.printStackTrace()
   }
@@ -44,11 +49,12 @@ object JdbcOper extends Logging with Serializable {
     * @return
     * 数据库连接
     */
-  def getConnection(): Connection = {
+  def getConnection(num: Int = 1): Connection = {
     try {
-      return cpds.getConnection()
+      val pool = this.connPoolMap.get(s"${this.jdbcPoolKey}$num")
+      return pool.get.getConnection
     } catch {
-      case ex: Exception => this.logError("获取数据库连接出现异常", ex)
+      case ex: Exception => this.logError(s"获取数据库连接[ $num ]出现异常，请检查配置文件", ex)
         null
     }
   }
@@ -69,14 +75,14 @@ object JdbcOper extends Logging with Serializable {
     * @return
     * 影响的记录数
     */
-  def executeUpdate(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
+  def executeUpdate(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, num: Int = 1): Long = {
     this.mark
     var retVal: Long = 0L
     var conn: Connection = connection
     var stat: PreparedStatement = null
     try {
       if (conn == null) {
-        conn = this.getConnection
+        conn = this.getConnection(num)
         conn.setAutoCommit(false)
       }
       stat = conn.prepareStatement(sql)
@@ -110,6 +116,46 @@ object JdbcOper extends Logging with Serializable {
   }
 
   /**
+    * 更新操作，调用配置的第二个连接
+    *
+    * @param sql
+    * 待执行的sql语句
+    * @param params
+    * sql中的参数
+    * @param connection
+    * 传递已有的数据库连接
+    * @param commit
+    * 是否自动提交事务，默认为自动提交
+    * @param closeConnection
+    * 是否关闭connection，默认关闭
+    * @return
+    * 影响的记录数
+    */
+  def executeUpdate2(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
+    this.executeUpdate(sql, params, connection, commit, closeConnection, 2)
+  }
+
+  /**
+    * 更新操作，调用配置的第三个连接
+    *
+    * @param sql
+    * 待执行的sql语句
+    * @param params
+    * sql中的参数
+    * @param connection
+    * 传递已有的数据库连接
+    * @param commit
+    * 是否自动提交事务，默认为自动提交
+    * @param closeConnection
+    * 是否关闭connection，默认关闭
+    * @return
+    * 影响的记录数
+    */
+  def executeUpdate3(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
+    this.executeUpdate(sql, params, connection, commit, closeConnection, 3)
+  }
+
+  /**
     * 执行批量更新操作
     *
     * @param sql
@@ -122,17 +168,19 @@ object JdbcOper extends Logging with Serializable {
     * 是否自动提交事务，默认为自动提交
     * @param closeConnection
     * 是否关闭connection，默认关闭
+    * @param num
+    * 对应的配置文件key的后缀数值，支持多个数据源
     * @return
     * 影响的记录数
     */
-  def executeBatch(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+  def executeBatch(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, num: Int = 1): Array[Int] = {
     this.mark
     var retVal: Array[Int] = null
     var conn: Connection = connection
     var stat: PreparedStatement = null
     try {
       if (conn == null) {
-        conn = this.getConnection
+        conn = this.getConnection(num)
         conn.setAutoCommit(false)
       }
       stat = conn.prepareStatement(sql)
@@ -166,6 +214,46 @@ object JdbcOper extends Logging with Serializable {
   }
 
   /**
+    * 对配置的第二个数据库连接执行批量更新操作
+    *
+    * @param sql
+    * 待执行的sql语句
+    * @param paramsList
+    * sql的参数列表
+    * @param connection
+    * 传递已有的数据库连接
+    * @param commit
+    * 是否自动提交事务，默认为自动提交
+    * @param closeConnection
+    * 是否关闭connection，默认关闭
+    * @return
+    * 影响的记录数
+    */
+  def executeBatch2(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+    this.executeBatch(sql, paramsList, connection, commit, closeConnection, 2)
+  }
+
+  /**
+    * 对配置的第三个数据库连接执行批量更新操作
+    *
+    * @param sql
+    * 待执行的sql语句
+    * @param paramsList
+    * sql的参数列表
+    * @param connection
+    * 传递已有的数据库连接
+    * @param commit
+    * 是否自动提交事务，默认为自动提交
+    * @param closeConnection
+    * 是否关闭connection，默认关闭
+    * @return
+    * 影响的记录数
+    */
+  def executeBatch3(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+    this.executeBatch(sql, paramsList, connection, commit, closeConnection, 3)
+  }
+
+  /**
     * 执行查询操作，以JavaBean方式返回结果集
     *
     * @param sql
@@ -174,18 +262,54 @@ object JdbcOper extends Logging with Serializable {
     * sql执行参数
     * @param clazz
     * JavaBean类型
+    * @param connection
+    * 使用制定的数据库连接
+    * @param num
+    * 对应的配置文件key的后缀数值，支持多个数据源
     */
-  def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T]): List[T] = {
+  def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, num: Int = 1): List[T] = {
     val listBuffer = ListBuffer[T]()
 
-    this.executeQuery(sql, params, new QueryCallback {
+    this.executeQueryCall(sql, params, new QueryCallback {
       override def process(rs: ResultSet): Int = {
         listBuffer ++= SparkUtils.dbResultSet2Bean(rs, clazz)
         listBuffer.size
       }
-    })
+    }, connection, num)
 
     listBuffer.toList
+  }
+
+  /**
+    * 使用配置的第二个连接执行查询操作，以JavaBean方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    * @param connection
+    * 使用制定的数据库连接
+    */
+  def executeQuery2[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): List[T] = {
+    this.executeQuery[T](sql, params, clazz, connection, 2)
+  }
+
+  /**
+    * 使用配置的第三个连接执行查询操作，以JavaBean方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    * @param connection
+    * 使用制定的数据库连接
+    */
+  def executeQuery3[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): List[T] = {
+    this.executeQuery[T](sql, params, clazz, connection, 3)
   }
 
   /**
@@ -197,14 +321,20 @@ object JdbcOper extends Logging with Serializable {
     * sql执行参数
     * @param callback
     * 查询回调
+    * @param connection
+    * 使用制定的数据库连接
+    * @param num
+    * 对应的配置文件key的后缀数值，支持多个数据源
     */
-  def executeQuery(sql: String, params: Seq[Any], callback: QueryCallback): Unit = {
+  def executeQueryCall(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null, num: Int = 1): Unit = {
     this.mark
-    var conn: Connection = null
+    var conn: Connection = connection
     var stat: PreparedStatement = null
     var rs: ResultSet = null
     try {
-      conn = this.getConnection
+      if (conn == null) {
+        conn = this.getConnection(num)
+      }
       stat = conn.prepareStatement(sql)
       if (params != null && params.length > 0) {
         var i = 1
@@ -240,7 +370,41 @@ object JdbcOper extends Logging with Serializable {
       }
     }
   }
+
+  /**
+    * 使用配置的第二个连接执行查询操作
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param callback
+    * 查询回调
+    * @param connection
+    * 使用制定的数据库连接
+    */
+  def executeQueryCall2(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null): Unit = {
+    this.executeQueryCall(sql, params, callback, connection, 2)
+  }
+
+  /**
+    * 使用配置的第三个连接执行查询操作
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param callback
+    * 查询回调
+    * @param connection
+    * 使用制定的数据库连接
+    */
+  def executeQueryCall3(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null): Unit = {
+    this.executeQueryCall(sql, params, callback, connection, 3)
+  }
+
 }
+
 
 /**
   * 内部回调trait

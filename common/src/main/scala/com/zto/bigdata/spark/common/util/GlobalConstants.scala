@@ -134,24 +134,24 @@ object GlobalConstants {
     * 关系型数据库连接池相关配置
     */
   object JdbcConf extends Enumeration {
-    val url = PropUtils.getString(PropKeys.SPARK_DB_JDBC_URL_KEY)
-    val driverClass = PropUtils.getString(PropKeys.SPARK_DB_JDBC_DRIVER_KEY)
-    val user = PropUtils.getString(PropKeys.SPARK_DB_JDBC_USER_KEY)
-    val password = PropUtils.getString(PropKeys.SPARK_DB_JDBC_PASSWORD_KEY)
+    def url(number: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_URL_KEY, number)
+    def driverClass(number: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_DRIVER_KEY, number)
+    def user(number: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_USER_KEY, number)
+    def password(number: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_PASSWORD_KEY, number)
     // 事务的隔离级别：NONE, READ_COMMITTED, READ_UNCOMMITTED, REPEATABLE_READ, SERIALIZABLE，默认为READ_UNCOMMITTED
-    val isolationLevel = PropUtils.getString(PropKeys.SPARK_DB_JDBC_ISOLATION_LEVEL, DefaultVals.jdbcIsolationLevel)
+    def isolationLevel(number: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_ISOLATION_LEVEL, number, DefaultVals.jdbcIsolationLevel)
     // 批量操作的记录数
-    val batchSize = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_BATCH_SIZE, DefaultVals.jdbcBatchSize)
+    def batchSize(number: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_BATCH_SIZE, number, DefaultVals.jdbcBatchSize)
     // 连接池最小连接数
-    val minPoolSize = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MIN_POOL_SIZE_KEY, 1)
+    def minPoolSize(number: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MIN_POOL_SIZE_KEY, number, 1)
     // 连接池初始化连接数
-    val initialPoolSize = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_INITIAL_POOL_SIZE_KEY, 1)
+    def initialPoolSize(number: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_INITIAL_POOL_SIZE_KEY, number, 1)
     // 连接池最大连接数
-    val maxPoolSize = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_POOL_SIZE_KEY, 3)
+    def maxPoolSize(number: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_POOL_SIZE_KEY, number, 5)
     // 连接池每次自增连接数
-    val acquireIncrement = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_ACQUIRE_INCREMENT_KEY, 1)
+    def acquireIncrement(number: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_ACQUIRE_INCREMENT_KEY, number, 1)
     // 多久释放没有用到的连接
-    val maxIdleTime = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_IDLE_TIME_KEY, 30)
+    def maxIdleTime(number: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_IDLE_TIME_KEY, number, 30)
   }
 
   /**

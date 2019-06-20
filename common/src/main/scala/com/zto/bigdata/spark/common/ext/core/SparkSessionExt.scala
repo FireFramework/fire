@@ -1,6 +1,7 @@
 package com.zto.bigdata.spark.common.ext.core
 
 import java.sql.Connection
+import java.util.Properties
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.db.{HBaseOper, HBaseSparkBridge, JdbcOper, QueryCallback}
@@ -1227,8 +1228,48 @@ class SparkSessionExt(spark: SparkSession) {
     * @return
     * 影响的记录数
     */
-  def jdbcUpdate(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
-    JdbcOper.executeUpdate(sql, params, connection, commit, closeConnection)
+  def jdbcUpdate(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, num: Int = 1): Long = {
+    JdbcOper.executeUpdate(sql, params, connection, commit, closeConnection, num)
+  }
+
+  /**
+    * 针对第二个数据源的插入、删除、更新操作
+    *
+    * @param sql
+    * 待执行的sql语句
+    * @param params
+    * sql中的参数
+    * @param connection
+    * 传递已有的数据库连接
+    * @param commit
+    * 是否自动提交事务，默认为自动提交
+    * @param closeConnection
+    * 是否关闭connection，默认关闭
+    * @return
+    * 影响的记录数
+    */
+  def jdbcUpdate2(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
+    this.jdbcUpdate(sql, params, connection, commit, closeConnection, 2)
+  }
+
+  /**
+    * 针对第三个数据源的插入、删除、更新操作
+    *
+    * @param sql
+    * 待执行的sql语句
+    * @param params
+    * sql中的参数
+    * @param connection
+    * 传递已有的数据库连接
+    * @param commit
+    * 是否自动提交事务，默认为自动提交
+    * @param closeConnection
+    * 是否关闭connection，默认关闭
+    * @return
+    * 影响的记录数
+    */
+  def jdbcUpdate3(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
+    this.jdbcUpdate(sql, params, connection, commit, closeConnection, 3)
   }
 
   /**
@@ -1247,8 +1288,48 @@ class SparkSessionExt(spark: SparkSession) {
     * @return
     * 影响的记录数
     */
-  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
-    JdbcOper.executeBatch(sql, paramsList, connection, commit, closeConnection)
+  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, num: Int = 1): Array[Int] = {
+    JdbcOper.executeBatch(sql, paramsList, connection, commit, closeConnection, num)
+  }
+
+  /**
+    * 针对第二个数据源的批量插入、删除、更新操作
+    *
+    * @param sql
+    * 待执行的sql语句
+    * @param paramsList
+    * sql的参数列表
+    * @param connection
+    * 传递已有的数据库连接
+    * @param commit
+    * 是否自动提交事务，默认为自动提交
+    * @param closeConnection
+    * 是否关闭connection，默认关闭
+    * @return
+    * 影响的记录数
+    */
+  def jdbcBatchUpdate2(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+    this.jdbcBatchUpdate(sql, paramsList, connection, commit, closeConnection, 2)
+  }
+
+  /**
+    * 针对第三个数据源的批量插入、删除、更新操作
+    *
+    * @param sql
+    * 待执行的sql语句
+    * @param paramsList
+    * sql的参数列表
+    * @param connection
+    * 传递已有的数据库连接
+    * @param commit
+    * 是否自动提交事务，默认为自动提交
+    * @param closeConnection
+    * 是否关闭connection，默认关闭
+    * @return
+    * 影响的记录数
+    */
+  def jdbcBatchUpdate3(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+    this.jdbcBatchUpdate(sql, paramsList, connection, commit, closeConnection, 3)
   }
 
   /**
@@ -1261,8 +1342,36 @@ class SparkSessionExt(spark: SparkSession) {
     * @param clazz
     * JavaBean类型
     */
-  def jdbcQuery[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T]): List[T] = {
-    JdbcOper.executeQuery[T](sql, params, clazz)
+  def jdbcQuery[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, num: Int = 1): List[T] = {
+    JdbcOper.executeQuery[T](sql, params, clazz, connection, num)
+  }
+
+  /**
+    * 针对第二个数据源执行查询操作，以JavaBean方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQuery2[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): List[T] = {
+    this.jdbcQuery[T](sql, params, clazz, connection, 2)
+  }
+
+  /**
+    * 针对第三个数据源执行查询操作，以JavaBean方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQuery3[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): List[T] = {
+    this.jdbcQuery[T](sql, params, clazz, connection, 3)
   }
 
   /**
@@ -1275,9 +1384,37 @@ class SparkSessionExt(spark: SparkSession) {
     * @param clazz
     * JavaBean类型
     */
-  def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T]): RDD[T] = {
-    val rsList = JdbcOper.executeQuery[T](sql, params, clazz)
+  def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, num: Int = 1): RDD[T] = {
+    val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, num)
     this.sc.parallelize(rsList, 10)
+  }
+
+  /**
+    * 针对第二个数据源执行查询操作，以RDD方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQueryRDD2[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): RDD[T] = {
+    this.jdbcQueryRDD[T](sql, params, clazz, connection, 2)
+  }
+
+  /**
+    * 针对第三个数据源执行查询操作，以RDD方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQueryRDD3[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): RDD[T] = {
+    this.jdbcQueryRDD[T](sql, params, clazz, connection, 3)
   }
 
 
@@ -1291,9 +1428,37 @@ class SparkSessionExt(spark: SparkSession) {
     * @param clazz
     * JavaBean类型
     */
-  def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T]): DataFrame = {
-    val rsList = JdbcOper.executeQuery[T](sql, params, clazz)
+  def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, num: Int = 1): DataFrame = {
+    val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, num)
     this.spark.createDataFrame(JavaConversions.seqAsJavaList(rsList), clazz)
+  }
+
+  /**
+    * 针对第二个数据源执行查询操作，以DataFrame方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQueryDF2[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): DataFrame = {
+    this.jdbcQueryDF[T](sql, params, clazz, connection, 2)
+  }
+
+  /**
+    * 针对第三个数据源执行查询操作，以DataFrame方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQueryDF3[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): DataFrame = {
+    this.jdbcQueryDF[T](sql, params, clazz, connection, 3)
   }
 
   /**
@@ -1306,9 +1471,37 @@ class SparkSessionExt(spark: SparkSession) {
     * @param clazz
     * JavaBean类型
     */
-  def jdbcQueryDS[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T]): Dataset[T] = {
-    val rsList = JdbcOper.executeQuery[T](sql, params, clazz)
+  def jdbcQueryDS[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, num: Int = 1): Dataset[T] = {
+    val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, num)
     this.spark.createDataset[T](JavaConversions.seqAsJavaList(rsList))(Encoders.bean(clazz))
+  }
+
+  /**
+    * 针对第二个数据源执行查询操作，以Dataset方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQueryDS2[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): Dataset[T] = {
+    this.jdbcQueryDS[T](sql, params, clazz, connection, 2)
+  }
+
+  /**
+    * 针对第三个数据源执行查询操作，以Dataset方式返回结果集
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param clazz
+    * JavaBean类型
+    */
+  def jdbcQueryDS3[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): Dataset[T] = {
+    this.jdbcQueryDS[T](sql, params, clazz, connection, 3)
   }
 
   /**
@@ -1321,8 +1514,49 @@ class SparkSessionExt(spark: SparkSession) {
     * @param callback
     * 查询回调
     */
-  def jdbcQuery(sql: String, params: Seq[Any], callback: QueryCallback): Unit = {
-    JdbcOper.executeQuery(sql, params, callback)
+  def jdbcQueryCall(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null, num: Int = 1): Unit = {
+    JdbcOper.executeQueryCall(sql, params, callback, connection, num)
+  }
+
+  /**
+    * 针对第二个数据源执行查询操作，并在QueryCallback对结果集进行处理
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param callback
+    * 查询回调
+    */
+  def jdbcQueryCall2(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null): Unit = {
+    this.jdbcQueryCall(sql, params, callback, connection, 2)
+  }
+
+  /**
+    * 针对第三个数据源执行查询操作，并在QueryCallback对结果集进行处理
+    *
+    * @param sql
+    * 查询语句
+    * @param params
+    * sql执行参数
+    * @param callback
+    * 查询回调
+    */
+  def jdbcQueryCall3(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null): Unit = {
+    this.jdbcQueryCall(sql, params, callback, connection, 3)
+  }
+
+  /**
+    * 将DataFrame数据保存到关系型数据库中
+    *
+    * @param dataFrame
+    * DataFrame数据集
+    * @param tableName
+    * 关系型数据库表名
+    * @return
+    */
+  def jdbcSparkSave(dataFrame: DataFrame, tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null): Unit = {
+    dataFrame.jdbcSparkSave(tableName, saveMode, jdbcProps)
   }
 
 }

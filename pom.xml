@@ -4,7 +4,7 @@
     <groupId>com.zto.bigdata.spark</groupId>
     <artifactId>spark2</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
     <inceptionYear>2008</inceptionYear>
 
     <properties>
