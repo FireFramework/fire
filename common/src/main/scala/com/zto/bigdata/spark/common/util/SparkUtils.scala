@@ -217,7 +217,7 @@ object SparkUtils {
           val anno = field.getAnnotation(classOf[FieldName])
           val begin = if (anno == null) true else !anno.disuse()
           if (begin) {
-            val fieldName = if (anno != null) anno.value() else field.getName
+            val fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
             val index = row.fieldIndex(fieldName.trim)
             val fieldType = field.getType
             if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
