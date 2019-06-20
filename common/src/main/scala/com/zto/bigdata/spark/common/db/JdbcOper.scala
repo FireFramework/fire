@@ -5,6 +5,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.util.{GlobalConstants, ParamUtils, SparkUtils}
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.Logging
 
 import scala.collection.mutable.ListBuffer
@@ -23,8 +24,8 @@ object JdbcOper extends Logging with Serializable {
   try {
     (1 to 9).foreach(i => {
       // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
-      if (ParamUtils.isNotBlank(GlobalConstants.JdbcConf.url(i), GlobalConstants.JdbcConf.user(i))) {
-        this.wrapLogInfo(s"初始化数据库连接池[ $i ]")
+      if (StringUtils.isNotBlank(GlobalConstants.JdbcConf.url(i)) && StringUtils.isNotBlank(GlobalConstants.JdbcConf.user(i))) {
+        this.log("jdbc", "init",s"初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$i ]", null, true)
         val cpds = new ComboPooledDataSource(true)
         cpds.setJdbcUrl(GlobalConstants.JdbcConf.url(i))
         cpds.setDriverClass(GlobalConstants.JdbcConf.driverClass(i))
@@ -35,8 +36,8 @@ object JdbcOper extends Logging with Serializable {
         cpds.setAcquireIncrement(GlobalConstants.JdbcConf.acquireIncrement(i))
         cpds.setInitialPoolSize(GlobalConstants.JdbcConf.initialPoolSize(i))
         cpds.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime(i))
-        this.wrapLogInfo(s"数据库连接池[ $i ]初始化成功：url: ${GlobalConstants.JdbcConf.url(i)} driver: ${GlobalConstants.JdbcConf.driverClass(i)} ")
         this.connPoolMap += (s"cpds$i" -> cpds)
+        this.log("jdbc", "init", s"数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$i ]初始化成功：url: ${GlobalConstants.JdbcConf.url(i)} driver: ${GlobalConstants.JdbcConf.driverClass(i)} ", null, true)
       }
     })
   } catch {
@@ -54,7 +55,7 @@ object JdbcOper extends Logging with Serializable {
       val pool = this.connPoolMap.get(s"${this.jdbcPoolKey}$num")
       return pool.get.getConnection
     } catch {
-      case ex: Exception => this.logError(s"获取数据库连接[ $num ]出现异常，请检查配置文件", ex)
+      case ex: Exception => this.log("jdbc", s"getConnection(${num})", s"获取数据库连接[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$num ]出现异常，请检查配置文件", ex, true)
         null
     }
   }
@@ -97,10 +98,10 @@ object JdbcOper extends Logging with Serializable {
       }
       retVal = stat.executeUpdate
       if (commit) conn.commit()
-      this.log("db", "update", s"sql->$sql 影响记录数：$retVal")
+      this.log("jdbc", "update", s"sql->$sql 影响记录数：$retVal", null, true)
     }
     catch {
-      case e: Exception => this.log("db", "update", s"sql->$sql result->fail", e)
+      case e: Exception => this.log("jdbc", "update", s"sql->$sql result->fail", e, true)
     } finally {
       if (conn != null && closeConnection)
         conn.close()
@@ -108,7 +109,7 @@ object JdbcOper extends Logging with Serializable {
         try {
           stat.close()
         } catch {
-          case e: SQLException => this.log("db", "释放连接", s"sql->$sql", e)
+          case e: SQLException => this.log("jdbc", "释放连接", s"sql->$sql", e, true)
         }
       }
     }
@@ -184,6 +185,7 @@ object JdbcOper extends Logging with Serializable {
         conn.setAutoCommit(false)
       }
       stat = conn.prepareStatement(sql)
+      var batch = 0
       if (paramsList != null && paramsList.size > 0) {
         paramsList.foreach(params => {
           var i = 1
@@ -191,22 +193,28 @@ object JdbcOper extends Logging with Serializable {
             stat.setObject(i, param)
             i += 1
           })
+          batch += 1
           stat.addBatch()
+          if (batch % GlobalConstants.JdbcConf.batchSize(num) == 0) {
+            stat.executeBatch()
+            stat.clearBatch()
+            this.log("jdbc", s"executeBatch-->batch=${GlobalConstants.JdbcConf.batchSize(num)}", s"sql->$sql 影响记录数：${GlobalConstants.JdbcConf.batchSize(num)}", null, true)
+          }
         })
       }
       // 执行批量更新
       retVal = stat.executeBatch
       if (commit) conn.commit()
-      this.log("db", "executeBatch", s"sql->$sql 影响记录数：$retVal")
+      this.log("jdbc", "executeBatch", s"sql->$sql 影响总记录数：$batch", null, true)
     } catch {
-      case e: Exception => this.log("db", "executeBatch", s"sql->$sql result->fail", e)
+      case e: Exception => this.log("jdbc", "executeBatch", s"sql->$sql result->fail", e, true)
     } finally {
       if (conn != null && closeConnection) conn.close()
       if (stat != null) {
         try {
           stat.close()
         } catch {
-          case e: SQLException => this.log("db", "释放连接", sql, e)
+          case e: SQLException => this.log("jdbc", "释放连接", sql, e, true)
         }
       }
     }
@@ -348,16 +356,16 @@ object JdbcOper extends Logging with Serializable {
       if (rs != null) {
         count = callback.process(rs)
       }
-      this.log("db", "query", s"sql->$sql result->success 查询记录数：$count")
+      this.log("jdbc", "query", s"sql->$sql result->success 查询记录数：$count", null, true)
     } catch {
-      case e: Exception => this.log("db", "query", s"sql->$sql result->fail", e)
+      case e: Exception => this.log("jdbc", "query", s"sql->$sql result->fail", e, true)
     } finally {
       if (conn != null) conn.close()
       if (rs != null) {
         try {
           rs.close()
         } catch {
-          case e: SQLException => this.log("db", "释放连接", s"sql->$sql", e)
+          case e: SQLException => this.log("db", "释放连接", s"sql->$sql", e, true)
         }
       }
       if (stat != null) {

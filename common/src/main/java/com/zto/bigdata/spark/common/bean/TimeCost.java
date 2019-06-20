@@ -30,6 +30,8 @@ public class TimeCost implements Serializable {
     private String action;
     // 耗时
     private Long timeCost;
+    // 用于区分埋点日志和用户日志
+    private Boolean sdk = false;
     // 处理结果（true：成功 false：失败）
     private Boolean result;
     private TaskContext taskInfo;
@@ -159,6 +161,10 @@ public class TimeCost implements Serializable {
         return resultSize;
     }
 
+    public Boolean getSdk() {
+        return sdk;
+    }
+
     @Override
     public String toString() {
         return JSON.toJSONString(this);
@@ -188,9 +194,10 @@ public class TimeCost implements Serializable {
      * @param action 执行的动作：insert、delete、update、select
      * @return 当前对象
      */
-    public TimeCost info(String sink, String action, String msg) {
+    public TimeCost info(String sink, String action, String msg, Boolean sdk) {
         this.sink = sink;
         this.action = action;
+        if (sdk != null) this.sdk = sdk;
         if (SparkUtils.isExecutor()) {
             this.taskInfo = TaskContext.get();
             if (this.taskInfo != null) {

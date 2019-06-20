@@ -25,15 +25,18 @@ class LoggerExt(logger: Logging) extends Logging {
     * 记录日志
     *
     * @param sink
-    * 数据的目标源
+    *                  数据的目标源
     * @param action
-    * 执行的动作
+    *                  执行的动作
     * @param msg
-    * 错误信息
+    *                  错误信息
+    * @param throwable 异常对象
+    * @param sdk
+    *                  用于区分系统埋点日志和用户日志，默认为用户日志
     */
-  def log(sink: String, action: String = "timecost", msg: String = "success", throwable: Throwable = null): Unit = {
+  def log(sink: String, action: String = "timecost", msg: String = "success", throwable: Throwable = null, sdk: Boolean = false): Unit = {
     if (this.timeCost == null) this.mark
-    this.timeCost.info(sink, action, msg)
+    this.timeCost.info(sink, action, msg, sdk)
     if (throwable == null) this.logInfo(this.timeCost.toString) else this.logError(this.timeCost.toString, throwable)
   }
 
