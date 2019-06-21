@@ -2,24 +2,34 @@ package com.zto.bigdata.spark.bean;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.zto.bigdata.spark.common.anno.FieldName;
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean;
 import com.zto.bigdata.spark.common.util.DateFormatUtils;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
+/**
+ * 对应HBase表的JavaBean
+ *
+ * @author ChengLong 2019-6-20 16:06:16
+ */
 public class Student extends HBaseBaseBean<Student> {
     private Long id;
     private String name;
     private Integer age;
+    // 多列族情况下需使用family单独指定
+    @FieldName(family = "data")
+    private String createTime;
+    // 若JavaBean的字段名称与HBase中的字段名称不一致，需使用value单独指定
+    // 此时hbase中的列名为length1，而不是length
+    @FieldName(family = "data", value = "length1")
     private BigDecimal length;
     private Boolean sex;
-    private String createTime;
 
     /**
      * rowkey的构建
+     *
      * @return
      */
     @Override
@@ -119,46 +129,47 @@ public class Student extends HBaseBaseBean<Student> {
                 new Student(8L, "flink", 19, new BigDecimal(19.1), true, dateTime),
                 new Student(9L, "streaming", 10, new BigDecimal(10.1), true, dateTime),
                 new Student(10L, "sql", 12, new BigDecimal(12.1), true, dateTime)
-                );
+        );
     }
 
     /**
      * 构建student集合
+     *
      * @return
      */
     public static List<Student> buildStudentList() {
         List<Student> studentList = new LinkedList<>();
         try {
-            for (int i=1; i<=1; i++) {
+            for (int i = 1; i <= 1; i++) {
                 Thread.sleep(500);
                 Student stu = new Student(1L, "root", i + 1, new BigDecimal(1 + i), true, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
 
-            for (int i=1; i<=2; i++) {
+            for (int i = 1; i <= 2; i++) {
                 Thread.sleep(500);
                 Student stu = new Student(2L, "admin", i + 2, new BigDecimal(2019.05180919 + i), false, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
 
-            for (int i=1; i<=3; i++) {
+            for (int i = 1; i <= 3; i++) {
                 Thread.sleep(500);
                 Student stu = new Student(3L, "spark", i + 3, new BigDecimal(33.1415926 + i));
                 studentList.add(stu);
             }
 
-            for (int i=1; i<=3; i++) {
+            for (int i = 1; i <= 3; i++) {
                 Thread.sleep(500);
                 Student stu = new Student(4L, "flink", i + 4, new BigDecimal(4.2 + i), true, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
 
-            for (int i=1; i<=3; i++) {
+            for (int i = 1; i <= 3; i++) {
                 Thread.sleep(500);
                 Student stu = new Student(5L, "hadoop", i + 5, new BigDecimal(5.5 + i), false, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
-            for (int i=1; i<=3; i++) {
+            for (int i = 1; i <= 3; i++) {
                 Thread.sleep(500);
                 Student stu = new Student(6L, "hbase", i + 6, new BigDecimal(66.66 + i), true, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
@@ -170,4 +181,11 @@ public class Student extends HBaseBaseBean<Student> {
         return studentList;
     }
 
+    public static void main(String[] args) {
+        Properties properties = System.getProperties();
+        Set set = System.getProperties().keySet();
+        for (Object key : set) {
+            System.out.println(key + "  value = " + properties.get(key));
+        }
+    }
 }

@@ -1,10 +1,12 @@
 package com.zto.bigdata.spark.hbase
 
 import com.zto.bigdata.spark.bean.Student
+import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.core.BaseSparkCore
 import com.zto.bigdata.spark.common.db.HBaseOper
 import com.zto.bigdata.spark.common.ext.SparkExt._
-import org.apache.spark.sql.{Encoders, Row}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{Encoders, Row, SparkSession}
 
 import scala.collection.JavaConversions
 
@@ -14,7 +16,7 @@ import scala.collection.JavaConversions
   *
   * @author ChengLong 2019-5-18 09:20:52
   */
-object HbaseBulkTest extends BaseSparkCore {
+object HBaseBulkTest extends BaseSparkCore {
   private val tableName1 = "zto_test_senda"
   private val tableName2 = "zto_test_senda2"
   private val tableName3 = "zto_test_senda3"
@@ -64,7 +66,7 @@ object HbaseBulkTest extends BaseSparkCore {
     val rdd = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
     val studentDataset = this.spark.createDataset(rdd)(Encoders.bean(classOf[Student]))
     // multiVersion=true表示以多版本形式插入
-    studentDataset.hbaseBulkPutDS(this.tableName3, false, true)
+    studentDataset.hbaseBulkPutDS(this.tableName2)
     // 方式二：
     // this.spark.hbaseBulkPutDS(this.tableName3, studentDataset)
   }
@@ -117,8 +119,8 @@ object HbaseBulkTest extends BaseSparkCore {
     val studentDS = rowKeyRdd.hbaseBulkGetDS(this.tableName1, classOf[Student])
     studentDS.show(100, false)
     // 方式二：使用this.spark.hbaseBulkGetDF
-    val studentDS2 = this.spark.hbaseBulkGetDS(this.tableName2, rowKeyRdd, classOf[Student])
-    studentDS2.show(100, false)
+    // val studentDS2 = this.spark.hbaseBulkGetDS(this.tableName2, rowKeyRdd, classOf[Student])
+    // studentDS2.show(100, false)
   }
 
   /**
@@ -126,7 +128,6 @@ object HbaseBulkTest extends BaseSparkCore {
     */
   def testHbaseBulkScanRDD: Unit = {
     // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为RDD[Student]
-    println("============scanRDD===========")
     val scanRDD = this.spark.hbaseBulkScanRDD(this.tableName2, "1", "6", classOf[Student])
     scanRDD.foreach(println)
   }
@@ -136,7 +137,6 @@ object HbaseBulkTest extends BaseSparkCore {
     */
   def testHbaseBulkScanDF: Unit = {
     // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为DataFrame
-    println("============scanDF===========")
     val scanDF = this.spark.hbaseBulkScanDF(this.tableName2, "1", "6", classOf[Student])
     scanDF.show(100, false)
   }
@@ -146,8 +146,7 @@ object HbaseBulkTest extends BaseSparkCore {
     */
   def testHbaseBulkScanDS: Unit = {
     // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为Dataset[Student]
-    println("============scanDS===========")
-    val scanDS = this.spark.hbaseBulkScanDS(this.tableName1, HBaseOper.buildScan("1", "6"), classOf[Student])
+    val scanDS = this.spark.hbaseBulkScanDS(this.tableName2, HBaseOper.buildScan("1", "6"), classOf[Student])
     scanDS.show(100, false)
   }
 
@@ -185,7 +184,7 @@ object HbaseBulkTest extends BaseSparkCore {
   override def process: Unit = {
     // this.testHbaseBulkPutRDD
     // this.testHbaseBulkPutDF
-    // this.testHbaseBulkPutDS
+    this.testHbaseBulkPutDS
 
     // this.testHBaseBulkGetRDD
     // this.testHBaseBulkGetDF
@@ -198,17 +197,11 @@ object HbaseBulkTest extends BaseSparkCore {
     // this.testHbaseBulkScanRDD
     // this.testHbaseBulkScanDF
     this.testHbaseBulkScanDS
-
-    /*this.testHbaseHadoopPutDataset
-    this.testBulkDelete
-    this.testBulkGet*/
-    // this.testBulkScan
   }
 
   def main(args: Array[String]): Unit = {
     this.init()
-
-    this.spark.stop()
+    spark.stop()
   }
 
 }

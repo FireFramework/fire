@@ -149,10 +149,19 @@ trait BaseSparkStreaming extends BaseSpark {
     * @return
     * kafka相关配置
     */
-  def kafkaParams(groupId: String = GlobalConstants.KafkaConf.kafkaGroupId(), kafkaBrokers: String = GlobalConstants.KafkaConf.kafkaBrokers(), offset: String = GlobalConstants.KafkaConf.offsetLargest, commit: Boolean = GlobalConstants.KafkaConf.kafkaEnableAutoCommit): Map[String, Object] = {
+  def kafkaParams(groupId: String = null, kafkaBrokers: String = null, offset: String = null, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
     // 如果配置文件中没有指定spark.kafka.group.id，则默认为appName
-    val kafkaGroupId = if (StringUtils.isNotBlank(groupId)) groupId else this.appName
-    SparkUtils.kafkaParams(kafkaGroupId, kafkaBrokers, offset)
+    val finalKafkaGroupId = if (StringUtils.isBlank(groupId)) {
+      if (StringUtils.isNotBlank(GlobalConstants.KafkaConf.kafkaGroupId(keyNum))) {
+        GlobalConstants.KafkaConf.kafkaGroupId(keyNum)
+      } else {
+        ssc.sparkContext.appName
+      }
+    } else {
+      groupId
+    }
+
+    SparkUtils.kafkaParams(finalKafkaGroupId, kafkaBrokers, offset, autoCommit, keyNum)
   }
 
   /**

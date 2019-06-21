@@ -9,6 +9,7 @@ import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.ext.module.HBaseContextExt
 import com.zto.bigdata.spark.common.udf.UDFs
 import com.zto.bigdata.spark.common.util._
+import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
 import org.apache.hadoop.hbase.filter.{Filter, FilterList}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
@@ -105,6 +106,17 @@ class SparkSessionExt(spark: SparkSession) {
     */
   def cacheTables(tables: String*): Unit = {
     spark.sqlContext.cacheTables(tables: _*)
+  }
+
+  /**
+    * 判断表是否被缓存
+    *
+    * @param tableName
+    * 表名
+    * @return
+    */
+  def isCached(tableName: String): Boolean = {
+    this.spark.sqlContext.isCached(tableName)
   }
 
   /**
@@ -1065,11 +1077,27 @@ class SparkSessionExt(spark: SparkSession) {
     * brokers地址
     * @param extraOptions
     * 消费kafka额外的参数
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     * @return
     * 转换成json字符串后的Dataset
     */
-  def loadKafka(brokers: String, extraOptions: mutable.HashMap[String, String]): Dataset[(String, String)] = {
-    val kafkaDF = spark.readStream.format("kafka").option("kafka.bootstrap.servers", brokers).options(extraOptions).load()
+  def loadKafka(brokers: String = null, extraOptions: mutable.HashMap[String, String] = null, keyNum: Int = 1): Dataset[(String, String)] = {
+    val finalBrokers = if (StringUtils.isBlank(brokers)) GlobalConstants.KafkaConf.kafkaBrokers(keyNum) else brokers
+    val finalExtraOptions = if (extraOptions == null || extraOptions.size == 0) {
+      mutable.HashMap[String, String]("subscribe" -> GlobalConstants.KafkaConf.kafkaTopics(),
+        "failOnDataLoss" -> GlobalConstants.KafkaConf.kafkaFailOnDataLoss(keyNum).toString,
+        "startingOffsets" -> GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum),
+        "enable.auto.commit" -> GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum).toString)
+    } else {
+      extraOptions
+    }
+    ParamUtils.requireNonNullForce(finalBrokers, s"kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name$keyNum ]指定")
+    ParamUtils.requireNonNullForce(finalExtraOptions, "kafka extraOptions不能为空")
+    ParamUtils.requireNonNullForce(extraOptions.getOrElse("subscribe", null), s"topic不能为空，可在配置文件中[ spark.kafka.topics$keyNum ]指定")
+
+    val kafkaDF = spark.readStream.format("kafka").option("kafka.bootstrap.servers", finalBrokers).options(finalExtraOptions).load()
     kafkaDF.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING) as value").as[(String, String)]
   }
 
@@ -1092,16 +1120,13 @@ class SparkSessionExt(spark: SparkSession) {
     * 转换成json字符串后的Dataset
     */
   def loadKafkaParseJson(schemaClass: Class[_],
-                         brokers: String = GlobalConstants.KafkaConf.kafkaBrokers(),
-                         extraOptions: mutable.HashMap[String, String] = mutable.HashMap[String, String]("subscribe" -> GlobalConstants.KafkaConf.kafkaTopics(), "failOnDataLoss" -> GlobalConstants.KafkaConf.kafkaFailOnDataLoss.toString, "startingOffsets" -> GlobalConstants.KafkaConf.kafkaStartingOffset, "enable.auto.commit" -> GlobalConstants.KafkaConf.kafkaEnableAutoCommit.toString),
+                         brokers: String = null,
+                         extraOptions: mutable.HashMap[String, String] = null,
                          parseAll: Boolean = false,
                          isMySQL: Boolean = true,
-                         fieldNameUpper: Boolean = false): DataFrame = {
-    ParamUtils.requireNonNullForce(brokers, "kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name ]指定")
-    ParamUtils.requireNonNullForce(extraOptions, "kafka extraOptions不能为空")
-    ParamUtils.requireNonNullForce(extraOptions.getOrElse("subscribe", null), "topic不能为空，可在配置文件中[ spark.kafka.topics ]指定")
+                         fieldNameUpper: Boolean = false, keyNum: Int = 1): DataFrame = {
 
-    val kafkaDataset = this.loadKafka(brokers, extraOptions)
+    val kafkaDataset = this.loadKafka(brokers, extraOptions, keyNum)
     val schemaDataset = kafkaDataset.select(from_json($"value", SparkUtils.buildSchema2Kafka(schemaClass, parseAll, isMySQL, fieldNameUpper)).as("data"))
     if (parseAll)
       schemaDataset.select("data.*")
@@ -1368,8 +1393,8 @@ class SparkSessionExt(spark: SparkSession) {
     *                  比如：gmt_create >= '2019-06-20' AND gmt_create <= '2019-06-21' 和 gmt_create >= '2019-06-22' AND gmt_create <= '2019-06-23'
     *                  那么将两个线程同步load，线程数与predicates中指定的参数个数保持一致
     * @param keyNum
-    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+    *                  配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    *                  比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     * @return
     * 查询结果集
     */

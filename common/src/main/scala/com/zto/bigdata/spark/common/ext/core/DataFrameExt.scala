@@ -67,6 +67,9 @@ class DataFrameExt(dataFrame: DataFrame) {
     *
     * @param tableName
     * 关系型数据库表名
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     * @return
     */
   def jdbcTableSave(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, keyNum: Int = 1): Unit = {

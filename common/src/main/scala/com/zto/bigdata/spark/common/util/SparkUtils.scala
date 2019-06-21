@@ -616,14 +616,20 @@ object SparkUtils {
     * @return
     * kafka相关配置
     */
-  def kafkaParams(groupId: String = GlobalConstants.KafkaConf.kafkaGroupId(), kafkaBrokers: String = GlobalConstants.KafkaConf.kafkaBrokers(), offset: String = GlobalConstants.KafkaConf.kafkaStartingOffset, commit: Boolean = GlobalConstants.KafkaConf.kafkaEnableAutoCommit): Map[String, Object] = {
+  def kafkaParams(groupId: String = null, kafkaBrokers: String = null, offset: String = null, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
+    ParamUtils.requireNonNull(groupId, s"kafka groupId不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum 指定")
+
+    val finalKafkaBrokers = if (StringUtils.isBlank(kafkaBrokers)) GlobalConstants.KafkaConf.kafkaBrokers(keyNum) else kafkaBrokers
+    val finalOffset = if (StringUtils.isBlank(offset)) GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum) else offset
+    val finalAutoCommit = if (autoCommit == null) GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum) else autoCommit
+
     Map[String, Object](
-      "bootstrap.servers" -> kafkaBrokers,
+      "bootstrap.servers" -> finalKafkaBrokers,
       "key.deserializer" -> classOf[StringDeserializer],
       "value.deserializer" -> classOf[StringDeserializer],
       "group.id" -> groupId,
-      "auto.offset.reset" -> offset,
-      "enable.auto.commit" -> (commit: java.lang.Boolean),
+      "auto.offset.reset" -> finalOffset,
+      "enable.auto.commit" -> (finalAutoCommit: java.lang.Boolean),
       "session.timeout.ms" -> (300000: java.lang.Integer),
       "request.timeout.ms" -> (400000: java.lang.Integer),
       "max.poll.interval.ms" -> (600000: java.lang.Integer)
@@ -638,12 +644,16 @@ object SparkUtils {
     * @return
     * rocketMQ相关配置
     */
-  def rocketParams(groupId: String = GlobalConstants.RocketConf.rocketGroupId(), rocketNameServer: String = GlobalConstants.RocketConf.rocketNameServer(), tag: String = GlobalConstants.RocketConf.rocketConsumerTag()): java.util.Map[String, String] = {
+  def rocketParams(groupId: String = null, rocketNameServer: String = null, tag: String = null, keyNum: Int = 1): java.util.Map[String, String] = {
+    ParamUtils.requireNonNull(groupId, s"RocketMQ的groupId不能为空，请在配置文件中指定：spark.rocket.group.id$keyNum")
+    val finalNameServer = if (StringUtils.isBlank(rocketNameServer)) GlobalConstants.RocketConf.rocketNameServer(keyNum) else rocketNameServer
+    val finalTag = if (StringUtils.isBlank(tag)) GlobalConstants.RocketConf.rocketConsumerTag(keyNum) else tag
+
     val optionParams = new java.util.HashMap[String, String]()
-    optionParams.put(RocketMQConfig.NAME_SERVER_ADDR, rocketNameServer)
+    optionParams.put(RocketMQConfig.NAME_SERVER_ADDR, finalNameServer)
     optionParams.put(RocketMQConfig.MAX_PULL_SPEED_PER_PARTITION, "5000")
     optionParams.put(RocketMQConfig.CONSUMER_GROUP, groupId)
-    optionParams.put(RocketMQConfig.CONSUMER_TAG, tag)
+    optionParams.put(RocketMQConfig.CONSUMER_TAG, finalTag)
     optionParams
   }
 

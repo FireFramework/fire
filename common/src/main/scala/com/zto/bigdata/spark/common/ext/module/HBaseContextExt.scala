@@ -34,7 +34,7 @@ import scala.reflect.ClassTag
   * @author ChengLong 2018年4月10日 10:39:28
   */
 class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config: Configuration = HBaseOper.getConfiguration) extends HBaseContext(sc, config) {
-  val batchSize = 10000
+  lazy val batchSize = GlobalConstants.HBaseConf.hbaseBatchSize
 
   /**
     * 根据RDD[String]批量删除，rdd是rowkey的集合
@@ -45,7 +45,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @param tableName
     * HBase表名
     * @param batchSize
-    * 批量删除的大小，默认为1000条
+    * 批量删除的大小，默认为10000条
     */
   def bulkDeleteRDD(tableName: String, rdd: RDD[String], batchSize: Integer = this.batchSize): Unit = {
     ParamUtils.requireNonNullForce(tableName, "表名不能为空")
@@ -65,7 +65,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @param tableName
     * HBase表名
     * @param batchSize
-    * 批量删除的大小，默认为1000条
+    * 批量删除的大小，默认为10000条
     */
   def bulkDeleteDS(tableName: String, dataset: Dataset[String], batchSize: Integer = this.batchSize): Unit = {
     ParamUtils.isNotBlank(dataset, "dataset不能为空")
@@ -97,7 +97,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @param clazz
     * 获取后的记录转换为目标类型（自定义的JavaBean类型）
     * @param batchSize
-    * 用于指定一次获取多少条记录，默认1000条
+    * 用于指定一次获取多少条记录，默认10000条
     * @tparam E
     * 自定义JavaBean类型，必须继承自HBaseBaseBean
     * @return
@@ -125,7 +125,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @param clazz
     * 获取后的记录转换为目标类型（自定义的JavaBean类型）
     * @param batchSize
-    * 用于指定一次获取多少条记录，默认1000条
+    * 用于指定一次获取多少条记录，默认10000条
     * @tparam E
     * 自定义JavaBean类型，必须继承自HBaseBaseBean
     * @return
@@ -147,7 +147,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * @param clazz
     * 获取后的记录转换为目标类型（自定义的JavaBean类型）
     * @param batchSize
-    * 用于指定一次获取多少条记录，默认1000条
+    * 用于指定一次获取多少条记录，默认10000条
     * @tparam E
     * 自定义JavaBean类型，必须继承自HBaseBaseBean
     * @return

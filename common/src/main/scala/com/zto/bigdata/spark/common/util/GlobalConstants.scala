@@ -54,6 +54,8 @@ object GlobalConstants {
     val dbName = "tmp"
     // 默认的partition名称
     val partitionName = "ds"
+    // HBase默认批次大小
+    val hbaseBatch = 10000
   }
 
   /**
@@ -80,11 +82,11 @@ object GlobalConstants {
     val LOG_LEVEL = "spark.log.level"
     val SAVE_MODE_KEY = "spark.saveMode"
     val PARALLELISM_KEY = "spark.parallelism"
-    val FAMILY_KEY = "family"
+    val HBBASE_COLUMN_FAMILY_KEY = "spark.hbase.column.family"
     val HbaseDurability_KEY = "HbaseDurability"
     val KUDU_MASTER_URL = "spark.kudu.master"
     val HBASE_CLUSTER_URL = "spark.hbase.cluster"
-    val ZK_URL = "zk.url"
+    val HBASE_BATCH = "spark.hbase.batch.size"
     val IMPALA_CONNECTION_URL_KEY: String = "spark.impala.connection.url"
     val IMPALA_JDBC_DRIVER_NAME_KEY: String = "spark.impala.jdbc.driver.class.name"
     val IMPALA_DAEMONS_URL = "spark.impala.daemons.url"
@@ -183,35 +185,33 @@ object GlobalConstants {
     private val zmsKafkaUrl = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092,192.168.1.173:9092,192.168.5.29:9092,192.168.5.30:9092"
 
     // kafka消费位点
-    val kafkaStartingOffset = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, DefaultVals.kafkaStartingOffset)
+    def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
     // 丢失数据时是否失败
-    val kafkaFailOnDataLoss = PropUtils.getBoolean(PropKeys.KAFKA_FAIL_ON_DATA_LOSS, DefaultVals.kafkaFailOnDataLoss)
+    def kafkaFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.kafkaFailOnDataLoss)
     // enable.auto.commit
-    val kafkaEnableAutoCommit = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, DefaultVals.kafkaEnableAutoCommit)
+    def kafkaEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.kafkaEnableAutoCommit)
 
     /**
       * 配置文件中的groupId
       *
-      * @param number
+      * @param keyNum
       * 序列
       * @return
       * 配置信息
       */
-    def kafkaGroupId(number: String = ""): String = {
-      PropUtils.getString(PropKeys.KAFKA_GROUP_ID + number.replace("1", ""), "")
-    }
+    def kafkaGroupId(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_GROUP_ID, keyNum, "")
 
 
     /**
       * 根据名称获取kafka broker地址
       *
-      * @param number
+      * @param keyNum
       * 序列
       * @return
       * 配置信息
       */
-    def kafkaBrokers(number: String = "") = {
-      val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME + number.replace("1", ""), DefaultVals.kafkaBrokersName)
+    def kafkaBrokers(keyNum: Int = 1) = {
+      val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME, keyNum, DefaultVals.kafkaBrokersName)
       if ("bigdata".equalsIgnoreCase(brokerName)) {
         bigdataKafkaUrl
       } else {
@@ -222,13 +222,12 @@ object GlobalConstants {
     /**
       * 获取topic列表
       *
-      * @param number
+      * @param keyNum
       * @return
       */
-    def kafkaTopics(number: String = ""): String = {
-      val key = PropKeys.KAFKA_TOPICS + number.replace("1", "")
-      val topics = PropUtils.getString(key, null)
-      ParamUtils.requireNonNullForce(topics, "配置未找到：" + key)
+    def kafkaTopics(keyNum: Int = 1): String = {
+      val topics = PropUtils.getString(PropKeys.KAFKA_TOPICS, keyNum, null)
+      ParamUtils.requireNonNullForce(topics, "配置未找到：spark.kafka.topics" + keyNum)
       topics
     }
   }
@@ -246,8 +245,8 @@ object GlobalConstants {
       * 获取消费位点
       * @return
       */
-    def rocketStartingOffset(number: String = ""): ConsumerStrategy = {
-      val offset = PropUtils.getString(PropKeys.ROCKET_STARTING_OFFSET + number.replace("1", ""), DefaultVals.rocketStartingOffset)
+    def rocketStartingOffset(keyNum: Int = 1): ConsumerStrategy = {
+      val offset = PropUtils.getString(PropKeys.ROCKET_STARTING_OFFSET, keyNum, DefaultVals.rocketStartingOffset)
       if (rocketOffsetLargest.equalsIgnoreCase(offset)) {
         ConsumerStrategy.lastest
       } else {
@@ -255,64 +254,59 @@ object GlobalConstants {
       }
     }
     // 丢失数据时是否失败
-    val rocketFailOnDataLoss = PropUtils.getBoolean(PropKeys.ROCKET_FAIL_ON_DATA_LOSS, DefaultVals.rocketFailOnDataLoss)
+    def rocketFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.rocketFailOnDataLoss)
     // enable.auto.commit
-    val rocketEnableAutoCommit = PropUtils.getBoolean(PropKeys.ROCKET_ENABLE_AUTO_COMMIT, DefaultVals.rocketEnableAutoCommit)
+    def rocketEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.rocketEnableAutoCommit)
 
     /**
       * 获取rocketMQ name server 地址
       *
-      * @param number
+      * @param keyNum
       * 序列
       * @return
       * 配置信息
       */
-    def rocketNameServer(number: String = ""): String = {
-      val key = PropKeys.ROCKET_BROKERS_NAME + number.replace("1", "")
-      val brokerName = PropUtils.getString(key, "")
-      ParamUtils.requireNonNullForce(brokerName, "配置未找到：" + key)
+    def rocketNameServer(keyNum: Int = 1): String = {
+      val brokerName = PropUtils.getString(PropKeys.ROCKET_BROKERS_NAME, keyNum, "")
+      ParamUtils.requireNonNullForce(brokerName, "配置未找到：spark.rocket.brokers.name" + keyNum)
       brokerName
     }
 
     /**
       * 获取rocketMQ 订阅的tag
       *
-      * @param number
+      * @param keyNum
       * 序列
       * @return
       * 配置信息
       */
-    def rocketConsumerTag(number: String = ""): String = {
-      PropUtils.getString(PropKeys.ROCKET_CONSUMER_TAG + number.replace("1", ""), "*")
-    }
+    def rocketConsumerTag(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_CONSUMER_TAG, keyNum, "*")
 
     /**
       * 获取groupId
       *
-      * @param number
+      * @param keyNum
       * 序列
       * @return
       * 配置信息
       */
-    def rocketGroupId(number: String = ""): String = {
-      val key = PropKeys.ROCKET_GROUP_ID + number.replace("1", "")
-      val groupId = PropUtils.getString(key, "")
-      ParamUtils.requireNonNullForce(groupId, "配置未找到：" + key)
+    def rocketGroupId(keyNum: Int = 1): String = {
+      val groupId = PropUtils.getString(PropKeys.ROCKET_GROUP_ID, keyNum, "")
+      ParamUtils.requireNonNullForce(groupId, "配置未找到：spark.rocket.group.id" + keyNum)
       groupId
     }
 
     /**
       * 获取rocket topic列表
       *
-      * @param number
+      * @param keyNum
       * 序列
       * @return
       * 配置信息
       */
-    def rocketTopics(number: String = ""): String = {
-      val key = PropKeys.ROCKET_TOPICS + number.replace("1", "")
-      val topics = PropUtils.getString(key, null)
-      ParamUtils.requireNonNullForce(topics, "配置未找到：" + key)
+    def rocketTopics(keyNum: Int = 1): String = {
+      val topics = PropUtils.getString(PropKeys.ROCKET_TOPICS, keyNum, null)
+      ParamUtils.requireNonNullForce(topics, "配置未找到：spark.rocket.topics" + keyNum)
       topics
     }
   }
@@ -320,8 +314,7 @@ object GlobalConstants {
   /**
     * hbase相关配置
     */
-  // object HBaseConf extends Enumeration {
-  val familyName = PropUtils.getString(PropKeys.FAMILY_KEY, "info") // hbase默认的列族名称，如果使用FieldName指定，则会被覆盖
+  val familyName = PropUtils.getString(PropKeys.HBBASE_COLUMN_FAMILY_KEY, "info") // hbase默认的列族名称，如果使用FieldName指定，则会被覆盖
 
   val hbaseDurability = if (StringUtils.isBlank(PropUtils.getString(PropKeys.HbaseDurability_KEY))) Durability.USE_DEFAULT
   else {
@@ -339,7 +332,13 @@ object GlobalConstants {
     }
   }
 
-  // }
+  /**
+    * hbase相关配置
+    */
+  object HBaseConf extends Enumeration {
+    // HBase操作默认的批次大小
+    val hbaseBatchSize = PropUtils.getInt(PropKeys.HBASE_BATCH, DefaultVals.hbaseBatch)
+  }
 
   /**
     * impala相关配置

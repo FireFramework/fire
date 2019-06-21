@@ -1,8 +1,10 @@
 package com.zto.bigdata.spark.hbase
 
 import com.zto.bigdata.spark.bean.Student
-import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.core.BaseSparkCore
+import com.zto.bigdata.spark.common.ext.SparkExt._
+import org.apache.hadoop.hbase.client.Scan
+import org.apache.hadoop.hbase.filter.{CompareFilter, RegexStringComparator, RowFilter}
 import org.apache.spark.sql.{Encoders, Row}
 
 import scala.collection.JavaConversions
@@ -68,14 +70,15 @@ object HBaseHadoopTest extends BaseSparkCore {
     val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
     this.spark.createDataFrame(studentRDD, classOf[Student]).createOrReplaceTempView("student")
     // 指定rowKey构建的函数
-    this.spark.sql("select age,createTime,id,length,name,sex from student").hbaseHadoopPutDFRow(this.tableName4, buildRowKey, false)
+    this.spark.sql("select age,createTime,id,length,name,sex from student").hbaseHadoopPutDFRow(this.tableName3, buildRowKey, false)
   }
 
   /**
     * 使用Spark的方式scan海量数据，并将结果集映射为RDD
     */
   def testHBaseHadoopScanRDD: Unit = {
-    val studentRDD = this.spark.hbaseHadoopScanRDD2(this.tableName2, "1", "6", classOf[Student])
+    val daysFilter = new RowFilter(CompareFilter.CompareOp.EQUAL, new RegexStringComparator("20190613|20190614|20190615|20190616"))
+    val studentRDD = this.spark.hbaseHadoopScanRDD(this.tableName2, new Scan().setFilter(daysFilter), classOf[Student])
     studentRDD.printEachPartition
   }
 
@@ -83,12 +86,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 使用Spark的方式scan海量数据，并将结果集映射为DataFrame
     */
   def testHBaseHadoopScanDF: Unit = {
-    val studentDF = this.spark.hbaseHadoopScanDF2(this.tableName1, "1", "6", classOf[Student])
-    studentDF.count()
-    studentDF.createOrReplaceTempViewCache("test")
-    studentDF.cache()
-
-    this.spark.uncache("test", studentDF, studentDF.rdd.cache(), "test3")
+    val studentDF = this.spark.hbaseHadoopScanDF2(this.tableName3, "1", "6", classOf[Student])
     studentDF.show(100, false)
   }
 
@@ -96,21 +94,8 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 使用Spark的方式scan海量数据，并将结果集映射为Dataset
     */
   def testHBaseHadoopScanDS: Unit = {
-    val studentDS = this.spark.hbaseHadoopScanDS2(this.tableName4, "1", "6", classOf[Student])
+    val studentDS = this.spark.hbaseHadoopScanDS2(this.tableName3, "1", "6", classOf[Student])
     studentDS.show(100, false)
-  }
-
-  /**
-    * 使用bulk方式批量删除指定的rowKey对应的数据
-    */
-  def testHBaseBulkDeleteRDD: Unit = {
-    // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
-    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 5.toString, 8.toString))
-    // 根据rowKey删除
-    rowKeyRdd.hbaseBulkDeleteRDD(this.tableName1)
-
-    // 方式二：使用this.spark.hbaseBulkDeleteRDD
-    // this.spark.hbaseBulkDeleteRDD(this.tableName1, rowKeyRdd)
   }
 
   /**
@@ -121,12 +106,11 @@ object HBaseHadoopTest extends BaseSparkCore {
     /*this.testHbaseHadoopPutRDD
     this.testHbaseHadoopPutDF
     this.testHbaseHadoopPutDS*/
-    // this.testHbaseHadoopPutDFRow
+    this.testHbaseHadoopPutDFRow
 
     // this.testHBaseHadoopScanRDD
-    this.testHBaseHadoopScanDF
-    // this.testHBaseHadoopScanDS
-    // this.testHBaseBulkDeleteRDD
+    // this.testHBaseHadoopScanDF
+    this.testHBaseHadoopScanDS
   }
 
   def main(args: Array[String]): Unit = {

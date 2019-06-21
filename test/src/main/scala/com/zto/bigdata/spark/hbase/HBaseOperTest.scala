@@ -2,6 +2,7 @@ package com.zto.bigdata.spark.hbase
 
 import com.zto.bigdata.spark.bean.Student
 import com.zto.bigdata.spark.common.core.BaseSparkCore
+import com.zto.bigdata.spark.common.db.HBaseOper
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import org.apache.hadoop.hbase.client.Get
 import org.apache.spark.sql.Encoders
@@ -39,7 +40,12 @@ object HBaseOperTest extends BaseSparkCore {
     val studentList = Student.buildStudentList()
     val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(studentList), 2)
     // 为空的字段不插入
-    studentRDD.hbaseOperPutRDD(this.tableName2, false)
+    studentRDD.hbaseOperPutRDD(this.tableName1, false)
+
+    /*this.sc.parallelize(1 to 10, 10).foreach(i => {
+      val student = Student.newStudentList()
+      HBaseOper.insert(this.tableName4, student)
+    })*/
   }
 
   /**
@@ -131,15 +137,17 @@ object HBaseOperTest extends BaseSparkCore {
     * 使用HBaseOper scan数据，并以DataFrame方式返回
     */
   def testHbaseOperScanDF: Unit = {
-    val dataFrame = this.spark.hbaseOperScanDF2(this.tableName3, "1", "6", classOf[Student])
+    val dataFrame = this.spark.hbaseOperScanDF2(this.tableName1, "1", "6", classOf[Student])
     dataFrame.show(100, false)
+    val studentRDD = dataFrame.toRDD(classOf[Student])
+    studentRDD.printEachPartition
   }
 
   /**
     * 使用HBaseOper scan数据，并以DataFrame方式返回
     */
   def testHbaseOperScanDS: Unit = {
-    val dataSet = this.spark.hbaseOperScanDS2(this.tableName1, "1", "6", classOf[Student])
+    val dataSet = this.spark.hbaseOperScanDS2(this.tableName3, "1", "6", classOf[Student])
     dataSet.show(100, false)
   }
 
@@ -183,16 +191,17 @@ object HBaseOperTest extends BaseSparkCore {
     this.testHbaseOperPutRDD()
     this.testHbaseOperPutDF()
     this.testHbaseOperPutDS()*/
+    // this.testHbaseOperPutDF()
 
     // this.testHbaseOperScanList
     // this.testHbaseOperScanRDD
     // this.testHbaseOperScanDF
 
-    this.testHbaseOperDeleteList
+    /*this.testHbaseOperDeleteList
     this.testHbaseOperDeleteRDD
-    this.testHbaseOperDeleteDS
-
-    this.testHbaseOperScanDS
+    this.testHbaseOperDeleteDS*/
+    this.testHbaseOperPutRDD()
+    this.testHbaseOperScanDF
   }
 
   def main(args: Array[String]): Unit = {
