@@ -1,18 +1,13 @@
 package com.zto.bigdata.spark.common.ext.core
 
-import java.sql.DriverManager
-
 import com.zto.bigdata.spark.common.acc.{MultiAccumulators, MultiDateTimeAccumulators}
 import com.zto.bigdata.spark.common.ext.SparkExt._
 import com.zto.bigdata.spark.common.ext.module.HBaseContextExt
 import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.rdd.{JdbcRDD, RDD}
 import org.apache.spark.sql._
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{Accumulator, SparkContext}
-
-import scala.reflect._
 
 /**
   * SparkContext扩展
@@ -70,34 +65,6 @@ class SparkContextExt(sc: SparkContext) {
     val logLevel = if (StringUtils.isNotBlank(GlobalConstants.SparkConf.logLevel)) GlobalConstants.SparkConf.logLevel else "DEBUG"
     sc.setLogLevel(logLevel)
     sc
-  }
-
-  /**
-    * 从关系型数据库中load数据后组装为RDD[bean]
-    *
-    * @param sql
-    * sql语句
-    * @param day1
-    * 起止时间
-    * @param day2
-    * 结束时间
-    * @param numPartitions
-    * 分区数
-    * @return
-    * RDD
-    */
-  def loadDBToBean[T: ClassManifest](sql: String, day1: String, day2: String, clazz: Class[T], numPartitions: Int = GlobalConstants.SparkConf.parallelism, num: Int = 1): RDD[T] = {
-    val lowerBound = DateFormatUtils.formatDateTime(day1).getTime / 1000
-    val upperBound = DateFormatUtils.formatDateTime(day2).getTime / 1000
-    new JdbcRDD(
-      sc,
-      () => {
-        Class.forName(GlobalConstants.JdbcConf.driverClass(num)).newInstance()
-        DriverManager.getConnection(GlobalConstants.JdbcConf.url(num), GlobalConstants.JdbcConf.user(num), GlobalConstants.JdbcConf.password(num))
-      },
-      sql,
-      lowerBound, upperBound, numPartitions,
-      row => SparkUtils.dbRow2Bean(row, clazz))
   }
 
   /**

@@ -4,7 +4,7 @@ import java.lang.reflect.Field
 import java.sql.{ResultSet, SQLException}
 import java.text.NumberFormat
 import java.util
-import java.util.{Date, Locale}
+import java.util.{Date, Locale, Properties}
 
 import com.zto.bigdata.spark.common.anno.FieldName
 import com.zto.bigdata.spark.common.ext.SparkExt._
@@ -746,4 +746,28 @@ object SparkUtils {
     SparkEnv.get.conf.get(key, default)
   }
 
+  /**
+    * 获取jdbc连接信息，若调用者指定，以调用者为准，否则读取配置文件
+    *
+    * @param jdbcProps
+    * 调用者传入的jdbc配置信息
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+    * @return
+    * jdbc配置信息
+    */
+  def getJdbcProps(jdbcProps: Properties = null, keyNum: Int = 1): Properties = {
+    if (jdbcProps == null || jdbcProps.size() == 0) {
+      val defaultProps = new Properties()
+      defaultProps.setProperty("user", GlobalConstants.JdbcConf.user(keyNum))
+      defaultProps.setProperty("password", GlobalConstants.JdbcConf.password(keyNum))
+      defaultProps.setProperty("driver", GlobalConstants.JdbcConf.driverClass(keyNum))
+      defaultProps.setProperty("batchsize", GlobalConstants.JdbcConf.batchSize(keyNum).toString)
+      defaultProps.setProperty("isolationLevel", GlobalConstants.JdbcConf.isolationLevel(keyNum).toUpperCase)
+      defaultProps
+    } else {
+      jdbcProps
+    }
+  }
 }

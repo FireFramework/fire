@@ -73,19 +73,19 @@ object PropUtils {
     * 获取拼接后数值的配置字符串
     *
     * @param key    配置的前缀
-    * @param number 拼接到key后的数值后缀
+    * @param keyNum 拼接到key后的数值后缀
     * @return
     * 对应的配置信息
     */
-  def getString(key: String, number: Int = 0, default: String = ""): String = {
-    if (number == null || number <= 1) {
+  def getString(key: String, keyNum: Int = 0, default: String = ""): String = {
+    if (keyNum == null || keyNum <= 1) {
       var value = this.getProperty(key)
       if (StringUtils.isBlank(value)) {
         value = this.getString(key + "1", default)
       }
       value
     } else {
-      this.getString(key + number, default)
+      this.getString(key + keyNum, default)
     }
   }
 
@@ -126,12 +126,12 @@ object PropUtils {
     * 获取拼接后数值的配置整数
     *
     * @param key    配置的前缀
-    * @param number 拼接到key后的数值后缀
+    * @param keyNum 拼接到key后的数值后缀
     * @return
     * 对应的配置信息
     */
-  def getInt(key: String, number: Int = 0, default: Int): Int = {
-    val value = this.getString(key, number, default + "")
+  def getInt(key: String, keyNum: Int = 0, default: Int): Int = {
+    val value = this.getString(key, keyNum, default + "")
     if (StringUtils.isNotBlank(value)) value.toInt else default
   }
 
@@ -161,12 +161,12 @@ object PropUtils {
     * 获取拼接后数值的配置长整数
     *
     * @param key    配置的前缀
-    * @param number 拼接到key后的数值后缀
+    * @param keyNum 拼接到key后的数值后缀
     * @return
     * 对应的配置信息
     */
-  def getLong(key: String, number: Int = 0, default: Long): Long = {
-    val value = this.getString(key, number, default + "")
+  def getLong(key: String, keyNum: Int = 0, default: Long): Long = {
+    val value = this.getString(key, keyNum, default + "")
     if (StringUtils.isNotBlank(value)) value.toLong else default
   }
 
@@ -196,12 +196,12 @@ object PropUtils {
     * 获取拼接后数值的配置布尔值
     *
     * @param key    配置的前缀
-    * @param number 拼接到key后的数值后缀
+    * @param keyNum 拼接到key后的数值后缀
     * @return
     * 对应的配置信息
     */
-  def getBoolean(key: String, number: Int = 0, default: Boolean): Boolean = {
-    val value = this.getString(key, number, default + "")
+  def getBoolean(key: String, keyNum: Int = 0, default: Boolean): Boolean = {
+    val value = this.getString(key, keyNum, default + "")
     if (StringUtils.isNotBlank(value)) value.toBoolean else default
   }
 

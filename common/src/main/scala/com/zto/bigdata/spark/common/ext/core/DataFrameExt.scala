@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark.common.ext.core
 
-import java.util.{Objects, Properties}
+import java.util.Properties
 
 import com.zto.bigdata.spark.common.bean.HBaseBaseBean
 import com.zto.bigdata.spark.common.db.HBaseSparkBridge
@@ -9,7 +9,6 @@ import com.zto.bigdata.spark.common.util._
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.apache.spark.storage.StorageLevel
 
 import scala.reflect._
 
@@ -70,41 +69,8 @@ class DataFrameExt(dataFrame: DataFrame) {
     * 关系型数据库表名
     * @return
     */
-  def jdbcSparkSave(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, num: Int = 1): Unit = {
-    val props = if (jdbcProps == null || jdbcProps.size() == 0) {
-      val defaultProps = new Properties()
-      defaultProps.setProperty("user", GlobalConstants.JdbcConf.user(num))
-      defaultProps.setProperty("password", GlobalConstants.JdbcConf.password(num))
-      defaultProps.setProperty("driver", GlobalConstants.JdbcConf.driverClass(num))
-      defaultProps.setProperty("batchsize", GlobalConstants.JdbcConf.batchSize(num).toString)
-      defaultProps.setProperty("isolationLevel", GlobalConstants.JdbcConf.isolationLevel(num).toUpperCase)
-      defaultProps
-    } else {
-      jdbcProps
-    }
-    dataFrame.write.mode(saveMode).jdbc(GlobalConstants.JdbcConf.url(num), tableName, props)
-  }
-
-  /**
-    * 将DataFrame数据保存到配置的第二个数据源中
-    *
-    * @param tableName
-    * 关系型数据库表名
-    * @return
-    */
-  def jdbcSparkSave2(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null): Unit = {
-    this.jdbcSparkSave(tableName, saveMode, jdbcProps, 2)
-  }
-
-  /**
-    * 将DataFrame数据保存到配置的第三个数据源中
-    *
-    * @param tableName
-    * 关系型数据库表名
-    * @return
-    */
-  def jdbcSparkSave3(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null): Unit = {
-    this.jdbcSparkSave(tableName, saveMode, jdbcProps, 3)
+  def jdbcTableSave(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, keyNum: Int = 1): Unit = {
+    dataFrame.write.mode(saveMode).jdbc(GlobalConstants.JdbcConf.url(keyNum), tableName, SparkUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
   /**

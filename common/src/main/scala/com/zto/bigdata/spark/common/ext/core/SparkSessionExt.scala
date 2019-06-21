@@ -98,32 +98,6 @@ class SparkSessionExt(spark: SparkSession) {
   }
 
   /**
-    * load关系型数据库整张表。若load部分数据，请使用：loadDBToBean()
-    *
-    * @param table
-    * 表名
-    * @return
-    * DataFrame
-    */
-  def loadDBTable(table: String): DataFrame = {
-    spark.sqlContext.loadDBTable(table)
-  }
-
-  /**
-    * 从oracle表中load数据
-    *
-    * @param tableName
-    * 表名
-    * @param predicates
-    * 配置信息
-    * @return
-    * DataFrame
-    */
-  def loadOracleData(tableName: String, predicates: Array[String]): DataFrame = {
-    spark.sqlContext.loadOracleData(tableName, predicates)
-  }
-
-  /**
     * 批量缓存多张表
     *
     * @param tables
@@ -1225,51 +1199,14 @@ class SparkSessionExt(spark: SparkSession) {
     * 是否自动提交事务，默认为自动提交
     * @param closeConnection
     * 是否关闭connection，默认关闭
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     * @return
     * 影响的记录数
     */
-  def jdbcUpdate(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, num: Int = 1): Long = {
-    JdbcOper.executeUpdate(sql, params, connection, commit, closeConnection, num)
-  }
-
-  /**
-    * 针对第二个数据源的插入、删除、更新操作
-    *
-    * @param sql
-    * 待执行的sql语句
-    * @param params
-    * sql中的参数
-    * @param connection
-    * 传递已有的数据库连接
-    * @param commit
-    * 是否自动提交事务，默认为自动提交
-    * @param closeConnection
-    * 是否关闭connection，默认关闭
-    * @return
-    * 影响的记录数
-    */
-  def jdbcUpdate2(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
-    this.jdbcUpdate(sql, params, connection, commit, closeConnection, 2)
-  }
-
-  /**
-    * 针对第三个数据源的插入、删除、更新操作
-    *
-    * @param sql
-    * 待执行的sql语句
-    * @param params
-    * sql中的参数
-    * @param connection
-    * 传递已有的数据库连接
-    * @param commit
-    * 是否自动提交事务，默认为自动提交
-    * @param closeConnection
-    * 是否关闭connection，默认关闭
-    * @return
-    * 影响的记录数
-    */
-  def jdbcUpdate3(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
-    this.jdbcUpdate(sql, params, connection, commit, closeConnection, 3)
+  def jdbcUpdate(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
+    JdbcOper.executeUpdate(sql, params, connection, commit, closeConnection, keyNum)
   }
 
   /**
@@ -1285,51 +1222,14 @@ class SparkSessionExt(spark: SparkSession) {
     * 是否自动提交事务，默认为自动提交
     * @param closeConnection
     * 是否关闭connection，默认关闭
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     * @return
     * 影响的记录数
     */
-  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, num: Int = 1): Array[Int] = {
-    JdbcOper.executeBatch(sql, paramsList, connection, commit, closeConnection, num)
-  }
-
-  /**
-    * 针对第二个数据源的批量插入、删除、更新操作
-    *
-    * @param sql
-    * 待执行的sql语句
-    * @param paramsList
-    * sql的参数列表
-    * @param connection
-    * 传递已有的数据库连接
-    * @param commit
-    * 是否自动提交事务，默认为自动提交
-    * @param closeConnection
-    * 是否关闭connection，默认关闭
-    * @return
-    * 影响的记录数
-    */
-  def jdbcBatchUpdate2(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
-    this.jdbcBatchUpdate(sql, paramsList, connection, commit, closeConnection, 2)
-  }
-
-  /**
-    * 针对第三个数据源的批量插入、删除、更新操作
-    *
-    * @param sql
-    * 待执行的sql语句
-    * @param paramsList
-    * sql的参数列表
-    * @param connection
-    * 传递已有的数据库连接
-    * @param commit
-    * 是否自动提交事务，默认为自动提交
-    * @param closeConnection
-    * 是否关闭connection，默认关闭
-    * @return
-    * 影响的记录数
-    */
-  def jdbcBatchUpdate3(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
-    this.jdbcBatchUpdate(sql, paramsList, connection, commit, closeConnection, 3)
+  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
+    JdbcOper.executeBatch(sql, paramsList, connection, commit, closeConnection, keyNum)
   }
 
   /**
@@ -1341,37 +1241,14 @@ class SparkSessionExt(spark: SparkSession) {
     * sql执行参数
     * @param clazz
     * JavaBean类型
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+    * @return
+    * 查询结果集
     */
-  def jdbcQuery[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, num: Int = 1): List[T] = {
-    JdbcOper.executeQuery[T](sql, params, clazz, connection, num)
-  }
-
-  /**
-    * 针对第二个数据源执行查询操作，以JavaBean方式返回结果集
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param clazz
-    * JavaBean类型
-    */
-  def jdbcQuery2[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): List[T] = {
-    this.jdbcQuery[T](sql, params, clazz, connection, 2)
-  }
-
-  /**
-    * 针对第三个数据源执行查询操作，以JavaBean方式返回结果集
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param clazz
-    * JavaBean类型
-    */
-  def jdbcQuery3[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): List[T] = {
-    this.jdbcQuery[T](sql, params, clazz, connection, 3)
+  def jdbcQuery[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, keyNum: Int = 1): List[T] = {
+    JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
   }
 
   /**
@@ -1383,40 +1260,15 @@ class SparkSessionExt(spark: SparkSession) {
     * sql执行参数
     * @param clazz
     * JavaBean类型
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+    * @return 查询结果集
     */
-  def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, num: Int = 1): RDD[T] = {
-    val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, num)
+  def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, keyNum: Int = 1): RDD[T] = {
+    val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
     this.sc.parallelize(rsList, 10)
   }
-
-  /**
-    * 针对第二个数据源执行查询操作，以RDD方式返回结果集
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param clazz
-    * JavaBean类型
-    */
-  def jdbcQueryRDD2[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): RDD[T] = {
-    this.jdbcQueryRDD[T](sql, params, clazz, connection, 2)
-  }
-
-  /**
-    * 针对第三个数据源执行查询操作，以RDD方式返回结果集
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param clazz
-    * JavaBean类型
-    */
-  def jdbcQueryRDD3[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): RDD[T] = {
-    this.jdbcQueryRDD[T](sql, params, clazz, connection, 3)
-  }
-
 
   /**
     * 执行查询操作，以DataFrame方式返回结果集
@@ -1427,38 +1279,14 @@ class SparkSessionExt(spark: SparkSession) {
     * sql执行参数
     * @param clazz
     * JavaBean类型
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+    * @return 查询结果集
     */
-  def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, num: Int = 1): DataFrame = {
-    val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, num)
+  def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, keyNum: Int = 1): DataFrame = {
+    val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
     this.spark.createDataFrame(JavaConversions.seqAsJavaList(rsList), clazz)
-  }
-
-  /**
-    * 针对第二个数据源执行查询操作，以DataFrame方式返回结果集
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param clazz
-    * JavaBean类型
-    */
-  def jdbcQueryDF2[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): DataFrame = {
-    this.jdbcQueryDF[T](sql, params, clazz, connection, 2)
-  }
-
-  /**
-    * 针对第三个数据源执行查询操作，以DataFrame方式返回结果集
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param clazz
-    * JavaBean类型
-    */
-  def jdbcQueryDF3[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): DataFrame = {
-    this.jdbcQueryDF[T](sql, params, clazz, connection, 3)
   }
 
   /**
@@ -1470,38 +1298,15 @@ class SparkSessionExt(spark: SparkSession) {
     * sql执行参数
     * @param clazz
     * JavaBean类型
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+    * @return
+    * 查询结果集
     */
-  def jdbcQueryDS[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, num: Int = 1): Dataset[T] = {
-    val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, num)
+  def jdbcQueryDS[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, keyNum: Int = 1): Dataset[T] = {
+    val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
     this.spark.createDataset[T](JavaConversions.seqAsJavaList(rsList))(Encoders.bean(clazz))
-  }
-
-  /**
-    * 针对第二个数据源执行查询操作，以Dataset方式返回结果集
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param clazz
-    * JavaBean类型
-    */
-  def jdbcQueryDS2[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): Dataset[T] = {
-    this.jdbcQueryDS[T](sql, params, clazz, connection, 2)
-  }
-
-  /**
-    * 针对第三个数据源执行查询操作，以Dataset方式返回结果集
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param clazz
-    * JavaBean类型
-    */
-  def jdbcQueryDS3[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null): Dataset[T] = {
-    this.jdbcQueryDS[T](sql, params, clazz, connection, 3)
   }
 
   /**
@@ -1513,37 +1318,12 @@ class SparkSessionExt(spark: SparkSession) {
     * sql执行参数
     * @param callback
     * 查询回调
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     */
-  def jdbcQueryCall(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null, num: Int = 1): Unit = {
-    JdbcOper.executeQueryCall(sql, params, callback, connection, num)
-  }
-
-  /**
-    * 针对第二个数据源执行查询操作，并在QueryCallback对结果集进行处理
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param callback
-    * 查询回调
-    */
-  def jdbcQueryCall2(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null): Unit = {
-    this.jdbcQueryCall(sql, params, callback, connection, 2)
-  }
-
-  /**
-    * 针对第三个数据源执行查询操作，并在QueryCallback对结果集进行处理
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param callback
-    * 查询回调
-    */
-  def jdbcQueryCall3(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null): Unit = {
-    this.jdbcQueryCall(sql, params, callback, connection, 3)
+  def jdbcQueryCall(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null, keyNum: Int = 1): Unit = {
+    JdbcOper.executeQueryCall(sql, params, callback, connection, keyNum)
   }
 
   /**
@@ -1553,10 +1333,70 @@ class SparkSessionExt(spark: SparkSession) {
     * DataFrame数据集
     * @param tableName
     * 关系型数据库表名
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+    */
+  def jdbcTableSave(dataFrame: DataFrame, tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, keyNum: Int = 1): Unit = {
+    dataFrame.jdbcTableSave(tableName, saveMode, jdbcProps, keyNum)
+  }
+
+  /**
+    * 单线程加载一张关系型数据库表
+    * 注：仅限用于小的表，不支持条件查询
+    *
+    * @param tableName
+    * 关系型数据库表名
+    * @param jdbcProps
+    * 调用者指定的数据库连接信息，如果为空，则默认读取配置文件
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+    * @return
+    * DataFrame
+    */
+  def jdbcTableLoadAll(tableName: String, jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
+    this.spark.sqlContext.jdbcTableLoadAll(tableName, jdbcProps, keyNum)
+  }
+
+  /**
+    * 指定load的条件，从关系型数据库中并行的load数据，并转为DataFrame
+    *
+    * @param tableName 数据库表名
+    * @param predicates
+    *                  并行load数据时，每一个分区load数据的where条件
+    *                  比如：gmt_create >= '2019-06-20' AND gmt_create <= '2019-06-21' 和 gmt_create >= '2019-06-22' AND gmt_create <= '2019-06-23'
+    *                  那么将两个线程同步load，线程数与predicates中指定的参数个数保持一致
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+    * @return
+    * 查询结果集
+    */
+  def jdbcTableLoad(tableName: String, predicates: Array[String], jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
+    this.spark.sqlContext.jdbcTableLoad(tableName, predicates, jdbcProps, keyNum)
+  }
+
+  /**
+    * 根据指定字段的范围load关系型数据库中的数据
+    *
+    * @param tableName
+    * 表名
+    * @param columnName
+    * 表的分区字段
+    * @param lowerBound
+    * 分区的下边界
+    * @param upperBound
+    * 分区的上边界
+    * @param jdbcProps
+    * jdbc连接信息，默认读取配置文件
+    * @param keyNum
+    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     * @return
     */
-  def jdbcSparkSave(dataFrame: DataFrame, tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null): Unit = {
-    dataFrame.jdbcSparkSave(tableName, saveMode, jdbcProps)
+  def jdbcTableLoadBound(tableName: String, columnName: String, lowerBound: Long, upperBound: Long, numPartitions: Int = 10, jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
+    this.spark.sqlContext.jdbcTableLoadBound(tableName, columnName, lowerBound, upperBound, keyNum, jdbcProps, keyNum)
   }
 
 }

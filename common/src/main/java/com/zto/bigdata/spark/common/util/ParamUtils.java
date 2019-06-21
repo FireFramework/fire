@@ -62,7 +62,7 @@ public class ParamUtils {
     /**
      * 方法参数或数组合法性检查
      *
-     * @param params
+     * @param params 待校验的多个参数
      * @return
      */
     public static boolean isNotBlank(Object... params) {
