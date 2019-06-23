@@ -1,0 +1,152 @@
+package com.zto.fire.common.util
+
+import java.lang.reflect.Field
+
+import com.zto.fire.common.anno.FieldName
+import org.apache.commons.lang3.StringUtils
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types._
+
+import scala.collection.mutable.ListBuffer
+import scala.reflect.{ClassTag, classTag}
+
+/**
+  * kudu工具类
+  *
+  * @author ChengLong 2019-6-23 13:32:15
+  */
+object KuduUtils {
+
+  /**
+    * 将kudu的JavaBean转为Row
+    * 实体Class类型
+    *
+    * @return
+    * Spark SQL Row对象
+    */
+  def kuduBean2Row[T: ClassTag](bean: T): Row = {
+    val beanClazz = classTag[T].runtimeClass
+    val values = ListBuffer[AnyRef]()
+    beanClazz.getDeclaredFields.foreach(field => {
+      field.setAccessible(true)
+      val anno = field.getAnnotation(classOf[FieldName])
+      if (anno != null && anno.id()) {
+        values += field.get(bean)
+      }
+    })
+    Row(values: _*)
+  }
+
+  /**
+    * 将kudu的JavaBean转为Row
+    *
+    * @param beanClazz
+    * 实体Class类型
+    * @return
+    * Spark SQL Row对象
+    */
+  def bean2Row(beanClazz: Class[_]): Row = {
+    val fieldList = ListBuffer[Field]()
+    beanClazz.getDeclaredFields.foreach(field => {
+      field.setAccessible(true)
+      val anno = field.getAnnotation(classOf[FieldName])
+      val begin = if (anno == null) true else !anno.disuse()
+      if (begin) {
+        fieldList += field
+      }
+    })
+    Row(fieldList)
+  }
+
+  /**
+    * 将Row转为自定义bean，以Row中的Field为基准
+    * bean中的field名称要与DataFrame中的field名称保持一致
+    *
+    * @param row
+    * @return
+    */
+  def kuduRowToBean[T](row: Row, clazz: Class[T]): T = {
+    val obj = clazz.newInstance()
+    if (row != null && clazz != null) {
+      try {
+        row.schema.fieldNames.foreach(fieldName => {
+          clazz.getDeclaredFields.foreach(field => {
+            field.setAccessible(true)
+            if (field.getName.equalsIgnoreCase(fieldName)) {
+              val index = row.fieldIndex(fieldName)
+              val fieldType = field.getType
+              if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
+              else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getAs[IntegerType](index))
+              else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getAs[DoubleType](index))
+              else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getAs[LongType](index))
+              else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getAs[DecimalType](index))
+              else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getAs[FloatType](index))
+              else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getAs[BooleanType](index))
+              else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getAs[ShortType](index))
+              else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getAs[DateType](index))
+            }
+          })
+        })
+      } catch {
+        case e: Exception => e.printStackTrace()
+      }
+    }
+    obj
+  }
+
+  /**
+    * 根据实体bean构建kudu表schema（只构建主键字段）
+    *
+    * @return StructField集合
+    */
+  def buildSchemaFromKuduBean(beanClazz: Class[_]): List[StructField] = {
+    val fieldMap = ReflectionUtils.getAllFields(beanClazz)
+    val strutFields = new ListBuffer[StructField]()
+    import scala.collection.JavaConversions._
+    for (map <- fieldMap.entrySet) {
+      val field: Field = map.getValue
+      val fieldType: Class[_] = field.getType
+      val anno: FieldName = field.getAnnotation(classOf[FieldName])
+      var fieldName: String = map.getKey
+      var nullable: Boolean = true
+      val begin = if (anno == null) {
+        false
+      } else {
+        if (StringUtils.isNotBlank(anno.value)) {
+          fieldName = anno.value
+        }
+        nullable = anno.nullable()
+        !anno.disuse
+      }
+      if (begin && anno.id) {
+        if (fieldType eq classOf[String]) strutFields += DataTypes.createStructField(fieldName, DataTypes.StringType, nullable)
+        else if (fieldType eq classOf[java.lang.Integer]) strutFields += DataTypes.createStructField(fieldName, DataTypes.IntegerType, nullable)
+        else if (fieldType eq classOf[java.lang.Double]) strutFields += DataTypes.createStructField(fieldName, DataTypes.DoubleType, nullable)
+        else if (fieldType eq classOf[java.lang.Long]) strutFields += DataTypes.createStructField(fieldName, DataTypes.LongType, nullable)
+        else if (fieldType eq classOf[java.math.BigDecimal]) strutFields += DataTypes.createStructField(fieldName, DataTypes.DoubleType, nullable)
+        else if (fieldType eq classOf[java.lang.Float]) strutFields += DataTypes.createStructField(fieldName, DataTypes.FloatType, nullable)
+        else if (fieldType eq classOf[java.lang.Boolean]) strutFields += DataTypes.createStructField(fieldName, DataTypes.BooleanType, nullable)
+        else if (fieldType eq classOf[java.lang.Short]) strutFields += DataTypes.createStructField(fieldName, DataTypes.ShortType, nullable)
+        else if (fieldType eq classOf[java.util.Date]) strutFields += DataTypes.createStructField(fieldName, DataTypes.DateType, nullable)
+      }
+    }
+    strutFields.toList
+  }
+
+  /**
+    * 将表名包装为以impala::开头的表
+    *
+    * @param tableName
+    * 库名.表名
+    * @return
+    * 包装后的表名
+    */
+  def packageKuduTableName(tableName: String): String = {
+    if (StringUtils.isBlank(tableName)) throw new IllegalArgumentException("表名不能为空")
+    if (tableName.startsWith("impala::")) {
+      tableName
+    } else {
+      s"impala::$tableName"
+    }
+  }
+}

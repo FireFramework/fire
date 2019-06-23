@@ -1,4 +1,4 @@
-package com.zto.bigdata.spark.common.util
+package com.zto.fire.common.util
 
 import java.io.InputStream
 import java.util.Properties
