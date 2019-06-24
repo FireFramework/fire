@@ -1,6 +1,6 @@
 package com.zto.fire.common.util
 
-import java.io.InputStream
+import java.io.{File, FileInputStream, InputStream}
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -22,7 +22,7 @@ object PropUtils {
   this.load("default.properties")
 
   /**
-    * 加载指定配置文件
+    * 加载指定配置文件，resources根目录下优先级最高，其次是按字典顺序的目录
     *
     * @param fileName
     * 配置文件名称
@@ -33,6 +33,16 @@ object PropUtils {
       var resource: InputStream = null
       try {
         resource = FileUtils.resourceFileExists(fullName)
+        if (resource == null) {
+          val findFileName = FindClassUtils.findFileInJar(fullName)
+          if (StringUtils.isNotBlank(findFileName)) {
+            if (FindClassUtils.isJar) {
+              resource = FileUtils.resourceFileExists(findFileName)
+            } else {
+              resource = new FileInputStream(findFileName)
+            }
+          }
+        }
         if (resource != null) {
           println(s"--------------------- load ${fullName} ---------------------")
           props.load(resource)
@@ -42,6 +52,14 @@ object PropUtils {
           IOUtils.close(resource)
         }
       }
+    }
+    this
+  }
+
+  def loadR(fileName: String): this.type = {
+    val url = this.getClass.getResource("/main/resources")
+    if (url != null) {
+      val file = new File(url.toURI)
     }
     this
   }

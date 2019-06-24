@@ -25,9 +25,9 @@ object BrickTest extends BaseSparkStreaming {
   // 线程池大小为2，保证顺序执行
   val brickThreadPool: ExecutorService = Executors.newFixedThreadPool(2)
   // yellowbrick中的item表名
-  val itemTableName = "tmp.tmp_dw_cj_dc_disp_item"
+  val itemTableName = "dw.dw_cj_dc_disp_item"
   // yellowbrick中的event表名
-  val eventTableName = "tmp.tmp_dw_cj_dc_disp_event"
+  val eventTableName = "dw.dw_cj_dc_disp_event"
   // 当前批次消息根据id去重过的item临时表
   val itemTmpTableName = "tmp_item"
   // 当前批次消息根据id去重过的event临时表
@@ -134,7 +134,7 @@ object BrickTest extends BaseSparkStreaming {
     * bill_event数据处理
     */
   def processEvent: Unit = {
-    val eventStream = this.ssc.createRocketPullStream()
+    val eventStream = this.ssc.createRocketPullStream(keyNum = 2)
     eventStream.foreachRDD(rdd => {
       // this.runAsThread(this.doEvent(eventStream, rdd), threadPool = this.brickThreadPool)
       this.doEvent(eventStream, rdd)
@@ -151,7 +151,7 @@ object BrickTest extends BaseSparkStreaming {
   }
 
   def main(args: Array[String]): Unit = {
-    this.init(10, false)
+    this.init(60, false)
     this.spark.stop()
   }
 

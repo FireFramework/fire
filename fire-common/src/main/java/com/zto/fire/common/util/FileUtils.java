@@ -355,30 +355,29 @@ public class FileUtils {
         return new File(file).exists();
     }
 
-    public static void main(String[] args) throws Exception {
-        String value = ",abcefg";
-        if (value.indexOf(',') > 0) {
-            value = value.replaceAll(",", "'，'");
+    /**
+     * 递归查找指定目录下的文件
+     *
+     * @param path 路径
+     * @param fileName 文件名
+     * @return 文件全路径
+     */
+    public static File findFile(String path, String fileName) {
+        File searchFile = null;
+        File dir = new File(path);
+        if (dir.exists() && dir.isDirectory()) {
+            for (File file : dir.listFiles()) {
+                if (file.isDirectory()) {
+                    searchFile = findFile(file.getPath(), fileName);
+                } else {
+                    if (file.getName().equals(fileName)) {
+                        searchFile = file;
+                        break;
+                    }
+                }
+            }
         }
-        // List<String> header = new ArrayList<String>();
-        // header.add("f1");
-        // header.add("f2");
-        //
-        // List<MyMap<String, String>> body = new ArrayList<MyMap<String,
-        // String>>();
-        // MyMap<String, String> map = new MyMap<String, String>();
-        // map.put("f1", "100");
-        // map.put("f2", "中文");
-        // body.add(0, map);
-        // writeExcel(header, body, "e:/tmp");
-        // System.out.println(103%200);
-        // System.out.println(102/100);
-        // System.out.println(NumberUtils.isNumber("111410303935L"));
-        // NumberUtils.createLong("111410303935L");//exception
-        // String uuid = UUID.randomUUID().toString();
-        // File csvFile = File.createTempFile(uuid, ".csv", new
-        // File("E:/V3/xls"));
-        // System.out.println("csvFile：" + csvFile + ";uuid:" + uuid);
+        return searchFile;
     }
 
     static class MyMap<T, A> extends HashMap implements Cloneable {

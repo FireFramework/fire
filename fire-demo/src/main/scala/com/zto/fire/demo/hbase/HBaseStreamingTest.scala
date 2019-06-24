@@ -14,8 +14,7 @@ object HBaseStreamingTest extends BaseSparkStreaming {
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream()
     // 多个kafka源的写法
-    // val dstream2 = this.ssc.createDirectStream2()
-    // val dstream3 = this.ssc.createDirectStream3()
+    // val dstream2 = this.ssc.createDirectStream(keyNum = 2)
 
     dstream.foreachRDD(rdd => {
       // 将kafka中的json一键解析成对应的JavaBean，或者使用：this.spark.kafkaJson2DF()

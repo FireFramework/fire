@@ -2,7 +2,6 @@ package com.zto.fire.demo.bean;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.zto.fire.common.anno.FieldName;
 import com.zto.fire.common.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
 
@@ -22,7 +21,7 @@ public class Student extends HBaseBaseBean<Student> {
     private String createTime;
     // 若JavaBean的字段名称与HBase中的字段名称不一致，需使用value单独指定
     // 此时hbase中的列名为length1，而不是length
-    @FieldName(family = "info", value = "length1")
+    // @FieldName(family = "info", value = "length1")
     private BigDecimal length;
     private Boolean sex;
 

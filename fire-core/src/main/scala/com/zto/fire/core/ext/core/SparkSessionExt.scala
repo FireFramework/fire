@@ -54,6 +54,32 @@ class SparkSessionExt(spark: SparkSession) {
     this.sc.parallelize(seq, numSlices)
   }
 
+  // ----------------------------------- Spark SQL 相关API ----------------------------------- //
+
+  /**
+    * 用于判断当前SparkSession下临时表或Hive表是否存在
+    *
+    * @param tableName
+    * 表名
+    * @return
+    * true：存在 false：不存在
+    */
+  def tableExists(tableName: String): Boolean = {
+    this.spark.catalog.tableExists(tableName)
+  }
+
+  /**
+    * 用于判断当前SparkSession下临时表或Hive表是否存在
+    *
+    * @param tableName
+    * 表名
+    * @return
+    * true：存在 false：不存在
+    */
+  def tableExists(dbName: String, tableName: String): Boolean = {
+    this.spark.catalog.tableExists(dbName, tableName)
+  }
+
   /**
     * 执行一段Hive QL语句，注册为临时表，持久化到hive中
     *
@@ -1194,7 +1220,7 @@ class SparkSessionExt(spark: SparkSession) {
         if (elem != null) {
           if (elem.isInstanceOf[String]) {
             val tableName = elem.asInstanceOf[String]
-            if (this.spark.sqlContext.isCached(tableName)) {
+            if (this.tableExists(tableName) && this.isCached(tableName)) {
               this.spark.sqlContext.uncacheTables(tableName)
             }
           } else if (elem.isInstanceOf[Dataset[_]]) {

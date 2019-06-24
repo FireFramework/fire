@@ -19,24 +19,39 @@ object SingletonFactory {
   @transient private var sqlContext: SQLContext = _
   @transient private var hbaseContext: HBaseContextExt = _
   @transient private var kuduContext: KuduContextExt = _
+  private var hbase: HBaseOper = _
+
+  /**
+    * 获取HBaseOper单例对象
+    *
+    * @return
+    * HBaseOper实例
+    */
+  def getHBaseOperInstance: HBaseOper = {
+    if (hbase == null) {
+      this.hbase = new HBaseOper
+    }
+    this.hbase
+  }
 
   /**
     * 获取单例的SQLContext对象
+    *
     * @param sparkContext
-    *                     SparkContext实例
+    * SparkContext实例
     * @param sql
-    *            预执行的sql
+    * 预执行的sql
     * @param props
-    *              指定SQLContext的配置信息
+    * 指定SQLContext的配置信息
     * @return
     */
   def getSQLContextInstance(sparkContext: SparkContext, sql: String = null, props: Properties = null): SQLContext = {
     if (this.sqlContext == null) {
       this.sqlContext = sparkContext.createSQLContext
-      if(props != null && props.size() > 0) {
+      if (props != null && props.size() > 0) {
         this.sqlContext.setConf(props)
       }
-      if(StringUtils.isNotBlank(sql)) {
+      if (StringUtils.isNotBlank(sql)) {
         this.sqlContext.sql(sql)
       }
     }
@@ -45,8 +60,9 @@ object SingletonFactory {
 
   /**
     * 获取单例的HBaseContext对象
+    *
     * @param sparkContext
-    *                     SparkContext实例
+    * SparkContext实例
     * @return
     */
   def getHBaseContextInstance(sparkContext: SparkContext): HBaseContextExt = {
@@ -58,8 +74,9 @@ object SingletonFactory {
 
   /**
     * 获取单例的KuduContext对象
+    *
     * @param sparkContext
-    *                     SparkContext实例
+    * SparkContext实例
     * @return
     */
   def getKuduContextInstance(sparkContext: SparkContext): KuduContextExt = {

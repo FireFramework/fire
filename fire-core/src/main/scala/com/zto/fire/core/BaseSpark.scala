@@ -2,14 +2,17 @@ package com.zto.fire.core
 
 import java.util.concurrent.{ExecutorService, Executors, ScheduledExecutorService, TimeUnit}
 
+import com.zto.fire.common.db.{HBaseOper, JdbcOper}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
 import com.zto.fire.common.util._
+import com.zto.fire.core.bridge.HBaseSparkBridge
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
+import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.util.LongAccumulator
@@ -24,6 +27,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   var conf: SparkConf = _
   var spark: SparkSession = _
   var sc: SparkContext = _
+  var catalog: Catalog = _
+  val jdbc = JdbcOper
   var ssc: StreamingContext = _
   var hiveContext: SQLContext = _
   var sqlContext: SQLContext = _
@@ -97,6 +102,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     }
     this.spark.registerAll()
     this.sc = this.spark.sparkContext
+    this.catalog = this.spark.catalog
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))
     this.hiveContext = this.spark.sqlContext
@@ -210,4 +216,12 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.wrapLogWarn("完成spark资源回收")
   }
 
+  /**
+    * 关闭SparkContext
+    */
+  def stop: Unit = {
+    if (this.spark != null) {
+      this.spark.stop()
+    }
+  }
 }

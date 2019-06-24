@@ -134,4 +134,67 @@ public class FindClassUtils {
         }
     }
 
+    /**
+     * 用于判断当前以jar方式运行还是以idea方式运行
+     *
+     * @return true：jar方式 false：idea运行
+     */
+    public static boolean isJar() {
+        URL url = FindClassUtils.class.getProtectionDomain().getCodeSource().getLocation();
+        if (url.getPath().endsWith(".jar")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 获取指定文件名在jar包中的位置，兼容非jar包
+     *
+     * @param fileName 文件名
+     * @return 路径名+文件名
+     */
+    public static String findFileInJar(String fileName) {
+        if (StringUtils.isBlank(fileName)) {
+            return null;
+        }
+        String fullName = "";
+        URL url = FindClassUtils.class.getProtectionDomain().getCodeSource().getLocation();
+        if (url.getPath().endsWith(".jar")) {
+            JarFile jarFile = null;
+            try {
+                jarFile = new JarFile(url.getFile());
+                Enumeration<JarEntry> entrys = jarFile.entries();
+                while (entrys.hasMoreElements()) {
+                    JarEntry jar = entrys.nextElement();
+                    String name = jar.getName();
+                    if (name.endsWith("/" + fileName)) {
+                        fullName = name;
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (jarFile != null) jarFile.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            // 在IDEA中执行
+            try {
+                File searchFile = FileUtils.findFile(FindClassUtils.class.getResource("/").getPath(), fileName);
+                if (searchFile != null && searchFile.exists()) {
+                    fullName = searchFile.getPath();
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return fullName;
+    }
+
 }

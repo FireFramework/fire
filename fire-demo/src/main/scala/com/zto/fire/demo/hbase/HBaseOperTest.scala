@@ -1,5 +1,6 @@
 package com.zto.fire.demo.hbase
 
+import com.zto.fire.common.db.HBaseOper
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.BaseSparkCore
 import com.zto.fire.demo.bean.Student
@@ -41,10 +42,10 @@ object HBaseOperTest extends BaseSparkCore {
     // 为空的字段不插入
     studentRDD.hbaseOperPutRDD(this.tableName1, false)
 
-    /*this.sc.parallelize(1 to 10, 10).foreach(i => {
+    this.sc.parallelize(1 to 10, 10).foreach(i => {
       val student = Student.newStudentList()
       HBaseOper.insert(this.tableName4, student)
-    })*/
+    })
   }
 
   /**
@@ -140,6 +141,8 @@ object HBaseOperTest extends BaseSparkCore {
     dataFrame.show(100, false)
     val studentRDD = dataFrame.toRDD(classOf[Student])
     studentRDD.printEachPartition
+    dataFrame.createOrReplaceTempView("test")
+    println("test是否存在：" + this.catalog.tableExists("test"))
   }
 
   /**

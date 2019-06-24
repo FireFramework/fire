@@ -23,7 +23,7 @@ import scala.reflect.ClassTag
   *
   * @author ChengLong 2019-5-10 14:39:39
   */
-object HBaseSparkBridge {
+object HBaseSparkBridge extends HBaseOper {
   val batchSize = 1000
 
   /**

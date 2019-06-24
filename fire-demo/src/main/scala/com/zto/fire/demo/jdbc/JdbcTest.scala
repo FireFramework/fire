@@ -113,7 +113,7 @@ object JdbcTest extends BaseSparkCore {
   def testExecutor: Unit = {
     val rdd = this.spark.parallelize(1 to 10, 10)
     rdd.foreachPartition(it => {
-      JdbcOper.executeQueryCall("select 'hello' as name from tmp.tmp_dw_cj_dc_disp_item where 1=0", null, new QueryCallback {
+      this.jdbc.executeQueryCall("select id from tmp.tmp_dw_cj_dc_disp_item limit 1", null, new QueryCallback {
         /**
           * 回调方法，对返回结果进行处理
           *
@@ -123,7 +123,9 @@ object JdbcTest extends BaseSparkCore {
           * 结果集记录数
           */
         override def process(rs: ResultSet): Int = {
-          println("-------------------------" + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+          while (rs.next()) {
+            println("-------------------------id=" + rs.getLong(1) + " executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+          }
           1
         }
       }, keyNum = 3)
@@ -131,10 +133,10 @@ object JdbcTest extends BaseSparkCore {
   }
 
   override def process: Unit = {
-    this.testJdbcUpdate
+    /*this.testJdbcUpdate
     this.testJdbcQuery
     this.testTableSave
-    this.testTableLoad
+    this.testTableLoad*/
     this.testExecutor
   }
 
