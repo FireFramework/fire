@@ -14,6 +14,7 @@ import org.apache.spark.sql.SaveMode
 
 /**
   * Spark jdbc操作
+  *
   * @author ChengLong 2019-6-17 15:17:38
   */
 object JdbcTest extends BaseSparkCore {
@@ -71,10 +72,10 @@ object JdbcTest extends BaseSparkCore {
     // 执行批量操作
     val batchSql = s"INSERT INTO $tableName (name, age, createTime, LENGTH, sex) VALUES (?, ?, ?, ?, ?)"
     this.spark.jdbcBatchUpdate(batchSql, Seq(Seq("spark1", 21, DateFormatUtils.formatCurrentDateTime(), 100.123, 1),
-                                             Seq("flink2", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
-                                             Seq("flink3", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
-                                             Seq("flink4", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
-                                             Seq("flink5", 27, DateFormatUtils.formatCurrentDateTime(), 17.236, 0)))
+      Seq("flink2", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
+      Seq("flink3", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
+      Seq("flink4", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
+      Seq("flink5", 27, DateFormatUtils.formatCurrentDateTime(), 17.236, 0)))
 
     // 方式一：通过this.spark方式执行delete操作
     val sql = s"DELETE FROM $tableName WHERE id=?"
@@ -111,22 +112,43 @@ object JdbcTest extends BaseSparkCore {
     * 在executor中执行jdbc操作
     */
   def testExecutor: Unit = {
-    this.jdbc.executeQueryCall(s"select id from tmp.tmp_dw_cj_dc_disp_item limit 1", null, new QueryCallback {
+    // val table = "tmp.tmp_dw_cj_dc_disp_item"
+    val table = "spark_test"
+    this.jdbc.executeQueryCall(s"select id from $table limit 1", null, new QueryCallback {
       override def process(rs: ResultSet): Int = {
-        println("=============yflush dw.dw_cj_dc_disp_item=============")
+        println(s"=============driver $table=============")
         1
       }
-    }, keyNum = 3)
-    val rdd = this.spark.parallelize(1 to 10, 10)
+    }, keyNum = 1)
+    this.jdbc.executeQueryCall(s"select id from $table limit 1", null, new QueryCallback {
+      override def process(rs: ResultSet): Int = {
+        println(s"=============driver $table=============")
+        1
+      }
+    }, keyNum = 2)
+
+    val rdd = this.spark.parallelize(1 to 100, 10)
     rdd.foreachPartition(it => {
-      this.jdbc.executeQueryCall("select id from tmp.tmp_dw_cj_dc_disp_item limit 1", null, new QueryCallback {
-        override def process(rs: ResultSet): Int = {
-          while (rs.next()) {
-            println("-------------------------id=" + rs.getLong(1) + " executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+      it.foreach(i => {
+        this.jdbc.executeQueryCall(s"select id from $table limit 1", null, new QueryCallback {
+          override def process(rs: ResultSet): Int = {
+            logError("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+            1
           }
-          1
-        }
-      }, keyNum = 3)
+        }, keyNum = 2)
+      })
+    })
+
+    val rdd2 = this.spark.parallelize(1 to 100, 10)
+    rdd2.foreachPartition(it => {
+      it.foreach(i => {
+        this.jdbc.executeQueryCall(s"select id from $table limit 1", null, new QueryCallback {
+          override def process(rs: ResultSet): Int = {
+            logError("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+            1
+          }
+        }, keyNum = 2)
+      })
     })
   }
 

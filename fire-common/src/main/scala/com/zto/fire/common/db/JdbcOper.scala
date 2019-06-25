@@ -19,35 +19,43 @@ import scala.reflect.ClassTag
   */
 object JdbcOper extends BaseBean {
   private lazy val connPoolMap = collection.mutable.Map[String, ComboPooledDataSource]()
-  private val isInit = new AtomicBoolean(false)
   private val jdbcPoolKey = "cpds"
 
-  def init: Unit = {
-    try {
-      (1 to 10).foreach(i => {
+  /**
+    * 初始化指定的连接池，未被使用
+    *
+    * @param keyNum
+    * 连接池配置数字后缀
+    * @return
+    * 连接池
+    */
+  def init(keyNum: Int = 1): ComboPooledDataSource = {
+    var pool = this.connPoolMap.get(s"${this.jdbcPoolKey}$keyNum").getOrElse(null)
+    if (pool == null) {
+      try {
         // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
-        if (StringUtils.isNotBlank(GlobalConstants.JdbcConf.url(i)) && StringUtils.isNotBlank(GlobalConstants.JdbcConf.user(i))) {
-          this.logger.info(s"${this.className}: 初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$i ]")
-          val cpds = new ComboPooledDataSource(true)
-          cpds.setJdbcUrl(GlobalConstants.JdbcConf.url(i))
-          cpds.setDriverClass(GlobalConstants.JdbcConf.driverClass(i))
-          cpds.setUser(GlobalConstants.JdbcConf.user(i))
-          cpds.setPassword(GlobalConstants.JdbcConf.password(i))
-          cpds.setMaxPoolSize(GlobalConstants.JdbcConf.maxPoolSize(i))
-          cpds.setMinPoolSize(GlobalConstants.JdbcConf.minPoolSize(i))
-          cpds.setAcquireIncrement(GlobalConstants.JdbcConf.acquireIncrement(i))
-          cpds.setInitialPoolSize(GlobalConstants.JdbcConf.initialPoolSize(i))
-          cpds.setMaxStatements(0)
-          cpds.setMaxStatementsPerConnection(0)
-          cpds.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime(i))
-          this.connPoolMap += (s"cpds$i" -> cpds)
-          this.logger.info(s"${this.className}: 数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$i ]初始化成功：url: ${GlobalConstants.JdbcConf.url(i)} driver: ${GlobalConstants.JdbcConf.driverClass(i)} ", null, true)
+        if (StringUtils.isNotBlank(GlobalConstants.JdbcConf.url(keyNum)) && StringUtils.isNotBlank(GlobalConstants.JdbcConf.user(keyNum))) {
+          this.logger.info(s"${this.className}: 准备初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
+          pool = new ComboPooledDataSource(true)
+          pool.setJdbcUrl(GlobalConstants.JdbcConf.url(keyNum))
+          pool.setDriverClass(GlobalConstants.JdbcConf.driverClass(keyNum))
+          pool.setUser(GlobalConstants.JdbcConf.user(keyNum))
+          pool.setPassword(GlobalConstants.JdbcConf.password(keyNum))
+          pool.setMaxPoolSize(GlobalConstants.JdbcConf.maxPoolSize(keyNum))
+          pool.setMinPoolSize(GlobalConstants.JdbcConf.minPoolSize(keyNum))
+          pool.setAcquireIncrement(GlobalConstants.JdbcConf.acquireIncrement(keyNum))
+          pool.setInitialPoolSize(GlobalConstants.JdbcConf.initialPoolSize(keyNum))
+          pool.setMaxStatements(0)
+          pool.setMaxStatementsPerConnection(0)
+          pool.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime(keyNum))
+          this.connPoolMap += (s"cpds$keyNum" -> pool)
+          this.logger.info(s"${this.className}: 完成数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]初始化：url: ${GlobalConstants.JdbcConf.url(keyNum)} driver: ${GlobalConstants.JdbcConf.driverClass(keyNum)} ", null, true)
         }
-      })
-      this.isInit.set(true)
-    } catch {
-      case ex: Exception => ex.printStackTrace()
+      } catch {
+        case ex: Exception => this.logger.error(s"${this.className}: 初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", ex)
+      }
     }
+    pool
   }
 
   /**
@@ -60,11 +68,10 @@ object JdbcOper extends BaseBean {
     * 对应配置项的数据库连接
     */
   def getConnection(keyNum: Int = 1): Connection = {
-    if (!this.isInit.get()) this.init
     var connection: Connection = null
     try {
-      val pool = this.connPoolMap.get(s"${this.jdbcPoolKey}$keyNum")
-      connection = pool.get.getConnection
+      val pool = this.init(keyNum)
+      connection = pool.getConnection
       this.logger.info(s"${this.className}: 获取数据库连接[ ${keyNum} ]成功")
     } catch {
       case ex: Exception => this.logger.error(s"${this.className}: getConnection(${keyNum}) 获取数据库连接[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]出现异常，请检查配置文件", ex)
