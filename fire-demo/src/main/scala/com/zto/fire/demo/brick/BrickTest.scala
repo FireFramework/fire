@@ -61,7 +61,7 @@ object BrickTest extends BaseSparkStreaming {
     itemDF.createOrReplaceTempViewCache("item")
     // this.spark.sql(BrickTestSQL.itemFields("item")).coalesce(20).saveAsJDBCTable(this.itemTableName)
     this.spark.sql(BrickTestSQL.itemFields("item")).coalesce(20).jdbcTableSave(this.itemTableName)
-
+    this.jdbc.executeUpdate(s"yflush ${this.itemTableName}")
     this.spark.unpersist(itemDF, "item", this.itemTmpTableName)
     rdd.rocketCommitOffsets(itemStream)
   }
@@ -91,7 +91,7 @@ object BrickTest extends BaseSparkStreaming {
     eventDF.createOrReplaceTempViewCache("event")
     // this.spark.sql(BrickTestSQL.eventFields("event")).coalesce(20).saveAsJDBCTable(this.eventTableName)
     this.spark.sql(BrickTestSQL.eventFields("event")).coalesce(20).jdbcTableSave(this.eventTableName)
-
+    this.jdbc.executeUpdate(s"yflush ${this.eventTableName}")
     this.spark.uncache(eventDF, "event", this.eventTmpTableName)
     rdd.rocketCommitOffsets(eventStream)
   }

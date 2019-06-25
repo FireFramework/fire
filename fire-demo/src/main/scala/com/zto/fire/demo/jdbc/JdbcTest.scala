@@ -111,17 +111,15 @@ object JdbcTest extends BaseSparkCore {
     * 在executor中执行jdbc操作
     */
   def testExecutor: Unit = {
+    this.jdbc.executeQueryCall(s"select id from tmp.tmp_dw_cj_dc_disp_item limit 1", null, new QueryCallback {
+      override def process(rs: ResultSet): Int = {
+        println("=============yflush dw.dw_cj_dc_disp_item=============")
+        1
+      }
+    }, keyNum = 3)
     val rdd = this.spark.parallelize(1 to 10, 10)
     rdd.foreachPartition(it => {
       this.jdbc.executeQueryCall("select id from tmp.tmp_dw_cj_dc_disp_item limit 1", null, new QueryCallback {
-        /**
-          * 回调方法，对返回结果进行处理
-          *
-          * @param rs
-          * 查询的结果集
-          * @return
-          * 结果集记录数
-          */
         override def process(rs: ResultSet): Int = {
           while (rs.next()) {
             println("-------------------------id=" + rs.getLong(1) + " executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())

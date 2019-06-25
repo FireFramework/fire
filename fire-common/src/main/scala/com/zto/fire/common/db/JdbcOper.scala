@@ -1,6 +1,7 @@
 package com.zto.fire.common.db
 
 import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}
+import java.util.concurrent.atomic.AtomicBoolean
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.bean.BaseBean
@@ -18,29 +19,35 @@ import scala.reflect.ClassTag
   */
 object JdbcOper extends BaseBean {
   private lazy val connPoolMap = collection.mutable.Map[String, ComboPooledDataSource]()
+  private val isInit = new AtomicBoolean(false)
   private val jdbcPoolKey = "cpds"
 
-  try {
-    (1 to 10).foreach(i => {
-      // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
-      if (StringUtils.isNotBlank(GlobalConstants.JdbcConf.url(i)) && StringUtils.isNotBlank(GlobalConstants.JdbcConf.user(i))) {
-        this.logger.info(s"${this.className}: 初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$i ]")
-        val cpds = new ComboPooledDataSource(true)
-        cpds.setJdbcUrl(GlobalConstants.JdbcConf.url(i))
-        cpds.setDriverClass(GlobalConstants.JdbcConf.driverClass(i))
-        cpds.setUser(GlobalConstants.JdbcConf.user(i))
-        cpds.setPassword(GlobalConstants.JdbcConf.password(i))
-        cpds.setMaxPoolSize(GlobalConstants.JdbcConf.maxPoolSize(i))
-        cpds.setMinPoolSize(GlobalConstants.JdbcConf.minPoolSize(i))
-        cpds.setAcquireIncrement(GlobalConstants.JdbcConf.acquireIncrement(i))
-        cpds.setInitialPoolSize(GlobalConstants.JdbcConf.initialPoolSize(i))
-        cpds.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime(i))
-        this.connPoolMap += (s"cpds$i" -> cpds)
-        this.logger.info(s"${this.className}: 数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$i ]初始化成功：url: ${GlobalConstants.JdbcConf.url(i)} driver: ${GlobalConstants.JdbcConf.driverClass(i)} ", null, true)
-      }
-    })
-  } catch {
-    case ex: Exception => ex.printStackTrace()
+  def init: Unit = {
+    try {
+      (1 to 10).foreach(i => {
+        // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
+        if (StringUtils.isNotBlank(GlobalConstants.JdbcConf.url(i)) && StringUtils.isNotBlank(GlobalConstants.JdbcConf.user(i))) {
+          this.logger.info(s"${this.className}: 初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$i ]")
+          val cpds = new ComboPooledDataSource(true)
+          cpds.setJdbcUrl(GlobalConstants.JdbcConf.url(i))
+          cpds.setDriverClass(GlobalConstants.JdbcConf.driverClass(i))
+          cpds.setUser(GlobalConstants.JdbcConf.user(i))
+          cpds.setPassword(GlobalConstants.JdbcConf.password(i))
+          cpds.setMaxPoolSize(GlobalConstants.JdbcConf.maxPoolSize(i))
+          cpds.setMinPoolSize(GlobalConstants.JdbcConf.minPoolSize(i))
+          cpds.setAcquireIncrement(GlobalConstants.JdbcConf.acquireIncrement(i))
+          cpds.setInitialPoolSize(GlobalConstants.JdbcConf.initialPoolSize(i))
+          cpds.setMaxStatements(0)
+          cpds.setMaxStatementsPerConnection(0)
+          cpds.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime(i))
+          this.connPoolMap += (s"cpds$i" -> cpds)
+          this.logger.info(s"${this.className}: 数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$i ]初始化成功：url: ${GlobalConstants.JdbcConf.url(i)} driver: ${GlobalConstants.JdbcConf.driverClass(i)} ", null, true)
+        }
+      })
+      this.isInit.set(true)
+    } catch {
+      case ex: Exception => ex.printStackTrace()
+    }
   }
 
   /**
@@ -53,6 +60,7 @@ object JdbcOper extends BaseBean {
     * 对应配置项的数据库连接
     */
   def getConnection(keyNum: Int = 1): Connection = {
+    if (!this.isInit.get()) this.init
     var connection: Connection = null
     try {
       val pool = this.connPoolMap.get(s"${this.jdbcPoolKey}$keyNum")
@@ -83,7 +91,7 @@ object JdbcOper extends BaseBean {
     * @return
     * 影响的记录数
     */
-  def executeUpdate(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
+  def executeUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
     var retVal: Long = 0L
     var conn: Connection = connection
     var stat: PreparedStatement = null
@@ -141,7 +149,7 @@ object JdbcOper extends BaseBean {
     * @return
     * 影响的记录数
     */
-  def executeBatch(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
+  def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
     var retVal: Array[Int] = null
     var conn: Connection = connection
     var stat: PreparedStatement = null
@@ -202,7 +210,7 @@ object JdbcOper extends BaseBean {
     * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
     * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     */
-  def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, keyNum: Int = 1): List[T] = {
+  def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): List[T] = {
     val listBuffer = ListBuffer[T]()
 
     this.executeQueryCall(sql, params, new QueryCallback {
@@ -230,7 +238,7 @@ object JdbcOper extends BaseBean {
     * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
     * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     */
-  def executeQueryCall(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null, keyNum: Int = 1): Unit = {
+  def executeQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null, keyNum: Int = 1): Unit = {
     var conn: Connection = connection
     var stat: PreparedStatement = null
     var rs: ResultSet = null
@@ -248,7 +256,7 @@ object JdbcOper extends BaseBean {
       }
       rs = stat.executeQuery
       var count: Long = 0
-      if (rs != null) {
+      if (rs != null && callback != null) {
         count = callback.process(rs)
       }
       this.logger.info(s"${this.className}: sql->$sql result->success 查询记录数：$count")

@@ -1258,7 +1258,7 @@ class SparkSessionExt(spark: SparkSession) {
     * @return
     * 影响的记录数
     */
-  def jdbcUpdate(sql: String, params: Seq[Any], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
+  def jdbcUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
     JdbcOper.executeUpdate(sql, params, connection, commit, closeConnection, keyNum)
   }
 
@@ -1281,7 +1281,7 @@ class SparkSessionExt(spark: SparkSession) {
     * @return
     * 影响的记录数
     */
-  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]], connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
+  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
     JdbcOper.executeBatch(sql, paramsList, connection, commit, closeConnection, keyNum)
   }
 
@@ -1300,7 +1300,7 @@ class SparkSessionExt(spark: SparkSession) {
     * @return
     * 查询结果集
     */
-  def jdbcQuery[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, keyNum: Int = 1): List[T] = {
+  def jdbcQuery[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): List[T] = {
     JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
   }
 
@@ -1318,7 +1318,7 @@ class SparkSessionExt(spark: SparkSession) {
     * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     * @return 查询结果集
     */
-  def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, keyNum: Int = 1): RDD[T] = {
+  def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): RDD[T] = {
     val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
     this.sc.parallelize(rsList, 10)
   }
@@ -1337,7 +1337,7 @@ class SparkSessionExt(spark: SparkSession) {
     * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     * @return 查询结果集
     */
-  def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, keyNum: Int = 1): DataFrame = {
+  def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): DataFrame = {
     val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
     this.spark.createDataFrame(JavaConversions.seqAsJavaList(rsList), clazz)
   }
@@ -1357,7 +1357,7 @@ class SparkSessionExt(spark: SparkSession) {
     * @return
     * 查询结果集
     */
-  def jdbcQueryDS[T <: Object : ClassTag](sql: String, params: Seq[Any], clazz: Class[T], connection: Connection = null, keyNum: Int = 1): Dataset[T] = {
+  def jdbcQueryDS[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): Dataset[T] = {
     val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
     this.spark.createDataset[T](JavaConversions.seqAsJavaList(rsList))(Encoders.bean(clazz))
   }
@@ -1375,7 +1375,7 @@ class SparkSessionExt(spark: SparkSession) {
     * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
     * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     */
-  def jdbcQueryCall(sql: String, params: Seq[Any], callback: QueryCallback, connection: Connection = null, keyNum: Int = 1): Unit = {
+  def jdbcQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null, keyNum: Int = 1): Unit = {
     JdbcOper.executeQueryCall(sql, params, callback, connection, keyNum)
   }
 
