@@ -202,9 +202,6 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
         this.sparkInfoBean.setDriverPort(this.baseSpark.sc.getConf.get("spark.driver.port", "0"))
         this.sparkInfoBean.setRestPort(this.baseSpark.restPort.toString)
         this.sparkInfoBean.setExecutorMemoryOverhead(this.baseSpark.sc.getConf.get("spark.yarn.executor.memoryOverhead", "0"))
-        this.sparkInfoBean.setTopics(PropUtils.getString(GlobalConstants.PropKeys.KAFKA_TOPICS, ""))
-        this.sparkInfoBean.setBrokers(GlobalConstants.KafkaConf.kafkaBrokers())
-        this.sparkInfoBean.setGroupId(PropUtils.getString(GlobalConstants.PropKeys.KAFKA_GROUP_ID, this.baseSpark.appName))
         this.sparkInfoBean.computeCpuMemory()
       }
       this.sparkInfoBean.setUptime(DateFormatUtils.runTime(this.baseSpark.startTime))

@@ -1,6 +1,7 @@
 package com.zto.fire.core.util
 
 import java.lang.reflect.Field
+import java.sql.ResultSet
 import java.text.NumberFormat
 import java.util.{Locale, Properties}
 
@@ -21,6 +22,7 @@ import org.apache.spark.sql.{Row, SparkSession}
 import scala.collection.JavaConversions
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.reflect._
+import scala.util.Try
 
 
 /**
@@ -78,7 +80,7 @@ object SparkUtils {
     * @return
     * 映射为对象的集合
     */
-  def sparkRowToBean[T](it: Iterator[Row], clazz: Class[T]): Iterator[T] = {
+  def sparkRowToBean[T](it: Iterator[Row], clazz: Class[T], toUppercase: Boolean = false): Iterator[T] = {
     val list = ListBuffer[T]()
     if (it != null && clazz != null) {
       val fields = clazz.getDeclaredFields
@@ -89,24 +91,45 @@ object SparkUtils {
           val anno = field.getAnnotation(classOf[FieldName])
           val begin = if (anno == null) true else !anno.disuse()
           if (begin) {
-            val fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
-            val index = row.fieldIndex(fieldName.trim)
-            val fieldType = field.getType
-            if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
-            else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getAs[IntegerType](index))
-            else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getAs[LongType](index))
-            else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getAs[DecimalType](index))
-            else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getAs[BooleanType](index))
-            else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getAs[DoubleType](index))
-            else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getAs[FloatType](index))
-            else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getAs[ShortType](index))
-            else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getAs[DateType](index))
+            var fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
+            fieldName = if (toUppercase) fieldName.toUpperCase else fieldName
+            if (this.containsColumn(row, fieldName)) {
+              val index = row.fieldIndex(fieldName.trim)
+              val fieldType = field.getType
+              if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
+              else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getAs[IntegerType](index))
+              else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getAs[LongType](index))
+              else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getAs[DecimalType](index))
+              else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getAs[BooleanType](index))
+              else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getAs[DoubleType](index))
+              else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getAs[FloatType](index))
+              else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getAs[ShortType](index))
+              else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getAs[DateType](index))
+            }
           }
         })
         list += obj
       })
     }
     list.iterator
+  }
+
+  /**
+    * 判断指定的Row中是否包含指定的列名
+    *
+    * @param row
+    * DataFrame中的行
+    * @param columnName
+    * 列名
+    * @return
+    * true: 存在 false：不存在
+    */
+  def containsColumn(row: Row, columnName: String): Boolean = {
+    Try {
+      try {
+        row.fieldIndex(columnName)
+      }
+    }.isSuccess
   }
 
   /**
@@ -169,7 +192,6 @@ object SparkUtils {
         .add("op_type", StringType)
         .add("op_ts", StringType)
         .add("current_ts", StringType)
-        // .add("pos", LongType)
         .add("gtid", StringType)
         .add("logFile", StringType)
         .add("offset", StringType)
@@ -409,4 +431,20 @@ object SparkUtils {
     SparkEnv.get.conf.get(key, default)
   }
 
+  /**
+    * 将指定的schema转为小写
+    *
+    * @param schema
+    * 转为小写的列
+    * @return
+    * 转为小写的field数组
+    */
+  def schemaToLowerCase(schema: StructType): ArrayBuffer[String] = {
+    val cols = ArrayBuffer[String]()
+    schema.foreach(field => {
+      val fieldName = field.name
+      cols += (s"$fieldName as ${fieldName.toLowerCase}")
+    })
+    cols
+  }
 }

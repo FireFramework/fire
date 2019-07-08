@@ -177,8 +177,8 @@ class DataFrameExt(dataFrame: DataFrame) {
     * @param clazz
     * @return
     */
-  def toRDD[E <: Object : ClassTag](clazz: Class[E]): RDD[E] = {
-    this.dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
+  def toRDD[E <: Object : ClassTag](clazz: Class[E], toUppercase: Boolean = false): RDD[E] = {
+    this.dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz, toUppercase))
   }
 
   /**

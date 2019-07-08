@@ -7,6 +7,7 @@ import com.zto.fire.common.anno.FieldName
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 /**
   * 关系型数据库操作工具类
@@ -97,14 +98,11 @@ object DBUtils {
     * true: 存在 false：不存在
     */
   def containsColumn(rs: ResultSet, columnName: String): Boolean = {
-    try {
-      if (rs.findColumn(columnName) > 0) {
-        return true
+    Try {
+      try {
+        rs.findColumn(columnName)
       }
-    } catch {
-      case e: Exception => return false
-    }
-    false
+    }.isSuccess
   }
 
   /**

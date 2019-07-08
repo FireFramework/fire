@@ -25,6 +25,7 @@ object BrickTest extends BaseSparkStreaming {
   // 线程池大小为2，保证顺序执行
   val brickThreadPool: ExecutorService = Executors.newFixedThreadPool(2)
   // yellowbrick中的item表名
+  // val itemTableName = "dw.dw_cj_dc_disp_item"
   val itemTableName = "dw.dw_cj_dc_disp_item"
   // yellowbrick中的event表名
   val eventTableName = "dw.dw_cj_dc_disp_event"

@@ -57,12 +57,6 @@ public class SparkInfo {
     private String memory;
     // 当前spark应用申请的总的cpu数量（driver+executor）
     private String cpu;
-    // kafka topic列表
-    private String topics;
-    // kafka broker地址
-    private String brokers;
-    // 消费kafka的groupId标识
-    private String groupId;
     // streaming批次时间
     private String batchDuration;
     // 当前driver系统时间
@@ -252,30 +246,6 @@ public class SparkInfo {
 
     public void setCpu(String cpu) {
         this.cpu = cpu;
-    }
-
-    public String getTopics() {
-        return topics;
-    }
-
-    public void setTopics(String topics) {
-        this.topics = topics;
-    }
-
-    public String getBrokers() {
-        return brokers;
-    }
-
-    public void setBrokers(String brokers) {
-        this.brokers = brokers;
-    }
-
-    public String getGroupId() {
-        return groupId;
-    }
-
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
     }
 
     public String getBatchDuration() {

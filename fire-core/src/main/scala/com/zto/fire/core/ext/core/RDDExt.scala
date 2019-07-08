@@ -272,6 +272,17 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   }
 
   /**
+    * 解析json数据，并注册为临时表
+    *
+    * @param tableName
+    * 临时表名
+    */
+  def kafkaJson2Table(tableName: String): Unit = {
+    val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()))(Encoders.STRING)
+    ds.createOrReplaceTempView(tableName)
+  }
+
+  /**
     * 清空RDD的缓存
     */
   def uncache: Unit = {
