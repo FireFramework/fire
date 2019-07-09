@@ -9,7 +9,7 @@ import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kudu.spark.kudu.KuduContext
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{SQLContext, SparkSession}
 
 /**
   * 单例工厂，用于创建单例的对象
@@ -20,6 +20,23 @@ object SingletonFactory {
   @transient private var hbaseContext: HBaseContextExt = _
   @transient private var kuduContext: KuduContextExt = _
   private var hbase: HBaseOper = _
+  private var sparkSession: SparkSession = _
+
+  /**
+    * 获取SparkSession实例
+    *
+    * @return
+    * SparkSession实例
+    */
+  def getSparkSession: SparkSession = this.sparkSession
+
+  /**
+    * SparkSession赋值
+    * @param sparkSession
+    */
+  def setSparkSession(sparkSession: SparkSession): Unit = {
+    this.sparkSession = sparkSession
+  }
 
   /**
     * 获取HBaseOper单例对象

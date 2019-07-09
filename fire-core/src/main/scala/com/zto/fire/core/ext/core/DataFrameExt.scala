@@ -23,6 +23,7 @@ class DataFrameExt(dataFrame: DataFrame) {
 
   // 获取单例的HBaseContext对象
   private lazy val hbaseContext: HBaseContextExt = SingletonFactory.getHBaseContextInstance(dataFrame.sparkSession.sparkContext)
+  private lazy val spark: SparkSession = SingletonFactory.getSparkSession
 
   /**
     * 注册为临时表的同时缓存表
@@ -179,6 +180,14 @@ class DataFrameExt(dataFrame: DataFrame) {
     */
   def toRDD[E <: Object : ClassTag](clazz: Class[E], toUppercase: Boolean = false): RDD[E] = {
     this.dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz, toUppercase))
+  }
+
+  /**
+    * 将DataFrame的schema转为小写
+    * @return
+    */
+  def toLowerDF: DataFrame = {
+    this.dataFrame.selectExpr(SparkUtils.schemaToLowerCase(this.dataFrame.schema): _*)
   }
 
   /**

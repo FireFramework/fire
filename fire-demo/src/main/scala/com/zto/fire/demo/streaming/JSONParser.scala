@@ -20,17 +20,29 @@ object JSONParser extends BaseSparkStreaming {
     */
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream()
-    dstream.foreachRDD((rdd, time) => {
-      println("time===> " + time)
-      rdd.kafkaJson2Table("test")
-      this.spark.sql("select * from test").show(1, false)
+    dstream.foreachRDD(rdd => {
+      // 一、将json解析并注册为临时表，默认不cache临时表
+      rdd.kafkaJson2Table("test", cacheTable = true)
+      // toLowerDF表示将大写的字段转为小写
+      this.spark.sql("select * from test").toLowerDF.show(1, false)
+      this.spark.sql("select after.* from test").toLowerDF.show(1, false)
+      this.spark.sql("select after.* from test where after.platformid=1").toLowerDF.show(1, false)
+
+      // 二、直接将json按指定的schema解析（只解析after）
+      /*println("================after================")
+      rdd.kafkaJson2DF2(classOf[OrderCommon], fieldNameUpper = true).show(2, false)
+      // 解析所有，包括before、table、offset等字段
+      println("================all================")
+      rdd.kafkaJson2DF2(classOf[OrderCommon], parseAll = true, fieldNameUpper = true, isMySQL = false).show(2, false)*/
+
+      this.spark.uncache("test")
     })
 
     this.ssc.startAwaitTermination()
   }
 
   def main(args: Array[String]): Unit = {
-    this.init(30, false)
+    this.init(10, false)
 
     this.stop
   }

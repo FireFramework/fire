@@ -11,6 +11,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges}
+import com.zto.fire.core.ext.SparkExt._
 
 import scala.reflect.{ClassTag, classTag}
 
@@ -24,6 +25,9 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   private lazy val sqlContext: SQLContext = SingletonFactory.getSQLContextInstance(rdd.sparkContext)
   // 获取单例的HBaseContext对象
   private lazy val hbaseContext: HBaseContextExt = SingletonFactory.getHBaseContextInstance(rdd.sparkContext)
+  private lazy val spark = SingletonFactory.getSparkSession
+
+  import spark.implicits._
 
   /**
     * 遍历每个partition并打印元素到控制台
@@ -272,14 +276,40 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   }
 
   /**
+    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
+    *
+    * @param schema
+    * 目标DataFrame类型的schema
+    * @param isMySQL
+    * 是否为mysql解析的消息
+    * @param fieldNameUpper
+    * 字段名称是否为大写
+    * @param parseAll
+    * 是否解析所有字段信息
+    * @return
+    */
+  def kafkaJson2DF2(schema: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): DataFrame = {
+    val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()))(Encoders.STRING)
+    // val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[String]])(Encoders.STRING)
+    val structType = SparkUtils.buildSchema2Kafka(schema, parseAll, isMySQL, fieldNameUpper)
+    val df = ds.select(from_json(new ColumnName("value"), structType).as("data"))
+    val tmpDF = if (parseAll)
+      df.select("data.*")
+    else
+      df.select("data.after.*")
+    if (fieldNameUpper) tmpDF.toLowerDF else tmpDF
+  }
+
+  /**
     * 解析json数据，并注册为临时表
     *
     * @param tableName
     * 临时表名
     */
-  def kafkaJson2Table(tableName: String): Unit = {
-    val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()))(Encoders.STRING)
-    ds.createOrReplaceTempView(tableName)
+  def kafkaJson2Table(tableName: String, cacheTable: Boolean = false): Unit = {
+    val msgDS = rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()).toDS()
+    spark.read.json(msgDS).toLowerDF.createOrReplaceTempView(tableName)
+    if (cacheTable) this.spark.cacheTables(tableName)
   }
 
   /**

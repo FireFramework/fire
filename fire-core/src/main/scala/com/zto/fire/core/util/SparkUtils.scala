@@ -153,11 +153,11 @@ object SparkUtils {
         if (StringUtils.isNotBlank(anno.value)) {
           fieldName = anno.value
         }
-        if (upper) fieldName = fieldName.toUpperCase
         nullable = anno.nullable()
         anno.disuse()
       }
       if (!disuse) {
+        if (upper) fieldName = fieldName.toUpperCase
         if (fieldType eq classOf[String]) strutFields += DataTypes.createStructField(fieldName, DataTypes.StringType, nullable)
         else if (fieldType eq classOf[java.lang.Integer]) strutFields += DataTypes.createStructField(fieldName, DataTypes.IntegerType, nullable)
         else if (fieldType eq classOf[java.lang.Double]) strutFields += DataTypes.createStructField(fieldName, DataTypes.DoubleType, nullable)

@@ -2,9 +2,9 @@ package com.zto.fire.demo.bean;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zto.fire.common.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
+import com.zto.fire.common.util.HttpClientUtils;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -183,9 +183,8 @@ public class Student extends HBaseBaseBean<Student> {
     }
 
     public static void main(String[] args) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        String json = mapper.writeValueAsString(new Student(1L, "admin", 10, new BigDecimal(10.10), true, DateFormatUtils.formatCurrentDateTime()));
-        Student2 student2 = mapper.readValue(json, Student2.class);
-        System.out.println(mapper.writeValueAsString(student2));
+        String json = "{\"className\": \"com.zto.bigdata.spark.zrc.ZrcDemo\", \"url\": \"http://10.9.39.10:8089\", \"fireVersion\": \"0.10\"}";
+        String msg = HttpClientUtils.doPost("http://10.9.38.156:8080/deploy/zrcConfCallBack", json);
+        System.out.println("msg=" + msg);
     }
 }

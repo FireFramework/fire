@@ -20,18 +20,8 @@ object LocalTest extends BaseSparkCore {
     * 注：此方法会被自动调用，不需要在main中手动调用
     */
   override def process: Unit = {
-    this.spark.sql("set spark.sql.caseSensitive=true")
-    val list = new util.ArrayList[String]()
-    list.add(json)
-    val jsonDS = this.spark.createDataset(list)(Encoders.STRING)
-    this.spark.read.json(jsonDS).createOrReplaceTempView("test")
-    this.spark.table("test").printSchema()
-    this.spark.sql("select after.* from test").printSchema()
-    this.spark.sql("select after.* from test").show(10, false)
-    println("======================rdd1==========================")
-    this.spark.sql("select after.* from test").toRDD(classOf[OrderCommon], true).collect().foreach(println)
-    println("======================rdd2==========================")
-    this.spark.sql("select after.* from test").toRDD(classOf[OrderCommon]).collect().foreach(println)
+    val rdd = this.spark.parallelize(Seq(json))
+    rdd.kafkaJson2DF2(classOf[OrderCommon], fieldNameUpper = true, parseAll = true).show(1, false)
   }
 
 

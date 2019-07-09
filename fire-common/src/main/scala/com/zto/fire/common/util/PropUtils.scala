@@ -4,6 +4,7 @@ import java.io.{File, FileInputStream, InputStream}
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 
+import com.alibaba.fastjson.JSON
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkEnv
 
@@ -274,4 +275,34 @@ object PropUtils {
       this.isMerge.set(true)
     }
   }
+
+  /**
+    * 获取zrc配置信息
+    */
+  def invokeZrcConf(className: String, rest: String): Unit = {
+    val param =
+      s"""
+        |{"className": "$className", "url": "http://$rest", "fireVersion": "${PropUtils.getString("spark.fire.version")}"}
+      """.stripMargin
+
+    var conf = ""
+    try {
+      val url = "http://10.9.38.156:8080/deploy/zrcConfCallBack"
+      conf = HttpClientUtils.doPost(url, param)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        val url2 = "http://10.9.38.156:8080/deploy/zrcConfCallBack"
+        conf = HttpClientUtils.doPost(url2, param)
+      }
+    } finally {
+      println("=====1.覆盖配置====" + conf)
+      if (StringUtils.isNotBlank(conf)) {
+        println("=====2.覆盖配置====" + conf)
+        val map = JSON.parseObject(conf, classOf[java.util.Map[String, String]])
+        PropUtils.setProperties(JavaConversions.mapAsScalaMap(map))
+      }
+    }
+  }
+
 }

@@ -17,8 +17,8 @@ import org.apache.spark.storage.StorageLevel
   */
 object ScanHbase2Hive extends BaseSparkCore {
   val tableName = "sz_zto_site_senda_bills"
-  private val hbaseStartDateTime = DateFormatUtils.addDays(new Date, -31).substring(0, 10) + " 00:00:00"
-  private val hbaseEndDateTime = DateFormatUtils.addDays(new Date, -30).substring(0, 10) + " 23:59:59"
+  private val hbaseStartDateTime = DateFormatUtils.addDays(new Date, -51).substring(0, 10) + " 00:00:00"
+  private val hbaseEndDateTime = DateFormatUtils.addDays(new Date, -50).substring(0, 10) + " 23:59:59"
 
   override def process: Unit = {
     this.spark.sql("use tmp")

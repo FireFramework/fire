@@ -57,9 +57,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     */
   private[this] def init: Unit = {
     PropUtils.load(this.appName)
-    // 后续调用接口获取配置信息即可
-    /*val map = JSON.parseObject("{id: '10', name:'root'}", classOf[java.util.Map[String, String]]).toScalaMap
-    PropUtils.setProperties(map)*/
+    // 注册到zrc平台，并覆盖配置信息
+    PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     if (StringUtils.isNotBlank(GlobalConstants.SparkConf.appName)) {
       this.appName = GlobalConstants.SparkConf.appName
     }
@@ -100,6 +99,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     } else {
       this.spark = SparkSession.builder().config(tmpConf).enableHiveSupport().getOrCreate()
     }
+    SingletonFactory.setSparkSession(this.spark)
     this.spark.registerAll()
     this.sc = this.spark.sparkContext
     this.catalog = this.spark.catalog
