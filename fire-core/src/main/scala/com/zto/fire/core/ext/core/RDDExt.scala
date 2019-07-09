@@ -268,28 +268,6 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     */
   def kafkaJson2DF(schema: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): DataFrame = {
     val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()))(Encoders.STRING)
-    val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, parseAll, isMySQL, fieldNameUpper)).as("data"))
-    if (parseAll)
-      df.select("data.*")
-    else
-      df.select("data.after.*")
-  }
-
-  /**
-    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
-    *
-    * @param schema
-    * 目标DataFrame类型的schema
-    * @param isMySQL
-    * 是否为mysql解析的消息
-    * @param fieldNameUpper
-    * 字段名称是否为大写
-    * @param parseAll
-    * 是否解析所有字段信息
-    * @return
-    */
-  def kafkaJson2DF2(schema: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): DataFrame = {
-    val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()))(Encoders.STRING)
     // val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[String]])(Encoders.STRING)
     val structType = SparkUtils.buildSchema2Kafka(schema, parseAll, isMySQL, fieldNameUpper)
     val df = ds.select(from_json(new ColumnName("value"), structType).as("data"))

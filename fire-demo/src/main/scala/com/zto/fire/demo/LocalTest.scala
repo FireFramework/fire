@@ -1,9 +1,6 @@
 package com.zto.fire.demo
 
-import java.util
-
 import com.zto.fire.core.BaseSparkCore
-import org.apache.spark.sql.{Dataset, Encoders}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.demo.bean.OrderCommon
 
@@ -21,7 +18,7 @@ object LocalTest extends BaseSparkCore {
     */
   override def process: Unit = {
     val rdd = this.spark.parallelize(Seq(json))
-    rdd.kafkaJson2DF2(classOf[OrderCommon], fieldNameUpper = true, parseAll = true).show(1, false)
+    rdd.kafkaJson2DF(classOf[OrderCommon], fieldNameUpper = true, parseAll = true).show(1, false)
   }
 
 

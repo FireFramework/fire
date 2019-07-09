@@ -2,7 +2,6 @@ package com.zto.fire.demo.streaming
 
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
-import com.zto.fire.core.util.SparkUtils
 import com.zto.fire.demo.bean.OrderCommon
 
 /**
@@ -28,12 +27,10 @@ object JSONParser extends BaseSparkStreaming {
       this.spark.sql("select after.* from test").toLowerDF.show(1, false)
       this.spark.sql("select after.* from test where after.platformid=1").toLowerDF.show(1, false)
 
-      // 二、直接将json按指定的schema解析（只解析after）
-      /*println("================after================")
-      rdd.kafkaJson2DF2(classOf[OrderCommon], fieldNameUpper = true).show(2, false)
-      // 解析所有，包括before、table、offset等字段
-      println("================all================")
-      rdd.kafkaJson2DF2(classOf[OrderCommon], parseAll = true, fieldNameUpper = true, isMySQL = false).show(2, false)*/
+      // 二、直接将json按指定的schema解析（只解析after），fieldNameUpper=true表示按大写方式解析，并自动转为小写
+      rdd.kafkaJson2DF(classOf[OrderCommon], fieldNameUpper = true).show(2, false)
+      // 递归解析所有指定的字段，包括before、table、offset等字段
+      rdd.kafkaJson2DF(classOf[OrderCommon], parseAll = true, fieldNameUpper = true, isMySQL = false).show(2, false)
 
       this.spark.uncache("test")
     })
