@@ -97,7 +97,7 @@ object SingletonFactory {
     * @return
     */
   def getKuduContextInstance(sparkContext: SparkContext): KuduContextExt = {
-    if (this.kuduContext == null) {
+    if (this.kuduContext == null && StringUtils.isNotBlank(GlobalConstants.KuduConf.kuduMaster)) {
       val kuduContextTmp = new KuduContext(GlobalConstants.KuduConf.kuduMaster, sparkContext)
       this.kuduContext = new KuduContextExt(SingletonFactory.getSQLContextInstance(sparkContext), kuduContextTmp)
     }

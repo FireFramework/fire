@@ -107,7 +107,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.sc.addSparkListener(new BaseSparkListener(this))
     this.hiveContext = this.spark.sqlContext
     this.sqlContext = this.hiveContext
-    this.hbaseContext = SingletonFactory.getHBaseContextInstance(sc)
+    this.hbaseContext = SingletonFactory.getHBaseContextInstance(this.sc)
+    this.kuduContext = SingletonFactory.getKuduContextInstance(this.sc)
     this.applicationId = SparkUtils.getApplicationId(this.spark)
     this.webUI = SparkUtils.getWebUI(this.spark)
     this.conf = tmpConf
