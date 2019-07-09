@@ -33,6 +33,7 @@ object JSONParser extends BaseSparkStreaming {
       rdd.kafkaJson2DF(classOf[OrderCommon], parseAll = true, fieldNameUpper = true, isMySQL = false).show(2, false)
 
       this.spark.uncache("test")
+      rdd.kafkaCommitOffsets(dstream)
     })
 
     this.ssc.startAwaitTermination()
