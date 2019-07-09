@@ -362,13 +362,13 @@ public class FileUtils {
      * @param fileName 文件名
      * @return 文件全路径
      */
-    public static File findFile(String path, String fileName) {
+    public static File findFile(String path, String fileName, List<File> fileList) {
         File searchFile = null;
         File dir = new File(path);
         if (dir.exists() && dir.isDirectory()) {
             for (File file : dir.listFiles()) {
                 if (file.isDirectory()) {
-                    searchFile = findFile(file.getPath(), fileName);
+                    searchFile = findFile(file.getPath(), fileName, fileList);
                 } else {
                     if (file.getName().equals(fileName)) {
                         searchFile = file;
@@ -377,6 +377,7 @@ public class FileUtils {
                 }
             }
         }
+        if (searchFile != null) fileList.add(searchFile);
         return searchFile;
     }
 

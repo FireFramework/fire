@@ -167,7 +167,7 @@ object HBaseOperTest extends BaseSparkCore {
   def testHbaseOperDeleteRDD: Unit = {
     val rowKeyList = Seq(1.toString, 2.toString, 5.toString, 8.toString)
     val rowKeyRDD = this.spark.parallelize(rowKeyList)
-    rowKeyRDD.hbaseOperDeleteRDD(this.tableName2)
+    rowKeyRDD.hbaseOperDeleteRDD(this.tableName1)
   }
 
   /**
@@ -203,6 +203,8 @@ object HBaseOperTest extends BaseSparkCore {
     this.testHbaseOperDeleteRDD
     this.testHbaseOperDeleteDS*/
     this.testHbaseOperPutRDD()
+    this.testHbaseOperGetDF
+    this.testHbaseOperDeleteRDD
     this.testHbaseOperScanDF
   }
 

@@ -114,7 +114,7 @@ object HBaseBulkTest extends BaseSparkCore {
   def testHBaseBulkGetDS: Unit = {
     // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
     val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString))
-    val studentDS = rowKeyRdd.hbaseBulkGetDS(this.tableName1, classOf[Student])
+    val studentDS = rowKeyRdd.hbaseBulkGetDS(this.tableName2, classOf[Student])
     studentDS.show(100, false)
     // 方式二：使用this.spark.hbaseBulkGetDF
     // val studentDS2 = this.spark.hbaseBulkGetDS(this.tableName2, rowKeyRdd, classOf[Student])
@@ -186,14 +186,14 @@ object HBaseBulkTest extends BaseSparkCore {
 
     // this.testHBaseBulkGetRDD
     // this.testHBaseBulkGetDF
-    // this.testHBaseBulkGetDS
+    this.testHBaseBulkGetDS
     // this.testHBaseBulkGetSeq
 
     // this.testHBaseBulkDeleteRDD
-    // this.testHBaseBulkDeleteDS
+    this.testHBaseBulkDeleteDS
 
-    // this.testHbaseBulkScanRDD
-    // this.testHbaseBulkScanDF
+    /*this.testHbaseBulkScanRDD
+    this.testHbaseBulkScanDF*/
     this.testHbaseBulkScanDS
   }
 

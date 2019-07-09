@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -185,9 +186,10 @@ public class FindClassUtils {
         } else {
             // 在IDEA中执行
             try {
-                File searchFile = FileUtils.findFile(FindClassUtils.class.getResource("/").getPath(), fileName);
-                if (searchFile != null && searchFile.exists()) {
-                    fullName = searchFile.getPath();
+                List<File> searchList = new LinkedList<>();
+                FileUtils.findFile(FindClassUtils.class.getResource("/").getPath(), fileName, searchList);
+                if (searchList != null && searchList.size() > 0) {
+                    fullName = searchList.get(0).getPath();
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();

@@ -153,10 +153,11 @@ object JdbcTest extends BaseSparkCore {
   }
 
   override def process: Unit = {
-    /*this.testJdbcUpdate
-    this.testJdbcQuery
+    this.testJdbcUpdate
+    /*this.testJdbcQuery
     this.testTableSave
     this.testTableLoad*/
+    this.testTableLoad
     this.testExecutor
   }
 

@@ -296,9 +296,7 @@ object PropUtils {
         conf = HttpClientUtils.doPost(url2, param)
       }
     } finally {
-      println("=====1.覆盖配置====" + conf)
       if (StringUtils.isNotBlank(conf)) {
-        println("=====2.覆盖配置====" + conf)
         val map = JSON.parseObject(conf, classOf[java.util.Map[String, String]])
         PropUtils.setProperties(JavaConversions.mapAsScalaMap(map))
       }
