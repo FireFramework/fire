@@ -241,6 +241,20 @@ object PropUtils {
   }
 
   /**
+    * 设置指定的配置
+    *
+    * @param key
+    * 配置的key
+    * @param value
+    * 配置的value
+    */
+  def setProperty(key: String, value: String): Unit = {
+    if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
+      this.props.setProperty(key, value)
+    }
+  }
+
+  /**
     * 打印配置文件中的kv
     */
   def print(): Unit = {
@@ -286,7 +300,7 @@ object PropUtils {
       s"""
          |{"className": "$className", "url": "http://$rest", "fireVersion": "${PropUtils.getString("spark.fire.version")}", "zrcKey": "21fa30b7f2082b1b12dfbc7c8c6d70b9"}
       """.stripMargin
-
+    this.setProperty("spark.rest.url", s"http://$rest")
     var conf = ""
     try {
       val url = "http://10.9.38.155:8080/zrcToExternal/zrcConfCallBack"
