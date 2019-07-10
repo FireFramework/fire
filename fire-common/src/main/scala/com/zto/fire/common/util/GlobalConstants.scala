@@ -522,6 +522,8 @@ object GlobalConstants {
       if (SystemInfoUtils.isLinux) {
         if ("batch".equalsIgnoreCase(hiveCluster)) {
           batchMetastore
+        } else if (StringUtils.isNotBlank(hiveCluster) && hiveCluster.contains(".")) {
+          hiveCluster
         } else {
           streamingMetastore
         }

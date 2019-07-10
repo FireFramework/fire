@@ -4,7 +4,7 @@ import java.io.{File, FileInputStream, InputStream}
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 
-import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkEnv
 
@@ -233,7 +233,9 @@ object PropUtils {
   def setProperties(map: Map[String, String]): Unit = {
     if (map != null) {
       map.foreach(kv => {
-        this.props.setProperty(kv._1, kv._2)
+        if (StringUtils.isNotBlank(kv._1) && StringUtils.isNotBlank(kv._2)) {
+          this.props.setProperty(kv._1, kv._2)
+        }
       })
     }
   }
@@ -282,7 +284,7 @@ object PropUtils {
   def invokeZrcConf(className: String, rest: String): Unit = {
     val param =
       s"""
-         |{"className": "$className", "url": "http://$rest", "fireVersion": "${PropUtils.getString("spark.fire.version")}"}
+         |{"className": "$className", "url": "http://$rest", "fireVersion": "${PropUtils.getString("spark.fire.version")}", "zrcKey": "21fa30b7f2082b1b12dfbc7c8c6d70b9"}
       """.stripMargin
 
     var conf = ""
@@ -297,11 +299,12 @@ object PropUtils {
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {
-        val map = JSON.parseObject(conf, classOf[java.util.Map[String, String]])
-        if (map != null && map.get("code") == 200) {
-          val props = map.getOrDefault("content", "")
-          if (StringUtils.isNotBlank(props)) {
-            val confMap = JSON.parseObject(props, classOf[java.util.Map[String, String]])
+        println("<----- zrc conf ----->" + conf)
+        val msg = JSON.parseObject(conf)
+        if (msg != null && msg.get("code") == 200) {
+          val content = msg.get("content")
+          if (content != null) {
+            val confMap = JSON.parseObject(content.toString, classOf[java.util.HashMap[String, String]])
             if (confMap != null && conf.size > 0) {
               PropUtils.setProperties(JavaConversions.mapAsScalaMap(confMap))
             }
