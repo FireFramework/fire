@@ -214,8 +214,10 @@ object GlobalConstants {
       val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME, keyNum, DefaultVals.kafkaBrokersName)
       if ("bigdata".equalsIgnoreCase(brokerName)) {
         bigdataKafkaUrl
-      } else {
+      } else if ("zms".equalsIgnoreCase(brokerName)) {
         zmsKafkaUrl
+      } else {
+        brokerName
       }
     }
 

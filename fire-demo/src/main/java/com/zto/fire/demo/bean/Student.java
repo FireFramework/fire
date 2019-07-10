@@ -184,7 +184,7 @@ public class Student extends HBaseBaseBean<Student> {
 
     public static void main(String[] args) throws Exception {
         String json = "{\"className\": \"com.zto.bigdata.spark.zrc.ZrcDemo\", \"url\": \"http://10.9.39.10:8089\", \"fireVersion\": \"0.10\"}";
-        String msg = HttpClientUtils.doPost("http://10.9.38.156:8080/deploy/zrcConfCallBack", json);
+        String msg = HttpClientUtils.doPost("http://10.9.38.156:8080/zrcToExternal/zrcConfCallBack", json);
         System.out.println("msg=" + msg);
     }
 }
