@@ -9,7 +9,6 @@ import com.zto.fire.core.ext.SparkExt._
   */
 object ZrcDemo extends BaseSparkStreaming {
 
-
   /**
     * Streaming的处理过程强烈建议放到process中，保持风格统一
     * 注：此方法会被自动调用，在以下两种情况下，必须将逻辑写在process中
@@ -22,12 +21,11 @@ object ZrcDemo extends BaseSparkStreaming {
     dstream.foreachRDD(rdd => {
       println("count=" + rdd.count())
     })
-    this.ssc.startAwaitTermination()
+    this.ssc.start()
+    this.ssc.awaitTermination()
   }
 
   def main(args: Array[String]): Unit = {
     this.init(30, false)
-
-    this.stop
   }
 }

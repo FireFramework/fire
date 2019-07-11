@@ -179,7 +179,11 @@ trait BaseSparkStreaming extends BaseSpark {
       if (StringUtils.isNotBlank(param)) {
         this.externalConf = JSON.parseObject(param, classOf[RestartParams])
         this.ssc.stop(this.externalConf.isRestartSparkContext, this.externalConf.isStopGracefully)
-        this.init(this.externalConf.getBatchDuration, this.externalConf.isCheckPoint)
+        new Thread(new Runnable {
+          override def run(): Unit = {
+            init(externalConf.getBatchDuration, externalConf.isCheckPoint)
+          }
+        }).start()
       }
       msg.buildSuccess("重启StreamingContext成功", ErrorCode.SUCCESS.toString)
     } catch {
