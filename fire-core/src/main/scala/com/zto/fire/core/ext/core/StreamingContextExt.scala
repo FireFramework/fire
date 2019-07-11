@@ -119,5 +119,6 @@ class StreamingContextExt(ssc: StreamingContext) {
   def startAwaitTermination(): Unit = {
     ssc.start()
     ssc.awaitTermination()
+    Thread.currentThread().join()
   }
 }

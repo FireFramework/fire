@@ -418,6 +418,31 @@ object SparkUtils {
   }
 
   /**
+    * 判断是否为yarn-client模式
+    * @return
+    *         true: yarn-client模式
+    */
+  def isYarnClientMode: Boolean = {
+    "client".equalsIgnoreCase(this.deployMode)
+  }
+
+  /**
+    * 判断是否为yarn-cluster模式
+    * @return
+    *         true: yarn-cluster模式
+    */
+  def isYarnClusterMode: Boolean = {
+    "cluster".equalsIgnoreCase(this.deployMode)
+  }
+
+  /**
+    * 获取spark任务运行模式
+    */
+  def deployMode: String = {
+    SingletonFactory.getSparkSession.conf.get("spark.submit.deployMode")
+  }
+
+  /**
     * 获取conf信息
     *
     * @param key

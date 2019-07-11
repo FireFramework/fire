@@ -21,11 +21,11 @@ object ZrcDemo extends BaseSparkStreaming {
     dstream.foreachRDD(rdd => {
       println("count=" + rdd.count())
     })
-    this.ssc.start()
-    this.ssc.awaitTermination()
+    this.ssc.startAwaitTermination()
   }
 
   def main(args: Array[String]): Unit = {
     this.init(30, false)
+    this.stop
   }
 }
