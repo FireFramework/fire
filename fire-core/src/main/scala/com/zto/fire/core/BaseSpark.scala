@@ -2,12 +2,11 @@ package com.zto.fire.core
 
 import java.util.concurrent.{ExecutorService, Executors, ScheduledExecutorService, TimeUnit}
 
-import com.zto.fire.common.db.{HBaseOper, JdbcOper}
-import com.zto.fire.core.ext.SparkExt._
-import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
+import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.util._
-import com.zto.fire.core.bridge.HBaseSparkBridge
+import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
+import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.log4j.{Level, Logger}

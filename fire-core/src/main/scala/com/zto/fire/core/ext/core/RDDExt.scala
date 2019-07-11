@@ -30,6 +30,14 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   import spark.implicits._
 
   /**
+    * 用于判断rdd是否为空
+    *
+    * @return
+    * true: 不为空 false：为空
+    */
+  def isNotEmpty: Boolean = !rdd.isEmpty()
+
+  /**
     * 遍历每个partition并打印元素到控制台
     */
   def printEachPartition: Unit = {
@@ -75,7 +83,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param batchSize
     * 批量删除的大小
     */
-  def hbaseBulkDeleteRDD[T<: String : ClassTag](tableName: String, batchSize: Integer = this.hbaseContext.batchSize): Unit = {
+  def hbaseBulkDeleteRDD[T <: String : ClassTag](tableName: String, batchSize: Integer = this.hbaseContext.batchSize): Unit = {
     this.hbaseContext.bulkDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]], batchSize)
   }
 

@@ -19,21 +19,24 @@ object JSONParser extends BaseSparkStreaming {
     */
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream()
+
     dstream.foreachRDD(rdd => {
-      // 一、将json解析并注册为临时表，默认不cache临时表
-      rdd.kafkaJson2Table("test", cacheTable = true)
-      // toLowerDF表示将大写的字段转为小写
-      this.spark.sql("select * from test").toLowerDF.show(1, false)
-      this.spark.sql("select after.* from test").toLowerDF.show(1, false)
-      this.spark.sql("select after.* from test where after.platformid=1").toLowerDF.show(1, false)
+      if (rdd.isNotEmpty) {
+        // 一、将json解析并注册为临时表，默认不cache临时表
+        rdd.kafkaJson2Table("test", cacheTable = true)
+        // toLowerDF表示将大写的字段转为小写
+        this.spark.sql("select * from test").toLowerDF.show(1, false)
+        this.spark.sql("select after.* from test").toLowerDF.show(1, false)
+        this.spark.sql("select after.* from test where after.platformid=1").toLowerDF.show(1, false)
 
-      // 二、直接将json按指定的schema解析（只解析after），fieldNameUpper=true表示按大写方式解析，并自动转为小写
-      rdd.kafkaJson2DF(classOf[OrderCommon], fieldNameUpper = true).show(2, false)
-      // 递归解析所有指定的字段，包括before、table、offset等字段
-      rdd.kafkaJson2DF(classOf[OrderCommon], parseAll = true, fieldNameUpper = true, isMySQL = false).show(2, false)
+        // 二、直接将json按指定的schema解析（只解析after），fieldNameUpper=true表示按大写方式解析，并自动转为小写
+        rdd.kafkaJson2DF(classOf[OrderCommon], fieldNameUpper = true).show(2, false)
+        // 递归解析所有指定的字段，包括before、table、offset等字段
+        rdd.kafkaJson2DF(classOf[OrderCommon], parseAll = true, fieldNameUpper = true, isMySQL = false).show(2, false)
 
-      this.spark.uncache("test")
-      rdd.kafkaCommitOffsets(dstream)
+        this.spark.uncache("test")
+        rdd.kafkaCommitOffsets(dstream)
+      }
     })
 
     this.ssc.startAwaitTermination()

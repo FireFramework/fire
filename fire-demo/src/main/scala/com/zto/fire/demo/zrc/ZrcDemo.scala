@@ -19,6 +19,9 @@ object ZrcDemo extends BaseSparkStreaming {
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream()
     dstream.print(1)
+    dstream.foreachRDD(rdd => {
+      println("count=" + rdd.count())
+    })
     this.ssc.startAwaitTermination()
   }
 
