@@ -54,6 +54,7 @@ trait BaseSparkStreaming extends BaseSpark {
       if (SystemInfoUtils.isLinux) {
         this.restfulRegister
           .addRest(RestCase(RequestMethod.POST.toString, "/system/restartStreaming", this.restartStreaming))
+          .addRest(RestCase(RequestMethod.POST.toString, "/system/streaming/hotRestart", this.hotRestart))
           .startRestServer
       }
     }
@@ -171,8 +172,8 @@ trait BaseSparkStreaming extends BaseSpark {
     * @return
     * 响应结果
     */
-  @Rest("/system/restartStreaming")
-  def restartStreaming(request: Request, response: Response): AnyRef = {
+  @Rest("/system/streaming/hotRestart")
+  def hotRestart(request: Request, response: Response): AnyRef = {
     val param = request.body()
     val msg = new ResultMsg()
     try {
@@ -194,6 +195,18 @@ trait BaseSparkStreaming extends BaseSpark {
     } finally {
       msg.toString
     }
+  }
+
+  /**
+    * 用于重置StreamingContext（仅支持batch时间的修改）
+    *
+    * @return
+    * 响应结果
+    */
+  @deprecated("use hotRestart", "0.1.2-SNAPSHOT")
+  @Rest("/system/restartStreaming")
+  def restartStreaming(request: Request, response: Response): AnyRef = {
+    this.hotRestart(request, response)
   }
 
 }
