@@ -62,8 +62,8 @@ public class HttpClientUtils {
         HttpClient httpClient = new HttpClient();
         try {
             postMethod = new PostMethod();
-            httpClient.setConnectionTimeout(5000);
-            postMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 5000);
+            httpClient.setConnectionTimeout(10000);
+            postMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 10000);
             postMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler());
             postMethod.setURI(new URI(url, true, "utf-8"));
             postMethod.addRequestHeader("Content-Type", "application/json");

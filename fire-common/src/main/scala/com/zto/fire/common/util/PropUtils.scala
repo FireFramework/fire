@@ -303,7 +303,7 @@ object PropUtils {
     this.setProperty("spark.rest.url", s"http://$rest")
     var conf = ""
     try {
-      val url = "http://10.9.38.155:8080/zrcToExternal/zrcConfCallBack"
+      val url = "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack"
       conf = HttpClientUtils.doPost(url, param)
     } catch {
       case e: Exception => {
