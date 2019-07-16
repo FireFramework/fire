@@ -101,6 +101,11 @@ object GlobalConstants {
     val KAFKA_ENABLE_AUTO_COMMIT = "spark.kafka.enable.auto.commit"
     // group.id
     val KAFKA_GROUP_ID = "spark.kafka.group.id"
+    // kafka session超时时间
+    val KAFKA_SESSION_TIMEOUT_MS = "spark.kafka.session.timeout.ms"
+    // kafka request超时时间
+    val KAFKA_REQUEST_TIMEOUT_MS = "spark.kafka.request.timeout.ms"
+    val KAFKA_MAX_POLL_INTERVAL_MS = "spark.kafka.max.poll.interval.ms"
 
     // spark相关配置
     val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
@@ -137,21 +142,31 @@ object GlobalConstants {
     */
   object JdbcConf extends Enumeration {
     def url(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_URL_KEY, keyNum)
+
     def driverClass(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_DRIVER_KEY, keyNum)
+
     def user(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_USER_KEY, keyNum)
+
     def password(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_PASSWORD_KEY, keyNum)
+
     // 事务的隔离级别：NONE, READ_COMMITTED, READ_UNCOMMITTED, REPEATABLE_READ, SERIALIZABLE，默认为READ_UNCOMMITTED
     def isolationLevel(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_ISOLATION_LEVEL, keyNum, DefaultVals.jdbcIsolationLevel)
+
     // 批量操作的记录数
     def batchSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_BATCH_SIZE, keyNum, DefaultVals.jdbcBatchSize)
+
     // 连接池最小连接数
     def minPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MIN_POOL_SIZE_KEY, keyNum, 1)
+
     // 连接池初始化连接数
     def initialPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_INITIAL_POOL_SIZE_KEY, keyNum, 1)
+
     // 连接池最大连接数
     def maxPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_POOL_SIZE_KEY, keyNum, 5)
+
     // 连接池每次自增连接数
     def acquireIncrement(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_ACQUIRE_INCREMENT_KEY, keyNum, 1)
+
     // 多久释放没有用到的连接
     def maxIdleTime(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_IDLE_TIME_KEY, keyNum, 30)
   }
@@ -186,8 +201,10 @@ object GlobalConstants {
 
     // kafka消费位点
     def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
+
     // 丢失数据时是否失败
     def kafkaFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.kafkaFailOnDataLoss)
+
     // enable.auto.commit
     def kafkaEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.kafkaEnableAutoCommit)
 
@@ -232,6 +249,37 @@ object GlobalConstants {
       ParamUtils.requireNonNullForce(topics, "配置未找到：spark.kafka.topics" + keyNum)
       topics
     }
+
+    /**
+      * kafka session超时时间，默认5分钟
+      *
+      * @param keyNum
+      * 配置的key后缀
+      * @return
+      */
+    def kafkaSessionTimeOut(keyNum: Int = 1): java.lang.Integer = {
+      PropUtils.getInt(PropKeys.KAFKA_SESSION_TIMEOUT_MS, keyNum, 300000)
+    }
+
+    /**
+      * kafka request超时时间
+      * @param keyNum
+      *              配置的key后缀
+      * @return
+      */
+    def kafkaRequestTimeOut(keyNum: Int = 1): java.lang.Integer = {
+      PropUtils.getInt(PropKeys.KAFKA_REQUEST_TIMEOUT_MS, keyNum, 400000)
+    }
+
+    /**
+      * kafka request超时时间，默认10分钟
+      * @param keyNum
+      *              配置的key后缀
+      * @return
+      */
+    def kafkaPollInterval(keyNum: Int = 1): java.lang.Integer = {
+      PropUtils.getInt(PropKeys.KAFKA_MAX_POLL_INTERVAL_MS, keyNum, 600000)
+    }
   }
 
   /**
@@ -245,6 +293,7 @@ object GlobalConstants {
 
     /**
       * 获取消费位点
+      *
       * @return
       */
     def rocketStartingOffset(keyNum: Int = 1): ConsumerStrategy = {
@@ -255,8 +304,10 @@ object GlobalConstants {
         ConsumerStrategy.earliest
       }
     }
+
     // 丢失数据时是否失败
     def rocketFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.rocketFailOnDataLoss)
+
     // enable.auto.commit
     def rocketEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.rocketEnableAutoCommit)
 

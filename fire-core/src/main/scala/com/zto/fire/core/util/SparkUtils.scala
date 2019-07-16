@@ -305,9 +305,9 @@ object SparkUtils {
       "group.id" -> groupId,
       "auto.offset.reset" -> finalOffset,
       "enable.auto.commit" -> (finalAutoCommit: java.lang.Boolean),
-      "session.timeout.ms" -> (300000: java.lang.Integer),
-      "request.timeout.ms" -> (400000: java.lang.Integer),
-      "max.poll.interval.ms" -> (600000: java.lang.Integer)
+      "session.timeout.ms" -> GlobalConstants.KafkaConf.kafkaSessionTimeOut(keyNum),
+      "request.timeout.ms" -> GlobalConstants.KafkaConf.kafkaRequestTimeOut(keyNum),
+      "max.poll.interval.ms" -> GlobalConstants.KafkaConf.kafkaPollInterval(keyNum)
     )
   }
 
