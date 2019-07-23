@@ -4,7 +4,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import com.zto.fire.common.bean.BaseBean
+import com.zto.fire.common.bean.BaseLogging
 import com.zto.fire.common.util.{DBUtils, GlobalConstants}
 import org.apache.commons.lang3.StringUtils
 
@@ -17,9 +17,10 @@ import scala.reflect.ClassTag
   *
   * @author ChengLong 2016-11-15 16:55:37
   */
-object JdbcOper extends BaseBean {
+object JdbcOper extends BaseLogging {
   private lazy val connPoolMap = collection.mutable.Map[String, ComboPooledDataSource]()
   private val jdbcPoolKey = "cpds"
+  private val peripheral = "jdbc"
 
   /**
     * 初始化指定的连接池，未被使用
@@ -35,7 +36,7 @@ object JdbcOper extends BaseBean {
       try {
         // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
         if (StringUtils.isNotBlank(GlobalConstants.JdbcConf.url(keyNum)) && StringUtils.isNotBlank(GlobalConstants.JdbcConf.user(keyNum))) {
-          this.logger.info(s"${this.className}: 准备初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
+          this.log(s"准备初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]", "jdbc")
           pool = new ComboPooledDataSource(true)
           pool.setJdbcUrl(GlobalConstants.JdbcConf.url(keyNum))
           pool.setDriverClass(GlobalConstants.JdbcConf.driverClass(keyNum))
@@ -49,10 +50,13 @@ object JdbcOper extends BaseBean {
           pool.setMaxStatementsPerConnection(0)
           pool.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime(keyNum))
           this.connPoolMap += (s"cpds$keyNum" -> pool)
-          this.logger.info(s"${this.className}: 完成数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]初始化：url: ${GlobalConstants.JdbcConf.url(keyNum)} driver: ${GlobalConstants.JdbcConf.driverClass(keyNum)} ", null, true)
+          this.log(s"完成数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]初始化：url: ${GlobalConstants.JdbcConf.url(keyNum)} driver: ${GlobalConstants.JdbcConf.driverClass(keyNum)} ", this.peripheral)
         }
       } catch {
-        case ex: Exception => this.logger.error(s"${this.className}: 初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", ex)
+        case ex: Exception => {
+          this.log(s"初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", this.peripheral, null, ex)
+          throw ex
+        }
       }
     }
     pool
@@ -72,9 +76,12 @@ object JdbcOper extends BaseBean {
     try {
       val pool = this.init(keyNum)
       connection = pool.getConnection
-      this.logger.info(s"${this.className}: 获取数据库连接[ ${keyNum} ]成功")
+      this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${keyNum} ]成功", this.peripheral)
     } catch {
-      case ex: Exception => this.logger.error(s"${this.className}: getConnection(${keyNum}) 获取数据库连接[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]出现异常，请检查配置文件", ex)
+      case ex: Exception => {
+        this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]出现异常，请检查配置文件", this.peripheral, null, ex)
+        throw ex
+      }
     }
     connection
   }
@@ -99,6 +106,7 @@ object JdbcOper extends BaseBean {
     * 影响的记录数
     */
   def executeUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
+    this.mark
     var retVal: Long = 0L
     var conn: Connection = connection
     var stat: PreparedStatement = null
@@ -119,10 +127,13 @@ object JdbcOper extends BaseBean {
       }
       retVal = stat.executeUpdate
       if (commit) conn.commit()
-      this.logger.info(s"${this.className}: sql->$sql 影响记录数：$retVal")
+      this.log(s"executeUpdate: sql->$sql 影响记录数：$retVal", this.peripheral, 0)
     }
     catch {
-      case e: Exception => this.logger.error(s"${this.className}: sql->$sql result->fail", e)
+      case e: Exception => {
+        this.log(s"executeUpdate: sql->$sql result->fail", this.peripheral, 0, e)
+        throw e
+      }
     } finally {
       if (conn != null && closeConnection)
         conn.close()
@@ -130,7 +141,10 @@ object JdbcOper extends BaseBean {
         try {
           stat.close()
         } catch {
-          case e: SQLException => this.logger.error(s"${this.className}: 释放连接 sql->$sql", e)
+          case e: SQLException => {
+            this.log(s"executeUpdate: 释放连接 sql->$sql", this.peripheral, 0, e)
+            throw e
+          }
         }
       }
     }
@@ -157,6 +171,7 @@ object JdbcOper extends BaseBean {
     * 影响的记录数
     */
   def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
+    this.mark
     var retVal: Array[Int] = null
     var conn: Connection = connection
     var stat: PreparedStatement = null
@@ -179,23 +194,28 @@ object JdbcOper extends BaseBean {
           if (batch % GlobalConstants.JdbcConf.batchSize(keyNum) == 0) {
             stat.executeBatch()
             stat.clearBatch()
-            this.logger.info(s"${this.className}: executeBatch-->batch=${GlobalConstants.JdbcConf.batchSize(keyNum)} sql->$sql 影响记录数：${GlobalConstants.JdbcConf.batchSize(keyNum)}")
           }
         })
       }
       // 执行批量更新
       retVal = stat.executeBatch
       if (commit) conn.commit()
-      this.logger.info(s"${this.className}: sql->$sql 影响总记录数：$batch")
+      this.log(s"executeBatch: sql->$sql 影响总记录数：$batch", this.peripheral, 0)
     } catch {
-      case e: Exception => this.logger.error(s"${this.className}: executeBatch sql->$sql result->fail", e)
+      case e: Exception => {
+        this.log(s"executeBatch: executeBatch sql->$sql result->fail", this.peripheral, 0, e)
+        throw e
+      }
     } finally {
       if (conn != null && closeConnection) conn.close()
       if (stat != null) {
         try {
           stat.close()
         } catch {
-          case e: SQLException => this.logger.error(s"${this.className}: 释放连接 sql->$sql", e)
+          case e: SQLException => {
+            this.log(s"executeBatch: 释放连接 sql->$sql", this.peripheral, 0, e)
+            throw e
+          }
         }
       }
     }
@@ -246,6 +266,7 @@ object JdbcOper extends BaseBean {
     * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     */
   def executeQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null, keyNum: Int = 1): Unit = {
+    this.mark
     var conn: Connection = connection
     var stat: PreparedStatement = null
     var rs: ResultSet = null
@@ -266,16 +287,22 @@ object JdbcOper extends BaseBean {
       if (rs != null && callback != null) {
         count = callback.process(rs)
       }
-      this.logger.info(s"${this.className}: sql->$sql result->success 查询记录数：$count")
+      this.log(s"executeQueryCall: sql->$sql result->success 查询记录数：$count", this.peripheral, 1)
     } catch {
-      case e: Exception => this.logger.error(s"${this.className}: sql->$sql result->fail", e)
+      case e: Exception => {
+        this.log(s"executeQueryCall: sql->$sql result->fail", this.peripheral, 1, e)
+        throw e
+      }
     } finally {
       if (conn != null) conn.close()
       if (rs != null) {
         try {
           rs.close()
         } catch {
-          case e: SQLException => this.logger.error(s"${this.className}: 释放连接 sql->$sql", e)
+          case e: SQLException => {
+            this.log(s"executeQueryCall: 释放连接 sql->$sql", this.peripheral, 1, e)
+            throw e
+          }
         }
       }
       if (stat != null) {
@@ -283,7 +310,10 @@ object JdbcOper extends BaseBean {
           stat.close()
         }
         catch {
-          case e: SQLException => this.logger.error(s"${this.className}: 释放连接 sql->$sql", e)
+          case e: SQLException => {
+            this.log(s"executeQueryCall: 释放连接 sql->$sql", this.peripheral, 1, e)
+            throw e
+          }
         }
       }
     }

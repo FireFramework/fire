@@ -274,7 +274,11 @@ object PropUtils {
   def toMap: Map[String, String] = {
     val confMap = scala.collection.mutable.Map[String, String]()
     JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
-      confMap += (key.toString -> this.props.getProperty(key.toString))
+      if (key != null) {
+        if (!key.toString.toUpperCase.contains("pass")) {
+          confMap += (key.toString -> this.props.getProperty(key.toString))
+        }
+      }
     })
     confMap
   }
@@ -286,6 +290,7 @@ object PropUtils {
     val env = SparkEnv.get
     if (env != null && env.conf != null) {
       env.conf.getAll.foreach(t => {
+        if (StringUtils.isNotBlank(t._1))
         this.props.setProperty(t._1, t._2)
       })
       this.isMerge.set(true)

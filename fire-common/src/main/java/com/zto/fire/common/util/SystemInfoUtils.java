@@ -1,5 +1,8 @@
 package com.zto.fire.common.util;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.zto.fire.common.bean.SystemLoadInfo;
 import org.apache.commons.lang3.StringUtils;
 
@@ -14,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import static com.zto.fire.common.util.ProcessUtil.executeCmdForLine;
 
@@ -28,6 +32,19 @@ public class SystemInfoUtils {
     private static SystemLoadInfo systemLoadInfo = new SystemLoadInfo();
     private static String ip;
     private static String hostname;
+    private static LoadingCache<String, String> loadCache;
+
+    static {
+        loadCache = CacheBuilder
+                .newBuilder()
+                .expireAfterWrite(30, TimeUnit.SECONDS)
+                .build(new CacheLoader<String, String>() {
+                    @Override
+                    public String load(String key) throws Exception {
+                        return getLoadAverage();
+                    }
+                });
+    }
 
     /**
      * 采集CPU使用率（兼容多核）
@@ -393,6 +410,14 @@ public class SystemInfoUtils {
     }
 
     /**
+     * 从缓存中获取load信息
+     * @return
+     */
+    public static String getLoadAverageCache() {
+        return loadCache.getUnchecked("load");
+    }
+
+    /**
      * 获取当前主机的平均负载
      * @return
      * eg: 0.64, 0.33, 0.30
@@ -402,7 +427,7 @@ public class SystemInfoUtils {
         if(StringUtils.isNotBlank(loadMsg) && loadMsg.contains("load average")) {
             return loadMsg.substring(loadMsg.lastIndexOf("load average")).replace("load average: ","");
         }
-        return "";
+        return loadMsg;
     }
 
     /**

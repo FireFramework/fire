@@ -2,14 +2,14 @@ package com.zto.fire.common.bean;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
-import com.zto.fire.common.util.DateFormatUtils;
+import com.zto.fire.common.util.StackTraceUtils;
 import com.zto.fire.common.util.SystemInfoUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.SparkEnv;
 import org.apache.spark.TaskContext;
-import org.apache.spark.executor.TaskMetrics;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * 用于记录任务的执行时间
@@ -17,70 +17,49 @@ import java.io.Serializable;
  * @author ChengLong 2019-6-10 16:16:16
  */
 public class TimeCost implements Serializable {
-    private static Boolean isExecutor;
-    // 起始时间
-    private String startTime;
-    private String endTime;
-    @JSONField(serialize = false)
-    private Long start;
-    // 目标源
-    private String sink;
     // 异常信息
     private String msg;
-    // 执行的操作
-    private String action;
     // 耗时
     private Long timeCost;
-    // 用于区分埋点日志和用户日志
-    private Boolean sdk = false;
-    // 处理结果（true：成功 false：失败）
-    private Boolean result;
-    private TaskContext taskInfo;
-    private String hostname;
     private String ip;
     private String load;
+
+    // 用于区分埋点日志和用户日志
+    @JSONField(serialize = false)
+    private Boolean isFire = false;
+    @JSONField(serialize = false)
+    private String id = UUID.randomUUID().toString();
+    // 任务的applicationId
+    @JSONField(serialize = false)
+    private String applicationId;
+    // 任务的main方法
+    @JSONField(serialize = false)
+    private String mainClass;
+    // executorId
+    private String executorId;
     private Integer stageId;
     private Long taskId;
     private Integer partitionId;
-    private Long executorCpuTime;
-    private Long executorRunTime;
-    private Long jvmGCTime;
-    private Long executorDeserializeCpuTime;
-    private Long executorDeserializeTime;
-    private Long bytesRead;
-    private Long recordsRead;
-    private Long memoryBytesSpilled;
-    private Long bytesWritten;
-    private Long recordsWritten;
-    private Long peakExecutionMemory;
-    private Long resultSize;
+    @JSONField(serialize = false)
+    private Throwable exception;
+    @JSONField(serialize = false)
+    private String stackTraceInfo;
+    @JSONField(serialize = false)
+    private String peripheral;
+    @JSONField(serialize = false)
+    private Integer io;
+    @JSONField(serialize = false)
+    private Long start;
 
+    public String getId() {
+        return id;
+    }
     public String getLoad() {
         return load;
     }
 
-    public String getEndTime() {
-        return endTime;
-    }
-
-    public Boolean getResult() {
-        return result;
-    }
-
-    public String getStartTime() {
-        return startTime;
-    }
-
-    public String getSink() {
-        return sink;
-    }
-
     public String getMsg() {
         return msg;
-    }
-
-    public String getAction() {
-        return action;
     }
 
     public Long getTimeCost() {
@@ -90,16 +69,8 @@ public class TimeCost implements Serializable {
         return timeCost;
     }
 
-    public String getHostname() {
-        return hostname;
-    }
-
     public String getIp() {
         return ip;
-    }
-
-    public TaskContext getTaskInfo() {
-        return taskInfo;
     }
 
     public Integer getStageId() {
@@ -114,56 +85,88 @@ public class TimeCost implements Serializable {
         return partitionId;
     }
 
-    public Long getExecutorCpuTime() {
-        return executorCpuTime;
+    public Boolean getIsFire() {
+        return isFire;
     }
 
-    public Long getExecutorRunTime() {
-        return executorRunTime;
+    public String getApplicationId() {
+        return applicationId;
     }
 
-    public Long getJvmGCTime() {
-        return jvmGCTime;
+    public void setApplicationId(String applicationId) {
+        this.applicationId = applicationId;
     }
 
-    public Long getExecutorDeserializeCpuTime() {
-        return executorDeserializeCpuTime;
+    public String getExecutorId() {
+        return executorId;
     }
 
-    public Long getExecutorDeserializeTime() {
-        return executorDeserializeTime;
+    public String getMainClass() {
+        return mainClass;
     }
 
-    public Long getBytesRead() {
-        return bytesRead;
+    public void setMainClass(String mainClass) {
+        this.mainClass = mainClass;
     }
 
-    public Long getRecordsRead() {
-        return recordsRead;
+    public void setMsg(String msg) {
+        this.msg = msg;
     }
 
-    public Long getMemoryBytesSpilled() {
-        return memoryBytesSpilled;
+    public void setTimeCost(Long timeCost) {
+        this.timeCost = timeCost;
     }
 
-    public Long getBytesWritten() {
-        return bytesWritten;
+    public Boolean getFire() {
+        return isFire;
     }
 
-    public Long getRecordsWritten() {
-        return recordsWritten;
+    public void setFire(Boolean fire) {
+        isFire = fire;
     }
 
-    public Long getPeakExecutionMemory() {
-        return peakExecutionMemory;
+    public void setIp(String ip) {
+        this.ip = ip;
     }
 
-    public Long getResultSize() {
-        return resultSize;
+    public void setLoad(String load) {
+        this.load = load;
     }
 
-    public Boolean getSdk() {
-        return sdk;
+    public void setStageId(Integer stageId) {
+        this.stageId = stageId;
+    }
+
+    public void setTaskId(Long taskId) {
+        this.taskId = taskId;
+    }
+
+    public void setPartitionId(Integer partitionId) {
+        this.partitionId = partitionId;
+    }
+
+    public Long getStart() {
+        return start;
+    }
+
+    public void setStart(Long start) {
+        this.start = start;
+    }
+
+    public String getStackTraceInfo() {
+        return stackTraceInfo;
+    }
+
+    public void setStackTraceInfo(String stackTraceInfo) {
+        this.stackTraceInfo = stackTraceInfo;
+    }
+
+    public String getPeripheral() {
+        return peripheral;
+    }
+
+    public Integer getIo() {
+        return io;
     }
 
     @Override
@@ -173,11 +176,11 @@ public class TimeCost implements Serializable {
 
     private TimeCost() {
         this.start = System.currentTimeMillis();
-        this.startTime = DateFormatUtils.formatCurrentDateTime();
         this.ip = SystemInfoUtils.getIp();
-        this.hostname = SystemInfoUtils.getHostName();
-        this.load = SystemInfoUtils.getLoadAverage();
-        isExecutor = !SparkEnv.get().executorId().equalsIgnoreCase("driver");
+        this.load = SystemInfoUtils.getLoadAverageCache();
+        if (SparkEnv.get() != null) {
+            executorId = SparkEnv.get().executorId();
+        }
     }
 
     /**
@@ -192,45 +195,25 @@ public class TimeCost implements Serializable {
     /**
      * 设置必要的参数
      *
-     * @param sink   目标源：hbase、oracle、mysql等
-     * @param action 执行的动作：insert、delete、update、select
      * @return 当前对象
      */
-    public TimeCost info(String sink, String action, String msg, Boolean sdk) {
-        this.sink = sink;
-        this.action = action;
-        if (sdk != null) this.sdk = sdk;
-        if (isExecutor) {
-            this.taskInfo = TaskContext.get();
-            if (this.taskInfo != null) {
-                this.taskId = this.taskInfo.taskAttemptId();
-                this.stageId = this.taskInfo.stageId();
-                this.partitionId = this.taskInfo.partitionId();
-                TaskMetrics taskMetrics = this.taskInfo.taskMetrics();
-                if (taskMetrics != null) {
-                    this.executorCpuTime = taskMetrics.executorCpuTime();
-                    this.executorRunTime = taskMetrics.executorRunTime();
-                    this.jvmGCTime = taskMetrics.jvmGCTime();
-                    this.executorDeserializeCpuTime = taskMetrics.executorDeserializeCpuTime();
-                    this.executorDeserializeTime = taskMetrics.executorDeserializeTime();
-                    this.bytesRead = taskMetrics.inputMetrics().bytesRead();
-                    this.recordsRead = taskMetrics.inputMetrics().recordsRead();
-                    this.memoryBytesSpilled = taskMetrics.memoryBytesSpilled();
-                    this.bytesWritten = taskMetrics.outputMetrics().bytesWritten();
-                    this.recordsWritten = taskMetrics.outputMetrics().recordsWritten();
-                    this.peakExecutionMemory = taskMetrics.peakExecutionMemory();
-                    this.resultSize = taskMetrics.resultSize();
-                }
+    public TimeCost info(String msg, String peripheral, Integer io, Boolean isFire, Throwable exception) {
+        this.timeCost = System.currentTimeMillis() - this.start;
+        this.exception = exception;
+        this.msg = msg;
+        this.peripheral = peripheral;
+        this.io = io;
+        if (isFire != null) this.isFire = isFire;
+        if (StringUtils.isNotBlank(this.executorId) && !"driver".equalsIgnoreCase(this.executorId)) {
+            TaskContext taskInfo = TaskContext.get();
+            if (taskInfo != null) {
+                this.taskId = taskInfo.taskAttemptId();
+                this.stageId = taskInfo.stageId();
+                this.partitionId = taskInfo.partitionId();
             }
         }
-        this.timeCost = System.currentTimeMillis() - this.start;
-        this.endTime = DateFormatUtils.formatCurrentDateTime();
-        if (StringUtils.isBlank(msg)) {
-            this.msg = "success";
-            this.result = true;
-        } else {
-            this.msg = msg;
-            this.result = false;
+        if (exception != null) {
+            this.stackTraceInfo = StackTraceUtils.stackTraceInfo(exception);
         }
         return this;
     }

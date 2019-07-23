@@ -41,9 +41,6 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   lazy val threadPoolSchedule = Executors.newScheduledThreadPool(10)
   val restPort = SystemInfoUtils.getRundomPort
   val restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
-  Logger.getLogger("org.apache.kafka.clients").setLevel(Level.WARN)
-  Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
-  Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
   private val systemRestful = new SystemRestful(this)
   lazy val count: LongAccumulator = this.sc.longAccumulator("common-count")
   var applicationId: String = _
@@ -56,12 +53,17 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     */
   private[this] def init: Unit = {
     PropUtils.load(this.appName)
+    PropUtils.setProperty("spark.driver.class.name", this.className)
     // 注册到zrc平台，并覆盖配置信息
     PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     if (StringUtils.isNotBlank(GlobalConstants.SparkConf.appName)) {
       this.appName = GlobalConstants.SparkConf.appName
     }
     PropUtils.print()
+    this.initLogging(this.className)
+    Logger.getLogger("org.apache.kafka.clients").setLevel(Level.WARN)
+    Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+    Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
   }
 
   /**
@@ -92,7 +94,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   def createContext(conf: SparkConf): Unit = {
     val tmpConf = if (conf == null) this.buildConf(conf) else conf
     tmpConf.setAll(PropUtils.toMap)
-    tmpConf.set("spark.driver.class", this.driverClass)
+    tmpConf.set("spark.driver.class.simple.name", this.driverClass)
     if (SystemInfoUtils.isWindows) {
       this.spark = SparkSession.builder().config(tmpConf).master("local[*]") /*.enableHiveSupport()*/ .getOrCreate()
     } else {

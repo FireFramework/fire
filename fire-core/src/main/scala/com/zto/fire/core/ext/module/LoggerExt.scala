@@ -1,7 +1,8 @@
 package com.zto.fire.core.ext.module
 
-import com.zto.fire.common.bean.TimeCost
+import com.zto.fire.common.bean.BaseLogging
 import com.zto.fire.common.util.GlobalConstants
+import com.zto.fire.core.util.SparkUtils
 import org.apache.spark.Logging
 
 /**
@@ -11,34 +12,44 @@ import org.apache.spark.Logging
   * 日志记录器
   * @author ChengLong 2019-6-12 10:32:38
   */
-class LoggerExt(logger: Logging) extends Logging {
-  var timeCost: TimeCost = _
+class LoggerExt(logger: Logging) extends BaseLogging with Logging {
+
+  /**
+    * 初始化日志记录器
+    */
+  protected[fire] override def initLogging(className: String): Unit = super.initLogging(className)
 
   /**
     * 开始记录日志
     */
-  def mark: Unit = {
-    this.timeCost = TimeCost.build()
+  override def mark: Unit = {
+    super.mark
   }
 
   /**
-    * 记录日志
+    * 用户日志记录器
     *
-    * @param sink
-    *                  数据的目标源
-    * @param action
-    *                  执行的动作
     * @param msg
-    *                  错误信息
-    * @param throwable 异常对象
-    * @param sdk
-    *                  用于区分系统埋点日志和用户日志，默认为用户日志
+    * 日志内容
+    * @param throwable
+    * 异常信息
     */
-  def log(sink: String, action: String = "timecost", msg: String = "success", throwable: Throwable = null, sdk: Boolean = false): Unit = {
-    if (this.timeCost == null) this.mark
-    this.timeCost.info(sink, action, msg, sdk)
-    if (throwable == null) this.logInfo(this.timeCost.toString) else this.logError(this.timeCost.toString, throwable)
+  def log(msg: String, throwable: Throwable = null): Unit = {
+    super.log(msg, null, null, throwable)
   }
+
+  /**
+    * fire框架内部日志记录器
+    *
+    * @param msg
+    * @param peripheral
+    * @param io
+    * @param throwable
+    */
+  protected[fire] override def logFire(msg: String, peripheral: String = null, io: Integer = null, throwable: Throwable): Unit = {
+    super.logFire(msg, null, null, throwable)
+  }
+
 
   /**
     * debug级别日志包裹
@@ -47,7 +58,7 @@ class LoggerExt(logger: Logging) extends Logging {
     * @param color 显示颜色
     * @return
     */
-  def wrapLogDebug(info: String, color: String = GlobalConstants.PS1.BLUE): Unit = {
+  private[fire] def wrapLogDebug(info: String, color: String = GlobalConstants.PS1.BLUE): Unit = {
     if (this.logger != null) {
       this.logDebug(color + GlobalConstants.LogVal.logInfoSplitStart + info + GlobalConstants.LogVal.logInfoSplitEnd + GlobalConstants.PS1.DEFAULT)
     }
@@ -60,7 +71,7 @@ class LoggerExt(logger: Logging) extends Logging {
     * @param color 显示颜色
     * @return
     */
-  def wrapLogInfo(info: String, color: String = GlobalConstants.PS1.GREEN): Unit = {
+  private[fire] def wrapLogInfo(info: String, color: String = GlobalConstants.PS1.GREEN): Unit = {
     if (this.logger != null) {
       this.logInfo(color + GlobalConstants.LogVal.logInfoSplitStart + info + GlobalConstants.LogVal.logInfoSplitEnd + GlobalConstants.PS1.DEFAULT)
     }
@@ -72,7 +83,7 @@ class LoggerExt(logger: Logging) extends Logging {
     * @param info 日志内容
     * @return
     */
-  def wrapLogWarn(info: String, color: String = GlobalConstants.PS1.PINK): Unit = {
+  private[fire] def wrapLogWarn(info: String, color: String = GlobalConstants.PS1.PINK): Unit = {
     if (this.logger != null) {
       this.logWarning(color + GlobalConstants.LogVal.logErrorSplitStart + info + GlobalConstants.LogVal.logErrorSplitEnd + GlobalConstants.PS1.DEFAULT)
     }
@@ -84,7 +95,7 @@ class LoggerExt(logger: Logging) extends Logging {
     * @param info 日志内容
     * @return
     */
-  def wrapLogError(info: String, color: String = GlobalConstants.PS1.RED): Unit = {
+  private[fire] def wrapLogError(info: String, color: String = GlobalConstants.PS1.RED): Unit = {
     if (this.logger != null) {
       this.logError(color + GlobalConstants.LogVal.logErrorSplitStart + info + GlobalConstants.LogVal.logErrorSplitEnd + GlobalConstants.PS1.DEFAULT)
     }
