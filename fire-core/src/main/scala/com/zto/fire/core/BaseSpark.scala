@@ -2,6 +2,7 @@ package com.zto.fire.core
 
 import java.util.concurrent.{ExecutorService, Executors, ScheduledExecutorService, TimeUnit}
 
+import com.zto.fire.common.acc.LogAccumulator
 import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.util._
 import com.zto.fire.core.ext.SparkExt._
@@ -15,7 +16,7 @@ import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.util.LongAccumulator
-import org.apache.spark.{Logging, SparkConf, SparkContext}
+import org.apache.spark.{Logging, SparkConf, SparkContext, SparkEnv}
 import spark.Spark
 
 /**
@@ -42,7 +43,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   val restPort = SystemInfoUtils.getRundomPort
   val restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
   private val systemRestful = new SystemRestful(this)
-  lazy val count: LongAccumulator = this.sc.longAccumulator("common-count")
+  var count: LongAccumulator = new LongAccumulator
+  var logAccumulator = new LogAccumulator
   var applicationId: String = _
   var batchDuration: Long = _
   var webUI: String = _
@@ -60,7 +62,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
       this.appName = GlobalConstants.SparkConf.appName
     }
     PropUtils.print()
-    this.initLogging(this.className)
+
     Logger.getLogger("org.apache.kafka.clients").setLevel(Level.WARN)
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
     Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
@@ -89,6 +91,24 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   def buildConf(conf: SparkConf = null): SparkConf
 
   /**
+    * 初始化fire内部累加器
+    */
+  private[fire] def initAccumulator: Unit = {
+    val executors = this.sc.getConf.get("spark.executor.instances", "10000").toInt
+    println("executors---->" + executors)
+    // 获取申请的executor数，设置累加器到conf中
+    val rdd = this.spark.sparkContext.parallelize(1 to executors, executors)
+    val logAccumulatorSer = SparkEnv.get.closureSerializer.newInstance().serialize(this.logAccumulator).array()
+    val countSer = SparkEnv.get.closureSerializer.newInstance().serialize(this.count).array()
+
+    // 在每个executor中反序列化内置累加器
+    rdd.foreachPartition(i => {
+      SparkEnv.get.conf.set("logAccumulator", StringsUtils.toHexString(logAccumulatorSer))
+      SparkEnv.get.conf.set("countAccumulator", StringsUtils.toHexString(countSer))
+    })
+  }
+
+  /**
     * 构建一系列context对象
     */
   def createContext(conf: SparkConf): Unit = {
@@ -106,6 +126,10 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.catalog = this.spark.catalog
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))
+    this.sc.register(logAccumulator, "logAccumulator")
+    this.sc.register(this.count, "common-count")
+    this.initLogging(this.className)
+    this.initAccumulator
     this.hiveContext = this.spark.sqlContext
     this.sqlContext = this.hiveContext
     this.hbaseContext = SingletonFactory.getHBaseContextInstance(this.sc)

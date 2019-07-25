@@ -38,7 +38,11 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener {
 
   override def onExecutorMetricsUpdate(executorMetricsUpdate: SparkListenerExecutorMetricsUpdate): Unit = this.baseSpark.onExecutorMetricsUpdate(executorMetricsUpdate)
 
-  override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = this.baseSpark.onExecutorAdded(executorAdded)
+  override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
+    this.baseSpark.onExecutorAdded(executorAdded)
+    println("--------------添加新的executor")
+    baseSpark.initAccumulator
+  }
 
   override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = this.baseSpark.onExecutorRemoved(executorRemoved)
 

@@ -81,6 +81,12 @@ object JdbcTest extends BaseSparkCore {
     val sql = s"DELETE FROM $tableName WHERE id=?"
     this.spark.jdbcUpdate(sql, Seq(2))
     // 方式二：通过JdbcOper.executeUpdate
+
+    // 同一个事务
+    /*val connection = this.jdbc.getConnection()
+    this.spark.jdbcBatchUpdate("insert", connection = connection, commit = false, closeConnection = false)
+    this.spark.jdbcBatchUpdate("delete", connection = connection, commit = false, closeConnection = false)
+    this.spark.jdbcBatchUpdate("update", connection = connection, commit = true, closeConnection = true)*/
   }
 
   /**
