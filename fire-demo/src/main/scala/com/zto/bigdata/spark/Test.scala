@@ -3,6 +3,7 @@ package com.zto.bigdata.spark
 import com.zto.fire.common.util.AccumulatorUtils
 import com.zto.fire.core.BaseSparkCore
 import com.zto.fire.core.ext.SparkExt._
+import org.apache.spark.util.LongAccumulator
 
 import scala.collection.JavaConversions
 

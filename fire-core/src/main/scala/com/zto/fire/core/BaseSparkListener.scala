@@ -38,9 +38,12 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener {
 
   override def onExecutorMetricsUpdate(executorMetricsUpdate: SparkListenerExecutorMetricsUpdate): Unit = this.baseSpark.onExecutorMetricsUpdate(executorMetricsUpdate)
 
+  /**
+    * 当添加新的executor时，重新初始化内置的累加器
+    * @param executorAdded
+    */
   override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
     this.baseSpark.onExecutorAdded(executorAdded)
-    println("--------------添加新的executor")
     baseSpark.initAccumulator
   }
 

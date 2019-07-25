@@ -95,16 +95,15 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     */
   private[fire] def initAccumulator: Unit = {
     val executors = this.sc.getConf.get("spark.executor.instances", "10000").toInt
-    println("executors---->" + executors)
     // 获取申请的executor数，设置累加器到conf中
     val rdd = this.spark.sparkContext.parallelize(1 to executors, executors)
     val logAccumulatorSer = SparkEnv.get.closureSerializer.newInstance().serialize(this.logAccumulator).array()
     val countSer = SparkEnv.get.closureSerializer.newInstance().serialize(this.count).array()
 
-    // 在每个executor中反序列化内置累加器
+    // 遍历每个executor，并将序列化之后的系统累加器转为字符串放到conf中
     rdd.foreachPartition(i => {
-      SparkEnv.get.conf.set("logAccumulator", StringsUtils.toHexString(logAccumulatorSer))
-      SparkEnv.get.conf.set("countAccumulator", StringsUtils.toHexString(countSer))
+      SparkEnv.get.conf.set(AccumulatorUtils.logAccumulator, StringsUtils.toHexString(logAccumulatorSer))
+      SparkEnv.get.conf.set(AccumulatorUtils.countAccumulator, StringsUtils.toHexString(countSer))
     })
   }
 
@@ -126,8 +125,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.catalog = this.spark.catalog
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))
-    this.sc.register(logAccumulator, "logAccumulator")
-    this.sc.register(this.count, "common-count")
+    this.sc.register(logAccumulator, AccumulatorUtils.logAccumulator)
+    this.sc.register(this.count, AccumulatorUtils.countAccumulator)
     this.initLogging(this.className)
     this.initAccumulator
     this.hiveContext = this.spark.sqlContext
