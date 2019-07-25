@@ -1,5 +1,6 @@
 package com.zto.fire.core
 
+import com.zto.fire.common.acc.AccumulatorManager
 import org.apache.spark.scheduler._
 
 /**
@@ -40,14 +41,20 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener {
 
   /**
     * 当添加新的executor时，重新初始化内置的累加器
-    * @param executorAdded
     */
   override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
     this.baseSpark.onExecutorAdded(executorAdded)
-    baseSpark.initAccumulator
+    println("重新注册累加器")
+    AccumulatorManager.registerAccumulators(this.baseSpark.sc, this.baseSpark.accumulatorMap)
   }
 
-  override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = this.baseSpark.onExecutorRemoved(executorRemoved)
+  /**
+    * 当移除已有的executor时，executor数递减
+    */
+  override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
+    this.baseSpark.onExecutorRemoved(executorRemoved)
+    AccumulatorManager.executorInstances -= 1
+  }
 
   override def onBlockUpdated(blockUpdated: SparkListenerBlockUpdated): Unit = this.baseSpark.onBlockUpdated(blockUpdated)
 }

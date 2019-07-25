@@ -2,7 +2,7 @@ package com.zto.fire.core
 
 import java.util.concurrent.{ExecutorService, Executors, ScheduledExecutorService, TimeUnit}
 
-import com.zto.fire.common.acc.LogAccumulator
+import com.zto.fire.common.acc.{AccumulatorManager, LogAccumulator}
 import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.util._
 import com.zto.fire.core.ext.SparkExt._
@@ -15,7 +15,7 @@ import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.util.LongAccumulator
+import org.apache.spark.util.{AccumulatorV2, LongAccumulator}
 import org.apache.spark.{Logging, SparkConf, SparkContext, SparkEnv}
 import spark.Spark
 
@@ -91,20 +91,10 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   def buildConf(conf: SparkConf = null): SparkConf
 
   /**
-    * 初始化fire内部累加器
+    * 内置累加器列表
     */
-  private[fire] def initAccumulator: Unit = {
-    val executors = this.sc.getConf.get("spark.executor.instances", "10000").toInt
-    // 获取申请的executor数，设置累加器到conf中
-    val rdd = this.spark.sparkContext.parallelize(1 to executors, executors)
-    val logAccumulatorSer = SparkEnv.get.closureSerializer.newInstance().serialize(this.logAccumulator).array()
-    val countSer = SparkEnv.get.closureSerializer.newInstance().serialize(this.count).array()
-
-    // 遍历每个executor，并将序列化之后的系统累加器转为字符串放到conf中
-    rdd.foreachPartition(i => {
-      SparkEnv.get.conf.set(AccumulatorUtils.logAccumulator, StringsUtils.toHexString(logAccumulatorSer))
-      SparkEnv.get.conf.set(AccumulatorUtils.countAccumulator, StringsUtils.toHexString(countSer))
-    })
+  private[fire] def accumulatorMap: Map[String, AccumulatorV2[_, _]] = {
+    Map(AccumulatorManager.log -> this.logAccumulator, AccumulatorManager.counter -> this.count)
   }
 
   /**
@@ -125,10 +115,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.catalog = this.spark.catalog
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))
-    this.sc.register(logAccumulator, AccumulatorUtils.logAccumulator)
-    this.sc.register(this.count, AccumulatorUtils.countAccumulator)
     this.initLogging(this.className)
-    this.initAccumulator
+    AccumulatorManager.registerAccumulators(this.sc, this.accumulatorMap)
     this.hiveContext = this.spark.sqlContext
     this.sqlContext = this.hiveContext
     this.hbaseContext = SingletonFactory.getHBaseContextInstance(this.sc)

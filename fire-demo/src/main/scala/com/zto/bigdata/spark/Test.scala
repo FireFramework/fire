@@ -1,6 +1,6 @@
 package com.zto.bigdata.spark
 
-import com.zto.fire.common.util.AccumulatorUtils
+import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.core.BaseSparkCore
 import com.zto.fire.core.ext.SparkExt._
 import org.apache.spark.util.LongAccumulator
@@ -14,7 +14,7 @@ object Test extends BaseSparkCore {
 
     rdd.foreach(i => {
       this.mark
-      AccumulatorUtils.addCountValue(1)
+      AccumulatorManager.addCountValue(1)
       Thread.sleep(1000)
       this.log("hello world")
     })
