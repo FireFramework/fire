@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.RestartParams
 import com.zto.fire.common.bean.rest.ResultMsg
-import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
+import com.zto.fire.common.enu.{ErrorCode, JobType, RequestMethod}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.rest.RestCase
 import com.zto.fire.common.util.{GlobalConstants, ParamUtils, SystemInfoUtils}
@@ -23,6 +23,7 @@ import scala.collection.JavaConversions
 trait BaseSparkStreaming extends BaseSpark {
   var checkPointDir: String = _
   var externalConf: RestartParams = _
+  override val jobType = JobType.STREAMING
 
   /**
     * 程序初始化方法，用于初始化必要的值

@@ -3,7 +3,6 @@ package com.zto.bigdata.spark
 import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.core.BaseSparkCore
 import com.zto.fire.core.ext.SparkExt._
-import org.apache.spark.util.LongAccumulator
 
 import scala.collection.JavaConversions
 
@@ -34,12 +33,10 @@ object Test extends BaseSparkCore {
     * main方法参数
     */
   override def before(args: Array[String]): Unit = {
-    if (args != null) args.foreach(println(_))
     println("初始化")
   }
 
   override def after(args: Array[String]): Unit = {
-    if (args != null) args.foreach(println(_))
     println("用户自定义资源回收")
   }
 

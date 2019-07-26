@@ -4,6 +4,7 @@ import java.util.concurrent.{ExecutorService, Executors, ScheduledExecutorServic
 
 import com.zto.fire.common.acc.{AccumulatorManager, LogAccumulator}
 import com.zto.fire.common.db.JdbcOper
+import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util._
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
@@ -38,6 +39,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   val driverClass = this.getClass.getSimpleName.replace("$", "")
   var appName = this.driverClass
   val className = this.getClass.getName.replace("$", "")
+  val jobType = JobType.UNDEFINED
   lazy val threadPool = Executors.newFixedThreadPool(20)
   lazy val threadPoolSchedule = Executors.newScheduledThreadPool(10)
   val restPort = SystemInfoUtils.getRundomPort
@@ -109,7 +111,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     */
   def createContext(conf: SparkConf): Unit = {
     // 注册到zrc平台，并覆盖配置信息
-    PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
+    if (this.jobType != JobType.CORE) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     PropUtils.print()
     val tmpConf = if (conf == null) this.buildConf(conf) else conf
     tmpConf.setAll(PropUtils.toMap)

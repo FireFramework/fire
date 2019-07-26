@@ -1,5 +1,6 @@
 package com.zto.fire.core
 
+import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.GlobalConstants
 import org.apache.spark.SparkConf
 
@@ -8,6 +9,7 @@ import org.apache.spark.SparkConf
   * Created by ChengLong on 2018-03-28.
   */
 class BaseSparkCore extends BaseSpark {
+  override val jobType = JobType.CORE
 
   /**
     * 程序初始化方法，用于初始化必要的值

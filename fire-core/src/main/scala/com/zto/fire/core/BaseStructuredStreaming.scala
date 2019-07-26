@@ -1,5 +1,6 @@
 package com.zto.fire.core
 
+import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{GlobalConstants, SystemInfoUtils}
 import org.apache.spark.SparkConf
 
@@ -8,6 +9,7 @@ import org.apache.spark.SparkConf
   * Created by ChengLong on 2019-03-11.
   */
 class BaseStructuredStreaming extends BaseSpark {
+  override val jobType = JobType.STRUCTUREDSTREAMING
 
   /**
     * 程序初始化方法，用于初始化必要的值
