@@ -22,6 +22,8 @@ object Test extends BaseSparkCore {
       println(t._1 + " value=" + t._2)
     })
     println("执行完成: count=" + this.count.value)
+
+    Thread.currentThread().join
   }
 
 
@@ -42,7 +44,6 @@ object Test extends BaseSparkCore {
 
   def main(args: Array[String]): Unit = {
     this.init(args = args)
-    this.stop
   }
 
 }
