@@ -25,10 +25,27 @@ object Test extends BaseSparkCore {
     println("执行完成: count=" + this.count.value)
   }
 
-  def main(args: Array[String]): Unit = {
-    this.init()
 
-    Thread.currentThread().join()
+  /**
+    * 生命周期方法，用于在SparkSession初始化之前完成用户需要的动作
+    * 注：该方法会在进行init之前自动被系统调用
+    *
+    * @param args
+    * main方法参数
+    */
+  override def before(args: Array[String]): Unit = {
+    if (args != null) args.foreach(println(_))
+    println("初始化")
+  }
+
+  override def after(args: Array[String]): Unit = {
+    if (args != null) args.foreach(println(_))
+    println("用户自定义资源回收")
+  }
+
+  def main(args: Array[String]): Unit = {
+    this.init(args = args)
+    this.stop
   }
 
 }

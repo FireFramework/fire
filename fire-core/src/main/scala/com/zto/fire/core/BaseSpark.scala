@@ -43,6 +43,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   val restPort = SystemInfoUtils.getRundomPort
   val restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
   private val systemRestful = new SystemRestful(this)
+  private[this] var args: Array[String] = null
   var count: LongAccumulator = new LongAccumulator
   var logAccumulator = new LogAccumulator
   var applicationId: String = _
@@ -56,17 +57,21 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   private[this] def init: Unit = {
     PropUtils.load(this.appName)
     PropUtils.setProperty("spark.driver.class.name", this.className)
-    // 注册到zrc平台，并覆盖配置信息
-    PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     if (StringUtils.isNotBlank(GlobalConstants.SparkConf.appName)) {
       this.appName = GlobalConstants.SparkConf.appName
     }
-    PropUtils.print()
-
     Logger.getLogger("org.apache.kafka.clients").setLevel(Level.WARN)
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
     Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
   }
+
+  /**
+    * 生命周期方法，用于在SparkSession初始化之前完成用户需要的动作
+    * 注：该方法会在进行init之前自动被系统调用
+    * @param args
+    * main方法参数
+    */
+  def before(args: Array[String]): Unit = {}
 
   /**
     * 程序初始化方法，用于初始化必要的值
@@ -76,6 +81,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     * @param args main方法参数
     */
   def init(conf: SparkConf = null, args: Array[String] = null): Unit = {
+    this.before(args)
+    this.args = args
     this.createContext(conf)
   }
 
@@ -101,6 +108,9 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     * 构建一系列context对象
     */
   def createContext(conf: SparkConf): Unit = {
+    // 注册到zrc平台，并覆盖配置信息
+    PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
+    PropUtils.print()
     val tmpConf = if (conf == null) this.buildConf(conf) else conf
     tmpConf.setAll(PropUtils.toMap)
     tmpConf.set("spark.driver.class.simple.name", this.driverClass)
@@ -133,12 +143,10 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   def process: Unit
 
   /**
-    * 资源回收与清理，子类复写实现具体逻辑
+    * 生命周期方法：用于资源回收与清理，子类复写实现具体逻辑
     * 注：该方法会在进行destroy之前自动被系统调用
-    *
-    * @param args
     */
-  def release(args: Array[String] = null): Unit = {}
+  def after(args: Array[String] = this.args): Unit = {}
 
   /**
     * 打印总耗时
@@ -148,7 +156,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     */
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
     try {
-      this.release()
+      this.after()
       this.wrapLogWarn("完成用户资源回收...")
       this.destroy
     } finally {
