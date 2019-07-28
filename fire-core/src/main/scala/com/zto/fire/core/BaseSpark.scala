@@ -17,7 +17,7 @@ import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.util.{AccumulatorV2, LongAccumulator}
-import org.apache.spark.{Logging, SparkConf, SparkContext, SparkEnv}
+import org.apache.spark.{Logging, SparkConf, SparkContext}
 import spark.Spark
 
 /**
@@ -43,20 +43,21 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   lazy val threadPool = Executors.newFixedThreadPool(20)
   lazy val threadPoolSchedule = Executors.newScheduledThreadPool(10)
   val restPort = SystemInfoUtils.getRundomPort
-  val restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
-  private val systemRestful = new SystemRestful(this)
-  private[this] var args: Array[String] = null
-  var count: LongAccumulator = new LongAccumulator
-  var logAccumulator = new LogAccumulator
+  lazy val restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
+  lazy private val systemRestful = new SystemRestful(this)
+  private[this] var args: Array[String] = _
+  val count: LongAccumulator = new LongAccumulator
+  val logAccumulator = new LogAccumulator
   var applicationId: String = _
   var batchDuration: Long = _
   var webUI: String = _
-  this.init
+  this.boot
 
   /**
-    * 初始化，系统启动时默认执行
+    * 生命周期方法：初始化fire框架必要的信息
+    * 注：该方法会同时在driver端与executor端执行
     */
-  private[this] def init: Unit = {
+  private[this] final def boot: Unit = {
     PropUtils.load(this.appName)
     PropUtils.setProperty("spark.driver.class.name", this.className)
     if (StringUtils.isNotBlank(GlobalConstants.SparkConf.appName)) {
@@ -65,10 +66,11 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     Logger.getLogger("org.apache.kafka.clients").setLevel(Level.WARN)
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
     Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
+    this.wrapLogWarn("完成fire框架启动...")
   }
 
   /**
-    * 生命周期方法，用于在SparkSession初始化之前完成用户需要的动作
+    * 生命周期方法：用于在SparkSession初始化之前完成用户需要的动作
     * 注：该方法会在进行init之前自动被系统调用
     * @param args
     * main方法参数
@@ -76,7 +78,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   def before(args: Array[String]): Unit = {}
 
   /**
-    * 程序初始化方法，用于初始化必要的值
+    * 生命周期方法：初始化spark运行信息
     *
     * @param conf
     *             Spark配置信息
@@ -84,8 +86,56 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     */
   def init(conf: SparkConf = null, args: Array[String] = null): Unit = {
     this.before(args)
+    this.wrapLogWarn("完成用户资源初始化")
     this.args = args
     this.createContext(conf)
+  }
+
+  /**
+    * 生命周期方法：具体的用户开发的业务逻辑代码
+    * 注：此方法会被自动调用，不需要在main中手动调用
+    */
+  def process: Unit
+
+  /**
+    * 生命周期方法：用于关闭SparkContext
+    */
+  final def stop: Unit = {
+    if (this.spark != null) {
+      this.spark.stop()
+    }
+  }
+
+  /**
+    * 生命周期方法：用于资源回收与清理，子类复写实现具体逻辑
+    * 注：该方法会在进行destroy之前自动被系统调用
+    */
+  def after(args: Array[String] = this.args): Unit = {}
+
+  /**
+    * 生命周期方法：进行fire框架的资源回收
+    * 注：不允许子类覆盖
+    */
+  private[fire] final def shutdown: Unit = {
+    try {
+      this.wrapLogWarn("完成用户资源回收...")
+      if (this.sqlContext != null) this.sqlContext.clearCache
+      if (this.ssc == null && !this.sc.isStopped) {
+        this.spark.stop()
+      } else if (this.ssc != null) {
+        this.ssc.stop(!this.sc.isStopped, false)
+      }
+      if (!this.threadPool.isShutdown) {
+        this.threadPool.shutdownNow()
+      }
+      if (!this.threadPoolSchedule.isShutdown) {
+        this.threadPoolSchedule.shutdownNow()
+      }
+      Spark.stop()
+      this.wrapLogWarn("完成fire资源回收...")
+    } finally {
+      GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
+    }
   }
 
   /**
@@ -98,13 +148,6 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     * 合并后的SparkConf对象
     */
   def buildConf(conf: SparkConf = null): SparkConf
-
-  /**
-    * 内置累加器列表
-    */
-  private[fire] def accumulatorMap: Map[String, AccumulatorV2[_, _]] = {
-    Map(AccumulatorManager.log -> this.logAccumulator, AccumulatorManager.counter -> this.count)
-  }
 
   /**
     * 构建一系列context对象
@@ -139,32 +182,10 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   }
 
   /**
-    * Spark处理逻辑
-    * 注：此方法会被自动调用，不需要在main中手动调用
+    * 内置累加器列表
     */
-  def process: Unit
-
-  /**
-    * 生命周期方法：用于资源回收与清理，子类复写实现具体逻辑
-    * 注：该方法会在进行destroy之前自动被系统调用
-    */
-  def after(args: Array[String] = this.args): Unit = {}
-
-  /**
-    * 打印总耗时
-    *
-    * @param applicationEnd
-    * 整个job执行结束后执行
-    */
-  override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
-    try {
-      this.after()
-      this.wrapLogWarn("完成用户资源回收...")
-      this.destroy
-    } finally {
-      this.wrapLogWarn("完成系统资源回收...")
-      GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
-    }
+  private[fire] def accumulatorMap: Map[String, AccumulatorV2[_, _]] = {
+    Map(AccumulatorManager.log -> this.logAccumulator, AccumulatorManager.counter -> this.count)
   }
 
   /**
@@ -216,35 +237,5 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     */
   def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, debug: Boolean = false, threadPoolSchedule: ScheduledExecutorService = this.threadPoolSchedule): Unit = {
     ThreadUtils.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount, debug)
-  }
-
-  /**
-    * 资源回收与应用关闭
-    * 注：不允许子类覆盖
-    */
-  final def destroy: Unit = {
-    if (this.sqlContext != null) this.sqlContext.clearCache
-    if (this.ssc == null && !this.sc.isStopped) {
-      this.spark.stop()
-    } else if (this.ssc != null) {
-      this.ssc.stop(!this.sc.isStopped, false)
-    }
-    if (!this.threadPool.isShutdown) {
-      this.threadPool.shutdownNow()
-    }
-    if (!this.threadPoolSchedule.isShutdown) {
-      this.threadPoolSchedule.shutdownNow()
-    }
-    Spark.stop()
-    this.wrapLogWarn("完成spark资源回收")
-  }
-
-  /**
-    * 关闭SparkContext
-    */
-  def stop: Unit = {
-    if (this.spark != null) {
-      this.spark.stop()
-    }
   }
 }

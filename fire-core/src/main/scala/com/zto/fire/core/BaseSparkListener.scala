@@ -35,7 +35,17 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener {
 
   override def onApplicationStart(applicationStart: SparkListenerApplicationStart): Unit = this.baseSpark.onApplicationStart(applicationStart)
 
-  override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = this.baseSpark.onApplicationEnd(applicationEnd)
+  /**
+    * 当Spark运行结束时执行
+    */
+  override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
+    try {
+      this.baseSpark.after()
+    } finally {
+      this.baseSpark.shutdown
+    }
+    super.onApplicationEnd(applicationEnd)
+  }
 
   override def onExecutorMetricsUpdate(executorMetricsUpdate: SparkListenerExecutorMetricsUpdate): Unit = this.baseSpark.onExecutorMetricsUpdate(executorMetricsUpdate)
 
@@ -43,6 +53,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener {
     * 当添加新的executor时，重新初始化内置的累加器
     */
   override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
+    AccumulatorManager.executorInstances.addAndGet(1)
     this.baseSpark.onExecutorAdded(executorAdded)
     println("重新注册累加器")
     AccumulatorManager.registerAccumulators(this.baseSpark.sc, this.baseSpark.accumulatorMap)
@@ -52,8 +63,8 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener {
     * 当移除已有的executor时，executor数递减
     */
   override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
+    AccumulatorManager.executorInstances.decrementAndGet()
     this.baseSpark.onExecutorRemoved(executorRemoved)
-    AccumulatorManager.executorInstances -= 1
   }
 
   override def onBlockUpdated(blockUpdated: SparkListenerBlockUpdated): Unit = this.baseSpark.onBlockUpdated(blockUpdated)
