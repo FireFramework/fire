@@ -168,7 +168,7 @@ object JdbcTest extends BaseSparkCore {
   }
 
   def main(args: Array[String]): Unit = {
-    this.init()
+    this.init(args = args)
 
     this.spark.stop()
   }

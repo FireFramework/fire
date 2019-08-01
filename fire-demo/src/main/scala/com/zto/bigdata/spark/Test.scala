@@ -10,7 +10,7 @@ object Test extends BaseSparkCore {
 
   override def process: Unit = {
     val rdd = spark.sparkContext.parallelize(1 to 20, 20)
-
+    this.log("============driver========")
     rdd.foreach(i => {
       this.mark
       AccumulatorManager.addCountValue(1)
@@ -19,7 +19,7 @@ object Test extends BaseSparkCore {
     })
 
     JavaConversions.mapAsScalaMap(this.logAccumulator.value).foreach(t => {
-      println(t._1 + " value=" + t._2)
+      println(t._2)
     })
     println("执行完成: count=" + this.count.value)
 

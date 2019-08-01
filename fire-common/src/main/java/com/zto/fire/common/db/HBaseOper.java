@@ -81,7 +81,20 @@ public class HBaseOper {
         if (conf == null) {
             conf = HBaseConfiguration.create();
             if (SystemInfoUtils.isLinux()) {
-                conf.set("hbase.zookeeper.quorum", hbaseCluster.get(GlobalConstants.hbaseCluster()));
+                String clusterName = GlobalConstants.hbaseCluster();
+                if (StringUtils.isBlank(clusterName)) {
+                    throw new IllegalArgumentException("hbase集群名称不能为空，请在配置文件中指定：spark.hbase.cluster");
+                }
+                if (!clusterName.contains(".")) {
+                    String zkUrl = hbaseCluster.get(clusterName);
+                    if (StringUtils.isNotBlank(zkUrl)) {
+                        conf.set("hbase.zookeeper.quorum", zkUrl);
+                    } else {
+                        conf.set("hbase.zookeeper.quorum", hbaseCluster.get("batch"));
+                    }
+                } else {
+                    conf.set("hbase.zookeeper.quorum", clusterName);
+                }
             } else {
                 conf.set("hbase.zookeeper.quorum", hbaseCluster.get("test"));
             }

@@ -45,7 +45,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   val restPort = SystemInfoUtils.getRundomPort
   private[fire] var restfulRegister: RestfulRegister = _
   private[fire] var systemRestful: SystemRestful = _
-  private[this] var args: Array[String] = _
+  var args: Array[String] = _
   val count: LongAccumulator = new LongAccumulator
   val logAccumulator = new LogAccumulator
   var applicationId: String = _

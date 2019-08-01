@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.zto.fire.common.bean.TimeCost
-import com.zto.fire.common.util.StringsUtils
+import com.zto.fire.common.util.{StringsUtils, SystemInfoUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.{AccumulatorV2, LongAccumulator}
 import org.apache.spark.{SparkContext, SparkEnv}
@@ -57,7 +57,7 @@ object AccumulatorManager {
     */
   private[fire] def registerAccumulators(sc: SparkContext, accumulatorInfo: Map[String, AccumulatorV2[_, _]]): Unit = {
     if (sc != null && accumulatorInfo != null && accumulatorInfo.size > 0) {
-      if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", "10000").toInt)
+      if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (SystemInfoUtils.isLinux) "10000" else "10").toInt)
       if (this.initExecutors.get() > this.executorInstances.get()) this.executorInstances.set(this.initExecutors.get())
 
       // TODO: 区分最新的executor，仅为新增的executor做序列化累加器的动作

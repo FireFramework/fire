@@ -1,7 +1,6 @@
 package com.zto.fire.common.bean;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.annotation.JSONField;
+import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.StackTraceUtils;
 import com.zto.fire.common.util.SystemInfoUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -25,35 +24,29 @@ public class TimeCost implements Serializable {
     private String load;
 
     // 用于区分埋点日志和用户日志
-    @JSONField(serialize = false)
     private Boolean isFire = false;
-    @JSONField(serialize = false)
     private String id = UUID.randomUUID().toString();
     // 任务的applicationId
-    @JSONField(serialize = false)
     private String applicationId;
     // 任务的main方法
-    @JSONField(serialize = false)
     private String mainClass;
     // executorId
     private String executorId;
     private Integer stageId;
     private Long taskId;
     private Integer partitionId;
-    @JSONField(serialize = false)
     private Throwable exception;
-    @JSONField(serialize = false)
     private String stackTraceInfo;
-    @JSONField(serialize = false)
     private String peripheral;
-    @JSONField(serialize = false)
     private Integer io;
-    @JSONField(serialize = false)
     private Long start;
+    private String startTime;
+    private String endTime;
 
     public String getId() {
         return id;
     }
+
     public String getLoad() {
         return load;
     }
@@ -67,6 +60,22 @@ public class TimeCost implements Serializable {
             return System.currentTimeMillis() - this.start;
         }
         return timeCost;
+    }
+
+    public String getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(String startTime) {
+        this.startTime = startTime;
+    }
+
+    public String getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(String endTime) {
+        this.endTime = endTime;
     }
 
     public String getIp() {
@@ -171,11 +180,17 @@ public class TimeCost implements Serializable {
 
     @Override
     public String toString() {
-        return JSON.toJSONString(this);
+        String baseInfo = "【fireLog】 " + this.msg + "    start：" + this.startTime + "    end：" + this.endTime + "    cost：" + this.timeCost + "      ip：" + this.ip + "      load：" + this.load + "      executor：" + this.executorId;
+        if ("driver".equalsIgnoreCase(this.executorId)) {
+            return baseInfo;
+        } else {
+            return baseInfo + "     stage：" + this.stageId + "   task：" + this.taskId;
+        }
     }
 
     private TimeCost() {
         this.start = System.currentTimeMillis();
+        this.startTime = DateFormatUtils.formatCurrentDateTime();
         this.ip = SystemInfoUtils.getIp();
         this.load = SystemInfoUtils.getLoadAverageCache();
         if (SparkEnv.get() != null) {
@@ -199,6 +214,7 @@ public class TimeCost implements Serializable {
      */
     public TimeCost info(String msg, String peripheral, Integer io, Boolean isFire, Throwable exception) {
         this.timeCost = System.currentTimeMillis() - this.start;
+        this.endTime = DateFormatUtils.formatCurrentDateTime();
         this.exception = exception;
         this.msg = msg;
         this.peripheral = peripheral;

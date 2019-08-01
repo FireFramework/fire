@@ -198,6 +198,10 @@ object GlobalConstants {
     private val bigdataKafkaUrl = "192.168.25.80:9092,192.168.25.81:9092,192.168.25.82:9092,192.168.25.129:9092,192.168.25.130:9092,192.168.25.131:9092"
     // zms kafka地址
     private val zmsKafkaUrl = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092,192.168.1.173:9092,192.168.5.29:9092,192.168.5.30:9092"
+    // zms new 地址
+    private val zmsNewKafkaUrl = "192.168.73.31:9092,192.168.73.32:9092,192.168.73.33:9092,192.168.73.34:9092,192.168.73.35:9092,192.168.73.36:9092"
+    // 测试kafka集群地址
+    private val testKafkaUrl = "10.9.45.97:9092,10.9.15.38:9092,10.9.36.49:9092,10.9.36.50:9092"
 
     // kafka消费位点
     def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
@@ -227,14 +231,20 @@ object GlobalConstants {
       * @return
       * 配置信息
       */
-    def kafkaBrokers(keyNum: Int = 1) = {
+    def kafkaBrokers(keyNum: Int = 1): String = {
       val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME, keyNum, DefaultVals.kafkaBrokersName)
       if ("bigdata".equalsIgnoreCase(brokerName)) {
         bigdataKafkaUrl
       } else if ("zms".equalsIgnoreCase(brokerName)) {
         zmsKafkaUrl
-      } else {
+      } else if ("zmsNew".equalsIgnoreCase(brokerName)) {
+        zmsNewKafkaUrl
+      } else if ("test".equalsIgnoreCase(brokerName)) {
+        testKafkaUrl
+      } else if (StringUtils.isNotBlank(brokerName) && brokerName.contains(".")) {
         brokerName
+      } else {
+        zmsKafkaUrl
       }
     }
 
@@ -263,8 +273,9 @@ object GlobalConstants {
 
     /**
       * kafka request超时时间
+      *
       * @param keyNum
-      *              配置的key后缀
+      * 配置的key后缀
       * @return
       */
     def kafkaRequestTimeOut(keyNum: Int = 1): java.lang.Integer = {
@@ -273,8 +284,9 @@ object GlobalConstants {
 
     /**
       * kafka request超时时间，默认10分钟
+      *
       * @param keyNum
-      *              配置的key后缀
+      * 配置的key后缀
       * @return
       */
     def kafkaPollInterval(keyNum: Int = 1): java.lang.Integer = {
@@ -570,16 +582,16 @@ object GlobalConstants {
       * uri
       */
     def getMetastoreUrl: String = {
-      if (SystemInfoUtils.isLinux) {
-        if ("batch".equalsIgnoreCase(hiveCluster)) {
-          batchMetastore
-        } else if (StringUtils.isNotBlank(hiveCluster) && hiveCluster.contains(".")) {
-          hiveCluster
-        } else {
-          streamingMetastore
-        }
-      } else {
+      if ("batch".equalsIgnoreCase(hiveCluster)) {
+        batchMetastore
+      } else if ("streaming".equalsIgnoreCase(hiveCluster)) {
+        streamingMetastore
+      } else if ("test".equalsIgnoreCase(hiveCluster)) {
         testMetastore
+      } else if (StringUtils.isNotBlank(hiveCluster) && hiveCluster.contains(".")) {
+        hiveCluster
+      } else {
+        streamingMetastore
       }
     }
   }
