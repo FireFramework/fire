@@ -50,7 +50,9 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   def kill(request: Request, response: Response): AnyRef = {
     val msg = new ResultMsg()
     try {
-      this.baseSpark.shutdown
+      val param = request.queryString()
+      val stopGracefully = if (StringUtils.isNotBlank(param) && "false".equalsIgnoreCase(param.trim)) false else true
+      this.baseSpark.shutdown(stopGracefully)
       ProcessUtil.executeCmds(s"yarn application -kill ${this.baseSpark.applicationId}", s"kill -9 ${SystemInfoUtils.getPid}")
       System.exit(0)
       msg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)

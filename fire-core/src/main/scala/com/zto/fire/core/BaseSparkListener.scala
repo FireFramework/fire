@@ -42,7 +42,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener {
     try {
       this.baseSpark.after()
     } finally {
-      this.baseSpark.shutdown
+      this.baseSpark.shutdown()
     }
     super.onApplicationEnd(applicationEnd)
   }

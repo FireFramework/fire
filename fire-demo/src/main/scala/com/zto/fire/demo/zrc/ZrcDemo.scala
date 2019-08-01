@@ -19,7 +19,11 @@ object ZrcDemo extends BaseSparkStreaming {
     val dstream = this.ssc.createDirectStream()
     dstream.print(1)
     dstream.foreachRDD(rdd => {
-      println("count=" + rdd.count())
+      rdd.foreachPartition(i => {
+        i.foreach(t => {
+          t.value().length
+        })
+      })
     })
     this.ssc.startAwaitTermination()
   }

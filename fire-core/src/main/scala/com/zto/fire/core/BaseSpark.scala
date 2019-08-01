@@ -12,7 +12,7 @@ import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
+import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
@@ -43,8 +43,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   lazy val threadPool = Executors.newFixedThreadPool(20)
   lazy val threadPoolSchedule = Executors.newScheduledThreadPool(10)
   val restPort = SystemInfoUtils.getRundomPort
-  lazy val restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
-  lazy private val systemRestful = new SystemRestful(this)
+  private[fire] var restfulRegister: RestfulRegister = _
+  private[fire] var systemRestful: SystemRestful = _
   private[this] var args: Array[String] = _
   val count: LongAccumulator = new LongAccumulator
   val logAccumulator = new LogAccumulator
@@ -101,7 +101,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     * 生命周期方法：用于关闭SparkContext
     */
   final def stop: Unit = {
-    if (this.spark != null) {
+    if (this.spark != null && this.sc != null && !this.sc.isStopped) {
       this.spark.stop()
     }
   }
@@ -116,23 +116,32 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     * 生命周期方法：进行fire框架的资源回收
     * 注：不允许子类覆盖
     */
-  private[fire] final def shutdown: Unit = {
+  private[fire] final def shutdown(stopGracefully: Boolean = true): Unit = {
     try {
       this.wrapLogWarn("完成用户资源回收...")
-      if (this.sqlContext != null) this.sqlContext.clearCache
-      if (this.ssc == null && !this.sc.isStopped) {
-        this.spark.stop()
-      } else if (this.ssc != null) {
-        this.ssc.stop(!this.sc.isStopped, false)
+
+      if (stopGracefully) {
+        if (this.sqlContext != null) this.sqlContext.clearCache
+        if (this.ssc != null) {
+          this.ssc.stop(true, stopGracefully)
+          this.ssc = null
+          this.sc = null
+        }
+        if (this.sc != null && !this.sc.isStopped) {
+          this.sc.stop()
+          this.sc = null
+        }
       }
-      if (!this.threadPool.isShutdown) {
+
+      if (this.threadPool != null && !this.threadPool.isShutdown) {
         this.threadPool.shutdownNow()
       }
-      if (!this.threadPoolSchedule.isShutdown) {
+      if (this.threadPoolSchedule != null && !this.threadPoolSchedule.isShutdown) {
         this.threadPoolSchedule.shutdownNow()
       }
       Spark.stop()
       this.wrapLogWarn("完成fire资源回收...")
+      println("完成fire资源回收...")
     } finally {
       GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
     }
@@ -152,7 +161,10 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   /**
     * 构建一系列context对象
     */
-  def createContext(conf: SparkConf): Unit = {
+  private[this] final def createContext(conf: SparkConf): Unit = {
+    this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
+    this.systemRestful = new SystemRestful(this)
+
     // 注册到zrc平台，并覆盖配置信息
     if (this.jobType != JobType.CORE) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     PropUtils.print()
