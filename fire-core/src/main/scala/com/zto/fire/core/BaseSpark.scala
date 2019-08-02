@@ -141,7 +141,6 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
       }
       Spark.stop()
       this.wrapLogWarn("完成fire资源回收...")
-      println("完成fire资源回收...")
     } finally {
       GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
     }
