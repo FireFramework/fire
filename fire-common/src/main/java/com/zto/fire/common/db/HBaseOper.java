@@ -7,7 +7,6 @@ import com.zto.fire.common.bean.HBaseBaseBean;
 import com.zto.fire.common.bean.MultiVersionsBean;
 import com.zto.fire.common.util.GlobalConstants;
 import com.zto.fire.common.util.ReflectionUtils;
-import com.zto.fire.common.util.SystemInfoUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
@@ -49,9 +48,9 @@ public class HBaseOper {
     static {
         hbaseCluster = ImmutableMap.<String, String>builder()
                 .put("old", "hadoop10.zto:2181,hadoop11.zto:2181,hadoop12.zto:2181")
-                .put("batch", "HZPL025041,HZPL025040,HZPL025042,HZPL025039,HZPL025038")
-                .put("streaming", "HZPL025024,HZPL025027,HZPL025025,HZPL025023,HZPL025026")
-                .put("test", "SHTL009046110,SHTL009046111,SHTL009046109").build();
+                .put("batch", "HZPL025041:2181,HZPL025040:2181,HZPL025042:2181,HZPL025039:2181,HZPL025038:2181")
+                .put("streaming", "HZPL025024:2181,HZPL025027:2181,HZPL025025:2181,HZPL025023:2181,HZPL025026:2181")
+                .put("test", "SHTL009046110:2181,SHTL009046111:2181,SHTL009046109:2181").build();
 
     }
 
@@ -80,23 +79,16 @@ public class HBaseOper {
     public static Configuration getConfiguration() {
         if (conf == null) {
             conf = HBaseConfiguration.create();
-            if (SystemInfoUtils.isLinux()) {
-                String clusterName = GlobalConstants.hbaseCluster();
-                if (StringUtils.isBlank(clusterName)) {
-                    throw new IllegalArgumentException("hbase集群名称不能为空，请在配置文件中指定：spark.hbase.cluster");
-                }
-                if (!clusterName.contains(".")) {
-                    String zkUrl = hbaseCluster.get(clusterName);
-                    if (StringUtils.isNotBlank(zkUrl)) {
-                        conf.set("hbase.zookeeper.quorum", zkUrl);
-                    } else {
-                        conf.set("hbase.zookeeper.quorum", hbaseCluster.get("batch"));
-                    }
+            String clusterName = GlobalConstants.hbaseCluster();
+            if (!clusterName.contains(":")) {
+                String zkUrl = hbaseCluster.get(clusterName);
+                if (StringUtils.isNotBlank(zkUrl)) {
+                    conf.set("hbase.zookeeper.quorum", zkUrl);
                 } else {
-                    conf.set("hbase.zookeeper.quorum", clusterName);
+                    conf.set("hbase.zookeeper.quorum", hbaseCluster.get("batch"));
                 }
             } else {
-                conf.set("hbase.zookeeper.quorum", hbaseCluster.get("test"));
+                conf.set("hbase.zookeeper.quorum", clusterName);
             }
             conf.set("hbase.zookeeper.property.clientPort", "2181");
             conf.set("zookeeper.znode.parent", "/hbase");

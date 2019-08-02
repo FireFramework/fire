@@ -66,7 +66,6 @@ object AccumulatorManager {
       val accumulatorMap = accumulatorInfo.map(accInfo => {
         // 注册每个累加器，必须是合法的名称并且未被注册过
         if (accInfo._2 != null && !accInfo._2.isRegistered) {
-          println("开始注册：" + accInfo._1 + " " + accInfo._2)
           if (StringUtils.isNotBlank(accInfo._1) && accInfo._1.contains("fire")) {
             sc.register(accInfo._2, accInfo._1)
           } else {

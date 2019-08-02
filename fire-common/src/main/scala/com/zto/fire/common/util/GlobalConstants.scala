@@ -241,7 +241,7 @@ object GlobalConstants {
         zmsNewKafkaUrl
       } else if ("test".equalsIgnoreCase(brokerName)) {
         testKafkaUrl
-      } else if (StringUtils.isNotBlank(brokerName) && brokerName.contains(".")) {
+      } else if (StringUtils.isNotBlank(brokerName) && brokerName.contains(":")) {
         brokerName
       } else {
         zmsKafkaUrl
@@ -588,7 +588,7 @@ object GlobalConstants {
         streamingMetastore
       } else if ("test".equalsIgnoreCase(hiveCluster)) {
         testMetastore
-      } else if (StringUtils.isNotBlank(hiveCluster) && hiveCluster.contains(".")) {
+      } else if (StringUtils.isNotBlank(hiveCluster) && hiveCluster.contains(":")) {
         hiveCluster
       } else {
         streamingMetastore
