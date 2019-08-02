@@ -178,14 +178,24 @@ public class TimeCost implements Serializable {
         return io;
     }
 
+    private String lable() {
+        if (this.isFire) {
+            return "fire";
+        } else {
+            return "user";
+        }
+    }
+
     @Override
     public String toString() {
-        String baseInfo = "【fireLog】 " + this.msg + "    start：" + this.startTime + "    end：" + this.endTime + "    cost：" + this.timeCost + "      ip：" + this.ip + "      load：" + this.load + "      executor：" + this.executorId;
-        if ("driver".equalsIgnoreCase(this.executorId)) {
-            return baseInfo;
-        } else {
-            return baseInfo + "     stage：" + this.stageId + "   task：" + this.taskId;
+        String baseInfo = "【" + this.lable() + "Log】 " + this.msg + "    start：" + this.startTime + "    end：" + this.endTime + "    cost：" + this.timeCost + "      ip：" + this.ip + "      load：" + this.load + "      executor：" + this.executorId;
+        if (!"driver".equalsIgnoreCase(this.executorId)) {
+            baseInfo += "     stage：" + this.stageId + "   task：" + this.taskId;
         }
+        if (this.isFire) {
+            baseInfo += "       peripheral：" + this.peripheral + "      io：" + this.io;
+        }
+        return baseInfo;
     }
 
     private TimeCost() {

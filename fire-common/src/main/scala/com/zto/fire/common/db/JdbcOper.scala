@@ -328,7 +328,7 @@ object JdbcOper extends BaseLogging {
   * @author ChengLong
   *         2016-11-16 09:22:11
   */
-trait QueryCallback {
+trait QueryCallback extends BaseLogging {
 
   /**
     * 回调方法，对返回结果进行处理

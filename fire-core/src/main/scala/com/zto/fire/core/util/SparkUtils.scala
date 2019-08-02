@@ -443,7 +443,7 @@ object SparkUtils {
   }
 
   /**
-    * 获取conf信息
+    * 优先从配置文件中获取配置信息，若获取不到，则从SparkEnv中获取
     *
     * @param key
     * 配置的key
@@ -453,7 +453,11 @@ object SparkUtils {
     * 配置的value
     */
   def getConf(key: String, default: String = ""): String = {
-    SparkEnv.get.conf.get(key, default)
+    var value = PropUtils.getString(key, default)
+    if (StringUtils.isBlank(value) && SparkEnv.get != null) {
+      value = SparkEnv.get.conf.get(key, default)
+    }
+    value
   }
 
   /**

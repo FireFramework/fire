@@ -4,10 +4,10 @@ import java.sql.ResultSet
 
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
-import com.zto.fire.core.ext.SparkExt._
-import com.zto.fire.common.db.{JdbcOper, QueryCallback}
+import com.zto.fire.common.db.QueryCallback
 import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.BaseSparkCore
+import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.util.SparkUtils
 import com.zto.fire.demo.bean.Student
 import org.apache.spark.sql.SaveMode
@@ -18,7 +18,42 @@ import org.apache.spark.sql.SaveMode
   * @author ChengLong 2019-6-17 15:17:38
   */
 object JdbcTest extends BaseSparkCore {
-  val tableName = "spark_test"
+  val tableName = SparkUtils.getConf("tableName")
+
+  /**
+    * 使用jdbc方式对关系型数据库进行增删改操作
+    */
+  def testJdbcUpdate: Unit = {
+    // 执行insert操作
+    val insertSql = s"INSERT INTO $tableName (name, age, createTime, LENGTH, sex) VALUES (?, ?, ?, ?, ?)"
+    this.spark.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1))
+    // 更新配置文件中指定的第二个关系型数据库
+    this.spark.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1), keyNum = 2)
+
+    // 执行更新操作
+    val updateSql = s"UPDATE $tableName SET name=? WHERE id=?"
+    this.spark.jdbcUpdate(updateSql, Seq("root", 1))
+
+    // 执行批量操作
+    val batchSql = s"INSERT INTO $tableName (name, age, createTime, LENGTH, sex) VALUES (?, ?, ?, ?, ?)"
+    this.spark.jdbcBatchUpdate(batchSql, Seq(Seq("spark1", 21, DateFormatUtils.formatCurrentDateTime(), 100.123, 1),
+      Seq("flink2", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
+      Seq("flink3", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
+      Seq("flink4", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
+      Seq("flink5", 27, DateFormatUtils.formatCurrentDateTime(), 17.236, 0)))
+
+    // 方式一：通过this.spark方式执行delete操作
+    val sql = s"DELETE FROM $tableName WHERE id=?"
+    this.spark.jdbcUpdate(sql, Seq(2))
+    // 方式二：通过JdbcOper.executeUpdate
+
+    // 同一个事务
+    /*val connection = this.jdbc.getConnection()
+    this.spark.jdbcBatchUpdate("insert", connection = connection, commit = false, closeConnection = false)
+    this.spark.jdbcBatchUpdate("delete", connection = connection, commit = false, closeConnection = false)
+    this.spark.jdbcBatchUpdate("update", connection = connection, commit = true, closeConnection = true)*/
+  }
+
 
   /**
     * 使用jdbc方式对关系型数据库进行查询操作
@@ -56,40 +91,6 @@ object JdbcTest extends BaseSparkCore {
   }
 
   /**
-    * 使用jdbc方式对关系型数据库进行增删改操作
-    */
-  def testJdbcUpdate: Unit = {
-    // 执行insert操作
-    val insertSql = s"INSERT INTO $tableName (name, age, createTime, LENGTH, sex) VALUES (?, ?, ?, ?, ?)"
-    this.spark.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1))
-    // 更新配置文件中指定的第二个关系型数据库
-    this.spark.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1), keyNum = 2)
-
-    // 执行更新操作
-    val updateSql = s"UPDATE $tableName SET name=? WHERE id=?"
-    this.spark.jdbcUpdate(updateSql, Seq("root", 1))
-
-    // 执行批量操作
-    val batchSql = s"INSERT INTO $tableName (name, age, createTime, LENGTH, sex) VALUES (?, ?, ?, ?, ?)"
-    this.spark.jdbcBatchUpdate(batchSql, Seq(Seq("spark1", 21, DateFormatUtils.formatCurrentDateTime(), 100.123, 1),
-      Seq("flink2", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
-      Seq("flink3", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
-      Seq("flink4", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
-      Seq("flink5", 27, DateFormatUtils.formatCurrentDateTime(), 17.236, 0)))
-
-    // 方式一：通过this.spark方式执行delete操作
-    val sql = s"DELETE FROM $tableName WHERE id=?"
-    this.spark.jdbcUpdate(sql, Seq(2))
-    // 方式二：通过JdbcOper.executeUpdate
-
-    // 同一个事务
-    /*val connection = this.jdbc.getConnection()
-    this.spark.jdbcBatchUpdate("insert", connection = connection, commit = false, closeConnection = false)
-    this.spark.jdbcBatchUpdate("delete", connection = connection, commit = false, closeConnection = false)
-    this.spark.jdbcBatchUpdate("update", connection = connection, commit = true, closeConnection = true)*/
-  }
-
-  /**
     * 使用spark方式对表进行数据加载操作
     */
   def testTableLoad: Unit = {
@@ -118,58 +119,57 @@ object JdbcTest extends BaseSparkCore {
     * 在executor中执行jdbc操作
     */
   def testExecutor: Unit = {
-    // val table = "tmp.tmp_dw_cj_dc_disp_item"
-    val table = "spark_test"
-    this.jdbc.executeQueryCall(s"select id from $table limit 1", null, new QueryCallback {
+    this.jdbc.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
       override def process(rs: ResultSet): Int = {
-        println(s"=============driver $table=============")
+        this.mark()
+        Thread.sleep(1000)
+        this.log(s"=============driver123 $tableName=============")
         1
       }
-    }, keyNum = 1)
-    this.jdbc.executeQueryCall(s"select id from $table limit 1", null, new QueryCallback {
+    }, keyNum = 3)
+    this.jdbc.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
       override def process(rs: ResultSet): Int = {
-        println(s"=============driver $table=============")
+        log(s"=============driver $tableName=============")
         1
       }
-    }, keyNum = 2)
+    }, keyNum = 5)
 
     val rdd = this.spark.parallelize(1 to 100, 10)
     rdd.foreachPartition(it => {
       it.foreach(i => {
-        this.jdbc.executeQueryCall(s"select id from $table limit 1", null, new QueryCallback {
+        this.jdbc.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
           override def process(rs: ResultSet): Int = {
-            logError("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+            this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
             1
           }
-        }, keyNum = 2)
+        }, keyNum = 3)
       })
     })
 
     val rdd2 = this.spark.parallelize(1 to 100, 10)
     rdd2.foreachPartition(it => {
       it.foreach(i => {
-        this.jdbc.executeQueryCall(s"select id from $table limit 1", null, new QueryCallback {
+        this.jdbc.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
           override def process(rs: ResultSet): Int = {
-            logError("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+            this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
             1
           }
-        }, keyNum = 2)
+        }, keyNum = 5)
       })
     })
   }
 
   override def process: Unit = {
-    // this.testJdbcUpdate
-    /*this.testJdbcQuery
-    this.testTableSave
-    this.testTableLoad*/
+    //this.testJdbcUpdate
+    // this.testJdbcQuery
     // this.testTableLoad
+    // this.testTableSave
     this.testExecutor
   }
 
   def main(args: Array[String]): Unit = {
     this.init(args = args)
 
-    this.spark.stop()
+    Thread.currentThread().join()
   }
 }

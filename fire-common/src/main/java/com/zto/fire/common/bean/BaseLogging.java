@@ -20,7 +20,8 @@ public class BaseLogging implements Serializable {
 
     /**
      * 初始化日志记录器
-     * @param className
+     *
+     * @param className 日志的类名
      */
     protected void initLogging(String className) {
         if (StringUtils.isBlank(className)) {
@@ -86,24 +87,12 @@ public class BaseLogging implements Serializable {
      * @param io         输入：1 输出：0
      * @param throwable  异常对象
      */
-    protected void logFire(String msg, String peripheral, Integer io, Throwable throwable) {
+    protected void log(String msg, String peripheral, Integer io, Throwable throwable) {
         this.log(msg, peripheral, io, throwable, true);
     }
 
     /**
-     * 用户日志记录
-     *
-     * @param msg        错误信息
-     * @param peripheral 外设（hbase、tidb、mysql）
-     * @param io         输入：1 输出：0
-     * @param throwable  异常对象
-     */
-    protected void log(String msg, String peripheral, Integer io, Throwable throwable) {
-        this.log(msg, peripheral, io, throwable, false);
-    }
-
-    /**
-     * 用于fire框架内部日志记录
+     * 日志记录
      *
      * @param msg        错误信息
      * @param peripheral 外设（hbase、tidb、mysql）
@@ -111,7 +100,7 @@ public class BaseLogging implements Serializable {
      * @param throwable  异常对象
      * @param isFire     用于标记是否为fire框架内部埋点日志
      */
-    private void log(String msg, String peripheral, Integer io, Throwable throwable, Boolean isFire) {
+    protected void log(String msg, String peripheral, Integer io, Throwable throwable, Boolean isFire) {
         if (timeCostLocal.get() == null) this.mark();
         TimeCost timeCost = timeCostLocal.get();
         timeCost.info(msg, peripheral, io, isFire, throwable);
