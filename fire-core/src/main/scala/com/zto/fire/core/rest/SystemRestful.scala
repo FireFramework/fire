@@ -25,9 +25,9 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   // 系统预定义接口注册
   {
     this.baseSpark.restfulRegister
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/kill", kill))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/cancelJob", cancelJob))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/cancelStage", cancelStage))
+      .addRest(RestCase(RequestMethod.DELETE.toString, s"/system/kill", kill))
+      .addRest(RestCase(RequestMethod.DELETE.toString, s"/system/cancelJob", cancelJob))
+      .addRest(RestCase(RequestMethod.DELETE.toString, s"/system/cancelStage", cancelStage))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/sql", sql))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/loadInfo", loadInfo))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/sparkInfo", sparkInfo))

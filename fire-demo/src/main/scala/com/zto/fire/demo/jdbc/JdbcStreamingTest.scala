@@ -1,13 +1,10 @@
-package com.zto.fire.demo.zrc
+package com.zto.fire.demo.jdbc
 
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
 
-/**
-  * Zrc联调程序
-  * @author ChengLong 2019-7-8 09:06:56
-  */
-object ZrcDemo extends BaseSparkStreaming {
+object JdbcStreamingTest extends BaseSparkStreaming {
+  val tableName = "t_hosts"
 
   /**
     * Streaming的处理过程强烈建议放到process中，保持风格统一
@@ -17,19 +14,20 @@ object ZrcDemo extends BaseSparkStreaming {
     */
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream()
-    dstream.print(1)
-    dstream.foreachRDD(rdd => {
-      rdd.foreachPartition(i => {
-        i.foreach(t => {
-          t.value().length
-        })
+
+    dstream.repartition(5).foreachRDD(rdd => {
+      rdd.foreachPartition(it => {
+        this.mark
+        val sql = s"select id from $tableName limit 1"
+        this.jdbc.executeQueryCall(sql)
+        this.log("查询完成")
       })
     })
+
     this.ssc.startAwaitTermination()
   }
 
   def main(args: Array[String]): Unit = {
-    this.init(30, false)
-    this.stop
+    this.init(10, false)
   }
 }

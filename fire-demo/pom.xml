@@ -7,12 +7,12 @@
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-parent</artifactId>
-        <version>0.1.2-SNAPSHOT</version>
+        <version>0.2.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <properties>
-        <fire.version>0.1.2-SNAPSHOT</fire.version>
+        <fire.version>0.2.0</fire.version>
     </properties>
 
     <dependencies>
