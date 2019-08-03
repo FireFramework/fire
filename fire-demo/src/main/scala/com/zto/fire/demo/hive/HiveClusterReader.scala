@@ -18,8 +18,6 @@ object HiveClusterReader extends BaseSparkCore {
     // spark为sparkSession的实例，已经在init()中完成初始化，可以直接通过this.spark方式调用
     this.spark.sql("use tmp")
     this.spark.sql("show tables").show(100, false)
-    /*val df = this.spark.table("tmp.tmp_pre_order_001")
-    df.write.mode(SaveMode.Overwrite).saveAsTable("tmp.tmp_pre_order_002")*/
 
     this.spark.stop()
   }

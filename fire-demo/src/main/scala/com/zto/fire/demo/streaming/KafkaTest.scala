@@ -8,8 +8,7 @@ import com.zto.fire.demo.bean.OrderCommon
   * kafka json解析
   * @author ChengLong 2019-6-26 16:52:58
   */
-object JSONParser extends BaseSparkStreaming {
-
+object KafkaTest extends BaseSparkStreaming {
 
   /**
     * Streaming的处理过程强烈建议放到process中，保持风格统一
@@ -38,6 +37,13 @@ object JSONParser extends BaseSparkStreaming {
         rdd.kafkaCommitOffsets(dstream)
       }
     })
+
+    val dstream2 = this.ssc.createDirectStream(keyNum = 2)
+    dstream2.print(1)
+    val dstream3 = this.ssc.createDirectStream(keyNum = 3)
+    dstream3.print(1)
+    val dstream5 = this.ssc.createDirectStream(keyNum = 5)
+    dstream5.print(1)
 
     this.ssc.startAwaitTermination()
   }
