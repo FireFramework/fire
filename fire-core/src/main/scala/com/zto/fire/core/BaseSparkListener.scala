@@ -56,7 +56,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener {
     AccumulatorManager.executorInstances.addAndGet(1)
     this.baseSpark.onExecutorAdded(executorAdded)
     println("重新注册累加器")
-    AccumulatorManager.registerAccumulators(this.baseSpark.sc, this.baseSpark.accumulatorMap)
+    AccumulatorManager.registerAccumulators(this.baseSpark.sc)
   }
 
   /**

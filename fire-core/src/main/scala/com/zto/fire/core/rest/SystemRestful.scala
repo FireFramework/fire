@@ -7,7 +7,6 @@ import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
 import com.zto.fire.core.BaseSpark
 import com.zto.fire.core.ext.SparkExt._
-import com.zto.fire.core.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.Logging
 import spark._
@@ -36,7 +35,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
 
   @Rest("/system/count")
   def count(request: Request, response: Response): AnyRef = {
-    this.baseSpark.count.value + ""
+    this.baseSpark.acc.getCounter + ""
   }
 
   /**

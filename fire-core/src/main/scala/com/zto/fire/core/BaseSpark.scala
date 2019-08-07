@@ -2,7 +2,7 @@ package com.zto.fire.core
 
 import java.util.concurrent.{ExecutorService, Executors, ScheduledExecutorService, TimeUnit}
 
-import com.zto.fire.common.acc.{AccumulatorManager, LogAccumulator}
+import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util._
@@ -16,7 +16,6 @@ import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.util.{AccumulatorV2, LongAccumulator}
 import org.apache.spark.{Logging, SparkConf, SparkContext}
 import spark.Spark
 
@@ -40,14 +39,13 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   var appName = this.driverClass
   val className = this.getClass.getName.replace("$", "")
   val jobType = JobType.UNDEFINED
+  val acc = AccumulatorManager
   lazy val threadPool = Executors.newFixedThreadPool(20)
   lazy val threadPoolSchedule = Executors.newScheduledThreadPool(10)
   val restPort = SystemInfoUtils.getRundomPort
   private[fire] var restfulRegister: RestfulRegister = _
   private[fire] var systemRestful: SystemRestful = _
   var args: Array[String] = _
-  val count: LongAccumulator = new LongAccumulator
-  val logAccumulator = new LogAccumulator
   var applicationId: String = _
   var batchDuration: Long = _
   var webUI: String = _
@@ -182,7 +180,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))
     this.initLogging(this.className)
-    AccumulatorManager.registerAccumulators(this.sc, this.accumulatorMap)
+    this.acc.registerAccumulators(this.sc)
     this.hiveContext = this.spark.sqlContext
     this.sqlContext = this.hiveContext
     this.hbaseContext = SingletonFactory.getHBaseContextInstance(this.sc)
@@ -190,13 +188,6 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.applicationId = SparkUtils.getApplicationId(this.spark)
     this.webUI = SparkUtils.getWebUI(this.spark)
     this.conf = tmpConf
-  }
-
-  /**
-    * 内置累加器列表
-    */
-  private[fire] def accumulatorMap: Map[String, AccumulatorV2[_, _]] = {
-    Map(AccumulatorManager.log -> this.logAccumulator, AccumulatorManager.counter -> this.count)
   }
 
   /**
