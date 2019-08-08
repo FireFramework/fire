@@ -1,10 +1,11 @@
 package com.zto.fire.common.util
 
-import java.io.{File, FileInputStream, InputStream}
+import java.io.{FileInputStream, InputStream}
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 
-import com.alibaba.fastjson.{JSON, JSONObject}
+import com.alibaba.fastjson.JSON
+import com.zto.fire.common.bean.BaseLogging
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkEnv
 
@@ -15,7 +16,7 @@ import scala.collection.mutable.Map
   * 读取配置文件工具类
   * Created by ChengLong on 2016-11-22.
   */
-object PropUtils {
+object PropUtils extends BaseLogging {
   private val props = new Properties()
   // 用于判断是否merge过
   private val isMerge = new AtomicBoolean(false)
@@ -45,7 +46,7 @@ object PropUtils {
           }
         }
         if (resource != null) {
-          println(s"--------------------- load ${fullName} ---------------------")
+          println(s"${GlobalConstants.PS1.YELLOW} --------------------- load ${fullName} --------------------- ${GlobalConstants.PS1.DEFAULT}")
           props.load(resource)
         }
       } finally {
@@ -53,14 +54,6 @@ object PropUtils {
           IOUtils.close(resource)
         }
       }
-    }
-    this
-  }
-
-  def loadR(fileName: String): this.type = {
-    val url = this.getClass.getResource("/main/resources")
-    if (url != null) {
-      val file = new File(url.toURI)
     }
     this
   }
@@ -255,16 +248,30 @@ object PropUtils {
   }
 
   /**
+    * 隐蔽密码信息后返回
+    * @return
+    */
+  def cover: Properties = {
+    val conf = new Properties()
+    JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
+      if (key != null && !key.toString.contains("pass")) {
+        conf.setProperty(key.toString, this.props.getProperty(key.toString))
+      }
+    })
+    conf
+  }
+
+  /**
     * 打印配置文件中的kv
     */
   def print(): Unit = {
-    println(GlobalConstants.PS1.YELLOW + "< -------------------------------------- 配置信息 -------------------------------------- >" + GlobalConstants.PS1.DEFAULT)
+    println(s"${GlobalConstants.PS1.YELLOW} < -------------------------------------- 配置信息 -------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
     JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
       if (key != null && !key.toString.contains("pass")) {
         println(">> " + GlobalConstants.PS1.PINK + key + " --> " + this.props.get(key) + GlobalConstants.PS1.DEFAULT)
       }
     })
-    println(GlobalConstants.PS1.YELLOW + "< -------------------------------------------------------------------------------------- >" + GlobalConstants.PS1.DEFAULT)
+    println(s"${GlobalConstants.PS1.YELLOW} < -------------------------------------------------------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
   }
 
   /**
@@ -293,7 +300,7 @@ object PropUtils {
     if (env != null && env.conf != null) {
       env.conf.getAll.foreach(t => {
         if (StringUtils.isNotBlank(t._1))
-        this.props.setProperty(t._1, t._2)
+          this.props.setProperty(t._1, t._2)
       })
       this.isMerge.set(true)
     }
@@ -303,6 +310,7 @@ object PropUtils {
     * 获取zrc配置信息
     */
   def invokeZrcConf(className: String, rest: String): Unit = {
+    this.mark
     val param =
       s"""
          |{"className": "$className", "url": "http://$rest", "fireVersion": "${PropUtils.getString("spark.fire.version")}", "zrcKey": "21fa30b7f2082b1b12dfbc7c8c6d70b9"}
@@ -314,13 +322,13 @@ object PropUtils {
       conf = HttpClientUtils.doPost(url, param)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        this.log("调用zrc注册接口失败", null, null, e)
         val url2 = "http://10.9.38.156:8080/zrcToExternal/zrcConfCallBack"
         conf = HttpClientUtils.doPost(url2, param)
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {
-        println("<----- zrc conf ----->" + conf)
+        this.log("成功获取zrc配置信息：" + conf)
         val msg = JSON.parseObject(conf)
         if (msg != null && msg.get("code") == 200) {
           val content = msg.get("content")

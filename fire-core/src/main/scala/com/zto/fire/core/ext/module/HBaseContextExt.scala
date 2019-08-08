@@ -13,10 +13,11 @@ import org.apache.hadoop.hbase.mapreduce.TableOutputFormat
 import org.apache.hadoop.hbase.spark.HBaseContext
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.mapreduce.Job
-import org.apache.spark.SparkContext
+import org.apache.spark.{Logging, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Encoders, Row}
 import org.apache.spark.streaming.dstream.DStream
+import com.zto.fire.core.ext.SparkExt._
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -34,7 +35,7 @@ import scala.reflect.ClassTag
   * HBase相关配置参数
   * @author ChengLong 2018年4月10日 10:39:28
   */
-class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config: Configuration = HBaseOper.getConfiguration) extends HBaseContext(sc, config) {
+class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config: Configuration = HBaseOper.getConfiguration) extends HBaseContext(sc, config) with Logging {
   lazy val batchSize = GlobalConstants.HBaseConf.hbaseBatchSize
 
   /**
@@ -53,8 +54,10 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     ParamUtils.requireNonNull(rdd, "rdd不能为空")
     ParamUtils.requireNonNull(batchSize, "批次大小不能为空")
 
+    this.mark
     val rowKeyRDD = rdd.filter(rowkey => StringUtils.isNotBlank(rowkey)).map(rowKey => Bytes.toBytes(rowKey))
     this.bulkDelete[Array[Byte]](rowKeyRDD, TableName.valueOf(tableName), rec => new Delete(rec), batchSize)
+    this.logFire(s"bulkDeleteRDD(tableName: ${tableName})", "hbase", 0)
   }
 
   /**
@@ -110,10 +113,14 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     ParamUtils.requireNonNull(clazz, "参数不合法：clazz不能为空")
     ParamUtils.requireNonNull(batchSize, "参数不合法：批次大小不能为空")
 
+    this.mark
     val rowKeyRDD = rdd.filter(StringUtils.isNotBlank(_)).map(rowKey => Bytes.toBytes(rowKey))
-    this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
+    val getRDD = this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
       HBaseOper.hbaseRow2Bean(result, clazz)
     }).filter(bean => bean != null)
+    this.logFire(s"bulkGetRDD(tableName: ${tableName})", "hbase", 1)
+
+    getRDD
   }
 
   /**
@@ -202,11 +209,13 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     ParamUtils.requireNonNull(insertEmpty, "参数不合法：insertEmpty不能为空")
     ParamUtils.requireNonNull(multiVersion, "参数不合法：multiVersion不能为空")
 
+    this.mark
     this.bulkPut[T](rdd,
       TableName.valueOf(tableName),
       (putRecord: T) => {
         HBaseOper.convert2Put(if (multiVersion) new MultiVersionsBean(putRecord) else putRecord, insertEmpty)
       })
+    this.logFire(s"bulkPutRDD(tableName: ${tableName})", "hbase", 0)
   }
 
   /**
@@ -252,10 +261,14 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     ParamUtils.requireNonNull(scan, "参数不合法：scan不能为空")
     ParamUtils.requireNonNull(clazz, "参数不合法：clazz不能为空")
 
+    this.mark
     if (scan.getCaching == -1) {
       scan.setCaching(this.batchSize)
     }
-    this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz))
+    val scanRDD = this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz))
+    this.logFire(s"bulkScanRDD(tableName: ${tableName})", "hbase", 1)
+
+    scanRDD
   }
 
   /**
@@ -343,9 +356,11 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     ParamUtils.requireNonNullForce(tableName, "参数不合法：表名不能为空")
     ParamUtils.requireNonNull(dstream, "参数不合法：dstream不能为空")
 
+    this.mark
     this.streamBulkPut[T](dstream, TableName.valueOf(tableName), (putRecord: T) => {
       HBaseOper.convert2Put(if (multiVersion) new MultiVersionsBean(putRecord) else putRecord, insertEmpty)
     })
+    this.logFire(s"bulkPutStream(tableName: ${tableName})", "hbase", 0)
   }
 
   /**
@@ -365,6 +380,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     ParamUtils.requireNonNull(rdd, "参数不合法：rdd不能为空")
     ParamUtils.requireNonNull(insertEmpty, "参数不合法：insertEmpty不能为空")
 
+    this.mark
     rdd.mapPartitions(it => {
       val putList = ListBuffer[(ImmutableBytesWritable, Put)]()
       it.foreach(t => {
@@ -372,6 +388,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
       })
       putList.iterator
     }).saveAsNewAPIHadoopDataset(this.getConfiguration(tableName))
+    this.logFire(s"hadoopPut(tableName: ${tableName})", "hbase", 0)
   }
 
   /**
@@ -422,8 +439,11 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     ParamUtils.requireNonNull(df, "参数不合法：dataFrame不能为空")
     ParamUtils.requireNonNull(insertEmpty, "参数不合法：insertEmpty不能为空")
 
+    this.mark
     val fields = df.schema.fields
     df.rdd.mapPartitions(it => {
+      this.mark
+      var count = 0
       val putList = ListBuffer[(ImmutableBytesWritable, Put)]()
       it.foreach(row => {
         val put = new Put(Bytes.toBytes(buildRowKey(row)))
@@ -458,9 +478,12 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
           }
         })
         putList += Tuple2(new ImmutableBytesWritable, put)
+        count += putList.size
       })
+      this.logFire(s"hadoopPutDFRow(tableName: ${tableName})  count: ${count}", "hbase", 0)
       putList.iterator
     }).saveAsNewAPIHadoopDataset(this.getConfiguration(tableName))
+    this.logFire(s"hadoopPutDFRow(tableName: ${tableName})", "hbase", 0)
   }
 
   /**

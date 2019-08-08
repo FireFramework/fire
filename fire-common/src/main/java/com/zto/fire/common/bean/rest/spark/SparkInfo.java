@@ -3,6 +3,7 @@ package com.zto.fire.common.bean.rest.spark;
 import com.zto.fire.common.util.DateFormatUtils;
 
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * 用于封装spark运行时的信息
@@ -63,6 +64,8 @@ public class SparkInfo {
     private String timestamp = DateFormatUtils.formatCurrentDateTime();
     // 接口耗时
     private long timeCost;
+    // 配置信息
+    private Properties properties;
 
     public String getAppName() {
         return appName;
@@ -278,6 +281,14 @@ public class SparkInfo {
 
     public void setRestPort(String restPort) {
         this.restPort = restPort;
+    }
+
+    public Properties getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Properties properties) {
+        this.properties = properties;
     }
 
     /**

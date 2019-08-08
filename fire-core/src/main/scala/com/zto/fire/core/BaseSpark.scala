@@ -64,7 +64,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     Logger.getLogger("org.apache.kafka").setLevel(Level.WARN)
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
     Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
-    this.wrapLogWarn("完成fire框架启动...")
+    this.wrapLogInfo("<-- 完成fire框架初始化 -->")
   }
 
   /**
@@ -84,7 +84,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     */
   def init(conf: SparkConf = null, args: Array[String] = null): Unit = {
     this.before(args)
-    this.wrapLogWarn("完成用户资源初始化")
+    this.wrapLogInfo("<-- 完成用户资源初始化 -->")
     this.args = args
     this.createContext(conf)
   }
@@ -116,7 +116,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     */
   private[fire] final def shutdown(stopGracefully: Boolean = true): Unit = {
     try {
-      this.wrapLogWarn("完成用户资源回收...")
+      this.wrapLogInfo("<-- 完成用户资源回收 -->")
 
       if (stopGracefully) {
         if (this.sqlContext != null) this.sqlContext.clearCache
@@ -138,7 +138,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
         this.threadPoolSchedule.shutdownNow()
       }
       Spark.stop()
-      this.wrapLogWarn("完成fire资源回收...")
+      this.wrapLogInfo("<-- 完成fire资源回收 -->")
     } finally {
       GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
     }
@@ -188,6 +188,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.applicationId = SparkUtils.getApplicationId(this.spark)
     this.webUI = SparkUtils.getWebUI(this.spark)
     this.conf = tmpConf
+    this.wrapLogInfo("<-- 完成Spark运行时信息初始化 -->")
   }
 
   /**

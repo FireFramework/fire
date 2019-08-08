@@ -47,17 +47,19 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     */
   @Rest("/system/kill")
   def kill(request: Request, response: Response): AnyRef = {
+    this.mark
     val msg = new ResultMsg()
     try {
       val param = request.queryString()
       val stopGracefully = if (StringUtils.isNotBlank(param) && "false".equalsIgnoreCase(param.trim)) false else true
       this.baseSpark.shutdown(stopGracefully)
       ProcessUtil.executeCmds(s"yarn application -kill ${this.baseSpark.applicationId}", s"kill -9 ${SystemInfoUtils.getPid}")
+      this.logFire("kill任务成功")
       System.exit(0)
       msg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.wrapLogError("kill job失败：" + e.getMessage)
+        this.logFire("执行kill任务失败", throwable = e)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {
@@ -74,16 +76,18 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     */
   @Rest("/system/cancelJob")
   def cancelJob(request: Request, response: Response): AnyRef = {
+    this.mark
     val msg = new ResultMsg()
     try {
       val jobId = request.queryString()
       if (StringUtils.isNotBlank(jobId)) {
         this.baseSpark.sc.cancelJob(jobId.toInt, "被管控平台kill")
       }
+      this.logFire("kill job成功：" + msg)
       msg.buildSuccess("kill job 成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.wrapLogError("kill job失败：" + e.getMessage)
+        this.logFire("kill job失败：" + msg, throwable = e)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {
@@ -100,16 +104,18 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     */
   @Rest("/system/cancelStage")
   def cancelStage(request: Request, response: Response): AnyRef = {
+    this.mark
     val msg = new ResultMsg()
     try {
       val stageId = request.queryString()
       if (StringUtils.isNotBlank(stageId)) {
         this.baseSpark.sc.cancelStage(stageId.toInt, "被管控平台kill")
       }
+      this.logFire(s"kill stage[${stageId}] 成功")
       msg.buildSuccess("kill stage 成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.wrapLogError("kill stage失败：" + e.getMessage)
+        this.logFire("kill stage失败", throwable = e)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {
@@ -148,19 +154,21 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     */
   @Rest(value = "/system/sql", method = "post")
   def sql(request: Request, response: Response): AnyRef = {
+    this.mark
     val msg = new ResultMsg()
+    val sql = request.body()
     try {
-      val sql = request.body()
       if (StringUtils.isBlank(sql) || sql.contains("alert") || sql.contains("drop") || sql.contains("ALERT") || sql.contains("DROP")) {
         return "sql不合法，暂不支持drop或alert语句"
       }
       if (this.baseSpark == null || this.baseSpark.spark == null) {
         return "系统正在初始化，请稍后再试"
       }
+      this.logFire("执行用户sql成功：" + sql)
       msg.buildSuccess(this.baseSpark.spark.sql(sql).limit(1000).showString(), ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.wrapLogError("执行用户SQL失败：" + e.getMessage)
+        this.logFire("执行用户sql失败：" + sql, throwable = e)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {
@@ -177,6 +185,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     */
   @Rest("/system/sparkInfoBean")
   def sparkInfo(request: Request, response: Response): AnyRef = {
+    this.mark
     val startTime = System.currentTimeMillis()
     val msg = new ResultMsg()
     try {
@@ -203,16 +212,18 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
         this.sparkInfoBean.setDriverPort(this.baseSpark.sc.getConf.get("spark.driver.port", "0"))
         this.sparkInfoBean.setRestPort(this.baseSpark.restPort.toString)
         this.sparkInfoBean.setExecutorMemoryOverhead(this.baseSpark.sc.getConf.get("spark.yarn.executor.memoryOverhead", "0"))
+        this.sparkInfoBean.setProperties(PropUtils.cover)
         this.sparkInfoBean.computeCpuMemory()
       }
       this.sparkInfoBean.setUptime(DateFormatUtils.runTime(this.baseSpark.startTime))
       this.sparkInfoBean.setBatchDuration(this.baseSpark.batchDuration + "")
       this.sparkInfoBean.setTimestamp(DateFormatUtils.formatCurrentDateTime())
       this.sparkInfoBean.setTimeCost(System.currentTimeMillis() - startTime)
+      this.logFire("获取spark信息成功")
       msg.buildSuccess(this.sparkInfoBean, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.wrapLogError("获取spark info信息失败：" + e.getMessage)
+        this.logFire("获取spark信息失败", throwable = e)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {

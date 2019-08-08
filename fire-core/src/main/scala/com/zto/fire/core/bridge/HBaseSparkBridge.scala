@@ -295,14 +295,17 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     * @return
     */
   def hbaseOperScanRDD[T <: HBaseBaseBean[T] : ClassTag](spark: SparkSession, tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
+    this.mark
     val hbaseRDD = this.hbaseHadoopScanRS(spark, tableName, scan, multiVersion, versions)
-    hbaseRDD.mapPartitions(it => {
+    val scanRDD = hbaseRDD.mapPartitions(it => {
       if (multiVersion) {
         JavaConversions.asScalaBuffer(HBaseOper.hbaseMultiVersionRow2BeanList(it, clazz)).iterator
       } else {
         HBaseOper.hbaseRow2BeanList(it, clazz)
       }
     })
+    this.logFire(s"hbaseOperScanRDD(tableName: $tableName)", "hbase", 1)
+    scanRDD
   }
 
   /**
@@ -319,6 +322,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     * @return
     */
   def hbaseOperScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Seq[T] = {
+    this.mark
     val list = if (multiVersion) {
       scan.setMaxVersions(versions)
       HBaseOper.scanMultiVersions(tableName, scan, clazz)
@@ -328,6 +332,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     if (list == null) {
       return null
     }
+    this.logFire(s"hbaseOperScanList(tableName: ${tableName})  count: ${list.size}", "hbase", 1)
     JavaConversions.asScalaBuffer(list)
   }
 
@@ -370,10 +375,11 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     * @return
     */
   def hbaseOperGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
-    rowKeyRDD.mapPartitions(it => {
+    this.mark
+    val getRDD = rowKeyRDD.mapPartitions(it => {
       val beanList = new util.LinkedList[T]()
       val getList = new util.LinkedList[Get]()
-
+      this.mark
       it.foreach(rowKey => {
         if (StringUtils.isNotBlank(rowKey)) {
           val get = new Get(rowKey.getBytes)
@@ -417,8 +423,11 @@ object HBaseSparkBridge extends HBaseOper with Logging {
           getList.clear()
         }
       }
+      this.logFire(s"hbaseOperGetRDD(tableName: ${tableName}) count: ${getList.size}", "hbase", 1)
       JavaConversions.asScalaIterator(beanList.iterator())
     })
+    this.logFire(s"hbaseOperGetRDD(tableName: ${tableName})", "hbase", 1)
+    getRDD
   }
 
   /**
@@ -474,6 +483,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     * 是否以多版本形式插入
     */
   def hbaseOperPutList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
+    this.mark
     if (multiVersion) {
       HBaseOper.insertMultiVersions(tableName, JavaConversions.seqAsJavaList(seq))
     } else {
@@ -483,6 +493,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
         HBaseOper.insertIgnoreNull(tableName, seq.toList)
       }
     }
+    this.logFire(s"hbaseOperPutList(tableName: ${tableName})  count: ${seq.size}", "hbase", 0)
   }
 
   /**
@@ -502,13 +513,14 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     * List[T]
     */
   def hbaseOperGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[Get], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Seq[T] = {
+    this.mark
     val beanList = if (multiVersion) {
       seq.foreach(get => get.setMaxVersions(versions))
       HBaseOper.getMultiVersions(tableName, JavaConversions.seqAsJavaList(seq), clazz)
     } else {
       HBaseOper.get(tableName, JavaConversions.seqAsJavaList(seq), clazz)
     }
-
+    this.logFire(s"hbaseOperGetList(tableName: ${tableName})  count: ${beanList.size}", "hbase", 0)
     JavaConversions.asScalaBuffer(beanList)
   }
 
@@ -543,7 +555,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     this.hbaseOperGetList[T](tableName, getList, clazz, multiVersion, versions)
   }
 
-  /**
+   /**
     * 根据rowKey集合批量删除记录
     *
     * @param tableName
@@ -554,7 +566,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
   def hbaseOperDeleteList(tableName: String, rowKeys: Seq[String]): Unit = {
     this.mark
     HBaseOper.deleteRow(tableName, JavaConversions.seqAsJavaList(rowKeys))
-    this.logFire(s"tableName: ${tableName} count: ${rowKeys.size}", "hbase", 1)
+    this.logFire(s"hbaseOperDeleteList(tableName: ${tableName}) count: ${rowKeys.size}", "hbase", 0)
   }
 
   /**
@@ -568,11 +580,15 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     * 一次删除多少条
     */
   def hbaseOperDeleteRDD(tableName: String, rowKeyRDD: RDD[String], batchSize: Int = this.batchSize): Unit = {
+    this.mark
     rowKeyRDD.foreachPartition(it => {
+      this.mark
       val rowKeyList = ListBuffer[String]()
+      var count = 0
       it.foreach(rowKey => {
         if (StringUtils.isNotBlank(rowKey)) {
           rowKeyList += rowKey
+          count += rowKeyList.size
         }
         if (rowKeyList.size >= batchSize) {
           HBaseOper.deleteRow(tableName, JavaConversions.seqAsJavaList(rowKeyList))
@@ -583,7 +599,9 @@ object HBaseSparkBridge extends HBaseOper with Logging {
         HBaseOper.deleteRow(tableName, JavaConversions.seqAsJavaList(rowKeyList))
         rowKeyList.clear()
       }
+      this.logFire(s"hbaseOperDeleteRDD(tableName: ${tableName}) count: $count", "hbase", 0)
     })
+    this.logFire(s"hbaseOperDeleteRDD(tableName: ${tableName})", "hbase", 0)
   }
 
   /**
@@ -648,6 +666,6 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     }
     count += list.size
     list.clear()
-    this.logFire(s"tableName: ${tableName} count: ${count}", "hbase", 1)
+    this.logFire(s"multiBatchInsert(tableName: ${tableName})  count: ${count}", "hbase", 0)
   }
 }

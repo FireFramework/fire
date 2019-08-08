@@ -174,6 +174,7 @@ trait BaseSparkStreaming extends BaseSpark {
     */
   @Rest("/system/streaming/hotRestart")
   def hotRestart(request: Request, response: Response): AnyRef = {
+    this.mark
     val param = request.body()
     val msg = new ResultMsg()
     try {
@@ -186,10 +187,11 @@ trait BaseSparkStreaming extends BaseSpark {
           }
         }).start()
       }
+      this.logFire("热重启执行成功：" + param)
       msg.buildSuccess("重启StreamingContext成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.wrapLogError("重启StreamingContext失败：" + e.getMessage)
+        this.logFire("重启StreamingContext失败", throwable = e)
         msg.buildError(e.getMessage, ErrorCode.ERROR)
       }
     } finally {
