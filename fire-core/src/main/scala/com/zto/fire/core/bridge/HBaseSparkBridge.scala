@@ -11,8 +11,10 @@ import org.apache.hadoop.hbase.client.{Get, Result, Scan}
 import org.apache.hadoop.hbase.filter.{Filter, FilterList}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat
+import org.apache.spark.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
+import com.zto.fire.core.ext.SparkExt._
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
@@ -23,7 +25,7 @@ import scala.reflect.ClassTag
   *
   * @author ChengLong 2019-5-10 14:39:39
   */
-object HBaseSparkBridge extends HBaseOper {
+object HBaseSparkBridge extends HBaseOper with Logging {
   val batchSize = 1000
 
   /**
@@ -550,7 +552,9 @@ object HBaseSparkBridge extends HBaseOper {
     * rowKey集合
     */
   def hbaseOperDeleteList(tableName: String, rowKeys: Seq[String]): Unit = {
+    this.mark
     HBaseOper.deleteRow(tableName, JavaConversions.seqAsJavaList(rowKeys))
+    this.logFire(s"tableName: ${tableName} count: ${rowKeys.size}", "hbase", 1)
   }
 
   /**
@@ -612,6 +616,8 @@ object HBaseSparkBridge extends HBaseOper {
     * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
     */
   private def multiBatchInsert[E <: HBaseBaseBean[E] : ClassTag](tableName: String, iterator: Iterator[E], insertEmpty: Boolean = true, batchSize: Int = this.batchSize, multiVersion: Boolean = false): Unit = {
+    this.mark
+    var count = 0
     val list = ListBuffer[E]()
     iterator.foreach(bean => {
       list += bean
@@ -625,6 +631,7 @@ object HBaseSparkBridge extends HBaseOper {
             HBaseOper.insertIgnoreNull(tableName, list)
           }
         }
+        count += list.size
         list.clear()
       }
     })
@@ -639,7 +646,8 @@ object HBaseSparkBridge extends HBaseOper {
         }
       }
     }
+    count += list.size
     list.clear()
+    this.logFire(s"tableName: ${tableName} count: ${count}", "hbase", 1)
   }
-
 }

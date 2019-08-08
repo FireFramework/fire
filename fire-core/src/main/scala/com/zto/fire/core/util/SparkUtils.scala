@@ -343,10 +343,11 @@ object SparkUtils {
     */
   def overrideBatchDuration(batchDuration: Long, hotRestart: Boolean): Long = {
     if (hotRestart) return batchDuration
-    if (GlobalConstants.SparkConf.batchDuration == -1) {
+    val confBathDuration = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_STREAMING_BATCH_DURATION, -1)
+    if (confBathDuration == -1) {
       batchDuration
     } else {
-      Math.abs(GlobalConstants.SparkConf.batchDuration)
+      Math.abs(confBathDuration)
     }
   }
 

@@ -46,7 +46,7 @@ class LoggerExt(logger: Logging) extends BaseLogging with Logging {
     * @param io
     * @param throwable
     */
-  protected[fire] def logFire(msg: String, peripheral: String = null, io: Integer = null, throwable: Throwable): Unit = {
+  protected[fire] def logFire(msg: String, peripheral: String = null, io: Integer = null, throwable: Throwable = null): Unit = {
     super.log(msg, null, null, throwable)
   }
 

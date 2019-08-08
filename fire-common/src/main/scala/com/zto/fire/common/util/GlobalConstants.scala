@@ -183,7 +183,6 @@ object GlobalConstants {
     val chkPointDirPrefix = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
     val defaultDB = PropUtils.getString(PropKeys.SPARK_DEFAULT_DATABASE_NAME, DefaultVals.dbName)
     val partitionName = PropUtils.getString(PropKeys.SPARK_DEFAULT_TABLE_PARTITION_NAME, DefaultVals.partitionName)
-    val batchDuration = PropUtils.getLong(PropKeys.SPARK_STREAMING_BATCH_DURATION, -1)
   }
 
   /**
