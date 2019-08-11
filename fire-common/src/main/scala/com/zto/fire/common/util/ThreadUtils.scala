@@ -3,12 +3,14 @@ package com.zto.fire.common.util
 import java.util.Objects
 import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
 
+import com.zto.fire.common.bean.BaseLogging
+
 /**
   * 线程相关工具类
   *
   * @author ChengLong 2019-4-25 15:17:55
   */
-object ThreadUtils {
+object ThreadUtils extends BaseLogging {
 
   /**
     * 以子线程方式执行函数调用
@@ -19,19 +21,16 @@ object ThreadUtils {
     * 用于指定以多线程方式执行的函数
     * @param threadCount
     * 表示开启多少个线程执行该fun任务
-    * @param debug
-    * true：打印运行日志
-    * false：不打印运行日志
     */
-  def runAsThread(threadPool: ExecutorService, fun: => Unit, threadCount: Int = 1, debug: Boolean = false): Unit = {
+  def runAsThread(threadPool: ExecutorService, fun: => Unit, threadCount: Int = 1): Unit = {
     Objects.requireNonNull(threadPool, "线程池不能为空")
 
     (1 to threadCount).foreach(_ => {
       threadPool.execute(new Runnable {
         override def run(): Unit = {
-          val startTime = System.currentTimeMillis()
+          mark()
           fun
-          if (debug) println(s"--> ${GlobalConstants.PS1.GREEN}Invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Time: ${DateFormatUtils.formatCurrentDateTime()}. TimeCost: ${System.currentTimeMillis() - startTime}. ${GlobalConstants.PS1.DEFAULT}<--")
+          log(s"Invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}.")
         }
       })
     })
@@ -45,16 +44,16 @@ object ThreadUtils {
     * @param delay
     * 循环调用间隔时间（单位s）
     */
-  def runAsThreadLoop(threadPool: ExecutorService, fun: => Unit, delay: Long = 10, threadCount: Int = 1, debug: Boolean = false): Unit = {
+  def runAsThreadLoop(threadPool: ExecutorService, fun: => Unit, delay: Long = 10, threadCount: Int = 1): Unit = {
     Objects.requireNonNull(threadPool, "线程池不能为空")
 
     (1 to threadCount).foreach(_ => {
       threadPool.execute(new Runnable {
         override def run(): Unit = {
           while (true) {
-            val startTime = System.currentTimeMillis()
+            mark
             fun
-            if (debug) println(s"--> ${GlobalConstants.PS1.GREEN}Loop invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Delay is ${delay}s. Time: ${DateFormatUtils.formatCurrentDateTime()}. TimeCost: ${System.currentTimeMillis() - startTime}. ${GlobalConstants.PS1.DEFAULT}<--")
+            log(s"Loop invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Delay is ${delay}s.")
             Thread.sleep(delay * 1000)
           }
         }
@@ -80,11 +79,8 @@ object ThreadUtils {
     * 时间单位，默认分钟
     * @param threadCount
     * 表示开启多少个线程执行该fun任务
-    * @param debug
-    * true：打印运行日志
-    * false：不打印运行日志
     */
-  def runAsSchedule(threadPoolSchedule: ScheduledExecutorService, fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, debug: Boolean = false): Unit = {
+  def runAsSchedule(threadPoolSchedule: ScheduledExecutorService, fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1): Unit = {
     Objects.requireNonNull(threadPoolSchedule, "线程池不能为空")
 
     (1 to threadCount).foreach(_ => {
@@ -106,9 +102,9 @@ object ThreadUtils {
 
       // 处理传入的函数
       def wrapFun(): Unit = {
-        val startTime = System.currentTimeMillis()
+        mark()
         fun
-        if (debug) println(s"--> ${GlobalConstants.PS1.GREEN}Loop invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Delay is ${period}${timeUnit.name()}. Time: ${DateFormatUtils.formatCurrentDateTime()}. TimeCost: ${System.currentTimeMillis() - startTime}. ${GlobalConstants.PS1.DEFAULT}<--")
+        log(s"Loop invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Delay is ${period}${timeUnit.name()}.")
       }
     })
   }
@@ -129,12 +125,9 @@ object ThreadUtils {
     * 时间单位，默认分钟
     * @param threadCount
     * 表示开启多少个线程执行该fun任务
-    * @param debug
-    * true：打印运行日志
-    * false：不打印运行日志
     */
-  def runAsScheduleAtFixedRate(threadPoolSchedule: ScheduledExecutorService, fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, debug: Boolean = false): Unit = {
-    this.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, true, timeUnit, threadCount, debug)
+  def runAsScheduleAtFixedRate(threadPoolSchedule: ScheduledExecutorService, fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1): Unit = {
+    this.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, true, timeUnit, threadCount)
   }
 
   /**
@@ -153,11 +146,8 @@ object ThreadUtils {
     * 时间单位，默认分钟
     * @param threadCount
     * 表示开启多少个线程执行该fun任务
-    * @param debug
-    * true：打印运行日志
-    * false：不打印运行日志
     */
-  def runAsScheduleWithFixedDelay(threadPoolSchedule: ScheduledExecutorService, fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, debug: Boolean = false): Unit = {
-    this.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, false, timeUnit, threadCount, debug)
+  def runAsScheduleWithFixedDelay(threadPoolSchedule: ScheduledExecutorService, fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1): Unit = {
+    this.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, false, timeUnit, threadCount)
   }
 }

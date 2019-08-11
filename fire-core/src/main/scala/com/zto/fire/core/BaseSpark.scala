@@ -198,12 +198,9 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     * 用于指定以多线程方式执行的函数
     * @param threadCount
     * 表示开启多少个线程执行该fun任务
-    * @param debug
-    * true：打印运行日志
-    * false：不打印运行日志
     */
-  def runAsThread(fun: => Unit, threadCount: Int = 1, debug: Boolean = false, threadPool: ExecutorService = this.threadPool): Unit = {
-    ThreadUtils.runAsThread(threadPool, fun, threadCount, debug)
+  def runAsThread(fun: => Unit, threadCount: Int = 1, threadPool: ExecutorService = this.threadPool): Unit = {
+    ThreadUtils.runAsThread(threadPool, fun, threadCount)
   }
 
   /**
@@ -214,8 +211,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     * @param delay
     * 循环调用间隔时间（单位s）
     */
-  def runAsThreadLoop(fun: => Unit, delay: Long = 10, threadCount: Int = 1, debug: Boolean = false, threadPool: ExecutorService = this.threadPool): Unit = {
-    ThreadUtils.runAsThreadLoop(threadPool, fun, delay, threadCount, debug)
+  def runAsThreadLoop(fun: => Unit, delay: Long = 10, threadCount: Int = 1, threadPool: ExecutorService = this.threadPool): Unit = {
+    ThreadUtils.runAsThreadLoop(threadPool, fun, delay, threadCount)
   }
 
   /**
@@ -234,11 +231,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     * 时间单位，默认分钟
     * @param threadCount
     * 表示开启多少个线程执行该fun任务
-    * @param debug
-    * true：打印运行日志
-    * false：不打印运行日志
     */
-  def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, debug: Boolean = false, threadPoolSchedule: ScheduledExecutorService = this.threadPoolSchedule): Unit = {
-    ThreadUtils.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount, debug)
+  def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, threadPoolSchedule: ScheduledExecutorService = this.threadPoolSchedule): Unit = {
+    ThreadUtils.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount)
   }
 }
