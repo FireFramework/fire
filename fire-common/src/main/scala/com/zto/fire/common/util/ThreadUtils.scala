@@ -30,7 +30,7 @@ object ThreadUtils extends BaseLogging {
         override def run(): Unit = {
           mark()
           fun
-          log(s"Invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}.")
+          log(s"Invoke runAsThread as ${Thread.currentThread().getName}.")
         }
       })
     })
@@ -53,7 +53,7 @@ object ThreadUtils extends BaseLogging {
           while (true) {
             mark
             fun
-            log(s"Loop invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Delay is ${delay}s.")
+            log(s"Loop invoke runAsThreadLoop as ${Thread.currentThread().getName}. Delay is ${delay}s.")
             Thread.sleep(delay * 1000)
           }
         }
@@ -104,7 +104,7 @@ object ThreadUtils extends BaseLogging {
       def wrapFun(): Unit = {
         mark()
         fun
-        log(s"Loop invoke ${fun.getClass.getName} as ${Thread.currentThread().getName}. Delay is ${period}${timeUnit.name()}.")
+        log(s"Loop invoke runAsSchedule as ${Thread.currentThread().getName}. Delay is ${period}${timeUnit.name()}.")
       }
     })
   }
