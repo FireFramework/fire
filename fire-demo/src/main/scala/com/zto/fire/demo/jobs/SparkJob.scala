@@ -7,4 +7,9 @@ class SparkJob extends Job {
   override def execute(jobExecutionContext: JobExecutionContext): Unit = {
     println(DateFormatUtils.formatCurrentDateTime())
   }
+
+  def print: Unit = {
+    println("=======print======")
+  }
+
 }

@@ -1,5 +1,6 @@
 package com.zto.fire.common.bean;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.StackTraceUtils;
 import com.zto.fire.common.util.SystemInfoUtils;
@@ -27,14 +28,15 @@ public class TimeCost implements Serializable {
     private Boolean isFire = false;
     private String id = UUID.randomUUID().toString();
     // 任务的applicationId
-    private String applicationId;
+    private static String applicationId;
     // 任务的main方法
-    private String mainClass;
+    private static String mainClass;
     // executorId
-    private String executorId;
+    private static String executorId;
     private Integer stageId;
     private Long taskId;
     private Integer partitionId;
+    @JSONField(serialize = false)
     private Throwable exception;
     private String stackTraceInfo;
     private String peripheral;
@@ -203,8 +205,17 @@ public class TimeCost implements Serializable {
         this.startTime = DateFormatUtils.formatCurrentDateTime();
         this.ip = SystemInfoUtils.getIp();
         this.load = SystemInfoUtils.getLoadAverageCache();
+
         if (SparkEnv.get() != null) {
-            executorId = SparkEnv.get().executorId();
+            if (StringUtils.isBlank(executorId)) {
+                executorId = SparkEnv.get().executorId();
+            }
+            if (StringUtils.isBlank(applicationId)) {
+                applicationId = SparkEnv.get().conf().get("spark.app.id", "");
+            }
+            if (StringUtils.isBlank(mainClass)) {
+                mainClass = SparkEnv.get().conf().get("spark.driver.class.name", "");
+            }
         }
     }
 

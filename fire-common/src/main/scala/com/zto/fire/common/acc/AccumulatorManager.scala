@@ -1,7 +1,7 @@
 package com.zto.fire.common.acc
 
 import java.nio.ByteBuffer
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.zto.fire.common.bean.TimeCost
@@ -78,7 +78,7 @@ private[fire] object AccumulatorManager {
     * @return
     * 日志累加值
     */
-  def getLog: ConcurrentHashMap[String, TimeCost] = this.logAccumulator.value
+  def getLog: ConcurrentLinkedQueue[String] = this.logAccumulator.value
 
   /**
     * 注册多个自定义累加器到每个executor

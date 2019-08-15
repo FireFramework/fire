@@ -50,6 +50,8 @@ object GlobalConstants {
     val hiveCluster = "streaming"
     // 默认的日志级别
     val logLevel = LogLevel.INFO
+    // 累加器保留日志默认的最大记录数
+    val maxLogSize = 1000
     // 默认的数据库名称
     val dbName = "tmp"
     // 默认的partition名称
@@ -135,6 +137,8 @@ object GlobalConstants {
     val ROCKET_STARTING_OFFSET = "spark.rocket.starting.offsets"
     // rocketMq订阅的tag
     val ROCKET_CONSUMER_TAG = "spark.rocket.consumer.tag"
+    // 日志记录器保留最大的记录数
+    val SPARK_FIRE_LOG_MAX_SIZE = "spark.fire.log.max.size"
   }
 
   /**

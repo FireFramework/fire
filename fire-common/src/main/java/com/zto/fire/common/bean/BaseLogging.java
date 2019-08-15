@@ -1,5 +1,6 @@
 package com.zto.fire.common.bean;
 
+import com.zto.fire.common.acc.AccumulatorManager;
 import org.apache.spark.SparkEnv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,7 +105,7 @@ public class BaseLogging implements Serializable {
         if (timeCostLocal.get() == null) this.mark();
         TimeCost timeCost = timeCostLocal.get();
         timeCost.info(msg, peripheral, io, isFire, throwable);
-        // AccumulatorManager.addLog(timeCost);
+        AccumulatorManager.addLog(timeCost);
         String log = timeCost.toString();
         if (throwable == null) {
             logger.warn(log);

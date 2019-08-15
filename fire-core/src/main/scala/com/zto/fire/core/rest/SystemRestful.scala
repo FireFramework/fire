@@ -31,11 +31,30 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/loadInfo", loadInfo))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/sparkInfo", sparkInfo))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/count", count))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/log", log))
   }
 
   @Rest("/system/count")
   def count(request: Request, response: Response): AnyRef = {
     this.baseSpark.acc.getCounter + ""
+  }
+
+  /**
+    * 获取运行时日志
+    */
+  @Rest("/system/log")
+  def log(request: Request, response: Response): AnyRef = {
+    val clear = request.queryString()
+    val logs = new StringBuilder("[")
+    JavaConversions.asScalaIterator(this.baseSpark.acc.getLog.iterator()).foreach(log => {
+      logs.append(log + ",")
+    })
+    if ("clear".equalsIgnoreCase(clear)) this.baseSpark.acc.logAccumulator.reset()
+    if (logs.length > 0 && logs.endsWith(",")) {
+      logs.substring(0, logs.length - 1) + "]"
+    } else {
+      ""
+    }
   }
 
   /**

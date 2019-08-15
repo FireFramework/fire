@@ -1,29 +1,30 @@
 package com.zto.fire.demo
 
-import com.zto.fire.core.BaseSparkCore
+import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
 
+import scala.collection.JavaConversions
 
-object Test extends BaseSparkCore {
+object Test extends BaseSparkStreaming {
 
   /**
     * Spark处理逻辑
     * 注：此方法会被自动调用，不需要在main中手动调用
     */
   override def process: Unit = {
-    // 以子线程方式执行print方法中的逻辑
-    this.runAsThread(this.print)
+    this.log("add count driver")
+    val rdd = this.sc.parallelize(1 to 1010, 5)
+    rdd.foreach(i => {
+      this.mark
+      this.log("add count")
+    })
+
+    JavaConversions.asScalaIterator(this.acc.getLog.iterator()).foreach(println)
+    println("size==>" + this.acc.getLog.size())
     Thread.currentThread().join()
   }
 
-  /**
-    * 以子线程方式执行一次
-    */
-  def print: Unit = {
-    println("==========子线程执行===========")
-  }
-
   def main(args: Array[String]): Unit = {
-    this.init()
+    this.init(100, false)
   }
 }
