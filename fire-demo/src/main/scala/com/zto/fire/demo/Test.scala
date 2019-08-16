@@ -12,16 +12,18 @@ object Test extends BaseSparkStreaming {
     * 注：此方法会被自动调用，不需要在main中手动调用
     */
   override def process: Unit = {
-    this.log("add count driver")
-    val rdd = this.sc.parallelize(1 to 1010, 5)
-    rdd.foreach(i => {
-      this.mark
-      this.log("add count")
-    })
+    while (true) {
+      this.log("add count driver")
+      val rdd = this.sc.parallelize(1 to 1010, 5)
+      rdd.foreach(i => {
+        this.mark
+        this.log("add count")
+      })
 
-    JavaConversions.asScalaIterator(this.acc.getLog.iterator()).foreach(println)
-    println("size==>" + this.acc.getLog.size())
-    Thread.currentThread().join()
+      JavaConversions.asScalaIterator(this.acc.getLog.iterator()).foreach(println)
+      println("size==>" + this.acc.getLog.size())
+      Thread.sleep(10000)
+    }
   }
 
   def main(args: Array[String]): Unit = {

@@ -15,6 +15,7 @@ import java.security.NoSuchAlgorithmException;
  * https://www.cnblogs.com/zhuyingming/p/5076401.html
  */
 public class EncryptUtils {
+    private static final String secret = "($zto%-%fire$)";
 
     /**
      * BASE64解密
@@ -111,8 +112,22 @@ public class EncryptUtils {
         return "";
     }
 
-
-
-    public static void main(String[] args) {
+    /**
+     * 权限校验
+     * @param json
+     * 请求json
+     * @return
+     * true：身份合法  false：身份非法
+     */
+    public static boolean checkPermission(String json, String privateKey) {
+        String auth = JSONUtils.getValue(json, "auth", "");
+        if (StringUtils.isBlank(auth)) {
+            return false;
+        }
+        String fireAuth = EncryptUtils.md5Encrypt(secret + privateKey + DateFormatUtils.formatCurrentDate());
+        if (!fireAuth.equals(auth)) {
+            return false;
+        }
+        return true;
     }
 }

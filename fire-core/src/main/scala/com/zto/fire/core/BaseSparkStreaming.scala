@@ -7,7 +7,7 @@ import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.enu.{ErrorCode, JobType, RequestMethod}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.rest.RestCase
-import com.zto.fire.common.util.{GlobalConstants, ParamUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{EncryptUtils, GlobalConstants, ParamUtils, SystemInfoUtils}
 import com.zto.fire.core.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkConf
@@ -175,24 +175,29 @@ trait BaseSparkStreaming extends BaseSpark {
   @Rest("/system/streaming/hotRestart")
   def hotRestart(request: Request, response: Response): AnyRef = {
     this.mark
-    val param = request.body()
     val msg = new ResultMsg()
+    val json = request.body
     try {
-      if (StringUtils.isNotBlank(param)) {
-        this.externalConf = JSON.parseObject(param, classOf[RestartParams])
-        new Thread(new Runnable {
-          override def run(): Unit = {
-            ssc.stop(externalConf.isRestartSparkContext, externalConf.isStopGracefully)
-            init(externalConf.getBatchDuration, externalConf.isCheckPoint)
-          }
-        }).start()
+      // 用户身份校验
+      if (!EncryptUtils.checkPermission(json, this.className)) {
+        this.logFire(s"[hotRestart] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", "rest")
+        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip}", ErrorCode.ERROR)
       }
-      this.logFire("热重启执行成功：" + param)
-      msg.buildSuccess("重启StreamingContext成功", ErrorCode.SUCCESS.toString)
+
+      this.externalConf = JSON.parseObject(json, classOf[RestartParams])
+      new Thread(new Runnable {
+        override def run(): Unit = {
+          ssc.stop(externalConf.isRestartSparkContext, externalConf.isStopGracefully)
+          init(externalConf.getBatchDuration, externalConf.isCheckPoint)
+        }
+      }).start()
+
+      this.logFire(s"[hotRestart] 执行热重启成功：duration=${this.externalConf.getBatchDuration} json=$json", "rest")
+      msg.buildSuccess(s"执行热重启成功：duration=${this.externalConf.getBatchDuration}", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire("重启StreamingContext失败", throwable = e)
-        msg.buildError(e.getMessage, ErrorCode.ERROR)
+        this.logFire(s"[hotRestart] 执行热重启成功失败：json=$json", "rest", throwable = e)
+        msg.buildError("执行热重启成功失败", ErrorCode.ERROR)
       }
     } finally {
       msg.toString

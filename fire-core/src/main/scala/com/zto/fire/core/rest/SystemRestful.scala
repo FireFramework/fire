@@ -20,6 +20,7 @@ import scala.collection.JavaConversions
   */
 class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   private var sparkInfoBean: SparkInfo = _
+  private val peripheral = "rest"
 
   // 系统预定义接口注册
   {
@@ -34,6 +35,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/log", log))
   }
 
+
   @Rest("/system/count")
   def count(request: Request, response: Response): AnyRef = {
     this.baseSpark.acc.getCounter + ""
@@ -44,42 +46,68 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     */
   @Rest("/system/log")
   def log(request: Request, response: Response): AnyRef = {
-    val clear = request.queryString()
-    val logs = new StringBuilder("[")
-    JavaConversions.asScalaIterator(this.baseSpark.acc.getLog.iterator()).foreach(log => {
-      logs.append(log + ",")
-    })
-    if ("clear".equalsIgnoreCase(clear)) this.baseSpark.acc.logAccumulator.reset()
-    if (logs.length > 0 && logs.endsWith(",")) {
-      logs.substring(0, logs.length - 1) + "]"
-    } else {
-      ""
+    this.mark
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      // 用户身份校验
+      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
+        this.logFire(s"[log] 非法请求：用户身份校验失败！ip=${request.ip()} json=$json", this.peripheral)
+        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip()}", ErrorCode.ERROR)
+      }
+
+      val logs = new StringBuilder("[")
+      JavaConversions.asScalaIterator(this.baseSpark.acc.getLog.iterator()).foreach(log => {
+        logs.append(log + ",")
+      })
+
+      // 参数校验与参数获取
+      val clear = JSONUtils.getValue(json, "clear", false)
+      if (clear) this.baseSpark.acc.logAccumulator.reset
+
+      if (logs.length > 0 && logs.endsWith(",")) {
+        this.logFire(s"[log] 日志获取成功：json=$json", this.peripheral)
+        msg.buildSuccess(logs.substring(0, logs.length - 1) + "]", "日志获取成功")
+      } else {
+        this.logFire(s"[log] 日志记录数为空：json=$json", this.peripheral)
+        msg.buildError("日志记录数为空", ErrorCode.NOT_FOUND)
+      }
+    } catch {
+      case e => {
+        this.logFire(s"[log] 日志获取失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("日志获取失败", ErrorCode.ERROR)
+      }
+    } finally {
+      msg.toString
     }
   }
 
   /**
-    * 强制spark退出
-    *
-    * @param request
-    * @param response
-    * @return
+    * kill 当前 Spark 任务
     */
   @Rest("/system/kill")
   def kill(request: Request, response: Response): AnyRef = {
     this.mark
-    val msg = new ResultMsg()
+    val msg = new ResultMsg
+    val json = request.body
     try {
-      val param = request.queryString()
-      val stopGracefully = if (StringUtils.isNotBlank(param) && "false".equalsIgnoreCase(param.trim)) false else true
+      // 用户身份校验
+      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
+        this.logFire(s"[kill] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
+        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip}", ErrorCode.ERROR)
+      }
+
+      // 参数校验与参数获取
+      val stopGracefully = JSONUtils.getValue(json, "stopGracefully", true)
       this.baseSpark.shutdown(stopGracefully)
       ProcessUtil.executeCmds(s"yarn application -kill ${this.baseSpark.applicationId}", s"kill -9 ${SystemInfoUtils.getPid}")
-      this.logFire("kill任务成功")
+      this.logFire(s"[kill] kill任务成功：json=$json", this.peripheral)
       System.exit(0)
       msg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire("执行kill任务失败", throwable = e)
-        msg.buildError(e.getMessage, ErrorCode.ERROR)
+        this.logFire(s"[kill] 执行kill任务失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("执行kill任务失败", ErrorCode.ERROR)
       }
     } finally {
       msg.toString
@@ -88,26 +116,33 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
 
   /**
     * 取消job的执行
-    *
-    * @param request
-    * @param response
-    * @return
     */
   @Rest("/system/cancelJob")
   def cancelJob(request: Request, response: Response): AnyRef = {
     this.mark
-    val msg = new ResultMsg()
+    val msg = new ResultMsg
+    val json = request.body
     try {
-      val jobId = request.queryString()
-      if (StringUtils.isNotBlank(jobId)) {
-        this.baseSpark.sc.cancelJob(jobId.toInt, "被管控平台kill")
+      // 用户身份校验
+      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
+        this.logFire(s"[cancelJob] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
+        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip}", ErrorCode.ERROR)
       }
-      this.logFire("kill job成功：" + msg)
+
+      // 参数校验与参数获取
+      val jobId = JSONUtils.getValue(json, "id", -1)
+      if (jobId == null || jobId <= 0) {
+        this.logFire(s"[cancelJob] 参数不合法：json=$json", this.peripheral)
+        return msg.buildError(s"参数不合法：json=$json", ErrorCode.ERROR)
+      }
+
+      this.baseSpark.sc.cancelJob(jobId, s"被管控平台kill：${DateFormatUtils.formatCurrentDateTime()}")
+      this.logFire(s"[cancelJob] kill job成功：json=$json")
       msg.buildSuccess("kill job 成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire("kill job失败：" + msg, throwable = e)
-        msg.buildError(e.getMessage, ErrorCode.ERROR)
+        this.logFire(s"[cancelJob] kill job失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("kill job失败", ErrorCode.ERROR)
       }
     } finally {
       msg.toString
@@ -116,26 +151,33 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
 
   /**
     * 取消stage的执行
-    *
-    * @param request
-    * @param response
-    * @return
     */
   @Rest("/system/cancelStage")
   def cancelStage(request: Request, response: Response): AnyRef = {
     this.mark
-    val msg = new ResultMsg()
+    val msg = new ResultMsg
+    val json = request.body
     try {
-      val stageId = request.queryString()
-      if (StringUtils.isNotBlank(stageId)) {
-        this.baseSpark.sc.cancelStage(stageId.toInt, "被管控平台kill")
+      // 用户身份校验
+      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
+        this.logFire(s"[cancelStage] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
+        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip}", ErrorCode.ERROR)
       }
-      this.logFire(s"kill stage[${stageId}] 成功")
+
+      // 参数校验与参数获取
+      val stageId = JSONUtils.getValue(json, "id", -1)
+      if (stageId == null || stageId <= 0) {
+        this.logFire(s"[cancelStage] 参数不合法：json=$json", this.peripheral)
+        return msg.buildError(s"参数不合法：json=$json", ErrorCode.ERROR)
+      }
+
+      this.baseSpark.sc.cancelStage(stageId, s"被管控平台kill：${DateFormatUtils.formatCurrentDateTime()}")
+      this.logFire(s"[cancelStage] kill stage[${stageId}] 成功：json=$json", this.peripheral)
       msg.buildSuccess("kill stage 成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire("kill stage失败", throwable = e)
-        msg.buildError(e.getMessage, ErrorCode.ERROR)
+        this.logFire(s"[cancelStage] kill stage失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("kill stage失败", ErrorCode.ERROR)
       }
     } finally {
       msg.toString
@@ -144,20 +186,24 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
 
   /**
     * 获取driver所在服务器的负载信息
-    *
-    * @param request
-    * @param response
-    * @return
     */
   @Rest("/system/loadInfo")
   def loadInfo(request: Request, response: Response): AnyRef = {
+    this.mark
     val msg = new ResultMsg
+    val json = request.body
     try {
+      // 用户身份校验
+      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
+        this.logFire(s"[loadInfo] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
+        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip} json=$json", ErrorCode.ERROR)
+      }
+
       msg.buildSuccess(SystemInfoUtils.getSystemLoadInfo, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.wrapLogError("获取driver所在主机负载信息失败：" + e.getMessage)
-        msg.buildError(e.getMessage, ErrorCode.ERROR)
+        this.logFire(s"[loadInfo] 获取driver所在主机负载信息失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("获取driver所在主机负载信息失败", ErrorCode.ERROR)
       }
     } finally {
       msg.toString
@@ -166,29 +212,37 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
 
   /**
     * 用于执行sql语句
-    *
-    * @param request
-    * @param response
-    * @return
     */
   @Rest(value = "/system/sql", method = "post")
   def sql(request: Request, response: Response): AnyRef = {
     this.mark
-    val msg = new ResultMsg()
-    val sql = request.body()
+    val msg = new ResultMsg
+    val json = request.body
     try {
-      if (StringUtils.isBlank(sql) || sql.contains("alert") || sql.contains("drop") || sql.contains("ALERT") || sql.contains("DROP")) {
-        return "sql不合法，暂不支持drop或alert语句"
+      // 用户身份校验
+      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
+        this.logFire(s"[sql] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
+        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip} json=$json", ErrorCode.ERROR)
       }
+
+      // 参数校验与参数获取
+      val sql = JSONUtils.getValue(json, "sql", "")
+
+      if (StringUtils.isBlank(sql) || sql.toUpperCase.contains("alert") || sql.toUpperCase.contains("drop") || sql.toLowerCase.contains("delete") || sql.toLowerCase.contains("create") || sql.toLowerCase.contains("insert")) {
+        this.logFire(s"[sql] sql不合法：json=$json", this.peripheral)
+        return msg.buildError(s"sql不合法", ErrorCode.ERROR)
+      }
+
       if (this.baseSpark == null || this.baseSpark.spark == null) {
+        this.logFire(s"[sql] 系统正在初始化，请稍后再试：json=$json", this.peripheral)
         return "系统正在初始化，请稍后再试"
       }
-      this.logFire("执行用户sql成功：" + sql)
+      this.logFire(s"[sql] 执行用户sql成功：json=$json", this.peripheral)
       msg.buildSuccess(this.baseSpark.spark.sql(sql).limit(1000).showString(), ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire("执行用户sql失败：" + sql, throwable = e)
-        msg.buildError(e.getMessage, ErrorCode.ERROR)
+        this.logFire(s"[sql] 执行用户sql失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("执行用户sql失败", ErrorCode.ERROR)
       }
     } finally {
       msg.toString
@@ -197,17 +251,19 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
 
   /**
     * 获取当前的spark运行时信息
-    *
-    * @param request
-    * @param response
-    * @return
     */
   @Rest("/system/sparkInfoBean")
   def sparkInfo(request: Request, response: Response): AnyRef = {
     this.mark
-    val startTime = System.currentTimeMillis()
-    val msg = new ResultMsg()
+    val msg = new ResultMsg
+    val json = request.body
     try {
+      // 用户身份校验
+      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
+        this.logFire(s"[sparkInfo] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
+        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip}", ErrorCode.ERROR)
+      }
+
       if (this.sparkInfoBean == null) {
         this.sparkInfoBean = new SparkInfo
         this.sparkInfoBean.setAppName(this.baseSpark.appName)
@@ -237,13 +293,12 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       this.sparkInfoBean.setUptime(DateFormatUtils.runTime(this.baseSpark.startTime))
       this.sparkInfoBean.setBatchDuration(this.baseSpark.batchDuration + "")
       this.sparkInfoBean.setTimestamp(DateFormatUtils.formatCurrentDateTime())
-      this.sparkInfoBean.setTimeCost(System.currentTimeMillis() - startTime)
-      this.logFire("获取spark信息成功")
+      this.logFire(s"[sparkInfo] 获取spark信息成功：json=$json", this.peripheral)
       msg.buildSuccess(this.sparkInfoBean, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire("获取spark信息失败", throwable = e)
-        msg.buildError(e.getMessage, ErrorCode.ERROR)
+        this.logFire(s"[sparkInfo] 获取spark信息失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("获取spark信息失败", ErrorCode.ERROR)
       }
     } finally {
       msg.toString

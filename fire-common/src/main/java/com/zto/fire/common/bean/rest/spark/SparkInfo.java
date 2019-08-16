@@ -62,8 +62,6 @@ public class SparkInfo {
     private String batchDuration;
     // 当前driver系统时间
     private String timestamp = DateFormatUtils.formatCurrentDateTime();
-    // 接口耗时
-    private long timeCost;
     // 配置信息
     private Properties properties;
 
@@ -265,14 +263,6 @@ public class SparkInfo {
 
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
-    }
-
-    public long getTimeCost() {
-        return timeCost;
-    }
-
-    public void setTimeCost(long timeCost) {
-        this.timeCost = timeCost;
     }
 
     public String getRestPort() {
