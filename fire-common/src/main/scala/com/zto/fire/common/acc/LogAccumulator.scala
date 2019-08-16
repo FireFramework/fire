@@ -27,17 +27,12 @@ class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[Strin
   /**
     * 用于复制累加器
     */
-  override def copy(): AccumulatorV2[TimeCost, ConcurrentLinkedQueue[String]] = {
-    val acc = new LogAccumulator
-    acc
-  }
+  override def copy(): AccumulatorV2[TimeCost, ConcurrentLinkedQueue[String]] = new LogAccumulator
 
   /**
     * driver端执行有效，用于清空累加器
     */
-  override def reset(): Unit = {
-    this.logQueue.clear()
-  }
+  override def reset(): Unit = this.logQueue.clear
 
   /**
     * executor端执行，用于收集日志信息
@@ -71,9 +66,7 @@ class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[Strin
     * @return
     * 收集到的日志信息
     */
-  override def value: ConcurrentLinkedQueue[String] = {
-    this.logQueue
-  }
+  override def value: ConcurrentLinkedQueue[String] = this.logQueue
 
   /**
     * 当日志累积量超过maxLogSize所设定的值时清理过期的日志数据

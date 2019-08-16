@@ -20,7 +20,14 @@ object Test extends BaseSparkStreaming {
         this.log("add count")
       })
 
-      JavaConversions.asScalaIterator(this.acc.getLog.iterator()).foreach(println)
+      rdd.foreachPartition(it => {
+        this.acc.addMultiCounter("写hbase", 1)
+        this.acc.addMultiCounter("读tidb", 2)
+      })
+
+      // JavaConversions.mapAsScalaConcurrentMap(this.acc.getMultiCounter).foreach(t => println(t._1 + " " + t._2))
+      println("counter=" + this.acc.getCounter)
+      // JavaConversions.asScalaIterator(this.acc.getLog.iterator()).foreach(println)
       println("size==>" + this.acc.getLog.size())
       Thread.sleep(10000)
     }
