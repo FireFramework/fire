@@ -71,6 +71,7 @@ object GlobalConstants {
     val RUNMODEL_KEY = "spark.runModel"
     val APP_NAME_KEY = "spark.appName"
     val SPARK_CONF_KEY = "SparkConf"
+
     // c3p0连接池相关配置
     val SPARK_DB_JDBC_URL_KEY = "spark.db.jdbc.url"
     val SPARK_DB_JDBC_DRIVER_KEY = "spark.db.jdbc.driver"
@@ -95,6 +96,8 @@ object GlobalConstants {
     val IMPALA_CONNECTION_URL_KEY: String = "spark.impala.connection.url"
     val IMPALA_JDBC_DRIVER_NAME_KEY: String = "spark.impala.jdbc.driver.class.name"
     val IMPALA_DAEMONS_URL = "spark.impala.daemons.url"
+
+    // ---------------------------- kafka 相关配置 ---------------------------- //
     val KAFKA_BROKERS_NAME = "spark.kafka.brokers.name"
     // kafka的topic列表，以逗号分隔
     val KAFKA_TOPICS = "spark.kafka.topics"
@@ -119,24 +122,23 @@ object GlobalConstants {
     val KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS = "spark.kafka.group.min.session.timeout.ms"
     // 一次调用pool返回的最大记录数：max.poll.records
     val KAFKA_MAX_POLL_RECORDS = "spark.kafka.max.poll.records"
-    // int 1048576
     // 每个分区返回的最大数据量：max.partition.fetch.bytes
     val KAFKA_MAX_PARTITION_FETCH_BYTES = "spark.kafka.max.partition.fetch.bytes"
 
-    // spark相关配置
+    // ---------------------------- spark 相关配置 ---------------------------- //
     val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
     val SPARK_LOG_LEVEL = "spark.log.level"
     // spark streaming批次时间
     val SPARK_STREAMING_BATCH_DURATION = "spark.streaming.batch.duration"
 
-    // hive相关配置
+    // ---------------------------- hive 相关配置 ---------------------------- //
     val HIVE_CLUSTER = "spark.hive.cluster"
     // 默认的库名
     val SPARK_DEFAULT_DATABASE_NAME = "spark.default.database.name"
     // 默认的分区名称
     val SPARK_DEFAULT_TABLE_PARTITION_NAME = "spark.default.table.partition.name"
 
-    // rocketMQ相关配置
+    // ---------------------------- RocketMQ 相关配置 ---------------------------- //
     // rocketMQ name server
     val ROCKET_BROKERS_NAME = "spark.rocket.brokers.name"
     // rocketMQ topic信息，多个以逗号分隔
@@ -151,6 +153,17 @@ object GlobalConstants {
     val ROCKET_STARTING_OFFSET = "spark.rocket.starting.offsets"
     // rocketMq订阅的tag
     val ROCKET_CONSUMER_TAG = "spark.rocket.consumer.tag"
+    val ROCKET_NAMESERVER_POLL_INTERVAL = "spark.rocket.nameserver.poll.interval"
+    val ROCKET_BROKERSERVER_HEARTBEAT_INTERVAL = "spark.rocket.brokerserver.heartbeat.interval"
+    val ROCKET_CONSUMER_OFFSET_PERSIST_INTERVAL = "spark.rocket.consumer.offset.persist.interval"
+    val ROCKET_CONSUMER_MIN_THREADS = "spark.rocket.consumer.min.threads"
+    val ROCKET_CONSUMER_MAX_THREADS = "spark.rocket.consumer.max.threads"
+    val ROCKET_SPOUT_MESSAGES_MAX_RETRY = "spark.rocket.spout.messages.max.retry"
+    val ROCKET_PULL_MAX_SPEED_PER_PARTITION = "spark.rocket.pull.max.speed.per.partition"
+    val ROCKET_PULL_MAX_BATCH_SIZE = "spark.rocket.pull.max.batch.size"
+    val ROCKET_PULL_TIMEOUT_MS = "spark.rocket.pull.timeout.ms"
+
+    // ---------------------------- Fire 相关配置 ---------------------------- //
     // 日志记录器保留最大的记录数
     val SPARK_FIRE_LOG_MAX_SIZE = "spark.fire.log.max.size"
     // rest接口权限认证
@@ -384,7 +397,6 @@ object GlobalConstants {
     val rocketOffsetSmallest = "earliest"
     val rocketConsumerTag = "*"
 
-
     /**
       * 获取消费位点
       *
@@ -455,6 +467,42 @@ object GlobalConstants {
       val topics = PropUtils.getString(PropKeys.ROCKET_TOPICS, keyNum, null)
       ParamUtils.requireNonNullForce(topics, "配置未找到：spark.rocket.topics" + keyNum)
       topics
+    }
+
+    def rocketNameserverPollInterval(keyNum: Int = 1): String = {
+      PropUtils.getString(PropKeys.ROCKET_NAMESERVER_POLL_INTERVAL, "")
+    }
+
+    def rocketBrokerserverHeartbeatInterval(keyNum: Int = 1): String = {
+      PropUtils.getString(PropKeys.ROCKET_BROKERSERVER_HEARTBEAT_INTERVAL, "")
+    }
+
+    def rocketConsumerOffsetPersistInterval(keyNum: Int = 1): String = {
+      PropUtils.getString(PropKeys.ROCKET_CONSUMER_OFFSET_PERSIST_INTERVAL, "")
+    }
+
+    def rocketConsumerMinThreads(keyNum: Int = 1): String = {
+      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MIN_THREADS, "")
+    }
+
+    def rocketConsumerMaxThreads(keyNum: Int = 1): String = {
+      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MAX_THREADS, "")
+    }
+
+    def rocketSpoutMessagesMaxRetry(keyNum: Int = 1): String = {
+      PropUtils.getString(PropKeys.ROCKET_SPOUT_MESSAGES_MAX_RETRY, "")
+    }
+
+    def rocketPullMaxSpeedPerPartition(keyNum: Int = 1): String = {
+      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_SPEED_PER_PARTITION, "")
+    }
+
+    def rocketPullMaxBatchSize(keyNum: Int = 1): String = {
+      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_BATCH_SIZE, "")
+    }
+
+    def rocketPullTimeoutMs(keyNum: Int = 1): String = {
+      PropUtils.getString(PropKeys.ROCKET_PULL_TIMEOUT_MS, "")
     }
   }
 
