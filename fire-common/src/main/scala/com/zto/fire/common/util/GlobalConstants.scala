@@ -18,6 +18,9 @@ object GlobalConstants {
     // hbase集群名，用于区分不同的hbase-site.xml文件
     val hbaseName = "batch"
 
+    // rest接口filter的开关
+    val restFilter = true
+
     // 默认的kafka broker地址
     val kafkaBrokers = "192.168.25.80:9092,192.168.25.81:9092,192.168.25.82:9092,192.168.25.129:9092,192.168.25.130:9092,192.168.25.131:9092"
     // 默认的broker名称
@@ -139,6 +142,16 @@ object GlobalConstants {
     val ROCKET_CONSUMER_TAG = "spark.rocket.consumer.tag"
     // 日志记录器保留最大的记录数
     val SPARK_FIRE_LOG_MAX_SIZE = "spark.fire.log.max.size"
+    // rest接口权限认证
+    val SPARK_FIRE_REST_FILTER = "spark.fire.rest.filter"
+  }
+
+  /**
+    * Fire框架相关配置
+    */
+  object FireConf extends Enumeration {
+    // rest接口权限认证
+    val restFilter = PropUtils.getBoolean(GlobalConstants.PropKeys.SPARK_FIRE_REST_FILTER, GlobalConstants.DefaultVals.restFilter)
   }
 
   /**

@@ -3,8 +3,13 @@ package com.zto.fire.core.rest
 import java.util.concurrent.ExecutorService
 
 import com.zto.fire.common.anno.Rest
-import com.zto.fire.common.util.{GlobalConstants, ReflectionUtils, SystemInfoUtils}
-import spark.{Request, Response, Route, Spark}
+import com.zto.fire.common.bean.rest.ResultMsg
+import com.zto.fire.common.enu.ErrorCode
+import com.zto.fire.common.util.{EncryptUtils, GlobalConstants, PropUtils, ReflectionUtils, SystemInfoUtils}
+import com.zto.fire.core.ext.SparkExt._
+import org.apache.commons.lang3.StringUtils
+import org.apache.spark.Logging
+import spark.{Filter, Request, Response, Route, Spark}
 
 import scala.collection.JavaConversions
 import scala.collection.mutable._
@@ -14,9 +19,10 @@ import scala.collection.mutable._
   *
   * @author ChengLong 2019-3-16 09:56:56
   */
-class RestfulRegister(val threadPool: ExecutorService) {
+class RestfulRegister(val threadPool: ExecutorService) extends Logging {
   private val restList = ListBuffer[RestCase]()
   private var port: Integer = _
+  private[this] lazy val mainClassName: String = PropUtils.getString("spark.driver.class.name")
 
   /**
     * 注册新的rest接口
@@ -79,9 +85,42 @@ class RestfulRegister(val threadPool: ExecutorService) {
             })
           }
         })
+
+        // 注册过滤器，用于进行权限校验
+        Spark.before(new Filter {
+          override def handle(request: Request, response: Response): Unit = {
+            if (GlobalConstants.FireConf.restFilter) {
+              val msg = checkPermission(request)
+              if (msg.getCode != null && ErrorCode.UNAUTHORIZED == msg.getCode) {
+                Spark.halt(401, msg.toString)
+              }
+            }
+          }
+        })
       }
     })
   }
+
+  /**
+    * 用于进行用户权限校验
+    */
+  private[fire] def checkPermission(request: Request): ResultMsg = {
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      if (!EncryptUtils.checkPermission(json, this.mainClassName)) {
+        this.logFire(s"[log] 非法请求：用户身份校验失败！ip=${request.ip()} json=$json", "filter")
+        msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
+      }
+    } catch {
+      case e => {
+        this.logFire(s"[log] 非法请求：请检查请求参数！ip=${request.ip()} json=$json", "filter")
+        msg.buildError(s"非法请求：请检查请求参数！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
+      }
+    }
+    msg
+  }
+
 
   /**
     * 扫描@Rest，并注册

@@ -13,29 +13,60 @@ import scala.collection.JavaConversions
   * @author ChengLong 2019-8-16 16:56:06
   */
 class MultiCounterAccumulator extends AccumulatorV2[(String, Long), ConcurrentHashMap[String, Long]] {
-  private[this] val multiCounter = new ConcurrentHashMap[String, Long]()
+  private[fire] val multiCounter = new ConcurrentHashMap[String, Long]()
 
+  /**
+    * 用于判断当前累加器是否为空
+    *
+    * @return
+    * true: 空 false：不为空
+    */
   override def isZero: Boolean = this.multiCounter.size() == 0
 
-  override def copy(): AccumulatorV2[(String, Long), ConcurrentHashMap[String, Long]] = new MultiCounterAccumulator
-
-  override def reset(): Unit = this.multiCounter.clear
-
-  override def add(kv: (String, Long)): Unit = {
-    this.mergeMap(kv)
+  /**
+    * 用于复制一个新的累加器实例
+    *
+    * @return
+    * 新的累加器实例对象
+    */
+  override def copy(): AccumulatorV2[(String, Long), ConcurrentHashMap[String, Long]] = {
+    val tmpAcc = new MultiCounterAccumulator
+    tmpAcc.multiCounter.putAll(this.multiCounter)
+    tmpAcc
   }
 
+  /**
+    * 用于重置累加器
+    */
+  override def reset(): Unit = this.multiCounter.clear
+
+  /**
+    * 用于添加新的数据到累加器中
+    *
+    * @param kv
+    * 累加值的key和value
+    */
+  override def add(kv: (String, Long)): Unit = this.mergeMap(kv)
+
+  /**
+    * 用于合并数据到累加器的map中
+    * 存在的累加，不存在的直接添加
+    *
+    * @param kv
+    * 累加值的key和value
+    */
   private[this] def mergeMap(kv: (String, Long)): Unit = {
     if (kv != null && StringUtils.isNotBlank(kv._1) && kv._2 != null) {
-      val sumValue = if (this.multiCounter.contains(kv._1)) {
-        this.multiCounter.get(kv._1) + kv._2
-      } else {
-        kv._2
-      }
-      this.multiCounter.put(kv._1, sumValue)
+      this.multiCounter.put(kv._1, this.multiCounter.getOrDefault(kv._1, 0) + kv._2)
     }
   }
 
+  /**
+    * 用于合并executor端的map到driver端
+    *
+    * @param other
+    * executor端的map
+    */
   override def merge(other: AccumulatorV2[(String, Long), ConcurrentHashMap[String, Long]]): Unit = {
     val otherMap = other.value
     if (otherMap != null && otherMap.size() > 0) {
@@ -45,5 +76,11 @@ class MultiCounterAccumulator extends AccumulatorV2[(String, Long), ConcurrentHa
     }
   }
 
+  /**
+    * 用于driver端获取累加器（map）中的值
+    *
+    * @return
+    * 累加器中的值
+    */
   override def value: ConcurrentHashMap[String, Long] = this.multiCounter
 }

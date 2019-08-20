@@ -31,14 +31,50 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/sql", sql))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/loadInfo", loadInfo))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/sparkInfo", sparkInfo))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/count", count))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/counter", counter))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiCounter", multiCounter))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/log", log))
   }
 
 
-  @Rest("/system/count")
-  def count(request: Request, response: Response): AnyRef = {
-    this.baseSpark.acc.getCounter + ""
+  /**
+    * 获取counter累加器中的值
+    */
+  @Rest("/system/counter")
+  def counter(request: Request, response: Response): AnyRef = {
+    this.mark
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      msg.buildSuccess(this.baseSpark.acc.getCounter, "获取单值累加器成功")
+    } catch {
+      case e => {
+        this.logFire(s"[log] 获取单值累加器失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("获取多值累加器失败", ErrorCode.ERROR)
+      }
+    } finally {
+      msg.toString
+    }
+  }
+
+  /**
+    * 获取多值累加器中的值
+    */
+  @Rest("/system/multiCounter")
+  def multiCounter(request: Request, response: Response): AnyRef = {
+    this.mark
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      msg.buildSuccess(this.baseSpark.acc.getMultiCounter, "获取多值累加器成功")
+    } catch {
+      case e => {
+        this.logFire(s"[log] 获取多值累加器失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("获取多值累加器失败", ErrorCode.ERROR)
+      }
+    } finally {
+      msg.toString
+    }
   }
 
   /**
@@ -50,12 +86,6 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     val msg = new ResultMsg
     val json = request.body
     try {
-      // 用户身份校验
-      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
-        this.logFire(s"[log] 非法请求：用户身份校验失败！ip=${request.ip()} json=$json", this.peripheral)
-        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip()}", ErrorCode.ERROR)
-      }
-
       val logs = new StringBuilder("[")
       JavaConversions.asScalaIterator(this.baseSpark.acc.getLog.iterator()).foreach(log => {
         logs.append(log + ",")
@@ -91,12 +121,6 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     val msg = new ResultMsg
     val json = request.body
     try {
-      // 用户身份校验
-      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
-        this.logFire(s"[kill] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
-        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip}", ErrorCode.ERROR)
-      }
-
       // 参数校验与参数获取
       val stopGracefully = JSONUtils.getValue(json, "stopGracefully", true)
       this.baseSpark.shutdown(stopGracefully)
@@ -123,12 +147,6 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     val msg = new ResultMsg
     val json = request.body
     try {
-      // 用户身份校验
-      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
-        this.logFire(s"[cancelJob] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
-        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip}", ErrorCode.ERROR)
-      }
-
       // 参数校验与参数获取
       val jobId = JSONUtils.getValue(json, "id", -1)
       if (jobId == null || jobId <= 0) {
@@ -158,12 +176,6 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     val msg = new ResultMsg
     val json = request.body
     try {
-      // 用户身份校验
-      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
-        this.logFire(s"[cancelStage] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
-        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip}", ErrorCode.ERROR)
-      }
-
       // 参数校验与参数获取
       val stageId = JSONUtils.getValue(json, "id", -1)
       if (stageId == null || stageId <= 0) {
@@ -193,12 +205,6 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     val msg = new ResultMsg
     val json = request.body
     try {
-      // 用户身份校验
-      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
-        this.logFire(s"[loadInfo] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
-        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip} json=$json", ErrorCode.ERROR)
-      }
-
       msg.buildSuccess(SystemInfoUtils.getSystemLoadInfo, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
@@ -219,12 +225,6 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     val msg = new ResultMsg
     val json = request.body
     try {
-      // 用户身份校验
-      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
-        this.logFire(s"[sql] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
-        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip} json=$json", ErrorCode.ERROR)
-      }
-
       // 参数校验与参数获取
       val sql = JSONUtils.getValue(json, "sql", "")
 
@@ -258,12 +258,6 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     val msg = new ResultMsg
     val json = request.body
     try {
-      // 用户身份校验
-      if (!EncryptUtils.checkPermission(json, this.baseSpark.className)) {
-        this.logFire(s"[sparkInfo] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", this.peripheral)
-        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip}", ErrorCode.ERROR)
-      }
-
       if (this.sparkInfoBean == null) {
         this.sparkInfoBean = new SparkInfo
         this.sparkInfoBean.setAppName(this.baseSpark.appName)

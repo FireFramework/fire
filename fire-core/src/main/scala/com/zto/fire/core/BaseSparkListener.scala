@@ -1,13 +1,15 @@
 package com.zto.fire.core
 
 import com.zto.fire.common.acc.AccumulatorManager
+import org.apache.spark.Logging
 import org.apache.spark.scheduler._
+import com.zto.fire.core.ext.SparkExt._
 
 /**
   * Spark事件监听器桥
   * Created by ChengLong on 2018-05-19.
   */
-class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener {
+class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging {
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
     this.baseSpark.onStageCompleted(stageCompleted)
     // this.baseSpark.logger.wrapLogWarn(s"${stageCompleted.stageInfo.stageId} ${stageCompleted.stageInfo.name} stage完成提交")
@@ -53,18 +55,21 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener {
     * 当添加新的executor时，重新初始化内置的累加器
     */
   override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
+    this.mark
     AccumulatorManager.executorInstances.addAndGet(1)
     this.baseSpark.onExecutorAdded(executorAdded)
-    println("重新注册累加器")
     AccumulatorManager.registerAccumulators(this.baseSpark.sc)
+    this.logFire(s"executor[${executorAdded.executorId}] added. host: [${executorAdded.executorInfo.executorHost}].")
   }
 
   /**
     * 当移除已有的executor时，executor数递减
     */
   override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
+    this.mark
     AccumulatorManager.executorInstances.decrementAndGet()
     this.baseSpark.onExecutorRemoved(executorRemoved)
+    this.logFire(s"executor[${executorRemoved.executorId}] removed. reason: [${executorRemoved.reason}].")
   }
 
   override def onBlockUpdated(blockUpdated: SparkListenerBlockUpdated): Unit = this.baseSpark.onBlockUpdated(blockUpdated)
