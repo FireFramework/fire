@@ -111,6 +111,17 @@ object GlobalConstants {
     // kafka request超时时间
     val KAFKA_REQUEST_TIMEOUT_MS = "spark.kafka.request.timeout.ms"
     val KAFKA_MAX_POLL_INTERVAL_MS = "spark.kafka.max.poll.interval.ms"
+    // 心跳间隔时间：heartbeat.interval.ms
+    val KAFKA_HEARTBEAT_INTERVAL_MS = "spark.kafka.heartbeat.interval.ms"
+    // 消费者组最大的session超时时间：group.max.session.timeout.ms
+    val KAFKA_GROUP_MAX_SESSION_TIMEOUT_MS = "spark.kafka.group.max.session.timeout.ms"
+    // 消费者组最小的session超时时间：group.min.session.timeout.ms
+    val KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS = "spark.kafka.group.min.session.timeout.ms"
+    // 一次调用pool返回的最大记录数：max.poll.records
+    val KAFKA_MAX_POLL_RECORDS = "spark.kafka.max.poll.records"
+    // int 1048576
+    // 每个分区返回的最大数据量：max.partition.fetch.bytes
+    val KAFKA_MAX_PARTITION_FETCH_BYTES = "spark.kafka.max.partition.fetch.bytes"
 
     // spark相关配置
     val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
@@ -307,6 +318,61 @@ object GlobalConstants {
       */
     def kafkaPollInterval(keyNum: Int = 1): java.lang.Integer = {
       PropUtils.getInt(PropKeys.KAFKA_MAX_POLL_INTERVAL_MS, keyNum, 600000)
+    }
+
+    /**
+      * 心跳间隔时间：heartbeat.interval.ms
+      *
+      * @param keyNum
+      * 配置的key后缀
+      * @return
+      */
+    def kafkaHeartbeatInterval(keyNum: Int = 1): java.lang.Integer = {
+      PropUtils.getInt(PropKeys.KAFKA_HEARTBEAT_INTERVAL_MS, -1)
+    }
+
+    /**
+      * 消费者组最大的session超时时间：group.max.session.timeout.ms
+      *
+      * @param keyNum
+      * 配置的key后缀
+      * @return
+      */
+    def kafkaGroupMaxSessionTimeOut(keyNum: Int = 1): java.lang.Integer = {
+      PropUtils.getInt(PropKeys.KAFKA_GROUP_MAX_SESSION_TIMEOUT_MS, -1)
+    }
+
+    /**
+      * 消费者组最小的session超时时间：group.min.session.timeout.ms
+      *
+      * @param keyNum
+      * 配置的key后缀
+      * @return
+      */
+    def kafkaGroupMinSessionTimeOut(keyNum: Int = 1): java.lang.Integer = {
+      PropUtils.getInt(PropKeys.KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS, -1)
+    }
+
+    /**
+      * 一次调用pool返回的最大记录数：max.poll.records
+      *
+      * @param keyNum
+      * 配置的key后缀
+      * @return
+      */
+    def kafkaMaxPollRecords(keyNum: Int = 1): java.lang.Integer = {
+      PropUtils.getInt(PropKeys.KAFKA_MAX_POLL_RECORDS, -1)
+    }
+
+    /**
+      * 每个分区返回的最大数据量：max.partition.fetch.bytes
+      *
+      * @param keyNum
+      * 配置的key后缀
+      * @return
+      */
+    def kafkaMaxPartitionFetchBytes(keyNum: Int = 1): java.lang.Integer = {
+      PropUtils.getInt(PropKeys.KAFKA_MAX_PARTITION_FETCH_BYTES, -1)
     }
   }
 
