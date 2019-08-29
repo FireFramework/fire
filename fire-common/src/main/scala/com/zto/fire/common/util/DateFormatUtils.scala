@@ -54,7 +54,16 @@ object DateFormatUtils {
     * @return
     */
   def getDateFormat(): SimpleDateFormat = {
-    val dateFormat: SimpleDateFormat = new SimpleDateFormat(GlobalConstants.DateTimeSchema.yyyy_MM_dd)
+    this.getSchemaFormat()
+  }
+
+  /**
+    * 将日期格式化为 yyyy-MM-dd
+    *
+    * @return
+    */
+  def getSchemaFormat(schema: String = GlobalConstants.DateTimeSchema.yyyy_MM_dd): SimpleDateFormat = {
+    val dateFormat: SimpleDateFormat = new SimpleDateFormat(schema)
     dateFormat.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
     dateFormat
   }
@@ -78,6 +87,18 @@ object DateFormatUtils {
   def formatDateTime(dateTime: Date): String = {
     if (dateTime != null) this.getTimeFormat().format(dateTime) else ""
   }
+
+  /**
+    * 将指定时间转为指定schema的格式
+    *
+    * @param dateTime
+    * 指定时间
+    * @return
+    */
+  def formatBySchema(dateTime: Date, schema: String): String = {
+    if (dateTime != null) this.getSchemaFormat(schema).format(dateTime) else ""
+  }
+
 
   /**
     * 将字符串格式化为yyyy-MM-dd的日期
@@ -115,6 +136,17 @@ object DateFormatUtils {
     */
   def formatCurrentDateTime(): String = {
     this.formatDateTime(new Date)
+  }
+
+  /**
+    * 转换当前时间为指定的时间格式
+    *
+    * @param schema
+    * 指定的schema
+    * @return
+    */
+  def formatCurrentBySchema(schema: String): String = {
+    this.formatBySchema(new Date, schema)
   }
 
   /**

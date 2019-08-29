@@ -4,6 +4,7 @@ import java.nio.ByteBuffer
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import java.util.concurrent.atomic.AtomicInteger
 
+import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.bean.TimeCost
 import com.zto.fire.common.util.{StringsUtils, SystemInfoUtils}
 import org.apache.commons.lang3.StringUtils
@@ -28,7 +29,11 @@ private[fire] object AccumulatorManager {
   private[this] val multiCounterLabel = "fire-multiCounter"
   private[fire] val multiCounter = new MultiCounterAccumulator
 
-  private[this] val accMap = Map(this.logAccumulatorLabel -> this.logAccumulator, this.counterLabel -> this.counter, this.multiCounterLabel -> this.multiCounter)
+  // timer累加器
+  private[this] val multiTimerLabel = "multiTimer"
+  private[fire] val multiTimer = new MultiTimerAccumulator
+
+  private[this] val accMap = Map(this.logAccumulatorLabel -> this.logAccumulator, this.counterLabel -> this.counter, this.multiCounterLabel -> this.multiCounter, this.multiTimerLabel -> this.multiTimer)
   private[fire] val executorInstances: AtomicInteger = new AtomicInteger(0)
   private[this] val initExecutors: AtomicInteger = new AtomicInteger(0)
 
@@ -110,6 +115,32 @@ private[fire] object AccumulatorManager {
     * 累加结果
     */
   def getMultiCounter: ConcurrentHashMap[String, Long] = this.multiCounter.value
+
+  /**
+    * 将数据累加到timer累加器中
+    *
+    * @param value
+    * 累加值
+    */
+  def addMultiTimer(key: String, value: Long): Unit = {
+    if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
+      val timerAccumulator = SparkEnv.get.conf.get(this.multiTimerLabel, "")
+      if (StringUtils.isNotBlank(timerAccumulator)) {
+        val multiTimer: MultiTimerAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(timerAccumulator)))
+        multiTimer.add(key, value)
+      }
+    } else {
+      this.multiTimer.add(key, value)
+    }
+  }
+
+  /**
+    * 获取timer累加器的值
+    *
+    * @return
+    * 累加结果
+    */
+  def getMultiTimer: HashBasedTable[String, Long, Long] = this.multiTimer.value
 
   /**
     * 注册多个自定义累加器到每个executor

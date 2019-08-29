@@ -5,5 +5,5 @@ package com.zto.fire.common.enu;
  * @author ChengLong 2019-7-26 11:06:38
  */
 public enum JobType {
-    CORE, STREAMING, STRUCTUREDSTREAMING, SQL, UNDEFINED
+    CORE, STREAMING, STRUCTURED_STREAMING, SQL, UNDEFINED
 }

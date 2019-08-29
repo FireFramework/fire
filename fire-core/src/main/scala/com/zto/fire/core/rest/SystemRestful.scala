@@ -33,6 +33,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/sparkInfo", sparkInfo))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/counter", counter))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiCounter", multiCounter))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiTimer", multiTimer))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/log", log))
   }
 
@@ -71,6 +72,26 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       case e => {
         this.logFire(s"[log] 获取多值累加器失败：json=$json", this.peripheral, throwable = e)
         msg.buildError("获取多值累加器失败", ErrorCode.ERROR)
+      }
+    } finally {
+      msg.toString
+    }
+  }
+
+  /**
+    * 获取timer累加器中的值
+    */
+  @Rest("/system/multiTimer")
+  def multiTimer(request: Request, response: Response): AnyRef = {
+    this.mark
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      msg.buildSuccess(this.baseSpark.acc.getMultiTimer.cellSet(), "获取timer累加器成功")
+    } catch {
+      case e => {
+        this.logFire(s"[log] 获取timer累加器失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("获取timer累加器失败", ErrorCode.ERROR)
       }
     } finally {
       msg.toString

@@ -6,7 +6,9 @@ import com.zto.fire.common.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * 对应HBase表的JavaBean
@@ -180,10 +182,12 @@ public class Student2 extends HBaseBaseBean<Student2> {
     }
 
     public static void main(String[] args) {
-        Properties properties = System.getProperties();
-        Set set = System.getProperties().keySet();
-        for (Object key : set) {
-            System.out.println(key + "  value = " + properties.get(key));
-        }
+        /*Table<String, String, Integer> table = HashBasedTable.create();
+        table.put("hbase", "20190820", 1);
+        table.put("hbase", "20190821", 3);
+        table.put("tidb", "20190821", 5);
+        table.put("oracle", "20190822", 6);
+        System.out.println(JSON.toJSONString(table.cellSet()));*/
+        System.out.println(DateFormatUtils.formatCurrentBySchema("yyyyMMddHHmm"));
     }
 }

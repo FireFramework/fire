@@ -1,6 +1,7 @@
 package com.zto.fire.core
 
 import com.zto.fire.common.acc.AccumulatorManager
+import com.zto.fire.common.enu.JobType
 import org.apache.spark.Logging
 import org.apache.spark.scheduler._
 import com.zto.fire.core.ext.SparkExt._
@@ -58,7 +59,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
     this.mark
     AccumulatorManager.executorInstances.addAndGet(1)
     this.baseSpark.onExecutorAdded(executorAdded)
-    AccumulatorManager.registerAccumulators(this.baseSpark.sc)
+    if (this.baseSpark.jobType != JobType.CORE) AccumulatorManager.registerAccumulators(this.baseSpark.sc)
     this.logFire(s"executor[${executorAdded.executorId}] added. host: [${executorAdded.executorInfo.executorHost}].")
   }
 

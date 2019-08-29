@@ -9,7 +9,7 @@ import org.apache.spark.SparkConf
   * Created by ChengLong on 2019-03-11.
   */
 class BaseStructuredStreaming extends BaseSpark {
-  override val jobType = JobType.STRUCTUREDSTREAMING
+  override val jobType = JobType.STRUCTURED_STREAMING
 
   /**
     * 程序初始化方法，用于初始化必要的值
