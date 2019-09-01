@@ -4,6 +4,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
+import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.common.bean.BaseLogging
 import com.zto.fire.common.util.{DBUtils, GlobalConstants}
 import org.apache.commons.lang3.StringUtils
@@ -288,6 +289,7 @@ object JdbcOper extends BaseLogging {
         count = callback.process(rs)
       }
       this.log(s"executeQueryCall: sql->$sql result->success 查询记录数：$count", this.peripheral, 1)
+      AccumulatorManager.addMultiTimer("jdbcReader", count)
     } catch {
       case e: Exception => {
         this.log(s"executeQueryCall: sql->$sql result->fail", this.peripheral, 1, e)

@@ -87,7 +87,11 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     val msg = new ResultMsg
     val json = request.body
     try {
-      msg.buildSuccess(this.baseSpark.acc.getMultiTimer.cellSet(), "获取timer累加器成功")
+      val cells = this.baseSpark.acc.getMultiTimer.cellSet()
+      val clear = JSONUtils.getValue(json, "clear", false)
+      if (clear) this.baseSpark.acc.multiTimer.reset
+
+      msg.buildSuccess(cells, "获取timer累加器成功")
     } catch {
       case e => {
         this.logFire(s"[log] 获取timer累加器失败：json=$json", this.peripheral, throwable = e)

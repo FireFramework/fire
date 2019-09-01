@@ -170,6 +170,50 @@ object PropUtils extends BaseLogging {
   }
 
   /**
+    * 获取float型数据
+    *
+    * @param key
+    * @return
+    */
+  def getFloat(key: String): Float = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toFloat else -1
+  }
+
+  /**
+    * 获取float型数据
+    *
+    * @param key
+    * @return
+    */
+  def getFloat(key: String, default: Float): Float = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toFloat else default
+  }
+
+  /**
+    * 获取float型数据
+    *
+    * @param key
+    * @return
+    */
+  def getDouble(key: String): Double = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toDouble else -1.0
+  }
+
+  /**
+    * 获取float型数据
+    *
+    * @param key
+    * @return
+    */
+  def getDouble(key: String, default: Double): Double = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toDouble else default
+  }
+
+  /**
     * 获取拼接后数值的配置长整数
     *
     * @param key    配置的前缀

@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.bean.TimeCost
-import com.zto.fire.common.util.{StringsUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{GlobalConstants, StringsUtils, SystemInfoUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.LongAccumulator
 import org.apache.spark.{SparkContext, SparkEnv}
@@ -120,17 +120,17 @@ private[fire] object AccumulatorManager {
     * 将数据累加到timer累加器中
     *
     * @param value
-    * 累加值
+    * 累加值的key、value和时间的schema，默认为yyyy-MM-dd HH:mm:00
     */
-  def addMultiTimer(key: String, value: Long): Unit = {
+  def addMultiTimer(key: String, value: Long, schema: String = GlobalConstants.MultiTimerSchema.MIN): Unit = {
     if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
       val timerAccumulator = SparkEnv.get.conf.get(this.multiTimerLabel, "")
       if (StringUtils.isNotBlank(timerAccumulator)) {
         val multiTimer: MultiTimerAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(timerAccumulator)))
-        multiTimer.add(key, value)
+        multiTimer.add(key, value, schema)
       }
     } else {
-      this.multiTimer.add(key, value)
+      this.multiTimer.add(key, value, schema)
     }
   }
 
@@ -140,7 +140,7 @@ private[fire] object AccumulatorManager {
     * @return
     * 累加结果
     */
-  def getMultiTimer: HashBasedTable[String, Long, Long] = this.multiTimer.value
+  def getMultiTimer: HashBasedTable[String, String, Long] = this.multiTimer.value
 
   /**
     * 注册多个自定义累加器到每个executor

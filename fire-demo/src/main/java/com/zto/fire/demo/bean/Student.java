@@ -4,8 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.zto.fire.common.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
-import com.zto.fire.common.util.EncryptUtils;
-import com.zto.fire.common.util.JSONUtils;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -184,9 +182,6 @@ public class Student extends HBaseBaseBean<Student> {
     }
 
     public static void main(String[] args) throws Exception {
-        String json = "{\"className\": \"com.zto.bigdata.spark.zrc.ZrcDemo\", \"url\": \"http://10.9.39.10:8089\", \"fireVersion\": \"0.10\", \"id\": 10, \"clear1\": true}";
-        System.out.println(JSONUtils.getValue(json, "clear", false));
-        // System.out.println(EncryptUtils.md5Encrypt("($zto%-%fire$)" + "com.zto.fire.demo.Test" + DateFormatUtils.formatCurrentDate()));
-        System.out.println(EncryptUtils.md5Encrypt("admin"));
+        System.out.println(DateFormatUtils.formatCurrentBySchema("yyyy-MM-dd HH:mm:00"));
     }
 }

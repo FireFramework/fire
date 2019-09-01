@@ -55,6 +55,8 @@ object GlobalConstants {
     val logLevel = LogLevel.INFO
     // 累加器保留日志默认的最大记录数
     val maxLogSize = 1000
+    val maxTimerSize = 1000
+    val maxTimerHour = 12
     // 默认的数据库名称
     val dbName = "tmp"
     // 默认的partition名称
@@ -166,6 +168,10 @@ object GlobalConstants {
     // ---------------------------- Fire 相关配置 ---------------------------- //
     // 日志记录器保留最大的记录数
     val SPARK_FIRE_LOG_MAX_SIZE = "spark.fire.log.max.size"
+    // timer累加器保留最大的记录数
+    val SPARK_FIRE_TIMER_MAX_SIZE = "spark.fire.timer.max.size"
+    // timer累加器清理几小时之前的记录
+    val SPARK_FIRE_TIMER_MAX_HOUR = "spark.fire.timer.max.hour"
     // rest接口权限认证
     val SPARK_FIRE_REST_FILTER = "spark.fire.rest.filter"
   }
@@ -741,4 +747,18 @@ object GlobalConstants {
     val UNKNOWN = "UNKNOWN"
   }
 
+  /**
+    * 用于定义累加日期的维度
+    */
+  object MultiTimerSchema extends Enumeration {
+    val SEC = "yyyy-MM-dd HH:mm:ss"
+    val MIN = "yyyy-MM-dd HH:mm:00"
+    val HOUR = "yyyy-MM-dd HH:00:00"
+    val DAY = "yyyy-MM-dd 00:00:00"
+
+    /**
+      * 其他用于自定义日期格式
+      */
+    def other(schema: String) = schema
+  }
 }

@@ -679,6 +679,15 @@ object DateFormatUtils {
   }
 
   /**
+    * 计算date1与date2之间相差的小时数
+    * @return
+    *         相差的小时数
+    */
+  def betweenHours(date1: Date, date2: Date): Double = {
+    (date1.getTime - date2.getTime) / 3600000.0
+  }
+
+  /**
     * 计算制定时间范围内的所有日期，使用制定字符串进行连接
     *
     * @param startDate

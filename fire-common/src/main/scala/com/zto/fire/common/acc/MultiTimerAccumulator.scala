@@ -1,19 +1,27 @@
 package com.zto.fire.common.acc
 
+import java.util.Date
+
 import com.google.common.collect.HashBasedTable
-import com.zto.fire.common.util.DateFormatUtils
+import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, PropUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.AccumulatorV2
 
-import scala.collection.JavaConversions
+import scala.collection.{JavaConversions, mutable}
 
 /**
   * timer累加器，对相同的key进行分钟级维度累加
   *
   * @author ChengLong 2019-8-21 14:22:12
   */
-class MultiTimerAccumulator extends AccumulatorV2[(String, Long), HashBasedTable[String, Long, Long]] {
-  private[fire] val timerCountTable = HashBasedTable.create[String, Long, Long]
+class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBasedTable[String, String, Long]] {
+  private[fire] val timerCountTable = HashBasedTable.create[String, String, Long]
+  // 用于限定最大保存量，防止数据量过大，撑爆driver
+  private lazy val maxTimerSize = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_FIRE_TIMER_MAX_SIZE, GlobalConstants.DefaultVals.maxTimerSize)
+  // 用于指定清理指定小时数之前的记录
+  private lazy val maxTimerHour = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_FIRE_TIMER_MAX_HOUR, GlobalConstants.DefaultVals.maxTimerHour)
+  // 用于记录上次清理过期累加数据的时间
+  private var lastClearTime = new Date
 
   /**
     * 用于判断当前累加器是否为空
@@ -29,7 +37,7 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long), HashBasedTable
     * @return
     * 新的累加器实例对象
     */
-  override def copy(): AccumulatorV2[(String, Long), HashBasedTable[String, Long, Long]] = {
+  override def copy(): AccumulatorV2[(String, Long, String), HashBasedTable[String, String, Long]] = {
     val tmpAcc = new MultiTimerAccumulator
     tmpAcc.timerCountTable.putAll(this.timerCountTable)
     tmpAcc
@@ -44,10 +52,16 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long), HashBasedTable
     * 用于添加新的数据到累加器中
     *
     * @param kv
-    * 累加值的key和value
+    * 累加值的key、value和时间的schema，默认为yyyy-MM-dd HH:mm:00
     */
-  override def add(kv: (String, Long)): Unit = {
-    this.mergeTable(kv._1, DateFormatUtils.formatCurrentBySchema("yyyyMMddHHmm").toLong, kv._2)
+  override def add(kv: (String, Long, String)): Unit = {
+    if (kv == null) return
+    val schema = if (StringUtils.isBlank(kv._3)) {
+      GlobalConstants.MultiTimerSchema.MIN
+    } else kv._3
+    if (StringUtils.isNotBlank(kv._1) && kv._2 != null) {
+      this.mergeTable(kv._1, DateFormatUtils.formatCurrentBySchema(schema), kv._2)
+    }
   }
 
   /**
@@ -57,10 +71,11 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long), HashBasedTable
     * @param kv
     * 累加值的key和value
     */
-  private[this] def mergeTable(kv: (String, Long, Long)): Unit = {
+  private[this] def mergeTable(kv: (String, String, Long)): Unit = {
     if (kv != null && StringUtils.isNotBlank(kv._1) && kv._2 != null && kv._3 != null) {
       val value = if (this.timerCountTable.contains(kv._1, kv._2)) this.timerCountTable.get(kv._1, kv._2) else 0L
       this.timerCountTable.put(kv._1, kv._2, kv._3 + value)
+      this.clear
     }
   }
 
@@ -70,7 +85,7 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long), HashBasedTable
     * @param other
     * executor端的map
     */
-  override def merge(other: AccumulatorV2[(String, Long), HashBasedTable[String, Long, Long]]): Unit = {
+  override def merge(other: AccumulatorV2[(String, Long, String), HashBasedTable[String, String, Long]]): Unit = {
     val otherTable = other.value
     if (otherTable != null && otherTable.size() > 0) {
       JavaConversions.asScalaSet(otherTable.cellSet()).foreach(timer => {
@@ -85,5 +100,33 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long), HashBasedTable
     * @return
     * 累加器中的值
     */
-  override def value: HashBasedTable[String, Long, Long] = this.timerCountTable
+  override def value: HashBasedTable[String, String, Long] = this.timerCountTable
+
+  /**
+    * 当累积量超过maxTimerSize所设定的值时清理过期的数据
+    */
+  private[this] def clear: Unit = {
+    val currentDate = new Date
+    if (this.timerCountTable.size() >= this.maxTimerSize && DateFormatUtils.betweenHours(currentDate, lastClearTime) >= this.maxTimerHour) {
+      val criticalTime = DateFormatUtils.addHours(currentDate, -Math.abs(this.maxTimerHour))
+
+      val timeOutSet = new mutable.HashSet[String]()
+      JavaConversions.mapAsScalaMap(this.timerCountTable.rowMap()).foreach(kmap => {
+        JavaConversions.mapAsScalaMap(kmap._2).foreach(kv => {
+          if (kv._1.compareTo(criticalTime) <= 0) {
+            if (StringUtils.isNotBlank(kmap._1) && StringUtils.isNotBlank(kv._1)) {
+              timeOutSet += kmap._1 + "#" + kv._1
+            }
+          }
+        })
+      })
+
+      if (timeOutSet.size > 0) {
+        timeOutSet.map(t => (t.split("#"))).foreach(kv => {
+          this.timerCountTable.remove(kv(0), kv(1))
+        })
+        this.lastClearTime = currentDate
+      }
+    }
+  }
 }
