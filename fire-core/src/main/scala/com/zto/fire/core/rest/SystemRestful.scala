@@ -37,7 +37,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiCounter", multiCounter))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiTimer", multiTimer))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/log", log))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/listDatabase", listDatabase))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/listDatabases", listDatabases))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/listTables", listTables))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/listColumns", listColumns))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/listFunctions", listFunctions))
@@ -163,8 +163,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   /**
     * 获取数据库列表
     */
-  @Rest("/system/listDatabase")
-  def listDatabase(request: Request, response: Response): AnyRef = {
+  @Rest("/system/listDatabases")
+  def listDatabases(request: Request, response: Response): AnyRef = {
     this.mark
     val msg = new ResultMsg
     try {
