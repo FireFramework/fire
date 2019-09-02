@@ -1,8 +1,10 @@
 package com.zto.fire.core.rest
 
+import java.util
+
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
-import com.zto.fire.common.bean.rest.spark.SparkInfo
+import com.zto.fire.common.bean.rest.spark.{ColumnMeta, FunctionMeta, SparkInfo, TableMeta}
 import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
 import com.zto.fire.core.BaseSpark
@@ -35,8 +37,153 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiCounter", multiCounter))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiTimer", multiTimer))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/log", log))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/listDatabase", listDatabase))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/listTables", listTables))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/listColumns", listColumns))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/listFunctions", listFunctions))
   }
 
+  /**
+    * 根据函数信息
+    */
+  @Rest("/system/listFunctions")
+  def listFunctions(request: Request, response: Response): AnyRef = {
+    this.mark
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      // 参数合法性检查
+      val dbName = JSONUtils.getValue(json, "dbName", "")
+
+      // 获取已注册的函数
+      val funList = new util.LinkedList[FunctionMeta]()
+      if (StringUtils.isNotBlank(dbName)) {
+        this.baseSpark.catalog.listFunctions(dbName).collect().foreach(fun => {
+          funList.add(new FunctionMeta(fun.description, fun.database, fun.name, fun.className, fun.isTemporary))
+        })
+      } else {
+        this.baseSpark.catalog.listFunctions().collect().foreach(fun => {
+          funList.add(new FunctionMeta(fun.description, fun.database, fun.name, fun.className, fun.isTemporary))
+        })
+      }
+
+      msg.buildSuccess(funList, s"获取[$dbName]函数信息成功")
+    } catch {
+      case e => {
+        this.logFire(s"[log] 获取函数信息失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("获取函数信息失败", ErrorCode.ERROR)
+      }
+    } finally {
+      msg.toString
+    }
+  }
+
+  /**
+    * 根据表名获取字段信息
+    */
+  @Rest("/system/listColumns")
+  def listColumns(request: Request, response: Response): AnyRef = {
+    this.mark
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      // 参数合法性检查
+      val dbName = JSONUtils.getValue(json, "dbName", "memory")
+      val tableName = JSONUtils.getValue(json, "tableName", "")
+      if (StringUtils.isBlank(dbName) || StringUtils.isBlank(tableName)) {
+        return msg.buildError("获取表元字段信息失败，库名和表名不能为空", ErrorCode.PARAM_ILLEGAL)
+      }
+
+      // 区分内存临时表和物理表
+      val columns = if ("memory".equals(dbName)) {
+        this.baseSpark.catalog.listColumns(tableName)
+      } else {
+        this.baseSpark.catalog.listColumns(dbName, tableName)
+      }
+
+      // 将字段元数据信息封装
+      val columnList = new util.LinkedList[ColumnMeta]
+      columns.collect().foreach(column => {
+        columnList.add(new ColumnMeta(column.description, dbName, tableName, column.name, column.dataType, column.nullable, column.isPartition, column.isBucket))
+      })
+
+      msg.buildSuccess(columnList, s"获取[$dbName.$tableName]字段信息成功")
+    } catch {
+      case e => {
+        this.logFire(s"[log] 获取表字段信息失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("获取表字段信息失败", ErrorCode.ERROR)
+      }
+    } finally {
+      msg.toString
+    }
+  }
+
+  /**
+    * 获取指定数据库下所有的表信息
+    */
+  @Rest("/system/listTables")
+  def listTables(request: Request, response: Response): AnyRef = {
+    this.mark
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      // 参数合法性检查
+      val dbName = JSONUtils.getValue(json, "dbName", "memory")
+      if (StringUtils.isBlank(dbName)) {
+        return msg.buildError("获取表元数据信息失败，库名不能为空", ErrorCode.PARAM_ILLEGAL)
+      }
+
+      val tableList = new util.LinkedList[TableMeta]
+      if ("memory".equals(dbName)) {
+        // 内存临时表元数据信息
+        this.baseSpark.catalog.listTables().collect().foreach(table => {
+          if (StringUtils.isBlank(table.database)) {
+            tableList.add(new TableMeta(table.description, "memory", table.name, table.tableType, table.isTemporary))
+          }
+        })
+      } else {
+        // 获取hive表元数据信息
+        this.baseSpark.catalog.listTables(dbName).collect().foreach(table => {
+          if (StringUtils.isNotBlank(table.database)) {
+            tableList.add(new TableMeta(table.description, table.database, table.name, table.tableType, table.isTemporary))
+          }
+        })
+      }
+      msg.buildSuccess(tableList, s"获取[$dbName]表元数据信息成功")
+    } catch {
+      case e => {
+        this.logFire(s"[log] 获取表元数据信息失败：json=$json", this.peripheral, throwable = e)
+        msg.buildError("获取表元数据信息失败", ErrorCode.ERROR)
+      }
+    } finally {
+      msg.toString
+    }
+  }
+
+  /**
+    * 获取数据库列表
+    */
+  @Rest("/system/listDatabase")
+  def listDatabase(request: Request, response: Response): AnyRef = {
+    this.mark
+    val msg = new ResultMsg
+    try {
+      // 获取所有的数据库名称
+      val dbList = new util.LinkedList[String]()
+      this.baseSpark.catalog.listDatabases().collect().foreach(db => dbList.add(db.name))
+      // 由于spark临时表没有库名，此处约定memory统一作为临时表所在的库
+      dbList.add("memory")
+
+      msg.buildSuccess(dbList, "获取数据库列表成功")
+    } catch {
+      case e => {
+        this.logFire(s"[log] 获取数据库列表失败", this.peripheral, throwable = e)
+        msg.buildError("获取数据库列表失败", ErrorCode.ERROR)
+      }
+    } finally {
+      msg.toString
+    }
+  }
 
   /**
     * 获取counter累加器中的值
