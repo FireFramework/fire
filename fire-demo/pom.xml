@@ -4,16 +4,16 @@
     <artifactId>fire-demo</artifactId>
     <inceptionYear>2008</inceptionYear>
 
+    <properties>
+        <fire.version>0.3.0-SNAPSHOT</fire.version>
+    </properties>
+
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-parent</artifactId>
-        <version>0.2.2</version>
+        <version>0.3.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-
-    <properties>
-        <fire.version>0.2.2</fire.version>
-    </properties>
 
     <dependencies>
         <dependency>

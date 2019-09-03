@@ -90,7 +90,7 @@ class RestfulRegister(val threadPool: ExecutorService) extends Logging {
         Spark.before(new Filter {
           override def handle(request: Request, response: Response): Unit = {
             if (GlobalConstants.FireConf.restFilter) {
-              val msg = checkPermission(request)
+              val msg = checkAuth(request)
               if (msg.getCode != null && ErrorCode.UNAUTHORIZED == msg.getCode) {
                 Spark.halt(401, msg.toString)
               }
@@ -102,19 +102,19 @@ class RestfulRegister(val threadPool: ExecutorService) extends Logging {
   }
 
   /**
-    * 用于进行用户权限校验
+    * 通过header进行用户权限校验
     */
-  private[fire] def checkPermission(request: Request): ResultMsg = {
+  private[fire] def checkAuth(request: Request): ResultMsg = {
     val msg = new ResultMsg
-    val json = request.body
+    val auth = request.headers("Authorization")
     try {
-      if (!EncryptUtils.checkPermission(json, this.mainClassName)) {
-        this.logFire(s"[log] 非法请求：用户身份校验失败！ip=${request.ip()} json=$json", "filter")
+      if (!EncryptUtils.checkAuth(auth, this.mainClassName)) {
+        this.logFire(s"[log] 非法请求：用户身份校验失败！ip=${request.ip()} auth=$auth", "filter")
         msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
       }
     } catch {
       case e => {
-        this.logFire(s"[log] 非法请求：请检查请求参数！ip=${request.ip()} json=$json", "filter")
+        this.logFire(s"[log] 非法请求：请检查请求参数！ip=${request.ip()} auth=$auth", "filter")
         msg.buildError(s"非法请求：请检查请求参数！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
       }
     }

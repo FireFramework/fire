@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.zto.fire.common.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
+import com.zto.fire.common.util.EncryptUtils;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -182,6 +183,6 @@ public class Student extends HBaseBaseBean<Student> {
     }
 
     public static void main(String[] args) throws Exception {
-        System.out.println(DateFormatUtils.formatCurrentBySchema("yyyy-MM-dd HH:mm:00"));
+        System.out.println(EncryptUtils.md5Encrypt("($zto%-%fire$)" + "com.zto.fire.demo.Test" + DateFormatUtils.formatCurrentDate()));
     }
 }

@@ -175,15 +175,9 @@ trait BaseSparkStreaming extends BaseSpark {
   @Rest("/system/streaming/hotRestart")
   def hotRestart(request: Request, response: Response): AnyRef = {
     this.mark
-    val msg = new ResultMsg()
+    val msg = new ResultMsg
     val json = request.body
     try {
-      // 用户身份校验
-      if (!EncryptUtils.checkPermission(json, this.className)) {
-        this.logFire(s"[hotRestart] 非法请求：用户身份校验失败！ip=${request.ip} json=$json", "rest")
-        return msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip}", ErrorCode.ERROR)
-      }
-
       this.externalConf = JSON.parseObject(json, classOf[RestartParams])
       new Thread(new Runnable {
         override def run(): Unit = {

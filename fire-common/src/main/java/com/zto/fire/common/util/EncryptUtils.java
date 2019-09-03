@@ -113,14 +113,13 @@ public class EncryptUtils {
     }
 
     /**
-     * 权限校验
-     * @param json
+     * header权限校验
+     * @param auth
      * 请求json
      * @return
      * true：身份合法  false：身份非法
      */
-    public static boolean checkPermission(String json, String privateKey) {
-        String auth = JSONUtils.getValue(json, "auth", "");
+    public static boolean checkAuth(String auth, String privateKey) {
         if (StringUtils.isBlank(auth)) {
             return false;
         }
