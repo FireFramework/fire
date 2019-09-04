@@ -1,18 +1,12 @@
 package com.zto.fire.demo
 
 import java.sql.ResultSet
-import java.util
 
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializerFeature
-import com.zto.fire.common.bean.rest.spark.{FunctionMeta, TableMeta}
 import com.zto.fire.common.db.QueryCallback
 import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.BaseSparkStreaming
-import com.zto.fire.demo.jdbc.JdbcTest.tableName
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.demo.bean.Student
-import org.apache.commons.lang3.StringUtils
 
 import scala.collection.JavaConversions
 
@@ -40,20 +34,20 @@ object Test extends BaseSparkStreaming {
     * 注：此方法会被自动调用，不需要在main中手动调用
     */
   override def process: Unit = {
-    val rdd = this.sc.parallelize(1 to 1010, 100)
+    val rdd = this.sc.parallelize(1 to 1010, 10)
     val studentRDD = this.sc.parallelize(JavaConversions.asScalaBuffer(Student.newStudentList()), 3)
     studentRDD.createOrReplaceTempView("t_student")
     while (true) {
       println(s"==================${DateFormatUtils.formatCurrentDateTime()}==================")
       rdd.foreachPartition(i => {
-        this.acc.addMultiTimer("hbaseWriter", 1)
+        // this.acc.addMultiTimer("hbaseWriter", 1)
         this.acc.addMultiTimer("tidbReader", 1, "yyyy-MM-dd HH")
-        // this.testJdbcQuery
+        this.testJdbcQuery
       })
       val size = this.acc.getMultiTimer.cellSet().size()
       JavaConversions.asScalaSet(this.acc.getMultiTimer.cellSet()).foreach(t => println(s"size=${size} 组件：" + t.getRowKey + " 时间：" + t.getColumnKey + " " + t.getValue + "条"))
       println
-      Thread.sleep(60000)
+      Thread.sleep(20000)
     }
     Thread.currentThread().join()
   }
