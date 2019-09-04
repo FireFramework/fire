@@ -55,6 +55,7 @@ object JdbcOper extends BaseLogging {
         }
       } catch {
         case ex: Exception => {
+          AccumulatorManager.addMultiTimer(s"$peripheral.exception.init", 1)
           this.log(s"初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", this.peripheral, null, ex)
           throw ex
         }
@@ -77,10 +78,11 @@ object JdbcOper extends BaseLogging {
     try {
       val pool = this.init(keyNum)
       connection = pool.getConnection
-      AccumulatorManager.addMultiTimer("jdbc.connection", 1)
+      AccumulatorManager.addMultiTimer(s"$peripheral.connection", 1)
       this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${keyNum} ]成功", this.peripheral)
     } catch {
       case ex: Exception => {
+        AccumulatorManager.addMultiTimer(s"$peripheral.exception.getConnection", 1)
         this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]出现异常，请检查配置文件", this.peripheral, null, ex)
         throw ex
       }
@@ -130,10 +132,11 @@ object JdbcOper extends BaseLogging {
       retVal = stat.executeUpdate
       if (commit) conn.commit()
       this.log(s"executeUpdate: sql->$sql 影响记录数：$retVal", this.peripheral, 0)
-      AccumulatorManager.addMultiTimer("jdbc.update", retVal)
+      AccumulatorManager.addMultiTimer(s"$peripheral.update", retVal)
     }
     catch {
       case e: Exception => {
+        AccumulatorManager.addMultiTimer(s"$peripheral.exception.executeUpdate", 1)
         this.log(s"executeUpdate: sql->$sql result->fail", this.peripheral, 0, e)
         throw e
       }
@@ -205,9 +208,10 @@ object JdbcOper extends BaseLogging {
       if (commit) conn.commit()
       val sum = retVal.sum
       this.log(s"executeBatch: sql->$sql 影响总记录数：$sum", this.peripheral, 0)
-      AccumulatorManager.addMultiTimer("jdbc.batch", sum)
+      AccumulatorManager.addMultiTimer(s"$peripheral.batch", sum)
     } catch {
       case e: Exception => {
+        AccumulatorManager.addMultiTimer(s"$peripheral.exception.executeBatch", 1)
         this.log(s"executeBatch: executeBatch sql->$sql result->fail", this.peripheral, 0, e)
         throw e
       }
@@ -293,9 +297,10 @@ object JdbcOper extends BaseLogging {
         count = callback.process(rs)
       }
       this.log(s"executeQueryCall: sql->$sql result->success 查询记录数：$count", this.peripheral, 1)
-      AccumulatorManager.addMultiTimer("jdbc.select", count)
+      AccumulatorManager.addMultiTimer(s"$peripheral.select", count)
     } catch {
       case e: Exception => {
+        AccumulatorManager.addMultiTimer(s"$peripheral.exception.executeQueryCall", 1)
         this.log(s"executeQueryCall: sql->$sql result->fail", this.peripheral, 1, e)
         throw e
       }

@@ -11,9 +11,16 @@ import com.zto.fire.core.ext.SparkExt._
   * Created by ChengLong on 2018-05-19.
   */
 class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging {
+  private val peripheral = "listener"
+
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
     this.baseSpark.onStageCompleted(stageCompleted)
-    // this.baseSpark.logger.wrapLogWarn(s"${stageCompleted.stageInfo.stageId} ${stageCompleted.stageInfo.name} stage完成提交")
+    if (stageCompleted != null && stageCompleted.stageInfo.failureReason.isEmpty) {
+      AccumulatorManager.addMultiTimer(s"listener.stageCompleted", 1)
+    } else {
+      AccumulatorManager.addMultiTimer(s"listener.exception.stageFailed", 1)
+      this.logFire(s"stage failed. reason: " + stageCompleted.stageInfo.failureReason, this.peripheral)
+    }
   }
 
   override def onStageSubmitted(stageSubmitted: SparkListenerStageSubmitted): Unit = this.baseSpark.onStageSubmitted(stageSubmitted)
@@ -22,11 +29,27 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
 
   override def onTaskGettingResult(taskGettingResult: SparkListenerTaskGettingResult): Unit = this.baseSpark.onTaskGettingResult(taskGettingResult)
 
-  override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = this.baseSpark.onTaskEnd(taskEnd)
+  override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
+    this.baseSpark.onTaskEnd(taskEnd)
+    if (taskEnd != null && taskEnd.reason != null && "Success".equalsIgnoreCase(taskEnd.reason.toString)) {
+      AccumulatorManager.addMultiTimer(s"listener.taskCompleted", 1)
+    } else {
+      AccumulatorManager.addMultiTimer(s"listener.exception.taskFailed", 1)
+      this.logFire(s"task failed.", this.peripheral)
+    }
+  }
 
   override def onJobStart(jobStart: SparkListenerJobStart): Unit = this.baseSpark.onJobStart(jobStart)
 
-  override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = this.baseSpark.onJobEnd(jobEnd)
+  override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
+    this.baseSpark.onJobEnd(jobEnd)
+    if (jobEnd != null && jobEnd.jobResult == JobSucceeded) {
+      AccumulatorManager.addMultiTimer(s"listener.jobCompleted", 1)
+    } else {
+      AccumulatorManager.addMultiTimer(s"listener.exception.jobFailed", 1)
+      this.logFire(s"job failed.", this.peripheral)
+    }
+  }
 
   override def onEnvironmentUpdate(environmentUpdate: SparkListenerEnvironmentUpdate): Unit = this.baseSpark.onEnvironmentUpdate(environmentUpdate)
 

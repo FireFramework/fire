@@ -34,12 +34,18 @@ object Test extends BaseSparkStreaming {
     * 注：此方法会被自动调用，不需要在main中手动调用
     */
   override def process: Unit = {
-    val rdd = this.sc.parallelize(1 to 1010, 10)
+    val rdd = this.sc.parallelize(1 to 10, 10)
     val studentRDD = this.sc.parallelize(JavaConversions.asScalaBuffer(Student.newStudentList()), 3)
     studentRDD.createOrReplaceTempView("t_student")
     while (true) {
       println(s"==================${DateFormatUtils.formatCurrentDateTime()}==================")
       rdd.foreachPartition(i => {
+        i.foreach(index => {
+          if (index % 5 == 0) {
+            val sum = 1 / 0
+            throw new RuntimeException("fail")
+          }
+        })
         // this.acc.addMultiTimer("hbaseWriter", 1)
         this.acc.addMultiTimer("tidbReader", 1, "yyyy-MM-dd HH")
         this.testJdbcQuery
