@@ -181,6 +181,14 @@ public class TimeCost implements Serializable {
         return io;
     }
 
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
+    }
+
     private String lable() {
         if (this.isFire) {
             return "fire";
