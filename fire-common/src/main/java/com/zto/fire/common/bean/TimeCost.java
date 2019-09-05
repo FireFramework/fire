@@ -39,6 +39,7 @@ public class TimeCost implements Serializable {
     @JSONField(serialize = false)
     private Throwable exception;
     private String stackTraceInfo;
+    private String level = "WARN";
     private String peripheral;
     private Integer io;
     private Long start;
@@ -190,12 +191,12 @@ public class TimeCost implements Serializable {
 
     @Override
     public String toString() {
-        String baseInfo = "【" + this.lable() + "Log】 " + this.msg + "    start：" + this.startTime + "    end：" + this.endTime + "    cost：" + this.timeCost + "      ip：" + this.ip + "      load：" + this.load + "      executor：" + this.executorId;
+        String baseInfo = "【" + this.lable() + "Log】 " + this.msg + " start：" + this.startTime + " end：" + this.endTime + " cost：" + this.timeCost + " ip：" + this.ip + " load：" + this.load + " executor：" + this.executorId;
         if (!"driver".equalsIgnoreCase(this.executorId)) {
-            baseInfo += "     stage：" + this.stageId + "   task：" + this.taskId;
+            baseInfo += " stage：" + this.stageId + " task：" + this.taskId;
         }
         if (this.isFire) {
-            baseInfo += "       peripheral：" + this.peripheral + "      io：" + this.io;
+            baseInfo += " peripheral：" + this.peripheral + " io：" + this.io;
         }
         return baseInfo;
     }
@@ -251,6 +252,7 @@ public class TimeCost implements Serializable {
         }
         if (exception != null) {
             this.stackTraceInfo = StackTraceUtils.stackTraceInfo(exception);
+            this.level = "ERROR";
         }
         return this;
     }

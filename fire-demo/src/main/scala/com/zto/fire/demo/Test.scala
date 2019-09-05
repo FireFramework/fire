@@ -2,8 +2,10 @@ package com.zto.fire.demo
 
 import java.sql.ResultSet
 
+import com.zto.fire.common.alarm.AlarmOper
 import com.zto.fire.common.db.QueryCallback
 import com.zto.fire.common.util.DateFormatUtils
+import com.zto.fire.common.util.alarm.PhoneUtils
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.demo.bean.Student
@@ -37,23 +39,20 @@ object Test extends BaseSparkStreaming {
     val rdd = this.sc.parallelize(1 to 10, 10)
     val studentRDD = this.sc.parallelize(JavaConversions.asScalaBuffer(Student.newStudentList()), 3)
     studentRDD.createOrReplaceTempView("t_student")
+
+    AlarmOper.ding("wangcl3", "fire告警")
+    AlarmOper.sms("15651830126", "fire告警")
+    AlarmOper.voice("15651830126", "fire告警")
     while (true) {
       println(s"==================${DateFormatUtils.formatCurrentDateTime()}==================")
       rdd.foreachPartition(i => {
-        i.foreach(index => {
-          if (index % 5 == 0) {
-            val sum = 1 / 0
-            throw new RuntimeException("fail")
-          }
-        })
-        // this.acc.addMultiTimer("hbaseWriter", 1)
         this.acc.addMultiTimer("tidbReader", 1, "yyyy-MM-dd HH")
         this.testJdbcQuery
       })
       val size = this.acc.getMultiTimer.cellSet().size()
       JavaConversions.asScalaSet(this.acc.getMultiTimer.cellSet()).foreach(t => println(s"size=${size} 组件：" + t.getRowKey + " 时间：" + t.getColumnKey + " " + t.getValue + "条"))
       println
-      Thread.sleep(20000)
+      Thread.sleep(30000)
     }
     Thread.currentThread().join()
   }
