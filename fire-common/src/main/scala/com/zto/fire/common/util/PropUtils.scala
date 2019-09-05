@@ -293,6 +293,7 @@ object PropUtils extends BaseLogging {
 
   /**
     * 隐蔽密码信息后返回
+    *
     * @return
     */
   def cover: Properties = {
@@ -327,10 +328,8 @@ object PropUtils extends BaseLogging {
   def toMap: Map[String, String] = {
     val confMap = scala.collection.mutable.Map[String, String]()
     JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
-      if (key != null) {
-        if (!key.toString.toUpperCase.contains("pass")) {
-          confMap += (key.toString -> this.props.getProperty(key.toString))
-        }
+      if (key != null && !key.toString.contains("pass")) {
+        confMap += (key.toString -> this.props.getProperty(key.toString))
       }
     })
     confMap
