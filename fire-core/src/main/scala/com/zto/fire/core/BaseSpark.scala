@@ -176,6 +176,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     SingletonFactory.setSparkSession(this.spark)
     this.spark.registerAll()
     this.sc = this.spark.sparkContext
+    // 关联所连接的hive集群，根据预制方案启用HDFS HA
+    GlobalConstants.HdfsConf.linkHiveCluster(this.sc.hadoopConfiguration)
     this.catalog = this.spark.catalog
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))

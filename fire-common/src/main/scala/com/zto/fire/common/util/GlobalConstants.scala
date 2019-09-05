@@ -1,6 +1,7 @@
 package com.zto.fire.common.util
 
 import org.apache.commons.lang3.StringUtils
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.client.Durability
 import org.apache.rocketmq.spark.ConsumerStrategy
 import org.apache.spark.sql.SaveMode
@@ -63,6 +64,8 @@ object GlobalConstants {
     val partitionName = "ds"
     // HBase默认批次大小
     val hbaseBatch = 10000
+    // 启用高可用
+    val enableHdfsHA = true
   }
 
   /**
@@ -174,6 +177,10 @@ object GlobalConstants {
     val SPARK_FIRE_TIMER_MAX_HOUR = "spark.fire.timer.max.hour"
     // rest接口权限认证
     val SPARK_FIRE_REST_FILTER = "spark.fire.rest.filter"
+
+    // ---------------------------- HDFS 相关配置 ---------------------------- //
+    // 是否启用高可用
+    val HDFS_HA = "spark.hdfs.ha.enable"
   }
 
   /**
@@ -705,7 +712,7 @@ object GlobalConstants {
     // hive集群标识（batch/streaming/test）
     val hiveCluster = PropUtils.getString(PropKeys.HIVE_CLUSTER, DefaultVals.hiveCluster)
     // 离线hive集群
-    private val batchMetastore = "thrift://192.168.25.36:9083"
+    private val batchMetastore = "thrift://192.168.25.36:9083,thrift://HZPL025050:9083,thrift://HZPL025051:9083,thrift://HZPL025052:9083"
     // 实时hive集群
     private val streamingMetastore = "thrift://192.168.25.180:9083"
     // 测试hive集群
@@ -759,6 +766,66 @@ object GlobalConstants {
     /**
       * 其他用于自定义日期格式
       */
-    def other(schema: String) = schema
+    def other(schema: String): String = schema
   }
+
+  /**
+    * HDFS配置
+    */
+  object HdfsConf extends Enumeration {
+    // 配置是否启用hdfs HA
+    lazy val hdfsHAEnable = PropUtils.getBoolean(PropKeys.HDFS_HA, DefaultVals.enableHdfsHA)
+
+    /**
+      * 离线集群默认的配置
+      *
+      * @param hadoopConf
+      * sc.hadoopConfiguration
+      */
+    def setBatchHdfsHAConf(hadoopConf: Configuration): Unit = {
+      if (hadoopConf != null && this.hdfsHAEnable) {
+        hadoopConf.set("fs.defaultFS", "hdfs://nameservice1")
+        hadoopConf.set("dfs.nameservices", "nameservice1")
+        hadoopConf.set("dfs.ha.namenodes.nameservice1", "namenode61,namenode99")
+        hadoopConf.set("dfs.namenode.rpc-address.nameservice1.namenode61", "HZPL025036:8020")
+        hadoopConf.set("dfs.namenode.rpc-address.nameservice1.namenode99", "HZPL025037:8020")
+        hadoopConf.set("dfs.client.failover.proxy.provider.nameservice1", "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider")
+      }
+    }
+
+    /**
+      * 实时集群默认的配置
+      *
+      * @param hadoopConf
+      * sc.hadoopConfiguration
+      */
+    def setStreamingHdfsHAConf(hadoopConf: Configuration): Unit = {
+      if (hadoopConf != null && this.hdfsHAEnable) {
+        hadoopConf.set("fs.defaultFS", "hdfs://appcluster")
+        hadoopConf.set("dfs.nameservices", "appcluster")
+        hadoopConf.set("dfs.ha.namenodes.appcluster", "nn1,nn2")
+        hadoopConf.set("dfs.namenode.rpc-address.appcluster.nn1", "HZPL025180:8020")
+        hadoopConf.set("dfs.namenode.rpc-address.appcluster.nn2", "HZPL025181:8020")
+        hadoopConf.set("dfs.client.failover.proxy.provider.appcluster", "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider")
+      }
+    }
+
+    /**
+      * hdfs高可用关联hive集群
+      */
+    def linkHiveCluster(hadoopConf: Configuration): Unit = {
+      if (hadoopConf != null && this.hdfsHAEnable) {
+        // 根据hive集群选择启用对应集群的HA
+        val hiveCluster = PropUtils.getString(PropKeys.HIVE_CLUSTER)
+        if (StringUtils.isNotBlank(hiveCluster)) {
+          if ("batch".equalsIgnoreCase(hiveCluster)) {
+            this.setBatchHdfsHAConf(hadoopConf)
+          } else if ("streaming".equalsIgnoreCase(hiveCluster)) {
+            this.setStreamingHdfsHAConf(hadoopConf)
+          }
+        }
+      }
+    }
+  }
+
 }
