@@ -21,7 +21,7 @@ import scala.reflect.ClassTag
 object JdbcOper extends BaseLogging {
   private lazy val connPoolMap = collection.mutable.Map[String, ComboPooledDataSource]()
   private val jdbcPoolKey = "cpds"
-  private val peripheral = "jdbc"
+  private val module = "jdbc"
 
   /**
     * 初始化指定的连接池，未被使用
@@ -51,12 +51,12 @@ object JdbcOper extends BaseLogging {
           pool.setMaxStatementsPerConnection(0)
           pool.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime(keyNum))
           this.connPoolMap += (s"cpds$keyNum" -> pool)
-          this.log(s"完成数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]初始化：url: ${GlobalConstants.JdbcConf.url(keyNum)} driver: ${GlobalConstants.JdbcConf.driverClass(keyNum)} ", this.peripheral)
+          this.log(s"完成数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]初始化：url: ${GlobalConstants.JdbcConf.url(keyNum)} driver: ${GlobalConstants.JdbcConf.driverClass(keyNum)} ", this.module)
         }
       } catch {
         case ex: Exception => {
-          AccumulatorManager.addMultiTimer(s"$peripheral.exception.init", 1)
-          this.log(s"初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", this.peripheral, null, ex)
+          AccumulatorManager.addMultiTimer(s"$module.exception.init", 1)
+          this.log(s"初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", this.module, null, ex)
           throw ex
         }
       }
@@ -78,12 +78,12 @@ object JdbcOper extends BaseLogging {
     try {
       val pool = this.init(keyNum)
       connection = pool.getConnection
-      AccumulatorManager.addMultiTimer(s"$peripheral.connection", 1)
-      this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${keyNum} ]成功", this.peripheral)
+      AccumulatorManager.addMultiTimer(s"$module.connection", 1)
+      this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${keyNum} ]成功", this.module)
     } catch {
       case ex: Exception => {
-        AccumulatorManager.addMultiTimer(s"$peripheral.exception.getConnection", 1)
-        this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]出现异常，请检查配置文件", this.peripheral, null, ex)
+        AccumulatorManager.addMultiTimer(s"$module.exception.getConnection", 1)
+        this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]出现异常，请检查配置文件", this.module, null, ex)
         throw ex
       }
     }
@@ -131,13 +131,13 @@ object JdbcOper extends BaseLogging {
       }
       retVal = stat.executeUpdate
       if (commit) conn.commit()
-      this.log(s"executeUpdate: sql->$sql 影响记录数：$retVal", this.peripheral, 0)
-      AccumulatorManager.addMultiTimer(s"$peripheral.update", retVal)
+      this.log(s"executeUpdate: sql->$sql 影响记录数：$retVal", this.module, 0)
+      AccumulatorManager.addMultiTimer(s"$module.update", retVal)
     }
     catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(s"$peripheral.exception.executeUpdate", 1)
-        this.log(s"executeUpdate: sql->$sql result->fail", this.peripheral, 0, e)
+        AccumulatorManager.addMultiTimer(s"$module.exception.executeUpdate", 1)
+        this.log(s"executeUpdate: sql->$sql result->fail", this.module, 0, e)
         throw e
       }
     } finally {
@@ -148,7 +148,7 @@ object JdbcOper extends BaseLogging {
           stat.close()
         } catch {
           case e: SQLException => {
-            this.log(s"executeUpdate: 释放连接 sql->$sql", this.peripheral, 0, e)
+            this.log(s"executeUpdate: 释放连接 sql->$sql", this.module, 0, e)
             throw e
           }
         }
@@ -207,12 +207,12 @@ object JdbcOper extends BaseLogging {
       retVal = stat.executeBatch
       if (commit) conn.commit()
       val sum = retVal.sum
-      this.log(s"executeBatch: sql->$sql 影响总记录数：$sum", this.peripheral, 0)
-      AccumulatorManager.addMultiTimer(s"$peripheral.batch", sum)
+      this.log(s"executeBatch: sql->$sql 影响总记录数：$sum", this.module, 0)
+      AccumulatorManager.addMultiTimer(s"$module.batch", sum)
     } catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(s"$peripheral.exception.executeBatch", 1)
-        this.log(s"executeBatch: executeBatch sql->$sql result->fail", this.peripheral, 0, e)
+        AccumulatorManager.addMultiTimer(s"$module.exception.executeBatch", 1)
+        this.log(s"executeBatch: executeBatch sql->$sql result->fail", this.module, 0, e)
         throw e
       }
     } finally {
@@ -222,7 +222,7 @@ object JdbcOper extends BaseLogging {
           stat.close()
         } catch {
           case e: SQLException => {
-            this.log(s"executeBatch: 释放连接 sql->$sql", this.peripheral, 0, e)
+            this.log(s"executeBatch: 释放连接 sql->$sql", this.module, 0, e)
             throw e
           }
         }
@@ -296,12 +296,12 @@ object JdbcOper extends BaseLogging {
       if (rs != null && callback != null) {
         count = callback.process(rs)
       }
-      this.log(s"executeQueryCall: sql->$sql result->success 查询记录数：$count", this.peripheral, 1)
-      AccumulatorManager.addMultiTimer(s"$peripheral.select", count)
+      this.log(s"executeQueryCall: sql->$sql result->success 查询记录数：$count", this.module, 1)
+      AccumulatorManager.addMultiTimer(s"$module.select", count)
     } catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(s"$peripheral.exception.executeQueryCall", 1)
-        this.log(s"executeQueryCall: sql->$sql result->fail", this.peripheral, 1, e)
+        AccumulatorManager.addMultiTimer(s"$module.exception.executeQueryCall", 1)
+        this.log(s"executeQueryCall: sql->$sql result->fail", this.module, 1, e)
         throw e
       }
     } finally {
@@ -311,7 +311,7 @@ object JdbcOper extends BaseLogging {
           rs.close()
         } catch {
           case e: SQLException => {
-            this.log(s"executeQueryCall: 释放连接 sql->$sql", this.peripheral, 1, e)
+            this.log(s"executeQueryCall: 释放连接 sql->$sql", this.module, 1, e)
             throw e
           }
         }
@@ -322,7 +322,7 @@ object JdbcOper extends BaseLogging {
         }
         catch {
           case e: SQLException => {
-            this.log(s"executeQueryCall: 释放连接 sql->$sql", this.peripheral, 1, e)
+            this.log(s"executeQueryCall: 释放连接 sql->$sql", this.module, 1, e)
             throw e
           }
         }

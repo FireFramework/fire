@@ -11,7 +11,7 @@ import com.zto.fire.core.ext.SparkExt._
   * Created by ChengLong on 2018-05-19.
   */
 class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging {
-  private val peripheral = "listener"
+  private val module = "listener"
 
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
     this.baseSpark.onStageCompleted(stageCompleted)
@@ -19,7 +19,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
       AccumulatorManager.addMultiTimer(s"listener.stageCompleted", 1)
     } else {
       AccumulatorManager.addMultiTimer(s"listener.exception.stageFailed", 1)
-      this.logFire(s"stage failed. reason: " + stageCompleted.stageInfo.failureReason, this.peripheral)
+      this.logFire(s"stage failed. reason: " + stageCompleted.stageInfo.failureReason, this.module)
     }
   }
 
@@ -35,7 +35,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
       AccumulatorManager.addMultiTimer(s"listener.taskCompleted", 1)
     } else {
       AccumulatorManager.addMultiTimer(s"listener.exception.taskFailed", 1)
-      this.logFire(s"task failed.", this.peripheral)
+      this.logFire(s"task failed.", this.module)
     }
   }
 
@@ -47,7 +47,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
       AccumulatorManager.addMultiTimer(s"listener.jobCompleted", 1)
     } else {
       AccumulatorManager.addMultiTimer(s"listener.exception.jobFailed", 1)
-      this.logFire(s"job failed.", this.peripheral)
+      this.logFire(s"job failed.", this.module)
     }
   }
 

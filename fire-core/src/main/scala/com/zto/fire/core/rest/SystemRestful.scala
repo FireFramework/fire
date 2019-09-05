@@ -22,7 +22,7 @@ import scala.collection.JavaConversions
   */
 class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   private var sparkInfoBean: SparkInfo = _
-  private val peripheral = "rest"
+  private val module = "rest"
 
   // 系统预定义接口注册
   {
@@ -70,7 +70,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       msg.buildSuccess(funList, s"获取[$dbName]函数信息成功")
     } catch {
       case e => {
-        this.logFire(s"[log] 获取函数信息失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[log] 获取函数信息失败：json=$json", this.module, throwable = e)
         msg.buildError("获取函数信息失败", ErrorCode.ERROR)
       }
     } finally {
@@ -110,7 +110,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       msg.buildSuccess(columnList, s"获取[$dbName.$tableName]字段信息成功")
     } catch {
       case e => {
-        this.logFire(s"[log] 获取表字段信息失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[log] 获取表字段信息失败：json=$json", this.module, throwable = e)
         msg.buildError("获取表字段信息失败", ErrorCode.ERROR)
       }
     } finally {
@@ -152,7 +152,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       msg.buildSuccess(tableList, s"获取[$dbName]表元数据信息成功")
     } catch {
       case e => {
-        this.logFire(s"[log] 获取表元数据信息失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[log] 获取表元数据信息失败：json=$json", this.module, throwable = e)
         msg.buildError("获取表元数据信息失败", ErrorCode.ERROR)
       }
     } finally {
@@ -177,7 +177,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       msg.buildSuccess(dbList, "获取数据库列表成功")
     } catch {
       case e => {
-        this.logFire(s"[log] 获取数据库列表失败", this.peripheral, throwable = e)
+        this.logFire(s"[log] 获取数据库列表失败", this.module, throwable = e)
         msg.buildError("获取数据库列表失败", ErrorCode.ERROR)
       }
     } finally {
@@ -197,7 +197,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       msg.buildSuccess(this.baseSpark.acc.getCounter, "获取单值累加器成功")
     } catch {
       case e => {
-        this.logFire(s"[log] 获取单值累加器失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[log] 获取单值累加器失败：json=$json", this.module, throwable = e)
         msg.buildError("获取多值累加器失败", ErrorCode.ERROR)
       }
     } finally {
@@ -217,7 +217,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       msg.buildSuccess(this.baseSpark.acc.getMultiCounter, "获取多值累加器成功")
     } catch {
       case e => {
-        this.logFire(s"[log] 获取多值累加器失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[log] 获取多值累加器失败：json=$json", this.module, throwable = e)
         msg.buildError("获取多值累加器失败", ErrorCode.ERROR)
       }
     } finally {
@@ -241,7 +241,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       msg.buildSuccess(cells, "获取timer累加器成功")
     } catch {
       case e => {
-        this.logFire(s"[log] 获取timer累加器失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[log] 获取timer累加器失败：json=$json", this.module, throwable = e)
         msg.buildError("获取timer累加器失败", ErrorCode.ERROR)
       }
     } finally {
@@ -268,15 +268,15 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       if (clear) this.baseSpark.acc.logAccumulator.reset
 
       if (logs.length > 0 && logs.endsWith(",")) {
-        this.logFire(s"[log] 日志获取成功：json=$json", this.peripheral)
+        this.logFire(s"[log] 日志获取成功：json=$json", this.module)
         msg.buildSuccess(logs.substring(0, logs.length - 1) + "]", "日志获取成功")
       } else {
-        this.logFire(s"[log] 日志记录数为空：json=$json", this.peripheral)
+        this.logFire(s"[log] 日志记录数为空：json=$json", this.module)
         msg.buildError("日志记录数为空", ErrorCode.NOT_FOUND)
       }
     } catch {
       case e => {
-        this.logFire(s"[log] 日志获取失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[log] 日志获取失败：json=$json", this.module, throwable = e)
         msg.buildError("日志获取失败", ErrorCode.ERROR)
       }
     } finally {
@@ -297,12 +297,12 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       val stopGracefully = JSONUtils.getValue(json, "stopGracefully", true)
       this.baseSpark.shutdown(stopGracefully)
       ProcessUtil.executeCmds(s"yarn application -kill ${this.baseSpark.applicationId}", s"kill -9 ${SystemInfoUtils.getPid}")
-      this.logFire(s"[kill] kill任务成功：json=$json", this.peripheral)
+      this.logFire(s"[kill] kill任务成功：json=$json", this.module)
       System.exit(0)
       msg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire(s"[kill] 执行kill任务失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[kill] 执行kill任务失败：json=$json", this.module, throwable = e)
         msg.buildError("执行kill任务失败", ErrorCode.ERROR)
       }
     } finally {
@@ -322,7 +322,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       // 参数校验与参数获取
       val jobId = JSONUtils.getValue(json, "id", -1)
       if (jobId == null || jobId <= 0) {
-        this.logFire(s"[cancelJob] 参数不合法：json=$json", this.peripheral)
+        this.logFire(s"[cancelJob] 参数不合法：json=$json", this.module)
         return msg.buildError(s"参数不合法：json=$json", ErrorCode.ERROR)
       }
 
@@ -331,7 +331,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       msg.buildSuccess("kill job 成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire(s"[cancelJob] kill job失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[cancelJob] kill job失败：json=$json", this.module, throwable = e)
         msg.buildError("kill job失败", ErrorCode.ERROR)
       }
     } finally {
@@ -351,16 +351,16 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       // 参数校验与参数获取
       val stageId = JSONUtils.getValue(json, "id", -1)
       if (stageId == null || stageId <= 0) {
-        this.logFire(s"[cancelStage] 参数不合法：json=$json", this.peripheral)
+        this.logFire(s"[cancelStage] 参数不合法：json=$json", this.module)
         return msg.buildError(s"参数不合法：json=$json", ErrorCode.ERROR)
       }
 
       this.baseSpark.sc.cancelStage(stageId, s"被管控平台kill：${DateFormatUtils.formatCurrentDateTime()}")
-      this.logFire(s"[cancelStage] kill stage[${stageId}] 成功：json=$json", this.peripheral)
+      this.logFire(s"[cancelStage] kill stage[${stageId}] 成功：json=$json", this.module)
       msg.buildSuccess("kill stage 成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire(s"[cancelStage] kill stage失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[cancelStage] kill stage失败：json=$json", this.module, throwable = e)
         msg.buildError("kill stage失败", ErrorCode.ERROR)
       }
     } finally {
@@ -380,7 +380,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       msg.buildSuccess(SystemInfoUtils.getSystemLoadInfo, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire(s"[loadInfo] 获取driver所在主机负载信息失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[loadInfo] 获取driver所在主机负载信息失败：json=$json", this.module, throwable = e)
         msg.buildError("获取driver所在主机负载信息失败", ErrorCode.ERROR)
       }
     } finally {
@@ -401,19 +401,19 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       val sql = JSONUtils.getValue(json, "sql", "")
 
       if (StringUtils.isBlank(sql) || sql.toUpperCase.contains("alert") || sql.toUpperCase.contains("drop") || sql.toLowerCase.contains("delete") || sql.toLowerCase.contains("create") || sql.toLowerCase.contains("insert")) {
-        this.logFire(s"[sql] sql不合法：json=$json", this.peripheral)
+        this.logFire(s"[sql] sql不合法：json=$json", this.module)
         return msg.buildError(s"sql不合法", ErrorCode.ERROR)
       }
 
       if (this.baseSpark == null || this.baseSpark.spark == null) {
-        this.logFire(s"[sql] 系统正在初始化，请稍后再试：json=$json", this.peripheral)
+        this.logFire(s"[sql] 系统正在初始化，请稍后再试：json=$json", this.module)
         return "系统正在初始化，请稍后再试"
       }
-      this.logFire(s"[sql] 执行用户sql成功：json=$json", this.peripheral)
+      this.logFire(s"[sql] 执行用户sql成功：json=$json", this.module)
       msg.buildSuccess(this.baseSpark.spark.sql(sql).limit(1000).showString(), ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire(s"[sql] 执行用户sql失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[sql] 执行用户sql失败：json=$json", this.module, throwable = e)
         msg.buildError("执行用户sql失败", ErrorCode.ERROR)
       }
     } finally {
@@ -459,11 +459,11 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       this.sparkInfoBean.setUptime(DateFormatUtils.runTime(this.baseSpark.startTime))
       this.sparkInfoBean.setBatchDuration(this.baseSpark.batchDuration + "")
       this.sparkInfoBean.setTimestamp(DateFormatUtils.formatCurrentDateTime())
-      this.logFire(s"[sparkInfo] 获取spark信息成功：json=$json", this.peripheral)
+      this.logFire(s"[sparkInfo] 获取spark信息成功：json=$json", this.module)
       msg.buildSuccess(this.sparkInfoBean, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire(s"[sparkInfo] 获取spark信息失败：json=$json", this.peripheral, throwable = e)
+        this.logFire(s"[sparkInfo] 获取spark信息失败：json=$json", this.module, throwable = e)
         msg.buildError("获取spark信息失败", ErrorCode.ERROR)
       }
     } finally {

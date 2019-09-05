@@ -63,48 +63,48 @@ public class BaseLogging implements Serializable {
      * 用于fire框架内部日志记录
      *
      * @param msg        错误信息
-     * @param peripheral 外设（hbase、tidb、mysql）
+     * @param module 外设（hbase、tidb、mysql）
      */
-    protected void log(String msg, String peripheral) {
-        this.log(msg, peripheral, null);
+    protected void log(String msg, String module) {
+        this.log(msg, module, null);
     }
 
     /**
      * 用于fire框架内部日志记录
      *
      * @param msg        错误信息
-     * @param peripheral 外设（hbase、tidb、mysql）
+     * @param module 外设（hbase、tidb、mysql）
      * @param io         输入：1 输出：0
      */
-    protected void log(String msg, String peripheral, Integer io) {
-        this.log(msg, peripheral, io, null);
+    protected void log(String msg, String module, Integer io) {
+        this.log(msg, module, io, null);
     }
 
     /**
      * 用于fire框架内部日志记录
      *
      * @param msg        错误信息
-     * @param peripheral 外设（hbase、tidb、mysql）
+     * @param module 外设（hbase、tidb、mysql）
      * @param io         输入：1 输出：0
      * @param throwable  异常对象
      */
-    protected void log(String msg, String peripheral, Integer io, Throwable throwable) {
-        this.log(msg, peripheral, io, throwable, true);
+    protected void log(String msg, String module, Integer io, Throwable throwable) {
+        this.log(msg, module, io, throwable, true);
     }
 
     /**
      * 日志记录
      *
      * @param msg        错误信息
-     * @param peripheral 外设（hbase、tidb、mysql）
+     * @param module 外设（hbase、tidb、mysql）
      * @param io         输入：1 输出：0
      * @param throwable  异常对象
      * @param isFire     用于标记是否为fire框架内部埋点日志
      */
-    protected void log(String msg, String peripheral, Integer io, Throwable throwable, Boolean isFire) {
+    protected void log(String msg, String module, Integer io, Throwable throwable, Boolean isFire) {
         if (timeCostLocal.get() == null) this.mark();
         TimeCost timeCost = timeCostLocal.get();
-        timeCost.info(msg, peripheral, io, isFire, throwable);
+        timeCost.info(msg, module, io, isFire, throwable);
         AccumulatorManager.addLog(timeCost);
         String log = timeCost.toString();
         if (throwable == null) {

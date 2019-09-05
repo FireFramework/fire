@@ -42,12 +42,12 @@ class LoggerExt(logger: Logging) extends BaseLogging with Logging {
     * fire框架内部日志记录器
     *
     * @param msg
-    * @param peripheral
+    * @param module
     * @param io
     * @param throwable
     */
-  protected[fire] def logFire(msg: String, peripheral: String = null, io: Integer = null, throwable: Throwable = null): Unit = {
-    super.log(msg, peripheral, io, throwable)
+  protected[fire] def logFire(msg: String, module: String = null, io: Integer = null, throwable: Throwable = null): Unit = {
+    super.log(msg, module, io, throwable)
   }
 
 

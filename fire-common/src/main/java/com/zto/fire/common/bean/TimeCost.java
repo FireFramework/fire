@@ -40,7 +40,7 @@ public class TimeCost implements Serializable {
     private Throwable exception;
     private String stackTraceInfo;
     private String level = "WARN";
-    private String peripheral;
+    private String module;
     private Integer io;
     private Long start;
     private String startTime;
@@ -173,8 +173,8 @@ public class TimeCost implements Serializable {
         this.stackTraceInfo = stackTraceInfo;
     }
 
-    public String getPeripheral() {
-        return peripheral;
+    public String getModule() {
+        return module;
     }
 
     public Integer getIo() {
@@ -204,7 +204,7 @@ public class TimeCost implements Serializable {
             baseInfo += " stage：" + this.stageId + " task：" + this.taskId;
         }
         if (this.isFire) {
-            baseInfo += " peripheral：" + this.peripheral + " io：" + this.io;
+            baseInfo += " module：" + this.module + " io：" + this.io;
         }
         return baseInfo;
     }
@@ -242,12 +242,12 @@ public class TimeCost implements Serializable {
      *
      * @return 当前对象
      */
-    public TimeCost info(String msg, String peripheral, Integer io, Boolean isFire, Throwable exception) {
+    public TimeCost info(String msg, String module, Integer io, Boolean isFire, Throwable exception) {
         this.timeCost = System.currentTimeMillis() - this.start;
         this.endTime = DateFormatUtils.formatCurrentDateTime();
         this.exception = exception;
         this.msg = msg;
-        this.peripheral = peripheral;
+        this.module = module;
         this.io = io;
         if (isFire != null) this.isFire = isFire;
         if (StringUtils.isNotBlank(this.executorId) && !"driver".equalsIgnoreCase(this.executorId)) {
