@@ -2,7 +2,6 @@ package com.zto.fire.demo
 
 import java.sql.ResultSet
 
-import com.zto.fire.common.alarm.AlarmOper
 import com.zto.fire.common.db.QueryCallback
 import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.BaseSparkStreaming
