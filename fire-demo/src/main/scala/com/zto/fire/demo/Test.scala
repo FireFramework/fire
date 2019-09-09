@@ -38,6 +38,7 @@ object Test extends BaseSparkStreaming {
     val studentRDD = this.sc.parallelize(JavaConversions.asScalaBuffer(Student.newStudentList()), 3)
     studentRDD.createOrReplaceTempView("t_student")
 
+
     while (true) {
       println(s"==================${DateFormatUtils.formatCurrentDateTime()}==================")
       rdd.foreachPartition(i => {
