@@ -8,7 +8,7 @@ import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kudu.spark.kudu.KuduContext
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkContext, SparkEnv}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 
 /**
@@ -21,6 +21,7 @@ object SingletonFactory {
   @transient private var kuduContext: KuduContextExt = _
   private var hbase: HBaseOper = _
   private var sparkSession: SparkSession = _
+  private var jobClassName: String = _
 
   /**
     * 获取SparkSession实例
@@ -36,6 +37,16 @@ object SingletonFactory {
     */
   def setSparkSession(sparkSession: SparkSession): Unit = {
     this.sparkSession = sparkSession
+  }
+
+  /**
+   * 用于获取当前的job全类名
+   */
+  def getJobClassName: String = {
+    if (StringUtils.isBlank(this.jobClassName)) {
+      this.jobClassName = SparkEnv.get.conf.get("spark.driver.class.name", "")
+    }
+    this.jobClassName
   }
 
   /**

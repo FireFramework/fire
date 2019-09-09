@@ -55,7 +55,7 @@ object JdbcOper extends BaseLogging {
         }
       } catch {
         case ex: Exception => {
-          AccumulatorManager.addMultiTimer(s"$module.exception.init", 1)
+          AccumulatorManager.addMultiTimer(module, "init", "init", "", "ERROR", keyNum.toString, 1)
           this.log(s"初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", this.module, null, ex)
           throw ex
         }
@@ -78,11 +78,11 @@ object JdbcOper extends BaseLogging {
     try {
       val pool = this.init(keyNum)
       connection = pool.getConnection
-      AccumulatorManager.addMultiTimer(s"$module.connection", 1)
+      AccumulatorManager.addMultiTimer(module, "getConnection", "getConnection", "", "INFO", keyNum.toString, 1)
       this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${keyNum} ]成功", this.module)
     } catch {
       case ex: Exception => {
-        AccumulatorManager.addMultiTimer(s"$module.exception.getConnection", 1)
+        AccumulatorManager.addMultiTimer(module, "getConnection", "getConnection", "", "ERROR", keyNum.toString, 1)
         this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]出现异常，请检查配置文件", this.module, null, ex)
         throw ex
       }
@@ -132,11 +132,11 @@ object JdbcOper extends BaseLogging {
       retVal = stat.executeUpdate
       if (commit) conn.commit()
       this.log(s"executeUpdate: sql->$sql 影响记录数：$retVal", this.module, 0)
-      AccumulatorManager.addMultiTimer(s"$module.update", retVal)
+      AccumulatorManager.addMultiTimer(module, "executeUpdate", "update", "", "INFO", keyNum.toString, retVal)
     }
     catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(s"$module.exception.executeUpdate", 1)
+        AccumulatorManager.addMultiTimer(module, "executeUpdate", "update", "", "ERROR", keyNum.toString, 1)
         this.log(s"executeUpdate: sql->$sql result->fail", this.module, 0, e)
         throw e
       }
@@ -208,10 +208,10 @@ object JdbcOper extends BaseLogging {
       if (commit) conn.commit()
       val sum = retVal.sum
       this.log(s"executeBatch: sql->$sql 影响总记录数：$sum", this.module, 0)
-      AccumulatorManager.addMultiTimer(s"$module.batch", sum)
+      AccumulatorManager.addMultiTimer(module, "executeBatch", "batch", "", "INFO", keyNum.toString, sum)
     } catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(s"$module.exception.executeBatch", 1)
+        AccumulatorManager.addMultiTimer(module, "executeBatch", "batch", "", "ERROR", keyNum.toString, 1)
         this.log(s"executeBatch: executeBatch sql->$sql result->fail", this.module, 0, e)
         throw e
       }
@@ -297,10 +297,10 @@ object JdbcOper extends BaseLogging {
         count = callback.process(rs)
       }
       this.log(s"executeQueryCall: sql->$sql result->success 查询记录数：$count", this.module, 1)
-      AccumulatorManager.addMultiTimer(s"$module.select", count)
+      AccumulatorManager.addMultiTimer(module, "executeQueryCall", "query", "", "INFO", keyNum.toString, count)
     } catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(s"$module.exception.executeQueryCall", 1)
+        AccumulatorManager.addMultiTimer(module, "executeQueryCall", "query", "", "ERROR", keyNum.toString, 1)
         this.log(s"executeQueryCall: sql->$sql result->fail", this.module, 1, e)
         throw e
       }

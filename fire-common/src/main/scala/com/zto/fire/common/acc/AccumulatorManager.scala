@@ -12,10 +12,10 @@ import org.apache.spark.util.LongAccumulator
 import org.apache.spark.{SparkContext, SparkEnv}
 
 /**
-  * fire内置累加器工具类
-  *
-  * @author ChengLong 2019-7-25 19:11:16
-  */
+ * fire内置累加器工具类
+ *
+ * @author ChengLong 2019-7-25 19:11:16
+ */
 private[fire] object AccumulatorManager {
   // 累加器名称，含有fire的名字将会显示在webui中
   private[this] val counterLabel = "fire-counter"
@@ -37,12 +37,15 @@ private[fire] object AccumulatorManager {
   private[fire] val executorInstances: AtomicInteger = new AtomicInteger(0)
   private[this] val initExecutors: AtomicInteger = new AtomicInteger(0)
 
+  // 获取当前任务的全类名
+  private[this] lazy val jobClassName = SparkEnv.get.conf.get("spark.driver.class.name", "")
+
   /**
-    * 将数据累加到count累加器中
-    *
-    * @param value
-    * 累加值
-    */
+   * 将数据累加到count累加器中
+   *
+   * @param value
+   * 累加值
+   */
   def addCounter(value: Long): Unit = {
     if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
       val countAccumulator = SparkEnv.get.conf.get(this.counterLabel, "")
@@ -56,19 +59,19 @@ private[fire] object AccumulatorManager {
   }
 
   /**
-    * 获取counter累加器的值
-    *
-    * @return
-    * 累加结果
-    */
+   * 获取counter累加器的值
+   *
+   * @return
+   * 累加结果
+   */
   def getCounter: Long = this.counter.value
 
   /**
-    * 将timeCost累加到日志累加器中
-    *
-    * @param timeCost
-    * TimeCost实例对象
-    */
+   * 将timeCost累加到日志累加器中
+   *
+   * @param timeCost
+   * TimeCost实例对象
+   */
   def addLog(timeCost: TimeCost): Unit = {
     val env = SparkEnv.get
     if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
@@ -83,19 +86,19 @@ private[fire] object AccumulatorManager {
   }
 
   /**
-    * 获取日志累加器中的值
-    *
-    * @return
-    * 日志累加值
-    */
+   * 获取日志累加器中的值
+   *
+   * @return
+   * 日志累加值
+   */
   def getLog: ConcurrentLinkedQueue[String] = this.logAccumulator.value
 
   /**
-    * 将数据累加到multiCount累加器中
-    *
-    * @param value
-    * 累加值
-    */
+   * 将数据累加到multiCount累加器中
+   *
+   * @param value
+   * 累加值
+   */
   def addMultiCounter(key: String, value: Long): Unit = {
     if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
       val countAccumulator = SparkEnv.get.conf.get(this.multiCounterLabel, "")
@@ -109,19 +112,19 @@ private[fire] object AccumulatorManager {
   }
 
   /**
-    * 获取multiCounter累加器的值
-    *
-    * @return
-    * 累加结果
-    */
+   * 获取multiCounter累加器的值
+   *
+   * @return
+   * 累加结果
+   */
   def getMultiCounter: ConcurrentHashMap[String, Long] = this.multiCounter.value
 
   /**
-    * 将数据累加到timer累加器中
-    *
-    * @param value
-    * 累加值的key、value和时间的schema，默认为yyyy-MM-dd HH:mm:00
-    */
+   * 将数据累加到timer累加器中
+   *
+   * @param value
+   * 累加值的key、value和时间的schema，默认为yyyy-MM-dd HH:mm:00
+   */
   def addMultiTimer(key: String, value: Long, schema: String = GlobalConstants.MultiTimerSchema.MIN): Unit = {
     if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
       val timerAccumulator = SparkEnv.get.conf.get(this.multiTimerLabel, "")
@@ -135,20 +138,46 @@ private[fire] object AccumulatorManager {
   }
 
   /**
-    * 获取timer累加器的值
-    *
-    * @return
-    * 累加结果
-    */
+   * 用于构建复杂类型（json）的多时间维度累加器的key
+   * 并将key作为多时间维度累加器的key
+   *
+   * @param value
+   * 累加的值
+   * @param cluster
+   * 连接的集群名
+   * @param module
+   * 所在的模块
+   * @param method
+   * 所在的方法名
+   * @param action
+   * 执行的动作
+   * @param sink
+   * 作用的目标
+   * @param level
+   * 日志级别：INFO、ERROR
+   * @return
+   * 累加器的key（json格式）
+   */
+  def addMultiTimer(module: String, method: String, action: String, sink: String, level: String, cluster: String, value: Long): Unit = {
+    val multiKey = s"""{"cluster":"$cluster","module":"$module","method":"$method","action":"$action","sink":"$sink","level":"$level","jobClass":"$jobClassName"}"""
+    this.addMultiTimer(multiKey, value)
+  }
+
+  /**
+   * 获取timer累加器的值
+   *
+   * @return
+   * 累加结果
+   */
   def getMultiTimer: HashBasedTable[String, String, Long] = this.multiTimer.value
 
   /**
-    * 注册多个自定义累加器到每个executor
-    *
-    * @param sc
-    * SparkContext
-    * [key, accumulator]
-    */
+   * 注册多个自定义累加器到每个executor
+   *
+   * @param sc
+   * SparkContext
+   * [key, accumulator]
+   */
   private[fire] def registerAccumulators(sc: SparkContext): Unit = {
     if (sc != null && accMap != null && accMap.size > 0) {
       if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (SystemInfoUtils.isLinux) "10000" else "10").toInt)

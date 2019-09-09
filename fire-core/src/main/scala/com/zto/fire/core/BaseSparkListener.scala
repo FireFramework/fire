@@ -1,6 +1,7 @@
 package com.zto.fire.core
 
 import com.zto.fire.common.acc.AccumulatorManager
+import com.zto.fire.common.db.JdbcOper.module
 import com.zto.fire.common.enu.JobType
 import org.apache.spark.Logging
 import org.apache.spark.scheduler._
@@ -16,9 +17,9 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
   override def onStageCompleted(stageCompleted: SparkListenerStageCompleted): Unit = {
     this.baseSpark.onStageCompleted(stageCompleted)
     if (stageCompleted != null && stageCompleted.stageInfo.failureReason.isEmpty) {
-      AccumulatorManager.addMultiTimer(s"listener.stageCompleted", 1)
+      AccumulatorManager.addMultiTimer(module, "onStageCompleted", "onStageCompleted", "", "INFO", "", 1)
     } else {
-      AccumulatorManager.addMultiTimer(s"listener.exception.stageFailed", 1)
+      AccumulatorManager.addMultiTimer(module, "onStageCompleted", "onStageCompleted", "", "ERROR", "", 1)
       this.logFire(s"stage failed. reason: " + stageCompleted.stageInfo.failureReason, this.module)
     }
   }
@@ -32,9 +33,9 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
   override def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit = {
     this.baseSpark.onTaskEnd(taskEnd)
     if (taskEnd != null && taskEnd.reason != null && "Success".equalsIgnoreCase(taskEnd.reason.toString)) {
-      AccumulatorManager.addMultiTimer(s"listener.taskCompleted", 1)
+      AccumulatorManager.addMultiTimer(module, "onTaskEnd", "onTaskEnd", "", "INFO", "", 1)
     } else {
-      AccumulatorManager.addMultiTimer(s"listener.exception.taskFailed", 1)
+      AccumulatorManager.addMultiTimer(module, "onTaskEnd", "onTaskEnd", "", "ERROR", "", 1)
       this.logFire(s"task failed.", this.module)
     }
   }
@@ -44,9 +45,9 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
   override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
     this.baseSpark.onJobEnd(jobEnd)
     if (jobEnd != null && jobEnd.jobResult == JobSucceeded) {
-      AccumulatorManager.addMultiTimer(s"listener.jobCompleted", 1)
+      AccumulatorManager.addMultiTimer(module, "onJobEnd", "onJobEnd", "", "INFO", "", 1)
     } else {
-      AccumulatorManager.addMultiTimer(s"listener.exception.jobFailed", 1)
+      AccumulatorManager.addMultiTimer(module, "onJobEnd", "onJobEnd", "", "ERROR", "", 1)
       this.logFire(s"job failed.", this.module)
     }
   }

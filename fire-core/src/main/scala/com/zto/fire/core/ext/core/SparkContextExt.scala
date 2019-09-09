@@ -1,7 +1,6 @@
 package com.zto.fire.core.ext.core
 
 import com.zto.fire.common.util.GlobalConstants
-import com.zto.fire.core.acc.{MultiAccumulators, MultiDateTimeAccumulators}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.HBaseContextExt
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
@@ -20,22 +19,6 @@ import org.apache.spark.{Accumulator, SparkContext}
 class SparkContextExt(sc: SparkContext) {
   // 获取单例的HBaseContext对象
   private lazy val hbaseContext: HBaseContextExt = SingletonFactory.getHBaseContextInstance(sc)
-
-  /**
-    * 根据多个key创建一个含有多个值的自定义多值累加器
-    */
-  def multiAccumulators(): Accumulator[collection.mutable.LinkedHashMap[String, Long]] = {
-    val map = scala.collection.mutable.LinkedHashMap[String, Long]()
-    this.sc.accumulator(map)(MultiAccumulators)
-  }
-
-  /**
-    * 根据多个key创建一个含有多个值多个时间的自定义多值累加器
-    */
-  def multiDateTimeAccumulators: Accumulator[collection.mutable.Map[String, Long]] = {
-    val map = scala.collection.mutable.Map[String, Long]()
-    this.sc.accumulator(map)(MultiDateTimeAccumulators)
-  }
 
   /**
     * 根据运行模式创建SQLContext或HiveContext

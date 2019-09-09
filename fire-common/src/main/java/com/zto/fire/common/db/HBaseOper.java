@@ -46,6 +46,7 @@ public class HBaseOper {
     private static Map<String, String> hbaseCluster;
     private static final Map<Class, Map<String, Field>> cacheFieldMap = new ConcurrentHashMap<>();
     private static final String timerSchema = "yyyy-MM-dd HH:mm:00";
+    private static final String module = "HBaseOper";
 
     static {
         hbaseCluster = ImmutableMap.<String, String>builder()
@@ -64,9 +65,9 @@ public class HBaseOper {
         if (connection == null) {
             try {
                 connection = ConnectionFactory.createConnection(getConfiguration());
-                AccumulatorManager.addMultiTimer("hbase.connection." + GlobalConstants.hbaseCluster(), 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "getConnection", "getConnection", "", "INFO", GlobalConstants.hbaseCluster(), 1);
             } catch (IOException e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.getConnection", 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "getConnection", "getConnection", "", "error", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             }
         }
@@ -121,9 +122,9 @@ public class HBaseOper {
                 Table table = getConnection().getTable(tbName);
                 table.put(put);
                 table.close();
-                AccumulatorManager.addMultiTimer("hbase.insert." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "insert", "insert", tableName, "INFO", GlobalConstants.hbaseCluster(), 1);
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.insert." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "insert", "insert", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             }
         }
@@ -142,9 +143,9 @@ public class HBaseOper {
                 Table table = getConnection().getTable(tbName);
                 table.put(put);
                 table.close();
-                AccumulatorManager.addMultiTimer("hbase.insert." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "insert", "insert", tableName, "INFO", GlobalConstants.hbaseCluster(), 1);
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.insert." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "insert", "insert", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             }
         }
@@ -163,9 +164,9 @@ public class HBaseOper {
                 TableName tbName = TableName.valueOf(tableName);
                 table = getConnection().getTable(tbName);
                 table.put(putList);
-                AccumulatorManager.addMultiTimer("hbase.insert." + tableName, putList.size(), HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "insertPut", "insert", tableName, "INFO", GlobalConstants.hbaseCluster(), 1);
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.insertPut." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "insertPut", "insert", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             } finally {
                 if (table != null) {
@@ -316,10 +317,10 @@ public class HBaseOper {
                 table = getConnection().getTable(TableName.valueOf(tableName));
                 Get get = new Get(rowKey.getBytes());
                 get.setMaxVersions(versionCount);
-                AccumulatorManager.addMultiTimer("hbase.get." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "get", "get", tableName, "INFO", GlobalConstants.hbaseCluster(), 1);
                 return table.get(get);
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.get." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "get", "get", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             } finally {
                 if (table != null) {
@@ -361,10 +362,10 @@ public class HBaseOper {
             Table table = null;
             try {
                 table = getConnection().getTable(TableName.valueOf(tableName));
-                AccumulatorManager.addMultiTimer("hbase.get." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "get", "get", tableName, "INFO", GlobalConstants.hbaseCluster(), 1);
                 return table.get(get);
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.get." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "get", "get", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             } finally {
                 if (table != null) {
@@ -391,10 +392,10 @@ public class HBaseOper {
             Table table = null;
             try {
                 table = getConnection().getTable(TableName.valueOf(tableName));
-                AccumulatorManager.addMultiTimer("hbase.get." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "get", "get", tableName, "INFO", GlobalConstants.hbaseCluster(), 1);
                 return table.get(getList);
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.get." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "get", "get", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             } finally {
                 if (table != null) {
@@ -585,10 +586,10 @@ public class HBaseOper {
                     get.setMaxVersions(versionCount);
                     gets.add(get);
                 }
-                AccumulatorManager.addMultiTimer("hbase.get." + tableName, gets.size(), HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "gets", "get", tableName, "INFO", GlobalConstants.hbaseCluster(), gets.size());
                 return table.get(gets);
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.get." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "gets", "get", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             } finally {
                 if (table != null) {
@@ -702,10 +703,10 @@ public class HBaseOper {
                         list.add(obj);
                     }
                 }
-                AccumulatorManager.addMultiTimer("hbase.scan." + tableName, list.size(), HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "scan", "scan", tableName, "INFO", GlobalConstants.hbaseCluster(), list.size());
                 return list;
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.scan." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "scan", "scan", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             } finally {
                 if (rsScanner != null) {
@@ -746,10 +747,10 @@ public class HBaseOper {
                         list.add(obj);
                     }
                 }
-                AccumulatorManager.addMultiTimer("hbase.scan." + tableName, list.size(), HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "scanMaxVersions", "scan", tableName, "INFO", GlobalConstants.hbaseCluster(), list.size());
                 return list;
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.scan." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "scanMaxVersions", "scan", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             } finally {
                 if (rsScanner != null) {
@@ -789,10 +790,10 @@ public class HBaseOper {
                         list.add(obj);
                     }
                 }
-                AccumulatorManager.addMultiTimer("hbase.scan." + tableName, list.size(), HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "scanAll", "scan", tableName, "INFO", GlobalConstants.hbaseCluster(), list.size());
                 return list;
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.scan." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "scanAll", "scan", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             } finally {
                 if (rsScanner != null) {
@@ -842,10 +843,10 @@ public class HBaseOper {
                         }
                     }
                 }
-                AccumulatorManager.addMultiTimer("hbase.scan." + tableName, list.size(), HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "scan", "scan", tableName, "INFO", GlobalConstants.hbaseCluster(), list.size());
                 return list;
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.scan." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "scan", "scan", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             } finally {
                 if (rsScanner != null) {
@@ -889,10 +890,10 @@ public class HBaseOper {
                     }
                 }
             }
-            AccumulatorManager.addMultiTimer("hbase.scan." + tableName, list.size(), HBaseOper.timerSchema);
+            AccumulatorManager.addMultiTimer(module, "scanMaxVersions", "scan", tableName, "INFO", GlobalConstants.hbaseCluster(), list.size());
             return list;
         } catch (Exception e) {
-            AccumulatorManager.addMultiTimer("hbase.exception.scan." + tableName, 1, HBaseOper.timerSchema);
+            AccumulatorManager.addMultiTimer(module, "scanMaxVersions", "scan", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
             e.printStackTrace();
         } finally {
             if (rsScanner != null) {
@@ -984,10 +985,10 @@ public class HBaseOper {
                 }
                 table.delete(deletes);
                 table.close();
-                AccumulatorManager.addMultiTimer("hbase.delete." + tableName, deletes.size(), HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "deleteRow", "delete", tableName, "INFO", GlobalConstants.hbaseCluster(), deletes.size());
             }
         } catch (Exception e) {
-            AccumulatorManager.addMultiTimer("hbase.exception.delete." + tableName, 1, HBaseOper.timerSchema);
+            AccumulatorManager.addMultiTimer(module, "deleteRow", "delete", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
             e.printStackTrace();
         }
     }
@@ -1235,11 +1236,11 @@ public class HBaseOper {
     private static Table getTable(String tableName) {
         try {
             if (isExists(tableName)) {
-                AccumulatorManager.addMultiTimer("hbase.getTable." + tableName, 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "getTable", "getTable", tableName, "INFO", GlobalConstants.hbaseCluster(), 1);
                 return getConnection().getTable(TableName.valueOf(tableName));
             }
         } catch (Exception e) {
-            AccumulatorManager.addMultiTimer("hbase.exception.getTable." + tableName, 1, HBaseOper.timerSchema);
+            AccumulatorManager.addMultiTimer(module, "getTable", "getTable", tableName, "ERROR", GlobalConstants.hbaseCluster(), 1);
             e.printStackTrace();
         }
         return null;
@@ -1392,7 +1393,7 @@ public class HBaseOper {
                 }
             }
         } catch (Exception e) {
-            AccumulatorManager.addMultiTimer("hbase.exception.multiCell2Field", 1, HBaseOper.timerSchema);
+            AccumulatorManager.addMultiTimer(module, "multiCell2Field", "multiCell2Field", "", "ERROR", GlobalConstants.hbaseCluster(), 1);
             e.printStackTrace();
         }
         return objList;
@@ -1419,7 +1420,7 @@ public class HBaseOper {
             idField.setAccessible(true);
             idField.set(obj, rowKey);
         } catch (Exception e) {
-            AccumulatorManager.addMultiTimer("hbase.exception.cell2Field", 1, HBaseOper.timerSchema);
+            AccumulatorManager.addMultiTimer(module, "cell2Field", "cell2Field", "", "ERROR", GlobalConstants.hbaseCluster(), 1);
             e.printStackTrace();
         }
         return obj;
@@ -1567,7 +1568,7 @@ public class HBaseOper {
                 beanList.$plus$eq(obj);
             }
         } catch (Exception e) {
-            AccumulatorManager.addMultiTimer("hbase.exception.hbaseRow2BeanList", 1, HBaseOper.timerSchema);
+            AccumulatorManager.addMultiTimer(module, "hbaseRow2BeanList", "hbaseRow2BeanList", "", "ERROR", GlobalConstants.hbaseCluster(), 1);
             e.printStackTrace();
         }
         return beanList.iterator();
@@ -1587,7 +1588,7 @@ public class HBaseOper {
                 beanList.addAll(hbaseMultiRow2Bean(it.next()._2, clazz));
             }
         } catch (Exception e) {
-            AccumulatorManager.addMultiTimer("hbase.exception.hbaseMultiVersionRow2BeanList", 1, HBaseOper.timerSchema);
+            AccumulatorManager.addMultiTimer(module, "hbaseMultiVersionRow2BeanList", "hbaseMultiVersionRow2BeanList", "", "ERROR", GlobalConstants.hbaseCluster(), 1);
             e.printStackTrace();
         }
         return beanList;
@@ -1671,7 +1672,7 @@ public class HBaseOper {
                 }
                 return put;
             } catch (Exception e) {
-                AccumulatorManager.addMultiTimer("hbase.exception.convert2Put", 1, HBaseOper.timerSchema);
+                AccumulatorManager.addMultiTimer(module, "convert2Put", "convert2Put", "", "ERROR", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
             }
         }
