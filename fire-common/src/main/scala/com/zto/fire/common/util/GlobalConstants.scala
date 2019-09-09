@@ -177,6 +177,14 @@ object GlobalConstants {
     val SPARK_FIRE_TIMER_MAX_HOUR = "spark.fire.timer.max.hour"
     // rest接口权限认证
     val SPARK_FIRE_REST_FILTER = "spark.fire.rest.filter"
+    // 用于配置是否关闭fire内置的所有累加器
+    val SPARK_FIRE_ACC_OPEN = "spark.fire.acc.open"
+    // 日志累加器开关
+    val SPARK_FIRE_ACC_LOG_OPEN = "spark.fire.acc.log.open"
+    // 多值累加器开关
+    val SPARK_FIRE_ACC_MULTI_COUNTER_OPEN = "spark.fire.acc.multi.counter.open"
+    // 多时间维度累加器开关
+    val SPARK_FIRE_ACC_MULTI_TIMER_OPEN = "spark.fire.acc.multi.timer.open"
 
     // ---------------------------- HDFS 相关配置 ---------------------------- //
     // 是否启用高可用
@@ -188,7 +196,15 @@ object GlobalConstants {
     */
   object FireConf extends Enumeration {
     // rest接口权限认证
-    val restFilter = PropUtils.getBoolean(GlobalConstants.PropKeys.SPARK_FIRE_REST_FILTER, GlobalConstants.DefaultVals.restFilter)
+    lazy val restFilter = PropUtils.getBoolean(GlobalConstants.PropKeys.SPARK_FIRE_REST_FILTER, GlobalConstants.DefaultVals.restFilter)
+    // 是否关闭fire内置的所有累加器
+    lazy val accOpen = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_OPEN, true)
+    // 日志累加器开关
+    lazy val accLogOpen = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_LOG_OPEN, true)
+    // 多值累加器开关
+    lazy val accMultiCounterOpen = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_MULTI_COUNTER_OPEN, true)
+    // 多时间维度累加器开关
+    lazy val accMultiTimerOpen = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_MULTI_TIMER_OPEN, true)
   }
 
   /**

@@ -38,17 +38,17 @@ object Test extends BaseSparkStreaming {
     val studentRDD = this.sc.parallelize(JavaConversions.asScalaBuffer(Student.newStudentList()), 3)
     studentRDD.createOrReplaceTempView("t_student")
 
-
     while (true) {
       println(s"==================${DateFormatUtils.formatCurrentDateTime()}==================")
       rdd.foreachPartition(i => {
-        this.acc.addMultiTimer("tidbReader", 1, "yyyy-MM-dd HH")
         this.testJdbcQuery
       })
+      this.acc.addMultiCounter("multiCounter", 1)
+      println("================多值累加器==============")
+      JavaConversions.mapAsScalaConcurrentMap(this.acc.getMultiCounter).foreach(t => println(t._1 + " " + t._2))
+      println("================多维度累加器==============")
       val size = this.acc.getMultiTimer.cellSet().size()
       JavaConversions.asScalaSet(this.acc.getMultiTimer.cellSet()).foreach(t => println(s"size=${size} 组件：" + t.getRowKey + " 时间：" + t.getColumnKey + " " + t.getValue + "条"))
-      this.spark.sql("use tmp")
-      this.spark.sql("show tables").show(100)
       println
       Thread.sleep(30000)
     }

@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.bean.TimeCost
+import com.zto.fire.common.util.GlobalConstants.{DefaultVals, PropKeys}
 import com.zto.fire.common.util.{GlobalConstants, PropUtils}
 import org.apache.spark.util.AccumulatorV2
 
@@ -15,9 +16,11 @@ import org.apache.spark.util.AccumulatorV2
   */
 class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[String]] {
   // 用于限定日志最大保存量，防止日志量过大，撑爆driver
-  private lazy val maxLogSize = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_FIRE_LOG_MAX_SIZE, GlobalConstants.DefaultVals.maxLogSize)
+  private lazy val maxLogSize = PropUtils.getInt(PropKeys.SPARK_FIRE_LOG_MAX_SIZE, DefaultVals.maxLogSize)
   // 用于存放日志的队列
   private val logQueue = new ConcurrentLinkedQueue[String]
+  // 判断是否打开日志累加器
+  private lazy val isOpen = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_OPEN, true) && PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_LOG_OPEN, true)
 
   /**
     * 判断累加器是否为空
@@ -41,7 +44,7 @@ class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[Strin
     * 日志记录对象
     */
   override def add(timeCost: TimeCost): Unit = {
-    if (timeCost != null) {
+    if (this.isOpen && timeCost != null) {
       this.logQueue.add(JSON.toJSONString(timeCost, SerializerFeature.WriteNullStringAsEmpty))
       this.clear
     }

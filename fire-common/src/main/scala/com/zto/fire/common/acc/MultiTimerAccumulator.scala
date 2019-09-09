@@ -3,6 +3,7 @@ package com.zto.fire.common.acc
 import java.util.Date
 
 import com.google.common.collect.HashBasedTable
+import com.zto.fire.common.util.GlobalConstants.PropKeys
 import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, PropUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.AccumulatorV2
@@ -22,6 +23,8 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBa
   private lazy val maxTimerHour = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_FIRE_TIMER_MAX_HOUR, GlobalConstants.DefaultVals.maxTimerHour)
   // 用于记录上次清理过期累加数据的时间
   private var lastClearTime = new Date
+  // 判断是否打开多时间维度累加器
+  private lazy val isOpen = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_OPEN, true) && PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_MULTI_TIMER_OPEN, true)
 
   /**
     * 用于判断当前累加器是否为空
@@ -55,7 +58,7 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBa
     * 累加值的key、value和时间的schema，默认为yyyy-MM-dd HH:mm:00
     */
   override def add(kv: (String, Long, String)): Unit = {
-    if (kv == null) return
+    if (!isOpen || kv == null) return
     val schema = if (StringUtils.isBlank(kv._3)) {
       GlobalConstants.MultiTimerSchema.MIN
     } else kv._3
