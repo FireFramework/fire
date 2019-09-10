@@ -20,13 +20,9 @@ object FireAccTest extends BaseSparkStreaming {
     val dstream = this.ssc.createDirectStream()
     dstream.foreachRDD(rdd => {
       rdd.foreachPartition(t => {
-        var sum = 0
         this.mark
-        t.foreach(i => {
-          sum += 1
-        })
         // 单值累加器
-        this.acc.addCounter(sum)
+        this.acc.addCounter(1)
         // 多值累加器，根据key的不同分别进行数据的累加
         this.acc.addMultiCounter("multiCounter", 1)
         this.acc.addMultiCounter("partitions", 1)
@@ -60,6 +56,6 @@ object FireAccTest extends BaseSparkStreaming {
   }
 
   def main(args: Array[String]): Unit = {
-    this.init(10, false)
+    this.init(1, false)
   }
 }
