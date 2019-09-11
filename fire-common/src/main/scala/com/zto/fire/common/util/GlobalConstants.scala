@@ -54,6 +54,8 @@ object GlobalConstants {
     val hiveCluster = "streaming"
     // 默认的日志级别
     val logLevel = LogLevel.INFO
+    // 累加器保留日志默认的最少记录数
+    val minLogSize = 500
     // 累加器保留日志默认的最大记录数
     val maxLogSize = 1000
     val maxTimerSize = 1000
@@ -169,7 +171,9 @@ object GlobalConstants {
     val ROCKET_PULL_TIMEOUT_MS = "spark.rocket.pull.timeout.ms"
 
     // ---------------------------- Fire 相关配置 ---------------------------- //
-    // 日志记录器保留最大的记录数
+    // 日志记录器保留最少的记录数
+    val SPARK_FIRE_LOG_MIN_SIZE = "spark.fire.log.min.size"
+    // 日志记录器保留最多的记录数
     val SPARK_FIRE_LOG_MAX_SIZE = "spark.fire.log.max.size"
     // timer累加器保留最大的记录数
     val SPARK_FIRE_TIMER_MAX_SIZE = "spark.fire.timer.max.size"

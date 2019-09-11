@@ -42,6 +42,9 @@ object Test extends BaseSparkStreaming {
       println(s"==================${DateFormatUtils.formatCurrentDateTime()}==================")
       rdd.foreachPartition(i => {
         this.testJdbcQuery
+        this.mark
+        Thread.sleep(100)
+        this.log("jdbc操作")
       })
       this.acc.addMultiCounter("multiCounter", 1)
       println("================多值累加器==============")
@@ -49,8 +52,8 @@ object Test extends BaseSparkStreaming {
       println("================多维度累加器==============")
       val size = this.acc.getMultiTimer.cellSet().size()
       JavaConversions.asScalaSet(this.acc.getMultiTimer.cellSet()).foreach(t => println(s"size=${size} 组件：" + t.getRowKey + " 时间：" + t.getColumnKey + " " + t.getValue + "条"))
-      println
-      Thread.sleep(30000)
+      println("日志累加器size=" + this.acc.getLog.size())
+      Thread.sleep(10000)
     }
     Thread.currentThread().join()
   }
