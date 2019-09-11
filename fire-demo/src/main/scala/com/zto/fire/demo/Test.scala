@@ -52,7 +52,7 @@ object Test extends BaseSparkStreaming {
       println("================多维度累加器==============")
       val size = this.acc.getMultiTimer.cellSet().size()
       JavaConversions.asScalaSet(this.acc.getMultiTimer.cellSet()).foreach(t => println(s"size=${size} 组件：" + t.getRowKey + " 时间：" + t.getColumnKey + " " + t.getValue + "条"))
-      println("日志累加器size=" + this.acc.getLog.size())
+      this.log("日志累加器size=" + this.acc.getLog.size())
       Thread.sleep(10000)
     }
     Thread.currentThread().join()

@@ -23,7 +23,8 @@ public class TimeCost implements Serializable {
     private Long timeCost;
     private String ip;
     private String load;
-
+    // 多核cpu使用率
+    private String cpuUsage;
     // 用于区分埋点日志和用户日志
     private Boolean isFire = false;
     private String id = UUID.randomUUID().toString();
@@ -189,6 +190,14 @@ public class TimeCost implements Serializable {
         this.level = level;
     }
 
+    public String getCpuUsage() {
+        return cpuUsage;
+    }
+
+    public void setCpuUsage(String cpuUsage) {
+        this.cpuUsage = cpuUsage;
+    }
+
     private String lable() {
         if (this.isFire) {
             return "fire";
@@ -199,7 +208,7 @@ public class TimeCost implements Serializable {
 
     @Override
     public String toString() {
-        String baseInfo = "【" + this.lable() + "Log】 " + this.msg + " start：" + this.startTime + " end：" + this.endTime + " cost：" + this.timeCost + " ip：" + this.ip + " load：" + this.load + " executor：" + this.executorId;
+        String baseInfo = "【" + this.lable() + "Log】 " + this.msg + " start：" + this.startTime + " end：" + this.endTime + " cost：" + this.timeCost + " ip：" + this.ip + " load：" + this.load + " cpuUsage：" + this.cpuUsage + " executor：" + this.executorId;
         if (!"driver".equalsIgnoreCase(this.executorId)) {
             baseInfo += " stage：" + this.stageId + " task：" + this.taskId;
         }
@@ -214,6 +223,7 @@ public class TimeCost implements Serializable {
         this.startTime = DateFormatUtils.formatCurrentDateTime();
         this.ip = SystemInfoUtils.getIp();
         this.load = SystemInfoUtils.getLoadAverageCache();
+        this.cpuUsage = SystemInfoUtils.getCpuUsageCache();
 
         if (SparkEnv.get() != null) {
             if (StringUtils.isBlank(executorId)) {

@@ -41,7 +41,13 @@ public class SystemInfoUtils {
                 .build(new CacheLoader<String, String>() {
                     @Override
                     public String load(String key) throws Exception {
-                        return getLoadAverage();
+                        if ("load".equalsIgnoreCase(key)) {
+                            return getLoadAverage();
+                        } else if ("cpuUsage".equalsIgnoreCase(key)) {
+                            return getCpuInfo().getCpuUsage() + "";
+                        } else {
+                            return "";
+                        }
                     }
                 });
     }
@@ -53,62 +59,64 @@ public class SystemInfoUtils {
      */
     public static SystemLoadInfo getCpuInfo() {
         float cpuUsage = 0;
-        Process pro1 = null;
-        Process pro2 = null;
-        Runtime runtime = Runtime.getRuntime();
-        BufferedReader in1 = null;
-        BufferedReader in2 = null;
-        try {
-            String command = "cat /proc/stat";
+        if (isLinux()) {
+            Process pro1 = null;
+            Process pro2 = null;
+            Runtime runtime = Runtime.getRuntime();
+            BufferedReader in1 = null;
+            BufferedReader in2 = null;
+            try {
+                String command = "cat /proc/stat";
 
-            //第一次采集CPU时间
-            pro1 = runtime.exec(command);
-            in1 = new BufferedReader(new InputStreamReader(pro1.getInputStream()));
-            String line = null;
-            long idleCpuTime1 = 0;
-            long totalCpuTime1 = 0;    //分别为系统启动后空闲的CPU时间和总的CPU时间
-            while ((line = in1.readLine()) != null) {
-                if (line.startsWith("cpu")) {
-                    line = line.trim();
-                    String[] temp = line.split("\\s+");
-                    idleCpuTime1 = Long.parseLong(temp[4]);
-                    for (String s : temp) {
-                        if (!s.equals("cpu")) {
-                            totalCpuTime1 += Long.parseLong(s);
+                //第一次采集CPU时间
+                pro1 = runtime.exec(command);
+                in1 = new BufferedReader(new InputStreamReader(pro1.getInputStream()));
+                String line = null;
+                long idleCpuTime1 = 0;
+                long totalCpuTime1 = 0;    //分别为系统启动后空闲的CPU时间和总的CPU时间
+                while ((line = in1.readLine()) != null) {
+                    if (line.startsWith("cpu")) {
+                        line = line.trim();
+                        String[] temp = line.split("\\s+");
+                        idleCpuTime1 = Long.parseLong(temp[4]);
+                        for (String s : temp) {
+                            if (!s.equals("cpu")) {
+                                totalCpuTime1 += Long.parseLong(s);
+                            }
                         }
+                        break;
                     }
-                    break;
                 }
-            }
 
-            //第二次采集CPU时间
-            Thread.sleep(100);
-            pro2 = runtime.exec(command);
-            in2 = new BufferedReader(new InputStreamReader(pro2.getInputStream()));
-            long idleCpuTime2 = 0;
-            long totalCpuTime2 = 0;    //分别为系统启动后空闲的CPU时间和总的CPU时间
-            while ((line = in2.readLine()) != null) {
-                if (line.startsWith("cpu")) {
-                    line = line.trim();
-                    String[] temp = line.split("\\s+");
-                    idleCpuTime2 = Long.parseLong(temp[4]);
-                    for (String s : temp) {
-                        if (!s.equals("cpu")) {
-                            totalCpuTime2 += Long.parseLong(s);
+                //第二次采集CPU时间
+                Thread.sleep(100);
+                pro2 = runtime.exec(command);
+                in2 = new BufferedReader(new InputStreamReader(pro2.getInputStream()));
+                long idleCpuTime2 = 0;
+                long totalCpuTime2 = 0;    //分别为系统启动后空闲的CPU时间和总的CPU时间
+                while ((line = in2.readLine()) != null) {
+                    if (line.startsWith("cpu")) {
+                        line = line.trim();
+                        String[] temp = line.split("\\s+");
+                        idleCpuTime2 = Long.parseLong(temp[4]);
+                        for (String s : temp) {
+                            if (!s.equals("cpu")) {
+                                totalCpuTime2 += Long.parseLong(s);
+                            }
                         }
+                        break;
                     }
-                    break;
                 }
+                if (idleCpuTime1 != 0 && totalCpuTime1 != 0 && idleCpuTime2 != 0 && totalCpuTime2 != 0) {
+                    cpuUsage = 1 - (float) (idleCpuTime2 - idleCpuTime1) / (float) (totalCpuTime2 - totalCpuTime1);
+                    systemLoadInfo.setCpuUsage(cpuUsage);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                IOUtils.close(in1, in2);
+                IOUtils.close(pro1, pro2);
             }
-            if (idleCpuTime1 != 0 && totalCpuTime1 != 0 && idleCpuTime2 != 0 && totalCpuTime2 != 0) {
-                cpuUsage = 1 - (float) (idleCpuTime2 - idleCpuTime1) / (float) (totalCpuTime2 - totalCpuTime1);
-                systemLoadInfo.setCpuUsage(cpuUsage);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            IOUtils.close(in1, in2);
-            IOUtils.close(pro1, pro2);
         }
         return systemLoadInfo;
     }
@@ -411,21 +419,40 @@ public class SystemInfoUtils {
 
     /**
      * 从缓存中获取load信息
-     * @return
      */
     public static String getLoadAverageCache() {
-        return loadCache.getUnchecked("load");
+        return getCache("load");
+    }
+
+    /**
+     * 从缓存中获取cpu使用率信息
+     */
+    public static String getCpuUsageCache() {
+        return getCache("cpuUsage");
+    }
+
+    /**
+     * 从缓存中获取数据
+     *
+     * @param key 缓存的key
+     * @return 缓存的值
+     */
+    public static String getCache(String key) {
+        return loadCache.getUnchecked(key);
     }
 
     /**
      * 获取当前主机的平均负载
-     * @return
-     * eg: 0.64, 0.33, 0.30
+     *
+     * @return eg: 0.64, 0.33, 0.30
      */
     public static String getLoadAverage() {
-        String loadMsg = executeCmdForLine("uptime");
-        if(StringUtils.isNotBlank(loadMsg) && loadMsg.contains("load average")) {
-            return loadMsg.substring(loadMsg.lastIndexOf("load average")).replace("load average: ","");
+        String loadMsg = "";
+        if (isLinux()) {
+            loadMsg = executeCmdForLine("uptime");
+            if (StringUtils.isNotBlank(loadMsg) && loadMsg.contains("load average")) {
+                return loadMsg.substring(loadMsg.lastIndexOf("load average")).replace("load average: ", "");
+            }
         }
         return loadMsg;
     }
