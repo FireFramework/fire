@@ -36,7 +36,7 @@ class StreamingContextExt(ssc: StreamingContext) {
     */
   def createDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, keyNum: Int = 1): DStream[ConsumerRecord[String, String]] = {
     val finalKafkaTopic = if (topics == null) SparkUtils.topicSplit(GlobalConstants.KafkaConf.kafkaTopics(keyNum)) else topics
-    val finalKafkaParams = if (kafkaParams == null) this.kafkaParams(keyNum = 1) else kafkaParams
+    val finalKafkaParams = if (kafkaParams == null) this.kafkaParams(keyNum = keyNum) else kafkaParams
 
     KafkaUtils.createDirectStream[String, String](
       ssc, PreferConsistent, Subscribe[String, String](finalKafkaTopic, finalKafkaParams))

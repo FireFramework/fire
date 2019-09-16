@@ -25,7 +25,7 @@ object JdbcTest extends BaseSparkCore {
     */
   def testJdbcUpdate: Unit = {
     // 执行insert操作
-    val insertSql = s"INSERT INTO $tableName (name, age, createTime, LENGTH, sex) VALUES (?, ?, ?, ?, ?)"
+    val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
     this.spark.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1))
     // 更新配置文件中指定的第二个关系型数据库
     this.spark.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1), keyNum = 2)
@@ -35,7 +35,7 @@ object JdbcTest extends BaseSparkCore {
     this.spark.jdbcUpdate(updateSql, Seq("root", 1))
 
     // 执行批量操作
-    val batchSql = s"INSERT INTO $tableName (name, age, createTime, LENGTH, sex) VALUES (?, ?, ?, ?, ?)"
+    val batchSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
     this.spark.jdbcBatchUpdate(batchSql, Seq(Seq("spark1", 21, DateFormatUtils.formatCurrentDateTime(), 100.123, 1),
       Seq("flink2", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
       Seq("flink3", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
@@ -160,7 +160,7 @@ object JdbcTest extends BaseSparkCore {
   }
 
   override def process: Unit = {
-    //this.testJdbcUpdate
+    // this.testJdbcUpdate
     // this.testJdbcQuery
     // this.testTableLoad
     // this.testTableSave

@@ -17,7 +17,7 @@ object KafkaTest extends BaseSparkStreaming {
     * 2. 支持streaming热重启（可在不关闭streaming任务的前提下修改batch时间）
     */
   override def process: Unit = {
-    val dstream = this.ssc.createDirectStream()
+    /*val dstream = this.ssc.createDirectStream()
 
     dstream.foreachRDD(rdd => {
       if (rdd.isNotEmpty) {
@@ -26,7 +26,7 @@ object KafkaTest extends BaseSparkStreaming {
         // toLowerDF表示将大写的字段转为小写
         this.spark.sql("select * from test").toLowerDF.show(1, false)
         this.spark.sql("select after.* from test").toLowerDF.show(1, false)
-        this.spark.sql("select after.* from test where after.platformid=1").toLowerDF.show(1, false)
+        this.spark.sql("select after.* from test where after.order_code=1").toLowerDF.show(1, false)
 
         // 二、直接将json按指定的schema解析（只解析after），fieldNameUpper=true表示按大写方式解析，并自动转为小写
         rdd.kafkaJson2DF(classOf[OrderCommon], fieldNameUpper = true).show(2, false)
@@ -41,15 +41,24 @@ object KafkaTest extends BaseSparkStreaming {
     val dstream2 = this.ssc.createDirectStream(keyNum = 2)
     dstream2.print(1)
     val dstream3 = this.ssc.createDirectStream(keyNum = 3)
-    dstream3.print(1)
+    dstream3.print(1)*/
     val dstream5 = this.ssc.createDirectStream(keyNum = 5)
+    this.mark
+    dstream5.count.foreachRDD(rdd => {
+      rdd.foreachPartition(it => {
+        it.foreach(t => {
+          this.acc.addMultiCounter("input", t)
+        })
+      })
+    })
+    this.log("count耗时")
     dstream5.print(1)
 
     this.ssc.startAwaitTermination()
   }
 
   def main(args: Array[String]): Unit = {
-    this.init(10, false)
+    this.init(10, true)
     this.stop
   }
 }

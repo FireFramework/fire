@@ -15,10 +15,10 @@ import scala.collection.JavaConversions
   * @author ChengLong 2019-5-18 09:20:52
   */
 object HBaseBulkTest extends BaseSparkCore {
-  private val tableName1 = "zto_test_senda"
-  private val tableName2 = "zto_test_senda2"
-  private val tableName3 = "zto_test_senda3"
-  private val tableName4 = "zto_test_senda4"
+  private val tableName1 = "fire_test_1"
+  private val tableName2 = "fire_test_2"
+  private val tableName3 = "fire_test_3"
+  private val tableName4 = "fire_test_4"
 
   /**
     * 使用id作为rowKey
