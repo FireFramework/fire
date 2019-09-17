@@ -26,6 +26,8 @@ object RocketTest extends BaseSparkStreaming {
         val scalaMap = JavaConversions.mapAsScalaMap(map)
         list ++= scalaMap.toList
       })
+
+      this.acc.addMultiCounter("item", list.size)
       list.iterator
     })
     println("=============item===========")
@@ -42,6 +44,7 @@ object RocketTest extends BaseSparkStreaming {
         val scalaMap = JavaConversions.mapAsScalaMap(map)
         list ++= scalaMap.toList
       })
+      this.acc.addMultiCounter("event", list.size)
       list.iterator
     })
     println("=============event===========")
