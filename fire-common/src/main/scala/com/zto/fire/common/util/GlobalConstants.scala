@@ -60,7 +60,7 @@ object GlobalConstants {
     // spark 默认的checkpoint地址
     val sparkChkPointDir = "hdfs://nameservice1/user/spark/ckpoint/"
     // hive metastore地址
-    val hiveCluster = "streaming"
+    val hiveCluster = "batch"
     // 默认的日志级别
     val logLevel = LogLevel.INFO
     // 累加器保留日志默认的最少记录数
