@@ -10,7 +10,7 @@ import com.zto.fire.demo.bean.Student2
   * @author ChengLong 2019-5-26 13:21:59
   */
 object HBaseStreamingTest extends BaseSparkStreaming {
-  private val tableName = "fire_test"
+  private val tableName = "fire_test_1"
 
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream()
