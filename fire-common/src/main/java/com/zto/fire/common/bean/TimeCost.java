@@ -208,7 +208,7 @@ public class TimeCost implements Serializable {
 
     @Override
     public String toString() {
-        String baseInfo = "【" + this.lable() + "Log】 " + this.msg + " start：" + this.startTime + " end：" + this.endTime + " cost：" + this.timeCost + " ip：" + this.ip + " load：" + this.load + " cpuUsage：" + this.cpuUsage + " executor：" + this.executorId;
+        String baseInfo = "【" + this.lable() + "Log】 〖" + this.msg + "〗    start：" + this.startTime + " end：" + this.endTime + " cost：" + this.timeCost + " ip：" + this.ip + " load：" + this.load + " cpuUsage：" + this.cpuUsage + " executor：" + this.executorId;
         if (!"driver".equalsIgnoreCase(this.executorId)) {
             baseInfo += " stage：" + this.stageId + " task：" + this.taskId;
         }

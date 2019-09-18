@@ -129,11 +129,11 @@ object JdbcTest extends BaseSparkCore {
     }, keyNum = 3)
     this.jdbc.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
       override def process(rs: ResultSet): Int = {
-        log(s"=============driver $tableName=============")
+        this.log(s"=============driver $tableName=============")
         1
       }
     }, keyNum = 5)
-
+    this.log("driver sql执行成功")
     val rdd = this.spark.parallelize(1 to 100, 10)
     rdd.foreachPartition(it => {
       it.foreach(i => {
@@ -144,6 +144,7 @@ object JdbcTest extends BaseSparkCore {
           }
         }, keyNum = 3)
       })
+      this.log("sql执行成功")
     })
 
     val rdd2 = this.spark.parallelize(1 to 100, 10)
@@ -155,6 +156,7 @@ object JdbcTest extends BaseSparkCore {
             1
           }
         }, keyNum = 5)
+        this.log("sql执行成功")
       })
     })
   }

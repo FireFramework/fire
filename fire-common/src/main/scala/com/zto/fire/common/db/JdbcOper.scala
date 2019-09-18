@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.common.bean.BaseLogging
-import com.zto.fire.common.util.{DBUtils, GlobalConstants}
+import com.zto.fire.common.util.{DBUtils, GlobalConstants, StringsUtils}
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable.ListBuffer
@@ -20,6 +20,8 @@ import scala.reflect.ClassTag
   */
 object JdbcOper extends BaseLogging {
   private lazy val connPoolMap = collection.mutable.Map[String, ComboPooledDataSource]()
+  // 日志中sql截取的长度
+  private lazy val logSqlLength = GlobalConstants.FireConf.logSqlLength
   private val jdbcPoolKey = "cpds"
   private val module = "jdbc"
 
@@ -131,13 +133,13 @@ object JdbcOper extends BaseLogging {
       }
       retVal = stat.executeUpdate
       if (commit) conn.commit()
-      this.log(s"executeUpdate: sql->$sql 影响记录数：$retVal", this.module, 0)
+      this.log(s"executeUpdate: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响记录数：$retVal", this.module, 0)
       AccumulatorManager.addMultiTimer(module, "executeUpdate", "update", "", "INFO", keyNum.toString, retVal)
     }
     catch {
       case e: Exception => {
         AccumulatorManager.addMultiTimer(module, "executeUpdate", "update", "", "ERROR", keyNum.toString, 1)
-        this.log(s"executeUpdate: sql->$sql result->fail", this.module, 0, e)
+        this.log(s"executeUpdate: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", this.module, 0, e)
         throw e
       }
     } finally {
@@ -148,7 +150,7 @@ object JdbcOper extends BaseLogging {
           stat.close()
         } catch {
           case e: SQLException => {
-            this.log(s"executeUpdate: 释放连接 sql->$sql", this.module, 0, e)
+            this.log(s"executeUpdate: 释放连接 sql->${StringsUtils.substring(sql, 0, this.logSqlLength)}", this.module, 0, e)
             throw e
           }
         }
@@ -207,12 +209,12 @@ object JdbcOper extends BaseLogging {
       retVal = stat.executeBatch
       if (commit) conn.commit()
       val sum = retVal.sum
-      this.log(s"executeBatch: sql->$sql 影响总记录数：$sum", this.module, 0)
+      this.log(s"executeBatch: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响总记录数：$sum", this.module, 0)
       AccumulatorManager.addMultiTimer(module, "executeBatch", "batch", "", "INFO", keyNum.toString, sum)
     } catch {
       case e: Exception => {
         AccumulatorManager.addMultiTimer(module, "executeBatch", "batch", "", "ERROR", keyNum.toString, 1)
-        this.log(s"executeBatch: executeBatch sql->$sql result->fail", this.module, 0, e)
+        this.log(s"executeBatch: executeBatch sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", this.module, 0, e)
         throw e
       }
     } finally {
@@ -222,7 +224,7 @@ object JdbcOper extends BaseLogging {
           stat.close()
         } catch {
           case e: SQLException => {
-            this.log(s"executeBatch: 释放连接 sql->$sql", this.module, 0, e)
+            this.log(s"executeBatch: 释放连接 sql->${StringsUtils.substring(sql, 0, this.logSqlLength)}", this.module, 0, e)
             throw e
           }
         }
@@ -296,12 +298,12 @@ object JdbcOper extends BaseLogging {
       if (rs != null && callback != null) {
         count = callback.process(rs)
       }
-      this.log(s"executeQueryCall: sql->$sql result->success 查询记录数：$count", this.module, 1)
+      this.log(s"executeQueryCall: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->success 查询记录数：$count", this.module, 1)
       AccumulatorManager.addMultiTimer(module, "executeQueryCall", "query", "", "INFO", keyNum.toString, count)
     } catch {
       case e: Exception => {
         AccumulatorManager.addMultiTimer(module, "executeQueryCall", "query", "", "ERROR", keyNum.toString, 1)
-        this.log(s"executeQueryCall: sql->$sql result->fail", this.module, 1, e)
+        this.log(s"executeQueryCall: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", this.module, 1, e)
         throw e
       }
     } finally {
@@ -311,7 +313,7 @@ object JdbcOper extends BaseLogging {
           rs.close()
         } catch {
           case e: SQLException => {
-            this.log(s"executeQueryCall: 释放连接 sql->$sql", this.module, 1, e)
+            this.log(s"executeQueryCall: 释放连接 sql->${StringsUtils.substring(sql, 0, this.logSqlLength)}", this.module, 1, e)
             throw e
           }
         }
@@ -322,7 +324,7 @@ object JdbcOper extends BaseLogging {
         }
         catch {
           case e: SQLException => {
-            this.log(s"executeQueryCall: 释放连接 sql->$sql", this.module, 1, e)
+            this.log(s"executeQueryCall: 释放连接 sql->${StringsUtils.substring(sql, 0, this.logSqlLength)}", this.module, 1, e)
             throw e
           }
         }

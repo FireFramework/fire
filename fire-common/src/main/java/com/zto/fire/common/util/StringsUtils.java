@@ -68,8 +68,7 @@ public class StringsUtils {
     /**
      * 16进制的字符串表示转成字节数组
      *
-     * @param hexString
-     *            16进制格式的字符串
+     * @param hexString 16进制格式的字符串
      * @return 转换后的字节数组
      **/
     public static byte[] toByteArray(String hexString) {
@@ -91,8 +90,7 @@ public class StringsUtils {
     /**
      * 字节数组转成16进制表示格式的字符串
      *
-     * @param byteArray
-     *            需要转换的字节数组
+     * @param byteArray 需要转换的字节数组
      * @return 16进制表示格式的字符串
      **/
     public static String toHexString(byte[] byteArray) {
@@ -106,6 +104,26 @@ public class StringsUtils {
             hexString.append(Integer.toHexString(0xFF & byteArray[i]));
         }
         return hexString.toString().toLowerCase();
+    }
+
+    /**
+     * 具有容错功能的substring，如果下标越界，则默认取到尾部
+     *
+     * @param str   原字符串
+     * @param start 索引起始
+     * @param end   索引结束
+     * @return 截取后的子字符串
+     */
+    public static String substring(String str, int start, int end) {
+        if (StringUtils.isBlank(str) || Math.abs(start) > Math.abs(end)) {
+            return "";
+        }
+        int length = str.length();
+        if (length >= Math.abs(end)) {
+            return str.substring(Math.abs(start), Math.abs(end));
+        } else {
+            return str.substring(Math.abs(start), Math.abs(length));
+        }
     }
 
     public static void main(String[] args) {

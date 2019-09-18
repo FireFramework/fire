@@ -24,7 +24,7 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBa
   // 用于记录上次清理过期累加数据的时间
   private var lastClearTime = new Date
   // 判断是否打开多时间维度累加器
-  private lazy val isOpen = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_OPEN, true) && PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_MULTI_TIMER_OPEN, true)
+  private lazy val isEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_ENABLE, true) && PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_MULTI_TIMER_ENABLE, true)
 
   /**
     * 用于判断当前累加器是否为空
@@ -58,7 +58,7 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBa
     * 累加值的key、value和时间的schema，默认为yyyy-MM-dd HH:mm:00
     */
   override def add(kv: (String, Long, String)): Unit = {
-    if (!isOpen || kv == null) return
+    if (!isEnable || kv == null) return
     val schema = if (StringUtils.isBlank(kv._3)) {
       GlobalConstants.MultiTimerSchema.MIN
     } else kv._3

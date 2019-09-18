@@ -17,7 +17,7 @@ import scala.collection.JavaConversions
 class MultiCounterAccumulator extends AccumulatorV2[(String, Long), ConcurrentHashMap[String, Long]] {
   private[fire] val multiCounter = new ConcurrentHashMap[String, Long]()
   // 判断是否打开多值累加器
-  private lazy val isOpen = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_OPEN, true) && PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_MULTI_COUNTER_OPEN, true)
+  private lazy val isEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_ENABLE, true) && PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_MULTI_COUNTER_ENABLE, true)
 
   /**
     * 用于判断当前累加器是否为空
@@ -60,7 +60,7 @@ class MultiCounterAccumulator extends AccumulatorV2[(String, Long), ConcurrentHa
     * 累加值的key和value
     */
   private[this] def mergeMap(kv: (String, Long)): Unit = {
-    if (this.isOpen && kv != null && StringUtils.isNotBlank(kv._1) && kv._2 != null) {
+    if (this.isEnable && kv != null && StringUtils.isNotBlank(kv._1) && kv._2 != null) {
       this.multiCounter.put(kv._1, this.multiCounter.getOrDefault(kv._1, 0) + kv._2)
     }
   }

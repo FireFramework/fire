@@ -22,7 +22,7 @@ class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[Strin
   // 用于存放日志的队列
   private val logQueue = new ConcurrentLinkedQueue[String]
   // 判断是否打开日志累加器
-  private lazy val isOpen = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_OPEN, true) && PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_LOG_OPEN, true)
+  private lazy val isEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_ENABLE, true) && PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_LOG_ENABLE, true)
 
   /**
     * 判断累加器是否为空
@@ -46,7 +46,7 @@ class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[Strin
     * 日志记录对象
     */
   override def add(timeCost: TimeCost): Unit = {
-    if (this.isOpen && timeCost != null) {
+    if (this.isEnable && timeCost != null) {
       this.logQueue.add(JSON.toJSONString(timeCost, SerializerFeature.WriteNullStringAsEmpty))
       this.clear
     }
