@@ -320,7 +320,7 @@ object PropUtils extends BaseLogging {
   }
 
   /**
-    * 将配置信息转为Map
+    * 将配置信息转为Map，并设置到SparkConf中
     *
     * @return
     * confMap
@@ -328,7 +328,7 @@ object PropUtils extends BaseLogging {
   def toMap: Map[String, String] = {
     val confMap = scala.collection.mutable.Map[String, String]()
     JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
-      if (key != null && !key.toString.contains("pass")) {
+      if (key != null) {
         confMap += (key.toString -> this.props.getProperty(key.toString))
       }
     })

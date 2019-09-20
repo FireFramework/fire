@@ -45,7 +45,6 @@ public class HBaseOper {
     private static Gson gson = new Gson();
     private static Map<String, String> hbaseCluster;
     private static final Map<Class, Map<String, Field>> cacheFieldMap = new ConcurrentHashMap<>();
-    private static final String timerSchema = "yyyy-MM-dd HH:mm:00";
     private static final String module = "HBaseOper";
 
     static {

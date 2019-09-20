@@ -4,7 +4,7 @@ import java.sql.ResultSet
 
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
-import com.zto.fire.common.db.QueryCallback
+import com.zto.fire.common.db.{JdbcOper, QueryCallback}
 import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.BaseSparkCore
 import com.zto.fire.core.ext.SparkExt._
@@ -127,14 +127,14 @@ object JdbcTest extends BaseSparkCore {
         1
       }
     }, keyNum = 3)
-    this.jdbc.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
+    JdbcOper.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
       override def process(rs: ResultSet): Int = {
         this.log(s"=============driver $tableName=============")
         1
       }
     }, keyNum = 5)
     this.log("driver sql执行成功")
-    val rdd = this.spark.parallelize(1 to 100, 10)
+    val rdd = this.spark.parallelize(1 to 3, 3)
     rdd.foreachPartition(it => {
       it.foreach(i => {
         this.jdbc.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
@@ -147,10 +147,10 @@ object JdbcTest extends BaseSparkCore {
       this.log("sql执行成功")
     })
 
-    val rdd2 = this.spark.parallelize(1 to 100, 10)
+    val rdd2 = this.spark.parallelize(1 to 3, 3)
     rdd2.foreachPartition(it => {
       it.foreach(i => {
-        this.jdbc.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
+        JdbcOper.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
           override def process(rs: ResultSet): Int = {
             this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
             1
