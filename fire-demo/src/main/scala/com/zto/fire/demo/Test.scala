@@ -12,23 +12,6 @@ import scala.collection.JavaConversions
 
 object Test extends BaseSparkStreaming {
 
-  def testJdbcQuery: Unit = {
-    val sql = s"select * from t_hosts where id in (?, ?, ?)"
-
-    // 执行sql查询，并对查询结果集进行处理
-    this.jdbc.executeQueryCall(sql, Seq(1, 2, 3), new QueryCallback {
-      override def process(rs: ResultSet): Int = {
-        var count = 0
-        while (rs.next()) {
-          // 对每条记录进行处理
-          println("driver=> id=" + rs.getLong(1))
-          count += 1
-        }
-        count
-      }
-    }, keyNum = 3)
-  }
-
   /**
     * Spark处理逻辑
     * 注：此方法会被自动调用，不需要在main中手动调用
@@ -41,7 +24,6 @@ object Test extends BaseSparkStreaming {
     while (true) {
       println(s"==================${DateFormatUtils.formatCurrentDateTime()}==================")
       rdd.foreachPartition(i => {
-        this.testJdbcQuery
         this.mark
         Thread.sleep(100)
         this.log("jdbc操作")
@@ -53,7 +35,7 @@ object Test extends BaseSparkStreaming {
       val size = this.acc.getMultiTimer.cellSet().size()
       JavaConversions.asScalaSet(this.acc.getMultiTimer.cellSet()).foreach(t => println(s"size=${size} 组件：" + t.getRowKey + " 时间：" + t.getColumnKey + " " + t.getValue + "条"))
       this.log("日志累加器size=" + this.acc.getLog.size())
-      Thread.sleep(10000)
+      Thread.sleep(60000)
     }
     Thread.currentThread().join()
   }

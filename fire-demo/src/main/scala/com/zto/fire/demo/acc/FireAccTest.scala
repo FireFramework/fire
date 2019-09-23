@@ -34,7 +34,7 @@ object FireAccTest extends BaseSparkStreaming {
     })
 
     // 定时打印fire内置累加器中的值
-    this.runAsSchedule(this.printAcc, 0, 1, true, TimeUnit.MINUTES)
+    this.runAsSchedule(this.printAcc, 0, 10, true, TimeUnit.MINUTES)
 
     this.ssc.startAwaitTermination()
   }

@@ -34,7 +34,6 @@ private[fire] object AccumulatorManager {
   private[fire] val multiTimer = new MultiTimerAccumulator
 
   private[this] val accMap = Map(this.logAccumulatorLabel -> this.logAccumulator, this.counterLabel -> this.counter, this.multiCounterLabel -> this.multiCounter, this.multiTimerLabel -> this.multiTimer)
-  private[fire] val executorInstances: AtomicInteger = new AtomicInteger(0)
   private[this] val initExecutors: AtomicInteger = new AtomicInteger(0)
 
   // 获取当前任务的全类名
@@ -181,7 +180,6 @@ private[fire] object AccumulatorManager {
   private[fire] def registerAccumulators(sc: SparkContext): Unit = {
     if (sc != null && accMap != null && accMap.size > 0) {
       if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (SystemInfoUtils.isLinux) "10000" else "10").toInt)
-      if (this.initExecutors.get() > this.executorInstances.get()) this.executorInstances.set(this.initExecutors.get())
 
       val accumulatorMap = accMap.map(accInfo => {
         // 注册每个累加器，必须是合法的名称并且未被注册过
@@ -196,7 +194,7 @@ private[fire] object AccumulatorManager {
       })
 
       // 获取申请的executor数，设置累加器到conf中
-      val rdd = sc.parallelize(1 to this.executorInstances.get, this.executorInstances.get)
+      val rdd = sc.parallelize(1 to this.initExecutors.get, this.initExecutors.get)
       rdd.foreachPartition(i => {
         // 将序列化后的累加器放置到conf中
         accumulatorMap.foreach(accSer => SparkEnv.get.conf.set(accSer._1, StringsUtils.toHexString(accSer._2)))

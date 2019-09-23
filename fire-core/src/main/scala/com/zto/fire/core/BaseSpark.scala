@@ -182,7 +182,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))
     this.initLogging(this.className)
-    this.acc.registerAccumulators(this.sc)
+    if (this.jobType != JobType.CORE) this.acc.registerAccumulators(this.sc)
     this.hiveContext = this.spark.sqlContext
     this.sqlContext = this.hiveContext
     this.hbaseContext = SingletonFactory.getHBaseContextInstance(this.sc)
