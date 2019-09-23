@@ -2,6 +2,7 @@ package com.zto.fire.core.rest
 
 import java.util
 
+import com.google.common.collect.Table
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.bean.rest.spark.{ColumnMeta, FunctionMeta, SparkInfo, TableMeta}
@@ -9,6 +10,7 @@ import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
 import com.zto.fire.core.BaseSpark
 import com.zto.fire.core.ext.SparkExt._
+import org.apache.commons.beanutils.BeanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.Logging
 import spark._
@@ -66,7 +68,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
           funList.add(new FunctionMeta(fun.description, fun.database, fun.name, fun.className, fun.isTemporary))
         })
       }
-
+      this.logFire(s"[listFunctions] 获取[$dbName]函数信息成功：json=$json", this.module)
       msg.buildSuccess(funList, s"获取[$dbName]函数信息成功")
     } catch {
       case e => {
@@ -107,6 +109,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
         columnList.add(new ColumnMeta(column.description, dbName, tableName, column.name, column.dataType, column.nullable, column.isPartition, column.isBucket))
       })
 
+      this.logFire(s"[listColumns] 获取[$dbName.$tableName]字段信息成功：json=$json", this.module)
       msg.buildSuccess(columnList, s"获取[$dbName.$tableName]字段信息成功")
     } catch {
       case e => {
@@ -149,6 +152,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
           }
         })
       }
+      this.logFire(s"[listTables] 获取[$dbName]表元数据信息成功：json=$json", this.module)
       msg.buildSuccess(tableList, s"获取[$dbName]表元数据信息成功")
     } catch {
       case e => {
@@ -174,6 +178,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       // 由于spark临时表没有库名，此处约定memory统一作为临时表所在的库
       dbList.add("memory")
 
+      this.logFire(s"[listDatabases] 获取数据库列表成功", this.module)
       msg.buildSuccess(dbList, "获取数据库列表成功")
     } catch {
       case e => {
@@ -194,7 +199,9 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     val msg = new ResultMsg
     val json = request.body
     try {
-      msg.buildSuccess(this.baseSpark.acc.getCounter, "获取单值累加器成功")
+      val counter = this.baseSpark.acc.getCounter
+      this.logFire(s"[counter] 获取单值累加器成功：counter=$counter", this.module)
+      msg.buildSuccess(counter, "获取单值累加器成功")
     } catch {
       case e => {
         this.logFire(s"[log] 获取单值累加器失败：json=$json", this.module, throwable = e)
@@ -214,6 +221,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     val msg = new ResultMsg
     val json = request.body
     try {
+      this.logFire(s"[multiCounter] 获取多值累加器成功", this.module)
       msg.buildSuccess(this.baseSpark.acc.getMultiCounter, "获取多值累加器成功")
     } catch {
       case e => {
@@ -234,9 +242,12 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     val msg = new ResultMsg
     val json = request.body
     try {
-      val cells = this.baseSpark.acc.getMultiTimer.cellSet()
+      val cells = new util.HashSet[Table.Cell[String, String, Long]]()
+      cells.addAll(this.baseSpark.acc.getMultiTimer.cellSet())
       val clear = JSONUtils.getValue(json, "clear", false)
+
       if (clear) this.baseSpark.acc.multiTimer.reset
+      this.logFire(s"[multiTimer] 获取timer累加器成功", this.module)
 
       msg.buildSuccess(cells, "获取timer累加器成功")
     } catch {
