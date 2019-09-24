@@ -37,12 +37,12 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/sparkInfo", sparkInfo))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/counter", counter))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiCounter", multiCounter))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiTimer", multiTimer))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/log", log))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/multiTimer", multiTimer))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/log", log))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/listDatabases", listDatabases))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/listTables", listTables))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/listColumns", listColumns))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/listFunctions", listFunctions))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/listTables", listTables))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/listColumns", listColumns))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/listFunctions", listFunctions))
   }
 
   /**
