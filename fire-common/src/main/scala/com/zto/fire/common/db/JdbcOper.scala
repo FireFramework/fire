@@ -208,9 +208,8 @@ object JdbcOper extends BaseLogging {
       // 执行批量更新
       retVal = stat.executeBatch
       if (commit) conn.commit()
-      val sum = retVal.sum
-      this.log(s"executeBatch: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响总记录数：$sum", this.module, 0)
-      AccumulatorManager.addMultiTimer(module, "executeBatch", "batch", "", "INFO", keyNum.toString, sum)
+      this.log(s"executeBatch: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响总记录数：$batch", this.module, 0)
+      AccumulatorManager.addMultiTimer(module, "executeBatch", "batch", "", "INFO", keyNum.toString, batch)
     } catch {
       case e: Exception => {
         AccumulatorManager.addMultiTimer(module, "executeBatch", "batch", "", "ERROR", keyNum.toString, 1)
