@@ -2,7 +2,7 @@ package com.zto.fire.demo
 
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
-import com.zto.fire.common.bean.RuntimeInfo
+import com.zto.fire.common.bean.runtime.RuntimeInfo
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
 
