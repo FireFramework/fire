@@ -1,6 +1,10 @@
 package com.zto.fire.common.bean.runtime;
 
+import com.alibaba.fastjson.JSON;
 import com.zto.fire.common.util.SystemInfoUtils;
+import oshi.SystemInfo;
+import oshi.software.os.OperatingSystem;
+import oshi.util.FormatUtil;
 
 /**
  * 用于封装操作系统信息
@@ -9,6 +13,10 @@ import com.zto.fire.common.util.SystemInfoUtils;
  */
 public class OSInfo {
     private static OSInfo osInfo;
+    // 制造商
+    private String manufacturer;
+    // 设备型号
+    private String model;
     // 操作系统名称
     private String name;
     // 操作系统架构
@@ -25,8 +33,13 @@ public class OSInfo {
     private String ip;
     // 集群的主机名
     private String hostname;
+    // 运行时间
+    private String uptime;
+    // 组织信息
+    private String family;
 
-    private OSInfo() {}
+    private OSInfo() {
+    }
 
     public String getName() {
         return name;
@@ -60,10 +73,27 @@ public class OSInfo {
         return hostname;
     }
 
+    public String getManufacturer() {
+        return manufacturer;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public String getUptime() {
+        return uptime;
+    }
+
+    public String getFamily() {
+        return family;
+    }
+
     /**
      * 获取操作系统相关信息
      */
     public static OSInfo getOSInfo() {
+        SystemInfo systemInfo = new SystemInfo();
         if (osInfo == null) {
             osInfo = new OSInfo();
             osInfo.name = System.getProperty("os.name");
@@ -74,8 +104,18 @@ public class OSInfo {
             osInfo.userDir = System.getProperty("user.dir");
             osInfo.ip = SystemInfoUtils.getIp();
             osInfo.hostname = SystemInfoUtils.getHostName();
+            OperatingSystem os = systemInfo.getOperatingSystem();
+            osInfo.manufacturer = os.getManufacturer();
+            osInfo.family = os.getFamily();
         }
+        osInfo.uptime = FormatUtil.formatElapsedSecs(systemInfo.getHardware().getProcessor().getSystemUptime());
         return osInfo;
     }
 
+    public static void main(String[] args) throws Exception {
+        while (true) {
+            System.out.println(JSON.toJSONString(getOSInfo()));
+            Thread.sleep(1000);
+        }
+    }
 }

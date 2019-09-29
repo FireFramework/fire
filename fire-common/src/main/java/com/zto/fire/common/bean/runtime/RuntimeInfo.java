@@ -3,6 +3,8 @@ package com.zto.fire.common.bean.runtime;
 import com.alibaba.fastjson.JSON;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 用于获取jvm、os、memory等运行时信息，获取速度较慢，比较重
@@ -22,6 +24,10 @@ public class RuntimeInfo implements Serializable {
     private MemoryInfo memoryInfo;
     // 类加载器运行时信息
     private ClassLoaderInfo classLoaderInfo;
+    // 磁盘及分区信息
+    private Map<String, List> diskInfo;
+    // 设备信息
+    private HardwareInfo hardwareInfo;
 
     private RuntimeInfo() {}
 
@@ -49,6 +55,14 @@ public class RuntimeInfo implements Serializable {
         return classLoaderInfo;
     }
 
+    public Map<String, List> getDiskInfo() {
+        return diskInfo;
+    }
+
+    public HardwareInfo getHardwareInfo() {
+        return hardwareInfo;
+    }
+
     /**
      * 获取运行时信息
      *
@@ -61,6 +75,8 @@ public class RuntimeInfo implements Serializable {
         runtimeInfo.osInfo = OSInfo.getOSInfo();
         runtimeInfo.cpuInfo = CpuInfo.getCpuInfo();
         runtimeInfo.memoryInfo = MemoryInfo.getMemoryInfo();
+        runtimeInfo.diskInfo = DiskInfo.getDiskInfo();
+        runtimeInfo.hardwareInfo = HardwareInfo.getHardwareInfo();
 
         return runtimeInfo;
     }
