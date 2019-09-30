@@ -1,9 +1,11 @@
 package com.zto.fire.common.bean.runtime;
 
 import com.alibaba.fastjson.JSON;
+import com.zto.fire.common.util.MathUtils;
 import oshi.SystemInfo;
 import oshi.hardware.ComputerSystem;
 import oshi.hardware.HardwareAbstractionLayer;
+import oshi.hardware.PowerSource;
 
 /**
  * 硬件信息封装类
@@ -18,6 +20,10 @@ public class HardwareInfo {
     private String model;
     // 序列号
     private String serialNumber;
+    // 电源信息
+    private String power;
+    // 电池容量
+    private String batteryCapacity;
 
     public String getManufacturer() {
         return manufacturer;
@@ -31,6 +37,14 @@ public class HardwareInfo {
         return serialNumber;
     }
 
+    public String getPower() {
+        return power;
+    }
+
+    public String getBatteryCapacity() {
+        return batteryCapacity;
+    }
+
     private HardwareInfo() {
     }
 
@@ -38,14 +52,34 @@ public class HardwareInfo {
      * 获取硬件设备信息
      */
     public static HardwareInfo getHardwareInfo() {
+        SystemInfo systemInfo = new SystemInfo();
+        HardwareAbstractionLayer hardware = systemInfo.getHardware();
         if (hardwareInfo == null) {
             hardwareInfo = new HardwareInfo();
-            SystemInfo systemInfo = new SystemInfo();
-            HardwareAbstractionLayer hardware = systemInfo.getHardware();
             ComputerSystem computerSystem = hardware.getComputerSystem();
             hardwareInfo.manufacturer = computerSystem.getManufacturer();
             hardwareInfo.model = computerSystem.getModel();
-            hardwareInfo.serialNumber = computerSystem.getSerialNumber();
+            hardwareInfo.serialNumber = computerSystem.getSerialNumber().trim();
+        }
+
+        // 获取电源信息
+        PowerSource[] powerSources = hardware.getPowerSources();
+        if (powerSources == null || powerSources[0] == null) {
+            hardwareInfo.power = "Unknown";
+        } else {
+            double timeRemaining = powerSources[0].getTimeRemaining();
+            if (timeRemaining < -1d) {
+                hardwareInfo.power = "充电中";
+            } else if (timeRemaining < 0d) {
+                hardwareInfo.power = "计算剩余时间";
+            } else {
+                hardwareInfo.power = String.format("%d:%02d remaining", (int) (timeRemaining / 3600),
+                        (int) (timeRemaining / 60) % 60);
+            }
+
+            for (PowerSource pSource : powerSources) {
+                hardwareInfo.batteryCapacity = MathUtils.doubleScale(pSource.getRemainingCapacity() * 100d, 2) + "";
+            }
         }
 
         return hardwareInfo;
