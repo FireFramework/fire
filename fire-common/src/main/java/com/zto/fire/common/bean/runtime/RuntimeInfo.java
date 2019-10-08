@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 用于获取jvm、os、memory等运行时信息，获取速度较慢，比较重
+ * 用于获取jvm、os、memory等运行时信息
+ *
  * @author ChengLong 2019年9月28日 16:57:03
  */
 public class RuntimeInfo implements Serializable {
@@ -29,7 +30,8 @@ public class RuntimeInfo implements Serializable {
     // 设备信息
     private HardwareInfo hardwareInfo;
 
-    private RuntimeInfo() {}
+    private RuntimeInfo() {
+    }
 
     public JvmInfo getJvmInfo() {
         return jvmInfo;

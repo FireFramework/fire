@@ -1,7 +1,9 @@
 package com.zto.fire.common.util;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * 通用的计量单位转换工具
@@ -130,7 +132,6 @@ public class UnitFormatUtils {
      * @param data     输入的初始参数
      * @param fromUnit 输入的初始参数的单位
      * @param toUnit   要转换的目标单位
-     * @return
      */
     public static String format(Number data, DateUnitEnum fromUnit, DateUnitEnum toUnit) {
         BigDecimal data1 = new BigDecimal(data.toString());
@@ -186,7 +187,6 @@ public class UnitFormatUtils {
      * @param data     输入的初始参数
      * @param fromUnit 输入的初始参数的单位
      * @param toUnit   要转换的目标单位
-     * @return
      */
     public static String format(Number data, MoneyUnitEnum fromUnit, MoneyUnitEnum toUnit) {
         BigDecimal data1 = new BigDecimal(data.toString());
@@ -242,7 +242,6 @@ public class UnitFormatUtils {
      * @param data     输入的初始参数
      * @param fromUnit 输入的初始参数的单位
      * @param toUnit   要转换的目标单位
-     * @return
      */
     public static String format(Number data, NumberUnitEnum fromUnit, NumberUnitEnum toUnit) {
         BigDecimal data1 = new BigDecimal(data.toString());
@@ -298,7 +297,6 @@ public class UnitFormatUtils {
      * @param data     输入的初始参数
      * @param fromUnit 输入的初始参数的单位
      * @param toUnit   要转换的目标单位
-     * @return
      */
     public static String format(Number data, TimeUnitEnum fromUnit, TimeUnitEnum toUnit) {
         BigDecimal data1 = new BigDecimal(data.toString());
@@ -354,7 +352,6 @@ public class UnitFormatUtils {
      * @param data     输入的初始参数
      * @param fromUnit 输入的初始参数的单位
      * @param toUnit   要转换的目标单位
-     * @return
      */
     public static String format(Number data, WeightUnitEnum fromUnit, WeightUnitEnum toUnit) {
         BigDecimal data1 = new BigDecimal(data.toString());
