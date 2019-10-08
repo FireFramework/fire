@@ -1,12 +1,10 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.alibaba.fastjson.JSON;
 import com.zto.fire.common.util.SystemInfoUtils;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.hardware.NetworkIF;
 import oshi.software.os.NetworkParams;
-import oshi.software.os.OperatingSystem;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -151,12 +149,5 @@ public class NetworkInfo {
             }
         }
         return networkInfoList;
-    }
-
-    public static void main(String[] args) throws Exception {
-        while(true) {
-            System.out.println(JSON.toJSONString(getNetworkInfo()));
-            Thread.sleep(10000);
-        }
     }
 }

@@ -83,12 +83,8 @@ public class RuntimeInfo implements Serializable {
 
     public static void main(String[] args) throws Exception {
         for (int i = 0; i < 10; i++) {
-            System.out.println(JSON.toJSONString(RuntimeInfo.getRuntimeInfo()));
+            System.out.println(JSON.toJSONString(RuntimeInfo.getRuntimeInfo()) + "\n");
+            Thread.sleep(1000);
         }
-        System.out.println("===============================");
-        Thread.sleep(60000);
-        long start = System.currentTimeMillis();
-        System.out.println(JSON.toJSONString(RuntimeInfo.getRuntimeInfo()) + "\n 耗时：" + (System.currentTimeMillis() - start));
-
     }
 }

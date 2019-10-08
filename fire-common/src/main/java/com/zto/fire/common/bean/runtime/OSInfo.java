@@ -1,6 +1,5 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.alibaba.fastjson.JSON;
 import com.zto.fire.common.util.SystemInfoUtils;
 import oshi.SystemInfo;
 import oshi.software.os.OperatingSystem;
@@ -110,12 +109,5 @@ public class OSInfo {
         }
         osInfo.uptime = FormatUtil.formatElapsedSecs(systemInfo.getHardware().getProcessor().getSystemUptime());
         return osInfo;
-    }
-
-    public static void main(String[] args) throws Exception {
-        while (true) {
-            System.out.println(JSON.toJSONString(getOSInfo()));
-            Thread.sleep(1000);
-        }
     }
 }

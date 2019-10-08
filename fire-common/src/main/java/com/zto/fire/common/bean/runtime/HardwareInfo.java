@@ -1,6 +1,5 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.alibaba.fastjson.JSON;
 import com.zto.fire.common.util.MathUtils;
 import oshi.SystemInfo;
 import oshi.hardware.ComputerSystem;
@@ -64,7 +63,7 @@ public class HardwareInfo {
 
         // 获取电源信息
         PowerSource[] powerSources = hardware.getPowerSources();
-        if (powerSources == null || powerSources[0] == null) {
+        if (powerSources == null || powerSources.length == 0) {
             hardwareInfo.power = "Unknown";
         } else {
             double timeRemaining = powerSources[0].getTimeRemaining();
@@ -83,9 +82,5 @@ public class HardwareInfo {
         }
 
         return hardwareInfo;
-    }
-
-    public static void main(String[] args) {
-        System.out.println(JSON.toJSONString(getHardwareInfo()));
     }
 }

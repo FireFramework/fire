@@ -1,16 +1,13 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableMap;
 import com.zto.fire.common.util.MathUtils;
-import com.zto.fire.common.util.UnitConvertUtils;
 import oshi.SystemInfo;
 import oshi.hardware.HWDiskStore;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.FileSystem;
 import oshi.software.os.OSFileStore;
 
-import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -90,16 +87,16 @@ public class DiskInfo {
             return mount;
         }
 
-        public String getTotal() {
-            return UnitConvertUtils.readable(new BigDecimal(total), UnitConvertUtils.DataUnit.BYTE);
+        public long getTotal() {
+            return total;
         }
 
-        public String getFree() {
-            return UnitConvertUtils.readable(new BigDecimal(free), UnitConvertUtils.DataUnit.BYTE);
+        public long getFree() {
+            return free;
         }
 
-        public String getUsed() {
-            return UnitConvertUtils.readable(new BigDecimal(used), UnitConvertUtils.DataUnit.BYTE);
+        public long getUsed() {
+            return used;
         }
 
         public long getTotalInodes() {
@@ -131,16 +128,16 @@ public class DiskInfo {
         return model;
     }
 
-    public String getTotal() {
-        return UnitConvertUtils.readable(new BigDecimal(total), UnitConvertUtils.DataUnit.BYTE);
+    public long getTotal() {
+        return total;
     }
 
-    public String getReads() {
-        return UnitConvertUtils.readable(new BigDecimal(reads), UnitConvertUtils.DataUnit.BYTE);
+    public long getReads() {
+        return reads;
     }
 
-    public String getWrites() {
-        return UnitConvertUtils.readable(new BigDecimal(writes), UnitConvertUtils.DataUnit.BYTE);
+    public long getWrites() {
+        return writes;
     }
 
     public long getTransferTime() {
@@ -184,12 +181,5 @@ public class DiskInfo {
         }
         Map<String, List> diskInfoMap = ImmutableMap.<String, List>builder().put("disks", diskInfoList).put("partitions", partitionInfoList).build();
         return diskInfoMap;
-    }
-
-    public static void main(String[] args) throws Exception {
-        while (true) {
-            System.out.println(JSON.toJSONString(getDiskInfo()));;
-            Thread.sleep(10000);
-        }
     }
 }

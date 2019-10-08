@@ -1,5 +1,7 @@
 package com.zto.fire.common.bean.runtime;
 
+import com.alibaba.fastjson.JSON;
+
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
 
@@ -41,5 +43,11 @@ public class ClassLoaderInfo {
         classLoaderInfo.unloadedClassCount = classLoadingMXBean.getUnloadedClassCount();
 
         return classLoaderInfo;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(JSON.toJSONString(getClassLoaderInfo()));
+        System.out.println(JSON.toJSONString(getClassLoaderInfo()));
+        System.out.println(JSON.toJSONString(getClassLoaderInfo()));
     }
 }

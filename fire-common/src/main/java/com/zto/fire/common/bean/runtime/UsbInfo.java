@@ -1,6 +1,5 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.alibaba.fastjson.JSON;
 import oshi.SystemInfo;
 import oshi.hardware.UsbDevice;
 
@@ -67,9 +66,5 @@ public class UsbInfo {
             }
         }
         return usbInfoList;
-    }
-
-    public static void main(String[] args) {
-        System.out.println(JSON.toJSONString(getUsbInfo()));
     }
 }

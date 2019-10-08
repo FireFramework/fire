@@ -1,6 +1,5 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.alibaba.fastjson.JSON;
 import oshi.SystemInfo;
 import oshi.hardware.Display;
 
@@ -10,10 +9,10 @@ import oshi.hardware.Display;
  */
 public class DisplayInfo {
     // 显示器描述信息
-    private StringBuilder display;
+    private String display;
 
-    public StringBuilder getDisplay() {
-        return display;
+    public String getDisplay() {
+        return display.toString();
     }
 
     private DisplayInfo() {
@@ -25,16 +24,16 @@ public class DisplayInfo {
     public static DisplayInfo getDisplayInfo() {
         SystemInfo systemInfo = new SystemInfo();
         Display[] displays = systemInfo.getHardware().getDisplays();
-        DisplayInfo displayInfo = new DisplayInfo();
+
+        StringBuilder sb = new StringBuilder();
         if (displays != null && displays.length > 0) {
             for (Display display : displays) {
-                displayInfo.display.append(display.toString());
+                sb.append(display.toString());
             }
         }
-        return displayInfo;
-    }
+        DisplayInfo displayInfo = new DisplayInfo();
+        displayInfo.display = sb.toString();
 
-    public static void main(String[] args) {
-        System.out.println(JSON.toJSONString(getDisplayInfo()));
+        return displayInfo;
     }
 }
