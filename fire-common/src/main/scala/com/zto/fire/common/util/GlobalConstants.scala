@@ -121,6 +121,16 @@ object GlobalConstants {
     val KAFKA_TOPICS = "spark.kafka.topics"
     // kafka起始消费位点
     val KAFKA_STARTING_OFFSET = "spark.kafka.starting.offsets"
+    // kafka结束消费位点
+    val KAFKA_ENDING_OFFSET = "spark.kafka.ending.offsets"
+    // 从Kafka轮询数据的超时时间（以毫秒为单位）
+    val KAFKA_POLL_TIMEOUT_MS = "spark.kafka.poll.timeout.ms"
+    // 放弃获取Kafka偏移前重试的次数
+    val KAFKA_FETCH_OFFSET_NUM_RETRIES = "spark.kafka.fetch.offset.num.retries"
+    // 重试获取Kafka偏移之前要等待的毫秒数
+    val KAFKA_FETCH_OFFSET_RETRY_INTERVAL_MS = "spark.kafka.fetch.offset.retry.interval.ms"
+    // 每个触发间隔处理的最大偏移量的速率限制，指定的偏移总数将在不同卷的topicPartitions中按比例分配
+    val KAFKA_MAX_OFFSETS_PER_TRIGGER = "spark.kafka.max.offsets.per.trigger"
     // 丢失数据是否失败
     val KAFKA_FAIL_ON_DATA_LOSS = "spark.kafka.failOnDataLoss"
     // 是否自动维护offset
@@ -288,13 +298,20 @@ object GlobalConstants {
     private val zmsNewKafkaUrl = "192.168.73.31:9092,192.168.73.32:9092,192.168.73.33:9092,192.168.73.34:9092,192.168.73.35:9092,192.168.73.36:9092"
     // 测试kafka集群地址
     private val testKafkaUrl = "10.9.45.97:9092,10.9.15.38:9092,10.9.36.49:9092,10.9.36.50:9092"
-
-    // kafka消费位点
+    // kafka消费起始位点
     def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
-
+    // kafka消费结束位点
+    def kafkaEndingOffsets(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_ENDING_OFFSET, keyNum, "")
+    // 从Kafka轮询数据的超时时间（以毫秒为单位，默认512）
+    def kafkaPollTimeoutMs(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_POLL_TIMEOUT_MS, keyNum, 512)
+    // 放弃获取Kafka偏移前重试的次数，默认3次
+    def kafkaFetchOffsetNumRetries(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.KAFKA_FETCH_OFFSET_NUM_RETRIES, keyNum, 3)
+    // 重试获取Kafka偏移之前要等待的毫秒数，默认10毫秒
+    def kafkaFetchOffsetRetryIntervalMs(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_FETCH_OFFSET_RETRY_INTERVAL_MS, keyNum, 10)
+    // 每个触发间隔处理的最大偏移量的速率限制，指定的偏移总数将在不同卷的topicPartitions中按比例分配
+    def kafkaMaxOffsetsPerTrigger(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_MAX_OFFSETS_PER_TRIGGER, keyNum, -1)
     // 丢失数据时是否失败
     def kafkaFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.kafkaFailOnDataLoss)
-
     // enable.auto.commit
     def kafkaEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.kafkaEnableAutoCommit)
 
@@ -307,7 +324,6 @@ object GlobalConstants {
      * 配置信息
      */
     def kafkaGroupId(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_GROUP_ID, keyNum, "")
-
 
     /**
      * 根据名称获取kafka broker地址

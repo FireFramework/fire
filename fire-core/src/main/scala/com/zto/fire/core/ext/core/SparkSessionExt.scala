@@ -1113,20 +1113,64 @@ class SparkSessionExt(spark: SparkSession) {
     */
   def loadKafka(brokers: String = null, extraOptions: mutable.HashMap[String, String] = null, keyNum: Int = 1): Dataset[(String, String)] = {
     val finalBrokers = if (StringUtils.isBlank(brokers)) GlobalConstants.KafkaConf.kafkaBrokers(keyNum) else brokers
-    val finalExtraOptions = if (extraOptions == null || extraOptions.size == 0) {
-      mutable.HashMap[String, String]("subscribe" -> GlobalConstants.KafkaConf.kafkaTopics(),
-        "failOnDataLoss" -> GlobalConstants.KafkaConf.kafkaFailOnDataLoss(keyNum).toString,
-        "startingOffsets" -> GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum),
-        "enable.auto.commit" -> GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum).toString)
-    } else {
-      extraOptions
-    }
     ParamUtils.requireNonNullForce(finalBrokers, s"kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name$keyNum ]指定")
-    ParamUtils.requireNonNullForce(finalExtraOptions, "kafka extraOptions不能为空")
-    ParamUtils.requireNonNullForce(extraOptions.getOrElse("subscribe", null), s"topic不能为空，可在配置文件中[ spark.kafka.topics$keyNum ]指定")
+    val kafkaReader = spark.readStream.format("kafka").option("kafka.bootstrap.servers", finalBrokers)
+    val topics = GlobalConstants.KafkaConf.kafkaTopics()
+    ParamUtils.requireNonNullForce(finalBrokers, s"kafka topic不能为空，可在配置文件中[ spark.kafka.topics$keyNum ]指定")
+    kafkaReader.option("subscribe", topics)
+    // 是否在数据丢失时失败
+    val failOnDataLoss = GlobalConstants.KafkaConf.kafkaFailOnDataLoss(keyNum)
+    if (failOnDataLoss != null) kafkaReader.option("failOnDataLoss", failOnDataLoss)
+    // 指定起始消费位点
+    val startingOffsets = GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum)
+    if (StringUtils.isNotBlank(startingOffsets)) kafkaReader.option("startingOffsets", startingOffsets)
+    // 指定结束消费位点
+    val endingOffsets = GlobalConstants.KafkaConf.kafkaEndingOffsets(keyNum)
+    if (StringUtils.isNotBlank(endingOffsets)) kafkaReader.option("endingOffsets", endingOffsets)
+    // 轮询数据的超时时间（以毫秒为单位）
+    val pollTimeoutMs = GlobalConstants.KafkaConf.kafkaPollTimeoutMs(keyNum)
+    if (pollTimeoutMs != null) kafkaReader.option("kafkaConsumer.pollTimeoutMs", pollTimeoutMs)
+    // 放弃获取Kafka偏移前重试的次数
+    val fetchOffsetNumRetries = GlobalConstants.KafkaConf.kafkaFetchOffsetNumRetries(keyNum)
+    if (fetchOffsetNumRetries != null) kafkaReader.option("fetchOffset.numRetries", fetchOffsetNumRetries)
+    // 重试获取Kafka偏移之前要等待的毫秒数
+    val fetchOffsetRetryIntervalMs = GlobalConstants.KafkaConf.kafkaFetchOffsetRetryIntervalMs(keyNum)
+    if (fetchOffsetRetryIntervalMs != null) kafkaReader.option("fetchOffset.retryIntervalMs", fetchOffsetRetryIntervalMs)
+    // 每个触发间隔处理的最大偏移量的速率限制
+    val maxOffsetsPerTrigger = GlobalConstants.KafkaConf.kafkaMaxOffsetsPerTrigger(keyNum)
+    if (maxOffsetsPerTrigger > 0) kafkaReader.option("maxOffsetsPerTrigger", maxOffsetsPerTrigger)
 
-    val kafkaDF = spark.readStream.format("kafka").option("kafka.bootstrap.servers", finalBrokers).options(finalExtraOptions).load()
-    kafkaDF.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING) as value").as[(String, String)]
+    // ------------------- kafka相关参数 ------------------- //
+    // 心跳间隔时间
+    val heartbeatInterval = GlobalConstants.KafkaConf.kafkaHeartbeatInterval(keyNum)
+    if (heartbeatInterval > 0) {
+      kafkaReader.option("kafka.heartbeat.interval.ms", heartbeatInterval.toString)
+    }
+    // 消费者组最大的session超时时间
+    val groupMaxSessionTimeOut = GlobalConstants.KafkaConf.kafkaGroupMaxSessionTimeOut(keyNum)
+    if (groupMaxSessionTimeOut > 0) {
+      kafkaReader.option("kafka.group.max.session.timeout.ms", groupMaxSessionTimeOut.toString)
+    }
+    // 消费者组最小的session超时时间
+    val groupMinSessionTimeOut = GlobalConstants.KafkaConf.kafkaGroupMinSessionTimeOut(keyNum)
+    if (groupMinSessionTimeOut > 0) {
+      kafkaReader.option("kafka.group.min.session.timeout.ms", groupMinSessionTimeOut.toString)
+    }
+    // 一次调用pool返回的最大记录数
+    val maxPollRecords = GlobalConstants.KafkaConf.kafkaMaxPollRecords(keyNum)
+    if (maxPollRecords > 0) {
+      kafkaReader.option("kafka.max.poll.records", maxPollRecords.toString)
+    }
+    // 每个分区返回的最大数据量
+    val maxPartitionFetchBytes = GlobalConstants.KafkaConf.kafkaMaxPartitionFetchBytes(keyNum)
+    if (maxPartitionFetchBytes > 0) {
+      kafkaReader.option("kafka.max.partition.fetch.bytes", maxPartitionFetchBytes.toString)
+    }
+
+    // 用户指定参数
+    if (extraOptions != null && extraOptions.size > 0) kafkaReader.options(extraOptions)
+
+    kafkaReader.load().selectExpr("CAST(key AS STRING)", "CAST(value AS STRING) as value").as[(String, String)]
   }
 
   /**
