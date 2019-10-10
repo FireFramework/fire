@@ -42,10 +42,16 @@ public class JvmInfo {
     private long nonHeapUseSize;
     // jvm Non-Heap已提交空间
     private long nonHeapCommitedSize;
-    // gc 总数
-    private long gcCount;
-    // gc 时长
-    private long gcTime;
+    // minor gc 次数
+    private long minorGCCount;
+    // minor gc 总耗时
+    private long minorGCTime;
+    // full gc 次数
+    private long fullGCCount;
+    // full gc 总耗时
+    private long fullGCTime;
+    // 虚拟机参数
+    private List<String> jvmOptions;
 
     private JvmInfo() {}
 
@@ -117,12 +123,24 @@ public class JvmInfo {
         return classVersion;
     }
 
-    public long getGcCount() {
-        return gcCount;
+    public long getMinorGCCount() {
+        return minorGCCount;
     }
 
-    public long getGcTime() {
-        return gcTime;
+    public long getMinorGCTime() {
+        return minorGCTime;
+    }
+
+    public long getFullGCCount() {
+        return fullGCCount;
+    }
+
+    public long getFullGCTime() {
+        return fullGCTime;
+    }
+
+    public List<String> getJvmOptions() {
+        return jvmOptions;
     }
 
     /**
@@ -159,11 +177,20 @@ public class JvmInfo {
         jvmInfo.javaHome = System.getProperty("java.home");
         jvmInfo.classVersion = System.getProperty("java.class.version");
 
+        // jvm 参数
+        jvmInfo.jvmOptions = ManagementFactory.getRuntimeMXBean().getInputArguments();
+
         // 获取gc信息
         List<GarbageCollectorMXBean> gcs = ManagementFactory.getGarbageCollectorMXBeans();
         for (GarbageCollectorMXBean gc : gcs) {
-            jvmInfo.gcCount = gc.getCollectionCount();
-            jvmInfo.gcTime = gc.getCollectionTime();
+            if (gc.getName().contains("Young") || gc.getName().contains("MarkSweep")) {
+                jvmInfo.minorGCCount = gc.getCollectionCount();
+                jvmInfo.minorGCTime = gc.getCollectionTime();
+            }
+            if (gc.getName().contains("Old") || gc.getName().contains("Scavenge")) {
+                jvmInfo.fullGCCount = gc.getCollectionCount();
+                jvmInfo.fullGCTime = gc.getCollectionTime();
+            }
         }
 
         return jvmInfo;

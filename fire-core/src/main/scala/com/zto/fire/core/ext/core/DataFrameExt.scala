@@ -10,6 +10,7 @@ import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
+import org.apache.spark.sql.streaming.{OutputMode, Trigger}
 
 import scala.reflect._
 
@@ -195,5 +196,19 @@ class DataFrameExt(dataFrame: DataFrame) {
     */
   def uncache: Unit = {
     dataFrame.unpersist()
+  }
+
+  /**
+   * 将当前DataFrame记录打印到控制台
+   */
+  def print(outputMode: String = "append", trigger: Trigger = null, numRows: Int = 20, truncate: Boolean = true): DataFrame = {
+    if (dataFrame.isStreaming) {
+      val tmpStream = dataFrame.writeStream.outputMode(outputMode).format("console")
+      if (trigger != null) tmpStream.trigger(trigger)
+      tmpStream.start
+    } else {
+      dataFrame.show(numRows, truncate)
+    }
+    dataFrame
   }
 }
