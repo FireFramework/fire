@@ -302,8 +302,8 @@ object GlobalConstants {
     def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
     // kafka消费结束位点
     def kafkaEndingOffsets(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_ENDING_OFFSET, keyNum, "")
-    // 从Kafka轮询数据的超时时间（以毫秒为单位，默认512）
-    def kafkaPollTimeoutMs(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_POLL_TIMEOUT_MS, keyNum, 512)
+    // 从Kafka轮询数据的超时时间（以毫秒为单位，默认1024）
+    def kafkaPollTimeoutMs(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_POLL_TIMEOUT_MS, keyNum, 1024)
     // 放弃获取Kafka偏移前重试的次数，默认3次
     def kafkaFetchOffsetNumRetries(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.KAFKA_FETCH_OFFSET_NUM_RETRIES, keyNum, 3)
     // 重试获取Kafka偏移之前要等待的毫秒数，默认10毫秒

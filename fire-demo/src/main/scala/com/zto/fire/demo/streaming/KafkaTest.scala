@@ -1,24 +1,21 @@
 package com.zto.fire.demo.streaming
 
-import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.demo.bean.OrderCommon
-import org.apache.spark.streaming.{Duration, State, StateSpec}
 
 /**
- * kafka json解析
- *
- * @author ChengLong 2019-6-26 16:52:58
- */
+  * kafka json解析
+  * @author ChengLong 2019-6-26 16:52:58
+  */
 object KafkaTest extends BaseSparkStreaming {
 
   /**
-   * Streaming的处理过程强烈建议放到process中，保持风格统一
-   * 注：此方法会被自动调用，在以下两种情况下，必须将逻辑写在process中
-   * 1. 开启checkpoint
-   * 2. 支持streaming热重启（可在不关闭streaming任务的前提下修改batch时间）
-   */
+    * Streaming的处理过程强烈建议放到process中，保持风格统一
+    * 注：此方法会被自动调用，在以下两种情况下，必须将逻辑写在process中
+    * 1. 开启checkpoint
+    * 2. 支持streaming热重启（可在不关闭streaming任务的前提下修改batch时间）
+    */
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream()
 
@@ -29,7 +26,7 @@ object KafkaTest extends BaseSparkStreaming {
         // toLowerDF表示将大写的字段转为小写
         this.spark.sql("select * from test").toLowerDF.show(1, false)
         this.spark.sql("select after.* from test").toLowerDF.show(1, false)
-        this.spark.sql("select after.* from test where after.order_code=1").toLowerDF.show(1, false)
+        this.spark.sql("select after.* from test where after.platformid=1").toLowerDF.show(1, false)
 
         // 二、直接将json按指定的schema解析（只解析after），fieldNameUpper=true表示按大写方式解析，并自动转为小写
         rdd.kafkaJson2DF(classOf[OrderCommon], fieldNameUpper = true).show(2, false)
@@ -46,32 +43,13 @@ object KafkaTest extends BaseSparkStreaming {
     val dstream3 = this.ssc.createDirectStream(keyNum = 3)
     dstream3.print(1)
     val dstream5 = this.ssc.createDirectStream(keyNum = 5)
-    this.mark
-    dstream5.count.foreachRDD(rdd => {
-      rdd.foreachPartition(it => {
-        it.foreach(t => {
-          this.acc.addMultiCounter("input", t)
-        })
-      })
-    })
-
-    dstream5.checkpoint(Duration(10 * 1000))
-    val wordStream = dstream5.map(t => (JSONUtils.getValue(t.value(), "after", "default"), 1)).mapWithState(StateSpec.function(mappingFunc))
-    wordStream.print(10)
-    this.log("count耗时")
     dstream5.print(1)
 
     this.ssc.startAwaitTermination()
   }
 
-  val mappingFunc = (word: String, count: Option[Int], state: State[Int]) => {
-    val sum = count.getOrElse(0) + state.getOption.getOrElse(0)
-    val output = (word, sum)
-    state.update(sum)
-    output
-  }
-
   def main(args: Array[String]): Unit = {
-    this.init(10, true)
+    this.init(10, false)
+    this.stop
   }
 }

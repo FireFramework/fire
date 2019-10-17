@@ -1,36 +1,24 @@
 package com.zto.fire.demo
 
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializerFeature
-import com.zto.fire.common.bean.runtime.RuntimeInfo
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
-
-import scala.collection.JavaConversions
+import com.zto.fire.demo.bean.ScanSendModel
 
 object Test extends BaseSparkStreaming {
 
   override def process: Unit = {
-    println("====================================")
-    println(JSON.toJSONString(RuntimeInfo.getRuntimeInfo, SerializerFeature.NotWriteRootClassName))
-    println("====================================")
     val dstream = this.ssc.createDirectStream()
     dstream.foreachRDD(rdd => {
-      rdd.foreach(t => t.value().length)
+      val parseDF = rdd.kafkaJson2DF(classOf[ScanSendModel], isMySQL = false, fieldNameUpper = false)
+      parseDF.show(2, false)
+      // parseDF.select("after.*").show(2, false)
+      /*rdd.kafkaJson2Table("test")
+      this.spark.sql("select * from test").show(20, false)*/
+      // this.spark.sql("select * from scan_send where pda_code='自动分拣'").show(10, false)*/
     })
-    this.runAsSchedule(this.collectLog, 1, 1)
     this.ssc.startAwaitTermination()
   }
 
-  /**
-   * 日志收集
-   */
-  def collectLog: Unit = {
-    JavaConversions.asScalaIterator(this.acc.getLog.iterator()).foreach(t => {
-      println(t)
-    })
-    this.acc.logAccumulator.reset()
-  }
 
   def main(args: Array[String]): Unit = {
     this.init(10, false)

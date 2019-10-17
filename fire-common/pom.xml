@@ -38,7 +38,11 @@
             <artifactId>taobao-sdk-java-auto</artifactId>
             <version>2.2.2</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka_2.11</artifactId>
+            <version>0.10.2.0</version>
+        </dependency>
     </dependencies>
 
     <build>
