@@ -20,9 +20,9 @@ import org.apache.spark.{Logging, SparkConf, SparkContext}
 import spark.Spark
 
 /**
-  * Spark通用父类
-  * Created by ChengLong on 2018-03-06.
-  */
+ * Spark通用父类
+ * Created by ChengLong on 2018-03-06.
+ */
 trait BaseSpark extends SparkListener with Logging with Serializable {
   var conf: SparkConf = _
   var spark: SparkSession = _
@@ -52,10 +52,11 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   this.boot
 
   /**
-    * 生命周期方法：初始化fire框架必要的信息
-    * 注：该方法会同时在driver端与executor端执行
-    */
+   * 生命周期方法：初始化fire框架必要的信息
+   * 注：该方法会同时在driver端与executor端执行
+   */
   private[this] final def boot: Unit = {
+    this.splash
     PropUtils.load(this.appName)
     PropUtils.setProperty("spark.driver.class.name", this.className)
     if (StringUtils.isNotBlank(GlobalConstants.SparkConf.appName)) {
@@ -68,20 +69,21 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   }
 
   /**
-    * 生命周期方法：用于在SparkSession初始化之前完成用户需要的动作
-    * 注：该方法会在进行init之前自动被系统调用
-    * @param args
-    * main方法参数
-    */
+   * 生命周期方法：用于在SparkSession初始化之前完成用户需要的动作
+   * 注：该方法会在进行init之前自动被系统调用
+   *
+   * @param args
+   * main方法参数
+   */
   def before(args: Array[String]): Unit = {}
 
   /**
-    * 生命周期方法：初始化spark运行信息
-    *
-    * @param conf
-    *             Spark配置信息
-    * @param args main方法参数
-    */
+   * 生命周期方法：初始化spark运行信息
+   *
+   * @param conf
+   *             Spark配置信息
+   * @param args main方法参数
+   */
   def init(conf: SparkConf = null, args: Array[String] = null): Unit = {
     this.before(args)
     this.wrapLogInfo("<-- 完成用户资源初始化 -->")
@@ -90,14 +92,14 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   }
 
   /**
-    * 生命周期方法：具体的用户开发的业务逻辑代码
-    * 注：此方法会被自动调用，不需要在main中手动调用
-    */
+   * 生命周期方法：具体的用户开发的业务逻辑代码
+   * 注：此方法会被自动调用，不需要在main中手动调用
+   */
   def process: Unit
 
   /**
-    * 生命周期方法：用于关闭SparkContext
-    */
+   * 生命周期方法：用于关闭SparkContext
+   */
   final def stop: Unit = {
     if (this.spark != null && this.sc != null && !this.sc.isStopped) {
       this.spark.stop()
@@ -105,15 +107,15 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   }
 
   /**
-    * 生命周期方法：用于资源回收与清理，子类复写实现具体逻辑
-    * 注：该方法会在进行destroy之前自动被系统调用
-    */
+   * 生命周期方法：用于资源回收与清理，子类复写实现具体逻辑
+   * 注：该方法会在进行destroy之前自动被系统调用
+   */
   def after(args: Array[String] = this.args): Unit = {}
 
   /**
-    * 生命周期方法：进行fire框架的资源回收
-    * 注：不允许子类覆盖
-    */
+   * 生命周期方法：进行fire框架的资源回收
+   * 注：不允许子类覆盖
+   */
   private[fire] final def shutdown(stopGracefully: Boolean = true): Unit = {
     try {
       this.wrapLogInfo("<-- 完成用户资源回收 -->")
@@ -145,19 +147,19 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   }
 
   /**
-    * 构建或合并SparkConf
-    * 注：不同的子类需根据需要复写该方法
-    *
-    * @param conf
-    * 在conf基础上构建
-    * @return
-    * 合并后的SparkConf对象
-    */
+   * 构建或合并SparkConf
+   * 注：不同的子类需根据需要复写该方法
+   *
+   * @param conf
+   * 在conf基础上构建
+   * @return
+   * 合并后的SparkConf对象
+   */
   def buildConf(conf: SparkConf = null): SparkConf
 
   /**
-    * 构建一系列context对象
-    */
+   * 构建一系列context对象
+   */
   private[this] final def createContext(conf: SparkConf): Unit = {
     this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
     this.systemRestful = new SystemRestful(this)
@@ -194,47 +196,70 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   }
 
   /**
-    * 以子线程方式执行函数调用
-    *
-    * @param fun
-    * 用于指定以多线程方式执行的函数
-    * @param threadCount
-    * 表示开启多少个线程执行该fun任务
-    */
+   * 以子线程方式执行函数调用
+   *
+   * @param fun
+   * 用于指定以多线程方式执行的函数
+   * @param threadCount
+   * 表示开启多少个线程执行该fun任务
+   */
   def runAsThread(fun: => Unit, threadCount: Int = 1, threadPool: ExecutorService = this.threadPool): Unit = {
     ThreadUtils.runAsThread(threadPool, fun, threadCount)
   }
 
   /**
-    * 以子线程while循环方式循环执行函数调用
-    *
-    * @param fun
-    * 用于指定以多线程方式执行的函数
-    * @param delay
-    * 循环调用间隔时间（单位s）
-    */
+   * 以子线程while循环方式循环执行函数调用
+   *
+   * @param fun
+   * 用于指定以多线程方式执行的函数
+   * @param delay
+   * 循环调用间隔时间（单位s）
+   */
   def runAsThreadLoop(fun: => Unit, delay: Long = 10, threadCount: Int = 1, threadPool: ExecutorService = this.threadPool): Unit = {
     ThreadUtils.runAsThreadLoop(threadPool, fun, delay, threadCount)
   }
 
   /**
-    * 定时调度给定的函数
-    *
-    * @param fun
-    * 定时执行的任务函数引用
-    * @param initialDelay
-    * 第一次延迟执行的时长
-    * @param period
-    * 每隔指定的时长执行一次
-    * @param rate
-    * true：表示周期性的执行，不受上一个定时任务的约束
-    * false：表示当上一次周期性任务执行成功后，period后开始执行
-    * @param timeUnit
-    * 时间单位，默认分钟
-    * @param threadCount
-    * 表示开启多少个线程执行该fun任务
-    */
+   * 定时调度给定的函数
+   *
+   * @param fun
+   * 定时执行的任务函数引用
+   * @param initialDelay
+   * 第一次延迟执行的时长
+   * @param period
+   * 每隔指定的时长执行一次
+   * @param rate
+   * true：表示周期性的执行，不受上一个定时任务的约束
+   * false：表示当上一次周期性任务执行成功后，period后开始执行
+   * @param timeUnit
+   * 时间单位，默认分钟
+   * @param threadCount
+   * 表示开启多少个线程执行该fun任务
+   */
   def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, threadPoolSchedule: ScheduledExecutorService = this.threadPoolSchedule): Unit = {
     ThreadUtils.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount)
+  }
+
+  /**
+   * 用于在fire框架启动时展示信息
+   */
+  private[this] def splash: Unit = {
+    val info =
+      """
+        |       ___                       ___           ___
+        |     /\  \          ___        /\  \         /\  \
+        |    /::\  \        /\  \      /::\  \       /::\  \
+        |   /:/\:\  \       \:\  \    /:/\:\  \     /:/\:\  \
+        |  /::\~\:\  \      /::\__\  /::\~\:\  \   /::\~\:\  \
+        | /:/\:\ \:\__\  __/:/\/__/ /:/\:\ \:\__\ /:/\:\ \:\__\
+        | \/__\:\ \/__/ /\/:/  /    \/_|::\/:/  / \:\~\:\ \/__/
+        |      \:\__\   \::/__/        |:|::/  /   \:\ \:\__\
+        |       \/__/    \:\__\        |:|\/__/     \:\ \/__/
+        |                 \/__/        |:|  |        \:\__\
+        |                               \|__|         \/__/     version
+        |
+        |""".stripMargin.replace("version", s"version ${GlobalConstants.PS1.PINK + PropUtils.getString("spark.fire.version", "1.0.0")}")
+
+    println(GlobalConstants.PS1.GREEN + info + GlobalConstants.PS1.DEFAULT)
   }
 }
