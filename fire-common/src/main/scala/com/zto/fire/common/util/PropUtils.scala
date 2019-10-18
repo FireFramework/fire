@@ -46,7 +46,7 @@ object PropUtils extends BaseLogging {
           }
         }
         if (resource != null) {
-          println(s"${GlobalConstants.PS1.YELLOW} --------------------- load ${fullName} --------------------- ${GlobalConstants.PS1.DEFAULT}")
+          println(s"${GlobalConstants.PS1.YELLOW} --------------------------------- load ${fullName} --------------------------------- ${GlobalConstants.PS1.DEFAULT}")
           props.load(resource)
         }
       } finally {
@@ -310,13 +310,13 @@ object PropUtils extends BaseLogging {
     * 打印配置文件中的kv
     */
   def print(): Unit = {
-    println(s"${GlobalConstants.PS1.YELLOW} < -------------------------------------- 配置信息 -------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
+    println(s"${GlobalConstants.PS1.YELLOW} < --------------------------------------- 配置信息 ---------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
     JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
       if (key != null && !key.toString.contains("pass")) {
         println(">> " + GlobalConstants.PS1.PINK + key + " --> " + this.props.get(key) + GlobalConstants.PS1.DEFAULT)
       }
     })
-    println(s"${GlobalConstants.PS1.YELLOW} < -------------------------------------------------------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
+    println(s"${GlobalConstants.PS1.YELLOW} < ----------------------------------------------------------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
   }
 
   /**
