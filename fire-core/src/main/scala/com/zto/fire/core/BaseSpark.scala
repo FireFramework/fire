@@ -1,10 +1,10 @@
 package com.zto.fire.core
 
-import java.util.concurrent.{ExecutorService, Executors, ScheduledExecutorService, TimeUnit}
+import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
 
 import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.common.db.JdbcOper
-import com.zto.fire.common.enu.JobType
+import com.zto.fire.common.enu.{JobType, ThreadPoolType}
 import com.zto.fire.common.util._
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
@@ -40,8 +40,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   val className = this.getClass.getName.replace("$", "")
   val jobType = JobType.UNDEFINED
   val acc = AccumulatorManager
-  lazy val threadPool = Executors.newFixedThreadPool(20)
-  lazy val threadPoolSchedule = Executors.newScheduledThreadPool(10)
+  lazy val threadPool = ThreadUtils.createThreadPool("threadPool", ThreadPoolType.FIXED, 10)
+  lazy val threadPoolSchedule = ThreadUtils.createThreadPool("threadPoolSchedule", ThreadPoolType.SCHEDULED, 10).asInstanceOf[ScheduledExecutorService]
   val restPort = SystemInfoUtils.getRundomPort
   private[fire] var restfulRegister: RestfulRegister = _
   private[fire] var systemRestful: SystemRestful = _
@@ -133,12 +133,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
         }
       }
 
-      if (this.threadPool != null && !this.threadPool.isShutdown) {
-        this.threadPool.shutdownNow()
-      }
-      if (this.threadPoolSchedule != null && !this.threadPoolSchedule.isShutdown) {
-        this.threadPoolSchedule.shutdownNow()
-      }
+      ThreadUtils.shutdown
       Spark.stop()
       this.wrapLogInfo("<-- 完成fire资源回收 -->")
     } finally {

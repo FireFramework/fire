@@ -1,11 +1,11 @@
 package com.zto.fire.core
 
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.{Executors, TimeUnit}
+import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
 
 import com.zto.fire.common.acc.AccumulatorManager
-import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.DateFormatUtils
+import com.zto.fire.common.enu.{JobType, ThreadPoolType}
+import com.zto.fire.common.util.{DateFormatUtils, ThreadUtils}
 import com.zto.fire.core.ext.SparkExt._
 import org.apache.spark.Logging
 import org.apache.spark.scheduler._
@@ -16,7 +16,7 @@ import org.apache.spark.scheduler._
   */
 class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging {
   private[this] val module = "listener"
-  private[this] val threadPool = Executors.newScheduledThreadPool(1)
+  private[this] val threadPool = ThreadUtils.createThreadPool("BaseSparkListener", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
   private[this] val needRegister = new AtomicBoolean(false)
   // 后台周期性（每隔1分钟）检测是否需要注册新的累加器到executor端
   this.baseSpark.runAsSchedule(registerAcc, 1, 1, false, TimeUnit.MINUTES, 1, this.threadPool)
