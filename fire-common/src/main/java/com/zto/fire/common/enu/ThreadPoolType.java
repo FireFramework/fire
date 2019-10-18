@@ -5,5 +5,5 @@ package com.zto.fire.common.enu;
  * @author ChengLong 2019年10月18日 14:33:52
  */
 public enum ThreadPoolType {
-    FIXED, SINGLE, CACHED, SCHEDULED, WORK_STEALING, FORK_JOIN
+    FIXED, SINGLE, CACHED, SCHEDULED, WORK_STEALING
 }
