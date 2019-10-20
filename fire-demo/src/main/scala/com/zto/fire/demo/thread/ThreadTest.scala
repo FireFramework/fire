@@ -47,6 +47,7 @@ object ThreadTest extends BaseSparkStreaming {
     */
   def showSchema: Unit = {
     println("--------------> atFixRate <----------------")
-    spark.sql("desc ods.gd_scan_send_new").show(false)
+    this.spark.sql("use tmp")
+    spark.sql("show tables").show(false)
   }
 }
