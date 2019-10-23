@@ -33,7 +33,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
     * 打印的行数
     * @return
     */
-  def showString(lines: Int = 100): String = {
+  def showString(lines: Int = 1000): String = {
     val showLines = if (lines <= 1000) lines else 1000
     val showStringMethod = dataset.getClass.getDeclaredMethod("showString", classOf[Int], classOf[Int], classOf[Boolean])
     showStringMethod.invoke(dataset, new Integer(showLines), new Integer(Int.MaxValue), new java.lang.Boolean(false)).toString
