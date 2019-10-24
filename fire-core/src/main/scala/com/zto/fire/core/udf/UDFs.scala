@@ -95,7 +95,7 @@ object UDFs extends Serializable {
       * @return
       */
     def addMons(dateTimeStr: String, mons: Int): String = {
-      DateFormatUtils.addMins(dateTimeStr, mons)
+      DateFormatUtils.addMons(dateTimeStr, mons)
     }
 
     /**
