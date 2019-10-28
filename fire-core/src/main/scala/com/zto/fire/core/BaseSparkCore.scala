@@ -44,7 +44,6 @@ class BaseSparkCore extends BaseSpark {
         .set("spark.sql.parquet.writeLegacyFormat", "true")
         .set("spark.scheduler.listenerbus.eventqueue.size", "130000")
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        .set("hive.metastore.uris", GlobalConstants.HiveConf.getMetastoreUrl)
     } else {
       conf
     }

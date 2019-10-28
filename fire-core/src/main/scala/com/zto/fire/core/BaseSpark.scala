@@ -165,6 +165,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     val tmpConf = if (conf == null) this.buildConf(conf) else conf
     tmpConf.setAll(PropUtils.toMap)
     tmpConf.set("spark.driver.class.simple.name", this.driverClass)
+    tmpConf.set("hive.metastore.uris", GlobalConstants.HiveConf.getMetastoreUrl)
     if (SystemInfoUtils.isWindows) {
       this.spark = SparkSession.builder().config(tmpConf).master("local[*]") /*.enableHiveSupport()*/ .getOrCreate()
     } else {

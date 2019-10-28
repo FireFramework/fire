@@ -754,7 +754,7 @@ object GlobalConstants {
    */
   object HiveConf extends Enumeration {
     // hive集群标识（batch/streaming/test）
-    val hiveCluster = PropUtils.getString(PropKeys.HIVE_CLUSTER, DefaultVals.hiveCluster)
+    lazy val hiveCluster = PropUtils.getString(PropKeys.HIVE_CLUSTER, DefaultVals.hiveCluster)
     // 离线hive集群
     private val batchMetastore = "thrift://192.168.25.36:9083,thrift://HZPL025050:9083,thrift://HZPL025051:9083,thrift://HZPL025052:9083"
     // 实时hive集群
@@ -857,11 +857,10 @@ object GlobalConstants {
     def linkHiveCluster(hadoopConf: Configuration): Unit = {
       if (hadoopConf != null && this.hdfsHAEnable) {
         // 根据hive集群选择启用对应集群的HA
-        val hiveCluster = PropUtils.getString(PropKeys.HIVE_CLUSTER)
-        if (StringUtils.isNotBlank(hiveCluster)) {
-          if ("batch".equalsIgnoreCase(hiveCluster)) {
+        if (StringUtils.isNotBlank(HiveConf.hiveCluster)) {
+          if ("batch".equalsIgnoreCase(HiveConf.hiveCluster)) {
             this.setBatchHdfsHAConf(hadoopConf)
-          } else if ("streaming".equalsIgnoreCase(hiveCluster)) {
+          } else if ("streaming".equalsIgnoreCase(HiveConf.hiveCluster)) {
             this.setStreamingHdfsHAConf(hadoopConf)
           }
         }

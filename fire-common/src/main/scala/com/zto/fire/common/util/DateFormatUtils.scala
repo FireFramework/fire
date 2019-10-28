@@ -726,6 +726,7 @@ object DateFormatUtils {
     */
   def truncateMonth(dateTime: Date): String = {
     val cal = Calendar.getInstance()
+    if (dateTime != null) cal.setTime(dateTime)
     val year = cal.get(Calendar.YEAR)
     val month = cal.get(Calendar.MONTH) + 1
     if (month < 10)
