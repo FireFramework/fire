@@ -423,7 +423,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
           getList.clear()
         }
       }
-      this.logFire(s"hbaseOperGetRDD(tableName: ${tableName}) count: ${getList.size}", "hbase", 1)
+      this.logFire(s"hbaseOperGetRDD(tableName: ${tableName}) count: ${beanList.size}", "hbase", 1)
       JavaConversions.asScalaIterator(beanList.iterator())
     })
     this.logFire(s"hbaseOperGetRDD(tableName: ${tableName})", "hbase", 1)

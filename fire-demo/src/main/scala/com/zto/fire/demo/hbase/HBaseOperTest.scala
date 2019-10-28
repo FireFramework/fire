@@ -100,7 +100,7 @@ object HBaseOperTest extends BaseSparkCore {
     */
   def testHbaseOperGetDF: Unit = {
     val getList = Seq("1", "2", "3", "4", "5", "6")
-    val getRDD = this.spark.parallelize(getList)
+    val getRDD = this.spark.parallelize(getList, 3)
     // get到的结果以dataframe形式返回
     val studentDF = this.spark.hbaseOperGetDF(this.tableName1, getRDD, classOf[Student])
     studentDF.show(100, false)
@@ -202,10 +202,16 @@ object HBaseOperTest extends BaseSparkCore {
     /*this.testHbaseOperDeleteList
     this.testHbaseOperDeleteRDD
     this.testHbaseOperDeleteDS*/
-    this.testHbaseOperPutRDD()
-    this.testHbaseOperGetDF
-    this.testHbaseOperDeleteRDD
-    this.testHbaseOperScanDF
+    // this.testHbaseOperPutRDD()
+    var count = 1;
+    while (true) {
+      this.testHbaseOperGetDF
+      count += 1
+      println("cache.count=" + count)
+      Thread.sleep(1000)
+    }
+    /*this.testHbaseOperDeleteRDD
+    this.testHbaseOperScanDF*/
   }
 
   def main(args: Array[String]): Unit = {
