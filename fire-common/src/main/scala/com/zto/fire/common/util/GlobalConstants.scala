@@ -5,6 +5,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.client.Durability
 import org.apache.rocketmq.spark.ConsumerStrategy
 import org.apache.spark.sql.SaveMode
+import org.apache.spark.storage.StorageLevel
 
 /**
  * 常量配置类
@@ -214,6 +215,15 @@ object GlobalConstants {
     val SPARK_FIRE_LOG_ENABLE = "spark.fire.log.enable"
     // 用于限定fire框架中sql日志的字符串长度
     val SPARK_FIRE_LOG_SQL_LENGTH = "spark.fire.log.sql.length"
+    // fire框架针对hbase操作后数据集的缓存策略，配置列表详见：StorageLevel.scala（配置不区分大小写）
+    val SPARK_FIRE_HBASE_STORAGE_LEVEL = "spark.fire.hbase.storage.level"
+    // 通过HBase scan后repartition的分区数
+    val SPARK_FIRE_HBASE_SCAN_REPARTITIONS = "spark.fire.hbase.scan.repartitions"
+
+    // fire框架针对jdbc操作后数据集的缓存策略
+    val SPARK_FIRE_JDBC_STORAGE_LEVEL = "spark.fire.jdbc.storage.level"
+    // 通过JdbcOper查询后将数据集放到多少个分区中，需根据实际的结果集做配置
+    val SPARK_FIRE_JDBC_QUERY_REPARTITIONS = "spark.fire.jdbc.query.partitions"
 
     // ---------------------------- HDFS 相关配置 ---------------------------- //
     // 是否启用高可用
@@ -238,6 +248,28 @@ object GlobalConstants {
     lazy val logEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_LOG_ENABLE, true)
     // 用于限定fire框架中sql日志的字符串长度
     lazy val logSqlLength = PropUtils.getInt(PropKeys.SPARK_FIRE_LOG_SQL_LENGTH, DefaultVals.logSqlLength)
+    // HBase结果集的缓存策略配置
+    lazy val hbaseStorageLevelConf = PropUtils.getString(PropKeys.SPARK_FIRE_HBASE_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
+    // 通过HBase scan后repartition的分区数，默认1200
+    lazy val hbaseHadoopScanRepartitions = PropUtils.getInt(PropKeys.SPARK_FIRE_HBASE_SCAN_REPARTITIONS, 1200)
+    // fire框架针对jdbc操作后数据集的缓存策略
+    lazy val jdbcStorageLevelConf = PropUtils.getString(PropKeys.SPARK_FIRE_JDBC_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
+    // 通过JdbcOper查询后将数据集放到多少个分区中，需根据实际的结果集做配置
+    lazy val jdbcQueryPartitions = PropUtils.getInt(PropKeys.SPARK_FIRE_JDBC_QUERY_REPARTITIONS, 10)
+
+    /**
+     * 获取配置的HBase缓存策略
+     */
+    def hbaseStorageLevel: StorageLevel = {
+      StorageLevel.fromString(hbaseStorageLevelConf)
+    }
+
+    /**
+     * 获取配置的JDBC缓存策略
+     */
+    def jdbcStorageLevel: StorageLevel = {
+      StorageLevel.fromString(jdbcStorageLevelConf)
+    }
   }
 
   /**

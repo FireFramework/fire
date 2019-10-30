@@ -2,6 +2,7 @@ package com.zto.fire.core.ext.module
 
 import com.zto.fire.common.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.common.db.HBaseOper
+import com.zto.fire.common.util.GlobalConstants.FireConf
 import com.zto.fire.common.util.{GlobalConstants, ParamUtils}
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
@@ -117,7 +118,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     val rowKeyRDD = rdd.filter(StringUtils.isNotBlank(_)).map(rowKey => Bytes.toBytes(rowKey))
     val getRDD = this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
       HBaseOper.hbaseRow2Bean(result, clazz)
-    }).filter(bean => bean != null)
+    }).filter(bean => bean != null).persist(FireConf.hbaseStorageLevel)
     this.logFire(s"bulkGetRDD(tableName: ${tableName})", "hbase", 1)
 
     getRDD
@@ -265,7 +266,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     if (scan.getCaching == -1) {
       scan.setCaching(this.batchSize)
     }
-    val scanRDD = this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz))
+    val scanRDD = this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz)).persist(FireConf.hbaseStorageLevel)
     this.logFire(s"bulkScanRDD(tableName: ${tableName})", "hbase", 1)
 
     scanRDD
