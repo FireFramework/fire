@@ -1,8 +1,8 @@
 package com.zto.fire.common.acc
 
 import java.nio.ByteBuffer
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.bean.TimeCost
@@ -13,7 +13,6 @@ import org.apache.spark.util.LongAccumulator
 import org.apache.spark.{SparkContext, SparkEnv}
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 /**
  * fire内置累加器工具类
