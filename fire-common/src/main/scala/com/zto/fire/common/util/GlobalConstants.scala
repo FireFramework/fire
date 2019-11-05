@@ -20,6 +20,8 @@ object GlobalConstants {
   lazy val hbaseCluster = PropUtils.getString(PropKeys.HBASE_CLUSTER_URL, DefaultVals.hbaseName)
   // fire框架埋点日志开关
   lazy val fireLogEnable = FireConf.logEnable
+  // 用于设置是否启用任务定时调度
+  lazy val scheduleEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_TASK_SCHEDULE_ENABLE, true)
 
 
   /**
@@ -224,6 +226,8 @@ object GlobalConstants {
     val SPARK_FIRE_JDBC_STORAGE_LEVEL = "spark.fire.jdbc.storage.level"
     // 通过JdbcOper查询后将数据集放到多少个分区中，需根据实际的结果集做配置
     val SPARK_FIRE_JDBC_QUERY_REPARTITIONS = "spark.fire.jdbc.query.partitions"
+    // 用于配置是否启用任务定时调度
+    val SPARK_FIRE_TASK_SCHEDULE_ENABLE = "spark.fire.task.schedule.enable"
 
     // ---------------------------- HDFS 相关配置 ---------------------------- //
     // 是否启用高可用

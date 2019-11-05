@@ -6,10 +6,14 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.bean.TimeCost
+import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{GlobalConstants, StringsUtils, SystemInfoUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.LongAccumulator
 import org.apache.spark.{SparkContext, SparkEnv}
+
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 /**
  * fire内置累加器工具类
@@ -38,6 +42,17 @@ private[fire] object AccumulatorManager {
 
   // 获取当前任务的全类名
   private[this] lazy val jobClassName = SparkEnv.get.conf.get("spark.driver.class.name", "")
+  // 用于注册定时任务的列表
+  private[this] val taskRegisterSet = mutable.HashSet[Object]()
+
+  /**
+   * 注册定时任务实例
+   */
+  def registerTasks(tasks: Object *): Unit = {
+    if (tasks != null) {
+      tasks.foreach(taskInstances => taskRegisterSet.add(taskInstances))
+    }
+  }
 
   /**
    * 将数据累加到count累加器中
@@ -180,7 +195,10 @@ private[fire] object AccumulatorManager {
   private[fire] def registerAccumulators(sc: SparkContext): Unit = {
     if (sc != null && accMap != null && accMap.size > 0) {
       if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (SystemInfoUtils.isLinux) "10000" else "10").toInt)
+      // 将定时任务所在类的实例广播到每个executor端
+      val taskSet = sc.broadcast(taskRegisterSet)
 
+      // 序列化内置的累加器
       val accumulatorMap = accMap.map(accInfo => {
         // 注册每个累加器，必须是合法的名称并且未被注册过
         if (accInfo._2 != null && !accInfo._2.isRegistered) {
@@ -198,6 +216,13 @@ private[fire] object AccumulatorManager {
       rdd.foreachPartition(i => {
         // 将序列化后的累加器放置到conf中
         accumulatorMap.foreach(accSer => SparkEnv.get.conf.set(accSer._1, StringsUtils.toHexString(accSer._2)))
+        if (GlobalConstants.scheduleEnable) {
+          // 从广播中获取到定时任务的实例，并在executor端完成注册
+          val tasks = taskSet.value
+          if (tasks != null && tasks.size > 0) {
+            tasks.foreach(obj => SchedulerManager.registerTasks(obj))
+          }
+        }
       })
     }
   }

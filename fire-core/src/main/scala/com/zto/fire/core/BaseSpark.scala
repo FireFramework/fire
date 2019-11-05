@@ -5,10 +5,12 @@ import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit
 import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.enu.{JobType, ThreadPoolType}
+import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util._
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
 import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
+import com.zto.fire.core.task.InternalTask
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.log4j.{Level, Logger}
@@ -135,6 +137,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
 
       ThreadUtils.shutdown
       Spark.stop()
+      SchedulerManager.shutdown(stopGracefully)
       this.wrapLogInfo("<-- 完成fire资源回收 -->")
     } finally {
       GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
@@ -180,6 +183,11 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
     this.sc.addSparkListener(new BaseSparkListener(this))
     this.initLogging(this.className)
+    // 向driver和executor注册定时任务
+    val taskSchedule = new InternalTask(this)
+    SchedulerManager.registerTasks(this, taskSchedule)
+    AccumulatorManager.registerTasks(this, taskSchedule)
+    // 向executor端注册自定义累加器
     if (this.jobType != JobType.CORE) this.acc.registerAccumulators(this.sc)
     this.hiveContext = this.spark.sqlContext
     this.sqlContext = this.hiveContext
@@ -188,7 +196,28 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.applicationId = SparkUtils.getApplicationId(this.spark)
     this.webUI = SparkUtils.getWebUI(this.spark)
     this.conf = tmpConf
+
     this.wrapLogInfo("<-- 完成Spark运行时信息初始化 -->")
+  }
+
+  /**
+   * 用于注册定时任务实例
+   *
+   * @param instances
+   * 标记有@Scheduled类的实例
+   */
+  def registerSchedule(instances: Object*): Unit = {
+    try {
+      // 向driver端注册定时任务
+      SchedulerManager.registerTasks(instances: _*)
+      // 向executor端注册定时任务
+      val executors = this.conf.get("spark.executor.instances").toInt
+      if (executors > 0 && this.sc != null) {
+        this.sc.parallelize(1 to executors, executors).foreachPartition(i => SchedulerManager.registerTasks(instances: _*))
+      }
+    } catch {
+      case e => this.log("定时任务注册失败.", e)
+    }
   }
 
   /**

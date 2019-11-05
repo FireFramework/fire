@@ -128,7 +128,7 @@ class RestfulRegister(val threadPool: ExecutorService) extends Logging {
   def registerRestful(): Unit = {
     val restClassList = ReflectionUtils.scanAnnotation("com.zto", classOf[Rest])
     if (restClassList != null && restClassList.size() > 0) {
-      JavaConversions.asScalaBuffer(restClassList).foreach(clazz => {
+      JavaConversions.asScalaSet(restClassList).foreach(clazz => {
         if (clazz != null) {
           val methods = clazz.getDeclaredMethods
           if (methods != null && methods.size > 0) {

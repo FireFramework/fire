@@ -1,4 +1,4 @@
-package com.zto.fire.demo
+package com.zto.fire.demo.schedule
 
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.util.DateFormatUtils
@@ -7,11 +7,12 @@ import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.util.SparkUtils
 
 /**
- * 用于测试scala代码
+ * 用于测试定时任务
  *
- * @author ChengLong 2019-9-4 13:39:16
+ * @author ChengLong 2019年11月5日 17:27:20
+ * @since 0.3.5
  */
-object ScalaTest extends BaseSparkStreaming {
+object ScheduleTest extends BaseSparkStreaming {
 
   /**
    * 只在driver端执行，不允许同一时刻同时执行该方法
@@ -24,6 +25,8 @@ object ScalaTest extends BaseSparkStreaming {
 
   def main(args: Array[String]): Unit = {
     this.init()
+    // 用于注册其他类下带有@Scheduler标记的方法
+    this.registerSchedule(new Tasks)
   }
 
 }
