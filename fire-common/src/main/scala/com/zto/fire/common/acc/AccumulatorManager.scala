@@ -47,7 +47,7 @@ private[fire] object AccumulatorManager {
   /**
    * 注册定时任务实例
    */
-  def registerTasks(tasks: Object *): Unit = {
+  def registerTasks(tasks: Object*): Unit = {
     if (tasks != null) {
       tasks.foreach(taskInstances => taskRegisterSet.add(taskInstances))
     }
@@ -192,42 +192,44 @@ private[fire] object AccumulatorManager {
    * [key, accumulator]
    */
   private[fire] def registerAccumulators(sc: SparkContext): Unit = {
-    if (sc != null && accMap != null && accMap.size > 0) {
-      if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (SystemInfoUtils.isLinux) "10000" else "10").toInt)
-      // 将定时任务所在类的实例广播到每个executor端
-      val taskSet = sc.broadcast(taskRegisterSet)
+    this.synchronized {
+      if (sc != null && accMap != null && accMap.size > 0) {
+        if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (SystemInfoUtils.isLinux) "10000" else "10").toInt)
+        // 将定时任务所在类的实例广播到每个executor端
+        val taskSet = sc.broadcast(taskRegisterSet)
 
-      // 序列化内置的累加器
-      val accumulatorMap = accMap.map(accInfo => {
-        // 注册每个累加器，必须是合法的名称并且未被注册过
-        if (accInfo._2 != null && !accInfo._2.isRegistered) {
-          if (StringUtils.isNotBlank(accInfo._1) && accInfo._1.contains("fire")) {
-            sc.register(accInfo._2, accInfo._1)
-          } else {
-            sc.register(accInfo._2)
+        // 序列化内置的累加器
+        val accumulatorMap = accMap.map(accInfo => {
+          // 注册每个累加器，必须是合法的名称并且未被注册过
+          if (accInfo._2 != null && !accInfo._2.isRegistered) {
+            if (StringUtils.isNotBlank(accInfo._1) && accInfo._1.contains("fire")) {
+              sc.register(accInfo._2, accInfo._1)
+            } else {
+              sc.register(accInfo._2)
+            }
           }
-        }
-        (accInfo._1, SparkEnv.get.closureSerializer.newInstance().serialize(accInfo._2).array())
-      })
+          (accInfo._1, SparkEnv.get.closureSerializer.newInstance().serialize(accInfo._2).array())
+        })
 
-      // 获取申请的executor数，设置累加器到conf中
-      val rdd = sc.parallelize(1 to this.initExecutors.get, this.initExecutors.get)
-      rdd.foreachPartition(i => {
-        // 将序列化后的累加器放置到conf中
-        accumulatorMap.foreach(accSer => SparkEnv.get.conf.set(accSer._1, StringsUtils.toHexString(accSer._2)))
-        if (GlobalConstants.scheduleEnable) {
-          // 从广播中获取到定时任务的实例，并在executor端完成注册
-          val tasks = taskSet.value
-          if (tasks != null && tasks.size > 0) {
-            tasks.foreach(obj => {
-              // 防止生成重复的Scheduler实例
-              if (!SchedulerManager.schedulerIsStarted()) {
-                SchedulerManager.registerTasks(obj)
-              }
-            })
+        // 获取申请的executor数，设置累加器到conf中
+        val rdd = sc.parallelize(1 to this.initExecutors.get, this.initExecutors.get)
+        rdd.foreachPartition(i => {
+          // 将序列化后的累加器放置到conf中
+          accumulatorMap.foreach(accSer => SparkEnv.get.conf.set(accSer._1, StringsUtils.toHexString(accSer._2)))
+          if (GlobalConstants.scheduleEnable) {
+            // 从广播中获取到定时任务的实例，并在executor端完成注册
+            val tasks = taskSet.value
+            if (tasks != null && tasks.size > 0) {
+              tasks.foreach(obj => {
+                // 防止生成重复的Scheduler实例
+                if (!SchedulerManager.schedulerIsStarted()) {
+                  SchedulerManager.registerTasks(obj)
+                }
+              })
+            }
           }
-        }
-      })
+        })
+      }
     }
   }
 }

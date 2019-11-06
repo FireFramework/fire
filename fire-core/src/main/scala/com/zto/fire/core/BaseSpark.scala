@@ -186,7 +186,9 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     this.initLogging(this.className)
     // 向driver和executor注册定时任务
     val taskSchedule = new InternalTask(this)
+    // driver端注册定时任务
     SchedulerManager.registerTasks(this, taskSchedule, sparkListener)
+    // executor端与自定义累加器一同完成定时任务注册
     AccumulatorManager.registerTasks(this, taskSchedule)
     // 向executor端注册自定义累加器
     if (this.jobType != JobType.CORE) this.acc.registerAccumulators(this.sc)

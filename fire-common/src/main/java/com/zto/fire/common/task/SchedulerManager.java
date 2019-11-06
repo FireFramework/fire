@@ -76,7 +76,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
      *     为了保证当前Spark任务所在的Object实例只有一个，约定传入的参数必须是类的实例而不是Class类型
      * @param taskInstances 具有@Scheduled注解类的实例
      */
-    public static void registerTasks(Object... taskInstances) {
+    public synchronized static void registerTasks(Object... taskInstances) {
         try {
             if (!GlobalConstants.scheduleEnable()) return;
             addScanTask(taskInstances);
@@ -169,7 +169,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
     /**
      * 用于判断当前的定时调度器是否已启动
      */
-    public static boolean schedulerIsStarted() {
+    public synchronized static boolean schedulerIsStarted() {
        if (scheduler == null) {
            return false;
        }
@@ -187,7 +187,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
      *
      * @param waitForJobsToComplete 是否等待所有job全部执行完成再关闭
      */
-    public static void shutdown(boolean waitForJobsToComplete) {
+    public synchronized static void shutdown(boolean waitForJobsToComplete) {
         try {
             if (scheduler != null && !scheduler.isShutdown()) {
                 scheduler.shutdown(waitForJobsToComplete);
