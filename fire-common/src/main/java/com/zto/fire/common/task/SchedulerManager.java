@@ -33,8 +33,6 @@ public class SchedulerManager extends BaseLogging implements Serializable {
     private static Map<String, Object> alreadyRegisteredTaskMap;
     // 定时调度实例
     private static Scheduler scheduler;
-    // executor数量
-    private static AtomicInteger initExecutors = new AtomicInteger(0);
 
     static {
         taskMap = Maps.newConcurrentMap();

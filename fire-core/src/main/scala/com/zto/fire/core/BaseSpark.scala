@@ -181,11 +181,12 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     GlobalConstants.HdfsConf.linkHiveCluster(this.sc.hadoopConfiguration)
     this.catalog = this.spark.catalog
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
-    this.sc.addSparkListener(new BaseSparkListener(this))
+    val sparkListener = new BaseSparkListener(this)
+    this.sc.addSparkListener(sparkListener)
     this.initLogging(this.className)
     // 向driver和executor注册定时任务
     val taskSchedule = new InternalTask(this)
-    SchedulerManager.registerTasks(this, taskSchedule)
+    SchedulerManager.registerTasks(this, taskSchedule, sparkListener)
     AccumulatorManager.registerTasks(this, taskSchedule)
     // 向executor端注册自定义累加器
     if (this.jobType != JobType.CORE) this.acc.registerAccumulators(this.sc)
