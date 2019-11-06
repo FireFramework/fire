@@ -27,6 +27,8 @@ object ScheduleTest extends BaseSparkStreaming {
     this.init()
     // 用于注册其他类下带有@Scheduler标记的方法
     this.registerSchedule(new Tasks)
+    // 重复注册的任务会自动去重
+    this.registerSchedule(new Tasks)
   }
 
 }

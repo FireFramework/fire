@@ -127,6 +127,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
                                             triggerBuilder.startAt(DateUtils.addMilliseconds(new Date(), new Long(anno.initialDelay()).intValue()));
                                     }
                                     // 添加到调度任务中
+                                    if (scheduler == null) scheduler = StdSchedulerFactory.getDefaultScheduler();
                                     scheduler.scheduleJob(job, triggerBuilder.build());
                                     // 将已注册的task放到已注册标记列表中，防止重复注册同一个类的同一个定时方法
                                     alreadyRegisteredTaskMap.put(entry.getKey(), entry.getValue());
@@ -165,6 +166,22 @@ public class SchedulerManager extends BaseLogging implements Serializable {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 用于判断当前的定时调度器是否已启动
+     */
+    public static boolean schedulerIsStarted() {
+       if (scheduler == null) {
+           return false;
+       }
+       try {
+           return scheduler.isStarted();
+       } catch (Exception e) {
+           System.err.println("获取调度器是否启用失败");
+           e.printStackTrace();
+       }
+       return false;
     }
 
     /**

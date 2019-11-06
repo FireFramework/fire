@@ -219,7 +219,12 @@ private[fire] object AccumulatorManager {
           // 从广播中获取到定时任务的实例，并在executor端完成注册
           val tasks = taskSet.value
           if (tasks != null && tasks.size > 0) {
-            tasks.foreach(obj => SchedulerManager.registerTasks(obj))
+            tasks.foreach(obj => {
+              // 防止生成重复的Scheduler实例
+              if (!SchedulerManager.schedulerIsStarted()) {
+                SchedulerManager.registerTasks(obj)
+              }
+            })
           }
         }
       })
