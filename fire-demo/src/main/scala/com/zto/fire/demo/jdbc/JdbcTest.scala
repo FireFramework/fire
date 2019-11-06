@@ -42,6 +42,9 @@ object JdbcTest extends BaseSparkCore {
       Seq("flink4", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
       Seq("flink5", 27, DateFormatUtils.formatCurrentDateTime(), 17.236, 0)))
 
+    // 执行批量更新
+    this.spark.jdbcBatchUpdate(s"update $tableName set sex=? where id=?", Seq(Seq(1, 1), Seq(2, 2), Seq(3, 3), Seq(4, 4), Seq(5, 5), Seq(6, 6)))
+
     // 方式一：通过this.spark方式执行delete操作
     val sql = s"DELETE FROM $tableName WHERE id=?"
     this.spark.jdbcUpdate(sql, Seq(2))
