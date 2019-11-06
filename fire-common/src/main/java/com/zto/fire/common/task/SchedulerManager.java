@@ -75,13 +75,14 @@ public class SchedulerManager extends BaseLogging implements Serializable {
 
     /**
      * 将标记有@Scheduled的类实例注册给定时调度管理器
-     *
-     * @param obj 具有@Scheduled注解类的实例
+     * 注：参数是类的实例而不是Class类型，是由于像Spark所在的object类型传入后，会被反射调用构造器创建另一个实例
+     *     为了保证当前Spark任务所在的Object实例只有一个，约定传入的参数必须是类的实例而不是Class类型
+     * @param taskInstances 具有@Scheduled注解类的实例
      */
-    public static void registerTasks(Object... obj) {
+    public static void registerTasks(Object... taskInstances) {
         try {
             if (!GlobalConstants.scheduleEnable()) return;
-            addScanTask(obj);
+            addScanTask(taskInstances);
             if (taskMap != null && taskMap.size() > 0) {
                 for (Map.Entry<String, Object> entry : taskMap.entrySet()) {
                     // 已经注册过的任务不再重复注册

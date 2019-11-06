@@ -5,7 +5,9 @@ import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.util.SparkUtils
 
 /**
- * 定时任务注册类，必须可序列化且@Scheduled标记的方法不能带参数
+ * 定时任务注册类
+ * 1. 可序列化
+ * 2. 方法不带任何参数
  *
  * @author ChengLong 2019年11月5日 17:29:35
  * @since 0.3.5
