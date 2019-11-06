@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.GlobalConstants.FireConf
 import com.zto.fire.core.ext.SparkExt._
 import org.apache.spark.Logging
 import org.apache.spark.scheduler._
