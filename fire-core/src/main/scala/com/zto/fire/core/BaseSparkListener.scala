@@ -147,7 +147,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
   override def onUnpersistRDD(unpersistRDD: SparkListenerUnpersistRDD): Unit = this.baseSpark.onUnpersistRDD(unpersistRDD)
 
   /**
-   * 用于注册内置累加器，每隔1分钟执行一次，共计执行10次
+   * 用于注册内置累加器，每隔1分钟执行一次，延迟1分钟执行，默认执行10次
    */
   @Scheduled(fixedInterval = 60 * 1000, initialDelay = 60 * 1000, concurrent = false, repeatCount = 10)
   private[fire] def registerAcc: Unit = {
