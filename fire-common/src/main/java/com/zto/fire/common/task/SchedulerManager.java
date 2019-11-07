@@ -73,7 +73,8 @@ public class SchedulerManager extends BaseLogging implements Serializable {
     /**
      * 将标记有@Scheduled的类实例注册给定时调度管理器
      * 注：参数是类的实例而不是Class类型，是由于像Spark所在的object类型传入后，会被反射调用构造器创建另一个实例
-     *     为了保证当前Spark任务所在的Object实例只有一个，约定传入的参数必须是类的实例而不是Class类型
+     * 为了保证当前Spark任务所在的Object实例只有一个，约定传入的参数必须是类的实例而不是Class类型
+     *
      * @param taskInstances 具有@Scheduled注解类的实例
      */
     public synchronized static void registerTasks(Object... taskInstances) {
@@ -129,7 +130,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
                                     scheduler.scheduleJob(job, triggerBuilder.build());
                                     // 将已注册的task放到已注册标记列表中，防止重复注册同一个类的同一个定时方法
                                     alreadyRegisteredTaskMap.put(entry.getKey(), entry.getValue());
-                                    System.out.println("\u001B[35m---> 已注册定时任务[ " + entry.getKey() + "." + method.getName() + " ]，等待系统调度执行. <---\u001B[0m");
+                                    System.out.println("\u001B[33m---> 已注册定时任务[ " + entry.getKey() + "." + method.getName() + " ]，" + buildSchedulerInfo(anno) + ". \u001B[33m<---\u001B[0m");
                                 }
                             }
                         }
@@ -142,6 +143,35 @@ public class SchedulerManager extends BaseLogging implements Serializable {
             System.err.println("定时任务注册失败：作为定时任务的类必须可序列化，并且标记有@Scheduled的方法必须是无参的！");
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 用于描述定时任务的详细信息
+     *
+     * @param anno Scheduled注解
+     * @return 描述信息
+     */
+    private static String buildSchedulerInfo(Scheduled anno) {
+        if (anno == null) return "Scheduled为空";
+        StringBuilder schedulerInfo = new StringBuilder("\u001B[31m调度信息\u001B[0m");
+        if (StringUtils.isNotBlank(anno.scope())) {
+            schedulerInfo.append("[ 范围=\u001B[32m" + anno.scope() + "\u001B[0m ] ");
+        }
+        if (StringUtils.isNotBlank(anno.cron())) {
+            schedulerInfo.append("[ 频率=\u001B[33m" + anno.cron() + "\u001B[0m ] ");
+        } else if (anno.fixedInterval() != -1) {
+            schedulerInfo.append("[ 频率=\u001B[34m" + anno.fixedInterval() + "\u001B[0m ] ");
+        }
+        if (anno.initialDelay() != -1) {
+            schedulerInfo.append("[ 延迟=\u001B[35m" + anno.initialDelay() + "\u001B[0m ] ");
+        }
+        if (StringUtils.isNotBlank(anno.startAt())) {
+            schedulerInfo.append("[ 启动时间=\u001B[36m" + anno.startAt() + "\u001B[0m ] ");
+        }
+        if (anno.repeatCount() != -1) {
+            schedulerInfo.append("[ 重复=\u001B[32m" + anno.repeatCount() + "\u001B[0m次 ] ");
+        }
+        return schedulerInfo.toString();
     }
 
     /**
@@ -170,16 +200,16 @@ public class SchedulerManager extends BaseLogging implements Serializable {
      * 用于判断当前的定时调度器是否已启动
      */
     public synchronized static boolean schedulerIsStarted() {
-       if (scheduler == null) {
-           return false;
-       }
-       try {
-           return scheduler.isStarted();
-       } catch (Exception e) {
-           System.err.println("获取调度器是否启用失败");
-           e.printStackTrace();
-       }
-       return false;
+        if (scheduler == null) {
+            return false;
+        }
+        try {
+            return scheduler.isStarted();
+        } catch (Exception e) {
+            System.err.println("获取调度器是否启用失败");
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /**

@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 
 import com.google.common.collect.HashBasedTable
+import com.zto.fire.common.acc.AccumulatorManager.envAccumulator
 import com.zto.fire.common.bean.TimeCost
 import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{GlobalConstants, StringsUtils, SystemInfoUtils}
@@ -36,7 +37,12 @@ private[fire] object AccumulatorManager {
   private[this] val multiTimerLabel = "multiTimer"
   private[fire] val multiTimer = new MultiTimerAccumulator
 
-  private[this] val accMap = Map(this.logAccumulatorLabel -> this.logAccumulator, this.counterLabel -> this.counter, this.multiCounterLabel -> this.multiCounter, this.multiTimerLabel -> this.multiTimer)
+  // env累加器
+  private[this] val envAccumulatorLabel = "envAccumulator"
+  private[fire] val envAccumulator = new EnvironmentAccumulator
+
+  // 累加器注册列表
+  private[this] val accMap = Map(this.logAccumulatorLabel -> this.logAccumulator, this.counterLabel -> this.counter, this.multiCounterLabel -> this.multiCounter, this.multiTimerLabel -> this.multiTimer, this.envAccumulatorLabel -> this.envAccumulator)
   private[this] val initExecutors: AtomicInteger = new AtomicInteger(0)
 
   // 获取当前任务的全类名
@@ -105,6 +111,33 @@ private[fire] object AccumulatorManager {
    * 日志累加值
    */
   def getLog: ConcurrentLinkedQueue[String] = this.logAccumulator.value
+
+  /**
+   * 将运行时信息累加到env累加器中
+   *
+   * @param envInfo
+   * 运行时信息
+   */
+  def addEnv(envInfo: String): Unit = {
+    val env = SparkEnv.get
+    if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
+      val envAccumulator = SparkEnv.get.conf.get(this.envAccumulatorLabel, "")
+      if (StringUtils.isNotBlank(envAccumulator)) {
+        val envAcc: EnvironmentAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(envAccumulator)))
+        envAcc.add(envInfo)
+      }
+    } else {
+      this.envAccumulator.add(envInfo)
+    }
+  }
+
+  /**
+   * 获取env累加器中的运行时信息
+   *
+   * @return
+   * 运行时信息
+   */
+  def getEnv: ConcurrentLinkedQueue[String] = this.envAccumulator.value
 
   /**
    * 将数据累加到multiCount累加器中

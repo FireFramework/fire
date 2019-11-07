@@ -16,9 +16,9 @@ import org.apache.spark.util.AccumulatorV2
   */
 class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[String]] {
   // 用于限定日志最少保存量，防止当日志量达到maxLogSize时频繁的进行clear操作
-  private lazy val minLogSize = PropUtils.getInt(PropKeys.SPARK_FIRE_LOG_MIN_SIZE, DefaultVals.minLogSize).abs
+  private lazy val minLogSize = PropUtils.getInt(PropKeys.SPARK_FIRE_ACC_LOG_MIN_SIZE, DefaultVals.minLogSize).abs
   // 用于限定日志最大保存量，防止日志量过大，撑爆driver
-  private lazy val maxLogSize = PropUtils.getInt(PropKeys.SPARK_FIRE_LOG_MAX_SIZE, DefaultVals.maxLogSize).abs
+  private lazy val maxLogSize = PropUtils.getInt(PropKeys.SPARK_FIRE_ACC_LOG_MAX_SIZE, DefaultVals.maxLogSize).abs
   // 用于存放日志的队列
   private val logQueue = new ConcurrentLinkedQueue[String]
   // 判断是否打开日志累加器

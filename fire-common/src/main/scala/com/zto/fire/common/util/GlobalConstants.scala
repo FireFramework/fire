@@ -70,6 +70,10 @@ object GlobalConstants {
     val minLogSize = 500
     // 累加器保留日志默认的最大记录数
     val maxLogSize = 1000
+    // env累加器保留的最大记录数
+    val maxEnvSize = 500
+    // env累加器保留的最少记录数
+    val minEnvSize = 100
     val maxTimerSize = 1000
     val maxTimerHour = 12
     // 默认的数据库名称
@@ -196,13 +200,17 @@ object GlobalConstants {
 
     // ---------------------------- Fire 相关配置 ---------------------------- //
     // 日志记录器保留最少的记录数
-    val SPARK_FIRE_LOG_MIN_SIZE = "spark.fire.log.min.size"
+    val SPARK_FIRE_ACC_LOG_MIN_SIZE = "spark.fire.acc.log.min.size"
     // 日志记录器保留最多的记录数
-    val SPARK_FIRE_LOG_MAX_SIZE = "spark.fire.log.max.size"
+    val SPARK_FIRE_ACC_LOG_MAX_SIZE = "spark.fire.acc.log.max.size"
+    // env累加器保留最多的记录数
+    val SPARK_FIRE_ACC_ENV_MAX_SIZE = "spark.fire.acc.env.max.size"
+    // env累加器保留最少的记录数
+    val SPARK_FIRE_ACC_ENV_MIN_SIZE = "spark.fire.acc.env.min.size"
     // timer累加器保留最大的记录数
-    val SPARK_FIRE_TIMER_MAX_SIZE = "spark.fire.timer.max.size"
+    val SPARK_FIRE_ACC_TIMER_MAX_SIZE = "spark.fire.acc.timer.max.size"
     // timer累加器清理几小时之前的记录
-    val SPARK_FIRE_TIMER_MAX_HOUR = "spark.fire.timer.max.hour"
+    val SPARK_FIRE_ACC_TIMER_MAX_HOUR = "spark.fire.acc.timer.max.hour"
     // rest接口权限认证
     val SPARK_FIRE_REST_FILTER_ENABLE = "spark.fire.rest.filter.enable"
     // 用于配置是否关闭fire内置的所有累加器
@@ -213,7 +221,9 @@ object GlobalConstants {
     val SPARK_FIRE_ACC_MULTI_COUNTER_ENABLE = "spark.fire.acc.multi.counter.enable"
     // 多时间维度累加器开关
     val SPARK_FIRE_ACC_MULTI_TIMER_ENABLE = "spark.fire.acc.multi.timer.enable"
-    // fire框架埋点日志开关
+    // env累加器开关
+    val SPARK_FIRE_ACC_ENV_ENABLE = "spark.fire.acc.env.enable"
+    // fire框架埋点日志开关，当关闭后，埋点的日志将不再被记录到日志累加器中，并且也不再打印
     val SPARK_FIRE_LOG_ENABLE = "spark.fire.log.enable"
     // 用于限定fire框架中sql日志的字符串长度
     val SPARK_FIRE_LOG_SQL_LENGTH = "spark.fire.log.sql.length"

@@ -39,6 +39,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiCounter", multiCounter))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/multiTimer", multiTimer))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/log", log))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/env", env))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/listDatabases", listDatabases))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/listTables", listTables))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/listColumns", listColumns))
@@ -289,6 +290,41 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       case e => {
         this.logFire(s"[log] 日志获取失败：json=$json", this.module, throwable = e)
         msg.buildError("日志获取失败", ErrorCode.ERROR)
+      }
+    } finally {
+      msg.toString
+    }
+  }
+
+  /**
+    * 获取运行时状态信息，包括GC、jvm、thread、memory、cpu等
+    */
+  @Rest("/system/env")
+  def env(request: Request, response: Response): AnyRef = {
+    this.mark
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      val envInfo = new StringBuilder("[")
+      JavaConversions.asScalaIterator(this.baseSpark.acc.getEnv.iterator()).foreach(env => {
+        envInfo.append(env + ",")
+      })
+
+      // 参数校验与参数获取
+      val clear = JSONUtils.getValue(json, "clear", false)
+      if (clear) this.baseSpark.acc.logAccumulator.reset
+
+      if (envInfo.length > 0 && envInfo.endsWith(",")) {
+        this.logFire(s"[env] 运行时信息获取成功：json=$json", this.module)
+        msg.buildSuccess(envInfo.substring(0, envInfo.length - 1) + "]", "运行时信息获取成功")
+      } else {
+        this.logFire(s"[env] 运行时信息记录数为空：json=$json", this.module)
+        msg.buildError("运行时信息记录数为空", ErrorCode.NOT_FOUND)
+      }
+    } catch {
+      case e => {
+        this.logFire(s"[env] 运行时信息获取失败：json=$json", this.module, throwable = e)
+        msg.buildError("运行时信息获取失败", ErrorCode.ERROR)
       }
     } finally {
       msg.toString

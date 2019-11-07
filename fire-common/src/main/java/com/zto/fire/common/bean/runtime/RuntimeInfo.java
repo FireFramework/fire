@@ -74,11 +74,11 @@ public class RuntimeInfo implements Serializable {
         runtimeInfo.jvmInfo = JvmInfo.getJvmInfo();
         runtimeInfo.classLoaderInfo = ClassLoaderInfo.getClassLoaderInfo();
         runtimeInfo.threadInfo = ThreadInfo.getThreadInfo();
-        runtimeInfo.osInfo = OSInfo.getOSInfo();
+        // runtimeInfo.osInfo = OSInfo.getOSInfo();
         runtimeInfo.cpuInfo = CpuInfo.getCpuInfo();
         runtimeInfo.memoryInfo = MemoryInfo.getMemoryInfo();
-        runtimeInfo.diskInfo = DiskInfo.getDiskInfo();
-        runtimeInfo.hardwareInfo = HardwareInfo.getHardwareInfo();
+        // runtimeInfo.diskInfo = DiskInfo.getDiskInfo();
+        // runtimeInfo.hardwareInfo = HardwareInfo.getHardwareInfo();
 
         return runtimeInfo;
     }
