@@ -5,10 +5,7 @@ import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.bean.runtime.RuntimeInfo
-import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.BaseSpark
-import com.zto.fire.core.ext.SparkExt._
-import com.zto.fire.core.util.SparkUtils
 import org.apache.spark.Logging
 
 /**
