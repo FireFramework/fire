@@ -461,7 +461,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     } catch {
       case e: Exception => {
         this.logFire(s"[sql] 执行用户sql失败：json=$json", this.module, throwable = e)
-        msg.buildError("执行用户sql失败", ErrorCode.ERROR)
+        msg.buildError("执行用户sql失败，异常堆栈：" + StackTraceUtils.stackTraceInfo(e), ErrorCode.ERROR)
       }
     } finally {
       msg.toString
