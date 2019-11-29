@@ -15,6 +15,8 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 定时任务管理器，内部使用Quartz框架
@@ -32,14 +34,25 @@ public class SchedulerManager extends BaseLogging implements Serializable {
     private static Map<String, Object> alreadyRegisteredTaskMap;
     // 定时调度实例
     private static Scheduler scheduler;
+    // 初始化标识
+    private static AtomicBoolean isInit = new AtomicBoolean(false);
 
-    static {
-        taskMap = Maps.newConcurrentMap();
-        alreadyRegisteredTaskMap = Maps.newConcurrentMap();
-        try {
-            scheduler = StdSchedulerFactory.getDefaultScheduler();
-        } catch (Exception e) {
-            e.printStackTrace();
+    /**
+     * 初始化quartz
+     */
+    private static void init() {
+        if (isInit.compareAndSet(false, true)) {
+            taskMap = Maps.newConcurrentMap();
+            alreadyRegisteredTaskMap = Maps.newConcurrentMap();
+            try {
+                StdSchedulerFactory factory = new StdSchedulerFactory();
+                Properties quartzProp = new Properties();
+                quartzProp.setProperty("org.quartz.threadPool.threadCount", GlobalConstants.quartzMaxThread());
+                factory.initialize(quartzProp);
+                scheduler = factory.getScheduler();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -80,6 +93,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
     public synchronized static void registerTasks(Object... taskInstances) {
         try {
             if (!GlobalConstants.scheduleEnable()) return;
+            SchedulerManager.init();
             addScanTask(taskInstances);
             if (taskMap != null && taskMap.size() > 0) {
                 for (Map.Entry<String, Object> entry : taskMap.entrySet()) {

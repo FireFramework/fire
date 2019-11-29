@@ -1,5 +1,6 @@
 package com.zto.fire.demo.streaming
 
+import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.demo.bean.OrderCommon
@@ -26,7 +27,7 @@ object KafkaTest extends BaseSparkStreaming {
         // toLowerDF表示将大写的字段转为小写
         this.spark.sql("select * from test").toLowerDF.show(1, false)
         this.spark.sql("select after.* from test").toLowerDF.show(1, false)
-        this.spark.sql("select after.* from test where after.platformid=1").toLowerDF.show(1, false)
+        this.spark.sql("select after.* from test where after.order_type=1").toLowerDF.show(1, false)
 
         // 二、直接将json按指定的schema解析（只解析after），fieldNameUpper=true表示按大写方式解析，并自动转为小写
         rdd.kafkaJson2DF(classOf[OrderCommon], fieldNameUpper = true).show(2, false)
@@ -38,15 +39,36 @@ object KafkaTest extends BaseSparkStreaming {
       }
     })
 
-    val dstream2 = this.ssc.createDirectStream(keyNum = 2)
+    /*val dstream2 = this.ssc.createDirectStream(keyNum = 2)
     dstream2.print(1)
     val dstream3 = this.ssc.createDirectStream(keyNum = 3)
     dstream3.print(1)
     val dstream5 = this.ssc.createDirectStream(keyNum = 5)
-    dstream5.print(1)
+    dstream5.print(1)*/
 
     this.ssc.startAwaitTermination()
   }
+
+  @Scheduled(fixedInterval = 1000)
+  def loadTable0: Unit = {
+    println("=================== 每秒钟执行loadTable0 ===================")
+  }
+
+  @Scheduled(fixedInterval = 60 * 1000)
+  def loadTable: Unit = {
+    println("=================== 每分钟执行loadTable ===================")
+  }
+
+  @Scheduled(cron = "0 0 * * * ?")
+  def loadTable2: Unit = {
+    println("=================== 每小时执行loadTable2 ===================")
+  }
+
+  @Scheduled(cron = "0 0 9 * * ?")
+  def loadTable3: Unit = {
+    println("=================== 每天9点执行loadTable3 ===================")
+  }
+
 
   def main(args: Array[String]): Unit = {
     this.init(10, false)

@@ -44,6 +44,7 @@ class RestfulRegister(val threadPool: ExecutorService) extends Logging {
     * @return
     */
   def port(port: Int): this.type = {
+    Spark.threadPool(GlobalConstants.FireConf.restfulMaxThread, 2, -1)
     Spark.port(port)
     this.port = port
     this

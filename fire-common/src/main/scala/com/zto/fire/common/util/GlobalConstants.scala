@@ -22,6 +22,8 @@ object GlobalConstants {
   lazy val fireLogEnable = FireConf.logEnable
   // 用于设置是否启用任务定时调度
   lazy val scheduleEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_TASK_SCHEDULE_ENABLE, true)
+  // quartz最大线程池大小
+  lazy val quartzMaxThread = PropUtils.getString(PropKeys.SPARK_FIRE_QUARTZ_MAX_THREAD, "8")
 
 
   /**
@@ -238,6 +240,10 @@ object GlobalConstants {
     val SPARK_FIRE_JDBC_QUERY_REPARTITIONS = "spark.fire.jdbc.query.partitions"
     // 用于配置是否启用任务定时调度
     val SPARK_FIRE_TASK_SCHEDULE_ENABLE = "spark.fire.task.schedule.enable"
+    // fire框架rest接口服务最大线程数
+    val SPARK_FIRE_RESTFUL_MAX_THREAD = "spark.fire.restful.max.thread"
+    // quartz最大线程池大小
+    val SPARK_FIRE_QUARTZ_MAX_THREAD = "spark.fire.quartz.max.thread"
 
     // ---------------------------- HDFS 相关配置 ---------------------------- //
     // 是否启用高可用
@@ -270,6 +276,8 @@ object GlobalConstants {
     lazy val jdbcStorageLevelConf = PropUtils.getString(PropKeys.SPARK_FIRE_JDBC_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
     // 通过JdbcOper查询后将数据集放到多少个分区中，需根据实际的结果集做配置
     lazy val jdbcQueryPartitions = PropUtils.getInt(PropKeys.SPARK_FIRE_JDBC_QUERY_REPARTITIONS, 10)
+    // fire框架rest接口服务最大线程数
+    lazy val restfulMaxThread = PropUtils.getInt(PropKeys.SPARK_FIRE_RESTFUL_MAX_THREAD, 8)
 
     /**
      * 获取配置的HBase缓存策略
