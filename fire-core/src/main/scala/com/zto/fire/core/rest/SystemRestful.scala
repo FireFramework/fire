@@ -457,7 +457,9 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
         return "系统正在初始化，请稍后再试"
       }
       this.logFire(s"[sql] 执行用户sql成功：json=$json", this.module)
-      msg.buildSuccess(this.baseSpark.spark.sql(sql.replace("memory.", "")).limit(1000).showString(), ErrorCode.SUCCESS.toString)
+      val sqlResult = this.baseSpark.spark.sql(sql.replace("memory.", "")).limit(1000).showString()
+      this.logFire(s"${sql}执行结果如下：\n" + sqlResult, this.module)
+      msg.buildSuccess(sqlResult, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
         this.logFire(s"[sql] 执行用户sql失败：json=$json", this.module, throwable = e)

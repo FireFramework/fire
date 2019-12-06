@@ -1,5 +1,6 @@
 package com.zto.fire.common.bean.runtime;
 
+import com.alibaba.fastjson.JSON;
 import com.sun.management.ThreadMXBean;
 
 import java.lang.management.ManagementFactory;
@@ -62,5 +63,10 @@ public class ThreadInfo {
         threadInfo.totalStartedCount = threadMBean.getTotalStartedThreadCount();
 
         return threadInfo;
+    }
+
+    public static void main(String[] args) {
+        ThreadMXBean threadMBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
+        System.out.println(JSON.toJSONString(threadMBean.getThreadInfo(threadMBean.getAllThreadIds())));
     }
 }
