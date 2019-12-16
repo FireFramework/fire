@@ -5,6 +5,7 @@ import java.util.Properties
 
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.db.{HBaseOper, JdbcOper, QueryCallback}
+import com.zto.fire.common.util.GlobalConstants.FireConf
 import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ParamUtils}
 import com.zto.fire.core.bridge.HBaseSparkBridge
 import com.zto.fire.core.ext.SparkExt._
@@ -1382,7 +1383,7 @@ class SparkSessionExt(spark: SparkSession) {
    */
   def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): RDD[T] = {
     val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
-    this.sc.parallelize(rsList, 10)
+    this.sc.parallelize(rsList, FireConf.jdbcQueryPartitions).persist(FireConf.jdbcStorageLevel)
   }
 
   /**
@@ -1400,8 +1401,7 @@ class SparkSessionExt(spark: SparkSession) {
    * @return 查询结果集
    */
   def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): DataFrame = {
-    val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
-    this.spark.createDataFrame(JavaConversions.seqAsJavaList(rsList), clazz)
+    this.spark.createDataFrame(this.jdbcQueryRDD(sql, params, clazz, connection, keyNum), clazz)
   }
 
   /**
@@ -1420,8 +1420,7 @@ class SparkSessionExt(spark: SparkSession) {
    * 查询结果集
    */
   def jdbcQueryDS[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): Dataset[T] = {
-    val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
-    this.spark.createDataset[T](JavaConversions.seqAsJavaList(rsList))(Encoders.bean(clazz))
+    this.spark.createDataset[T](this.jdbcQueryRDD(sql, params, clazz, connection, keyNum))(Encoders.bean(clazz))
   }
 
   /**

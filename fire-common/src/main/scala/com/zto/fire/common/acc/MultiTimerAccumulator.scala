@@ -18,9 +18,9 @@ import scala.collection.{JavaConversions, mutable}
 class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBasedTable[String, String, Long]] {
   private[fire] val timerCountTable = HashBasedTable.create[String, String, Long]
   // 用于限定最大保存量，防止数据量过大，撑爆driver
-  private lazy val maxTimerSize = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_FIRE_TIMER_MAX_SIZE, GlobalConstants.DefaultVals.maxTimerSize).abs
+  private lazy val maxTimerSize = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_FIRE_ACC_TIMER_MAX_SIZE, GlobalConstants.DefaultVals.maxTimerSize).abs
   // 用于指定清理指定小时数之前的记录
-  private lazy val maxTimerHour = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_FIRE_TIMER_MAX_HOUR, GlobalConstants.DefaultVals.maxTimerHour).abs
+  private lazy val maxTimerHour = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_FIRE_ACC_TIMER_MAX_HOUR, GlobalConstants.DefaultVals.maxTimerHour).abs
   // 用于记录上次清理过期累加数据的时间
   private var lastClearTime = new Date
   // 判断是否打开多时间维度累加器

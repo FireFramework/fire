@@ -546,7 +546,7 @@ public class ReflectionUtils {
      * @param annoClass   使用的annotation
      * @return
      */
-    public static List<Class<?>> scanAnnotation(Package packageName, Class<? extends Annotation> annoClass) {
+    public static Set<Class<?>> scanAnnotation(Package packageName, Class<? extends Annotation> annoClass) {
         return scanAnnotation(packageName.getName(), annoClass);
     }
 
@@ -558,16 +558,16 @@ public class ReflectionUtils {
      * @param annoClass   使用的annotation
      * @return
      */
-    public static List<Class<?>> scanAnnotation(String packageName, Class<? extends Annotation> annoClass) {
+    public static Set<Class<?>> scanAnnotation(String packageName, Class<? extends Annotation> annoClass) {
         if (StringUtils.isBlank(packageName) || annoClass == null) {
             throw new IllegalArgumentException("参数不合法");
         }
         List<Class<?>> classList = getAllClassByPackageName(packageName);
         if (classList == null) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
-        List<Class<?>> annoClassList = new LinkedList<>();
+        Set<Class<?>> annoClassList = new HashSet<>();
         for (Class<?> clazz : classList) {
             if (clazz != null) {
                 if (clazz.getAnnotation(annoClass) != null) {

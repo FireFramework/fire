@@ -1,5 +1,6 @@
 package com.zto.fire.demo.streaming
 
+import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.demo.sql.LoadTestSQL
@@ -18,6 +19,14 @@ object LoadTest extends BaseSparkStreaming {
   }
 
   /**
+   * 重复压测
+   */
+  @Scheduled(fixedInterval = 1000 * 60 * 1, concurrent = false, initialDelay = 1000 * 30)
+  def reload(): Unit = {
+    this.spark.sql(LoadTestSQL.loadSQL).show(10, false)
+  }
+
+  /**
     * Streaming的处理过程强烈建议放到process中，保持风格统一
     * 注：此方法会被自动调用，在以下两种情况下，必须将逻辑写在process中
     * 1. 开启checkpoint
@@ -25,8 +34,6 @@ object LoadTest extends BaseSparkStreaming {
     */
   override def process: Unit = {
     this.loadNewConfigTable
-
-    this.spark.sql(LoadTestSQL.loadSQL).show(10, false)
 
     val dstream = this.ssc.createDirectStream()
     dstream.foreachRDD(rdd => {

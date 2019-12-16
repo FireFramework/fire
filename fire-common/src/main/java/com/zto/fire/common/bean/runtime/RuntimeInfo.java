@@ -1,6 +1,9 @@
 package com.zto.fire.common.bean.runtime;
 
 import com.alibaba.fastjson.JSON;
+import com.zto.fire.common.util.SystemInfoUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.spark.SparkEnv;
 
 import java.io.Serializable;
 import java.util.List;
@@ -29,6 +32,18 @@ public class RuntimeInfo implements Serializable {
     private Map<String, List> diskInfo;
     // 设备信息
     private HardwareInfo hardwareInfo;
+    // executorId号或driver
+    private static String executorId;
+    // executor所在ip
+    private static String ip;
+    // executor所在主机名
+    private static String hostname;
+    // 当前pid的进程号
+    private static String pid;
+    // executor启动时间（UNIX时间戳）
+    private long startTime = System.currentTimeMillis();
+    // executor运行时间（毫秒）
+    private long uptime;
 
     private RuntimeInfo() {
     }
@@ -65,20 +80,60 @@ public class RuntimeInfo implements Serializable {
         return hardwareInfo;
     }
 
+    public String getExecutorId() {
+        return executorId;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public String getPid() {
+        return pid;
+    }
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public long getUptime() {
+        this.uptime = System.currentTimeMillis() - this.startTime;
+        return uptime;
+    }
+
     /**
      * 获取运行时信息
      *
      * @return 当前运行时信息
      */
     public static RuntimeInfo getRuntimeInfo() {
+        SparkEnv sparkEnv = SparkEnv.get();
+        if (sparkEnv != null) {
+            if (StringUtils.isBlank(executorId)) {
+                executorId = sparkEnv.executorId();
+            }
+        }
+        if (StringUtils.isBlank(ip)) {
+            ip = SystemInfoUtils.getIp();
+        }
+        if (StringUtils.isBlank(hostname)) {
+            hostname = SystemInfoUtils.getHostName();
+        }
+        if (StringUtils.isBlank(pid)) {
+            pid = SystemInfoUtils.getPid();
+        }
         runtimeInfo.jvmInfo = JvmInfo.getJvmInfo();
         runtimeInfo.classLoaderInfo = ClassLoaderInfo.getClassLoaderInfo();
         runtimeInfo.threadInfo = ThreadInfo.getThreadInfo();
-        runtimeInfo.osInfo = OSInfo.getOSInfo();
         runtimeInfo.cpuInfo = CpuInfo.getCpuInfo();
         runtimeInfo.memoryInfo = MemoryInfo.getMemoryInfo();
-        runtimeInfo.diskInfo = DiskInfo.getDiskInfo();
-        runtimeInfo.hardwareInfo = HardwareInfo.getHardwareInfo();
+        // runtimeInfo.osInfo = OSInfo.getOSInfo();
+        // runtimeInfo.diskInfo = DiskInfo.getDiskInfo();
+        // runtimeInfo.hardwareInfo = HardwareInfo.getHardwareInfo();
 
         return runtimeInfo;
     }

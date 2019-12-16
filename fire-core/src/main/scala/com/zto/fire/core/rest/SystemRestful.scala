@@ -10,7 +10,6 @@ import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
 import com.zto.fire.core.BaseSpark
 import com.zto.fire.core.ext.SparkExt._
-import org.apache.commons.beanutils.BeanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.Logging
 import spark._
@@ -18,10 +17,10 @@ import spark._
 import scala.collection.JavaConversions
 
 /**
-  * 系统预定义的restful服务
-  *
-  * @author ChengLong 2019-3-16 10:16:38
-  */
+ * 系统预定义的restful服务
+ *
+ * @author ChengLong 2019-3-16 10:16:38
+ */
 class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   private var sparkInfoBean: SparkInfo = _
   private val module = "rest"
@@ -39,6 +38,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiCounter", multiCounter))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/multiTimer", multiTimer))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/log", log))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/env", env))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/listDatabases", listDatabases))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/listTables", listTables))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/listColumns", listColumns))
@@ -46,8 +46,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 根据函数信息
-    */
+   * 根据函数信息
+   */
   @Rest("/system/listFunctions")
   def listFunctions(request: Request, response: Response): AnyRef = {
     this.mark
@@ -81,8 +81,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 根据表名获取字段信息
-    */
+   * 根据表名获取字段信息
+   */
   @Rest("/system/listColumns")
   def listColumns(request: Request, response: Response): AnyRef = {
     this.mark
@@ -122,8 +122,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 获取指定数据库下所有的表信息
-    */
+   * 获取指定数据库下所有的表信息
+   */
   @Rest("/system/listTables")
   def listTables(request: Request, response: Response): AnyRef = {
     this.mark
@@ -165,8 +165,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 获取数据库列表
-    */
+   * 获取数据库列表
+   */
   @Rest("/system/listDatabases")
   def listDatabases(request: Request, response: Response): AnyRef = {
     this.mark
@@ -191,8 +191,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 获取counter累加器中的值
-    */
+   * 获取counter累加器中的值
+   */
   @Rest("/system/counter")
   def counter(request: Request, response: Response): AnyRef = {
     this.mark
@@ -213,8 +213,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 获取多值累加器中的值
-    */
+   * 获取多值累加器中的值
+   */
   @Rest("/system/multiCounter")
   def multiCounter(request: Request, response: Response): AnyRef = {
     this.mark
@@ -234,8 +234,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 获取timer累加器中的值
-    */
+   * 获取timer累加器中的值
+   */
   @Rest("/system/multiTimer")
   def multiTimer(request: Request, response: Response): AnyRef = {
     this.mark
@@ -261,8 +261,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 获取运行时日志
-    */
+   * 获取运行时日志
+   */
   @Rest("/system/log")
   def log(request: Request, response: Response): AnyRef = {
     this.mark
@@ -296,8 +296,43 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * kill 当前 Spark 任务
-    */
+   * 获取运行时状态信息，包括GC、jvm、thread、memory、cpu等
+   */
+  @Rest("/system/env")
+  def env(request: Request, response: Response): AnyRef = {
+    this.mark
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      val envInfo = new StringBuilder("[")
+      JavaConversions.asScalaIterator(this.baseSpark.acc.getEnv.iterator()).foreach(env => {
+        envInfo.append(env + ",")
+      })
+
+      // 参数校验与参数获取
+      val clear = JSONUtils.getValue(json, "clear", false)
+      if (clear) this.baseSpark.acc.logAccumulator.reset
+
+      if (envInfo.length > 0 && envInfo.endsWith(",")) {
+        this.logFire(s"[env] 运行时信息获取成功：json=$json", this.module)
+        msg.buildSuccess(envInfo.substring(0, envInfo.length - 1) + "]", "运行时信息获取成功")
+      } else {
+        this.logFire(s"[env] 运行时信息记录数为空：json=$json", this.module)
+        msg.buildError("运行时信息记录数为空", ErrorCode.NOT_FOUND)
+      }
+    } catch {
+      case e => {
+        this.logFire(s"[env] 运行时信息获取失败：json=$json", this.module, throwable = e)
+        msg.buildError("运行时信息获取失败", ErrorCode.ERROR)
+      }
+    } finally {
+      msg.toString
+    }
+  }
+
+  /**
+   * kill 当前 Spark 任务
+   */
   @Rest("/system/kill")
   def kill(request: Request, response: Response): AnyRef = {
     this.mark
@@ -322,8 +357,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 取消job的执行
-    */
+   * 取消job的执行
+   */
   @Rest("/system/cancelJob")
   def cancelJob(request: Request, response: Response): AnyRef = {
     this.mark
@@ -351,8 +386,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 取消stage的执行
-    */
+   * 取消stage的执行
+   */
   @Rest("/system/cancelStage")
   def cancelStage(request: Request, response: Response): AnyRef = {
     this.mark
@@ -380,8 +415,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 获取driver所在服务器的负载信息
-    */
+   * 获取driver所在服务器的负载信息
+   */
   @Rest("/system/loadInfo")
   def loadInfo(request: Request, response: Response): AnyRef = {
     this.mark
@@ -400,8 +435,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 用于执行sql语句
-    */
+   * 用于执行sql语句
+   */
   @Rest(value = "/system/sql", method = "post")
   def sql(request: Request, response: Response): AnyRef = {
     this.mark
@@ -411,21 +446,24 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       // 参数校验与参数获取
       val sql = JSONUtils.getValue(json, "sql", "")
 
-      if (StringUtils.isBlank(sql) || sql.toUpperCase.contains("alert") || sql.toUpperCase.contains("drop") || sql.toLowerCase.contains("delete") || sql.toLowerCase.contains("create") || sql.toLowerCase.contains("insert")) {
-        this.logFire(s"[sql] sql不合法：json=$json", this.module)
-        return msg.buildError(s"sql不合法", ErrorCode.ERROR)
+      // sql合法性检查
+      if (StringUtils.isBlank(sql) || !sql.toLowerCase.trim.startsWith("select ")) {
+        this.logFire(s"[sql] sql不合法，在线调试功能只支持查询操作：json=$json", this.module)
+        return msg.buildError(s"sql不合法，在线调试功能只支持查询操作", ErrorCode.ERROR)
       }
 
       if (this.baseSpark == null || this.baseSpark.spark == null) {
         this.logFire(s"[sql] 系统正在初始化，请稍后再试：json=$json", this.module)
         return "系统正在初始化，请稍后再试"
       }
-      this.logFire(s"[sql] 执行用户sql成功：json=$json", this.module)
-      msg.buildSuccess(this.baseSpark.spark.sql(sql).limit(1000).showString(), ErrorCode.SUCCESS.toString)
+
+      val sqlResult = this.baseSpark.spark.sql(sql.replace("memory.", "")).limit(1000).showString()
+      this.logFire(s"成功执行以下查询：${sql}\n执行结果如下：\n" + sqlResult, this.module)
+      msg.buildSuccess(sqlResult, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
         this.logFire(s"[sql] 执行用户sql失败：json=$json", this.module, throwable = e)
-        msg.buildError("执行用户sql失败", ErrorCode.ERROR)
+        msg.buildError("执行用户sql失败，异常堆栈：" + StackTraceUtils.stackTraceInfo(e), ErrorCode.ERROR)
       }
     } finally {
       msg.toString
@@ -433,8 +471,8 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   }
 
   /**
-    * 获取当前的spark运行时信息
-    */
+   * 获取当前的spark运行时信息
+   */
   @Rest("/system/sparkInfoBean")
   def sparkInfo(request: Request, response: Response): AnyRef = {
     this.mark

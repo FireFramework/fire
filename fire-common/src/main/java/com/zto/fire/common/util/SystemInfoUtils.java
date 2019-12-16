@@ -32,6 +32,7 @@ public class SystemInfoUtils {
     private static SystemLoadInfo systemLoadInfo = new SystemLoadInfo();
     private static String ip;
     private static String hostname;
+    private static String pid;
     private static LoadingCache<String, String> loadCache;
 
     static {
@@ -555,7 +556,10 @@ public class SystemInfoUtils {
      * @return pid
      */
     public static String getPid() {
-        return ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
+        if (StringUtils.isBlank(pid)) {
+            pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];;
+        }
+        return pid;
     }
 
     /**

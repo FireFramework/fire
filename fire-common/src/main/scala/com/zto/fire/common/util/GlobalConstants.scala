@@ -5,6 +5,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.client.Durability
 import org.apache.rocketmq.spark.ConsumerStrategy
 import org.apache.spark.sql.SaveMode
+import org.apache.spark.storage.StorageLevel
 
 /**
  * 常量配置类
@@ -19,6 +20,10 @@ object GlobalConstants {
   lazy val hbaseCluster = PropUtils.getString(PropKeys.HBASE_CLUSTER_URL, DefaultVals.hbaseName)
   // fire框架埋点日志开关
   lazy val fireLogEnable = FireConf.logEnable
+  // 用于设置是否启用任务定时调度
+  lazy val scheduleEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_TASK_SCHEDULE_ENABLE, true)
+  // quartz最大线程池大小
+  lazy val quartzMaxThread = PropUtils.getString(PropKeys.SPARK_FIRE_QUARTZ_MAX_THREAD, "8")
 
 
   /**
@@ -67,6 +72,10 @@ object GlobalConstants {
     val minLogSize = 500
     // 累加器保留日志默认的最大记录数
     val maxLogSize = 1000
+    // env累加器保留的最大记录数
+    val maxEnvSize = 500
+    // env累加器保留的最少记录数
+    val minEnvSize = 100
     val maxTimerSize = 1000
     val maxTimerHour = 12
     // 默认的数据库名称
@@ -193,13 +202,17 @@ object GlobalConstants {
 
     // ---------------------------- Fire 相关配置 ---------------------------- //
     // 日志记录器保留最少的记录数
-    val SPARK_FIRE_LOG_MIN_SIZE = "spark.fire.log.min.size"
+    val SPARK_FIRE_ACC_LOG_MIN_SIZE = "spark.fire.acc.log.min.size"
     // 日志记录器保留最多的记录数
-    val SPARK_FIRE_LOG_MAX_SIZE = "spark.fire.log.max.size"
+    val SPARK_FIRE_ACC_LOG_MAX_SIZE = "spark.fire.acc.log.max.size"
+    // env累加器保留最多的记录数
+    val SPARK_FIRE_ACC_ENV_MAX_SIZE = "spark.fire.acc.env.max.size"
+    // env累加器保留最少的记录数
+    val SPARK_FIRE_ACC_ENV_MIN_SIZE = "spark.fire.acc.env.min.size"
     // timer累加器保留最大的记录数
-    val SPARK_FIRE_TIMER_MAX_SIZE = "spark.fire.timer.max.size"
+    val SPARK_FIRE_ACC_TIMER_MAX_SIZE = "spark.fire.acc.timer.max.size"
     // timer累加器清理几小时之前的记录
-    val SPARK_FIRE_TIMER_MAX_HOUR = "spark.fire.timer.max.hour"
+    val SPARK_FIRE_ACC_TIMER_MAX_HOUR = "spark.fire.acc.timer.max.hour"
     // rest接口权限认证
     val SPARK_FIRE_REST_FILTER_ENABLE = "spark.fire.rest.filter.enable"
     // 用于配置是否关闭fire内置的所有累加器
@@ -210,10 +223,27 @@ object GlobalConstants {
     val SPARK_FIRE_ACC_MULTI_COUNTER_ENABLE = "spark.fire.acc.multi.counter.enable"
     // 多时间维度累加器开关
     val SPARK_FIRE_ACC_MULTI_TIMER_ENABLE = "spark.fire.acc.multi.timer.enable"
-    // fire框架埋点日志开关
+    // env累加器开关
+    val SPARK_FIRE_ACC_ENV_ENABLE = "spark.fire.acc.env.enable"
+    // fire框架埋点日志开关，当关闭后，埋点的日志将不再被记录到日志累加器中，并且也不再打印
     val SPARK_FIRE_LOG_ENABLE = "spark.fire.log.enable"
     // 用于限定fire框架中sql日志的字符串长度
     val SPARK_FIRE_LOG_SQL_LENGTH = "spark.fire.log.sql.length"
+    // fire框架针对hbase操作后数据集的缓存策略，配置列表详见：StorageLevel.scala（配置不区分大小写）
+    val SPARK_FIRE_HBASE_STORAGE_LEVEL = "spark.fire.hbase.storage.level"
+    // 通过HBase scan后repartition的分区数
+    val SPARK_FIRE_HBASE_SCAN_REPARTITIONS = "spark.fire.hbase.scan.repartitions"
+
+    // fire框架针对jdbc操作后数据集的缓存策略
+    val SPARK_FIRE_JDBC_STORAGE_LEVEL = "spark.fire.jdbc.storage.level"
+    // 通过JdbcOper查询后将数据集放到多少个分区中，需根据实际的结果集做配置
+    val SPARK_FIRE_JDBC_QUERY_REPARTITIONS = "spark.fire.jdbc.query.partitions"
+    // 用于配置是否启用任务定时调度
+    val SPARK_FIRE_TASK_SCHEDULE_ENABLE = "spark.fire.task.schedule.enable"
+    // fire框架rest接口服务最大线程数
+    val SPARK_FIRE_RESTFUL_MAX_THREAD = "spark.fire.restful.max.thread"
+    // quartz最大线程池大小
+    val SPARK_FIRE_QUARTZ_MAX_THREAD = "spark.fire.quartz.max.thread"
 
     // ---------------------------- HDFS 相关配置 ---------------------------- //
     // 是否启用高可用
@@ -238,6 +268,30 @@ object GlobalConstants {
     lazy val logEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_LOG_ENABLE, true)
     // 用于限定fire框架中sql日志的字符串长度
     lazy val logSqlLength = PropUtils.getInt(PropKeys.SPARK_FIRE_LOG_SQL_LENGTH, DefaultVals.logSqlLength)
+    // HBase结果集的缓存策略配置
+    lazy val hbaseStorageLevelConf = PropUtils.getString(PropKeys.SPARK_FIRE_HBASE_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
+    // 通过HBase scan后repartition的分区数，默认1200
+    lazy val hbaseHadoopScanRepartitions = PropUtils.getInt(PropKeys.SPARK_FIRE_HBASE_SCAN_REPARTITIONS, 1200)
+    // fire框架针对jdbc操作后数据集的缓存策略
+    lazy val jdbcStorageLevelConf = PropUtils.getString(PropKeys.SPARK_FIRE_JDBC_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
+    // 通过JdbcOper查询后将数据集放到多少个分区中，需根据实际的结果集做配置
+    lazy val jdbcQueryPartitions = PropUtils.getInt(PropKeys.SPARK_FIRE_JDBC_QUERY_REPARTITIONS, 10)
+    // fire框架rest接口服务最大线程数
+    lazy val restfulMaxThread = PropUtils.getInt(PropKeys.SPARK_FIRE_RESTFUL_MAX_THREAD, 8)
+
+    /**
+     * 获取配置的HBase缓存策略
+     */
+    def hbaseStorageLevel: StorageLevel = {
+      StorageLevel.fromString(hbaseStorageLevelConf)
+    }
+
+    /**
+     * 获取配置的JDBC缓存策略
+     */
+    def jdbcStorageLevel: StorageLevel = {
+      StorageLevel.fromString(jdbcStorageLevelConf)
+    }
   }
 
   /**
