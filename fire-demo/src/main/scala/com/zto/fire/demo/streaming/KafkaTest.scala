@@ -39,12 +39,12 @@ object KafkaTest extends BaseSparkStreaming {
       }
     })
 
-    /*val dstream2 = this.ssc.createDirectStream(keyNum = 2)
+    val dstream2 = this.ssc.createDirectStream(keyNum = 2)
     dstream2.print(1)
     val dstream3 = this.ssc.createDirectStream(keyNum = 3)
     dstream3.print(1)
     val dstream5 = this.ssc.createDirectStream(keyNum = 5)
-    dstream5.print(1)*/
+    dstream5.print(1)
 
     this.ssc.startAwaitTermination()
   }
