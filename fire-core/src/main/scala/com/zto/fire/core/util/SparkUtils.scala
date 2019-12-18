@@ -250,7 +250,7 @@ object SparkUtils {
     * @return
     */
   def topicSplit(topics: String, splitStr: String = ","): Set[String] = {
-    ParamUtils.requireNonNullForce(topics, "topic不能为空，请在配置文件中[ spark.kafka.topics ]配置")
+    ValueUtils.requireNonNullForce(topics, "topic不能为空，请在配置文件中[ spark.kafka.topics ]配置")
     topics.split(splitStr).filter(topic => StringUtils.isNotBlank(topic)).map(topic => topic.trim).toSet
   }
 
@@ -292,7 +292,7 @@ object SparkUtils {
     * kafka相关配置
     */
   def kafkaParams(groupId: String = null, kafkaBrokers: String = null, offset: String = null, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
-    ParamUtils.requireNonNull(groupId, s"kafka groupId不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum 指定")
+    ValueUtils.requireNonNull(groupId, s"kafka groupId不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum 指定")
 
     val finalKafkaBrokers = if (StringUtils.isBlank(kafkaBrokers)) GlobalConstants.KafkaConf.kafkaBrokers(keyNum) else kafkaBrokers
     val finalOffset = if (StringUtils.isBlank(offset)) GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum) else offset
@@ -348,7 +348,7 @@ object SparkUtils {
     * rocketMQ相关配置
     */
   def rocketParams(groupId: String = null, rocketNameServer: String = null, tag: String = null, keyNum: Int = 1): java.util.Map[String, String] = {
-    ParamUtils.requireNonNull(groupId, s"RocketMQ的groupId不能为空，请在配置文件中指定：spark.rocket.group.id$keyNum")
+    ValueUtils.requireNonNull(groupId, s"RocketMQ的groupId不能为空，请在配置文件中指定：spark.rocket.group.id$keyNum")
     val finalNameServer = if (StringUtils.isBlank(rocketNameServer)) GlobalConstants.RocketConf.rocketNameServer(keyNum) else rocketNameServer
     val finalTag = if (StringUtils.isBlank(tag)) GlobalConstants.RocketConf.rocketConsumerTag(keyNum) else tag
 

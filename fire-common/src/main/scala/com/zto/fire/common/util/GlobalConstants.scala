@@ -412,7 +412,7 @@ object GlobalConstants {
      */
     def kafkaTopics(keyNum: Int = 1): String = {
       val topics = PropUtils.getString(PropKeys.KAFKA_TOPICS, keyNum, null)
-      ParamUtils.requireNonNullForce(topics, "配置未找到：spark.kafka.topics" + keyNum)
+      ValueUtils.requireNonNullForce(topics, "配置未找到：spark.kafka.topics" + keyNum)
       topics
     }
 
@@ -543,7 +543,7 @@ object GlobalConstants {
      */
     def rocketNameServer(keyNum: Int = 1): String = {
       val brokerName = PropUtils.getString(PropKeys.ROCKET_BROKERS_NAME, keyNum, "")
-      ParamUtils.requireNonNullForce(brokerName, "配置未找到：spark.rocket.brokers.name" + keyNum)
+      ValueUtils.requireNonNullForce(brokerName, "配置未找到：spark.rocket.brokers.name" + keyNum)
       brokerName
     }
 
@@ -567,7 +567,7 @@ object GlobalConstants {
      */
     def rocketGroupId(keyNum: Int = 1): String = {
       val groupId = PropUtils.getString(PropKeys.ROCKET_GROUP_ID, keyNum, "")
-      ParamUtils.requireNonNullForce(groupId, "配置未找到：spark.rocket.group.id" + keyNum)
+      ValueUtils.requireNonNullForce(groupId, "配置未找到：spark.rocket.group.id" + keyNum)
       groupId
     }
 
@@ -581,7 +581,7 @@ object GlobalConstants {
      */
     def rocketTopics(keyNum: Int = 1): String = {
       val topics = PropUtils.getString(PropKeys.ROCKET_TOPICS, keyNum, null)
-      ParamUtils.requireNonNullForce(topics, "配置未找到：spark.rocket.topics" + keyNum)
+      ValueUtils.requireNonNullForce(topics, "配置未找到：spark.rocket.topics" + keyNum)
       topics
     }
 

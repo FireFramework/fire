@@ -6,7 +6,7 @@ import java.util.Properties
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.db.{HBaseOper, JdbcOper, QueryCallback}
 import com.zto.fire.common.util.GlobalConstants.FireConf
-import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ParamUtils}
+import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ValueUtils}
 import com.zto.fire.core.bridge.HBaseSparkBridge
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.HBaseContextExt
@@ -1113,10 +1113,10 @@ class SparkSessionExt(spark: SparkSession) {
   def loadKafka(extraOptions: mutable.HashMap[String, String] = null, keyNum: Int = 1): Dataset[(String, String)] = {
     val groupId = if (StringUtils.isNotBlank(GlobalConstants.KafkaConf.kafkaGroupId(keyNum))) GlobalConstants.KafkaConf.kafkaGroupId(keyNum) else this.sc.appName
     val finalBrokers = GlobalConstants.KafkaConf.kafkaBrokers(keyNum)
-    ParamUtils.requireNonNullForce(finalBrokers, s"kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name$keyNum ]指定")
+    ValueUtils.requireNonNullForce(finalBrokers, s"kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name$keyNum ]指定")
     val kafkaReader = spark.readStream.format("kafka").option("group.id", groupId).option("kafka.bootstrap.servers", finalBrokers)
     val topics = GlobalConstants.KafkaConf.kafkaTopics()
-    ParamUtils.requireNonNullForce(topics, s"kafka topic不能为空，可在配置文件中[ spark.kafka.topics$keyNum ]指定")
+    ValueUtils.requireNonNullForce(topics, s"kafka topic不能为空，可在配置文件中[ spark.kafka.topics$keyNum ]指定")
     kafkaReader.option("subscribe", topics)
     // 是否在数据丢失时失败
     val failOnDataLoss = GlobalConstants.KafkaConf.kafkaFailOnDataLoss(keyNum)
@@ -1216,7 +1216,7 @@ class SparkSessionExt(spark: SparkSession) {
                          extraOptions: mutable.HashMap[String, String] = null,
                          keyNum: Int = 1): DataFrame = {
     val msg = KafkaUtils.getMsg(GlobalConstants.KafkaConf.kafkaBrokers(), GlobalConstants.KafkaConf.kafkaTopics(), null)
-    ParamUtils.requireNonNullForce(msg, s"获取样例消息失败，请重启任务尝试重新获取")
+    ValueUtils.requireNonNullForce(msg, s"获取样例消息失败，请重启任务尝试重新获取")
     val jsonDS = this.spark.createDataset(Seq(msg))(Encoders.STRING)
     val jsonDF = this.spark.read.json(jsonDS)
 

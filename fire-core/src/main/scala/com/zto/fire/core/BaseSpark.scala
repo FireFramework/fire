@@ -31,6 +31,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   var sc: SparkContext = _
   var catalog: Catalog = _
   val jdbc = JdbcOper
+  val value = ValueUtils
   var ssc: StreamingContext = _
   var hiveContext: SQLContext = _
   var sqlContext: SQLContext = _

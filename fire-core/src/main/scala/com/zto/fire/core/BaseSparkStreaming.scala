@@ -5,9 +5,9 @@ import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.RestartParams
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.enu.{ErrorCode, JobType, RequestMethod}
+import com.zto.fire.common.util.{GlobalConstants, SystemInfoUtils, ValueUtils}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.rest.RestCase
-import com.zto.fire.common.util.{EncryptUtils, GlobalConstants, ParamUtils, SystemInfoUtils}
 import com.zto.fire.core.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkConf
@@ -136,8 +136,8 @@ trait BaseSparkStreaming extends BaseSpark {
     * 2. 支持streaming热重启（可在不关闭streaming任务的前提下修改batch时间）
     */
   override def process: Unit = {
-    ParamUtils.requireNull(this.checkPointDir, "当开启checkPoint机制时，必须将对接kafka的代码写在process方法内")
-    ParamUtils.requireNull(this.externalConf, "当需要使用热重启功能时，必须将对接kafka的代码写在process方法内")
+    ValueUtils.requireNull(this.checkPointDir, "当开启checkPoint机制时，必须将对接kafka的代码写在process方法内")
+    ValueUtils.requireNull(this.externalConf, "当需要使用热重启功能时，必须将对接kafka的代码写在process方法内")
   }
 
   /**

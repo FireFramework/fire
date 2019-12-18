@@ -36,7 +36,7 @@ public class ReflectionUtils {
             return Collections.emptyMap();
         }
         Field[] fields = clazz.getFields();
-        if (ParamUtils.isBlank(fields)) {
+        if (ValueUtils.isEmpty(fields)) {
             return Collections.emptyMap();
         }
         Map<String, Field> fieldMap = new HashMap<String, Field>(fields.length);
@@ -57,7 +57,7 @@ public class ReflectionUtils {
             return Collections.emptyMap();
         }
         Field[] fields = clazz.getDeclaredFields();
-        if (ParamUtils.isBlank(fields)) {
+        if (ValueUtils.isEmpty(fields)) {
             return Collections.emptyMap();
         }
         Map<String, Field> fieldMap = new HashMap<String, Field>(fields.length);
@@ -135,7 +135,7 @@ public class ReflectionUtils {
             return Collections.emptyMap();
         }
         Method[] methods = clazz.getMethods();
-        if (ParamUtils.isBlank(methods)) {
+        if (ValueUtils.isEmpty(methods)) {
             return Collections.emptyMap();
         }
         Map<String, Method> methodMap = new HashMap<String, Method>(methods.length);
@@ -156,7 +156,7 @@ public class ReflectionUtils {
             return Collections.emptyMap();
         }
         Method[] methods = clazz.getDeclaredMethods();
-        if (ParamUtils.isBlank(methods)) {
+        if (ValueUtils.isEmpty(methods)) {
             return Collections.emptyMap();
         }
         Map<String, Method> methodMap = new HashMap<String, Method>(methods.length);
@@ -175,7 +175,7 @@ public class ReflectionUtils {
      * @return
      */
     public static Class getFieldType(Class clazz, String fieldName) {
-        if (ParamUtils.isBlank(clazz, fieldName)) {
+        if (ValueUtils.isExistsEmpty(new Object[] {clazz, fieldName})) {
             return null;
         }
         try {
@@ -201,7 +201,7 @@ public class ReflectionUtils {
      * @param memberName 成员名称，指定获取指定成员的Annotation实例
      */
     private static <T extends Annotation> Annotation getAnnotation(Class clazz, ElementType scope, String memberName, Class<T> annoClass) {
-        if (ParamUtils.isBlank(clazz, scope, memberName, annoClass)) {
+        if (ValueUtils.isExistsEmpty(new Object[] {clazz, scope, memberName, annoClass})) {
             return null;
         }
         try {
@@ -230,7 +230,7 @@ public class ReflectionUtils {
      * @param memberName 成员名称，指定获取指定成员的Annotation实例
      */
     private static Annotation[] getAnnotations(Class clazz, ElementType scope, String memberName) {
-        if (ParamUtils.isBlank(clazz, scope, memberName)) {
+        if (ValueUtils.isExistsEmpty(new Object[] {clazz, scope, memberName})) {
             return null;
         }
         try {
@@ -326,7 +326,7 @@ public class ReflectionUtils {
      * @return
      */
     public static Annotation[][] getParamAnnotations(Class clazz, String methodName, Class<?>... parameterTypes) {
-        if (ParamUtils.isBlank(clazz, methodName)) {
+        if (ValueUtils.isExistsEmpty(new Object[] {clazz, methodName})) {
             return null;
         }
         try {
