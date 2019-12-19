@@ -192,7 +192,6 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
           JdbcOper.executeBatch(sql, list)
           count = 0
           list.clear()
-          println("分批执行")
         }
       })
 
@@ -200,7 +199,6 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
       if (list.nonEmpty) {
         JdbcOper.executeBatch(sql, list)
         list.clear()
-        println("最终执行")
       }
     })
   }

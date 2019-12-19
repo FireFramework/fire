@@ -123,13 +123,13 @@ object JdbcTest extends BaseSparkCore {
    */
   def testDataFrameSave: Unit = {
     val df = this.spark.createDataFrame(Student.newStudentList(), classOf[Student])
-    val insertSql = s"INSERT INTO spark_test(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
 
+    val insertSql = s"INSERT INTO spark_test(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
     // 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序
-    // df.jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"))
+    df.jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"))
 
     df.createOrReplaceTempViewCache("student")
-    val sqlDF = this.spark.sql("select name, age, createTime from student where id=100").repartition(1)
+    val sqlDF = this.spark.sql("select name, age, createTime from student where id>=1").repartition(1)
     // 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
     sqlDF.jdbcBatchUpdate("insert into spark_test(name, age, createTime) values(?, ?, ?)")
     // 等同以上方式
