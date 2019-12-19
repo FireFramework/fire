@@ -125,8 +125,8 @@ object JdbcTest extends BaseSparkCore {
     val df = this.spark.createDataFrame(Student.newStudentList(), classOf[Student])
 
     val insertSql = s"INSERT INTO spark_test(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-    // 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序
-    df.jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"))
+    // 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序，batch用于指定批次大小，默认取spark.db.jdbc.batch.size配置的值
+    df.jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
 
     df.createOrReplaceTempViewCache("student")
     val sqlDF = this.spark.sql("select name, age, createTime from student where id>=1").repartition(1)

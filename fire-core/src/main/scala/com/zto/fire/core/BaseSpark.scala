@@ -1,5 +1,6 @@
 package com.zto.fire.core
 
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
 
 import com.zto.fire.common.acc.AccumulatorManager
@@ -41,6 +42,8 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
   val driverClass = this.getClass.getSimpleName.replace("$", "")
   var appName = this.driverClass
   val className = this.getClass.getName.replace("$", "")
+  // 用于子类的锁状态判断，默认关闭状态
+  lazy val lock = new AtomicBoolean(false)
   val jobType = JobType.UNDEFINED
   val acc = AccumulatorManager
   lazy val threadPool = ThreadUtils.createThreadPool("threadPool", ThreadPoolType.FIXED, 10)
