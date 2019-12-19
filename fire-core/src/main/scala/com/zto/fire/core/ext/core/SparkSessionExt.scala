@@ -3,7 +3,7 @@ package com.zto.fire.core.ext.core
 import java.sql.Connection
 import java.util.Properties
 
-import com.zto.fire.common.bean.HBaseBaseBean
+import com.zto.fire.common.bean.{BaseLogging, HBaseBaseBean}
 import com.zto.fire.common.db.{HBaseOper, JdbcOper, QueryCallback}
 import com.zto.fire.common.util.GlobalConstants.FireConf
 import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ValueUtils}
@@ -33,7 +33,7 @@ import scala.reflect.ClassTag
  * sparkSession对象
  * @author ChengLong 2019-5-18 10:51:19
  */
-class SparkSessionExt(spark: SparkSession) {
+class SparkSessionExt(spark: SparkSession) extends BaseLogging {
 
   import spark.implicits._
 
@@ -1513,4 +1513,27 @@ class SparkSessionExt(spark: SparkSession) {
     this.spark.sqlContext.jdbcTableLoadBound(tableName, columnName, lowerBound, upperBound, keyNum, jdbcProps, keyNum)
   }
 
+  /**
+   * 将DataFrame中指定的列写入到jdbc中
+   * 调用者需自己保证DataFrame中的列类型与关系型数据库对应字段类型一致
+   *
+   * @param dataFrame
+   * 将要插入到关系型数据库中原始的数据集
+   * @param sql
+   * 关系型数据库待执行的增删改sql
+   * @param fields
+   * 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序
+   * 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
+   * @param batch
+   * 每个批次执行多少条
+   * @param keyNum
+   * 对应配置文件中指定的数据源编号
+   */
+  def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = GlobalConstants.JdbcConf.batchSize(), keyNum: Int = 1): Unit = {
+    if (ValueUtils.isEmpty(dataFrame)) {
+      this.log("执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
+      return
+    }
+    dataFrame.jdbcBatchUpdate(sql, fields, batch, keyNum)
+  }
 }
