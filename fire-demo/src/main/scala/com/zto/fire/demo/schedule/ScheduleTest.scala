@@ -23,12 +23,32 @@ object ScheduleTest extends BaseSparkStreaming {
     this.log("executorId=" + SparkUtils.getExecutorId + "====方法 test1() 每5秒执行====" + DateFormatUtils.formatCurrentDateTime())
   }
 
-  def main(args: Array[String]): Unit = {
-    this.init()
+
+  // 每天凌晨4点01将锁标志设置为false，这样下一个批次就可以先更新维表再执行sql
+  @Scheduled(cron = "0 1 4 * * ?")
+  def updateTableJob: Unit = this.lock.compareAndSet(true, false)
+
+  // 用于缓存变更过的维表，只有当定时任务将标记设置为可更新时才会真正拉取最新的表
+  def cacheTable: Unit = {
+    // 加载完成维表以后上锁
+    if (this.lock.compareAndSet(false, true)) {
+      this.spark.uncache("test")
+      this.spark.cacheTables("test")
+    }
+  }
+
+  override def process: Unit = {
     // 用于注册其他类下带有@Scheduler标记的方法
     this.registerSchedule(new Tasks)
     // 重复注册的任务会自动去重
     this.registerSchedule(new Tasks)
+
+    // 更新并缓存维表动作，具体要根据锁的标记判断是否执行
+    this.cacheTable
+  }
+
+  def main(args: Array[String]): Unit = {
+    this.init()
   }
 
 }
