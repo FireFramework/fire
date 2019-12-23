@@ -82,6 +82,76 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
   }
 
   /**
+   * 将DataFrame中指定的列写入到jdbc中
+   * 调用者需自己保证DataFrame中的列类型与关系型数据库对应字段类型一致
+   *
+   * @param sql
+   * 关系型数据库待执行的增删改sql
+   * @param fields
+   * 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序
+   * 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
+   * @param batch
+   * 每个批次执行多少条
+   * @param keyNum
+   * 对应配置文件中指定的数据源编号
+   */
+  def jdbcBatchUpdate(sql: String, fields: Seq[String] = null, batch: Int = GlobalConstants.JdbcConf.batchSize(), keyNum: Int = 1): Unit = {
+    if (ValueUtils.isEmpty(sql)) {
+      this.log("执行jdbcBatchUpdate失败，sql语句不能为空")
+      return
+    }
+
+    if (dataFrame.isStreaming) {
+      // 如果是streaming流
+      dataFrame.writeStream.format("fire-jdbc")
+        .option("checkpointLocation", GlobalConstants.SparkConf.chkPointDirPrefix)
+        .option("sql", sql)
+        .option("batch", batch)
+        .option("keyNum", keyNum)
+        .option("fields", if (fields != null) fields.mkString(",") else "")
+        .start()
+    } else {
+      // 非structured streaming调用
+      dataFrame.foreachPartition(it => {
+        var count: Int = 0
+        val list = ListBuffer[ListBuffer[Any]]()
+        var params: ListBuffer[Any] = null
+
+        it.foreach(row => {
+          count += 1
+          params = ListBuffer[Any]()
+          if (ValueUtils.isNotEmpty(fields)) {
+            // 若调用者指定了某些列，则取这些列的数据
+            fields.foreach(field => {
+              val index = row.fieldIndex(field)
+              params += row.get(index)
+            })
+          } else {
+            // 否则取当前DataFrame全部的列，顺序要与sql问号占位符保持一致
+            (0 to row.size - 1).foreach(index => {
+              params += row.get(index)
+            })
+          }
+          list += params
+
+          // 分批次执行
+          if (count == batch) {
+            JdbcOper.executeBatch(sql, list)
+            count = 0
+            list.clear()
+          }
+        })
+
+        // 将剩余的数据一次执行掉
+        if (list.nonEmpty) {
+          JdbcOper.executeBatch(sql, list)
+          list.clear()
+        }
+      })
+    }
+  }
+
+  /**
    * 批量写入，将自定义的JavaBean数据集批量并行写入
    * 到HBase的指定表中。内部会将自定义JavaBean的相应
    * 字段一一映射为Put对象，并完成一次写入
@@ -146,65 +216,6 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
     }*/
 
   /**
-   * 将DataFrame中指定的列写入到jdbc中
-   * 调用者需自己保证DataFrame中的列类型与关系型数据库对应字段类型一致
-   *
-   * @param sql
-   * 关系型数据库待执行的增删改sql
-   * @param fields
-   * 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序
-   * 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
-   * @param batch
-   * 每个批次执行多少条
-   * @param keyNum
-   * 对应配置文件中指定的数据源编号
-   */
-  def jdbcBatchUpdate(sql: String, fields: Seq[String] = null, batch: Int = GlobalConstants.JdbcConf.batchSize(), keyNum: Int = 1): Unit = {
-    if (ValueUtils.isEmpty(dataFrame) || ValueUtils.isEmpty(sql)) {
-      this.log("执行jdbcBatchUpdate失败，dataFrame或sql为空")
-      return
-    }
-
-    dataFrame.foreachPartition(it => {
-      var count: Int = 0
-      val list = ListBuffer[ListBuffer[Any]]()
-      var params: ListBuffer[Any] = null
-
-      it.foreach(row => {
-        count += 1
-        params = ListBuffer[Any]()
-        if (ValueUtils.isNotEmpty(fields)) {
-          // 若调用者指定了某些列，则取这些列的数据
-          fields.foreach(field => {
-            val index = row.fieldIndex(field)
-            params += row.get(index)
-          })
-        } else {
-          // 否则取当前DataFrame全部的列，顺序要与sql问号占位符保持一致
-          (0 to row.size - 1).foreach(index => {
-            params += row.get(index)
-          })
-        }
-        list += params
-
-        // 分批次执行
-        if (count == batch) {
-          JdbcOper.executeBatch(sql, list)
-          count = 0
-          list.clear()
-        }
-      })
-
-      // 将剩余的数据一次执行掉
-      if (list.nonEmpty) {
-        JdbcOper.executeBatch(sql, list)
-        list.clear()
-      }
-    })
-  }
-
-
-  /**
    * 使用Java API的方式将DataFrame中的数据分多个批次插入到HBase中
    *
    * @param tableName
@@ -258,4 +269,13 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
     dataFrame.unpersist()
   }
 
+  /**
+   * 将实时流转为静态DataFrame
+   *
+   * @return
+   * 静态DataFrame
+   */
+  def toExternalRow: DataFrame = {
+    if (this.dataFrame.isStreaming) SparkUtils.toExternalRow(dataFrame) else this.dataFrame
+  }
 }

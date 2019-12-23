@@ -5,7 +5,7 @@ import java.util.Objects
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.{DataFrame, Dataset}
 
 /**
  * 值校验工具，支持任意对象、字符串、集合、map、rdd、dataset是否为空的校验
@@ -256,5 +256,23 @@ object ValueUtils {
     if (param.isInstanceOf[String] && this.isEmpty(param.asInstanceOf[String])) throw new IllegalArgumentException(message)
     else if (param.isInstanceOf[util.Collection[_]] && param.asInstanceOf[util.Collection[_]].size == 0) throw new IllegalArgumentException(message)
     else if (param.isInstanceOf[Map[_, _]] && param.asInstanceOf[Map[_, _]].size == 0) throw new IllegalArgumentException(message)
+  }
+
+  /**
+   * 用于严格校验当前DataFrame是否来自Streaming Source
+   *
+   * @param dataFrame
+   */
+  def requireStreaming(dataFrame: DataFrame, api: String = ""): Unit = {
+    if (!dataFrame.isStreaming) throw new RuntimeException(s"不合法的API调用，必须在structured streaming中调用此方法 $api")
+  }
+
+  /**
+   * 用于严格校验当前DataFrame是否来自非Streaming Source
+   *
+   * @param dataFrame
+   */
+  def requireNotStreaming(dataFrame: DataFrame, api: String = ""): Unit = {
+    if (dataFrame.isStreaming) throw new RuntimeException(s"不合法的API调用，不允许在structured streaming中调用此方法 $api")
   }
 }

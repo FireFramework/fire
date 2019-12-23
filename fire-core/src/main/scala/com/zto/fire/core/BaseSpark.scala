@@ -179,7 +179,7 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
       this.spark = SparkSession.builder().config(tmpConf).enableHiveSupport().getOrCreate()
     }
     SingletonFactory.setSparkSession(this.spark)
-    this.spark.registerAll()
+    this.spark.registerUDF()
     this.sc = this.spark.sparkContext
     // 关联所连接的hive集群，根据预制方案启用HDFS HA
     GlobalConstants.HdfsConf.linkHiveCluster(this.sc.hadoopConfiguration)

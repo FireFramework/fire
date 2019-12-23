@@ -23,7 +23,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.streaming.dstream.DStream
 
-import scala.collection.{JavaConversions, mutable}
+import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
@@ -53,6 +53,14 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    */
   def parallelize[T: ClassTag](seq: Seq[T], numSlices: Int = sc.defaultParallelism): RDD[T] = {
     this.sc.parallelize(seq, numSlices)
+  }
+
+  /**
+   * 批量注册udf函数，包含系统内置的与用户自定义的
+   */
+  def registerUDF(): SparkSession = {
+    UDFs.registerSysUDF(spark)
+    spark
   }
 
   // ----------------------------------- Spark SQL 相关API ----------------------------------- //
@@ -322,16 +330,6 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    */
   def moveDB(tableName: String, oldDB: String, newDB: String): Unit = {
     spark.sqlContext.moveDB(tableName, oldDB, newDB)
-  }
-
-  /**
-   * 批量注册自定义udf函数
-   *
-   * @return
-   */
-  def registerAll(): SparkSession = {
-    UDFs.registerAll(spark)
-    spark
   }
 
   // ----------------------------------- HBase Bulk API ----------------------------------- //
@@ -1215,8 +1213,8 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
   def loadKafkaParseJson(tableName: String = "data",
                          extraOptions: mutable.HashMap[String, String] = null,
                          keyNum: Int = 1): DataFrame = {
-    val msg = KafkaUtils.getMsg(GlobalConstants.KafkaConf.kafkaBrokers(), GlobalConstants.KafkaConf.kafkaTopics(), null)
-    ValueUtils.requireNonNullForce(msg, s"获取样例消息失败，请重启任务尝试重新获取")
+    val msg = KafkaUtils.getMsg(GlobalConstants.KafkaConf.kafkaBrokers(keyNum), GlobalConstants.KafkaConf.kafkaTopics(keyNum), null)
+    ValueUtils.requireNonNullForce(msg, s"获取样例消息失败！请重启任务尝试重新获取，并保证topic[${GlobalConstants.KafkaConf.kafkaTopics(keyNum)}]持续的有新消息。")
     val jsonDS = this.spark.createDataset(Seq(msg))(Encoders.STRING)
     val jsonDF = this.spark.read.json(jsonDS)
 

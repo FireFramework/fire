@@ -15,9 +15,10 @@ import org.apache.hadoop.hbase.util.{Base64, Bytes}
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.rocketmq.spark.RocketMQConfig
 import org.apache.spark.SparkEnv
+import org.apache.spark.sql.catalyst.{CatalystTypeConverters, InternalRow}
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -26,18 +27,18 @@ import scala.util.Try
 
 
 /**
-  * Spark 相关的工具类
-  * Created by ChengLong on 2016-11-24.
-  */
+ * Spark 相关的工具类
+ * Created by ChengLong on 2016-11-24.
+ */
 object SparkUtils {
 
   /**
-    * 将Row转为自定义bean，以JavaBean中的Field为基准
-    * bean中的field名称要与DataFrame中的field名称保持一致
-    *
-    * @param row
-    * @return
-    */
+   * 将Row转为自定义bean，以JavaBean中的Field为基准
+   * bean中的field名称要与DataFrame中的field名称保持一致
+   *
+   * @param row
+   * @return
+   */
   def sparkRowToBean[T](row: Row, clazz: Class[T]): T = {
     val obj = clazz.newInstance()
     if (row != null && clazz != null) {
@@ -69,17 +70,17 @@ object SparkUtils {
   }
 
   /**
-    * 将SparkRow迭代映射为对象的迭代
-    *
-    * @param it
-    * Row迭代器
-    * @param clazz
-    * 待映射的自定义JavaBean
-    * @tparam T
-    * 泛型
-    * @return
-    * 映射为对象的集合
-    */
+   * 将SparkRow迭代映射为对象的迭代
+   *
+   * @param it
+   * Row迭代器
+   * @param clazz
+   * 待映射的自定义JavaBean
+   * @tparam T
+   * 泛型
+   * @return
+   * 映射为对象的集合
+   */
   def sparkRowToBean[T](it: Iterator[Row], clazz: Class[T], toUppercase: Boolean = false): Iterator[T] = {
     val list = ListBuffer[T]()
     if (it != null && clazz != null) {
@@ -115,15 +116,15 @@ object SparkUtils {
   }
 
   /**
-    * 判断指定的Row中是否包含指定的列名
-    *
-    * @param row
-    * DataFrame中的行
-    * @param columnName
-    * 列名
-    * @return
-    * true: 存在 false：不存在
-    */
+   * 判断指定的Row中是否包含指定的列名
+   *
+   * @param row
+   * DataFrame中的行
+   * @param columnName
+   * 列名
+   * @return
+   * true: 存在 false：不存在
+   */
   def containsColumn(row: Row, columnName: String): Boolean = {
     Try {
       try {
@@ -133,10 +134,10 @@ object SparkUtils {
   }
 
   /**
-    * 根据实体bean构建schema信息
-    *
-    * @return StructField集合
-    */
+   * 根据实体bean构建schema信息
+   *
+   * @return StructField集合
+   */
   def buildSchemaFromBean(beanClazz: Class[_], upper: Boolean = false): List[StructField] = {
     val fieldMap = ReflectionUtils.getAllFields(beanClazz)
     val strutFields = new ListBuffer[StructField]()
@@ -173,18 +174,18 @@ object SparkUtils {
   }
 
   /**
-    * 获取kafka中json数据的before和after信息
-    *
-    * @param beanClazz
-    * json数据对应的java bean类型
-    * @param isMySQL
-    * 是否为mysql解析的消息
-    * @param fieldNameUpper
-    * 字段名称是否为大写
-    * @param parseAll
-    * 是否解析所有字段信息
-    * @return
-    */
+   * 获取kafka中json数据的before和after信息
+   *
+   * @param beanClazz
+   * json数据对应的java bean类型
+   * @param isMySQL
+   * 是否为mysql解析的消息
+   * @param fieldNameUpper
+   * 字段名称是否为大写
+   * @param parseAll
+   * 是否解析所有字段信息
+   * @return
+   */
   def buildSchema2Kafka(beanClazz: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): StructType = {
     if (parseAll) {
       val structTypes = new StructType()
@@ -208,13 +209,13 @@ object SparkUtils {
 
 
   /**
-    * 以Map的方式获取Hive表的字段名称和类型
-    *
-    * @param tableName
-    *                  db.hiveTable
-    * @return
-    * Map[FieldName, FieldType]
-    */
+   * 以Map的方式获取Hive表的字段名称和类型
+   *
+   * @param tableName
+   *                  db.hiveTable
+   * @return
+   * Map[FieldName, FieldType]
+   */
   def getTableSchemaAsMap(hiveContext: HiveContext, kuduContext: KuduContextExt, tableName: String): Map[String, String] = {
     val dataFrame = if (tableName.startsWith("impala")) {
       kuduContext.loadKuduTable(tableName)
@@ -228,38 +229,38 @@ object SparkUtils {
   }
 
   /**
-    * 获取表的全名
-    *
-    * @param dbName
-    * 表所在的库名
-    * @param tableName
-    * 表名
-    * @return
-    * 库名.表名
-    */
+   * 获取表的全名
+   *
+   * @param dbName
+   * 表所在的库名
+   * @param tableName
+   * 表名
+   * @return
+   * 库名.表名
+   */
   def getFullTableName(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
     val dbNameStr = if (StringUtils.isBlank(dbName)) GlobalConstants.SparkConf.defaultDB else dbName
     s"$dbNameStr.$tableName"
   }
 
   /**
-    * 分割topic列表，返回set集合
-    *
-    * @param topics
-    * 多个topic以指定分隔符分割
-    * @return
-    */
+   * 分割topic列表，返回set集合
+   *
+   * @param topics
+   * 多个topic以指定分隔符分割
+   * @return
+   */
   def topicSplit(topics: String, splitStr: String = ","): Set[String] = {
     ValueUtils.requireNonNullForce(topics, "topic不能为空，请在配置文件中[ spark.kafka.topics ]配置")
     topics.split(splitStr).filter(topic => StringUtils.isNotBlank(topic)).map(topic => topic.trim).toSet
   }
 
   /**
-    * 获取webui地址
-    *
-    * @param spark
-    * @return
-    */
+   * 获取webui地址
+   *
+   * @param spark
+   * @return
+   */
   def getWebUI(spark: SparkSession): String = {
     val optConf = spark.conf.getOption("spark.org.apache.hadoop.yarn.server.webproxy.amfilter.AmIpFilter.param.PROXY_URI_BASES")
 
@@ -272,25 +273,25 @@ object SparkUtils {
   }
 
   /**
-    * 获取applicationId
-    *
-    * @param spark
-    * @return
-    */
+   * 获取applicationId
+   *
+   * @param spark
+   * @return
+   */
   def getApplicationId(spark: SparkSession): String = {
     spark.sparkContext.applicationId
   }
 
   /**
-    * kafka配置信息
-    *
-    * @param groupId
-    * 消费组
-    * @param offset
-    * smallest、largest
-    * @return
-    * kafka相关配置
-    */
+   * kafka配置信息
+   *
+   * @param groupId
+   * 消费组
+   * @param offset
+   * smallest、largest
+   * @return
+   * kafka相关配置
+   */
   def kafkaParams(groupId: String = null, kafkaBrokers: String = null, offset: String = null, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
     ValueUtils.requireNonNull(groupId, s"kafka groupId不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum 指定")
 
@@ -340,13 +341,13 @@ object SparkUtils {
   }
 
   /**
-    * rocketMQ配置信息
-    *
-    * @param groupId
-    * 消费组
-    * @return
-    * rocketMQ相关配置
-    */
+   * rocketMQ配置信息
+   *
+   * @param groupId
+   * 消费组
+   * @return
+   * rocketMQ相关配置
+   */
   def rocketParams(groupId: String = null, rocketNameServer: String = null, tag: String = null, keyNum: Int = 1): java.util.Map[String, String] = {
     ValueUtils.requireNonNull(groupId, s"RocketMQ的groupId不能为空，请在配置文件中指定：spark.rocket.group.id$keyNum")
     val finalNameServer = if (StringUtils.isBlank(rocketNameServer)) GlobalConstants.RocketConf.rocketNameServer(keyNum) else rocketNameServer
@@ -381,14 +382,14 @@ object SparkUtils {
   }
 
   /**
-    * 使用配置文件中的spark.streaming.batch.duration覆盖传参的batchDuration
-    *
-    * @param batchDuration
-    *                   代码中指定的批次时间
-    * @param hotRestart 是否热重启，热重启优先级最高
-    * @return
-    * 被配置文件覆盖后的批次时间
-    */
+   * 使用配置文件中的spark.streaming.batch.duration覆盖传参的batchDuration
+   *
+   * @param batchDuration
+   *                   代码中指定的批次时间
+   * @param hotRestart 是否热重启，热重启优先级最高
+   * @return
+   * 被配置文件覆盖后的批次时间
+   */
   def overrideBatchDuration(batchDuration: Long, hotRestart: Boolean): Long = {
     if (hotRestart) return batchDuration
     val confBathDuration = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_STREAMING_BATCH_DURATION, -1)
@@ -400,10 +401,10 @@ object SparkUtils {
   }
 
   /**
-    * 获取spark任务的webUI地址信息
-    *
-    * @return
-    */
+   * 获取spark任务的webUI地址信息
+   *
+   * @return
+   */
   def getUI(webUI: String): String = {
     val line = new StringBuilder()
     webUI.split(",").foreach(url => {
@@ -414,10 +415,10 @@ object SparkUtils {
   }
 
   /**
-    * 用于判断当前是否为executor
-    *
-    * @return true: executor false: driver
-    */
+   * 用于判断当前是否为executor
+   *
+   * @return true: executor false: driver
+   */
   def isExecutor: Boolean = {
     val executorId = this.getExecutorId
     if ("driver".equalsIgnoreCase(executorId)) {
@@ -428,79 +429,81 @@ object SparkUtils {
   }
 
   /**
-    * 获取当前executor id
-    *
-    * @return
-    * executor id或driver
-    */
+   * 获取当前executor id
+   *
+   * @return
+   * executor id或driver
+   */
   def getExecutorId: String = {
     SparkEnv.get.executorId
   }
 
   /**
-    * 用于判断当前是否为driver
-    *
-    * @return true: driver false: executor
-    */
+   * 用于判断当前是否为driver
+   *
+   * @return true: driver false: executor
+   */
   def isDriver: Boolean = {
     !this.isExecutor
   }
 
   /**
-    * 是否是集群模式
-    *
-    * @return
-    * true: 集群模式  false：本地模式
-    */
+   * 是否是集群模式
+   *
+   * @return
+   * true: 集群模式  false：本地模式
+   */
   def isCluster: Boolean = {
     SystemInfoUtils.isLinux
   }
 
   /**
-    * 是否是本地模式
-    *
-    * @return
-    * true: 本地模式  false：集群模式
-    */
+   * 是否是本地模式
+   *
+   * @return
+   * true: 本地模式  false：集群模式
+   */
   def isLocal: Boolean = {
     !isCluster
   }
 
   /**
-    * 判断是否为yarn-client模式
-    * @return
-    *         true: yarn-client模式
-    */
+   * 判断是否为yarn-client模式
+   *
+   * @return
+   * true: yarn-client模式
+   */
   def isYarnClientMode: Boolean = {
     "client".equalsIgnoreCase(this.deployMode)
   }
 
   /**
-    * 判断是否为yarn-cluster模式
-    * @return
-    *         true: yarn-cluster模式
-    */
+   * 判断是否为yarn-cluster模式
+   *
+   * @return
+   * true: yarn-cluster模式
+   */
   def isYarnClusterMode: Boolean = {
     "cluster".equalsIgnoreCase(this.deployMode)
   }
 
   /**
-    * 获取spark任务运行模式
-    */
+   * 获取spark任务运行模式
+   */
   def deployMode: String = {
     SingletonFactory.getSparkSession.conf.get("spark.submit.deployMode")
   }
 
   /**
-    * 优先从配置文件中获取配置信息，若获取不到，则从SparkEnv中获取
-    *
-    * @param key
-    * 配置的key
-    * @param default
-    * 配置为空则返回default
-    * @return
-    * 配置的value
-    */
+   * 优先从配置文件中获取配置信息，若获取不到，则从SparkEnv中获取
+   *
+   * @param key
+   * 配置的key
+   * @param default
+   * 配置为空则返回default
+   * @return
+   * 配置的value
+   */
   def getConf(key: String, default: String = ""): String = {
     var value = PropUtils.getString(key, default)
     if (StringUtils.isBlank(value) && SparkEnv.get != null) {
@@ -510,13 +513,13 @@ object SparkUtils {
   }
 
   /**
-    * 将指定的schema转为小写
-    *
-    * @param schema
-    * 转为小写的列
-    * @return
-    * 转为小写的field数组
-    */
+   * 将指定的schema转为小写
+   *
+   * @param schema
+   * 转为小写的列
+   * @return
+   * 转为小写的field数组
+   */
   def schemaToLowerCase(schema: StructType): ArrayBuffer[String] = {
     val cols = ArrayBuffer[String]()
     schema.foreach(field => {
@@ -524,5 +527,22 @@ object SparkUtils {
       cols += (s"$fieldName as ${fieldName.toLowerCase}")
     })
     cols
+  }
+
+  /**
+   * 将内部row类型的DataFrame转为Row类型的DataFrame
+   *
+   * @param df
+   * InternalRow类型的DataFrame
+   * @return
+   * Row类型的DataFrame
+   */
+  def toExternalRow(df: DataFrame): DataFrame = {
+    val schema = df.schema
+    val mapedRowRDD = df.queryExecution.toRdd.mapPartitions { rows =>
+      val converter = CatalystTypeConverters.createToScalaConverter(schema)
+      rows.map(converter(_).asInstanceOf[Row])
+    }
+    SingletonFactory.getSparkSession.createDataFrame(mapedRowRDD, schema)
   }
 }
