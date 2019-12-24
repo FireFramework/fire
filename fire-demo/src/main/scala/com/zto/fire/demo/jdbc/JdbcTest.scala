@@ -91,11 +91,6 @@ object JdbcTest extends BaseSparkCore {
     // 将jdbc查询结果集封装到Dataset中
     val ds = this.spark.jdbcQueryDS(sql, Seq(1, 2, 3), classOf[Student])
     ds.show(10, false)
-
-    // 将结果集注册成Spark临时表
-    println("===========结果集注册成临时表============")
-    this.spark.jdbcQueryTable(this.tableName, sql, Seq(1, 2, 3), classOf[Student])
-    this.spark.sql(s"select * from ${this.tableName}").show(10, false)
   }
 
   /**
