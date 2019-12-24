@@ -91,6 +91,11 @@ object JdbcTest extends BaseSparkCore {
     // 将jdbc查询结果集封装到Dataset中
     val ds = this.spark.jdbcQueryDS(sql, Seq(1, 2, 3), classOf[Student])
     ds.show(10, false)
+
+    // 将结果集注册成Spark临时表
+    println("===========结果集注册成临时表============")
+    this.spark.jdbcQueryTable(this.tableName, sql, Seq(1, 2, 3), classOf[Student])
+    this.spark.sql(s"select * from ${this.tableName}").show(10, false)
   }
 
   /**
@@ -184,13 +189,13 @@ object JdbcTest extends BaseSparkCore {
 
   override def process: Unit = {
     // 测试环境测试
-    // this.testJdbcUpdate
-    // this.testJdbcQuery
+    this.testJdbcUpdate
+    this.testJdbcQuery
     // this.testTableLoad
     // this.testTableSave
     // this.testDataFrameSave
     // 生产环境测试
-    this.testExecutor
+    // this.testExecutor
   }
 
   def main(args: Array[String]): Unit = {

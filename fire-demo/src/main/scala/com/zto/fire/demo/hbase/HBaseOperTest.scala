@@ -110,6 +110,18 @@ object HBaseOperTest extends BaseSparkCore {
   }
 
   /**
+    * 使用HBaseOper get数据，并将结果注册成Spark临时表
+    */
+  def testHbaseOperGetTable: Unit = {
+    println("================将批量获取到的数据注册成临时表==================")
+    val getList = Seq("1", "2", "3", "4", "5", "6")
+    val getRDD = this.spark.parallelize(getList, 3)
+    // get到的结果以dataframe形式返回
+    this.spark.hbaseOperGetTable(this.tableName1, getRDD, classOf[Student])
+    this.spark.sql(s"select * from ${this.tableName1}").show(100, false)
+  }
+
+  /**
     * 使用HBaseOper get数据，并将结果以Dataset方式返回
     */
   def testHbaseOperGetDS: Unit = {
@@ -146,6 +158,24 @@ object HBaseOperTest extends BaseSparkCore {
     studentRDD.printEachPartition
     dataFrame.createOrReplaceTempView("test")
     println("test是否存在：" + this.catalog.tableExists("test"))
+  }
+
+  /**
+    * 使用HBaseOper scan数据，并注册成临时表
+    */
+  def testHbaseOperScanTable: Unit = {
+    println("===========将查询的结果集注册成临时表==============")
+    this.spark.hbaseOperScanTable(this.tableName1, HBaseOper.buildScan("1", "6"), classOf[Student])
+    this.spark.sql(s"select * from ${this.tableName1}").show(10, false)
+  }
+
+  /**
+    * 使用HBaseOper scan数据，并注册成临时表
+    */
+  def testHbaseOperScanTable2: Unit = {
+    println("===========将查询的结果集注册成临时表2==============")
+    this.spark.hbaseOperScanTable2(this.tableName1, "1", "6", classOf[Student])
+    this.spark.sql(s"select * from ${this.tableName1}").show(10, false)
   }
 
   /**
@@ -209,10 +239,13 @@ object HBaseOperTest extends BaseSparkCore {
     /*this.testHbaseOperDeleteRDD
     this.testHbaseOperScanDF*/
 
-    this.testHbaseOperPutRDD()
+    /*this.testHbaseOperPutRDD()
     this.testHbaseOperGetDF
     this.testHbaseOperDeleteRDD
     this.testHbaseOperScanDF
+    this.testHbaseOperScanTable
+    this.testHbaseOperScanTable2*/
+    this.testHbaseOperGetTable
   }
 
   def main(args: Array[String]): Unit = {

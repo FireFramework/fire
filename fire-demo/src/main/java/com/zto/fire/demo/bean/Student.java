@@ -64,6 +64,10 @@ public class Student extends HBaseBaseBean<Student> {
     public Student() {
     }
 
+    public Student(Long id) {
+        this.id = id;
+    }
+
     public String getCreateTime() {
         return createTime;
     }

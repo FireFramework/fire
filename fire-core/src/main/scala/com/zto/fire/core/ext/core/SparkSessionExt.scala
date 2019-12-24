@@ -404,6 +404,46 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
   }
 
   /**
+   * 使用bulk方式scan数据，并转为Spark临时表
+   *
+   * @param tableName
+   * HBase表名，Spark临时表名
+   * @param scan
+   * scan对象
+   * @param clazz
+   * 对应的返回值类型
+   * @param cacheTable
+   * 是否缓存Spark临时表
+   * @return
+   * clazz类型的rdd
+   */
+  def hbaseBulkScanTable[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], cacheTable: Boolean = true): DataFrame = {
+    val df = this.hbaseBulkScanDF[T](tableName, scan, clazz)
+    if (cacheTable && ValueUtils.isNotEmpty(df)) df.createOrReplaceTempViewCache(tableName) else df.createOrReplaceTempView(tableName)
+    df
+  }
+
+  /**
+   * 使用bulk方式scan数据，并转为Spark临时表
+   *
+   * @param tableName
+   * HBase表名
+   * @param startRow
+   * 开始
+   * @param stopRow
+   * 结束
+   * @param clazz
+   * 对应的返回值类型
+   * @return
+   * clazz类型的rdd
+   */
+  def hbaseBulkScanTable2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], cacheTable: Boolean = true): DataFrame = {
+    val df = this.hbaseBulkScanDF[T](tableName, startRow, stopRow, clazz)
+    if (cacheTable) df.createOrReplaceTempViewCache(tableName) else df.createOrReplaceTempView(tableName)
+    df
+  }
+
+  /**
    * 使用bulk方式scan数据，并转为Dataset
    *
    * @param tableName
@@ -579,6 +619,28 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
   }
 
   /**
+   * 根据rowKey集合批量获取数据，注册成Spark临时表，并映射为自定义的JavaBean类型
+   *
+   * @param tableName
+   * HBase表名，Spark临时表名
+   * @param clazz
+   * 获取后的记录转换为目标类型（自定义的JavaBean类型）
+   * @param cacheTable
+   * 是否缓存Spark临时表
+   * @param batchSize
+   * 用于指定一次获取多少条记录，默认1000条
+   * @tparam E
+   * 自定义JavaBean类型，必须继承自HBaseBaseBean
+   * @return
+   * 自定义JavaBean的对象结果集
+   */
+  def hbaseBulkGetTable[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], cacheTable: Boolean = true, batchSize: Integer = this.hbaseContext.batchSize): DataFrame = {
+    val df = rowKeyRDD.hbaseBulkGetTable[E](tableName, clazz, cacheTable, batchSize)
+    if (cacheTable && ValueUtils.isNotEmpty(df)) df.createOrReplaceTempViewCache(tableName) else df.createOrReplaceTempView(tableName)
+    df
+  }
+
+  /**
    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
    *
    * @param tableName
@@ -707,7 +769,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
   }
 
   /**
-   * Scan指定HBase表的数据，并映射为RDD[(T]
+   * Scan指定HBase表的数据，并映射为DataFrame
    *
    * @param tableName
    * HBase表名
@@ -721,7 +783,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
   }
 
   /**
-   * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+   * Scan指定HBase表的数据，并映射为DataFrame
    *
    * @param tableName
    * HBase表名
@@ -741,6 +803,36 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    *
    * @param tableName
    * HBase表名
+   * @param scan
+   * scan对象
+   * 目标类型
+   * @return
+   */
+  def hbaseHadoopScanTable[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], cacheTable: Boolean = true, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    HBaseSparkBridge.hbaseHadoopScanTable[T](this.spark, tableName, scan, clazz, cacheTable, multiVersion, versions)
+  }
+
+  /**
+   * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+   *
+   * @param tableName
+   * HBase表名，注册成的Spark临时表名。两者名称相同
+   * @param startRow
+   * rowKey开始位置
+   * @param stopRow
+   * rowKey结束位置
+   * 目标类型
+   * @return
+   */
+  def hbaseHadoopScanTable2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], cacheTable: Boolean = true, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    HBaseSparkBridge.hbaseHadoopScanTable2[T](this.spark, tableName, startRow, stopRow, clazz, cacheTable, multiVersion, versions)
+  }
+
+  /**
+   * Scan指定HBase表的数据，并映射为RDD[T]
+   *
+   * @param tableName
+   * HBase表名，注册成的Spark临时表名。两者名称相同
    * @param scan
    * scan对象
    * 目标类型
@@ -801,6 +893,41 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    */
   def hbaseOperScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
     HBaseSparkBridge.hbaseOperScanDF2(this.spark, tableName, startRow, stopRow, clazz, multiVersion, versions)
+  }
+
+  /**
+   * Scan指定HBase表的数据，并映射为Spark临时表
+   *
+   * @param tableName
+   * HBase表名，注册成的Spark临时表名。两者名称相同
+   * @param scan
+   * scan对象
+   * @param clazz
+   * 目标类型
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseOperScanTable[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], cacheTable: Boolean = true, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    HBaseSparkBridge.hbaseOperScanTable(this.spark, tableName, scan, clazz, cacheTable, multiVersion, versions)
+  }
+
+  /**
+   * Scan指定HBase表的数据，并映射为Spark临时表
+   *
+   * @param tableName
+   *                HBase表名，注册成的Spark临时表名。两者名称相同
+   * @param startRow
+   *                开始主键
+   * @param stopRow 结束主键
+   * @param clazz
+   *                目标类型
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseOperScanTable2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T], cacheTable: Boolean = true, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    HBaseSparkBridge.hbaseOperScanTable2(this.spark, tableName, startRow, stopRow, clazz, cacheTable, multiVersion, versions)
   }
 
   /**
@@ -998,6 +1125,23 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    */
   def hbaseOperGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
     rdd.hbaseOperGetDF(tableName, clazz, multiVersion, versions)
+  }
+
+  /**
+   * 通过RDD[String]批量获取对应的数据，并将结果集注册Spark临时表（可获取历史版本的记录）
+   *
+   * @param tableName
+   * HBase表名，与注册成的Spark临时表同名
+   * @param clazz
+   * 目标类型
+   * @param multiVersion
+   * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseOperGetTable[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[T], cacheTable: Boolean = true, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    rdd.hbaseOperGetTable(tableName, clazz, cacheTable, multiVersion, versions)
   }
 
   /**
@@ -1204,13 +1348,13 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    * 消费kafka中的json数据，并自动解析json数据，将解析后的数据注册到tableName所指定的临时表中
    *
    * @param tableName
-   * 解析后的数据存放的临时表名，默认名为data
+   * 解析后的数据存放的临时表名，默认名为kafka
    * @param extraOptions
    * 消费kafka额外的参数
    * @return
    * 转换成json字符串后的Dataset
    */
-  def loadKafkaParseJson(tableName: String = "data",
+  def loadKafkaParseJson(tableName: String = "kafka",
                          extraOptions: mutable.HashMap[String, String] = null,
                          keyNum: Int = 1): DataFrame = {
     val msg = KafkaUtils.getMsg(GlobalConstants.KafkaConf.kafkaBrokers(keyNum), GlobalConstants.KafkaConf.kafkaTopics(keyNum), null)
@@ -1219,7 +1363,8 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
     val jsonDF = this.spark.read.json(jsonDS)
 
     val kafkaDataset = this.loadKafka(extraOptions, keyNum)
-    val schemaDataset = kafkaDataset.select(from_json($"value", jsonDF.schema).as(tableName))
+    val schemaDataset = kafkaDataset.select(from_json($"value", jsonDF.schema).as(tableName)).select(s"${tableName}.*")
+    schemaDataset.createOrReplaceTempView(tableName)
     schemaDataset
   }
 
@@ -1400,6 +1545,30 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    */
   def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): DataFrame = {
     this.spark.createDataFrame(this.jdbcQueryRDD(sql, params, clazz, connection, keyNum), clazz)
+  }
+
+  /**
+   * 执行查询操作，并将结果集注册成Spark临时表
+   *
+   * @param tableName
+   * spark的临时表名
+   * @param sql
+   * 查询语句
+   * @param params
+   * sql执行参数
+   * @param clazz
+   * JavaBean类型
+   * @param cacheTable
+   * 是否缓存临时表
+   * @param keyNum
+   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   * @return 查询结果集
+   */
+  def jdbcQueryTable[T <: Object : ClassTag](tableName: String, sql: String, params: Seq[Any] = null, clazz: Class[T], cacheTable: Boolean = true, connection: Connection = null, keyNum: Int = 1): DataFrame = {
+    val df = this.jdbcQueryDF[T](sql, params, clazz, connection, keyNum)
+    if (cacheTable && ValueUtils.isNotEmpty(df)) df.createOrReplaceTempViewCache(tableName) else df.createOrReplaceTempView(tableName)
+    df
   }
 
   /**

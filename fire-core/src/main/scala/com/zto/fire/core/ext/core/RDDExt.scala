@@ -1,6 +1,7 @@
 package com.zto.fire.core.ext.core
 
 import com.zto.fire.common.bean.HBaseBaseBean
+import com.zto.fire.common.util.ValueUtils
 import com.zto.fire.core.bridge.HBaseSparkBridge
 import com.zto.fire.core.ext.module.HBaseContextExt
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
@@ -16,10 +17,10 @@ import com.zto.fire.core.ext.SparkExt._
 import scala.reflect.{ClassTag, classTag}
 
 /**
-  * RDD相关扩展
-  *
-  * @author ChengLong 2019-5-18 10:28:31
-  */
+ * RDD相关扩展
+ *
+ * @author ChengLong 2019-5-18 10:28:31
+ */
 class RDDExt[T: ClassTag](rdd: RDD[T]) {
   // 获取单例的SQLContext对象
   private lazy val sqlContext: SQLContext = SingletonFactory.getSQLContextInstance(rdd.sparkContext)
@@ -30,16 +31,16 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   import spark.implicits._
 
   /**
-    * 用于判断rdd是否为空
-    *
-    * @return
-    * true: 不为空 false：为空
-    */
+   * 用于判断rdd是否为空
+   *
+   * @return
+   * true: 不为空 false：为空
+   */
   def isNotEmpty: Boolean = !rdd.isEmpty()
 
   /**
-    * 遍历每个partition并打印元素到控制台
-    */
+   * 遍历每个partition并打印元素到控制台
+   */
   def printEachPartition: Unit = {
     rdd.foreachPartition(it => {
       it.foreach(item => println(item + " "))
@@ -47,27 +48,27 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   }
 
   /**
-    * 集群模式下打印数据
-    */
+   * 集群模式下打印数据
+   */
   def printEachClusterPartition: Unit = {
     rdd.collect().foreach(println)
   }
 
   /**
-    * 将rdd转为DataFrame
-    */
+   * 将rdd转为DataFrame
+   */
   def toDF(): DataFrame = {
     this.sqlContext.createDataFrame(rdd, classTag[T].runtimeClass)
   }
 
   /**
-    * 将rdd转为DataFrame并注册成临时表
-    *
-    * @param tableName
-    * 表名
-    * @return
-    * DataFrame
-    */
+   * 将rdd转为DataFrame并注册成临时表
+   *
+   * @param tableName
+   * 表名
+   * @return
+   * DataFrame
+   */
   def createOrReplaceTempView(tableName: String, cache: Boolean = false): DataFrame = {
     val dataFrame = this.toDF()
     dataFrame.createOrReplaceTempView(tableName)
@@ -76,182 +77,221 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   }
 
   /**
-    * 根据RDD[String]批量删除
-    *
-    * @param tableName
-    * HBase表名
-    * @param batchSize
-    * 批量删除的大小
-    */
+   * 根据RDD[String]批量删除
+   *
+   * @param tableName
+   * HBase表名
+   * @param batchSize
+   * 批量删除的大小
+   */
   def hbaseBulkDeleteRDD[T <: String : ClassTag](tableName: String, batchSize: Integer = this.hbaseContext.batchSize): Unit = {
     this.hbaseContext.bulkDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]], batchSize)
   }
 
   /**
-    * 根据RDD[RowKey]批量删除记录
-    *
-    * @param tableName
-    * rowKey集合
-    * @param batchSize
-    * 一次删除多少条
-    */
+   * 根据RDD[RowKey]批量删除记录
+   *
+   * @param tableName
+   * rowKey集合
+   * @param batchSize
+   * 一次删除多少条
+   */
   def hbaseOperDeleteRDD(tableName: String, batchSize: Int = this.hbaseContext.batchSize): Unit = {
     HBaseSparkBridge.hbaseOperDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]], batchSize)
   }
 
   /**
-    * 根据rowKey集合批量获取数据
-    *
-    * @param tableName
-    * HBase表名
-    * @param clazz
-    * 获取后的记录转换为目标类型
-    * @param batchSize
-    * 批量的大小
-    * @return
-    * 结果集
-    */
+   * 根据rowKey集合批量获取数据
+   *
+   * @param tableName
+   * HBase表名
+   * @param clazz
+   * 获取后的记录转换为目标类型
+   * @param batchSize
+   * 批量的大小
+   * @return
+   * 结果集
+   */
   def hbaseBulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): RDD[E] = {
     this.hbaseContext.bulkGetRDD(tableName, rdd.asInstanceOf[RDD[String]], clazz, batchSize)
   }
 
   /**
-    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
-    *
-    * @param tableName
-    * HBase表名
-    * @param clazz
-    * 获取后的记录转换为目标类型（自定义的JavaBean类型）
-    * @param batchSize
-    * 用于指定一次获取多少条记录，默认1000条
-    * @tparam E
-    * 自定义JavaBean类型，必须继承自HBaseBaseBean
-    * @return
-    * 自定义JavaBean的对象结果集
-    */
+   * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
+   *
+   * @param tableName
+   * HBase表名
+   * @param clazz
+   * 获取后的记录转换为目标类型（自定义的JavaBean类型）
+   * @param batchSize
+   * 用于指定一次获取多少条记录，默认1000条
+   * @tparam E
+   * 自定义JavaBean类型，必须继承自HBaseBaseBean
+   * @return
+   * 自定义JavaBean的对象结果集
+   */
   def hbaseBulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): DataFrame = {
     this.hbaseContext.bulkGetDF[E](tableName, rdd.asInstanceOf[RDD[String]], clazz, batchSize)
   }
 
   /**
-    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
-    *
-    * @param tableName
-    * HBase表名
-    * @param clazz
-    * 获取后的记录转换为目标类型（自定义的JavaBean类型）
-    * @param batchSize
-    * 用于指定一次获取多少条记录，默认1000条
-    * @tparam E
-    * 自定义JavaBean类型，必须继承自HBaseBaseBean
-    * @return
-    * 自定义JavaBean的对象结果集
-    */
+   * 根据rowKey集合批量获取数据，注册成Spark临时表，并映射为自定义的JavaBean类型
+   *
+   * @param tableName
+   * HBase表名，Spark临时表名
+   * @param clazz
+   * 获取后的记录转换为目标类型（自定义的JavaBean类型）
+   * @param cacheTable
+   * 是否缓存Spark临时表
+   * @param batchSize
+   * 用于指定一次获取多少条记录，默认1000条
+   * @tparam E
+   * 自定义JavaBean类型，必须继承自HBaseBaseBean
+   * @return
+   * 自定义JavaBean的对象结果集
+   */
+  def hbaseBulkGetTable[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], cacheTable: Boolean = true, batchSize: Integer = this.hbaseContext.batchSize): DataFrame = {
+    val df = this.hbaseBulkGetDF[E](tableName, clazz, batchSize)
+    if (cacheTable && ValueUtils.isNotEmpty(df)) df.createOrReplaceTempViewCache(tableName) else df.createOrReplaceTempView(tableName)
+    df
+  }
+
+  /**
+   * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
+   *
+   * @param tableName
+   * HBase表名
+   * @param clazz
+   * 获取后的记录转换为目标类型（自定义的JavaBean类型）
+   * @param batchSize
+   * 用于指定一次获取多少条记录，默认1000条
+   * @tparam E
+   * 自定义JavaBean类型，必须继承自HBaseBaseBean
+   * @return
+   * 自定义JavaBean的对象结果集
+   */
   def hbaseBulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], batchSize: Integer = this.hbaseContext.batchSize): Dataset[E] = {
     this.hbaseContext.bulkGetDS[E](tableName, rdd.asInstanceOf[RDD[String]], clazz, batchSize)
   }
 
   /**
-    * 批量插入数据
-    *
-    * @param tableName
-    * HBase表名
-    * 数据集合，继承自HBaseBaseBean
-    * @param insertEmpty
-    * 为空的字段是否写入
-    */
+   * 批量插入数据
+   *
+   * @param tableName
+   * HBase表名
+   * 数据集合，继承自HBaseBaseBean
+   * @param insertEmpty
+   * 为空的字段是否写入
+   */
   def hbaseBulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
     this.hbaseContext.bulkPutRDD(tableName, rdd.asInstanceOf[RDD[T]], insertEmpty, multiVersion)
   }
 
   /**
-    * 使用Spark API的方式将RDD中的数据分多个批次插入到HBase中
-    *
-    * @param tableName
-    * HBase表名
-    */
+   * 使用Spark API的方式将RDD中的数据分多个批次插入到HBase中
+   *
+   * @param tableName
+   * HBase表名
+   */
   def hbaseHadoopPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true): Unit = {
     this.hbaseContext.hadoopPut(tableName, rdd.asInstanceOf[RDD[T]], insertEmpty)
   }
 
   /**
-    * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
-    *
-    * @param tableName
-    * HBase表名
-    * @param clazz
-    * 目标类型
-    * @param multiVersion
-    * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
-    * @tparam T
-    * 目标类型
-    * @return
-    */
+   * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+   *
+   * @param tableName
+   * HBase表名
+   * @param clazz
+   * 目标类型
+   * @param multiVersion
+   * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+   * @tparam T
+   * 目标类型
+   * @return
+   */
   def hbaseOperGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): RDD[T] = {
     HBaseSparkBridge.hbaseOperGetRDD(tableName, rdd.asInstanceOf[RDD[String]], clazz, multiVersion, versions)
   }
 
   /**
-    * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
-    *
-    * @param tableName
-    * HBase表名
-    * @param clazz
-    * 目标类型
-    * @param multiVersion
-    * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
-    * @tparam T
-    * 目标类型
-    * @return
-    */
+   * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+   *
+   * @param tableName
+   * HBase表名
+   * @param clazz
+   * 目标类型
+   * @param multiVersion
+   * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+   * @tparam T
+   * 目标类型
+   * @return
+   */
   def hbaseOperGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
     HBaseSparkBridge.hbaseOperGetDS[T](tableName, rdd.asInstanceOf[RDD[String]], clazz, multiVersion, versions)
   }
 
   /**
-    * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
-    *
-    * @param tableName
-    * HBase表名
-    * @param clazz
-    * 目标类型
-    * @param multiVersion
-    * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
-    * @tparam T
-    * 目标类型
-    * @return
-    */
+   * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+   *
+   * @param tableName
+   * HBase表名
+   * @param clazz
+   * 目标类型
+   * @param multiVersion
+   * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+   * @tparam T
+   * 目标类型
+   * @return
+   */
   def hbaseOperGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
     HBaseSparkBridge.hbaseOperGetDF(tableName, rdd.asInstanceOf[RDD[String]], clazz, multiVersion, versions)
   }
 
   /**
-    * 使用Java API的方式将RDD中的数据分多个批次插入到HBase中
-    *
-    * @param tableName
-    * HBase表名
-    * @param batchSize
-    * 批次大小
-    * @param multiVersion
-    * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
-    */
+   * 通过RDD[String]批量获取对应的数据，并将结果集注册Spark临时表（可获取历史版本的记录）
+   *
+   * @param tableName
+   * HBase表名，与注册成的Spark临时表同名
+   * @param clazz
+   * 目标类型
+   * @param multiVersion
+   * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseOperGetTable[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], cacheTable: Boolean = true, multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
+    HBaseSparkBridge.hbaseOperGetTable(tableName, rdd.asInstanceOf[RDD[String]], clazz, cacheTable, multiVersion, versions)
+  }
+
+  /**
+   * 使用Java API的方式将RDD中的数据分多个批次插入到HBase中
+   *
+   * @param tableName
+   * HBase表名
+   * @param batchSize
+   * 批次大小
+   * @param multiVersion
+   * 是否以多版本方式插入（会将多列数据转为一列的json数据进行保存）
+   */
   def hbaseOperPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
     HBaseSparkBridge.hbaseOperPutRDD[T](tableName, rdd.asInstanceOf[RDD[T]], insertEmpty, batchSize, multiVersion)
   }
 
   /**
-    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
-    *
-    * @param schema
-    * 目标DataFrame类型的schema
-    * @param isMySQL
-    * 是否为mysql解析的消息
-    * @param fieldNameUpper
-    * 字段名称是否为大写
-    * @param parseAll
-    * 是否需要解析所有字段信息
-    * @return
-    */
+   * 解析DStream中每个rdd的json数据，并转为DataFrame类型
+   *
+   * @param schema
+   * 目标DataFrame类型的schema
+   * @param isMySQL
+   * 是否为mysql解析的消息
+   * @param fieldNameUpper
+   * 字段名称是否为大写
+   * @param parseAll
+   * 是否需要解析所有字段信息
+   * @return
+   */
   def kafkaJson2DFV(schema: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): DataFrame = {
     val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[String]])(Encoders.STRING)
     val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, parseAll, isMySQL, fieldNameUpper)).as("data"))
@@ -262,18 +302,18 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   }
 
   /**
-    * 解析DStream中每个rdd的json数据，并转为DataFrame类型
-    *
-    * @param schema
-    * 目标DataFrame类型的schema
-    * @param isMySQL
-    * 是否为mysql解析的消息
-    * @param fieldNameUpper
-    * 字段名称是否为大写
-    * @param parseAll
-    * 是否解析所有字段信息
-    * @return
-    */
+   * 解析DStream中每个rdd的json数据，并转为DataFrame类型
+   *
+   * @param schema
+   * 目标DataFrame类型的schema
+   * @param isMySQL
+   * 是否为mysql解析的消息
+   * @param fieldNameUpper
+   * 字段名称是否为大写
+   * @param parseAll
+   * 是否解析所有字段信息
+   * @return
+   */
   def kafkaJson2DF(schema: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): DataFrame = {
     val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()))(Encoders.STRING)
     // val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[String]])(Encoders.STRING)
@@ -287,11 +327,11 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   }
 
   /**
-    * 解析json数据，并注册为临时表
-    *
-    * @param tableName
-    * 临时表名
-    */
+   * 解析json数据，并注册为临时表
+   *
+   * @param tableName
+   * 临时表名
+   */
   def kafkaJson2Table(tableName: String, cacheTable: Boolean = false): Unit = {
     val msgDS = rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()).toDS()
     spark.read.json(msgDS).toLowerDF.createOrReplaceTempView(tableName)
@@ -299,23 +339,23 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   }
 
   /**
-    * 清空RDD的缓存
-    */
+   * 清空RDD的缓存
+   */
   def uncache: Unit = {
     rdd.unpersist()
   }
 
   /**
-    * 维护RocketMQ的offset
-    */
+   * 维护RocketMQ的offset
+   */
   def kafkaCommitOffsets(stream: DStream[ConsumerRecord[String, String]]): Unit = {
     val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
     stream.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
   }
 
   /**
-    * 维护RocketMQ的offset
-    */
+   * 维护RocketMQ的offset
+   */
   def rocketCommitOffsets(stream: InputDStream[MessageExt]): Unit = {
     val offsetRanges = rdd.asInstanceOf[org.apache.rocketmq.spark.HasOffsetRanges].offsetRanges
     stream.asInstanceOf[org.apache.rocketmq.spark.CanCommitOffsets].commitAsync(offsetRanges)
