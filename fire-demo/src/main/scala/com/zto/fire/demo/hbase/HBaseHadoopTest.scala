@@ -1,6 +1,5 @@
 package com.zto.fire.demo.hbase
 
-import com.zto.fire.common.db.HBaseOper
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.BaseSparkCore
 import com.zto.fire.demo.bean.Student
@@ -27,7 +26,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     */
   def testHbaseHadoopPutRDD: Unit = {
     val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
-    this.spark.hbaseHadoopPutRDD(this.tableName1, studentRDD)
+    this.spark.hbaseHadoopPutRDD(this.tableName3, studentRDD)
     // 方式二：直接基于rdd进行方法调用
     // studentRDD.hbaseHadoopPutRDD(this.tableName1)
   }
@@ -92,29 +91,12 @@ object HBaseHadoopTest extends BaseSparkCore {
   }
 
   /**
-   * 使用Spark的方式scan海量数据，并将结果集注册成临时表
-   */
-  def testHBaseHadoopScanTable: Unit = {
-    println("=============scan后将结果集注册成临时表================")
-    this.spark.hbaseHadoopScanTable(this.tableName3, HBaseOper.buildScan("1", "3"), classOf[Student])
-    this.spark.sql(s"select * from ${this.tableName3}").show(100, false)
-  }
-
-  /**
-    * 使用Spark的方式scan海量数据，并将结果集注册成临时表
-    */
-  def testHBaseHadoopScanTable2: Unit = {
-    println("=============scan后将结果集注册成临时表2================")
-    val studentDF = this.spark.hbaseHadoopScanTable2(this.tableName3, "4", "6", classOf[Student])
-    this.spark.sql(s"select * from ${this.tableName3}").show(100, false)
-    studentDF.show()
-  }
-
-  /**
     * 使用Spark的方式scan海量数据，并将结果集映射为Dataset
     */
   def testHBaseHadoopScanDS: Unit = {
-    val studentDS = this.spark.hbaseHadoopScanDS2(this.tableName3, "1", "6", classOf[Student])
+    val scan = new Scan()
+    scan.setTimeRange(1575216000000L, 1575648000000L)
+    val studentDS = this.spark.hbaseHadoopScanDS(this.tableName3, scan, classOf[Student])
     studentDS.show(100, false)
   }
 
@@ -126,13 +108,11 @@ object HBaseHadoopTest extends BaseSparkCore {
     /*this.testHbaseHadoopPutRDD
     this.testHbaseHadoopPutDF
     this.testHbaseHadoopPutDS*/
-    this.testHbaseHadoopPutDFRow
-
+    // this.testHbaseHadoopPutDFRow
+    // this.testHbaseHadoopPutRDD
     // this.testHBaseHadoopScanRDD
     // this.testHBaseHadoopScanDF
-    // this.testHBaseHadoopScanDS
-    this.testHBaseHadoopScanTable
-    this.testHBaseHadoopScanTable2
+    this.testHBaseHadoopScanDS
   }
 
   def main(args: Array[String]): Unit = {

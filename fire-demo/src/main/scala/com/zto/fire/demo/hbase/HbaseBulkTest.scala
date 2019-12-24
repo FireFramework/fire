@@ -109,16 +109,6 @@ object HBaseBulkTest extends BaseSparkCore {
   }
 
   /**
-    * 使用bulk方式根据rowKey获取数据，并将结果集注册成临时表
-    */
-  def testHBaseBulkGetTable: Unit = {
-    println("==========将get到的结果集注册成临时表==============")
-    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString))
-    rowKeyRdd.hbaseBulkGetTable(this.tableName2, classOf[Student])
-    this.spark.sql(s"select * from ${this.tableName2}").show(10, false)
-  }
-
-  /**
     * 使用bulk方式根据rowKey获取数据，并将结果集以Dataset形式返回
     */
   def testHBaseBulkGetDS: Unit = {
@@ -147,26 +137,6 @@ object HBaseBulkTest extends BaseSparkCore {
     // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为DataFrame
     val scanDF = this.spark.hbaseBulkScanDF(this.tableName2, "1", "6", classOf[Student])
     scanDF.show(100, false)
-  }
-
-  /**
-    * 使用bulk方式进行scan，并将结果集注册成临时表
-    */
-  def testHbaseBulkScanTable: Unit = {
-    println("==============将scan的结果集注册成临时表=============")
-    // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为DataFrame
-    this.spark.hbaseBulkScanTable(this.tableName2, HBaseOper.buildScan("1", "6"), classOf[Student])
-    this.spark.sql(s"select * from ${this.tableName2}").show(10, false)
-  }
-
-  /**
-    * 使用bulk方式进行scan，并将结果集注册成临时表
-    */
-  def testHbaseBulkScanTable2: Unit = {
-    println("==============将scan的结果集注册成临时表2=============")
-    // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为DataFrame
-    this.spark.hbaseBulkScanTable2(this.tableName2, "1", "6", classOf[Student])
-    this.spark.sql(s"select * from ${this.tableName2}").show(10, false)
   }
 
   /**
@@ -216,18 +186,15 @@ object HBaseBulkTest extends BaseSparkCore {
 
     // this.testHBaseBulkGetRDD
     // this.testHBaseBulkGetDF
-    // this.testHBaseBulkGetDS
+    this.testHBaseBulkGetDS
     // this.testHBaseBulkGetSeq
 
     // this.testHBaseBulkDeleteRDD
-    // this.testHBaseBulkDeleteDS
+    this.testHBaseBulkDeleteDS
 
     /*this.testHbaseBulkScanRDD
     this.testHbaseBulkScanDF*/
     this.testHbaseBulkScanDS
-    this.testHBaseBulkGetTable
-    this.testHbaseBulkScanTable
-    this.testHbaseBulkScanTable2
   }
 
   def main(args: Array[String]): Unit = {
