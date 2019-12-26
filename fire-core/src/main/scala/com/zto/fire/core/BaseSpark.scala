@@ -188,6 +188,13 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     val sparkListener = new BaseSparkListener(this)
     this.sc.addSparkListener(sparkListener)
     this.initLogging(this.className)
+    this.hiveContext = this.spark.sqlContext
+    this.sqlContext = this.hiveContext
+    this.hbaseContext = SingletonFactory.getHBaseContextInstance(this.sc)
+    this.kuduContext = SingletonFactory.getKuduContextInstance(this.sc)
+    this.applicationId = SparkUtils.getApplicationId(this.spark)
+    this.webUI = SparkUtils.getWebUI(this.spark)
+    this.conf = tmpConf
     // 向driver和executor注册定时任务
     val taskSchedule = new InternalTask(this)
     // driver端注册定时任务
@@ -196,13 +203,6 @@ trait BaseSpark extends SparkListener with Logging with Serializable {
     AccumulatorManager.registerTasks(this, taskSchedule)
     // 向executor端注册自定义累加器
     if (this.jobType != JobType.CORE) this.acc.registerAccumulators(this.sc)
-    this.hiveContext = this.spark.sqlContext
-    this.sqlContext = this.hiveContext
-    this.hbaseContext = SingletonFactory.getHBaseContextInstance(this.sc)
-    this.kuduContext = SingletonFactory.getKuduContextInstance(this.sc)
-    this.applicationId = SparkUtils.getApplicationId(this.spark)
-    this.webUI = SparkUtils.getWebUI(this.spark)
-    this.conf = tmpConf
 
     this.wrapLogInfo("<-- 完成Spark运行时信息初始化 -->")
   }

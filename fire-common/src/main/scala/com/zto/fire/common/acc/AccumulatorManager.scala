@@ -1,6 +1,7 @@
 package com.zto.fire.common.acc
 
 import java.nio.ByteBuffer
+import java.util
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 
@@ -13,7 +14,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.LongAccumulator
 import org.apache.spark.{SparkContext, SparkEnv}
 
-import scala.collection.mutable
+import scala.collection.{JavaConversions, mutable}
 
 /**
  * fire内置累加器工具类
@@ -252,12 +253,10 @@ private[fire] object AccumulatorManager {
           if (GlobalConstants.scheduleEnable) {
             // 从广播中获取到定时任务的实例，并在executor端完成注册
             val tasks = taskSet.value
-            if (tasks != null && tasks.size > 0) {
+            if (tasks != null && tasks.size > 0 && !SchedulerManager.schedulerIsStarted()) {
               tasks.foreach(obj => {
                 // 防止生成重复的Scheduler实例
-                if (!SchedulerManager.schedulerIsStarted()) {
                   SchedulerManager.registerTasks(obj)
-                }
               })
             }
           }
