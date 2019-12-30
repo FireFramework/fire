@@ -1,7 +1,10 @@
 package com.zto.fire.core.rest
 
 import java.util
+import java.util.concurrent.atomic.AtomicReference
 
+import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.serializer.SerializerFeature
 import com.google.common.collect.Table
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
@@ -24,6 +27,7 @@ import scala.collection.JavaConversions
 class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   private var sparkInfoBean: SparkInfo = _
   private val module = "rest"
+  private lazy val jsonConf = new AtomicReference[String](this.confToJson)
 
   // 系统预定义接口注册
   {
@@ -43,6 +47,41 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/listTables", listTables))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/listColumns", listColumns))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/listFunctions", listFunctions))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/setConf", setConf))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/getConf", getConf))
+  }
+
+  /**
+   * 用于更新配置信息
+   */
+  @Rest("/system/setConf")
+  def setConf(request: Request, response: Response): AnyRef = {
+    this.mark
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      val confMap = JSON.parseObject(json, classOf[java.util.HashMap[String, String]])
+      if (ValueUtils.isNotEmpty(confMap)) {
+        this.baseSpark.conf.setAll(JavaConversions.mapAsScalaMap(confMap))
+        this.jsonConf.set(this.confToJson)
+      }
+      msg.buildSuccess("配置信息已更新", ErrorCode.SUCCESS.toString)
+    } catch {
+      case e: Exception => {
+        this.logFire(s"[setConf] 设置配置信息失败：json=$json", this.module, throwable = e)
+        msg.buildError("设置配置信息失败", ErrorCode.ERROR)
+      }
+    } finally {
+      msg.toString
+    }
+  }
+
+  /**
+   * 用于同步最新的配置信息
+   */
+  @Rest("/system/getConf")
+  def getConf(request: Request, response: Response): AnyRef = {
+    this.jsonConf.get()
   }
 
   /**
@@ -473,7 +512,7 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
   /**
    * 获取当前的spark运行时信息
    */
-  @Rest("/system/sparkInfoBean")
+  @Rest("/system/sparkInfo")
   def sparkInfo(request: Request, response: Response): AnyRef = {
     this.mark
     val msg = new ResultMsg
@@ -520,4 +559,22 @@ class SystemRestful(val baseSpark: BaseSpark) extends Logging {
     }
   }
 
+  /**
+   * 将conf信息转为json
+   *
+   * @return
+   * json结构的配置信息
+   */
+  private def confToJson: String = {
+    if (this.baseSpark.conf == null) return ""
+
+    val map = new util.HashMap[String, String]()
+    this.baseSpark.conf.getAll.foreach(t => {
+      if (ValueUtils.isNotEmpty(t._1)) {
+        map.put(t._1, t._2)
+      }
+    })
+    // 将最新的配置信息转为json，供executor端调用
+    JSON.toJSONString(map, SerializerFeature.NotWriteDefaultValue)
+  }
 }

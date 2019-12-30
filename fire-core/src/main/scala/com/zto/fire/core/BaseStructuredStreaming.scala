@@ -20,6 +20,8 @@ class BaseStructuredStreaming extends BaseSpark {
     */
   override def init(conf: SparkConf = null, args: Array[String] = null): Unit = {
     super.init(conf, args)
+    // 添加时间监听器
+    this.spark.streams.addListener(new BaseStreamingQueryListener)
     if (SystemInfoUtils.isLinux) this.restfulRegister.startRestServer
     this.process
   }
