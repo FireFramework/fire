@@ -24,6 +24,8 @@ object GlobalConstants {
   lazy val scheduleEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_TASK_SCHEDULE_ENABLE, true)
   // quartz最大线程池大小
   lazy val quartzMaxThread = PropUtils.getString(PropKeys.SPARK_FIRE_QUARTZ_MAX_THREAD, "8")
+  // 定时任务黑名单，配置的value为方法名，多个以逗号分隔
+  lazy val schedulerBlackList = PropUtils.getString(PropKeys.SPARK_FIRE_SCHEDULER_BLACKLIST, "")
 
 
   /**
@@ -244,6 +246,8 @@ object GlobalConstants {
     val SPARK_FIRE_RESTFUL_MAX_THREAD = "spark.fire.restful.max.thread"
     // quartz最大线程池大小
     val SPARK_FIRE_QUARTZ_MAX_THREAD = "spark.fire.quartz.max.thread"
+    // 定时调度任务黑名单（定时任务方法名），以逗号分隔
+    val SPARK_FIRE_SCHEDULER_BLACKLIST = "spark.fire.scheduler.blacklist"
 
     // ---------------------------- HDFS 相关配置 ---------------------------- //
     // 是否启用高可用

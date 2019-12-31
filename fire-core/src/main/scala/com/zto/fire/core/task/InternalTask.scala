@@ -26,7 +26,7 @@ private[fire] class InternalTask(baseSpark: BaseSpark) extends Logging with Seri
    * 并将采集到的数据存放到EnvironmentAccumulator中
    */
   @Scheduled(fixedInterval = 5000, scope = "all", initialDelay = 0L, concurrent = false)
-  def collectEnvironmentInfo: Unit = {
+  def jvmMonitor: Unit = {
     AccumulatorManager.addEnv(JSON.toJSONString(RuntimeInfo.getRuntimeInfo, SerializerFeature.NotWriteRootClassName))
   }
 

@@ -56,6 +56,26 @@ object ValueUtils {
   def isNotEmpty(map: java.util.Map[_, _]): Boolean = !this.isEmpty(map)
 
   /**
+   * 用于校验数组是否为空
+   *
+   * @param array
+   * 数组
+   * @return
+   * true: 为空  false：不为空
+   */
+  def isEmpty(array: Array[Any]): Boolean = array == null || array.length == 0
+
+  /**
+   * 用于校验数组是否不为空
+   *
+   * @param array
+   * 数组
+   * @return
+   * true: 不为空  false：为空
+   */
+  def isNotEmpty(array: Array[Any]): Boolean = !this.isEmpty(array)
+
+  /**
    * 用于校验scala的集合是否为空
    *
    * @param seq

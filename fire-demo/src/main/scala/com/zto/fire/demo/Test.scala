@@ -1,9 +1,21 @@
 package com.zto.fire.demo
 
+import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
 
 object Test extends BaseSparkStreaming {
+
+  @Scheduled(fixedInterval = 5000, scope = "all", initialDelay = 0L, concurrent = false)
+  def setConf: Unit = {
+    println("=============setConf==================")
+  }
+
+  @Scheduled(fixedInterval = 5000, scope = "all", initialDelay = 0L, concurrent = false)
+  def setConf2: Unit = {
+    println("=============setConf2==================")
+  }
+
 
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream()

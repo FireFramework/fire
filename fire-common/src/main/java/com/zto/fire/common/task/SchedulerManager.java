@@ -5,6 +5,7 @@ import com.zto.fire.common.anno.Scheduled;
 import com.zto.fire.common.bean.BaseLogging;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.GlobalConstants;
+import com.zto.fire.common.util.ValueUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.spark.SparkEnv;
@@ -36,6 +37,22 @@ public class SchedulerManager extends BaseLogging implements Serializable {
     private static Scheduler scheduler;
     // 初始化标识
     private static AtomicBoolean isInit = new AtomicBoolean(false);
+    // 定时任务黑名单，存放带有@Scheduler标识的方法名
+    private static Map<String, String> blacklistMap = Maps.newHashMap();
+
+    static {
+        String blacklistMethod = GlobalConstants.schedulerBlackList();
+        if (ValueUtils.isNotEmpty(blacklistMethod)) {
+            String[] methods = blacklistMethod.split(",");
+            if (ValueUtils.isNotEmpty(methods)) {
+                for (String method : methods) {
+                    if (ValueUtils.isNotEmpty(method)) {
+                        blacklistMap.put(method.trim(), method);
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * 初始化quartz
@@ -106,6 +123,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
                         for (Method method : methods) {
                             if (method != null) {
                                 method.setAccessible(true);
+                                if (blacklistMap.containsKey(method.getName())) continue;
                                 Scheduled anno = method.getAnnotation(Scheduled.class);
                                 String label = label();
                                 if (anno != null && StringUtils.isNotBlank(anno.scope()) && ("all".equalsIgnoreCase(anno.scope()) || anno.scope().equalsIgnoreCase(label))) {
