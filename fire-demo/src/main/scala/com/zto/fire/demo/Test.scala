@@ -1,19 +1,25 @@
 package com.zto.fire.demo
 
+import java.util.Date
+
 import com.zto.fire.common.anno.Scheduled
+import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
+import com.zto.fire.core.ext.module.KuduContextExt
 
 object Test extends BaseSparkStreaming {
 
-  @Scheduled(fixedInterval = 5000, scope = "all", initialDelay = 0L, concurrent = false)
+  /**
+   * 每天23点为trans_fee与pangu这两张kudu表添加分区
+   */
+  @Scheduled(cron = "0 0 23 * * ?", concurrent = false)
   def setConf: Unit = {
-    println("=============setConf==================")
-  }
-
-  @Scheduled(fixedInterval = 5000, scope = "all", initialDelay = 0L, concurrent = false)
-  def setConf2: Unit = {
-    println("=============setConf2==================")
+    KuduContextExt.addPartition(Seq("trans_fee", "pangu"),
+      // 明天
+      DateFormatUtils.addPartitionDays(new Date(), 1),
+      // 后天
+      DateFormatUtils.addPartitionDays(new Date, 2))
   }
 
 
