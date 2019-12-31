@@ -3,6 +3,7 @@ package com.zto.fire.core.ext.module
 import java.lang.reflect.Field
 import java.sql._
 import java.util
+import java.util.concurrent.atomic.AtomicBoolean
 
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.bean.KuduBaseBean
@@ -764,17 +765,24 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
 }
 
 object KuduContextExt {
-  private val impalaDaemons = GlobalConstants.KuduConf.impalaDaemons.split(",").toSet[String]
-  private val dataSource: util.LinkedList[Connection] = new util.LinkedList[Connection]()
-  if (ValueUtils.isNotEmpty(GlobalConstants.KuduConf.impalaJdbcDriverName)) Class.forName(GlobalConstants.KuduConf.impalaJdbcDriverName)
+  private lazy val impalaDaemons = GlobalConstants.KuduConf.impalaDaemons.split(",").toSet[String]
+  private lazy val dataSource: util.LinkedList[Connection] = new util.LinkedList[Connection]()
+  private lazy val isInit = new AtomicBoolean(false)
 
-  impalaDaemons.foreach(ip => {
-    if (StringUtils.isNotBlank(ip)) {
-      val conn: Connection = DriverManager.getConnection(s"jdbc:hive2://${ip.trim}:21050/;auth=noSasl")
-      println(s"$ip")
-      this.dataSource.push(conn)
+  /**
+   * 初始化impala连接池
+   */
+  private[this] def initPool: Unit = {
+    if (isInit.compareAndSet(false, true)) {
+      if (ValueUtils.isNotEmpty(GlobalConstants.KuduConf.impalaJdbcDriverName)) Class.forName(GlobalConstants.KuduConf.impalaJdbcDriverName)
+
+      impalaDaemons.filter(ValueUtils.isNotEmpty(_)).map(_.trim).foreach(ip => {
+        val conn: Connection = DriverManager.getConnection(s"jdbc:hive2://$ip:21050/;auth=noSasl")
+        println(s"已成功创建impala连接：$ip")
+        this.dataSource.push(conn)
+      })
     }
-  })
+  }
 
   /**
    * 从数据库连接池中获取一个连接
@@ -784,6 +792,7 @@ object KuduContextExt {
    */
   def getConnection: Connection = {
     this.synchronized {
+      this.initPool
       // 如果当前连接池中没有连接，则一直等待，直到获取到连接
       while (this.dataSource.isEmpty)
         try {
