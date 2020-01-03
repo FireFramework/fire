@@ -356,18 +356,16 @@ object PropUtils extends BaseLogging {
     this.mark
     val param =
       s"""
-         |{"className": "$className", "url": "http://$rest", "fireVersion": "${PropUtils.getString("spark.fire.version")}", "zrcKey": "21fa30b7f2082b1b12dfbc7c8c6d70b9"}
+         |{"className": "$className", "url": "http://$rest", "fireVersion": "${this.getString("spark.fire.version")}", "zrcKey": "21fa30b7f2082b1b12dfbc7c8c6d70b9"}
       """.stripMargin
     this.setProperty("spark.rest.url", s"http://$rest")
     var conf = ""
     try {
-      val url = "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack"
-      conf = HttpClientUtils.doPost(url, param)
+      conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.prod.address", "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack"), param)
     } catch {
       case e: Exception => {
-        this.log("调用zrc注册接口失败", null, null, e)
-        val url2 = "http://10.9.38.156:8080/zrcToExternal/zrcConfCallBack"
-        conf = HttpClientUtils.doPost(url2, param)
+        this.log("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", null, null, e)
+        conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.test.address"), param)
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {
