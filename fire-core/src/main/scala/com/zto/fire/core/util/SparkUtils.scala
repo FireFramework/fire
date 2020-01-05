@@ -49,17 +49,19 @@ object SparkUtils {
           val begin = if (anno == null) true else !anno.disuse()
           if (begin) {
             val fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
-            val index = row.fieldIndex(fieldName.trim)
-            val fieldType = field.getType
-            if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
-            else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getAs[IntegerType](index))
-            else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getAs[DoubleType](index))
-            else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getAs[LongType](index))
-            else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getAs[DecimalType](index))
-            else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getAs[FloatType](index))
-            else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getAs[BooleanType](index))
-            else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getAs[ShortType](index))
-            else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getAs[DateType](index))
+            if (this.containsColumn(row, fieldName.trim)) {
+              val index = row.fieldIndex(fieldName.trim)
+              val fieldType = field.getType
+              if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
+              else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getAs[IntegerType](index))
+              else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getAs[DoubleType](index))
+              else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getAs[LongType](index))
+              else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getAs[DecimalType](index))
+              else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getAs[FloatType](index))
+              else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getAs[BooleanType](index))
+              else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getAs[ShortType](index))
+              else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getAs[DateType](index))
+            }
           }
         })
       } catch {

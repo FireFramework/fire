@@ -39,6 +39,11 @@ public class Student extends HBaseBaseBean<Student> {
         return this;
     }
 
+    public Student(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
     public Student(Long id, String name, Integer age) {
         this.id = id;
         this.name = name;
