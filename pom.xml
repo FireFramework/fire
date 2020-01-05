@@ -25,6 +25,7 @@
         <module>fire-common</module>
         <module>fire-core</module>
         <module>fire-demo</module>
+        <module>fire-flink</module>
     </modules>
 
     <pluginRepositories>
