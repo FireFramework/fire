@@ -11,19 +11,10 @@ import org.apache.hadoop.ipc.Server;
  *
  * @author ChengLong 2019-9-4 13:39:36
  */
-public class JavaTest implements MyBizable {
-    @Override
-    public String doSomething(String str) {
-        return "服务端返回数据：" + str;
-    }
+public class JavaTest {
 
     public static void main(String[] args) throws Exception {
-        Server server = new RPC.Builder(new Configuration())
-                .setProtocol(MyBizable.class)
-                .setInstance(new JavaTest())
-                .setBindAddress("10.1.54.130")
-                .setPort(8077).build();
-        server.start();
+
     }
 
 }
