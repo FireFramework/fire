@@ -18,7 +18,7 @@ class BaseStructuredStreaming extends BaseSpark {
     * Spark配置信息
     * @param args main方法参数
     */
-  override def init(conf: SparkConf = null, args: Array[String] = null): Unit = {
+  override def init(conf: Any = null, args: Array[String] = null): Unit = {
     super.init(conf, args)
     // 添加时间监听器
     this.spark.streams.addListener(new BaseStreamingQueryListener)
