@@ -1,5 +1,7 @@
 package com.zto.fire.core
 
+import com.zto.fire.common.util.PropUtils
+
 /**
  * Flink引擎通用父接口
  *
@@ -12,6 +14,9 @@ trait BaseFlink extends BaseFire {
    * 注：该方法会同时在driver端与executor端执行
    */
   override private[fire] def boot: Unit = {
+    PropUtils.compatible("flink")
+    PropUtils.load("flink")
+    PropUtils.load(this.appName)
     this.splash
   }
 

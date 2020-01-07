@@ -13,9 +13,9 @@ import org.apache.flink.table.api.scala.StreamTableEnvironment
  * @author ChengLong 2020年1月7日 10:50:19
  */
 trait BaseFlinkStreaming extends BaseFlink {
-  override val jobType: JobType = JobType.FLINK_STREAMING
   var env, ssc: StreamExecutionEnvironment = _
   var tableEnv, flink: StreamTableEnvironment = _
+  override val jobType: JobType = JobType.FLINK_STREAMING
 
   override def init(conf: Any = null, args: Array[String] = null): Unit = {
     if (conf != null) conf.asInstanceOf[Configuration].setBoolean(ConfigConstants.LOCAL_START_WEBSERVER, true)

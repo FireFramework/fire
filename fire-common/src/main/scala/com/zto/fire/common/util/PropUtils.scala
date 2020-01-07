@@ -20,8 +20,22 @@ object PropUtils extends BaseLogging {
   private val props = new Properties()
   // 用于判断是否merge过
   private val isMerge = new AtomicBoolean(false)
+  // key的前缀
+  private var keyPrefix = "spark"
+  // 是否兼容key的前缀配置
+  private var compatible = false
   // 加载默认配置文件
   this.load("default.properties")
+
+  /**
+   * 用于设置兼容的key的前缀
+   */
+  private[fire] def compatible(keyPrefix: String): Unit = {
+    if (StringUtils.isNotBlank(keyPrefix.trim) && !keyPrefix.equals("spark")) {
+      this.keyPrefix = keyPrefix.trim
+      this.compatible = true
+    }
+  }
 
   /**
     * 加载指定配置文件，resources根目录下优先级最高，其次是按字典顺序的目录
@@ -68,7 +82,13 @@ object PropUtils extends BaseLogging {
     */
   def getProperty(key: String): String = {
     if (!this.isMerge.get) this.mergeSparkConf
-    this.props.getProperty(key)
+    if (this.compatible) {
+      // 兼容配置key的前缀变化，适配flink.为前缀的配置项
+      val value = this.props.getProperty(key.replaceFirst("spark", this.keyPrefix))
+      if (StringUtils.isNotBlank(value)) value else this.props.getProperty(key)
+    } else {
+      this.props.getProperty(key)
+    }
   }
 
   /**
