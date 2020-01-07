@@ -12,21 +12,14 @@ import org.apache.spark.sql.api.java.UDF1
  */
 object ScalaTest extends BaseSparkCore {
 
-  val anonfun1 = new Function1[Int, Int] {
-    def apply(x: Int): Int = x + 1
-  }
-
-  def test(str: String): Int = 1
-
   override def process: Unit = {
-    /*val func = UDF1[_, _].asInstanceOf[UDF1[Any, Any]].call(_: Any)
-    this.spark.udf.register("test", func)*/
-
+    val rdd = this.spark.parallelize(1 to 10)
+    println("count=" + rdd.count)
   }
 
-    def main(args: Array[String]): Unit = {
-      this.init()
-      this.stop
-    }
-
+  def main(args: Array[String]): Unit = {
+    this.init()
+    this.stop
   }
+
+}

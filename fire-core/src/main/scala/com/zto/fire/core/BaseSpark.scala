@@ -57,20 +57,6 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
   }
 
   /**
-   * 生命周期方法：初始化spark运行信息
-   *
-   * @param conf
-   *             Spark配置信息
-   * @param args main方法参数
-   */
-  override def init(conf: Any = null, args: Array[String] = null): Unit = {
-    this.before(args)
-    this.wrapLogInfo("<-- 完成用户资源初始化 -->")
-    this.args = args
-    this.createContext(if (conf != null) conf.asInstanceOf[SparkConf] else null)
-  }
-
-  /**
    * 生命周期方法：用于关闭SparkContext
    */
   override final def stop: Unit = {
@@ -123,14 +109,14 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
   /**
    * 构建一系列context对象
    */
-  private[this] final def createContext(conf: SparkConf): Unit = {
+  override private[fire] final def createContext(conf: Any): Unit = {
     this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
     this.systemRestful = new SystemRestful(this)
 
     // 注册到zrc平台，并覆盖配置信息
     if (this.jobType != JobType.CORE) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     PropUtils.print()
-    val tmpConf = if (conf == null) this.buildConf(conf) else conf
+    val tmpConf = if (conf == null) this.buildConf(null) else conf.asInstanceOf[SparkConf]
     tmpConf.setAll(PropUtils.toMap)
     tmpConf.set("spark.driver.class.simple.name", this.driverClass)
     tmpConf.set("hive.metastore.uris", GlobalConstants.HiveConf.getMetastoreUrl)

@@ -68,7 +68,20 @@ trait BaseFire {
    * @param conf 配置信息
    * @param args main方法参数
    */
-  def init(conf: Any = null, args: Array[String] = null): Unit = {}
+  def init(conf: Any = null, args: Array[String] = null): Unit = {
+    this.before(args)
+    println(s" ${GlobalConstants.PS1.YELLOW}< ----------------------------------- 完成用户资源初始化 ---------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
+    this.args = args
+    this.createContext(conf)
+  }
+
+  /**
+   * 创建计算引擎运行时环境
+   *
+   * @param conf
+   * 配置信息
+   */
+  private[fire] def createContext(conf: Any): Unit
 
   /**
    * 生命周期方法：具体的用户开发的业务逻辑代码

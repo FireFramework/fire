@@ -11,7 +11,7 @@ import org.apache.flink.table.api.scala._
  * @since 0.4.1
  */
 class DataStreamExt[T](dataStream: DataStream[T]) {
-  lazy val tableEnv = FlinkSingletonFactory.getTableEnv
+  lazy val tableEnv = FlinkSingletonFactory.getStreamTableEnv
 
   def createOrReplaceTempView(tableName: String = ""): Table = {
     val table = this.dataStream.toTable(this.tableEnv)
