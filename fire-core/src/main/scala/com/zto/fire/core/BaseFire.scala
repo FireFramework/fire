@@ -19,6 +19,7 @@ trait BaseFire {
   val startTime = DateFormatUtils.currentTime
   // jdbc包装类
   val jdbc = JdbcOper
+  // web ui地址
   var webUI: String = _
   val value = ValueUtils
   // main方法参数
