@@ -1,5 +1,6 @@
 package com.zto.fire.flink.util
 
+import com.zto.fire.common.util.ValueUtils
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.table.api.TableEnvironment
@@ -10,6 +11,7 @@ import org.apache.flink.table.api.scala.StreamTableEnvironment
   * Created by ChengLong on 2020年1月6日 16:50:56.
   */
 object FlinkSingletonFactory {
+  @transient private[this] var appName: String = _
   @transient private[this] var streamEnv: StreamExecutionEnvironment = _
   @transient private[this] var streamTableEnv: StreamTableEnvironment = _
   @transient private[this] var env: ExecutionEnvironment = _
@@ -23,6 +25,14 @@ object FlinkSingletonFactory {
     this
   }
 
+  /**
+   * 设置TableEnv实例
+   */
+  private[fire] def setAppName(appName: String): this.type = {
+    if (ValueUtils.isNotEmpty(appName) && ValueUtils.isEmpty(this.appName)) this.appName = appName
+    this
+  }
+
 
   /**
     * 设置TableEnv实例
@@ -33,7 +43,7 @@ object FlinkSingletonFactory {
   }
 
   /**
-   * 设置TableEnv实例
+   * 设置ExecutionEnvironment实例
    */
   private[fire] def setEnv(env: ExecutionEnvironment): this.type = {
     if (env != null && this.env == null) this.env = env
@@ -50,7 +60,15 @@ object FlinkSingletonFactory {
   }
 
   /**
-   * 设置TableEnv实例
+   * 获取appName
+   *
+   * @return
+   * TableEnv实例
+   */
+  private[fire] def getAppName: String = this.appName
+
+  /**
+   * 获取StreamTableEnv实例
    *
    * @return
    * TableEnv实例
@@ -58,7 +76,7 @@ object FlinkSingletonFactory {
   private[fire] def getStreamTableEnv: StreamTableEnvironment = this.streamTableEnv
 
   /**
-   * 设置TableEnv实例
+   * 获取TableEnv实例
    *
    * @return
    * TableEnv实例

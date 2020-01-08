@@ -2,6 +2,7 @@ package com.zto.fire.flink
 
 import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.BaseFire
+import com.zto.fire.flink.util.FlinkSingletonFactory
 import org.apache.flink.configuration.Configuration
 
 /**
@@ -20,6 +21,7 @@ trait BaseFlink extends BaseFire {
     PropUtils.compatible("flink")
     PropUtils.load("flink")
     PropUtils.load(this.appName)
+    FlinkSingletonFactory.setAppName(this.appName)
     this.splash
   }
 

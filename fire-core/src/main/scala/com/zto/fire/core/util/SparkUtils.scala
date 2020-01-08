@@ -299,7 +299,7 @@ object SparkUtils {
 
     val finalKafkaBrokers = if (StringUtils.isBlank(kafkaBrokers)) GlobalConstants.KafkaConf.kafkaBrokers(keyNum) else kafkaBrokers
     val finalOffset = if (StringUtils.isBlank(offset)) GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum) else offset
-    val finalAutoCommit = if (autoCommit == null) GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum) else autoCommit
+    val finalAutoCommit = if (GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum) != null) GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum) else autoCommit
 
     val consumerMap = collection.mutable.Map[String, Object](
       "bootstrap.servers" -> finalKafkaBrokers,
