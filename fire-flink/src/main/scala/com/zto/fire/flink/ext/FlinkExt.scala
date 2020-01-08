@@ -1,6 +1,6 @@
-package com.zto.fire.core.ext
+package com.zto.fire.flink.ext
 
-import com.zto.fire.flink.ext.{DataStreamExt, StreamExecutionEnvironmentExt, StreamTableEnvironmentExt, TableExt}
+import com.zto.fire.flink.ext.core.{DataStreamExt, StreamExecutionEnvironmentExt, StreamTableEnvironmentExt, TableExt}
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala.StreamTableEnvironment

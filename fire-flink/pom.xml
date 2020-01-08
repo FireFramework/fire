@@ -5,14 +5,15 @@
     <artifactId>fire-flink</artifactId>
     <version>0.4.1-SNAPSHOT</version>
     <inceptionYear>2010</inceptionYear>
+    <packaging>jar</packaging>
 
     <properties>
         <fire.version>0.4.1-SNAPSHOT</fire.version>
         <flink.version>1.9.1</flink.version>
         <scala.version>2.11.12</scala.version>
         <scala.binary.version>2.11</scala.binary.version>
-        <kafka.version>0.11.0.2</kafka.version>
-        <maven.scope>compile</maven.scope>
+        <kafka.version>0.10.2.0</kafka.version>
+        <maven.scope>provided</maven.scope>
     </properties>
 
     <parent>
@@ -28,7 +29,13 @@
             <artifactId>fire-common</artifactId>
             <version>${fire.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>fire-core</artifactId>
+            <version>${fire.version}</version>
+        </dependency>
 
+        <!-- flink计算引擎相关依赖 -->
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-java</artifactId>

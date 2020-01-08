@@ -1,6 +1,8 @@
 package com.zto.fire.flink.util
 
+import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.table.api.TableEnvironment
 import org.apache.flink.table.api.scala.StreamTableEnvironment
 
 /**
@@ -10,6 +12,8 @@ import org.apache.flink.table.api.scala.StreamTableEnvironment
 object FlinkSingletonFactory {
   @transient private[this] var streamEnv: StreamExecutionEnvironment = _
   @transient private[this] var streamTableEnv: StreamTableEnvironment = _
+  @transient private[this] var env: ExecutionEnvironment = _
+  @transient private[this] var tableEnv: TableEnvironment = _
 
   /**
    * 设置TableEnv实例
@@ -30,9 +34,34 @@ object FlinkSingletonFactory {
 
   /**
    * 设置TableEnv实例
+   */
+  private[fire] def setEnv(env: ExecutionEnvironment): this.type = {
+    if (env != null && this.env == null) this.env = env
+    this
+  }
+
+
+  /**
+    * 设置TableEnv实例
+    */
+  private[fire] def setTableEnv(tableEnv: TableEnvironment): this.type = {
+    if (tableEnv != null && this.tableEnv == null) this.tableEnv = tableEnv
+    this
+  }
+
+  /**
+   * 设置TableEnv实例
    *
    * @return
    * TableEnv实例
    */
   private[fire] def getStreamTableEnv: StreamTableEnvironment = this.streamTableEnv
+
+  /**
+   * 设置TableEnv实例
+   *
+   * @return
+   * TableEnv实例
+   */
+  private[fire] def getTableEnv: TableEnvironment = this.tableEnv
 }

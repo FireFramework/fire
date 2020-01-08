@@ -1,6 +1,7 @@
-package com.zto.fire.core
+package com.zto.fire.flink
 
 import com.zto.fire.common.util.PropUtils
+import com.zto.fire.core.BaseFire
 import org.apache.flink.configuration.Configuration
 
 /**

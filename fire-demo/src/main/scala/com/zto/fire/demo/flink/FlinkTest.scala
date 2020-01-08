@@ -1,10 +1,9 @@
 package com.zto.fire.demo.flink
 
-import com.zto.fire.core.BaseFlinkStreaming
-import com.zto.fire.core.ext.FlinkExt._
+import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.ext.FlinkExt._
 
 object FlinkTest extends BaseFlinkStreaming {
-
 
   /**
    * 生命周期方法：用于在SparkSession初始化之前完成用户需要的动作

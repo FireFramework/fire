@@ -1,4 +1,4 @@
-package com.zto.fire.flink.ext
+package com.zto.fire.flink.ext.core
 
 import java.util.Properties
 

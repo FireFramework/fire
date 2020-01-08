@@ -21,11 +21,6 @@
             <artifactId>fire-common</artifactId>
             <version>${fire.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-flink</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
     </dependencies>
 
     <build>

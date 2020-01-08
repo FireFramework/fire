@@ -1,4 +1,4 @@
-package com.zto.fire.core
+package com.zto.fire.flink
 
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.SystemInfoUtils
@@ -14,8 +14,8 @@ import org.apache.flink.table.api.scala.StreamTableEnvironment
  * @author ChengLong 2020年1月7日 10:50:19
  */
 trait BaseFlinkStreaming extends BaseFlink {
-  var env, ssc: StreamExecutionEnvironment = _
-  var tableEnv, flink: StreamTableEnvironment = _
+  protected var env, ssc: StreamExecutionEnvironment = _
+  protected var tableEnv, flink: StreamTableEnvironment = _
   override val jobType: JobType = JobType.FLINK_STREAMING
 
 
@@ -62,7 +62,6 @@ trait BaseFlinkStreaming extends BaseFlink {
     } else {
       this.env = StreamExecutionEnvironment.getExecutionEnvironment
     }
-
     this.ssc = this.env
     val bsSettings = EnvironmentSettings.newInstance.useBlinkPlanner.inStreamingMode.build
     this.tableEnv = StreamTableEnvironment.create(this.env, bsSettings)

@@ -1,4 +1,4 @@
-package com.zto.fire.flink.ext
+package com.zto.fire.flink.ext.core
 
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import org.apache.flink.streaming.api.scala.DataStream
