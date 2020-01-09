@@ -67,7 +67,7 @@ trait BaseFlinkBatch extends BaseFlink {
     } else {
       this.env = ExecutionEnvironment.getExecutionEnvironment
     }
-    this.env.getConfig.setGlobalJobParameters(new ParameterTool(finalConf))
+    this.env.getConfig.setGlobalJobParameters(ParameterTool.fromMap(finalConf.toMap))
     this.sc = this.env
     this.tableEnv = BatchTableEnvironment.create(this.env)
     this.flink = this.tableEnv
