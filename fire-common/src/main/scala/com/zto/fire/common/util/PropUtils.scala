@@ -356,6 +356,22 @@ object PropUtils extends BaseLogging {
   }
 
   /**
+    * 将配置信息转为Map，并设置到Flink Configuration中
+    *
+    * @return
+    * confMap
+    */
+  def toFlinkConfMap: Map[String, String] = {
+    val confMap = scala.collection.mutable.Map[String, String]()
+    JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
+      if (key != null) {
+        confMap += (key.toString -> this.props.getProperty(key.toString))
+      }
+    })
+    confMap
+  }
+
+  /**
     * 合并SparkConf中的配置信息
     */
   def mergeSparkConf: Unit = {

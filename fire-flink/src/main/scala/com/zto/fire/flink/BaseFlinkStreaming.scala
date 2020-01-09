@@ -1,8 +1,9 @@
 package com.zto.fire.flink
 
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.SystemInfoUtils
+import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
 import com.zto.fire.flink.util.FlinkSingletonFactory
+import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.table.api.EnvironmentSettings
@@ -31,6 +32,7 @@ trait BaseFlinkStreaming extends BaseFlink {
   override def buildConf(conf: Configuration): Configuration = {
     val finalConf = if (conf != null) conf else {
       val tmpConf = new Configuration()
+      PropUtils.toFlinkConfMap.foreach(t => tmpConf.setString(t._1, t._2))
       tmpConf
     }
     finalConf.setBoolean(ConfigConstants.LOCAL_START_WEBSERVER, true)
@@ -62,6 +64,7 @@ trait BaseFlinkStreaming extends BaseFlink {
     } else {
       this.env = StreamExecutionEnvironment.getExecutionEnvironment
     }
+    this.env.getConfig.setGlobalJobParameters(new ParameterTool(finalConf))
     this.ssc = this.env
     val bsSettings = EnvironmentSettings.newInstance.useBlinkPlanner.inStreamingMode.build
     this.tableEnv = StreamTableEnvironment.create(this.env, bsSettings)

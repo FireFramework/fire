@@ -1,8 +1,9 @@
 package com.zto.fire.flink
 
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.SystemInfoUtils
+import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
 import com.zto.fire.flink.util.FlinkSingletonFactory
+import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
 import org.apache.flink.table.api.scala.BatchTableEnvironment
@@ -28,6 +29,7 @@ trait BaseFlinkBatch extends BaseFlink {
   override def buildConf(conf: Configuration): Configuration = {
     val finalConf = if (conf != null) conf else {
       val tmpConf = new Configuration()
+      PropUtils.toFlinkConfMap.foreach(t => tmpConf.setString(t._1, t._2))
       tmpConf
     }
     finalConf.setBoolean(ConfigConstants.LOCAL_START_WEBSERVER, true)
@@ -65,6 +67,7 @@ trait BaseFlinkBatch extends BaseFlink {
     } else {
       this.env = ExecutionEnvironment.getExecutionEnvironment
     }
+    this.env.getConfig.setGlobalJobParameters(new ParameterTool(finalConf))
     this.sc = this.env
     this.tableEnv = BatchTableEnvironment.create(this.env)
     this.flink = this.tableEnv
