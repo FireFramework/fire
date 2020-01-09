@@ -1,4 +1,4 @@
-package com.zto.fire.flink.ext.core
+package com.zto.fire.flink.ext.core.stream
 
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala.StreamTableEnvironment
@@ -8,7 +8,7 @@ import org.apache.flink.table.api.scala.StreamTableEnvironment
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class StreamTableEnvironmentExt(tableEnv: StreamTableEnvironment) {
+class StreamTableEnvExt(tableEnv: StreamTableEnvironment) {
 
   /**
    * 执行sql query操作

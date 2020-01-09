@@ -1,9 +1,11 @@
 package com.zto.fire.flink.ext
 
-import com.zto.fire.flink.ext.core.{DataStreamExt, StreamExecutionEnvironmentExt, StreamTableEnvironmentExt, TableExt}
+import com.zto.fire.flink.ext.core.batch.{BatchExecutionEnvExt, BatchTableEnvExt}
+import com.zto.fire.flink.ext.core.stream.{DataStreamExt, StreamExecutionEnvExt, StreamTableEnvExt, StreamTableExt}
+import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.api.scala.StreamTableEnvironment
+import org.apache.flink.table.api.scala.{BatchTableEnvironment, StreamTableEnvironment}
 
 /**
  * Flink扩展工具类，利用隐式转换对已有的类追加自定义函数
@@ -17,7 +19,7 @@ object FlinkExt {
    * @param env
    * StreamExecutionEnvironment对象
    */
-  implicit class StreamExecutionEnvironmentExtBridge(env: StreamExecutionEnvironment) extends StreamExecutionEnvironmentExt(env) {
+  implicit class StreamExecutionEnvExtBridge(env: StreamExecutionEnvironment) extends StreamExecutionEnvExt(env) {
 
   }
 
@@ -27,9 +29,10 @@ object FlinkExt {
    * @param tableEnv
    * StreamTableEnvironment对象
    */
-  implicit class StreamTableEnvironmentExtBridge(tableEnv: StreamTableEnvironment) extends StreamTableEnvironmentExt(tableEnv) {
+  implicit class StreamTableEnvExtBridge(tableEnv: StreamTableEnvironment) extends StreamTableEnvExt(tableEnv) {
 
   }
+
 
   /**
    * DataStream扩展
@@ -47,8 +50,28 @@ object FlinkExt {
    * @param table
    * Table对象
    */
-  implicit class TableExtBridge(table: Table) extends TableExt(table) {
+  implicit class StreamTableExtBridge(table: Table) extends StreamTableExt(table) {
 
   }
 
+  /**
+   * BatchTableEnvironment扩展
+   *
+   * @param tableEnv
+   * BatchTableEnvironment对象
+   */
+  implicit class BatchTableEnvExtBridge(tableEnv: BatchTableEnvironment) extends BatchTableEnvExt(tableEnv) {
+
+  }
+
+
+  /**
+   * ExecutionEnvironment扩展
+   *
+   * @param env
+   * ExecutionEnvironment对象
+   */
+  implicit class BatchExecutionEnvExtBridge(env: ExecutionEnvironment) extends BatchExecutionEnvExt(env) {
+
+  }
 }

@@ -5,7 +5,7 @@ import com.zto.fire.common.util.SystemInfoUtils
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
-import org.apache.flink.table.api.{EnvironmentSettings, TableEnvironment}
+import org.apache.flink.table.api.scala.BatchTableEnvironment
 
 /**
  * flink batch通用父接口
@@ -14,7 +14,7 @@ import org.apache.flink.table.api.{EnvironmentSettings, TableEnvironment}
 trait BaseFlinkBatch extends BaseFlink {
   override val jobType: JobType = JobType.FLINK_BATCH
   protected var env, sc: ExecutionEnvironment = _
-  protected var tableEnv, flink: TableEnvironment = _
+  protected var tableEnv, flink: BatchTableEnvironment = _
 
   /**
    * 构建或合并Configuration
@@ -46,6 +46,7 @@ trait BaseFlinkBatch extends BaseFlink {
    * main方法参数列表
    */
   override def init(conf: Any = null, args: Array[String] = null): Unit = {
+    super.init(conf, args)
     if (conf != null) conf.asInstanceOf[Configuration].setBoolean(ConfigConstants.LOCAL_START_WEBSERVER, true)
 
     this.process
@@ -65,8 +66,7 @@ trait BaseFlinkBatch extends BaseFlink {
       this.env = ExecutionEnvironment.getExecutionEnvironment
     }
     this.sc = this.env
-    val bsSettings = EnvironmentSettings.newInstance.useBlinkPlanner.inStreamingMode.build
-    // this.tableEnv = TableEnvironment.create(bsSettings)
+    this.tableEnv = BatchTableEnvironment.create(this.env)
     this.flink = this.tableEnv
 
     FlinkSingletonFactory.setEnv(this.env).setTableEnv(this.tableEnv)
