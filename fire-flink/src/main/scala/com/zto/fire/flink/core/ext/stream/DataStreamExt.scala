@@ -1,14 +1,12 @@
-package com.zto.fire.flink.ext.core.stream
+package com.zto.fire.flink.core.ext.stream
 
-import com.zto.fire.flink.util.FlinkSingletonFactory
-import org.apache.flink.api.common.accumulators.{Accumulator, IntCounter, SimpleAccumulator}
+import com.zto.fire.flink.core.util.FlinkSingletonFactory
+import org.apache.flink.api.common.accumulators.SimpleAccumulator
 import org.apache.flink.api.common.functions.RichMapFunction
-import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
-import org.apache.flink.streaming.api.scala.DataStream
+import org.apache.flink.streaming.api.scala.{DataStream, _}
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala._
-import org.apache.flink.streaming.api.scala._
 
 /**
  * 用于对Flink DataStream的API库扩展
@@ -50,4 +48,16 @@ class DataStreamExt[T](dataStream: DataStream[T]) {
       override def map(value: T): String = value.toString
     })
   }
+
+  /*def richMap(fun: T => T): DataStream[T] = {
+    if (fun == null) {
+      throw new NullPointerException("Map function must not be null.")
+    }
+    // val cleanFun = clean(fun)
+    val mapper = new RichMapFunction[T, T] {
+      def map(in: T): T = in
+    }
+    this.dataStream.map(mapper)
+  }*/
+
 }

@@ -1,4 +1,4 @@
-package com.zto.fire.flink.ext.core.batch
+package com.zto.fire.flink.core.ext.batch
 
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala.BatchTableEnvironment

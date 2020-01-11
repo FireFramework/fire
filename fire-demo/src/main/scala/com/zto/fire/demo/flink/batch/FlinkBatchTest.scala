@@ -1,12 +1,12 @@
 package com.zto.fire.demo.flink.batch
 
-import com.zto.fire.flink.BaseFlinkBatch
-import com.zto.fire.flink.ext.FlinkExt._
+import com.zto.fire.flink.core.BaseFlinkBatch
 import org.apache.flink.api.common.accumulators.IntCounter
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.core.fs.FileSystem
+import com.zto.fire.flink.core.ext.FlinkExt._
 
 object FlinkBatchTest extends BaseFlinkBatch {
 

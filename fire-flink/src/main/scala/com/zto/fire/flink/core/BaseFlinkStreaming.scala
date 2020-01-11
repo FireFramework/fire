@@ -1,8 +1,8 @@
-package com.zto.fire.flink
+package com.zto.fire.flink.core
 
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
-import com.zto.fire.flink.util.FlinkSingletonFactory
+import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment

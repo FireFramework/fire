@@ -1,8 +1,8 @@
-package com.zto.fire.flink
+package com.zto.fire.flink.core
 
 import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.BaseFire
-import com.zto.fire.flink.util.FlinkSingletonFactory
+import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.flink.configuration.Configuration
 
 /**

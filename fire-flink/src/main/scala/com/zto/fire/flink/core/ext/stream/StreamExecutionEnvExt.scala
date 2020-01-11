@@ -1,10 +1,10 @@
-package com.zto.fire.flink.ext.core.stream
+package com.zto.fire.flink.core.ext.stream
 
 import java.util.Properties
 
 import com.zto.fire.common.util.{GlobalConstants, ValueUtils}
 import com.zto.fire.core.util.SparkUtils
-import com.zto.fire.flink.util.FlinkSingletonFactory
+import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.common.typeinfo.TypeInformation

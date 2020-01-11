@@ -212,14 +212,14 @@ object ValueUtils {
   }
 
   /**
-   * 校验多个参数都不为空
+   * 校验多个参数是否不存在为空的
    *
    * @param params
    * 多个参数
    * @return
    * true：全都不为空 false：存在为空的
    */
-  def isExistsNotEmpty(params: Any*): Boolean = !isExistsEmpty(params)
+  def isAllNotEmpty(params: Any*): Boolean = !isExistsEmpty(params)
 
   /**
    * 校验多个参数是否存在为空
@@ -240,14 +240,14 @@ object ValueUtils {
   }
 
   /**
-   * 校验多个参数都不为空
+   * 校验多个参数是否不存在为空的
    *
    * @param params
    * 多个参数
    * @return
    * true：全都不为空 false：存在为空的
    */
-  def isExistsNotEmpty(params: Array[Any]): Boolean = !isExistsEmpty(params)
+  def isAllNotEmpty(params: Array[Any]): Boolean = !isExistsEmpty(params)
 
   /**
    * 参数非空约束

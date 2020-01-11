@@ -1,4 +1,4 @@
-package com.zto.fire.flink.util
+package com.zto.fire.flink.core.util
 
 import com.zto.fire.common.util.ValueUtils
 import org.apache.flink.api.scala.ExecutionEnvironment

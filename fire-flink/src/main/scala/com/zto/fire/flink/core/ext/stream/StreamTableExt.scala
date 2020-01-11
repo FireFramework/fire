@@ -1,4 +1,4 @@
-package com.zto.fire.flink.ext.core.stream
+package com.zto.fire.flink.core.ext.stream
 
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala._

@@ -169,7 +169,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * 多个表名
     */
   def dropHiveTable(tableNames: String*) = {
-    if (ValueUtils.isExistsNotEmpty(tableNames)) {
+    if (ValueUtils.isAllNotEmpty(tableNames)) {
       tableNames.foreach(tableName => {
         sqlContext.sql(s"DROP TABLE IF EXISTS $tableName")
       })
@@ -185,7 +185,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * 分区
     */
   def addPartitions(tableName: String, partitions: String*): Unit = {
-    if (StringUtils.isNotBlank(tableName) && ValueUtils.isExistsNotEmpty(partitions)) {
+    if (StringUtils.isNotBlank(tableName) && ValueUtils.isAllNotEmpty(partitions)) {
       partitions.foreach(ds => {
         this.addPartition(tableName, ds, GlobalConstants.SparkConf.partitionName)
       })
@@ -231,7 +231,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * 分区
     */
   def dropPartitions(tableName: String, partitions: String*): Unit = {
-    if (StringUtils.isNotBlank(tableName) && ValueUtils.isExistsNotEmpty(partitions)) {
+    if (StringUtils.isNotBlank(tableName) && ValueUtils.isAllNotEmpty(partitions)) {
       partitions.foreach(ds => {
         this.dropPartition(tableName, ds, GlobalConstants.SparkConf.partitionName)
       })

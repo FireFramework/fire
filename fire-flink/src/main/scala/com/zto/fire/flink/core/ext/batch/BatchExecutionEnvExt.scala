@@ -1,4 +1,4 @@
-package com.zto.fire.flink.ext.core.batch
+package com.zto.fire.flink.core.ext.batch
 
 import com.zto.fire.common.util.ValueUtils
 import org.apache.flink.api.common.typeinfo.TypeInformation

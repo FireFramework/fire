@@ -1,12 +1,12 @@
 package com.zto.fire.demo.flink.stream
 
-import com.zto.fire.flink.BaseFlinkStreaming
-import com.zto.fire.flink.ext.FlinkExt._
+import com.zto.fire.flink.core.BaseFlinkStreaming
 import org.apache.flink.api.common.accumulators.{IntCounter, LongCounter}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.windowing.time.Time
+import com.zto.fire.flink.core.ext.FlinkExt._
 
 object FlinkTest extends BaseFlinkStreaming {
 
@@ -24,7 +24,7 @@ object FlinkTest extends BaseFlinkStreaming {
         count.add(value.toInt)
         value.toInt
       }
-    }).print
+    })
 
     val count = this.ssc.execute("counter test").getAccumulatorResult[Int]("myCounter")
     println("累加结果：" + count)

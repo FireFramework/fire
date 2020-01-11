@@ -1,7 +1,7 @@
-package com.zto.fire.flink.ext
+package com.zto.fire.flink.core.ext
 
-import com.zto.fire.flink.ext.core.batch.{BatchExecutionEnvExt, BatchTableEnvExt}
-import com.zto.fire.flink.ext.core.stream.{DataStreamExt, StreamExecutionEnvExt, StreamTableEnvExt, StreamTableExt}
+import com.zto.fire.flink.core.ext.batch.{BatchExecutionEnvExt, BatchTableEnvExt}
+import com.zto.fire.flink.core.ext.stream.{DataStreamExt, StreamExecutionEnvExt, StreamTableEnvExt, StreamTableExt}
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.table.api.Table
