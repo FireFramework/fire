@@ -363,7 +363,7 @@ object PropUtils extends BaseLogging {
     */
   def toFlinkConfMap: Map[String, String] = {
     val confMap = scala.collection.mutable.Map[String, String]()
-    JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
+    JavaConversions.asScalaSet(this.props.keySet()).filter(t => t != null && t.toString.startsWith("flink")).foreach(key => {
       if (key != null) {
         confMap += (key.toString -> this.props.getProperty(key.toString))
       }
