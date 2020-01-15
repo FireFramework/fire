@@ -6,11 +6,15 @@ import com.zto.fire.common.util.PropUtils
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
-import com.zto.fire.flink.core.sink.HBaseOperSink
+import com.zto.fire.flink.core.sink.{HBaseOperSink, HBaseOperSinkBatch}
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
+import org.apache.flink.streaming.api.scala.function.AllWindowFunction
+import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
+import org.apache.flink.util.Collector
 
 import scala.collection.JavaConversions
+import scala.collection.mutable.ListBuffer
 
 /**
  * 自定义HBaseSink
@@ -23,7 +27,7 @@ object HBaseSinkTest extends BaseFlinkStreaming {
   override def process: Unit = {
     PropUtils.toFlinkConfMap.foreach(t => println(t._1 + " -> " + t._2))
     val dataStream = this.ssc.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
-    dataStream.hbaseOperPut("fire_test_1")
+    dataStream.hbaseOperPut("fire_test_1", batchSize = 1)
     this.ssc.execute("hbase sink test")
   }
 
