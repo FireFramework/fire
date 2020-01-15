@@ -9,7 +9,7 @@ import org.apache.spark.SparkConf
   * Created by ChengLong on 2018-03-28.
   */
 class BaseSparkCore extends BaseSpark {
-  override val jobType = JobType.CORE
+  override val jobType = JobType.SPARK_CORE
 
   /**
     * 程序初始化方法，用于初始化必要的值

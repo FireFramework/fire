@@ -70,8 +70,9 @@ trait BaseFire {
    */
   def init(conf: Any = null, args: Array[String] = null): Unit = {
     this.before(args)
-    println(s" ${GlobalConstants.PS1.YELLOW}< ----------------------------------- 完成用户资源初始化 ---------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
+    println(s" ${GlobalConstants.PS1.YELLOW}< ----------------------------------- 完成用户资源初始化，任务类型：${this.jobType.getJobType} ---------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
     this.args = args
+    GlobalConstants.jobType = this.jobType
     this.createContext(conf)
   }
 

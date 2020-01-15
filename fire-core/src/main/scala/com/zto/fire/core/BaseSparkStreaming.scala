@@ -23,7 +23,7 @@ import scala.collection.JavaConversions
 trait BaseSparkStreaming extends BaseSpark {
   var checkPointDir: String = _
   var externalConf: RestartParams = _
-  override val jobType = JobType.STREAMING
+  override val jobType = JobType.SPARK_STREAMING
 
   /**
     * 程序初始化方法，用于初始化必要的值

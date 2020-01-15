@@ -114,7 +114,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     this.systemRestful = new SystemRestful(this)
 
     // 注册到zrc平台，并覆盖配置信息
-    if (this.jobType != JobType.CORE) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
+    if (this.jobType != JobType.SPARK_CORE) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     PropUtils.print()
     val tmpConf = if (conf == null) this.buildConf(null) else conf.asInstanceOf[SparkConf]
     tmpConf.setAll(PropUtils.toMap)
@@ -149,7 +149,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     // executor端与自定义累加器一同完成定时任务注册
     AccumulatorManager.registerTasks(this, taskSchedule)
     // 向executor端注册自定义累加器
-    if (this.jobType != JobType.CORE) this.acc.registerAccumulators(this.sc)
+    if (this.jobType != JobType.SPARK_CORE) this.acc.registerAccumulators(this.sc)
 
     this.wrapLogInfo("<-- 完成Spark运行时信息初始化 -->")
   }

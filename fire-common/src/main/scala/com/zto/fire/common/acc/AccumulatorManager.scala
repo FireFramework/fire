@@ -67,14 +67,16 @@ private[fire] object AccumulatorManager {
    * 累加值
    */
   def addCounter(value: Long): Unit = {
-    if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
-      val countAccumulator = SparkEnv.get.conf.get(this.counterLabel, "")
-      if (StringUtils.isNotBlank(countAccumulator)) {
-        val counter: LongAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(countAccumulator)))
-        counter.add(value)
+    if (GlobalConstants.jobType.isSpark) {
+      if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
+        val countAccumulator = SparkEnv.get.conf.get(this.counterLabel, "")
+        if (StringUtils.isNotBlank(countAccumulator)) {
+          val counter: LongAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(countAccumulator)))
+          counter.add(value)
+        }
+      } else {
+        this.counter.add(value)
       }
-    } else {
-      this.counter.add(value)
     }
   }
 
@@ -93,15 +95,17 @@ private[fire] object AccumulatorManager {
    * TimeCost实例对象
    */
   def addLog(timeCost: TimeCost): Unit = {
-    val env = SparkEnv.get
-    if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
-      val logAccumulator = SparkEnv.get.conf.get(this.logAccumulatorLabel, "")
-      if (StringUtils.isNotBlank(logAccumulator)) {
-        val logAcc: LogAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(logAccumulator)))
-        logAcc.add(timeCost)
+    if (GlobalConstants.jobType.isSpark) {
+      val env = SparkEnv.get
+      if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
+        val logAccumulator = SparkEnv.get.conf.get(this.logAccumulatorLabel, "")
+        if (StringUtils.isNotBlank(logAccumulator)) {
+          val logAcc: LogAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(logAccumulator)))
+          logAcc.add(timeCost)
+        }
+      } else {
+        this.logAccumulator.add(timeCost)
       }
-    } else {
-      this.logAccumulator.add(timeCost)
     }
   }
 
@@ -120,15 +124,17 @@ private[fire] object AccumulatorManager {
    * 运行时信息
    */
   def addEnv(envInfo: String): Unit = {
-    val env = SparkEnv.get
-    if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
-      val envAccumulator = SparkEnv.get.conf.get(this.envAccumulatorLabel, "")
-      if (StringUtils.isNotBlank(envAccumulator)) {
-        val envAcc: EnvironmentAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(envAccumulator)))
-        envAcc.add(envInfo)
+    if (GlobalConstants.jobType.isSpark) {
+      val env = SparkEnv.get
+      if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
+        val envAccumulator = SparkEnv.get.conf.get(this.envAccumulatorLabel, "")
+        if (StringUtils.isNotBlank(envAccumulator)) {
+          val envAcc: EnvironmentAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(envAccumulator)))
+          envAcc.add(envInfo)
+        }
+      } else {
+        this.envAccumulator.add(envInfo)
       }
-    } else {
-      this.envAccumulator.add(envInfo)
     }
   }
 
@@ -147,14 +153,16 @@ private[fire] object AccumulatorManager {
    * 累加值
    */
   def addMultiCounter(key: String, value: Long): Unit = {
-    if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
-      val countAccumulator = SparkEnv.get.conf.get(this.multiCounterLabel, "")
-      if (StringUtils.isNotBlank(countAccumulator)) {
-        val multiCounter: MultiCounterAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(countAccumulator)))
-        multiCounter.add(key, value)
+    if (GlobalConstants.jobType.isSpark) {
+      if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
+        val countAccumulator = SparkEnv.get.conf.get(this.multiCounterLabel, "")
+        if (StringUtils.isNotBlank(countAccumulator)) {
+          val multiCounter: MultiCounterAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(countAccumulator)))
+          multiCounter.add(key, value)
+        }
+      } else {
+        this.multiCounter.add(key, value)
       }
-    } else {
-      this.multiCounter.add(key, value)
     }
   }
 
@@ -173,14 +181,16 @@ private[fire] object AccumulatorManager {
    * 累加值的key、value和时间的schema，默认为yyyy-MM-dd HH:mm:00
    */
   def addMultiTimer(key: String, value: Long, schema: String = GlobalConstants.MultiTimerSchema.MIN): Unit = {
-    if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
-      val timerAccumulator = SparkEnv.get.conf.get(this.multiTimerLabel, "")
-      if (StringUtils.isNotBlank(timerAccumulator)) {
-        val multiTimer: MultiTimerAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(timerAccumulator)))
-        multiTimer.add(key, value, schema)
+    if (GlobalConstants.jobType.isSpark) {
+      if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
+        val timerAccumulator = SparkEnv.get.conf.get(this.multiTimerLabel, "")
+        if (StringUtils.isNotBlank(timerAccumulator)) {
+          val multiTimer: MultiTimerAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(timerAccumulator)))
+          multiTimer.add(key, value, schema)
+        }
+      } else {
+        this.multiTimer.add(key, value, schema)
       }
-    } else {
-      this.multiTimer.add(key, value, schema)
     }
   }
 
@@ -206,8 +216,10 @@ private[fire] object AccumulatorManager {
    * 累加器的key（json格式）
    */
   def addMultiTimer(module: String, method: String, action: String, sink: String, level: String, cluster: String, value: Long): Unit = {
-    val multiKey = s"""{"cluster":"$cluster","module":"$module","method":"$method","action":"$action","sink":"$sink","level":"$level","jobClass":"$jobClassName"}"""
-    this.addMultiTimer(multiKey, value)
+    if (GlobalConstants.jobType.isSpark) {
+      val multiKey = s"""{"cluster":"$cluster","module":"$module","method":"$method","action":"$action","sink":"$sink","level":"$level","jobClass":"$jobClassName"}"""
+      this.addMultiTimer(multiKey, value)
+    }
   }
 
   /**
