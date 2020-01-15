@@ -1,24 +1,30 @@
 package com.zto.fire.demo.flink.stream
 
-import com.zto.fire.common.bean.HBaseBaseBean
+import com.zto.fire.common.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.common.db.HBaseOper
 import com.zto.fire.common.util.PropUtils
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
+import com.zto.fire.flink.core.sink.HBaseOperSink
 import org.apache.flink.api.scala._
-import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 
 import scala.collection.JavaConversions
 
+/**
+ * 自定义HBaseSink
+ *
+ * @author ChengLong 2020年1月15日 16:05:56
+ * @since 0.4.1
+ */
 object HBaseSinkTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     PropUtils.toFlinkConfMap.foreach(t => println(t._1 + " -> " + t._2))
-    val dataset = this.ssc.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
-    dataset.addSink(new HBaseSink)
-    this.ssc.execute("udf test")
+    val dataStream = this.ssc.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
+    dataStream.hbaseOperPut("fire_test_1")
+    this.ssc.execute("hbase sink test")
   }
 
   def main(args: Array[String]): Unit = {
@@ -26,16 +32,3 @@ object HBaseSinkTest extends BaseFlinkStreaming {
   }
 }
 
-class HBaseSink extends RichSinkFunction[Student] {
-  override def open(parameters: Configuration): Unit = {
-    println("======open()======")
-  }
-
-  override def close(): Unit = {
-    println("======close()======")
-  }
-
-  override def invoke(value: Student, context: SinkFunction.Context[_]): Unit = {
-    HBaseOper.insert("fire_test_1", value)
-  }
-}

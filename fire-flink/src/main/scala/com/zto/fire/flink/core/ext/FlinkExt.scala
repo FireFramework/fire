@@ -1,11 +1,13 @@
 package com.zto.fire.flink.core.ext
 
-import com.zto.fire.flink.core.ext.batch.{BatchExecutionEnvExt, BatchTableEnvExt}
+import com.zto.fire.flink.core.ext.batch.{BatchExecutionEnvExt, BatchTableEnvExt, DataSetExt}
 import com.zto.fire.flink.core.ext.stream.{DataStreamExt, StreamExecutionEnvExt, StreamTableEnvExt, StreamTableExt}
-import org.apache.flink.api.scala.ExecutionEnvironment
+import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala.{BatchTableEnvironment, StreamTableEnvironment}
+
+import scala.reflect.ClassTag
 
 /**
  * Flink扩展工具类，利用隐式转换对已有的类追加自定义函数
@@ -72,6 +74,16 @@ object FlinkExt {
    * ExecutionEnvironment对象
    */
   implicit class BatchExecutionEnvExtBridge(env: ExecutionEnvironment) extends BatchExecutionEnvExt(env) {
+
+  }
+
+  /**
+   * DataSet扩展
+   *
+   * @param dataSet
+   * DataSet对象
+   */
+  implicit class DataSetExtBridge[T](dataSet: DataSet[T]) extends DataSetExt(dataSet) {
 
   }
 }
