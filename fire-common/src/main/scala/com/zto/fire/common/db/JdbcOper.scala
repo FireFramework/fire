@@ -34,6 +34,7 @@ object JdbcOper extends BaseLogging {
     * 连接池
     */
   def init(keyNum: Int = 1): ComboPooledDataSource = {
+    this.mark()
     var pool = this.connPoolMap.get(s"${this.jdbcPoolKey}$keyNum").getOrElse(null)
     if (pool == null) {
       try {
@@ -79,6 +80,7 @@ object JdbcOper extends BaseLogging {
     var connection: Connection = null
     try {
       val pool = this.init(keyNum)
+      this.mark()
       connection = pool.getConnection
       AccumulatorManager.addMultiTimer(module, "getConnection", "getConnection", "", "INFO", keyNum.toString, 1)
       this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${keyNum} ]成功", this.module)
@@ -112,7 +114,6 @@ object JdbcOper extends BaseLogging {
     * 影响的记录数
     */
   def executeUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
-    this.mark
     var retVal: Long = 0L
     var conn: Connection = connection
     var stat: PreparedStatement = null
@@ -121,6 +122,7 @@ object JdbcOper extends BaseLogging {
         conn = this.getConnection(keyNum)
         conn.setAutoCommit(false)
       }
+      this.mark
       stat = conn.prepareStatement(sql)
 
       // 设置值参数
@@ -179,7 +181,6 @@ object JdbcOper extends BaseLogging {
     * 影响的记录数
     */
   def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
-    this.mark
     var retVal: Array[Int] = null
     var conn: Connection = connection
     var stat: PreparedStatement = null
@@ -188,6 +189,7 @@ object JdbcOper extends BaseLogging {
         conn = this.getConnection(keyNum)
         conn.setAutoCommit(false)
       }
+      this.mark
       stat = conn.prepareStatement(sql)
       var batch = 0
       if (paramsList != null && paramsList.size > 0) {
@@ -276,7 +278,6 @@ object JdbcOper extends BaseLogging {
     * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
     */
   def executeQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null, keyNum: Int = 1): Unit = {
-    this.mark
     var conn: Connection = connection
     var stat: PreparedStatement = null
     var rs: ResultSet = null
@@ -284,6 +285,7 @@ object JdbcOper extends BaseLogging {
       if (conn == null) {
         conn = this.getConnection(keyNum)
       }
+      this.mark
       stat = conn.prepareStatement(sql)
       if (params != null && params.length > 0) {
         var i = 1
