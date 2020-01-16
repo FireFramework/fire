@@ -33,7 +33,7 @@ object HBaseSinkTest extends BaseFlinkStreaming {
   override def process: Unit = {
     PropUtils.toFlinkConfMap.foreach(t => println(t._1 + " -> " + t._2))
     val dataStream = this.ssc.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
-    dataStream.hbaseOperPut("fire_test_1", batchSize = 1)
+    dataStream.hbaseOperPut("fire_test_1")
     this.ssc.execute("hbase sink test")
     Thread.currentThread().join()
   }

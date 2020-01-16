@@ -5,6 +5,7 @@ import org.apache.flink.streaming.api.scala.function.AllWindowFunction
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.apache.flink.util.Collector
 import com.zto.fire.common.bean.HBaseBaseBean
+import com.zto.fire.common.util.GlobalConstants
 import com.zto.fire.core.bridge.HBaseSparkBridge
 import com.zto.fire.flink.core.sink.{HBaseOperSink, HBaseOperSinkBatch}
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
@@ -76,7 +77,7 @@ class DataStreamExt[T](dataStream: DataStream[T]) {
    * @author ChengLong 2020年1月15日 16:11:08
    * @since 0.4.1
    */
-  def hbaseOperPut[E <: HBaseBaseBean[E] : ClassTag](tableName: String, insertEmpty: Boolean = true, batchSize: Int = HBaseSparkBridge.batchSize, multiVersion: Boolean = false): Unit = {
+  def hbaseOperPut[E <: HBaseBaseBean[E] : ClassTag](tableName: String, insertEmpty: Boolean = true, batchSize: Int = GlobalConstants.HBaseConf.hbaseBatchSize, multiVersion: Boolean = false): Unit = {
     if (Math.abs(batchSize) == 1) {
       this.dataStream.asInstanceOf[DataStream[E]].addSink(new HBaseOperSink[E](tableName, insertEmpty, multiVersion))
     } else {

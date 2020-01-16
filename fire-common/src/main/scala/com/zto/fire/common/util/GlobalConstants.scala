@@ -650,7 +650,7 @@ object GlobalConstants {
    */
   object HBaseConf extends Enumeration {
     // HBase操作默认的批次大小
-    val hbaseBatchSize = PropUtils.getInt(PropKeys.HBASE_BATCH, DefaultVals.hbaseBatch)
+    lazy val hbaseBatchSize = PropUtils.getInt(PropKeys.HBASE_BATCH, DefaultVals.hbaseBatch)
   }
 
   /**

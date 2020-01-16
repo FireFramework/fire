@@ -1,12 +1,13 @@
 package com.zto.fire.demo.flink.stream
 
+import com.alibaba.fastjson.JSON
+import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
-import org.apache.flink.api.common.accumulators.{IntCounter, LongCounter}
-import org.apache.flink.api.common.functions.RichMapFunction
-import org.apache.flink.api.scala._
-import org.apache.flink.configuration.Configuration
-import org.apache.flink.streaming.api.windowing.time.Time
+import com.zto.fire.flink.core.bean.FlinkTableSchema
 import com.zto.fire.flink.core.ext.FlinkExt._
+import com.zto.fire.flink.core.util.FlinkUtils
+import org.apache.flink.api.scala._
+import org.apache.flink.types.Row
 
 object FlinkTest extends BaseFlinkStreaming {
 
@@ -15,21 +16,17 @@ object FlinkTest extends BaseFlinkStreaming {
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
   override def process: Unit = {
-    val dstream = this.ssc.createDirectStream()//.map(json => JSON.parseObject(json, classOf[Student]))
-    // dstream.flatMap(t => t.split(",")).map(t => (t, 1)).keyBy(0).timeWindow(Time.seconds(30)).sum(1).print()
+    val dstream = this.ssc.createDirectStream().map(json => JSON.parseObject(json, classOf[Student]))
+    dstream.createOrReplaceTempView("student")
+    val table = this.flink.sql("select * from student")
+    val tableSchema = new FlinkTableSchema(table.getSchema)
 
-    dstream.registerAcc(new IntCounter(), "myCounter").map(new RichMapFunction[String, Int] {
-      override def map(value: String): Int = {
-        val count = this.getRuntimeContext.getIntCounter("myCounter")
-        count.add(value.toInt)
-        value.toInt
-      }
+    this.flink.toRetractStream[Row](table).addSink(t => {
+      val student: Student = FlinkUtils.flinkRowToBean(tableSchema, t._2, classOf[Student])
+      println("-------->" + student.toString)
     })
 
-    val count = this.ssc.execute("counter test").getAccumulatorResult[Int]("myCounter")
-    println("累加结果：" + count)
-
-    // this.ssc.startAwaitTermination()
+    this.ssc.startAwaitTermination()
   }
 
   def main(args: Array[String]): Unit = {
