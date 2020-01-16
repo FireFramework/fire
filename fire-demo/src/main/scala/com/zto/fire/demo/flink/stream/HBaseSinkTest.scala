@@ -1,5 +1,6 @@
 package com.zto.fire.demo.flink.stream
 
+import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.common.db.HBaseOper
 import com.zto.fire.common.util.PropUtils
@@ -24,11 +25,17 @@ import scala.collection.mutable.ListBuffer
  */
 object HBaseSinkTest extends BaseFlinkStreaming {
 
+  @Scheduled(fixedInterval = 5000)
+  def job: Unit = {
+    println("====定时执行====")
+  }
+
   override def process: Unit = {
     PropUtils.toFlinkConfMap.foreach(t => println(t._1 + " -> " + t._2))
     val dataStream = this.ssc.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
     dataStream.hbaseOperPut("fire_test_1", batchSize = 1)
     this.ssc.execute("hbase sink test")
+    Thread.currentThread().join()
   }
 
   def main(args: Array[String]): Unit = {

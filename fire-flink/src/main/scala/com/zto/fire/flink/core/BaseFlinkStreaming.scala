@@ -58,6 +58,7 @@ trait BaseFlinkStreaming extends BaseFlink {
    * 初始化flink运行时环境
    */
   override def createContext(conf: Any): Unit = {
+    super.createContext(conf)
     val finalConf = this.buildConf(conf.asInstanceOf[Configuration])
     if (SystemInfoUtils.isWindows) {
       this.env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(finalConf)

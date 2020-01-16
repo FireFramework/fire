@@ -61,6 +61,7 @@ trait BaseFlinkBatch extends BaseFlink {
    * 配置信息
    */
   override private[fire] def createContext(conf: Any): Unit = {
+    super.createContext(conf)
     val finalConf = this.buildConf(conf.asInstanceOf[Configuration])
     if (SystemInfoUtils.isWindows) {
       this.env = ExecutionEnvironment.createLocalEnvironmentWithWebUI(finalConf)

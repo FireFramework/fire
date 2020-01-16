@@ -1,5 +1,6 @@
 package com.zto.fire.flink.core
 
+import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.BaseFire
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
@@ -23,6 +24,13 @@ trait BaseFlink extends BaseFire {
     PropUtils.load(this.appName)
     FlinkSingletonFactory.setAppName(this.appName)
     this.splash
+  }
+
+  /**
+   * 初始化flink运行时环境
+   */
+  override private[fire] def createContext(conf: Any): Unit = {
+    SchedulerManager.registerTasks(this)
   }
 
   /**
