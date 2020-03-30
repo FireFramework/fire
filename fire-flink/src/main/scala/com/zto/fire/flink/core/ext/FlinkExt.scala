@@ -1,11 +1,12 @@
 package com.zto.fire.flink.core.ext
 
 import com.zto.fire.flink.core.ext.batch.{BatchExecutionEnvExt, BatchTableEnvExt, DataSetExt}
-import com.zto.fire.flink.core.ext.stream.{DataStreamExt, StreamExecutionEnvExt, StreamTableEnvExt, StreamTableExt}
+import com.zto.fire.flink.core.ext.stream.{DataStreamExt, RowExt, StreamExecutionEnvExt, StreamTableEnvExt, StreamTableExt}
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala.{BatchTableEnvironment, StreamTableEnvironment}
+import org.apache.flink.types.Row
 
 import scala.reflect.ClassTag
 
@@ -84,6 +85,13 @@ object FlinkExt {
    * DataSet对象
    */
   implicit class DataSetExtBridge[T](dataSet: DataSet[T]) extends DataSetExt(dataSet) {
+
+  }
+
+  /**
+   * Row扩展
+   */
+  implicit class RowExtBridge(row: Row) extends RowExt(row) {
 
   }
 }

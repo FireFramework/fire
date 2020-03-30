@@ -22,7 +22,7 @@ object UDFTest extends BaseFlinkStreaming {
 
     this.flink.registerDataStream("test", dataset)
     // 注册udf
-    this.flink.registerFunction("appendFire", new AppendFire)
+    this.flink.udf("appendFire", new AppendFire)
     // 在sql中使用自定义的udf
     this.flink.sql("select appendFire(name), appendFire(age) from test")
 

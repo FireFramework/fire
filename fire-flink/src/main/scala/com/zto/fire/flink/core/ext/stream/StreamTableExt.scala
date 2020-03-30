@@ -1,5 +1,6 @@
 package com.zto.fire.flink.core.ext.stream
 
+import com.zto.fire.flink.core.bean.FlinkTableSchema
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala._
 
@@ -16,5 +17,15 @@ class StreamTableExt(table: Table) {
    */
   def show: Unit = {
     this.table.addSink(row => println(row))
+  }
+
+  /**
+   * 获取表的schema包装类，用于flinkRowToBean
+   *
+   * @return
+   * fire包装后的表schema信息
+   */
+  def getTableSchema: FlinkTableSchema = {
+    new FlinkTableSchema(table.getSchema)
   }
 }

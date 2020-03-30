@@ -39,7 +39,7 @@ class DataStreamExt[T](dataStream: DataStream[T]) {
    */
   def createOrReplaceTempView(tableName: String): Table = {
     val table = this.dataStream.toTable(this.tableEnv)
-    this.tableEnv.registerTable(tableName, table)
+    this.tableEnv.createTemporaryView(tableName, table)
     table
   }
 

@@ -19,14 +19,15 @@ object FlinkTest extends BaseFlinkStreaming {
     val dstream = this.ssc.createDirectStream().map(json => JSON.parseObject(json, classOf[Student]))
     dstream.createOrReplaceTempView("student")
     val table = this.flink.sql("select * from student")
-    val tableSchema = new FlinkTableSchema(table.getSchema)
+
+    // table无法序列化，因此需在此处获取schema信息，传入到addSink中
+    val tableSchema = table.getTableSchema
 
     // toRetractStream支持状态更新、删除操作，比例sql中含有group by 等聚合操作，后进来的记录会导致已有的聚合结果不正确
     // 使用toRetractStream后会将之前的旧的聚合结果重新发送一次，并且tuple中的flag标记为false，然后再发送一条正确的结果
     // 类似于structured streaming中自动维护结果表，并进行update操作
-    this.flink.toRetractStream[Row](table).addSink(t => {
-      val student: Student = FlinkUtils.flinkRowToBean(tableSchema, t._2, classOf[Student])
-      println("-------->" + student.toString)
+    this.flink.toRetractStream[Row](table).map(t => t._2).addSink(row => {
+      println("-------->" + row.rowToBean(tableSchema, classOf[Student]))
     })
 
     this.ssc.startAwaitTermination()
