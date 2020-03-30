@@ -4,14 +4,13 @@
     <groupId>com.zto.fire</groupId>
     <artifactId>fire-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.4.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <inceptionYear>2008</inceptionYear>
 
     <properties>
         <maven.scope>provided</maven.scope>
         <!--<maven.scope>compile</maven.scope>-->
-        <fire.version>0.4.1-SNAPSHOT</fire.version>
-        <flink.version>1.9.1</flink.version>
+        <fire.version>1.0.0-SNAPSHOT</fire.version>
         <scala.version>2.11.12</scala.version>
         <scala.binary.version>2.11</scala.binary.version>
         <kafka.version>0.11.0.2</kafka.version>
@@ -244,7 +243,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.60</version>
+            <version>1.2.67</version>
         </dependency>
         <dependency>
             <groupId>fastutil</groupId>
