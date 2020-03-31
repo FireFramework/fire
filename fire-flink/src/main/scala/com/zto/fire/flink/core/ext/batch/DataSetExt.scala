@@ -12,4 +12,10 @@ import scala.reflect.ClassTag
  */
 class DataSetExt[T](dataSet: DataSet[T]){
 
+  /**
+   * 设置并行度
+   */
+  def repartition(parallelism: Int): DataSet[T] = {
+    this.dataSet.setParallelism(parallelism)
+  }
 }

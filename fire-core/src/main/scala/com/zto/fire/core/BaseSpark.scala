@@ -1,11 +1,7 @@
 package com.zto.fire.core
 
-import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
-import java.util.concurrent.atomic.AtomicBoolean
-
 import com.zto.fire.common.acc.AccumulatorManager
-import com.zto.fire.common.db.JdbcOper
-import com.zto.fire.common.enu.{JobType, ThreadPoolType}
+import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util._
 import com.zto.fire.core.ext.SparkExt._
@@ -20,7 +16,6 @@ import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.{Logging, SparkConf, SparkContext}
-import spark.Spark
 
 /**
  * Spark通用父类
@@ -86,10 +81,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
         }
       }
 
-      ThreadUtils.shutdown
-      Spark.stop()
-      SchedulerManager.shutdown(stopGracefully)
-      this.wrapLogInfo("<-- 完成fire资源回收 -->")
+      super.shutdown(stopGracefully)
     } finally {
       GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
     }

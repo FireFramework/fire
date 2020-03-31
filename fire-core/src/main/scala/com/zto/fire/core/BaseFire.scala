@@ -5,8 +5,10 @@ import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit
 
 import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.enu.{JobType, ThreadPoolType}
+import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, PropUtils, SystemInfoUtils, ThreadUtils, ValueUtils}
 import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
+import spark.Spark
 
 /**
  * 通用的父接口，提供通用的生命周期方法约束
@@ -105,7 +107,12 @@ trait BaseFire {
    * 生命周期方法：进行fire框架的资源回收
    * 注：不允许子类覆盖
    */
-  private[fire] def shutdown(stopGracefully: Boolean = true): Unit
+  private[fire] def shutdown(stopGracefully: Boolean = true): Unit = {
+    ThreadUtils.shutdown
+    Spark.stop()
+    SchedulerManager.shutdown(stopGracefully)
+    println("---> 完成fire资源回收 <---")
+  }
 
   /**
    * 以子线程方式执行函数调用

@@ -71,6 +71,8 @@ trait BaseFlinkBatch extends BaseFlink {
     this.env.getConfig.setGlobalJobParameters(ParameterTool.fromMap(finalConf.toMap))
     this.sc = this.env
     this.tableEnv = BatchTableEnvironment.create(this.env)
+    this.tableEnv.registerCatalog("hive", this.hive)
+    this.tableEnv.useCatalog("hive")
     this.flink = this.tableEnv
 
     FlinkSingletonFactory.setEnv(this.env).setTableEnv(this.tableEnv)

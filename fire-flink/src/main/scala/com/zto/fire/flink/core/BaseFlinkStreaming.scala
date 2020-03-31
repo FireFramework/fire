@@ -67,8 +67,10 @@ trait BaseFlinkStreaming extends BaseFlink {
     }
     this.env.getConfig.setGlobalJobParameters(ParameterTool.fromMap(finalConf.toMap))
     this.ssc = this.env
-    val bsSettings = EnvironmentSettings.newInstance.useBlinkPlanner.inStreamingMode.build
-    this.tableEnv = StreamTableEnvironment.create(this.env, bsSettings)
+    val settings = EnvironmentSettings.newInstance.useBlinkPlanner.inStreamingMode.build
+    this.tableEnv = StreamTableEnvironment.create(this.env, settings)
+    this.tableEnv.registerCatalog("hive", this.hive)
+    this.tableEnv.useCatalog("hive")
     this.flink = this.tableEnv
 
     FlinkSingletonFactory.setStreamEnv(this.env).setStreamTableEnv(this.tableEnv)

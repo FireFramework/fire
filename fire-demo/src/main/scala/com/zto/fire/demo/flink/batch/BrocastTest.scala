@@ -1,9 +1,13 @@
 package com.zto.fire.demo.flink.batch
 
+import java.lang
+
 import com.zto.fire.flink.core.BaseFlinkBatch
-import org.apache.flink.api.common.functions.RichMapFunction
+import org.apache.flink.api.common.functions.{RichMapFunction, RichMapPartitionFunction}
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
+import com.zto.fire.flink.core.ext.FlinkExt._
+import org.apache.flink.util.Collector
 
 import scala.collection.{JavaConversions, mutable}
 
@@ -17,7 +21,7 @@ object BrocastTest extends BaseFlinkBatch {
   override def process: Unit = {
     val ds = this.env.fromElements(1, 2, 3, 4, 5)
     // flink中可以广播的数据必须是Dataset
-    val brocastDS = this.env.fromElements("a", "b", "c", "d", "e")
+    val brocastDS = this.env.parallelize(Seq("a", "b", "c", "d", "e"))
 
     ds.map(new RichMapFunction[Int, String] {
       var broadcastSet: java.util.List[String] = null
@@ -32,6 +36,20 @@ object BrocastTest extends BaseFlinkBatch {
       }
       // 每次使用必须通过withBroadcastSet进行广播
     }).withBroadcastSet(brocastDS, "brocastDS").print()
+
+    // 使用mapPartition
+    ds.mapPartition(new RichMapPartitionFunction[Int, String] {
+      var list: java.util.List[String] = _
+
+      override def open(parameters: Configuration): Unit = {
+        this.list = this.getRuntimeContext.getBroadcastVariable("list")
+      }
+
+      override def mapPartition(values: lang.Iterable[Int], out: Collector[String]): Unit = {
+        JavaConversions.asScalaIterator(values.iterator()).foreach(index => println(index + " " + this.list.get(index - 1)))
+        this.list
+      }
+    }).withBroadcastSet(brocastDS, "list").print()
   }
 
   def main(args: Array[String]): Unit = {

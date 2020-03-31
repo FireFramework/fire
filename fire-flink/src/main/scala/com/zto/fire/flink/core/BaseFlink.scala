@@ -1,10 +1,11 @@
 package com.zto.fire.flink.core
 
 import com.zto.fire.common.task.SchedulerManager
-import com.zto.fire.common.util.PropUtils
+import com.zto.fire.common.util.{GlobalConstants, PropUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.table.catalog.hive.HiveCatalog
 
 /**
  * Flink引擎通用父接口
@@ -13,6 +14,7 @@ import org.apache.flink.configuration.Configuration
  */
 trait BaseFlink extends BaseFire {
   protected var conf: Configuration = _
+  protected var hive: HiveCatalog = _
 
   /**
    * 生命周期方法：初始化fire框架必要的信息
@@ -31,6 +33,8 @@ trait BaseFlink extends BaseFire {
    */
   override private[fire] def createContext(conf: Any): Unit = {
     SchedulerManager.registerTasks(this)
+    // 创建HiveCatalog
+    this.hive = new HiveCatalog("hive", GlobalConstants.SparkConf.defaultDB, GlobalConstants.HiveConf.hiveSiteDir, GlobalConstants.HiveConf.hiveVersion)
   }
 
   /**
@@ -47,11 +51,21 @@ trait BaseFlink extends BaseFire {
   /**
    * 生命周期方法：用于回收资源
    */
-  override def stop: Unit = {}
+  override def stop: Unit = {
+    try {
+      this.after()
+      // TODO: stop flink相关的上下文
+
+    } finally {
+      this.shutdown()
+    }
+  }
 
   /**
    * 生命周期方法：进行fire框架的资源回收
    * 注：不允许子类覆盖
    */
-  override private[fire] def shutdown(stopGracefully: Boolean): Unit = {}
+  override private[fire] def shutdown(stopGracefully: Boolean = true): Unit = {
+    super.shutdown(stopGracefully)
+  }
 }

@@ -1,12 +1,7 @@
 package com.zto.fire.flink.core.ext.stream
 
-import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
-import org.apache.flink.streaming.api.scala.function.AllWindowFunction
-import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
-import org.apache.flink.util.Collector
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.util.GlobalConstants
-import com.zto.fire.core.bridge.HBaseSparkBridge
 import com.zto.fire.flink.core.sink.{HBaseOperSink, HBaseOperSinkBatch}
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.flink.api.common.accumulators.SimpleAccumulator
@@ -20,7 +15,7 @@ import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala._
 import org.apache.flink.util.Collector
 
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.ClassTag
 
 /**
  * 用于对Flink DataStream的API库扩展
@@ -98,5 +93,12 @@ class DataStreamExt[T](dataStream: DataStream[T]) {
         out.collect(input.toList)
       }
     })(typeInfo)
+  }
+
+  /**
+   * 设置并行度
+   */
+  def repartition(parallelism: Int): DataStream[T] = {
+    this.dataStream.setParallelism(parallelism)
   }
 }

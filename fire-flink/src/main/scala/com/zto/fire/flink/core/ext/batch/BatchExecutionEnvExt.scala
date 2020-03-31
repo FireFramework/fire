@@ -31,7 +31,7 @@ class BatchExecutionEnvExt(env: ExecutionEnvironment) {
    * @tparam T
    *           元素的类型
    */
-  def parallelize[T: TypeInformation: ClassTag](seq: Seq[T]): DataSet[T] = {
-    this.env.fromCollection[T](seq)
+  def parallelize[T: TypeInformation: ClassTag](seq: Seq[T], parallelism: Int = this.env.getParallelism): DataSet[T] = {
+    this.env.fromCollection[T](seq).setParallelism(parallelism)
   }
 }

@@ -179,6 +179,10 @@ object GlobalConstants {
     val SPARK_DEFAULT_DATABASE_NAME = "spark.default.database.name"
     // 默认的分区名称
     val SPARK_DEFAULT_TABLE_PARTITION_NAME = "spark.default.table.partition.name"
+    // hive-site.xml配置文件存放的路径
+    val HIVE_SITE_DIR = "spark.hive.conf.dir"
+    // hive版本号
+    val HIVE_VERSION = "spark.hive.version"
 
     // ---------------------------- RocketMQ 相关配置 ---------------------------- //
     // rocketMQ name server
@@ -822,6 +826,10 @@ object GlobalConstants {
     private val streamingMetastore = "thrift://192.168.25.180:9083"
     // 测试hive集群
     private val testMetastore = "thrift://10.9.46.107:9083"
+    // hive-site.xml存放的路径
+    lazy val hiveSiteDir = PropUtils.getString(PropKeys.HIVE_SITE_DIR)
+    // hive版本号
+    lazy val hiveVersion = PropUtils.getString(PropKeys.HIVE_VERSION)
 
     /**
      * 根据hive集群名称获取metastore地址
