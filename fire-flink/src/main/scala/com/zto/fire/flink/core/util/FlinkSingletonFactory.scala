@@ -4,7 +4,7 @@ import com.zto.fire.common.util.ValueUtils
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.table.api.TableEnvironment
-import org.apache.flink.table.api.scala.StreamTableEnvironment
+import org.apache.flink.table.api.scala.{BatchTableEnvironment, StreamTableEnvironment}
 
 /**
   * 单例工厂，用于创建单例的对象
@@ -15,7 +15,7 @@ object FlinkSingletonFactory {
   @transient private[this] var streamEnv: StreamExecutionEnvironment = _
   @transient private[this] var streamTableEnv: StreamTableEnvironment = _
   @transient private[this] var env: ExecutionEnvironment = _
-  @transient private[this] var tableEnv: TableEnvironment = _
+  @transient private[this] var tableEnv: BatchTableEnvironment = _
 
   /**
    * 设置TableEnv实例
@@ -54,7 +54,7 @@ object FlinkSingletonFactory {
   /**
     * 设置TableEnv实例
     */
-  private[fire] def setTableEnv(tableEnv: TableEnvironment): this.type = {
+  private[fire] def setTableEnv(tableEnv: BatchTableEnvironment): this.type = {
     if (tableEnv != null && this.tableEnv == null) this.tableEnv = tableEnv
     this
   }
@@ -81,5 +81,5 @@ object FlinkSingletonFactory {
    * @return
    * TableEnv实例
    */
-  private[fire] def getTableEnv: TableEnvironment = this.tableEnv
+  private[fire] def getBatchTableEnv: BatchTableEnvironment = this.tableEnv
 }

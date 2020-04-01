@@ -1,7 +1,7 @@
 package com.zto.fire.flink.core.ext
 
 import com.zto.fire.flink.core.ext.batch.{BatchExecutionEnvExt, BatchTableEnvExt, DataSetExt}
-import com.zto.fire.flink.core.ext.stream.{DataStreamExt, RowExt, StreamExecutionEnvExt, StreamTableEnvExt, StreamTableExt}
+import com.zto.fire.flink.core.ext.stream.{DataStreamExt, RowExt, StreamExecutionEnvExt, StreamTableEnvExt, TableExt}
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.table.api.Table
@@ -53,7 +53,7 @@ object FlinkExt {
    * @param table
    * Table对象
    */
-  implicit class StreamTableExtBridge(table: Table) extends StreamTableExt(table) {
+  implicit class StreamTableExtBridge(table: Table) extends TableExt(table) {
 
   }
 

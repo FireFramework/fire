@@ -101,4 +101,13 @@ class DataStreamExt[T](dataStream: DataStream[T]) {
   def repartition(parallelism: Int): DataStream[T] = {
     this.dataStream.setParallelism(parallelism)
   }
+
+  /**
+   * 将DataStream转为Table
+   */
+  def toTable: Table = {
+    this.tableEnv.fromDataStream(this.dataStream)
+  }
+
+
 }
