@@ -7,7 +7,7 @@ import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.enu.{JobType, ThreadPoolType}
 import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, PropUtils, SystemInfoUtils, ThreadUtils, ValueUtils}
-import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
+import com.zto.fire.core.rest.{RestfulRegister, SparkSystemRestful, SystemRestful}
 import spark.Spark
 
 /**
@@ -38,6 +38,8 @@ trait BaseFire {
   val restPort = SystemInfoUtils.getRundomPort
   // 用于子类的锁状态判断，默认关闭状态
   lazy val lock = new AtomicBoolean(false)
+  // 是否已停止
+  lazy val isStoped = new AtomicBoolean(false)
   // 当前任务的类名（包名+类名）
   val className = this.getClass.getName.replace("$", "")
   // 当前任务的类名
@@ -108,10 +110,14 @@ trait BaseFire {
    * 注：不允许子类覆盖
    */
   private[fire] def shutdown(stopGracefully: Boolean = true): Unit = {
-    ThreadUtils.shutdown
-    Spark.stop()
-    SchedulerManager.shutdown(stopGracefully)
-    println("---> 完成fire资源回收 <---")
+    if (this.isStoped.compareAndSet(false, true)) {
+      ThreadUtils.shutdown
+      Spark.stop()
+      SchedulerManager.shutdown(stopGracefully)
+      println("---> 完成fire资源回收 <---")
+      GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
+      // TODO: yarn kill; system.exit(0)
+    }
   }
 
   /**

@@ -3,6 +3,8 @@ package com.zto.fire.flink.core
 import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{GlobalConstants, PropUtils}
 import com.zto.fire.core.BaseFire
+import com.zto.fire.core.rest.{RestfulRegister, SparkSystemRestful}
+import com.zto.fire.flink.core.rest.FlinkSystemRestful
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.table.catalog.hive.HiveCatalog
@@ -32,6 +34,9 @@ trait BaseFlink extends BaseFire {
    * 初始化flink运行时环境
    */
   override private[fire] def createContext(conf: Any): Unit = {
+    this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
+    this.systemRestful = new FlinkSystemRestful(this)
+
     SchedulerManager.registerTasks(this)
     // 创建HiveCatalog
     this.hive = new HiveCatalog("hive", GlobalConstants.SparkConf.defaultDB, GlobalConstants.HiveConf.hiveSiteDir, GlobalConstants.HiveConf.hiveVersion)

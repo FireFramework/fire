@@ -6,7 +6,7 @@ import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util._
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
-import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
+import com.zto.fire.core.rest.{RestfulRegister, SparkSystemRestful}
 import com.zto.fire.core.task.InternalTask
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
@@ -81,9 +81,8 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
         }
       }
 
-      super.shutdown(stopGracefully)
     } finally {
-      GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
+      super.shutdown(stopGracefully)
     }
   }
 
@@ -103,7 +102,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    */
   override private[fire] final def createContext(conf: Any): Unit = {
     this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
-    this.systemRestful = new SystemRestful(this)
+    this.systemRestful = new SparkSystemRestful(this)
 
     // 注册到zrc平台，并覆盖配置信息
     if (this.jobType != JobType.SPARK_CORE) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")

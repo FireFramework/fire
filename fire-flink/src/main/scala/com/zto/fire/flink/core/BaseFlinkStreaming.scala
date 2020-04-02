@@ -59,6 +59,7 @@ trait BaseFlinkStreaming extends BaseFlink {
    */
   override def createContext(conf: Any): Unit = {
     super.createContext(conf)
+    this.restfulRegister.startRestServer
     val finalConf = this.buildConf(conf.asInstanceOf[Configuration])
     if (SystemInfoUtils.isWindows) {
       this.env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(finalConf)
