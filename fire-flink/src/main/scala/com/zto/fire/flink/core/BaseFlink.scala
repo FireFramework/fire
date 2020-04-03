@@ -1,7 +1,8 @@
 package com.zto.fire.flink.core
 
+import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.task.SchedulerManager
-import com.zto.fire.common.util.{GlobalConstants, PropUtils}
+import com.zto.fire.common.util.{GlobalConstants, PropUtils, SystemInfoUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestfulRegister
 import com.zto.fire.flink.core.rest.FlinkSystemRestful
@@ -36,6 +37,9 @@ trait BaseFlink extends BaseFire {
   override private[fire] def createContext(conf: Any): Unit = {
     this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
     this.systemRestful = new FlinkSystemRestful(this)
+    // 注册到zrc平台，并覆盖配置信息
+    if (this.jobType == JobType.FLINK_STREAMING) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
+    PropUtils.print()
 
     SchedulerManager.registerTasks(this)
     // 创建HiveCatalog

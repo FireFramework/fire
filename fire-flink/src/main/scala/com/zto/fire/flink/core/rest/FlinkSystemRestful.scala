@@ -22,7 +22,6 @@ private[fire] class FlinkSystemRestful(val baseFlink: BaseFlink) extends SystemR
    * 注册Flink引擎restful接口
    */
   override protected def register: Unit = {
-    println("========注册flink接口=========")
     this.baseFlink.restfulRegister
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/kill", kill))
   }
