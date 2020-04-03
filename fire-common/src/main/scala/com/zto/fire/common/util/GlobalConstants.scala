@@ -829,7 +829,7 @@ object GlobalConstants {
     // hive-site.xml存放的路径
     lazy val hiveSiteDir = PropUtils.getString(PropKeys.HIVE_SITE_DIR)
     // hive版本号
-    lazy val hiveVersion = PropUtils.getString(PropKeys.HIVE_VERSION)
+    lazy val hiveVersion = PropUtils.getString(PropKeys.HIVE_VERSION, "1.1.0")
 
     /**
      * 根据hive集群名称获取metastore地址

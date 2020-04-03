@@ -3,7 +3,7 @@ package com.zto.fire.flink.core
 import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{GlobalConstants, PropUtils}
 import com.zto.fire.core.BaseFire
-import com.zto.fire.core.rest.{RestfulRegister, SparkSystemRestful}
+import com.zto.fire.core.rest.RestfulRegister
 import com.zto.fire.flink.core.rest.FlinkSystemRestful
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.flink.configuration.Configuration
@@ -72,5 +72,6 @@ trait BaseFlink extends BaseFire {
    */
   override private[fire] def shutdown(stopGracefully: Boolean = true): Unit = {
     super.shutdown(stopGracefully)
+    System.exit(0)
   }
 }
