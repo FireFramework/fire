@@ -2,12 +2,14 @@ package com.zto.fire.flink.core
 
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.task.SchedulerManager
-import com.zto.fire.common.util.{GlobalConstants, PropUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{GlobalConstants, PropUtils, SystemInfoUtils, ValueUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestfulRegister
 import com.zto.fire.flink.core.rest.FlinkSystemRestful
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
+import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.table.catalog.hive.HiveCatalog
 
 /**
@@ -77,5 +79,19 @@ trait BaseFlink extends BaseFire {
   override private[fire] def shutdown(stopGracefully: Boolean = true): Unit = {
     super.shutdown(stopGracefully)
     System.exit(0)
+  }
+
+  /**
+   * 用于解析configuration中的配置，识别flink参数（非用户自定义参数），并设置到env中
+   */
+  private[fire] def configParse(env: Any): Unit = {
+    ValueUtils.requireNonNullForce(env, "Environment对象不能为空")
+    val config = if (env.isInstanceOf[ExecutionEnvironment]) {
+      env.asInstanceOf[ExecutionEnvironment].getConfig
+    } else {
+      env.asInstanceOf[StreamExecutionEnvironment].getConfig
+    }
+    // TODO: 解析Configuration中的配置，分别设置到config中
+
   }
 }
