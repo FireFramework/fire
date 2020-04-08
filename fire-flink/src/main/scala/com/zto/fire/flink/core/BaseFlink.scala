@@ -6,7 +6,10 @@ import com.zto.fire.common.util.{GlobalConstants, PropUtils, SystemInfoUtils, Va
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestfulRegister
 import com.zto.fire.flink.core.rest.FlinkSystemRestful
-import com.zto.fire.flink.core.util.FlinkSingletonFactory
+import com.zto.fire.flink.core.util.{FlinkSingletonFactory, FlinkUtils}
+import org.apache.commons.lang3.StringUtils
+import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
+import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
@@ -84,14 +87,15 @@ trait BaseFlink extends BaseFire {
   /**
    * 用于解析configuration中的配置，识别flink参数（非用户自定义参数），并设置到env中
    */
-  private[fire] def configParse(env: Any): Unit = {
+  private[fire] def configParse(env: Any): ExecutionConfig = {
     ValueUtils.requireNonNullForce(env, "Environment对象不能为空")
     val config = if (env.isInstanceOf[ExecutionEnvironment]) {
       env.asInstanceOf[ExecutionEnvironment].getConfig
     } else {
       env.asInstanceOf[StreamExecutionEnvironment].getConfig
     }
-    // TODO: 解析Configuration中的配置，分别设置到config中
+    FlinkUtils.parseConf(config)
 
+    config
   }
 }

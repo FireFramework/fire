@@ -259,6 +259,23 @@ object GlobalConstants {
     // ---------------------------- HDFS 相关配置 ---------------------------- //
     // 是否启用高可用
     val HDFS_HA = "spark.hdfs.ha.enable"
+
+    // ---------------------------- FLINK 相关配置 ---------------------------- //
+    val FLINK_AUTO_GENERATE_UID_ENABLE = "flink.auto.generate.uid.enable"
+    val FLINK_AUTO_TYPE_REGISTRATION_ENABLE = "flink.auto.type.registration.enable"
+    val FLINK_FORCE_AVRO_ENABLE = "flink.force.avro.enable"
+    val FLINK_FORCE_KRYO_ENABLE = "flink.force.kryo.enable"
+    val FLINK_GENERIC_TYPES_ENABLE = "flink.generic.types.enable"
+    val FLINK_OBJECT_REUSE_ENABLE = "flink.object.reuse.enable"
+    val FLINK_AUTO_WATERMARK_INTERVAL = "flink.auto.watermark.interval"
+    val FLINK_CLOSURE_CLEANER_LEVEL = "flink.closure.cleaner.level"
+    val FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT = "flink.default.input.dependency.constraint"
+    val FLINK_EXECUTION_MODE = "flink.execution.mode"
+    val FLINK_LATENCY_TRACKING_INTERVAL = "flink.latency.tracking.interval"
+    val FLINK_MAX_PARALLELISM = "flink.max.parallelism"
+    val FLINK_TASK_CANCELLATION_INTERVAL = "flink.task.cancellation.interval"
+    val FLINK_TASK_CANCELLATION_TIMEOUT_MILLIS = "flink.task.cancellation.timeout.millis"
+    val FLINK_USE_SNAPSHOT_COMPRESSION = "flink.use.snapshot.compression"
   }
 
   /**
@@ -303,6 +320,27 @@ object GlobalConstants {
     def jdbcStorageLevel: StorageLevel = {
       StorageLevel.fromString(jdbcStorageLevelConf)
     }
+  }
+
+  /**
+   * flink相关配置
+   */
+  object FlinkConf extends Enumeration {
+    lazy val autoGenerateUidEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_AUTO_GENERATE_UID_ENABLE, true)
+    lazy val autoTypeRegistrationEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_AUTO_TYPE_REGISTRATION_ENABLE, true)
+    lazy val forceAvroEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_FORCE_AVRO_ENABLE, false)
+    lazy val forceKryoEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_FORCE_KRYO_ENABLE, false)
+    lazy val genericTypesEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_GENERIC_TYPES_ENABLE, false)
+    lazy val objectReuseEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_OBJECT_REUSE_ENABLE, false)
+    lazy val autoWatermarkInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_AUTO_WATERMARK_INTERVAL)
+    lazy val closureCleanerLevel  = PropUtils.getString(GlobalConstants.PropKeys.FLINK_CLOSURE_CLEANER_LEVEL)
+    lazy val defaultInputDependencyConstraint  = PropUtils.getString(GlobalConstants.PropKeys.FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT)
+    lazy val executionMode  = PropUtils.getString(GlobalConstants.PropKeys.FLINK_EXECUTION_MODE)
+    lazy val latencyTrackingInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_LATENCY_TRACKING_INTERVAL, -1)
+    lazy val maxParallelism = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_MAX_PARALLELISM, -1)
+    lazy val taskCancellationInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_TASK_CANCELLATION_INTERVAL, -1)
+    lazy val taskCancellationTimeoutMillis = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_TASK_CANCELLATION_TIMEOUT_MILLIS, -1)
+    lazy val useSnapshotCompression = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_USE_SNAPSHOT_COMPRESSION, false)
   }
 
   /**
