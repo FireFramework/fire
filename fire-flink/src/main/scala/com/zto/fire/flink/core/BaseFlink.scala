@@ -12,6 +12,7 @@ import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.table.catalog.hive.HiveCatalog
 
@@ -90,9 +91,21 @@ trait BaseFlink extends BaseFire {
   private[fire] def configParse(env: Any): ExecutionConfig = {
     ValueUtils.requireNonNullForce(env, "Environment对象不能为空")
     val config = if (env.isInstanceOf[ExecutionEnvironment]) {
-      env.asInstanceOf[ExecutionEnvironment].getConfig
+      val batchEnv = env.asInstanceOf[ExecutionEnvironment]
+      // flink.default.parallelism
+      batchEnv.setParallelism(GlobalConstants.FlinkConf.parallelism)
+      batchEnv.getConfig
     } else {
-      env.asInstanceOf[StreamExecutionEnvironment].getConfig
+      val streamEnv = env.asInstanceOf[StreamExecutionEnvironment]
+      // flink.default.parallelism
+      streamEnv.setParallelism(GlobalConstants.FlinkConf.parallelism)
+      // flink.stream.buffer.timeout.millis
+      if (GlobalConstants.FlinkConf.streamBufferTimeoutMillis != -1) streamEnv.setBufferTimeout(GlobalConstants.FlinkConf.streamBufferTimeoutMillis)
+      // flink.stream.number.execution.retries
+      if (GlobalConstants.FlinkConf.streamNumberExecutionRetries != -1)  streamEnv.setNumberOfExecutionRetries(GlobalConstants.FlinkConf.streamNumberExecutionRetries)
+      // flink.stream.time.characteristic
+      if (StringUtils.isNotBlank(GlobalConstants.FlinkConf.streamTimeCharacteristic)) streamEnv.setStreamTimeCharacteristic(TimeCharacteristic.valueOf(GlobalConstants.FlinkConf.streamTimeCharacteristic))
+      streamEnv.getConfig
     }
     FlinkUtils.parseConf(config)
 

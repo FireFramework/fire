@@ -333,7 +333,9 @@ object PropUtils extends BaseLogging {
     println(s"${GlobalConstants.PS1.YELLOW} < --------------------------------------- 配置信息 ---------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
     JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
       if (key != null && !key.toString.contains("pass")) {
-        println(">> " + GlobalConstants.PS1.PINK + key + " --> " + this.props.get(key) + GlobalConstants.PS1.DEFAULT)
+        if (("spark".equals(this.keyPrefix) && !key.toString.contains("flink")) || ("flink".equals(this.keyPrefix) && !key.toString.contains("spark"))) {
+          println(">> " + GlobalConstants.PS1.PINK + key + " --> " + this.props.get(key) + GlobalConstants.PS1.DEFAULT)
+        }
       }
     })
     println(s"${GlobalConstants.PS1.YELLOW} < ----------------------------------------------------------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
