@@ -163,7 +163,7 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
      * @param value 累加的值
      * @return Long计数器实例
      */
-    protected LongCounter addToLongCounter(String name, long value) {
+    private LongCounter addToLongCounter(String name, long value) {
         LongCounter longCounter = this.getLongCounter(name);
         longCounter.add(value);
         return longCounter;
@@ -187,7 +187,7 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
      * @param value 累加的值
      * @return Double计数器实例
      */
-    protected DoubleCounter addToDoubleCounter(String name, double value) {
+    private DoubleCounter addToDoubleCounter(String name, double value) {
         DoubleCounter doubleCounter = this.getDoubleCounter(name);
         doubleCounter.add(value);
         return doubleCounter;
@@ -199,7 +199,7 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
      * @param name 计数器名称
      * @return Double计数器
      */
-    private DoubleCounter getDoubleCounter(String name) {
+    protected DoubleCounter getDoubleCounter(String name) {
         ValueUtils.requireNonNull(name, "DoubleCounter计数器名称不能为空！");
         return this.getRuntimeContext().getDoubleCounter(name);
     }
@@ -228,7 +228,7 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
      * @param name 计数器名称
      * @return int计数器
      */
-    private IntCounter getIntCounter(String name) {
+    protected IntCounter getIntCounter(String name) {
         ValueUtils.requireNonNull(name, "IntCounter计数器名称不能为空！");
         return this.getRuntimeContext().getIntCounter(name);
     }
