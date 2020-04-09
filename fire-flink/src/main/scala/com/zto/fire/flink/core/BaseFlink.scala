@@ -8,8 +8,7 @@ import com.zto.fire.core.rest.RestfulRegister
 import com.zto.fire.flink.core.rest.FlinkSystemRestful
 import com.zto.fire.flink.core.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
-import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
-import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
+import org.apache.flink.api.common.ExecutionConfig
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.TimeCharacteristic
@@ -93,12 +92,14 @@ trait BaseFlink extends BaseFire {
     val config = if (env.isInstanceOf[ExecutionEnvironment]) {
       val batchEnv = env.asInstanceOf[ExecutionEnvironment]
       // flink.default.parallelism
-      batchEnv.setParallelism(GlobalConstants.FlinkConf.parallelism)
+      if (GlobalConstants.FlinkConf.defaultParallelism != -1) batchEnv.setParallelism(GlobalConstants.FlinkConf.defaultParallelism)
       batchEnv.getConfig
     } else {
       val streamEnv = env.asInstanceOf[StreamExecutionEnvironment]
+      // flink.max.parallelism
+      if (GlobalConstants.FlinkConf.maxParallelism != -1) streamEnv.setMaxParallelism(GlobalConstants.FlinkConf.maxParallelism)
       // flink.default.parallelism
-      streamEnv.setParallelism(GlobalConstants.FlinkConf.parallelism)
+      if (GlobalConstants.FlinkConf.defaultParallelism != -1) streamEnv.setParallelism(GlobalConstants.FlinkConf.defaultParallelism)
       // flink.stream.buffer.timeout.millis
       if (GlobalConstants.FlinkConf.streamBufferTimeoutMillis != -1) streamEnv.setBufferTimeout(GlobalConstants.FlinkConf.streamBufferTimeoutMillis)
       // flink.stream.number.execution.retries

@@ -272,7 +272,8 @@ object GlobalConstants {
     val FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT = "flink.default.input.dependency.constraint"
     val FLINK_EXECUTION_MODE = "flink.execution.mode"
     val FLINK_LATENCY_TRACKING_INTERVAL = "flink.latency.tracking.interval"
-    val FLINK_PARALLELISM = "flink.default.parallelism"
+    val FLINK_MAX_PARALLELISM = "flink.max.parallelism"
+    val FLINK_DEFAULT_PARALLELISM = "flink.default.parallelism"
     val FLINK_TASK_CANCELLATION_INTERVAL = "flink.task.cancellation.interval"
     val FLINK_TASK_CANCELLATION_TIMEOUT_MILLIS = "flink.task.cancellation.timeout.millis"
     val FLINK_USE_SNAPSHOT_COMPRESSION = "flink.use.snapshot.compression"
@@ -340,7 +341,8 @@ object GlobalConstants {
     lazy val defaultInputDependencyConstraint  = PropUtils.getString(GlobalConstants.PropKeys.FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT)
     lazy val executionMode  = PropUtils.getString(GlobalConstants.PropKeys.FLINK_EXECUTION_MODE)
     lazy val latencyTrackingInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_LATENCY_TRACKING_INTERVAL, -1)
-    lazy val parallelism = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_PARALLELISM, -1)
+    lazy val maxParallelism = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_MAX_PARALLELISM, -1)
+    lazy val defaultParallelism = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_DEFAULT_PARALLELISM, -1)
     lazy val taskCancellationInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_TASK_CANCELLATION_INTERVAL, -1)
     lazy val taskCancellationTimeoutMillis = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_TASK_CANCELLATION_TIMEOUT_MILLIS, -1)
     lazy val useSnapshotCompression = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_USE_SNAPSHOT_COMPRESSION, false)

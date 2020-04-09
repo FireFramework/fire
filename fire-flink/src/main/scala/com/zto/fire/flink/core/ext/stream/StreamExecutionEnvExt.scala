@@ -6,6 +6,7 @@ import com.zto.fire.common.util.{GlobalConstants, ValueUtils}
 import com.zto.fire.core.util.SparkUtils
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
+import org.apache.flink.api.common.JobExecutionResult
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
@@ -53,7 +54,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
    * @param jobName
    * job名称
    */
-  def startAwaitTermination(jobName: String = ""): Unit = {
+  def startAwaitTermination(jobName: String = ""): JobExecutionResult = {
     if (ValueUtils.isEmpty(jobName)) this.env.execute() else this.env.execute(jobName)
   }
 

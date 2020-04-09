@@ -122,7 +122,7 @@ object FlinkUtils {
     if (GlobalConstants.FlinkConf.latencyTrackingInterval != -1) config.setLatencyTrackingInterval(GlobalConstants.FlinkConf.latencyTrackingInterval)
 
     // flink.max.parallelism=1  没有默认值
-    if (GlobalConstants.FlinkConf.parallelism != -1) config.setMaxParallelism(GlobalConstants.FlinkConf.parallelism)
+    if (GlobalConstants.FlinkConf.defaultParallelism != -1) config.setMaxParallelism(GlobalConstants.FlinkConf.defaultParallelism)
 
     // flink.task.cancellation.interval=1 无默认值
     if (GlobalConstants.FlinkConf.taskCancellationInterval != -1) config.setTaskCancellationInterval(GlobalConstants.FlinkConf.taskCancellationInterval)
