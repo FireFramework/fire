@@ -9,6 +9,8 @@ import org.apache.flink.api.common.state.*;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.metrics.MetricGroup;
 import org.apache.flink.util.Collector;
+import scala.collection.JavaConversions;
+import scala.collection.mutable.Buffer;
 
 import java.io.File;
 import java.io.Serializable;
@@ -100,9 +102,10 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
      * @param <T>  广播变量类型
      * @return 广播变量集合
      */
-    protected <T> List<T> getBroadcastVariable(String name) {
+    protected <T> scala.collection.immutable.List<T> getBroadcastVariable(String name) {
         ValueUtils.requireNonNull(name, "广播变量名称不能为空！");
-        return this.getRuntimeContext().getBroadcastVariable(name);
+        Buffer<T> broadcastList = JavaConversions.asScalaBuffer(this.getRuntimeContext().getBroadcastVariable(name));
+        return broadcastList.toList();
     }
 
     protected <T, C> C getBroadcastVariableWithInitializer(String name, BroadcastVariableInitializer<T, C> initializer) {
