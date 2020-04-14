@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 对应HBase表的JavaBean
@@ -189,6 +190,24 @@ public class Student extends HBaseBaseBean<Student> {
         }
 
         return studentList;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Student)) return false;
+        Student student = (Student) o;
+        return Objects.equals(id, student.id) &&
+                Objects.equals(name, student.name) &&
+                Objects.equals(age, student.age) &&
+                Objects.equals(createTime, student.createTime) &&
+                Objects.equals(length, student.length) &&
+                Objects.equals(sex, student.sex);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, age, createTime, length, sex);
     }
 
     public static void main(String[] args) throws Exception {
