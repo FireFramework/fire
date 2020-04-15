@@ -288,6 +288,7 @@ object GlobalConstants {
     val FLINK_STREAM_CHECKPOINT_MIN_PAUSE_BETWEEN = "flink.stream.checkpoint.min.pause.between"
     val FLINK_STREAM_CHECKPOINT_PREFER_RECOVERY = "flink.stream.checkpoint.prefer.recovery"
     val FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER = "flink.stream.checkpoint.tolerable.failure.number"
+    val FLINK_STREAM_CHECKPOINT_EXTERNALIZED = "flink.stream.checkpoint.externalized"
   }
 
   /**
@@ -366,6 +367,7 @@ object GlobalConstants {
     lazy val streamCheckpointMinPauseBetween = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_MIN_PAUSE_BETWEEN, 0)
     lazy val streamCheckpointPreferRecovery = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_PREFER_RECOVERY, false)
     lazy val streamCheckpointTolerableTailureNumber = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER, 0)
+    lazy val streamCheckpointExternalized = PropUtils.getString(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_EXTERNALIZED, "RETAIN_ON_CANCELLATION")
   }
 
   /**

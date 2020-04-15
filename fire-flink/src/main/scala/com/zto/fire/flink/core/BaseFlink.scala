@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.table.catalog.hive.HiveCatalog
@@ -124,6 +125,8 @@ trait BaseFlink extends BaseFire {
         ckConfig.setPreferCheckpointForRecovery(GlobalConstants.FlinkConf.streamCheckpointPreferRecovery)
         // flink.stream.checkpoint.tolerable.failure.number 默认：0
         if (GlobalConstants.FlinkConf.streamCheckpointTolerableTailureNumber >= 0) ckConfig.setTolerableCheckpointFailureNumber(GlobalConstants.FlinkConf.streamCheckpointTolerableTailureNumber)
+        // flink.stream.checkpoint.externalized
+        if (StringUtils.isNotBlank(GlobalConstants.FlinkConf.streamCheckpointExternalized)) ckConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.valueOf(GlobalConstants.FlinkConf.streamCheckpointExternalized.trim))
       }
 
       streamEnv.getConfig
