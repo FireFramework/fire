@@ -280,6 +280,14 @@ object GlobalConstants {
     val FLINK_STREAM_BUFFER_TIMEOUT_MILLIS = "flink.stream.buffer.timeout.millis"
     val FLINK_STREAM_NUMBER_EXECUTION_RETRIES = "flink.stream.number.execution.retries"
     val FLINK_STREAM_TIME_CHARACTERISTIC = "flink.stream.time.characteristic"
+    // checkpoint相关配置项
+    val FLINK_STREAM_CHECKPOINT_INTERVAL = "flink.stream.checkpoint.interval"
+    val FLINK_STREAM_CHECKPOINT_MODE = "flink.stream.checkpoint.mode"
+    val FLINK_STREAM_CHECKPOINT_TIMEOUT = "flink.stream.checkpoint.timeout"
+    val FLINK_STREAM_CHECKPOINT_MAX_CONCURRENT = "flink.stream.checkpoint.max.concurrent"
+    val FLINK_STREAM_CHECKPOINT_MIN_PAUSE_BETWEEN = "flink.stream.checkpoint.min.pause.between"
+    val FLINK_STREAM_CHECKPOINT_PREFER_RECOVERY = "flink.stream.checkpoint.prefer.recovery"
+    val FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER = "flink.stream.checkpoint.tolerable.failure.number"
   }
 
   /**
@@ -349,6 +357,15 @@ object GlobalConstants {
     lazy val streamBufferTimeoutMillis = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_STREAM_BUFFER_TIMEOUT_MILLIS, -1)
     lazy val streamNumberExecutionRetries = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_STREAM_NUMBER_EXECUTION_RETRIES, -1)
     lazy val streamTimeCharacteristic = PropUtils.getString(GlobalConstants.PropKeys.FLINK_STREAM_TIME_CHARACTERISTIC, "")
+
+    // checkpoint相关配置项
+    lazy val streamCheckpointInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_INTERVAL, -1)
+    lazy val streamCheckpointMode = PropUtils.getString(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_MODE, "EXACTLY_ONCE")
+    lazy val streamCheckpointTimeout = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_TIMEOUT, 600000L)
+    lazy val streamCheckpointMaxConcurrent = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_MAX_CONCURRENT, 1)
+    lazy val streamCheckpointMinPauseBetween = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_MIN_PAUSE_BETWEEN, 0)
+    lazy val streamCheckpointPreferRecovery = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_PREFER_RECOVERY, false)
+    lazy val streamCheckpointTolerableTailureNumber = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER, 0)
   }
 
   /**
