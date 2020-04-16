@@ -59,6 +59,7 @@ object PropUtils extends BaseLogging {
             }
           }
         }
+        if (resource == null) println(s"${GlobalConstants.PS1.RED} ------> 未找到配置文件[ $fullName ]，请核实！<------ ${GlobalConstants.PS1.DEFAULT}")
         if (resource != null) {
           println(s"${GlobalConstants.PS1.YELLOW} --------------------------------- load ${fullName} --------------------------------- ${GlobalConstants.PS1.DEFAULT}")
           props.load(resource)
