@@ -67,7 +67,7 @@ class StreamingContextExt(ssc: StreamingContext) {
       groupId
     }
 
-    SparkUtils.kafkaParams(finalKafkaGroupId, kafkaBrokers, offset, autoCommit, keyNum)
+    com.zto.fire.common.util.KafkaUtils.kafkaParams(finalKafkaGroupId, kafkaBrokers, offset, autoCommit, keyNum)
   }
 
   /**

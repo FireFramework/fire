@@ -92,6 +92,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
      * 判断当前是否为driver
      */
     private static String label() {
+        if (GlobalConstants.isFlinkEngine()) return "driver";
         SparkEnv sparkEnv = SparkEnv.get();
         if (sparkEnv == null || "driver".equalsIgnoreCase(sparkEnv.executorId())) {
             return "driver";

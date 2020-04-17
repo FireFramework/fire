@@ -49,7 +49,7 @@ trait BaseFlink extends BaseFire {
 
     SchedulerManager.registerTasks(this)
     // 创建HiveCatalog
-    this.hive = new HiveCatalog("hive", GlobalConstants.SparkConf.defaultDB, GlobalConstants.HiveConf.hiveSiteDir, GlobalConstants.HiveConf.hiveVersion)
+    this.hive = new HiveCatalog(GlobalConstants.HiveConf.hiveCatalogName, GlobalConstants.SparkConf.defaultDB, GlobalConstants.HiveConf.hiveSiteDir, GlobalConstants.HiveConf.hiveVersion)
   }
 
   /**
@@ -107,6 +107,8 @@ trait BaseFlink extends BaseFire {
       if (GlobalConstants.FlinkConf.streamNumberExecutionRetries != -1)  streamEnv.setNumberOfExecutionRetries(GlobalConstants.FlinkConf.streamNumberExecutionRetries)
       // flink.stream.time.characteristic
       if (StringUtils.isNotBlank(GlobalConstants.FlinkConf.streamTimeCharacteristic)) streamEnv.setStreamTimeCharacteristic(TimeCharacteristic.valueOf(GlobalConstants.FlinkConf.streamTimeCharacteristic))
+      // TODO: 支持状态保存
+      // streamEnv.setStateBackend()
 
       // checkPoint相关参数
       val ckConfig = streamEnv.getCheckpointConfig

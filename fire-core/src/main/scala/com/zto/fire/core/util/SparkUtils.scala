@@ -285,64 +285,6 @@ object SparkUtils {
   }
 
   /**
-   * kafka配置信息
-   *
-   * @param groupId
-   * 消费组
-   * @param offset
-   * smallest、largest
-   * @return
-   * kafka相关配置
-   */
-  def kafkaParams(groupId: String = null, kafkaBrokers: String = null, offset: String = null, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
-    ValueUtils.requireNonNull(groupId, s"kafka groupId不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum 指定")
-
-    val finalKafkaBrokers = if (StringUtils.isBlank(kafkaBrokers)) GlobalConstants.KafkaConf.kafkaBrokers(keyNum) else kafkaBrokers
-    val finalOffset = if (StringUtils.isBlank(offset)) GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum) else offset
-    val finalAutoCommit = if (GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum) != null) GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum) else autoCommit
-
-    val consumerMap = collection.mutable.Map[String, Object](
-      "bootstrap.servers" -> finalKafkaBrokers,
-      "key.deserializer" -> classOf[StringDeserializer],
-      "value.deserializer" -> classOf[StringDeserializer],
-      "group.id" -> groupId,
-      "auto.offset.reset" -> finalOffset,
-      "enable.auto.commit" -> (finalAutoCommit: java.lang.Boolean),
-      "session.timeout.ms" -> GlobalConstants.KafkaConf.kafkaSessionTimeOut(keyNum),
-      "request.timeout.ms" -> GlobalConstants.KafkaConf.kafkaRequestTimeOut(keyNum),
-      "max.poll.interval.ms" -> GlobalConstants.KafkaConf.kafkaPollInterval(keyNum)
-    )
-
-    // 心跳间隔时间
-    val heartbeatInterval = GlobalConstants.KafkaConf.kafkaHeartbeatInterval(keyNum)
-    if (heartbeatInterval > 0) {
-      consumerMap += ("heartbeat.interval.ms" -> heartbeatInterval)
-    }
-    // 消费者组最大的session超时时间
-    val groupMaxSessionTimeOut = GlobalConstants.KafkaConf.kafkaGroupMaxSessionTimeOut(keyNum)
-    if (groupMaxSessionTimeOut > 0) {
-      consumerMap += ("group.max.session.timeout.ms" -> groupMaxSessionTimeOut)
-    }
-    // 消费者组最小的session超时时间
-    val groupMinSessionTimeOut = GlobalConstants.KafkaConf.kafkaGroupMinSessionTimeOut(keyNum)
-    if (groupMinSessionTimeOut > 0) {
-      consumerMap += ("group.min.session.timeout.ms" -> groupMinSessionTimeOut)
-    }
-    // 一次调用pool返回的最大记录数
-    val maxPollRecords = GlobalConstants.KafkaConf.kafkaMaxPollRecords(keyNum)
-    if (maxPollRecords > 0) {
-      consumerMap += ("max.poll.records" -> maxPollRecords)
-    }
-    // 每个分区返回的最大数据量
-    val maxPartitionFetchBytes = GlobalConstants.KafkaConf.kafkaMaxPartitionFetchBytes(keyNum)
-    if (maxPartitionFetchBytes > 0) {
-      consumerMap += ("max.partition.fetch.bytes" -> maxPartitionFetchBytes)
-    }
-
-    consumerMap.toMap
-  }
-
-  /**
    * rocketMQ配置信息
    *
    * @param groupId

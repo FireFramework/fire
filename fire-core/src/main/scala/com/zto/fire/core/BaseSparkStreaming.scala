@@ -5,7 +5,7 @@ import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.RestartParams
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.enu.{ErrorCode, JobType, RequestMethod}
-import com.zto.fire.common.util.{GlobalConstants, SystemInfoUtils, ValueUtils}
+import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, SystemInfoUtils, ValueUtils}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.rest.RestCase
 import com.zto.fire.core.util.SparkUtils
@@ -162,7 +162,7 @@ trait BaseSparkStreaming extends BaseSpark {
       groupId
     }
 
-    SparkUtils.kafkaParams(finalKafkaGroupId, kafkaBrokers, offset, autoCommit, keyNum)
+    KafkaUtils.kafkaParams(finalKafkaGroupId, kafkaBrokers, offset, autoCommit, keyNum)
   }
 
   /**

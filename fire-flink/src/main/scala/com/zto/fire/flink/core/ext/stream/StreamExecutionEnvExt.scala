@@ -2,7 +2,7 @@ package com.zto.fire.flink.core.ext.stream
 
 import java.util.Properties
 
-import com.zto.fire.common.util.{GlobalConstants, ValueUtils}
+import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ValueUtils}
 import com.zto.fire.core.util.SparkUtils
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
@@ -36,7 +36,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
 
     // 配置文件中的group.id优先级更高，若位置的，则取当前appName
     val finalGroupId = if (ValueUtils.isNotEmpty(groupId)) groupId else FlinkSingletonFactory.getAppName
-    val kafkaProps = if (ValueUtils.isNotEmpty(kafkaParams)) kafkaParams else SparkUtils.kafkaParams(finalGroupId, keyNum = keyNum)
+    val kafkaProps = if (ValueUtils.isNotEmpty(kafkaParams)) kafkaParams else KafkaUtils.kafkaParams(finalGroupId, keyNum = keyNum)
     ValueUtils.requireNonNullForce(kafkaProps, "kafka相关配置不能为空！")
     val topicList = if (ValueUtils.isNotEmpty(topics)) topics.toArray else GlobalConstants.KafkaConf.kafkaTopics(keyNum).split(",")
 

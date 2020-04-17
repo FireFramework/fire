@@ -21,7 +21,7 @@ object PropUtils extends BaseLogging {
   // 用于判断是否merge过
   private val isMerge = new AtomicBoolean(false)
   // key的前缀
-  private var keyPrefix = "spark"
+  private[fire] var keyPrefix = "spark"
   // 是否兼容key的前缀配置
   private var compatible = false
   // 加载默认配置文件
@@ -82,7 +82,7 @@ object PropUtils extends BaseLogging {
     * 配置的value
     */
   def getProperty(key: String): String = {
-    if (!this.isMerge.get) this.mergeSparkConf
+    if (!this.isMerge.get && "spark".equals(this.keyPrefix)) this.mergeSparkConf
     if (this.compatible) {
       // 兼容配置key的前缀变化，适配flink.为前缀的配置项
       val value = this.props.getProperty(key.replaceFirst("spark", this.keyPrefix))
@@ -393,7 +393,7 @@ object PropUtils extends BaseLogging {
     * 获取zrc配置信息
     */
   def invokeZrcConf(className: String, rest: String): Unit = {
-    this.mark
+    if ("spark".equals(this.keyPrefix)) this.mark
     val param =
       s"""
          |{"className": "$className", "url": "http://$rest", "fireVersion": "${this.getString("spark.fire.version")}", "zrcKey": "21fa30b7f2082b1b12dfbc7c8c6d70b9"}
@@ -404,12 +404,12 @@ object PropUtils extends BaseLogging {
       conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.prod.address", "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack"), param)
     } catch {
       case e: Exception => {
-        this.log("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", null, null, e)
+        if ("spark".equals(this.keyPrefix)) this.log("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", null, null, e)
         conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.test.address"), param)
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {
-        this.log("成功获取zrc配置信息：" + conf)
+        if ("spark".equals(this.keyPrefix)) this.log("成功获取zrc配置信息：" + conf)
         val msg = JSON.parseObject(conf)
         if (msg != null && msg.get("code") == 200) {
           val content = msg.get("content")

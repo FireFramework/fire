@@ -29,7 +29,18 @@ object GlobalConstants {
   lazy val schedulerBlackList = PropUtils.getString(PropKeys.SPARK_FIRE_SCHEDULER_BLACKLIST, "")
   // 当前在run的任务类型
   private[fire] var jobType: JobType = _
+  // 用于区分不同的流计算引擎类型
+  private[fire] lazy val engine = PropUtils.keyPrefix
 
+  /**
+   * 用于判断是否为spark引擎
+   */
+  def isSparkEngine = "spark".equals(this.engine)
+
+  /**
+   * 用于判断是否为flink引擎
+   */
+  def isFlinkEngine = "flink".equals(this.engine)
 
   /**
    * 预定义的默认值，配置文件没有指明的情况下会取默认值
@@ -183,6 +194,8 @@ object GlobalConstants {
     val HIVE_SITE_DIR = "spark.hive.conf.dir"
     // hive版本号
     val HIVE_VERSION = "spark.hive.version"
+    // hive的catalog名称
+    val HIVE_CATALOG_NAME = "spark.hive.catalog.name"
 
     // ---------------------------- RocketMQ 相关配置 ---------------------------- //
     // rocketMQ name server
@@ -895,6 +908,8 @@ object GlobalConstants {
     lazy val hiveSiteDir = PropUtils.getString(PropKeys.HIVE_SITE_DIR)
     // hive版本号
     lazy val hiveVersion = PropUtils.getString(PropKeys.HIVE_VERSION, "1.1.0")
+    // hive catalog名称
+    lazy val hiveCatalogName = PropUtils.getString(PropKeys.HIVE_CATALOG_NAME, "hive")
 
     /**
      * 根据hive集群名称获取metastore地址
