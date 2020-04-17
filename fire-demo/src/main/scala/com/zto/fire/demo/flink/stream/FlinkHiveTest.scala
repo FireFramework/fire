@@ -1,11 +1,9 @@
 package com.zto.fire.demo.flink.stream
 
 import com.alibaba.fastjson.JSON
-import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
-import com.zto.fire.flink.core.util.FlinkUtils
 import org.apache.flink.api.scala._
 
 
