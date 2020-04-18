@@ -8,12 +8,11 @@ import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
+import com.zto.fire.flink.core.ext.watermark.FirePeriodicWatermarks
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.scala._
-import org.apache.flink.streaming.api.functions.{AssignerWithPeriodicWatermarks, AssignerWithPunctuatedWatermarks}
 import org.apache.flink.streaming.api.scala.OutputTag
 import org.apache.flink.streaming.api.scala.function.WindowFunction
-import org.apache.flink.streaming.api.watermark.Watermark
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow
@@ -39,33 +38,19 @@ object WatermarkTest extends BaseFlinkStreaming {
       (student, DateFormatUtils.formatDateTime(student.getCreateTime).getTime)
     })
 
-    // 分配计算水位线
-    val watermarkDS = dstream.assignTimestampsAndWatermarks(new AssignerWithPeriodicWatermarks[(Student, Long)]() {
-      var currentMaxTimestamp = 0L
-      // 最大允许的乱序时间是10s
-      val maxOutOfOrderness = 10000L
+    // 分配并计算水位线，默认允许最大的乱序时间为10s，若需指定，则通过构造方法传参new FirePeriodicWatermarks(100)
+    val watermarkDS = dstream.assignTimestampsAndWatermarks(new FirePeriodicWatermarks[(Student, Long)]() {
       val format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
 
       /**
-       * 1. 先执行抽取eventtime字段
+       * 抽取eventtime字段
        */
       override def extractTimestamp(element: (Student, Long), previousElementTimestamp: Long): Long = {
-        // 用于根据当前事件时间计算水位线的值
-        this.currentMaxTimestamp = Math.max(element._2, this.currentMaxTimestamp)
-        println("---> 抽取eventtime：" + element._2 + " 最新水位线值：" + this.currentMaxTimestamp)
+        println("---> 抽取eventtime：" + element._2 + " 最新水位线值：" + this.watermark.getTimestamp)
         element._2
       }
 
-      /**
-       * 2.获取当前水位线
-       */
-      override def getCurrentWatermark: Watermark = {
-        new Watermark(this.currentMaxTimestamp - this.maxOutOfOrderness)
-      }
     }).setParallelism(1) // 并行度调整为1的好处是能尽快观察到水位线的效果，否则要等多个task满足条件，不易观察结果
-
-    // 用于存放延期的数据
-    val outputTag = new OutputTag[(Student, Long)]("later_data")
 
     val windowDStream = watermarkDS
       .keyBy(_._1)
@@ -73,12 +58,12 @@ object WatermarkTest extends BaseFlinkStreaming {
       // 最大允许延迟的数据3s，算上水位线允许最大的乱序时间10s，一共允许最大的延迟时间为13s
       .allowedLateness(Time.seconds(3))
       // 收集延期的数据
-      .sideOutputLateData(outputTag)
+      .sideOutputLateData(this.outputTag.asInstanceOf[OutputTag[(Student, Long)]])
       .apply(new WindowFunctionTest)
 
     windowDStream.print().setParallelism(1)
     // 获取由于延迟太久而被丢弃的数据
-    windowDStream.getSideOutput[(Student, Long)](outputTag).print()
+    windowDStream.getSideOutput[(Student, Long)](this.outputTag.asInstanceOf[OutputTag[(Student, Long)]]).map(t => ("丢弃", t)).print()
 
     this.ssc.startAwaitTermination()
   }

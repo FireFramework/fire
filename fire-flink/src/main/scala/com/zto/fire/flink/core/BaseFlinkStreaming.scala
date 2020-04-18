@@ -5,8 +5,9 @@ import com.zto.fire.common.util.{GlobalConstants, PropUtils, SystemInfoUtils}
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.scala.{OutputTag, StreamExecutionEnvironment}
 import org.apache.flink.table.api.EnvironmentSettings
+import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala.StreamTableEnvironment
 
 /**
@@ -18,6 +19,8 @@ trait BaseFlinkStreaming extends BaseFlink {
   protected var env, ssc: StreamExecutionEnvironment = _
   protected var tableEnv, flink: StreamTableEnvironment = _
   override val jobType: JobType = JobType.FLINK_STREAMING
+  // 用于存放延期的数据
+  protected val outputTag = new OutputTag[Any]("later_data")
 
 
   /**
