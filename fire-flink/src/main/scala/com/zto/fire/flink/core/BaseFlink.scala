@@ -49,7 +49,7 @@ trait BaseFlink extends BaseFire {
 
     SchedulerManager.registerTasks(this)
     // 创建HiveCatalog
-    this.hive = new HiveCatalog(GlobalConstants.HiveConf.hiveCatalogName, GlobalConstants.SparkConf.defaultDB, GlobalConstants.HiveConf.hiveSiteDir, GlobalConstants.HiveConf.hiveVersion)
+    this.hive = new HiveCatalog(GlobalConstants.HiveConf.hiveCatalogName, GlobalConstants.SparkConf.defaultDB, GlobalConstants.HiveConf.getHiveConfDir, GlobalConstants.HiveConf.hiveVersion)
   }
 
   /**
@@ -104,7 +104,7 @@ trait BaseFlink extends BaseFire {
       // flink.stream.buffer.timeout.millis
       if (GlobalConstants.FlinkConf.streamBufferTimeoutMillis != -1) streamEnv.setBufferTimeout(GlobalConstants.FlinkConf.streamBufferTimeoutMillis)
       // flink.stream.number.execution.retries
-      if (GlobalConstants.FlinkConf.streamNumberExecutionRetries != -1)  streamEnv.setNumberOfExecutionRetries(GlobalConstants.FlinkConf.streamNumberExecutionRetries)
+      if (GlobalConstants.FlinkConf.streamNumberExecutionRetries != -1) streamEnv.setNumberOfExecutionRetries(GlobalConstants.FlinkConf.streamNumberExecutionRetries)
       // flink.stream.time.characteristic
       if (StringUtils.isNotBlank(GlobalConstants.FlinkConf.streamTimeCharacteristic)) streamEnv.setStreamTimeCharacteristic(TimeCharacteristic.valueOf(GlobalConstants.FlinkConf.streamTimeCharacteristic))
       // TODO: 支持状态保存

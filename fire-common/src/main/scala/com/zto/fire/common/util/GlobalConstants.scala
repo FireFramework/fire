@@ -359,9 +359,9 @@ object GlobalConstants {
     lazy val genericTypesEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_GENERIC_TYPES_ENABLE, false)
     lazy val objectReuseEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_OBJECT_REUSE_ENABLE, false)
     lazy val autoWatermarkInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_AUTO_WATERMARK_INTERVAL)
-    lazy val closureCleanerLevel  = PropUtils.getString(GlobalConstants.PropKeys.FLINK_CLOSURE_CLEANER_LEVEL)
-    lazy val defaultInputDependencyConstraint  = PropUtils.getString(GlobalConstants.PropKeys.FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT)
-    lazy val executionMode  = PropUtils.getString(GlobalConstants.PropKeys.FLINK_EXECUTION_MODE)
+    lazy val closureCleanerLevel = PropUtils.getString(GlobalConstants.PropKeys.FLINK_CLOSURE_CLEANER_LEVEL)
+    lazy val defaultInputDependencyConstraint = PropUtils.getString(GlobalConstants.PropKeys.FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT)
+    lazy val executionMode = PropUtils.getString(GlobalConstants.PropKeys.FLINK_EXECUTION_MODE)
     lazy val latencyTrackingInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_LATENCY_TRACKING_INTERVAL, -1)
     lazy val maxParallelism = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_MAX_PARALLELISM, -1)
     lazy val defaultParallelism = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_DEFAULT_PARALLELISM, -1)
@@ -389,24 +389,34 @@ object GlobalConstants {
   object JdbcConf extends Enumeration {
     // spark.db.jdbc.url
     def url(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_URL_KEY, keyNum)
+
     // spark.db.jdbc.driver
     def driverClass(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_DRIVER_KEY, keyNum)
+
     // spark.db.jdbc.user
     def user(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_USER_KEY, keyNum)
+
     // spark.db.jdbc.password
     def password(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_PASSWORD_KEY, keyNum)
+
     // 事务的隔离级别：NONE, READ_COMMITTED, READ_UNCOMMITTED, REPEATABLE_READ, SERIALIZABLE，默认为READ_UNCOMMITTED
     def isolationLevel(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_ISOLATION_LEVEL, keyNum, DefaultVals.jdbcIsolationLevel)
+
     // 批量操作的记录数
     def batchSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_BATCH_SIZE, keyNum, DefaultVals.jdbcBatchSize)
+
     // 连接池最小连接数
     def minPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MIN_POOL_SIZE_KEY, keyNum, 1)
+
     // 连接池初始化连接数
     def initialPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_INITIAL_POOL_SIZE_KEY, keyNum, 1)
+
     // 连接池最大连接数
     def maxPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_POOL_SIZE_KEY, keyNum, 5)
+
     // 连接池每次自增连接数
     def acquireIncrement(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_ACQUIRE_INCREMENT_KEY, keyNum, 1)
+
     // 多久释放没有用到的连接
     def maxIdleTime(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_IDLE_TIME_KEY, keyNum, 30)
   }
@@ -441,20 +451,28 @@ object GlobalConstants {
     private val zmsNewKafkaUrl = "192.168.73.31:9092,192.168.73.32:9092,192.168.73.33:9092,192.168.73.34:9092,192.168.73.35:9092,192.168.73.36:9092"
     // 测试kafka集群地址
     private val testKafkaUrl = "10.9.45.97:9092,10.9.15.38:9092,10.9.36.49:9092,10.9.36.50:9092"
+
     // kafka消费起始位点
     def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
+
     // kafka消费结束位点
     def kafkaEndingOffsets(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_ENDING_OFFSET, keyNum, "")
+
     // 从Kafka轮询数据的超时时间（以毫秒为单位，默认1024）
     def kafkaPollTimeoutMs(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_POLL_TIMEOUT_MS, keyNum, 1024)
+
     // 放弃获取Kafka偏移前重试的次数，默认3次
     def kafkaFetchOffsetNumRetries(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.KAFKA_FETCH_OFFSET_NUM_RETRIES, keyNum, 3)
+
     // 重试获取Kafka偏移之前要等待的毫秒数，默认10毫秒
     def kafkaFetchOffsetRetryIntervalMs(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_FETCH_OFFSET_RETRY_INTERVAL_MS, keyNum, 10)
+
     // 每个触发间隔处理的最大偏移量的速率限制，指定的偏移总数将在不同卷的topicPartitions中按比例分配
     def kafkaMaxOffsetsPerTrigger(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_MAX_OFFSETS_PER_TRIGGER, keyNum, -1)
+
     // 丢失数据时是否失败
     def kafkaFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.kafkaFailOnDataLoss)
+
     // enable.auto.commit
     def kafkaEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.kafkaEnableAutoCommit)
 
@@ -904,8 +922,6 @@ object GlobalConstants {
     private val streamingMetastore = "thrift://192.168.25.180:9083"
     // 测试hive集群
     private val testMetastore = "thrift://10.9.46.107:9083"
-    // hive-site.xml存放的路径
-    lazy val hiveSiteDir = PropUtils.getString(PropKeys.HIVE_SITE_DIR)
     // hive版本号
     lazy val hiveVersion = PropUtils.getString(PropKeys.HIVE_VERSION, "1.1.0")
     // hive catalog名称
@@ -928,6 +944,24 @@ object GlobalConstants {
         hiveCluster
       } else {
         streamingMetastore
+      }
+    }
+
+    /**
+     * 获取hive-site.xml的存放路径
+     *
+     * @return
+     * /path/to/hive-site.xml
+     */
+    def getHiveConfDir: String = {
+      if ("batch".equalsIgnoreCase(hiveCluster)) {
+        "/home/hadoop/flink/conf/hive/batch"
+      } else if ("streaming".equalsIgnoreCase(hiveCluster)) {
+        "/home/hadoop/flink/conf/hive/streaming"
+      } else if ("test".equalsIgnoreCase(hiveCluster)) {
+        "/home/hadoop/app/flink/conf"
+      } else {
+        hiveCluster
       }
     }
   }

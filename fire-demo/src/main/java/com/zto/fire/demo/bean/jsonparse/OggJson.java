@@ -1,8 +1,6 @@
 package com.zto.fire.demo.bean.jsonparse;
 
-import java.io.Serializable;
-
-public class OggJson<T> implements BaseJson {
+public class OggJson implements BaseJson {
     private String table;
     private String op_type;
     private String op_ts;
@@ -13,8 +11,6 @@ public class OggJson<T> implements BaseJson {
     private String schema;
     private String when;
     private String pos;
-    private T after;
-    private T before;
 
     public OggJson() {
     }
@@ -97,23 +93,5 @@ public class OggJson<T> implements BaseJson {
 
     public void setPos(String pos) {
         this.pos = pos;
-    }
-
-    public T getAfter() {
-        return after;
-    }
-
-    public OggJson setAfter(T after) {
-        this.after = after;
-        return this;
-    }
-
-    public T getBefore() {
-        return before;
-    }
-
-    public OggJson setBefore(T before) {
-        this.before = before;
-        return this;
     }
 }
