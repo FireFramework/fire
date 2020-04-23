@@ -1,10 +1,13 @@
 package com.zto.fire.demo.flink.stream
 
 import com.alibaba.fastjson.JSON
+import com.zto.fire.common.bean.OGGBaseBean
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
+import com.zto.fire.flink.core.ext.functions.FireMapFunction
 import org.apache.flink.api.scala._
+import org.apache.flink.configuration.Configuration
 
 
 /**
@@ -21,13 +24,19 @@ object FlinkHiveTest extends BaseFlinkStreaming {
     this.flink.sql("select * from kafka").show
     // 查询操作
     this.flink.sql("select * from tmp.zto_scan_send order by bill_code limit 10").createOrReplaceTempView("scan_send")
-    val joinedTable = this.flink.sql("select t1.bill_code, t2.id, t2.name from scan_send t1 left join kafka t2 on t1.bill_code=t2.name")
+    val joinedTable = this.flink.sql("select t1.bill_code, t2.name from scan_send t1 left join kafka t2 on t1.bill_code=t2.name")
     joinedTable.toRetractStream.print()
 
     this.ssc.startAwaitTermination()
   }
 
+  override def before(args: Array[String]): Unit = {
+    if (args != null) {
+      args.foreach(x => println("main方法参数：" + x))
+    }
+  }
+
   def main(args: Array[String]): Unit = {
-    this.init()
+    this.init(args = args)
   }
 }
