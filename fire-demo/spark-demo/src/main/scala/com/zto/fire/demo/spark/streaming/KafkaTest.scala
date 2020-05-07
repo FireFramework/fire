@@ -1,6 +1,7 @@
 package com.zto.fire.demo.spark.streaming
 
 import com.zto.fire.common.anno.Scheduled
+import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.demo.bean.OrderCommon
@@ -49,7 +50,10 @@ object KafkaTest extends BaseSparkStreaming {
 
     val dstream2 = this.ssc.createDirectStream(keyNum = 2)
     dstream2.print(1)
-    val dstream3 = this.ssc.createDirectStream(keyNum = 3)
+    val dstream3 = this.ssc.createDirectStream(keyNum = 1)
+    dstream3.count().foreachRDD(rdd => {
+      println("count=" + rdd.count())
+    })
     dstream3.print(1)
     val dstream5 = this.ssc.createDirectStream(keyNum = 5)
     dstream5.print(1)
@@ -57,19 +61,19 @@ object KafkaTest extends BaseSparkStreaming {
     this.ssc.startAwaitTermination()
   }
 
-  @Scheduled(fixedInterval = 60 * 1000)
+  @Scheduled(fixedInterval = 60 * 1000, scope = "all")
   def loadTable: Unit = {
-    println("=================== 每分钟执行loadTable ===================")
+    println(s"${DateFormatUtils.formatCurrentDateTime()}=================== 每分钟执行loadTable ===================")
   }
 
   @Scheduled(cron = "0 0 * * * ?")
   def loadTable2: Unit = {
-    println("=================== 每小时执行loadTable2 ===================")
+    println(s"${DateFormatUtils.formatCurrentDateTime()}=================== 每小时执行loadTable2 ===================")
   }
 
   @Scheduled(cron = "0 0 9 * * ?")
   def loadTable3: Unit = {
-    println("=================== 每天9点执行loadTable3 ===================")
+    println(s"${DateFormatUtils.formatCurrentDateTime()}=================== 每天9点执行loadTable3 ===================")
   }
 
 

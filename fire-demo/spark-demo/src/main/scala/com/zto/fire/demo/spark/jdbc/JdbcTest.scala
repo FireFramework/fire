@@ -18,7 +18,9 @@ import org.apache.spark.sql.SaveMode
   * @author ChengLong 2019-6-17 15:17:38
   */
 object JdbcTest extends BaseSparkCore {
-  lazy val tableName = this.conf.get("tableName")
+  lazy val tableName = "spark_test"
+  lazy val tableName2 = "t_cluster_info"
+  lazy val tableName3 = "t_cluster_status"
 
   /**
     * 使用jdbc方式对关系型数据库进行增删改操作
@@ -140,17 +142,17 @@ object JdbcTest extends BaseSparkCore {
     * 在executor中执行jdbc操作
     */
   def testExecutor: Unit = {
-    this.jdbc.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
+    this.jdbc.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
       override def process(rs: ResultSet): Int = {
         this.mark()
         Thread.sleep(1000)
-        this.log(s"=============driver123 $tableName=============")
+        this.log(s"=============driver123 $tableName2=============")
         1
       }
     }, keyNum = 3)
-    JdbcOper.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
+    JdbcOper.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
       override def process(rs: ResultSet): Int = {
-        this.log(s"=============driver $tableName=============")
+        this.log(s"=============driver $tableName2=============")
         1
       }
     }, keyNum = 5)
@@ -158,7 +160,7 @@ object JdbcTest extends BaseSparkCore {
     val rdd = this.spark.parallelize(1 to 3, 3)
     rdd.foreachPartition(it => {
       it.foreach(i => {
-        this.jdbc.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
+        this.jdbc.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
           override def process(rs: ResultSet): Int = {
             this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
             1
@@ -171,7 +173,7 @@ object JdbcTest extends BaseSparkCore {
     val rdd2 = this.spark.parallelize(1 to 3, 3)
     rdd2.foreachPartition(it => {
       it.foreach(i => {
-        JdbcOper.executeQueryCall(s"select id from $tableName limit 1", null, new QueryCallback {
+        JdbcOper.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
           override def process(rs: ResultSet): Int = {
             this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
             1
@@ -186,9 +188,9 @@ object JdbcTest extends BaseSparkCore {
     // 测试环境测试
     this.testJdbcUpdate
     this.testJdbcQuery
-    // this.testTableLoad
-    // this.testTableSave
-    // this.testDataFrameSave
+    this.testTableLoad
+    this.testTableSave
+    this.testDataFrameSave
     // 生产环境测试
     // this.testExecutor
   }
