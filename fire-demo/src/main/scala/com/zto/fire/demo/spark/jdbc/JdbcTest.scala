@@ -18,7 +18,7 @@ import org.apache.spark.sql.SaveMode
   * @author ChengLong 2019-6-17 15:17:38
   */
 object JdbcTest extends BaseSparkCore {
-  val tableName = SparkUtils.getConf("tableName")
+  lazy val tableName = this.conf.get("tableName")
 
   /**
     * 使用jdbc方式对关系型数据库进行增删改操作

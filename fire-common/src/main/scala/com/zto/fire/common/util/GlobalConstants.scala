@@ -27,8 +27,6 @@ object GlobalConstants {
   lazy val quartzMaxThread = PropUtils.getString(PropKeys.SPARK_FIRE_QUARTZ_MAX_THREAD, "8")
   // 定时任务黑名单，配置的value为方法名，多个以逗号分隔
   lazy val schedulerBlackList = PropUtils.getString(PropKeys.SPARK_FIRE_SCHEDULER_BLACKLIST, "")
-  // 当前在run的任务类型
-  private[fire] var jobType: JobType = _
   // 用于区分不同的流计算引擎类型
   private[fire] lazy val engine = PropUtils.keyPrefix
 

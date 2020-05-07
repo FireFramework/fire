@@ -15,7 +15,7 @@ object HBaseStreamingTest extends BaseSparkStreaming {
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream()
 
-    dstream.repartition(10).foreachRDD(rdd => {
+    dstream.repartition(5).foreachRDD(rdd => {
       rdd.foreachPartition(it => {
         this.mark
         HBaseOper.insert(this.tableName, Student2.buildStudentList())

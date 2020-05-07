@@ -16,16 +16,13 @@ import scala.collection.JavaConversions
   * @author ChengLong 2019-5-9 09:37:25
   */
 object HBaseHadoopTest extends BaseSparkCore {
-  private val tableName1 = "fire_test_1"
-  private val tableName2 = "fire_test_2"
   private val tableName3 = "fire_test_3"
-  private val tableName4 = "fire_test_4"
 
   /**
     * 基于saveAsNewAPIHadoopDataset封装，将rdd数据保存到hbase中
     */
   def testHbaseHadoopPutRDD: Unit = {
-    val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
+    val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
     this.spark.hbaseHadoopPutRDD(this.tableName3, studentRDD)
     // 方式二：直接基于rdd进行方法调用
     // studentRDD.hbaseHadoopPutRDD(this.tableName1)
@@ -35,12 +32,12 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 基于saveAsNewAPIHadoopDataset封装，将DataFrame数据保存到hbase中
     */
   def testHbaseHadoopPutDF: Unit = {
-    val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
+    val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
     val studentDF = this.spark.createDataFrame(studentRDD, classOf[Student])
     // 由于DataFrame相较于Dataset和RDD是弱类型的数据集合，所以需要传递具体的类型classOf[Type]
-    this.spark.hbaseHadoopPutDF(this.tableName2, studentDF, classOf[Student])
+    this.spark.hbaseHadoopPutDF(this.tableName3, studentDF, classOf[Student])
     // 方式二：基于DataFrame进行方法调用
-    // studentDF.hbaseHadoopPutDF(this.tableName2, classOf[Student])
+    // studentDF.hbaseHadoopPutDF(this.tableName3, classOf[Student])
   }
 
   /**
@@ -67,7 +64,7 @@ object HBaseHadoopTest extends BaseSparkCore {
       row.getAs("id").toString
     }
 
-    val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
+    val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
     this.spark.createDataFrame(studentRDD, classOf[Student]).createOrReplaceTempView("student")
     // 指定rowKey构建的函数
     this.spark.sql("select age,createTime,id,length,name,sex from student").hbaseHadoopPutDFRow(this.tableName3, buildRowKey, false)
@@ -77,8 +74,9 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 使用Spark的方式scan海量数据，并将结果集映射为RDD
     */
   def testHBaseHadoopScanRDD: Unit = {
+    println("===========testHBaseHadoopScanRDD===========")
     val daysFilter = new RowFilter(CompareFilter.CompareOp.EQUAL, new RegexStringComparator("20190613|20190614|20190615|20190616"))
-    val studentRDD = this.spark.hbaseHadoopScanRDD(this.tableName2, new Scan().setFilter(daysFilter), classOf[Student])
+    val studentRDD = this.spark.hbaseHadoopScanRDD(this.tableName3, new Scan().setFilter(daysFilter), classOf[Student])
     studentRDD.printEachPartition
   }
 
@@ -86,6 +84,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 使用Spark的方式scan海量数据，并将结果集映射为DataFrame
     */
   def testHBaseHadoopScanDF: Unit = {
+    println("===========testHBaseHadoopScanDF===========")
     val studentDF = this.spark.hbaseHadoopScanDF2(this.tableName3, "1", "6", classOf[Student])
     studentDF.show(100, false)
   }
@@ -94,6 +93,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 使用Spark的方式scan海量数据，并将结果集映射为Dataset
     */
   def testHBaseHadoopScanDS: Unit = {
+    println("===========testHBaseHadoopScanDS===========")
     val scan = new Scan()
     scan.setTimeRange(1575216000000L, 1575648000000L)
     val studentDS = this.spark.hbaseHadoopScanDS(this.tableName3, scan, classOf[Student])
@@ -105,18 +105,17 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 注：此方法会被自动调用
     */
   override def process: Unit = {
-    /*this.testHbaseHadoopPutRDD
-    this.testHbaseHadoopPutDF
-    this.testHbaseHadoopPutDS*/
+    this.testHbaseHadoopPutRDD
+    // this.testHbaseHadoopPutDF
+    // this.testHbaseHadoopPutDS
     // this.testHbaseHadoopPutDFRow
-    // this.testHbaseHadoopPutRDD
-    // this.testHBaseHadoopScanRDD
-    // this.testHBaseHadoopScanDF
+
+    this.testHBaseHadoopScanRDD
+    this.testHBaseHadoopScanDF
     this.testHBaseHadoopScanDS
   }
 
   def main(args: Array[String]): Unit = {
     this.init()
-    this.spark.stop()
   }
 }
