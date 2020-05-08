@@ -1,5 +1,6 @@
 package com.zto.fire.demo.spark.thread
 
+import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.BaseSparkStreaming
 
@@ -46,7 +47,7 @@ object ThreadTest extends BaseSparkStreaming {
     * 查看表结构信息
     */
   def showSchema: Unit = {
-    println("--------------> atFixRate <----------------")
+    println(s"${DateFormatUtils.formatCurrentDateTime()}--------------> atFixRate <----------------")
     this.spark.sql("use tmp")
     spark.sql("show tables").show(false)
   }
