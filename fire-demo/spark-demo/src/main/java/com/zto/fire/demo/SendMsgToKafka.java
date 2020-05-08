@@ -23,7 +23,7 @@ public class SendMsgToKafka {
         props.put("value.serializer", StringSerializer.class.getName());
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(props);
         while (true) {
-            producer.send(new ProducerRecord<>("fire", "{\"age\":1,\"className\":\"Student\",\"id\":1,\"length\":33.16,\"name\":\"admin\", \"createTime\": \"2020-04-17 17:52:00\"}"));
+            producer.send(new ProducerRecord<>("flink", "{\"age\":1,\"className\":\"Student\",\"id\":1,\"length\":33.16,\"name\":\"admin\", \"createTime\": \"2020-04-17 17:52:00\"}"));
             Thread.sleep(10);
         }
     }
