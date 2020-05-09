@@ -45,8 +45,8 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     if (StringUtils.isNotBlank(GlobalConstants.SparkConf.appName)) {
       this.appName = GlobalConstants.SparkConf.appName
     }
-    Logger.getLogger("org.apache.kafka").setLevel(Level.WARN)
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+    Logger.getLogger("org.apache.kafka").setLevel(Level.ERROR)
     Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
     this.wrapLogInfo("<-- 完成fire框架初始化 -->")
   }
