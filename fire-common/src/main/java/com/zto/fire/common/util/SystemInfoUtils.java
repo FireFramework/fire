@@ -569,7 +569,7 @@ public class SystemInfoUtils {
      */
     public static boolean isLinux() {
         String os = System.getProperty("os.name");
-        if (os.toLowerCase().startsWith("windows")) {
+        if (os.toLowerCase().startsWith("windows") || os.toLowerCase().contains("mac")) {
             return false;
         } else {
             return true;
@@ -582,7 +582,33 @@ public class SystemInfoUtils {
      * @return
      */
     public static boolean isWindows() {
-        return !isLinux();
+        String os = System.getProperty("os.name");
+        if (os.toLowerCase().startsWith("windows")) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 是否为mac os环境
+     */
+    public static boolean isMac() {
+        String os = System.getProperty("os.name");
+        if (os.toLowerCase().contains("mac")) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 判断当前是否运行在本地环境下
+     * 本地环境包括：Windows、Mac OS
+     */
+    public static boolean isLocal() {
+        if (isWindows() || isMac()) {
+            return true;
+        }
+        return false;
     }
 
     /**
