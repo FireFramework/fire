@@ -112,7 +112,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     tmpConf.set("spark.driver.class.simple.name", this.driverClass)
     tmpConf.set("hive.metastore.uris", GlobalConstants.HiveConf.getMetastoreUrl)
     if (SystemInfoUtils.isLocal) {
-      this.spark = SparkSession.builder().config(tmpConf).master("local[*]") /*.enableHiveSupport()*/ .getOrCreate()
+      this.spark = SparkSession.builder().config(tmpConf).master("local[*]").enableHiveSupport().getOrCreate()
     } else {
       this.spark = SparkSession.builder().config(tmpConf).enableHiveSupport().getOrCreate()
     }
