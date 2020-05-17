@@ -8,6 +8,7 @@ import com.zto.fire.common.enu.{JobType, ThreadPoolType}
 import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, PropUtils, SystemInfoUtils, ThreadUtils, ValueUtils}
 import com.zto.fire.core.rest.{RestfulRegister, SparkSystemRestful, SystemRestful}
+import com.zto.fire.core.util.FireUtils
 import spark.Spark
 
 /**
@@ -35,7 +36,7 @@ trait BaseFire {
   // restful接口注册
   private[fire] var restfulRegister: RestfulRegister = _
   // fire restful服务端口号
-  val restPort = SystemInfoUtils.getRundomPort
+  var restPort: Int = _
   // 用于子类的锁状态判断，默认关闭状态
   lazy val lock = new AtomicBoolean(false)
   // 是否已停止
@@ -163,6 +164,24 @@ trait BaseFire {
   def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, threadPoolSchedule: ScheduledExecutorService = this.threadPoolSchedule): Unit = {
     ThreadUtils.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount)
   }
+
+  /**
+   * 重试指定的函数fn retryNum次
+   * 当fn执行失败时，会根据设置的重试次数自动重试retryNum次
+   * 每次重试间隔等待duration(毫秒)
+   *
+   * @param retryNum
+   * 指定重试的次数
+   * @param duration
+   * 重试的间隔时间（ms）
+   * @param fun
+   * 重试的函数或方法
+   * @tparam T
+   * fn执行后返回的数据类型
+   * @return
+   * 返回fn执行结果
+   */
+  def retry[T](retryNum: Int = 3, duration: Long = 3000)(fun: => T): T = FireUtils.retry(retryNum, duration)(fun)
 
   /**
    * 用于在fire框架启动时展示信息

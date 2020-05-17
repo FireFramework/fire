@@ -1,6 +1,5 @@
 package com.zto.fire.common.util
 
-import com.zto.fire.common.enu.JobType
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.client.Durability
@@ -266,6 +265,12 @@ object GlobalConstants {
     val SPARK_FIRE_QUARTZ_MAX_THREAD = "spark.fire.quartz.max.thread"
     // 定时调度任务黑名单（定时任务方法名），以逗号分隔
     val SPARK_FIRE_SCHEDULER_BLACKLIST = "spark.fire.scheduler.blacklist"
+    // 用于配置是否抛弃zrc独立运行，配置为false表示不向zrc注册，不获取zrc配置
+    val SPARK_FIRE_ZRC_ENABLE = "spark.fire.zrc.enable"
+    // fire框架restful端口冲突重试次数
+    val SPARK_FIRE_RESTFUL_PORT_RETRY_NUM = "spark.fire.restful.port.retry_num"
+    // fire框架restful端口冲突重试时间（ms）
+    val SPARK_FIRE_RESTFUL_PORT_RETRY_DURATION = "spark.fire.restful.port.retry_duration"
 
     // ---------------------------- HDFS 相关配置 ---------------------------- //
     // 是否启用高可用
@@ -330,6 +335,12 @@ object GlobalConstants {
     lazy val jdbcQueryPartitions = PropUtils.getInt(PropKeys.SPARK_FIRE_JDBC_QUERY_REPARTITIONS, 10)
     // fire框架rest接口服务最大线程数
     lazy val restfulMaxThread = PropUtils.getInt(PropKeys.SPARK_FIRE_RESTFUL_MAX_THREAD, 8)
+    // 用于配置是否抛弃zrc独立运行，配置为false表示不向zrc注册，不获取zrc配置
+    lazy val zrcEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ZRC_ENABLE, true)
+    // fire框架restful端口冲突重试次数
+    lazy val restfulPortRetryNum = PropUtils.getInt(PropKeys.SPARK_FIRE_RESTFUL_PORT_RETRY_NUM, 3)
+    // fire框架restful端口冲突重试时间（ms）
+    lazy val restfulPortRetryDuration = PropUtils.getLong(PropKeys.SPARK_FIRE_RESTFUL_PORT_RETRY_DURATION, 1000L)
 
     /**
      * 获取配置的HBase缓存策略

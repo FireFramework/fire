@@ -41,10 +41,13 @@ trait BaseFlink extends BaseFire {
    * 初始化flink运行时环境
    */
   override private[fire] def createContext(conf: Any): Unit = {
-    this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
+    this.retry(GlobalConstants.FireConf.restfulPortRetryNum, GlobalConstants.FireConf.restfulPortRetryDuration) {
+      this.restPort = SystemInfoUtils.getRundomPort
+      this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
+    }
     this.systemRestful = new FlinkSystemRestful(this)
     // 注册到zrc平台，并覆盖配置信息
-    if (this.jobType == JobType.FLINK_STREAMING) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
+    if (this.jobType == JobType.FLINK_STREAMING && GlobalConstants.FireConf.zrcEnable) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     PropUtils.print()
 
     SchedulerManager.registerTasks(this)

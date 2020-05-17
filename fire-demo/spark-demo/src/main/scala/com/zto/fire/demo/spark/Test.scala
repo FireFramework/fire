@@ -1,8 +1,9 @@
 package com.zto.fire.demo.spark
 
-import com.zto.fire.core.BaseSparkCore
+import com.zto.fire.core.util.FireUtils
+import com.zto.fire.core.{BaseSparkCore, BaseSparkStreaming}
 
-object Test extends BaseSparkCore {
+object Test extends BaseSparkStreaming {
 
   override def process: Unit = {
     val start = System.currentTimeMillis()
@@ -780,7 +781,10 @@ object Test extends BaseSparkCore {
   }
 
   def main(args: Array[String]): Unit = {
-    this.init()
-    this.stop
+    /*this.init(10, false)
+    this.stop*/
+    FireUtils.retry(10, 10) {
+      val i = 10 / 0
+    }
   }
 }

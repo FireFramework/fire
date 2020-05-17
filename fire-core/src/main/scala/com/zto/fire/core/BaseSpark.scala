@@ -101,11 +101,14 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 构建一系列context对象
    */
   override private[fire] final def createContext(conf: Any): Unit = {
-    this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
+    this.retry(GlobalConstants.FireConf.restfulPortRetryNum, GlobalConstants.FireConf.restfulPortRetryDuration) {
+      this.restPort = SystemInfoUtils.getRundomPort
+      this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
+    }
     this.systemRestful = new SparkSystemRestful(this)
 
     // 注册到zrc平台，并覆盖配置信息
-    if (this.jobType != JobType.SPARK_CORE) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
+    if (this.jobType != JobType.SPARK_CORE && GlobalConstants.FireConf.zrcEnable) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     PropUtils.print()
     val tmpConf = if (conf == null) this.buildConf(null) else conf.asInstanceOf[SparkConf]
     tmpConf.setAll(PropUtils.toMap)
