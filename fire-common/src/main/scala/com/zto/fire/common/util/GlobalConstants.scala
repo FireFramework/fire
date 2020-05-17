@@ -573,7 +573,7 @@ object GlobalConstants {
      * @return
      */
     def kafkaHeartbeatInterval(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_HEARTBEAT_INTERVAL_MS, -1)
+      PropUtils.getInt(PropKeys.KAFKA_HEARTBEAT_INTERVAL_MS, keyNum, -1)
     }
 
     /**
@@ -584,7 +584,7 @@ object GlobalConstants {
      * @return
      */
     def kafkaGroupMaxSessionTimeOut(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_GROUP_MAX_SESSION_TIMEOUT_MS, -1)
+      PropUtils.getInt(PropKeys.KAFKA_GROUP_MAX_SESSION_TIMEOUT_MS, keyNum, -1)
     }
 
     /**
@@ -595,7 +595,7 @@ object GlobalConstants {
      * @return
      */
     def kafkaGroupMinSessionTimeOut(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS, -1)
+      PropUtils.getInt(PropKeys.KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS, keyNum, -1)
     }
 
     /**
@@ -606,7 +606,7 @@ object GlobalConstants {
      * @return
      */
     def kafkaMaxPollRecords(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_MAX_POLL_RECORDS, -1)
+      PropUtils.getInt(PropKeys.KAFKA_MAX_POLL_RECORDS, keyNum, -1)
     }
 
     /**
@@ -617,7 +617,7 @@ object GlobalConstants {
      * @return
      */
     def kafkaMaxPartitionFetchBytes(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_MAX_PARTITION_FETCH_BYTES, -1)
+      PropUtils.getInt(PropKeys.KAFKA_MAX_PARTITION_FETCH_BYTES, keyNum, -1)
     }
   }
 
@@ -702,39 +702,39 @@ object GlobalConstants {
     }
 
     def rocketNameserverPollInterval(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_NAMESERVER_POLL_INTERVAL, "")
+      PropUtils.getString(PropKeys.ROCKET_NAMESERVER_POLL_INTERVAL, keyNum,"")
     }
 
     def rocketBrokerserverHeartbeatInterval(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_BROKERSERVER_HEARTBEAT_INTERVAL, "")
+      PropUtils.getString(PropKeys.ROCKET_BROKERSERVER_HEARTBEAT_INTERVAL, keyNum, "")
     }
 
     def rocketConsumerOffsetPersistInterval(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_CONSUMER_OFFSET_PERSIST_INTERVAL, "")
+      PropUtils.getString(PropKeys.ROCKET_CONSUMER_OFFSET_PERSIST_INTERVAL, keyNum, "")
     }
 
     def rocketConsumerMinThreads(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MIN_THREADS, "")
+      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MIN_THREADS, keyNum, "")
     }
 
     def rocketConsumerMaxThreads(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MAX_THREADS, "")
+      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MAX_THREADS, keyNum, "")
     }
 
     def rocketSpoutMessagesMaxRetry(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_SPOUT_MESSAGES_MAX_RETRY, "")
+      PropUtils.getString(PropKeys.ROCKET_SPOUT_MESSAGES_MAX_RETRY, keyNum, "")
     }
 
     def rocketPullMaxSpeedPerPartition(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_SPEED_PER_PARTITION, "")
+      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_SPEED_PER_PARTITION, keyNum, "")
     }
 
     def rocketPullMaxBatchSize(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_BATCH_SIZE, "")
+      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_BATCH_SIZE, keyNum, "")
     }
 
     def rocketPullTimeoutMs(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_PULL_TIMEOUT_MS, "")
+      PropUtils.getString(PropKeys.ROCKET_PULL_TIMEOUT_MS, keyNum, "")
     }
   }
 
