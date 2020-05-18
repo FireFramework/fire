@@ -11,7 +11,7 @@ import com.zto.fire.core.bridge.HBaseSparkBridge
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.HBaseContextExt
 import com.zto.fire.core.udf.UDFs
-import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
+import com.zto.fire.core.util.{FireUtils, SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
 import org.apache.hadoop.hbase.filter.{Filter, FilterList}
@@ -1213,7 +1213,9 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
   def loadKafkaParseJson(tableName: String = "kafka",
                          extraOptions: mutable.HashMap[String, String] = null,
                          keyNum: Int = 1): DataFrame = {
-    val msg = KafkaUtils.getMsg(GlobalConstants.KafkaConf.kafkaBrokers(keyNum), GlobalConstants.KafkaConf.kafkaTopics(keyNum), null)
+    val msg = FireUtils.retry(5, 1000) {
+      KafkaUtils.getMsg(GlobalConstants.KafkaConf.kafkaBrokers(keyNum), GlobalConstants.KafkaConf.kafkaTopics(keyNum), null)
+    }
     ValueUtils.requireNonNullForce(msg, s"获取样例消息失败！请重启任务尝试重新获取，并保证topic[${GlobalConstants.KafkaConf.kafkaTopics(keyNum)}]持续的有新消息。")
     val jsonDS = this.spark.createDataset(Seq(msg))(Encoders.STRING)
     val jsonDF = this.spark.read.json(jsonDS)
