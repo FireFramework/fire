@@ -39,6 +39,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
     val kafkaProps = if (ValueUtils.isNotEmpty(kafkaParams)) kafkaParams else KafkaUtils.kafkaParams(finalGroupId, keyNum = keyNum)
     ValueUtils.requireNonNullForce(kafkaProps, "kafka相关配置不能为空！")
     val topicList = if (ValueUtils.isNotEmpty(topics)) topics.toArray else GlobalConstants.KafkaConf.kafkaTopics(keyNum).split(",")
+    if (topicList == null || topicList.size == 0) throw new IllegalArgumentException(s"kafka topic不能为空，请在配置文件中指定：flink.kafka.topics$keyNum")
 
     val properties = new Properties();
     kafkaProps.foreach(t => properties.setProperty(t._1, t._2.toString))

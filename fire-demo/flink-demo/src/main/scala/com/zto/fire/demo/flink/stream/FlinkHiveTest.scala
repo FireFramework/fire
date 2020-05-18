@@ -1,13 +1,10 @@
 package com.zto.fire.demo.flink.stream
 
 import com.alibaba.fastjson.JSON
-import com.zto.fire.common.bean.OGGBaseBean
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
-import com.zto.fire.flink.core.ext.functions.FireMapFunction
 import org.apache.flink.api.scala._
-import org.apache.flink.configuration.Configuration
 
 
 /**

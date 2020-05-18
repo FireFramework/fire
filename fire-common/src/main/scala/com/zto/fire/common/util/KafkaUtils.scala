@@ -160,9 +160,11 @@ object KafkaUtils {
    * kafka相关配置
    */
   def kafkaParams(groupId: String = null, kafkaBrokers: String = null, offset: String = null, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
-    ValueUtils.requireNonNull(groupId, s"kafka groupId不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum 指定")
+    ValueUtils.requireNonNull(groupId, s"kafka groupId不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum")
 
     val finalKafkaBrokers = if (StringUtils.isBlank(kafkaBrokers)) GlobalConstants.KafkaConf.kafkaBrokers(keyNum) else kafkaBrokers
+    ValueUtils.requireNonNull(finalKafkaBrokers, s"kafka broker地址不能为空，可在配置文件中指定[ spark.kafka.brokers.name$keyNum ]")
+
     val finalOffset = if (StringUtils.isBlank(offset)) GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum) else offset
     val finalAutoCommit = if (GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum) != null) GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum) else autoCommit
 

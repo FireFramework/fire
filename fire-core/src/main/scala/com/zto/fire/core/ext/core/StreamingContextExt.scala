@@ -1,6 +1,6 @@
 package com.zto.fire.core.ext.core
 
-import com.zto.fire.common.util.GlobalConstants
+import com.zto.fire.common.util.{GlobalConstants, ValueUtils}
 import com.zto.fire.core.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -36,6 +36,7 @@ class StreamingContextExt(ssc: StreamingContext) {
     */
   def createDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, keyNum: Int = 1): DStream[ConsumerRecord[String, String]] = {
     val finalKafkaTopic = if (topics == null) SparkUtils.topicSplit(GlobalConstants.KafkaConf.kafkaTopics(keyNum)) else topics
+    ValueUtils.requireNonNull(finalKafkaTopic, s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
     val finalKafkaParams = if (kafkaParams == null) this.kafkaParams(keyNum = keyNum) else kafkaParams
 
     KafkaUtils.createDirectStream[String, String](

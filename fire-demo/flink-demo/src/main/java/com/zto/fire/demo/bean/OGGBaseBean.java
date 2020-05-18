@@ -6,12 +6,14 @@ import java.io.Serializable;
  * 用于封装OGG发送过来的json的基础类
  * Created by ChengLong on 2017-05-25.
  */
-public class OGGBaseBean implements Serializable {
-    public String table;
-    public String op_type;
-    public String op_ts;
-    public String current_ts;
-    public String pos;
+public class OGGBaseBean<T> implements Serializable {
+    private String table;
+    private String op_type;
+    private String op_ts;
+    private String current_ts;
+    private String pos;
+    private T before;
+    private T after;
 
     public String getTable() {
         return table;
@@ -51,5 +53,21 @@ public class OGGBaseBean implements Serializable {
 
     public void setPos(String pos) {
         this.pos = pos;
+    }
+
+    public T getBefore() {
+        return before;
+    }
+
+    public void setBefore(T before) {
+        this.before = before;
+    }
+
+    public T getAfter() {
+        return after;
+    }
+
+    public void setAfter(T after) {
+        this.after = after;
     }
 }

@@ -1,17 +1,20 @@
-package com.zto.fire.common.bean;
+package com.zto.fire.common.bean.ogg;
 
 import java.io.Serializable;
 
 /**
- * 用于封装OGG发送过来的json的基础类
- * Created by ChengLong on 2017-05-25.
+ * ogg基础字段包装类
+ *
+ * @author ChengLong
+ * @create: 2020-05-18 17:59
+ * @since 1.0.0
  */
-public class OGGBaseBean implements Serializable {
-    public String table;
-    public String op_type;
-    public String op_ts;
-    public String current_ts;
-    public String pos;
+public class OGGBaseBean implements Serializable  {
+    protected String table;
+    protected String op_type;
+    protected String op_ts;
+    protected String current_ts;
+    protected String pos;
 
     public String getTable() {
         return table;
