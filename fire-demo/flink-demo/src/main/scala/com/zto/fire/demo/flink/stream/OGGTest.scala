@@ -1,25 +1,16 @@
 package com.zto.fire.demo.flink.stream
 
-import com.alibaba.fastjson.{JSON, JSONObject}
-import com.alibaba.fastjson.serializer.SerializerFeature
-import com.zto.fire.common.util.ValueUtils
-import com.zto.fire.demo.bean.{OGGBaseBean, Student}
+import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
-import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.scala._
 
-import scala.collection.JavaConversions
-import scala.collection.mutable.ListBuffer
-import scala.reflect.{ClassTag, classTag}
-
-
 /**
- *
+ * ogg消息解析测试
  *
  * @author ChengLong
- * @since 1.
- * @create: 2020-05-18 09:33
+ * @since 1.0.0
+ * @create 2020-05-18 09:33
  */
 object OGGTest extends BaseFlinkStreaming {
 

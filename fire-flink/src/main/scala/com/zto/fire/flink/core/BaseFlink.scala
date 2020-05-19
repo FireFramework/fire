@@ -33,6 +33,7 @@ trait BaseFlink extends BaseFire {
     PropUtils.compatible("flink")
     PropUtils.load("flink")
     PropUtils.load(this.appName)
+    PropUtils.setProperty("flink.client.class.name", this.className)
     FlinkSingletonFactory.setAppName(this.appName)
     this.splash
   }
