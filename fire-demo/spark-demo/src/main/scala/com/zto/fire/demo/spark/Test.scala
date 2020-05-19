@@ -9,7 +9,7 @@ object Test extends BaseSparkStreaming {
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream()
     dstream.mapOgg(classOf[Student]).foreachRDD(rdd => {
-
+      rdd.foreach(t => println(t.getTable + " " + t.getBefore.getId + " " + t.getAfter.getName + " rowkey=" + t.getBefore.getRowKey + " " + t.getAfter.getRowKey))
     })
     this.ssc.startAwaitTermination()
   }
