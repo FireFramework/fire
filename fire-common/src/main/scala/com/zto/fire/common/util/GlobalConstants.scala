@@ -126,6 +126,7 @@ object GlobalConstants {
     val SPARK_DB_JDBC_BATCH_SIZE = "spark.db.jdbc.batch.size"
 
     val LOG_LEVEL = "spark.log.level"
+    val KAFKA_LOG_LEVEL = "spark.kafka.log.level"
     val SAVE_MODE_KEY = "spark.saveMode"
     val PARALLELISM_KEY = "spark.parallelism"
     val HBBASE_COLUMN_FAMILY_KEY = "spark.hbase.column.family"
@@ -436,7 +437,7 @@ object GlobalConstants {
   object SparkConf extends Enumeration {
     val appName = PropUtils.getString(PropKeys.APP_NAME_KEY, "")
     val sparkConf = PropUtils.getString(PropKeys.SPARK_CONF_KEY)
-    val logLevel = PropUtils.getString(PropKeys.LOG_LEVEL, DefaultVals.logLevel)
+    val logLevel = PropUtils.getString(PropKeys.LOG_LEVEL, DefaultVals.logLevel).toUpperCase
     val saveMode = if ("Overwrite".equalsIgnoreCase(PropUtils.getString(PropKeys.SAVE_MODE_KEY))) SaveMode.Overwrite else SaveMode.Append
     val parallelism = PropUtils.getInt(PropKeys.PARALLELISM_KEY)
     val chkPointDirPrefix = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
@@ -451,6 +452,7 @@ object GlobalConstants {
     val offsetLargest = "latest"
     val offsetSmallest = "earliest"
     val offsetNone = "none"
+    val logLevel = PropUtils.getString(PropKeys.KAFKA_LOG_LEVEL, DefaultVals.logLevel).toUpperCase
 
     // 大数据kafka地址
     private val bigdataKafkaUrl = "192.168.25.80:9092,192.168.25.81:9092,192.168.25.82:9092,192.168.25.129:9092,192.168.25.130:9092,192.168.25.131:9092"
