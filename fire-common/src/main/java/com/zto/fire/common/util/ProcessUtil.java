@@ -16,16 +16,14 @@ import java.io.InputStreamReader;
 public class ProcessUtil {
     private final static Logger LOGGER = Logger.getLogger(ProcessUtil.class);
 
-
     /**
      * 执行多条linux命令，不返回命令执行日志
-     * @param commands
-     * linux命令
-     * @return
-     * 命令执行结果的一行数据
+     *
+     * @param commands linux命令
+     * @return 命令执行结果的一行数据
      */
-    public static void executeCmds(String ... commands) {
-        ParamUtils.requireNonNull(commands, "命令不能为空");
+    public static void executeCmds(String... commands) {
+        ValueUtils.requireNonNull(commands, "命令不能为空");
         for (String command : commands) {
             executeCmdForLine(command);
         }
@@ -33,13 +31,12 @@ public class ProcessUtil {
 
     /**
      * 执行一条linux命令，仅返回命令的一行
-     * @param cmd
-     * linux命令
-     * @return
-     * 命令执行结果的一行数据
+     *
+     * @param cmd linux命令
+     * @return 命令执行结果的一行数据
      */
     public static String executeCmdForLine(String cmd) {
-        if(!SystemInfoUtils.isLinux() || StringUtils.isBlank(cmd)) {
+        if (!SystemInfoUtils.isLinux() || StringUtils.isBlank(cmd)) {
             // 如果是windows环境
             return " <windows environment.> ";
         }
@@ -82,6 +79,8 @@ public class ProcessUtil {
             errorInputStreams(p.getErrorStream());
             p.waitFor();
             exitValue = p.exitValue();
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             if (p != null) {
                 p.destroy();
@@ -118,6 +117,7 @@ public class ProcessUtil {
                             if (inputStream != null)
                                 inputStream.close();
                         } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     }
                 }
@@ -143,11 +143,13 @@ public class ProcessUtil {
                             }
                         }
                     } catch (IOException e) {
+                        e.printStackTrace();
                     } finally {
                         try {
                             if (inputStream != null)
                                 inputStream.close();
                         } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     }
                 }

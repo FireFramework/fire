@@ -20,8 +20,22 @@ object PropUtils extends BaseLogging {
   private val props = new Properties()
   // 用于判断是否merge过
   private val isMerge = new AtomicBoolean(false)
+  // key的前缀
+  private[fire] var keyPrefix = "spark"
+  // 是否兼容key的前缀配置
+  private var compatible = false
   // 加载默认配置文件
   this.load("default.properties")
+
+  /**
+   * 用于设置兼容的key的前缀
+   */
+  private[fire] def compatible(keyPrefix: String): Unit = {
+    if (StringUtils.isNotBlank(keyPrefix.trim) && !keyPrefix.equals("spark")) {
+      this.keyPrefix = keyPrefix.trim
+      this.compatible = true
+    }
+  }
 
   /**
     * 加载指定配置文件，resources根目录下优先级最高，其次是按字典顺序的目录
@@ -45,6 +59,7 @@ object PropUtils extends BaseLogging {
             }
           }
         }
+        if (resource == null) println(s"${GlobalConstants.PS1.RED} ------> 未找到配置文件[ $fullName ]，请核实！<------ ${GlobalConstants.PS1.DEFAULT}")
         if (resource != null) {
           println(s"${GlobalConstants.PS1.YELLOW} --------------------------------- load ${fullName} --------------------------------- ${GlobalConstants.PS1.DEFAULT}")
           props.load(resource)
@@ -67,8 +82,14 @@ object PropUtils extends BaseLogging {
     * 配置的value
     */
   def getProperty(key: String): String = {
-    if (!this.isMerge.get) this.mergeSparkConf
-    this.props.getProperty(key)
+    if (!this.isMerge.get && "spark".equals(this.keyPrefix)) this.mergeSparkConf
+    if (this.compatible) {
+      // 兼容配置key的前缀变化，适配flink.为前缀的配置项
+      val value = this.props.getProperty(key.replaceFirst("spark", this.keyPrefix))
+      if (StringUtils.isNotBlank(value)) value else this.props.getProperty(key)
+    } else {
+      this.props.getProperty(key)
+    }
   }
 
   /**
@@ -313,7 +334,10 @@ object PropUtils extends BaseLogging {
     println(s"${GlobalConstants.PS1.YELLOW} < --------------------------------------- 配置信息 ---------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
     JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
       if (key != null && !key.toString.contains("pass")) {
-        println(">> " + GlobalConstants.PS1.PINK + key + " --> " + this.props.get(key) + GlobalConstants.PS1.DEFAULT)
+        // 如果是spark引擎，则忽略flink相关配置；如果是flink引擎，则忽略spark相关配置
+        if (("spark".equals(this.keyPrefix) && !key.toString.contains("flink")) || ("flink".equals(this.keyPrefix) && !key.toString.contains("spark"))) {
+          println(">> " + GlobalConstants.PS1.PINK + key + " --> " + this.props.get(key) + GlobalConstants.PS1.DEFAULT)
+        }
       }
     })
     println(s"${GlobalConstants.PS1.YELLOW} < ----------------------------------------------------------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
@@ -328,6 +352,22 @@ object PropUtils extends BaseLogging {
   def toMap: Map[String, String] = {
     val confMap = scala.collection.mutable.Map[String, String]()
     JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
+      if (key != null) {
+        confMap += (key.toString -> this.props.getProperty(key.toString))
+      }
+    })
+    confMap
+  }
+
+  /**
+    * 将配置信息转为Map，并设置到Flink Configuration中
+    *
+    * @return
+    * confMap
+    */
+  def toFlinkConfMap: Map[String, String] = {
+    val confMap = scala.collection.mutable.Map[String, String]()
+    JavaConversions.asScalaSet(this.props.keySet()).filter(t => t != null && t.toString.startsWith("flink")).foreach(key => {
       if (key != null) {
         confMap += (key.toString -> this.props.getProperty(key.toString))
       }
@@ -353,25 +393,23 @@ object PropUtils extends BaseLogging {
     * 获取zrc配置信息
     */
   def invokeZrcConf(className: String, rest: String): Unit = {
-    this.mark
+    if ("spark".equals(this.keyPrefix)) this.mark
     val param =
       s"""
-         |{"className": "$className", "url": "http://$rest", "fireVersion": "${PropUtils.getString("spark.fire.version")}", "zrcKey": "21fa30b7f2082b1b12dfbc7c8c6d70b9"}
+         |{"className": "$className", "url": "http://$rest", "fireVersion": "${this.getString("spark.fire.version")}", "zrcKey": "21fa30b7f2082b1b12dfbc7c8c6d70b9"}
       """.stripMargin
     this.setProperty("spark.rest.url", s"http://$rest")
     var conf = ""
     try {
-      val url = "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack"
-      conf = HttpClientUtils.doPost(url, param)
+      conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.prod.address", "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack"), param)
     } catch {
       case e: Exception => {
-        this.log("调用zrc注册接口失败", null, null, e)
-        val url2 = "http://10.9.38.156:8080/zrcToExternal/zrcConfCallBack"
-        conf = HttpClientUtils.doPost(url2, param)
+        if ("spark".equals(this.keyPrefix)) this.log("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", null, null, e)
+        conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.test.address"), param)
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {
-        this.log("成功获取zrc配置信息：" + conf)
+        if ("spark".equals(this.keyPrefix)) this.log("成功获取zrc配置信息：" + conf)
         val msg = JSON.parseObject(conf)
         if (msg != null && msg.get("code") == 200) {
           val content = msg.get("content")

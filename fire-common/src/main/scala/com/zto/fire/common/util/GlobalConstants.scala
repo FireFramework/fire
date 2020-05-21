@@ -24,7 +24,20 @@ object GlobalConstants {
   lazy val scheduleEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_TASK_SCHEDULE_ENABLE, true)
   // quartz最大线程池大小
   lazy val quartzMaxThread = PropUtils.getString(PropKeys.SPARK_FIRE_QUARTZ_MAX_THREAD, "8")
+  // 定时任务黑名单，配置的value为方法名，多个以逗号分隔
+  lazy val schedulerBlackList = PropUtils.getString(PropKeys.SPARK_FIRE_SCHEDULER_BLACKLIST, "")
+  // 用于区分不同的流计算引擎类型
+  private[fire] lazy val engine = PropUtils.keyPrefix
 
+  /**
+   * 用于判断是否为spark引擎
+   */
+  def isSparkEngine = "spark".equals(this.engine)
+
+  /**
+   * 用于判断是否为flink引擎
+   */
+  def isFlinkEngine = "flink".equals(this.engine)
 
   /**
    * 预定义的默认值，配置文件没有指明的情况下会取默认值
@@ -113,6 +126,7 @@ object GlobalConstants {
     val SPARK_DB_JDBC_BATCH_SIZE = "spark.db.jdbc.batch.size"
 
     val LOG_LEVEL = "spark.log.level"
+    val KAFKA_LOG_LEVEL = "spark.kafka.log.level"
     val SAVE_MODE_KEY = "spark.saveMode"
     val PARALLELISM_KEY = "spark.parallelism"
     val HBBASE_COLUMN_FAMILY_KEY = "spark.hbase.column.family"
@@ -174,6 +188,12 @@ object GlobalConstants {
     val SPARK_DEFAULT_DATABASE_NAME = "spark.default.database.name"
     // 默认的分区名称
     val SPARK_DEFAULT_TABLE_PARTITION_NAME = "spark.default.table.partition.name"
+    // hive-site.xml配置文件存放的路径
+    val HIVE_SITE_DIR = "spark.hive.conf.dir"
+    // hive版本号
+    val HIVE_VERSION = "spark.hive.version"
+    // hive的catalog名称
+    val HIVE_CATALOG_NAME = "spark.hive.catalog.name"
 
     // ---------------------------- RocketMQ 相关配置 ---------------------------- //
     // rocketMQ name server
@@ -244,10 +264,48 @@ object GlobalConstants {
     val SPARK_FIRE_RESTFUL_MAX_THREAD = "spark.fire.restful.max.thread"
     // quartz最大线程池大小
     val SPARK_FIRE_QUARTZ_MAX_THREAD = "spark.fire.quartz.max.thread"
+    // 定时调度任务黑名单（定时任务方法名），以逗号分隔
+    val SPARK_FIRE_SCHEDULER_BLACKLIST = "spark.fire.scheduler.blacklist"
+    // 用于配置是否抛弃zrc独立运行，配置为false表示不向zrc注册，不获取zrc配置
+    val SPARK_FIRE_ZRC_ENABLE = "spark.fire.zrc.enable"
+    // fire框架restful端口冲突重试次数
+    val SPARK_FIRE_RESTFUL_PORT_RETRY_NUM = "spark.fire.restful.port.retry_num"
+    // fire框架restful端口冲突重试时间（ms）
+    val SPARK_FIRE_RESTFUL_PORT_RETRY_DURATION = "spark.fire.restful.port.retry_duration"
 
     // ---------------------------- HDFS 相关配置 ---------------------------- //
     // 是否启用高可用
     val HDFS_HA = "spark.hdfs.ha.enable"
+
+    // ---------------------------- FLINK 相关配置 ---------------------------- //
+    val FLINK_AUTO_GENERATE_UID_ENABLE = "flink.auto.generate.uid.enable"
+    val FLINK_AUTO_TYPE_REGISTRATION_ENABLE = "flink.auto.type.registration.enable"
+    val FLINK_FORCE_AVRO_ENABLE = "flink.force.avro.enable"
+    val FLINK_FORCE_KRYO_ENABLE = "flink.force.kryo.enable"
+    val FLINK_GENERIC_TYPES_ENABLE = "flink.generic.types.enable"
+    val FLINK_OBJECT_REUSE_ENABLE = "flink.object.reuse.enable"
+    val FLINK_AUTO_WATERMARK_INTERVAL = "flink.auto.watermark.interval"
+    val FLINK_CLOSURE_CLEANER_LEVEL = "flink.closure.cleaner.level"
+    val FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT = "flink.default.input.dependency.constraint"
+    val FLINK_EXECUTION_MODE = "flink.execution.mode"
+    val FLINK_LATENCY_TRACKING_INTERVAL = "flink.latency.tracking.interval"
+    val FLINK_MAX_PARALLELISM = "flink.max.parallelism"
+    val FLINK_DEFAULT_PARALLELISM = "flink.default.parallelism"
+    val FLINK_TASK_CANCELLATION_INTERVAL = "flink.task.cancellation.interval"
+    val FLINK_TASK_CANCELLATION_TIMEOUT_MILLIS = "flink.task.cancellation.timeout.millis"
+    val FLINK_USE_SNAPSHOT_COMPRESSION = "flink.use.snapshot.compression"
+    val FLINK_STREAM_BUFFER_TIMEOUT_MILLIS = "flink.stream.buffer.timeout.millis"
+    val FLINK_STREAM_NUMBER_EXECUTION_RETRIES = "flink.stream.number.execution.retries"
+    val FLINK_STREAM_TIME_CHARACTERISTIC = "flink.stream.time.characteristic"
+    // checkpoint相关配置项
+    val FLINK_STREAM_CHECKPOINT_INTERVAL = "flink.stream.checkpoint.interval"
+    val FLINK_STREAM_CHECKPOINT_MODE = "flink.stream.checkpoint.mode"
+    val FLINK_STREAM_CHECKPOINT_TIMEOUT = "flink.stream.checkpoint.timeout"
+    val FLINK_STREAM_CHECKPOINT_MAX_CONCURRENT = "flink.stream.checkpoint.max.concurrent"
+    val FLINK_STREAM_CHECKPOINT_MIN_PAUSE_BETWEEN = "flink.stream.checkpoint.min.pause.between"
+    val FLINK_STREAM_CHECKPOINT_PREFER_RECOVERY = "flink.stream.checkpoint.prefer.recovery"
+    val FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER = "flink.stream.checkpoint.tolerable.failure.number"
+    val FLINK_STREAM_CHECKPOINT_EXTERNALIZED = "flink.stream.checkpoint.externalized"
   }
 
   /**
@@ -278,6 +336,12 @@ object GlobalConstants {
     lazy val jdbcQueryPartitions = PropUtils.getInt(PropKeys.SPARK_FIRE_JDBC_QUERY_REPARTITIONS, 10)
     // fire框架rest接口服务最大线程数
     lazy val restfulMaxThread = PropUtils.getInt(PropKeys.SPARK_FIRE_RESTFUL_MAX_THREAD, 8)
+    // 用于配置是否抛弃zrc独立运行，配置为false表示不向zrc注册，不获取zrc配置
+    lazy val zrcEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ZRC_ENABLE, true)
+    // fire框架restful端口冲突重试次数
+    lazy val restfulPortRetryNum = PropUtils.getInt(PropKeys.SPARK_FIRE_RESTFUL_PORT_RETRY_NUM, 3)
+    // fire框架restful端口冲突重试时间（ms）
+    lazy val restfulPortRetryDuration = PropUtils.getLong(PropKeys.SPARK_FIRE_RESTFUL_PORT_RETRY_DURATION, 1000L)
 
     /**
      * 获取配置的HBase缓存策略
@@ -295,29 +359,74 @@ object GlobalConstants {
   }
 
   /**
+   * flink相关配置
+   */
+  object FlinkConf extends Enumeration {
+    lazy val autoGenerateUidEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_AUTO_GENERATE_UID_ENABLE, true)
+    lazy val autoTypeRegistrationEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_AUTO_TYPE_REGISTRATION_ENABLE, true)
+    lazy val forceAvroEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_FORCE_AVRO_ENABLE, false)
+    lazy val forceKryoEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_FORCE_KRYO_ENABLE, false)
+    lazy val genericTypesEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_GENERIC_TYPES_ENABLE, false)
+    lazy val objectReuseEnable = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_OBJECT_REUSE_ENABLE, false)
+    lazy val autoWatermarkInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_AUTO_WATERMARK_INTERVAL)
+    lazy val closureCleanerLevel = PropUtils.getString(GlobalConstants.PropKeys.FLINK_CLOSURE_CLEANER_LEVEL)
+    lazy val defaultInputDependencyConstraint = PropUtils.getString(GlobalConstants.PropKeys.FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT)
+    lazy val executionMode = PropUtils.getString(GlobalConstants.PropKeys.FLINK_EXECUTION_MODE)
+    lazy val latencyTrackingInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_LATENCY_TRACKING_INTERVAL, -1)
+    lazy val maxParallelism = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_MAX_PARALLELISM, -1)
+    lazy val defaultParallelism = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_DEFAULT_PARALLELISM, -1)
+    lazy val taskCancellationInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_TASK_CANCELLATION_INTERVAL, -1)
+    lazy val taskCancellationTimeoutMillis = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_TASK_CANCELLATION_TIMEOUT_MILLIS, -1)
+    lazy val useSnapshotCompression = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_USE_SNAPSHOT_COMPRESSION, false)
+    lazy val streamBufferTimeoutMillis = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_STREAM_BUFFER_TIMEOUT_MILLIS, -1)
+    lazy val streamNumberExecutionRetries = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_STREAM_NUMBER_EXECUTION_RETRIES, -1)
+    lazy val streamTimeCharacteristic = PropUtils.getString(GlobalConstants.PropKeys.FLINK_STREAM_TIME_CHARACTERISTIC, "")
+
+    // checkpoint相关配置项
+    lazy val streamCheckpointInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_INTERVAL, -1)
+    lazy val streamCheckpointMode = PropUtils.getString(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_MODE, "EXACTLY_ONCE")
+    lazy val streamCheckpointTimeout = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_TIMEOUT, 600000L)
+    lazy val streamCheckpointMaxConcurrent = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_MAX_CONCURRENT, 1)
+    lazy val streamCheckpointMinPauseBetween = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_MIN_PAUSE_BETWEEN, 0)
+    lazy val streamCheckpointPreferRecovery = PropUtils.getBoolean(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_PREFER_RECOVERY, false)
+    lazy val streamCheckpointTolerableTailureNumber = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER, 0)
+    lazy val streamCheckpointExternalized = PropUtils.getString(GlobalConstants.PropKeys.FLINK_STREAM_CHECKPOINT_EXTERNALIZED, "RETAIN_ON_CANCELLATION")
+  }
+
+  /**
    * 关系型数据库连接池相关配置
    */
   object JdbcConf extends Enumeration {
     // spark.db.jdbc.url
     def url(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_URL_KEY, keyNum)
+
     // spark.db.jdbc.driver
     def driverClass(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_DRIVER_KEY, keyNum)
+
     // spark.db.jdbc.user
     def user(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_USER_KEY, keyNum)
+
     // spark.db.jdbc.password
     def password(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_PASSWORD_KEY, keyNum)
+
     // 事务的隔离级别：NONE, READ_COMMITTED, READ_UNCOMMITTED, REPEATABLE_READ, SERIALIZABLE，默认为READ_UNCOMMITTED
     def isolationLevel(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_ISOLATION_LEVEL, keyNum, DefaultVals.jdbcIsolationLevel)
+
     // 批量操作的记录数
     def batchSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_BATCH_SIZE, keyNum, DefaultVals.jdbcBatchSize)
+
     // 连接池最小连接数
     def minPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MIN_POOL_SIZE_KEY, keyNum, 1)
+
     // 连接池初始化连接数
     def initialPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_INITIAL_POOL_SIZE_KEY, keyNum, 1)
+
     // 连接池最大连接数
     def maxPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_POOL_SIZE_KEY, keyNum, 5)
+
     // 连接池每次自增连接数
     def acquireIncrement(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_ACQUIRE_INCREMENT_KEY, keyNum, 1)
+
     // 多久释放没有用到的连接
     def maxIdleTime(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_IDLE_TIME_KEY, keyNum, 30)
   }
@@ -328,7 +437,7 @@ object GlobalConstants {
   object SparkConf extends Enumeration {
     val appName = PropUtils.getString(PropKeys.APP_NAME_KEY, "")
     val sparkConf = PropUtils.getString(PropKeys.SPARK_CONF_KEY)
-    val logLevel = PropUtils.getString(PropKeys.LOG_LEVEL, DefaultVals.logLevel)
+    val logLevel = PropUtils.getString(PropKeys.LOG_LEVEL, DefaultVals.logLevel).toUpperCase
     val saveMode = if ("Overwrite".equalsIgnoreCase(PropUtils.getString(PropKeys.SAVE_MODE_KEY))) SaveMode.Overwrite else SaveMode.Append
     val parallelism = PropUtils.getInt(PropKeys.PARALLELISM_KEY)
     val chkPointDirPrefix = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
@@ -343,6 +452,7 @@ object GlobalConstants {
     val offsetLargest = "latest"
     val offsetSmallest = "earliest"
     val offsetNone = "none"
+    val logLevel = PropUtils.getString(PropKeys.KAFKA_LOG_LEVEL, DefaultVals.logLevel).toUpperCase
 
     // 大数据kafka地址
     private val bigdataKafkaUrl = "192.168.25.80:9092,192.168.25.81:9092,192.168.25.82:9092,192.168.25.129:9092,192.168.25.130:9092,192.168.25.131:9092"
@@ -352,20 +462,28 @@ object GlobalConstants {
     private val zmsNewKafkaUrl = "192.168.73.31:9092,192.168.73.32:9092,192.168.73.33:9092,192.168.73.34:9092,192.168.73.35:9092,192.168.73.36:9092"
     // 测试kafka集群地址
     private val testKafkaUrl = "10.9.45.97:9092,10.9.15.38:9092,10.9.36.49:9092,10.9.36.50:9092"
+
     // kafka消费起始位点
     def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
+
     // kafka消费结束位点
     def kafkaEndingOffsets(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_ENDING_OFFSET, keyNum, "")
+
     // 从Kafka轮询数据的超时时间（以毫秒为单位，默认1024）
     def kafkaPollTimeoutMs(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_POLL_TIMEOUT_MS, keyNum, 1024)
+
     // 放弃获取Kafka偏移前重试的次数，默认3次
     def kafkaFetchOffsetNumRetries(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.KAFKA_FETCH_OFFSET_NUM_RETRIES, keyNum, 3)
+
     // 重试获取Kafka偏移之前要等待的毫秒数，默认10毫秒
     def kafkaFetchOffsetRetryIntervalMs(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_FETCH_OFFSET_RETRY_INTERVAL_MS, keyNum, 10)
+
     // 每个触发间隔处理的最大偏移量的速率限制，指定的偏移总数将在不同卷的topicPartitions中按比例分配
     def kafkaMaxOffsetsPerTrigger(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_MAX_OFFSETS_PER_TRIGGER, keyNum, -1)
+
     // 丢失数据时是否失败
     def kafkaFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.kafkaFailOnDataLoss)
+
     // enable.auto.commit
     def kafkaEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.kafkaEnableAutoCommit)
 
@@ -412,7 +530,7 @@ object GlobalConstants {
      */
     def kafkaTopics(keyNum: Int = 1): String = {
       val topics = PropUtils.getString(PropKeys.KAFKA_TOPICS, keyNum, null)
-      ParamUtils.requireNonNullForce(topics, "配置未找到：spark.kafka.topics" + keyNum)
+      ValueUtils.requireNonNullForce(topics, "配置未找到：spark.kafka.topics" + keyNum)
       topics
     }
 
@@ -457,7 +575,7 @@ object GlobalConstants {
      * @return
      */
     def kafkaHeartbeatInterval(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_HEARTBEAT_INTERVAL_MS, -1)
+      PropUtils.getInt(PropKeys.KAFKA_HEARTBEAT_INTERVAL_MS, keyNum, -1)
     }
 
     /**
@@ -468,7 +586,7 @@ object GlobalConstants {
      * @return
      */
     def kafkaGroupMaxSessionTimeOut(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_GROUP_MAX_SESSION_TIMEOUT_MS, -1)
+      PropUtils.getInt(PropKeys.KAFKA_GROUP_MAX_SESSION_TIMEOUT_MS, keyNum, -1)
     }
 
     /**
@@ -479,7 +597,7 @@ object GlobalConstants {
      * @return
      */
     def kafkaGroupMinSessionTimeOut(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS, -1)
+      PropUtils.getInt(PropKeys.KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS, keyNum, -1)
     }
 
     /**
@@ -490,7 +608,7 @@ object GlobalConstants {
      * @return
      */
     def kafkaMaxPollRecords(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_MAX_POLL_RECORDS, -1)
+      PropUtils.getInt(PropKeys.KAFKA_MAX_POLL_RECORDS, keyNum, -1)
     }
 
     /**
@@ -501,7 +619,7 @@ object GlobalConstants {
      * @return
      */
     def kafkaMaxPartitionFetchBytes(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_MAX_PARTITION_FETCH_BYTES, -1)
+      PropUtils.getInt(PropKeys.KAFKA_MAX_PARTITION_FETCH_BYTES, keyNum, -1)
     }
   }
 
@@ -543,7 +661,7 @@ object GlobalConstants {
      */
     def rocketNameServer(keyNum: Int = 1): String = {
       val brokerName = PropUtils.getString(PropKeys.ROCKET_BROKERS_NAME, keyNum, "")
-      ParamUtils.requireNonNullForce(brokerName, "配置未找到：spark.rocket.brokers.name" + keyNum)
+      ValueUtils.requireNonNullForce(brokerName, "配置未找到：spark.rocket.brokers.name" + keyNum)
       brokerName
     }
 
@@ -567,7 +685,7 @@ object GlobalConstants {
      */
     def rocketGroupId(keyNum: Int = 1): String = {
       val groupId = PropUtils.getString(PropKeys.ROCKET_GROUP_ID, keyNum, "")
-      ParamUtils.requireNonNullForce(groupId, "配置未找到：spark.rocket.group.id" + keyNum)
+      ValueUtils.requireNonNullForce(groupId, "配置未找到：spark.rocket.group.id" + keyNum)
       groupId
     }
 
@@ -581,44 +699,44 @@ object GlobalConstants {
      */
     def rocketTopics(keyNum: Int = 1): String = {
       val topics = PropUtils.getString(PropKeys.ROCKET_TOPICS, keyNum, null)
-      ParamUtils.requireNonNullForce(topics, "配置未找到：spark.rocket.topics" + keyNum)
+      ValueUtils.requireNonNullForce(topics, "配置未找到：spark.rocket.topics" + keyNum)
       topics
     }
 
     def rocketNameserverPollInterval(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_NAMESERVER_POLL_INTERVAL, "")
+      PropUtils.getString(PropKeys.ROCKET_NAMESERVER_POLL_INTERVAL, keyNum,"")
     }
 
     def rocketBrokerserverHeartbeatInterval(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_BROKERSERVER_HEARTBEAT_INTERVAL, "")
+      PropUtils.getString(PropKeys.ROCKET_BROKERSERVER_HEARTBEAT_INTERVAL, keyNum, "")
     }
 
     def rocketConsumerOffsetPersistInterval(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_CONSUMER_OFFSET_PERSIST_INTERVAL, "")
+      PropUtils.getString(PropKeys.ROCKET_CONSUMER_OFFSET_PERSIST_INTERVAL, keyNum, "")
     }
 
     def rocketConsumerMinThreads(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MIN_THREADS, "")
+      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MIN_THREADS, keyNum, "")
     }
 
     def rocketConsumerMaxThreads(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MAX_THREADS, "")
+      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MAX_THREADS, keyNum, "")
     }
 
     def rocketSpoutMessagesMaxRetry(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_SPOUT_MESSAGES_MAX_RETRY, "")
+      PropUtils.getString(PropKeys.ROCKET_SPOUT_MESSAGES_MAX_RETRY, keyNum, "")
     }
 
     def rocketPullMaxSpeedPerPartition(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_SPEED_PER_PARTITION, "")
+      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_SPEED_PER_PARTITION, keyNum, "")
     }
 
     def rocketPullMaxBatchSize(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_BATCH_SIZE, "")
+      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_BATCH_SIZE, keyNum, "")
     }
 
     def rocketPullTimeoutMs(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_PULL_TIMEOUT_MS, "")
+      PropUtils.getString(PropKeys.ROCKET_PULL_TIMEOUT_MS, keyNum, "")
     }
   }
 
@@ -643,7 +761,7 @@ object GlobalConstants {
    */
   object HBaseConf extends Enumeration {
     // HBase操作默认的批次大小
-    val hbaseBatchSize = PropUtils.getInt(PropKeys.HBASE_BATCH, DefaultVals.hbaseBatch)
+    lazy val hbaseBatchSize = PropUtils.getInt(PropKeys.HBASE_BATCH, DefaultVals.hbaseBatch)
   }
 
   /**
@@ -815,6 +933,10 @@ object GlobalConstants {
     private val streamingMetastore = "thrift://192.168.25.180:9083"
     // 测试hive集群
     private val testMetastore = "thrift://10.9.46.107:9083"
+    // hive版本号
+    lazy val hiveVersion = PropUtils.getString(PropKeys.HIVE_VERSION, "1.1.0")
+    // hive catalog名称
+    lazy val hiveCatalogName = PropUtils.getString(PropKeys.HIVE_CATALOG_NAME, "hive")
 
     /**
      * 根据hive集群名称获取metastore地址
@@ -833,6 +955,24 @@ object GlobalConstants {
         hiveCluster
       } else {
         streamingMetastore
+      }
+    }
+
+    /**
+     * 获取hive-site.xml的存放路径
+     *
+     * @return
+     * /path/to/hive-site.xml
+     */
+    def getHiveConfDir: String = {
+      if ("batch".equalsIgnoreCase(hiveCluster)) {
+        "/home/hadoop/flink/conf/hive/batch"
+      } else if ("streaming".equalsIgnoreCase(hiveCluster)) {
+        "/home/hadoop/flink/conf/hive/streaming"
+      } else if ("test".equalsIgnoreCase(hiveCluster)) {
+        "/home/hadoop/app/flink/conf"
+      } else {
+        hiveCluster
       }
     }
   }

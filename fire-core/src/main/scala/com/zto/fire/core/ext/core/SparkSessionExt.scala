@@ -3,15 +3,15 @@ package com.zto.fire.core.ext.core
 import java.sql.Connection
 import java.util.Properties
 
-import com.zto.fire.common.bean.HBaseBaseBean
+import com.zto.fire.common.bean.{BaseLogging, HBaseBaseBean}
 import com.zto.fire.common.db.{HBaseOper, JdbcOper, QueryCallback}
 import com.zto.fire.common.util.GlobalConstants.FireConf
-import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ParamUtils}
+import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ValueUtils}
 import com.zto.fire.core.bridge.HBaseSparkBridge
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.HBaseContextExt
 import com.zto.fire.core.udf.UDFs
-import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
+import com.zto.fire.core.util.{FireUtils, SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
 import org.apache.hadoop.hbase.filter.{Filter, FilterList}
@@ -23,7 +23,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.streaming.dstream.DStream
 
-import scala.collection.{JavaConversions, mutable}
+import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
@@ -33,7 +33,7 @@ import scala.reflect.ClassTag
  * sparkSession对象
  * @author ChengLong 2019-5-18 10:51:19
  */
-class SparkSessionExt(spark: SparkSession) {
+class SparkSessionExt(spark: SparkSession) extends BaseLogging {
 
   import spark.implicits._
 
@@ -53,6 +53,14 @@ class SparkSessionExt(spark: SparkSession) {
    */
   def parallelize[T: ClassTag](seq: Seq[T], numSlices: Int = sc.defaultParallelism): RDD[T] = {
     this.sc.parallelize(seq, numSlices)
+  }
+
+  /**
+   * 批量注册udf函数，包含系统内置的与用户自定义的
+   */
+  def registerUDF(): SparkSession = {
+    UDFs.registerSysUDF(spark)
+    spark
   }
 
   // ----------------------------------- Spark SQL 相关API ----------------------------------- //
@@ -322,16 +330,6 @@ class SparkSessionExt(spark: SparkSession) {
    */
   def moveDB(tableName: String, oldDB: String, newDB: String): Unit = {
     spark.sqlContext.moveDB(tableName, oldDB, newDB)
-  }
-
-  /**
-   * 批量注册自定义udf函数
-   *
-   * @return
-   */
-  def registerAll(): SparkSession = {
-    UDFs.registerAll(spark)
-    spark
   }
 
   // ----------------------------------- HBase Bulk API ----------------------------------- //
@@ -1113,10 +1111,10 @@ class SparkSessionExt(spark: SparkSession) {
   def loadKafka(extraOptions: mutable.HashMap[String, String] = null, keyNum: Int = 1): Dataset[(String, String)] = {
     val groupId = if (StringUtils.isNotBlank(GlobalConstants.KafkaConf.kafkaGroupId(keyNum))) GlobalConstants.KafkaConf.kafkaGroupId(keyNum) else this.sc.appName
     val finalBrokers = GlobalConstants.KafkaConf.kafkaBrokers(keyNum)
-    ParamUtils.requireNonNullForce(finalBrokers, s"kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name$keyNum ]指定")
+    ValueUtils.requireNonNullForce(finalBrokers, s"kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name$keyNum ]指定")
     val kafkaReader = spark.readStream.format("kafka").option("group.id", groupId).option("kafka.bootstrap.servers", finalBrokers)
     val topics = GlobalConstants.KafkaConf.kafkaTopics()
-    ParamUtils.requireNonNullForce(topics, s"kafka topic不能为空，可在配置文件中[ spark.kafka.topics$keyNum ]指定")
+    ValueUtils.requireNonNullForce(topics, s"kafka topic不能为空，可在配置文件中[ spark.kafka.topics$keyNum ]指定")
     kafkaReader.option("subscribe", topics)
     // 是否在数据丢失时失败
     val failOnDataLoss = GlobalConstants.KafkaConf.kafkaFailOnDataLoss(keyNum)
@@ -1206,22 +1204,25 @@ class SparkSessionExt(spark: SparkSession) {
    * 消费kafka中的json数据，并自动解析json数据，将解析后的数据注册到tableName所指定的临时表中
    *
    * @param tableName
-   * 解析后的数据存放的临时表名，默认名为data
+   * 解析后的数据存放的临时表名，默认名为kafka
    * @param extraOptions
    * 消费kafka额外的参数
    * @return
    * 转换成json字符串后的Dataset
    */
-  def loadKafkaParseJson(tableName: String = "data",
+  def loadKafkaParseJson(tableName: String = "kafka",
                          extraOptions: mutable.HashMap[String, String] = null,
                          keyNum: Int = 1): DataFrame = {
-    val msg = KafkaUtils.getMsg(GlobalConstants.KafkaConf.kafkaBrokers(), GlobalConstants.KafkaConf.kafkaTopics(), null)
-    ParamUtils.requireNonNullForce(msg, s"获取样例消息失败，请重启任务尝试重新获取")
+    val msg = FireUtils.retry(5, 1000) {
+      KafkaUtils.getMsg(GlobalConstants.KafkaConf.kafkaBrokers(keyNum), GlobalConstants.KafkaConf.kafkaTopics(keyNum), null)
+    }
+    ValueUtils.requireNonNullForce(msg, s"获取样例消息失败！请重启任务尝试重新获取，并保证topic[${GlobalConstants.KafkaConf.kafkaTopics(keyNum)}]持续的有新消息。")
     val jsonDS = this.spark.createDataset(Seq(msg))(Encoders.STRING)
     val jsonDF = this.spark.read.json(jsonDS)
 
     val kafkaDataset = this.loadKafka(extraOptions, keyNum)
-    val schemaDataset = kafkaDataset.select(from_json($"value", jsonDF.schema).as(tableName))
+    val schemaDataset = kafkaDataset.select(from_json($"value", jsonDF.schema).as(tableName)).select(s"${tableName}.*")
+    schemaDataset.createOrReplaceTempView(tableName)
     schemaDataset
   }
 
@@ -1513,4 +1514,27 @@ class SparkSessionExt(spark: SparkSession) {
     this.spark.sqlContext.jdbcTableLoadBound(tableName, columnName, lowerBound, upperBound, keyNum, jdbcProps, keyNum)
   }
 
+  /**
+   * 将DataFrame中指定的列写入到jdbc中
+   * 调用者需自己保证DataFrame中的列类型与关系型数据库对应字段类型一致
+   *
+   * @param dataFrame
+   * 将要插入到关系型数据库中原始的数据集
+   * @param sql
+   * 关系型数据库待执行的增删改sql
+   * @param fields
+   * 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序
+   * 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
+   * @param batch
+   * 每个批次执行多少条
+   * @param keyNum
+   * 对应配置文件中指定的数据源编号
+   */
+  def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = GlobalConstants.JdbcConf.batchSize(), keyNum: Int = 1): Unit = {
+    if (ValueUtils.isEmpty(dataFrame)) {
+      this.log("执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
+      return
+    }
+    dataFrame.jdbcBatchUpdate(sql, fields, batch, keyNum)
+  }
 }

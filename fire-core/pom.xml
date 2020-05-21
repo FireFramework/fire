@@ -5,13 +5,13 @@
     <inceptionYear>2008</inceptionYear>
 
     <properties>
-        <fire.version>0.4.0</fire.version>
+        <fire.version>1.0.0-SNAPSHOT</fire.version>
     </properties>
 
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-parent</artifactId>
-        <version>0.4.0</version>
+        <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 

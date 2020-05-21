@@ -169,7 +169,7 @@ object ThreadUtils extends BaseLogging {
    * 线程池大小
    */
   def createThreadPool(poolName: String, poolType: ThreadPoolType = ThreadPoolType.FIXED, poolSize: Int = 1): ExecutorService = {
-    ParamUtils.requireNonNullForce(poolName, "线程池名称不能为空")
+    ValueUtils.requireNonNullForce(poolName, "线程池名称不能为空")
     if (this.threadPoolMap.containsKey(poolName)) {
       this.threadPoolMap.get(poolName)
     } else {

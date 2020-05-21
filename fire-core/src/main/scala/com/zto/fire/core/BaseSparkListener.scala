@@ -48,7 +48,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
   override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
     this.mark
     this.baseSpark.onExecutorAdded(executorAdded)
-    if (this.baseSpark.jobType != JobType.CORE) this.needRegister.compareAndSet(false, true)
+    if (this.baseSpark.jobType != JobType.SPARK_CORE) this.needRegister.compareAndSet(false, true)
     this.logFire(s"executor[${executorAdded.executorId}] added. host: [${executorAdded.executorInfo.executorHost}].", this.module)
   }
 

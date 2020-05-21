@@ -3,10 +3,10 @@ package com.zto.fire.core.ext.core
 import java.util.Properties
 
 import com.zto.fire.common.bean.HBaseBaseBean
-import com.zto.fire.common.util.{DBUtils, GlobalConstants, KuduUtils, ParamUtils}
+import com.zto.fire.common.util.{DBUtils, GlobalConstants, KuduUtils, ValueUtils}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.KuduContextExt
-import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
+import com.zto.fire.core.util.SingletonFactory
 import org.apache.commons.lang3.StringUtils
 import org.apache.kudu.spark.kudu._
 import org.apache.spark.sql.{DataFrame, SQLContext, SaveMode}
@@ -169,7 +169,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * 多个表名
     */
   def dropHiveTable(tableNames: String*) = {
-    if (ParamUtils.isNotBlank(tableNames)) {
+    if (ValueUtils.isAllNotEmpty(tableNames)) {
       tableNames.foreach(tableName => {
         sqlContext.sql(s"DROP TABLE IF EXISTS $tableName")
       })
@@ -185,7 +185,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * 分区
     */
   def addPartitions(tableName: String, partitions: String*): Unit = {
-    if (StringUtils.isNotBlank(tableName) && ParamUtils.isNotBlank(partitions)) {
+    if (StringUtils.isNotBlank(tableName) && ValueUtils.isAllNotEmpty(partitions)) {
       partitions.foreach(ds => {
         this.addPartition(tableName, ds, GlobalConstants.SparkConf.partitionName)
       })
@@ -231,7 +231,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * 分区
     */
   def dropPartitions(tableName: String, partitions: String*): Unit = {
-    if (StringUtils.isNotBlank(tableName) && ParamUtils.isNotBlank(partitions)) {
+    if (StringUtils.isNotBlank(tableName) && ValueUtils.isAllNotEmpty(partitions)) {
       partitions.foreach(ds => {
         this.dropPartition(tableName, ds, GlobalConstants.SparkConf.partitionName)
       })

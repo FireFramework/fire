@@ -2,10 +2,10 @@ package com.zto.fire.common.bean;
 
 import com.zto.fire.common.acc.AccumulatorManager;
 import com.zto.fire.common.util.GlobalConstants;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.SparkEnv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.utils.StringUtils;
 
 import java.io.Serializable;
 

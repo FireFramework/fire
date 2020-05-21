@@ -9,7 +9,7 @@ import org.apache.spark.SparkConf
   * Created by ChengLong on 2019-03-11.
   */
 class BaseStructuredStreaming extends BaseSpark {
-  override val jobType = JobType.STRUCTURED_STREAMING
+  override val jobType = JobType.SPARK_STRUCTURED_STREAMING
 
   /**
     * 程序初始化方法，用于初始化必要的值
@@ -18,8 +18,10 @@ class BaseStructuredStreaming extends BaseSpark {
     * Spark配置信息
     * @param args main方法参数
     */
-  override def init(conf: SparkConf = null, args: Array[String] = null): Unit = {
+  override def init(conf: Any = null, args: Array[String] = null): Unit = {
     super.init(conf, args)
+    // 添加时间监听器
+    this.spark.streams.addListener(new BaseStreamingQueryListener)
     if (SystemInfoUtils.isLinux) this.restfulRegister.startRestServer
     this.process
   }

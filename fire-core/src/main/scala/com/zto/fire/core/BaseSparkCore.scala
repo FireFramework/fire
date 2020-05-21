@@ -9,7 +9,7 @@ import org.apache.spark.SparkConf
   * Created by ChengLong on 2018-03-28.
   */
 class BaseSparkCore extends BaseSpark {
-  override val jobType = JobType.CORE
+  override val jobType = JobType.SPARK_CORE
 
   /**
     * 程序初始化方法，用于初始化必要的值
@@ -17,7 +17,7 @@ class BaseSparkCore extends BaseSpark {
     * @param conf
     * Spark配置信息
     */
-  override def init(conf: SparkConf = null, args: Array[String] = null): Unit = {
+  override def init(conf: Any = null, args: Array[String] = null): Unit = {
     super.init(conf, args)
     this.process
   }

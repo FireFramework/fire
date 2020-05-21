@@ -531,6 +531,17 @@ object DateFormatUtils {
   }
 
   /**
+    * 对指定日期增加天，并以指定的格式返回
+    */
+  def addPartitionDays(dateTime: Date, days: Int, schema: String = "yyyyMMdd"): String = {
+    if (dateTime != null) {
+      DateFormatUtils.formatBySchema(DateUtils.addDays(dateTime, days), schema)
+    } else {
+      ""
+    }
+  }
+
+  /**
     * 对指定的时间字段进行天加减
     *
     * @param dateTimeStr
