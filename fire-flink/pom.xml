@@ -3,23 +3,17 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.zto.fire</groupId>
     <artifactId>fire-flink</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
     <inceptionYear>2010</inceptionYear>
     <packaging>jar</packaging>
 
     <properties>
-        <fire.version>1.0.0-SNAPSHOT</fire.version>
         <flink.version>1.10.0</flink.version>
-        <scala.version>2.11.12</scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
-        <kafka.version>0.10.2.0</kafka.version>
-        <maven.scope>provided</maven.scope>
     </properties>
 
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -86,7 +80,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-kafka-0.10_${scala.binary.version}</artifactId>
+            <artifactId>flink-connector-kafka-0.11_${scala.binary.version}</artifactId>
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>

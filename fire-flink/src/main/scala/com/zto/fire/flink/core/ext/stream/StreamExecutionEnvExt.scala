@@ -3,7 +3,6 @@ package com.zto.fire.flink.core.ext.stream
 import java.util.Properties
 
 import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ValueUtils}
-import com.zto.fire.core.util.SparkUtils
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.JobExecutionResult
@@ -11,7 +10,7 @@ import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011
 
 import scala.collection.JavaConversions
 
@@ -44,7 +43,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
     val properties = new Properties();
     kafkaProps.foreach(t => properties.setProperty(t._1, t._2.toString))
 
-    val kafkaConsumer = new FlinkKafkaConsumer010[String](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
+    val kafkaConsumer = new FlinkKafkaConsumer011[String](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
       new SimpleStringSchema(), properties)
     env.addSource(kafkaConsumer)
   }
