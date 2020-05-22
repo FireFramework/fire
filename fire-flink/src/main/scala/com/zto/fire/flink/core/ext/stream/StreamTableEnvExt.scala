@@ -1,5 +1,6 @@
 package com.zto.fire.flink.core.ext.stream
 
+import com.zto.fire.core.bridge.JdbcOperBridge
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala.StreamTableEnvironment
 import org.apache.flink.table.functions.ScalarFunction
@@ -10,7 +11,7 @@ import org.apache.flink.table.functions.ScalarFunction
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class StreamTableEnvExt(tableEnv: StreamTableEnvironment) {
+class StreamTableEnvExt(tableEnv: StreamTableEnvironment) extends JdbcOperBridge {
 
   /**
    * 执行sql query操作
@@ -35,4 +36,6 @@ class StreamTableEnvExt(tableEnv: StreamTableEnvironment) {
   def udf(name: String, function: ScalarFunction): Unit = {
     this.tableEnv.registerFunction(name, function)
   }
+
+
 }

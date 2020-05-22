@@ -2,16 +2,17 @@ package com.zto.fire.flink.core.ext.stream
 
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.bean.ogg.OGGBean
-import com.zto.fire.common.util.GlobalConstants
+import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants}
 import com.zto.fire.core.util.FireUtils
 import com.zto.fire.flink.core.ext.functions.FireMapFunction
-import com.zto.fire.flink.core.sink.{HBaseOperSink, HBaseOperSinkBatch}
+import com.zto.fire.flink.core.sink.{FlinkJdbcSink, HBaseOperSink, HBaseOperSinkBatch}
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.accumulators.SimpleAccumulator
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.function.AllWindowFunction
 import org.apache.flink.streaming.api.scala.{DataStream, _}
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
@@ -148,6 +149,31 @@ class DataStreamExt[T](stream: DataStream[T]) {
             throw new IllegalArgumentException("ogg消息解析失败：json格式不合法")
           }
         }
+      }
+    })
+  }
+
+  /**
+   * jdbc批量sink操作
+   *
+   * @param sql
+   * 增删改sql
+   * @param batch
+   * 每次sink最大的记录数
+   * @param flushInterval
+   * 多久flush一次（毫秒）
+   * @param keyNum
+   * 配置文件中的key后缀
+   * @param fun
+   * 将dstream中的数据映射为该sink组件所能处理的数据
+   */
+  def jdbcBatchUpdate(sql: String,
+                         batch: Int = 10,
+                         flushInterval: Long = 1000,
+                         keyNum: Int = 1)(fun:T => Seq[Any]): DataStreamSink[T] = {
+    this.stream.addSink(new FlinkJdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
+      override def map(value: T): Seq[Any] = {
+        fun(value)
       }
     })
   }

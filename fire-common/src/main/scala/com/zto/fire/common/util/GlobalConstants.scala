@@ -124,6 +124,7 @@ object GlobalConstants {
     val SPARK_DB_JDBC_INITIAL_POOL_SIZE_KEY = "spark.db.jdbc.initialPoolSize"
     val SPARK_DB_JDBC_MAX_IDLE_TIME_KEY = "spark.db.jdbc.maxIdleTime"
     val SPARK_DB_JDBC_BATCH_SIZE = "spark.db.jdbc.batch.size"
+    val SPARK_DB_JDBC_FLUSH_INTERVAL = "spark.db.jdbc.flushInterval"
 
     val LOG_LEVEL = "spark.log.level"
     val KAFKA_LOG_LEVEL = "spark.kafka.log.level"
@@ -414,6 +415,9 @@ object GlobalConstants {
 
     // 批量操作的记录数
     def batchSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_BATCH_SIZE, keyNum, DefaultVals.jdbcBatchSize)
+
+    // 默认多少毫秒flush一次
+    def jdbcFlushInterval(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.SPARK_DB_JDBC_FLUSH_INTERVAL, keyNum, 1000)
 
     // 连接池最小连接数
     def minPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MIN_POOL_SIZE_KEY, keyNum, 1)

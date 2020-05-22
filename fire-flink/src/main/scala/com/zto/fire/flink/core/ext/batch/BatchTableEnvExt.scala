@@ -1,5 +1,6 @@
 package com.zto.fire.flink.core.ext.batch
 
+import com.zto.fire.core.bridge.JdbcOperBridge
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala.BatchTableEnvironment
 
@@ -9,7 +10,7 @@ import org.apache.flink.table.api.scala.BatchTableEnvironment
  * @author ChengLong 2020年1月9日 13:52:16
  * @since 0.4.1
  */
-class BatchTableEnvExt(env: BatchTableEnvironment) {
+class BatchTableEnvExt(env: BatchTableEnvironment) extends JdbcOperBridge {
 
   /**
    * 执行sql query操作
