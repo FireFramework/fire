@@ -30,8 +30,9 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
   @transient
   protected lazy val closed = new AtomicBoolean(false)
   @transient
-  protected lazy val buffer = Collections.synchronizedList[OUT](Lists.newLinkedList())
   protected lazy val logger = LoggerFactory.getLogger(this.getClass)
+  @transient
+  protected lazy val buffer = Collections.synchronizedList[OUT](Lists.newArrayListWithCapacity(this.batch))
 
   /**
    * 初始化定时调度器，用于定时flush数据到目标组件

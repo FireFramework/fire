@@ -1,8 +1,10 @@
 package com.zto.fire.flink.core.ext.stream
 
+import java.lang.reflect.Field
+
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.bean.ogg.OGGBean
-import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants}
+import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, ReflectionUtils, ValueUtils}
 import com.zto.fire.core.util.FireUtils
 import com.zto.fire.flink.core.ext.functions.FireMapFunction
 import com.zto.fire.flink.core.sink.{FlinkJdbcSink, HBaseOperSink, HBaseOperSinkBatch}
@@ -20,6 +22,8 @@ import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala._
 import org.apache.flink.util.Collector
 
+import scala.collection.{JavaConversions, mutable}
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /**
@@ -167,14 +171,64 @@ class DataStreamExt[T](stream: DataStream[T]) {
    * @param fun
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
-  def jdbcBatchUpdate(sql: String,
-                         batch: Int = 10,
-                         flushInterval: Long = 1000,
-                         keyNum: Int = 1)(fun:T => Seq[Any]): DataStreamSink[T] = {
+  def jdbcBatchUpdate2(sql: String,
+                       batch: Int = 10,
+                       flushInterval: Long = 1000,
+                       keyNum: Int = 1)(fun: T => Seq[Any]): DataStreamSink[T] = {
     this.stream.addSink(new FlinkJdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       override def map(value: T): Seq[Any] = {
         fun(value)
       }
     })
   }
+
+  /**
+   * jdbc批量sink操作，根据用户指定的DataStream中字段的顺序，依次填充到sql中的占位符所对应的位置
+   * 注：
+   *  1. fieldList指定DataStream中JavaBean的字段名称，非jdbc表中的字段名称
+   *  2. fieldList多个字段使用逗号分隔
+   *  3. fieldList中的字段顺序要与sql中占位符顺序保持一致，数量一致
+   *
+   * @param sql
+   * 增删改sql
+   * @param fields
+   * DataStream中数据的每一列的列名（非数据库中的列名，需与sql中占位符的顺序一致）
+   * @param batch
+   * 每次sink最大的记录数
+   * @param flushInterval
+   * 多久flush一次（毫秒）
+   * @param keyNum
+   * 配置文件中的key后缀
+   */
+  def jdbcBatchUpdate(sql: String,
+                      fields: String,
+                      batch: Int = 10,
+                      flushInterval: Long = 1000,
+                      keyNum: Int = 1): DataStreamSink[T] = {
+    this.stream.addSink(new FlinkJdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
+      var fieldMap: java.util.Map[String, Field] = _
+      var clazz: Class[_] = _
+
+      override def map(value: T): Seq[Any] = {
+        ValueUtils.requireNonNullForce(sql, "sql语句不能为空")
+        ValueUtils.requireNonNullForce(fields, "字段列表不能为空！请以逗号分隔，按照sql中的占位符顺序依次指定当前DataStream中数据字段的名称")
+
+        val params = ListBuffer[Any]()
+        if (clazz == null) {
+          if (value != null) {
+            clazz = value.getClass
+            fieldMap = ReflectionUtils.getAllFields(clazz)
+          }
+        }
+
+        fields.split(",").foreach(fieldName => {
+          val field = this.fieldMap.get(StringUtils.trim(fieldName.trim))
+          ValueUtils.requireNonNullForce(field, s"当前DataStream中不存在该列名$fieldName，请检查！")
+          params += field.get(value)
+        })
+        params
+      }
+    })
+  }
+
 }
