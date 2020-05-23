@@ -80,6 +80,38 @@ class TableExt(table: Table) {
   }
 
   /**
+   * table的jdbc批量sink操作，根据用户指定的Row中字段的顺序，依次填充到sql中的占位符所对应的位置
+   * 注：
+   *  1. Row中的字段顺序要与sql中占位符顺序保持一致，数量一致
+   *  2. 目前仅处理Retract中的true消息，用户需手动传入merge语句
+   *
+   * @param sql
+   * 增删改sql
+   * @param batch
+   * 每次sink最大的记录数
+   * @param flushInterval
+   * 多久flush一次（毫秒）
+   * @param keyNum
+   * 配置文件中的key后缀
+   */
+  def jdbcBatchUpdate(sql: String,
+                      batch: Int = 10,
+                      flushInterval: Long = 1000,
+                      isMerge: Boolean = true,
+                      keyNum: Int = 1): DataStreamSink[Row] = {
+
+    this.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, keyNum) {
+      row => {
+        val param = ListBuffer[Any]()
+        for (i <- 0 until row.getArity) {
+          param += row.getField(i)
+        }
+        param
+      }
+    }
+  }
+
+  /**
    * table的jdbc批量sink操作，该api需用户定义row的取数规则，并与sql中的占位符对等
    *
    * @param sql
@@ -106,35 +138,4 @@ class TableExt(table: Table) {
     }
   }
 
-  /**
-   * table的jdbc批量sink操作，根据用户指定的Row中字段的顺序，依次填充到sql中的占位符所对应的位置
-   * 注：
-   *  1. Row中的字段顺序要与sql中占位符顺序保持一致，数量一致
-   *  2. 目前仅处理Retract中的true消息，用户需手动传入merge语句
-   *
-   * @param sql
-   * 增删改sql
-   * @param batch
-   * 每次sink最大的记录数
-   * @param flushInterval
-   * 多久flush一次（毫秒）
-   * @param keyNum
-   * 配置文件中的key后缀
-   */
-  def jdbcBatchUpdate(sql: String,
-                      batch: Int = 10,
-                      flushInterval: Long = 1000,
-                      isMerge: Boolean = true,
-                      keyNum: Int = 1): DataStreamSink[Row] = {
-
-    this.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, keyNum){
-      row => {
-        val param = ListBuffer[Any]()
-        for (i <- 0 until row.getArity) {
-          param += row.getField(i)
-        }
-        param
-      }
-    }
-  }
 }

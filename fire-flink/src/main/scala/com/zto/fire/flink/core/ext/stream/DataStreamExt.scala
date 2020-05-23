@@ -158,31 +158,6 @@ class DataStreamExt[T](stream: DataStream[T]) {
   }
 
   /**
-   * jdbc批量sink操作
-   *
-   * @param sql
-   * 增删改sql
-   * @param batch
-   * 每次sink最大的记录数
-   * @param flushInterval
-   * 多久flush一次（毫秒）
-   * @param keyNum
-   * 配置文件中的key后缀
-   * @param fun
-   * 将dstream中的数据映射为该sink组件所能处理的数据
-   */
-  def jdbcBatchUpdate2(sql: String,
-                       batch: Int = 10,
-                       flushInterval: Long = 1000,
-                       keyNum: Int = 1)(fun: T => Seq[Any]): DataStreamSink[T] = {
-    this.stream.addSink(new FlinkJdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
-      override def map(value: T): Seq[Any] = {
-        fun(value)
-      }
-    })
-  }
-
-  /**
    * jdbc批量sink操作，根据用户指定的DataStream中字段的顺序，依次填充到sql中的占位符所对应的位置
    * 注：
    *  1. fieldList指定DataStream中JavaBean的字段名称，非jdbc表中的字段名称
@@ -227,6 +202,31 @@ class DataStreamExt[T](stream: DataStream[T]) {
           params += field.get(value)
         })
         params
+      }
+    })
+  }
+
+  /**
+   * jdbc批量sink操作
+   *
+   * @param sql
+   * 增删改sql
+   * @param batch
+   * 每次sink最大的记录数
+   * @param flushInterval
+   * 多久flush一次（毫秒）
+   * @param keyNum
+   * 配置文件中的key后缀
+   * @param fun
+   * 将dstream中的数据映射为该sink组件所能处理的数据
+   */
+  def jdbcBatchUpdate2(sql: String,
+                       batch: Int = 10,
+                       flushInterval: Long = 1000,
+                       keyNum: Int = 1)(fun: T => Seq[Any]): DataStreamSink[T] = {
+    this.stream.addSink(new FlinkJdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
+      override def map(value: T): Seq[Any] = {
+        fun(value)
       }
     })
   }
