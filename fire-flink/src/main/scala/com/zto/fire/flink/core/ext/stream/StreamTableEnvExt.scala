@@ -1,5 +1,6 @@
 package com.zto.fire.flink.core.ext.stream
 
+import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.core.bridge.JdbcOperBridge
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
@@ -133,5 +134,59 @@ class StreamTableEnvExt(tableEnv: StreamTableEnvironment) extends JdbcOperBridge
                             isMerge: Boolean = true,
                             keyNum: Int = 1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
     table.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, keyNum)(fun)
+  }
+
+  /**
+   * hbase批量sink操作，DataStream[T]中的T必须是HBaseBaseBean的子类
+   *
+   * @param tableName
+   * hbase表名
+   * @param insertEmpty
+   * 为空的字段是否插入到hbase中
+   * @param batch
+   * 每次sink最大的记录数
+   * @param multiVersion
+   * 是否以多版本形式保存
+   * @param flushInterval
+   * 多久flush一次（毫秒）
+   * @param keyNum
+   * 配置文件中的key后缀
+   */
+  def hbaseOperPutDS[T <: HBaseBaseBean[T]](stream: DataStream[T],
+                                            tableName: String,
+                                            insertEmpty: Boolean = true,
+                                            batch: Int = 100,
+                                            multiVersion: Boolean = false,
+                                            flushInterval: Long = 3000,
+                                            keyNum: Int = 1): DataStreamSink[T] = {
+    stream.hbaseOperPutDS(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)
+  }
+
+  /**
+   * hbase批量sink操作，DataStream[T]中的T必须是HBaseBaseBean的子类
+   *
+   * @param tableName
+   * hbase表名
+   * @param insertEmpty
+   * 为空的字段是否插入到hbase中
+   * @param batch
+   * 每次sink最大的记录数
+   * @param multiVersion
+   * 是否以多版本形式保存
+   * @param flushInterval
+   * 多久flush一次（毫秒）
+   * @param keyNum
+   * 配置文件中的key后缀
+   * @param fun
+   * 将dstream中的数据映射为该sink组件所能处理的数据
+   */
+  def hbaseOperPutDS2[T](stream: DataStream[T],
+                         tableName: String,
+                         insertEmpty: Boolean = true,
+                         batch: Int = 100,
+                         multiVersion: Boolean = false,
+                         flushInterval: Long = 3000,
+                         keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[T] = {
+    stream.hbaseOperPutDS2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)(fun)
   }
 }

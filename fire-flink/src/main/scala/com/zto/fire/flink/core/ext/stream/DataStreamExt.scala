@@ -7,7 +7,7 @@ import com.zto.fire.common.bean.ogg.OGGBean
 import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, ReflectionUtils, ValueUtils}
 import com.zto.fire.core.util.FireUtils
 import com.zto.fire.flink.core.ext.functions.FireMapFunction
-import com.zto.fire.flink.core.sink.{FlinkJdbcSink, HBaseOperSink, HBaseOperSinkBatch}
+import com.zto.fire.flink.core.sink.{FlinkHBaseSink, FlinkJdbcSink, HBaseOperSink, HBaseOperSinkBatch}
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.accumulators.SimpleAccumulator
@@ -239,6 +239,75 @@ class DataStreamExt[T](stream: DataStream[T]) {
                        keyNum: Int = 1)(fun: T => Seq[Any]): DataStreamSink[T] = {
     this.stream.addSink(new FlinkJdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       override def map(value: T): Seq[Any] = {
+        fun(value)
+      }
+    })
+  }
+
+  /**
+   * hbase批量sink操作，DataStream[T]中的T必须是HBaseBaseBean的子类
+   *
+   * @param tableName
+   * hbase表名
+   * @param insertEmpty
+   * 为空的字段是否插入到hbase中
+   * @param batch
+   * 每次sink最大的记录数
+   * @param multiVersion
+   * 是否以多版本形式保存
+   * @param flushInterval
+   * 多久flush一次（毫秒）
+   * @param keyNum
+   * 配置文件中的key后缀
+   */
+  def hbaseOperPutDS(tableName: String,
+                     insertEmpty: Boolean = true,
+                     batch: Int = 100,
+                     multiVersion: Boolean = false,
+                     flushInterval: Long = 3000,
+                     keyNum: Int = 1): DataStreamSink[T] = {
+    this.stream.addSink(new FlinkHBaseSink[T](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
+      /**
+       * 将数据构建成sink的格式
+       */
+      override def map(value: T): HBaseBaseBean[T] = {
+        if (!value.isInstanceOf[HBaseBaseBean[T]]) {
+          throw new IllegalArgumentException("hbase sink 失败，DataStream中的数据类型必须为DataStream[HBaseBaseBean]")
+        }
+        value.asInstanceOf[HBaseBaseBean[T]]
+      }
+    })
+  }
+
+  /**
+   * hbase批量sink操作，DataStream[T]中的T必须是HBaseBaseBean的子类
+   *
+   * @param tableName
+   * hbase表名
+   * @param insertEmpty
+   * 为空的字段是否插入到hbase中
+   * @param batch
+   * 每次sink最大的记录数
+   * @param multiVersion
+   * 是否以多版本形式保存
+   * @param flushInterval
+   * 多久flush一次（毫秒）
+   * @param keyNum
+   * 配置文件中的key后缀
+   * @param fun
+   * 将dstream中的数据映射为该sink组件所能处理的数据
+   */
+  def hbaseOperPutDS2(tableName: String,
+                      insertEmpty: Boolean = true,
+                      batch: Int = 100,
+                      multiVersion: Boolean = false,
+                      flushInterval: Long = 3000,
+                      keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[T] = {
+    this.stream.addSink(new FlinkHBaseSink[T](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
+      /**
+       * 将数据构建成sink的格式
+       */
+      override def map(value: T): HBaseBaseBean[T] = {
         fun(value)
       }
     })

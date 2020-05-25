@@ -1,0 +1,77 @@
+package com.zto.fire.demo.flink.stream
+
+import com.alibaba.fastjson.JSON
+import com.zto.fire.common.bean.HBaseBaseBean
+import com.zto.fire.demo.bean.Student
+import com.zto.fire.flink.core.BaseFlinkStreaming
+import com.zto.fire.flink.core.ext.FlinkExt._
+import com.zto.fire.flink.core.sink.FlinkHBaseSink
+import org.apache.flink.api.scala._
+import org.apache.flink.streaming.api.scala.DataStream
+
+/**
+ * flink hbase sink
+ *
+ * @author ChengLong
+ * @since 1.1.0
+ * @create 2020-5-25 16:32:50
+ */
+object FlinkHBaseTest extends BaseFlinkStreaming {
+  lazy val tableName = "fire_test_1"
+
+
+  /**
+   * table的hbase sink
+   */
+  def testTableHBaseSink(stream: DataStream[Student]): Unit = {
+    stream.createOrReplaceTempView("student")
+    val table = this.flink.sql("select name, age, createTime, length, sex from student group by name, age, createTime, length, sex")
+    // 方式一、table中的列顺序和类型需与jdbc sql中的占位符顺序保持一致
+    // table.jdbcBatchUpdate(sql, keyNum = 1).setParallelism(1)
+    // 或者
+
+    // 方式二、自定义row取数规则，适用于row中的列个数和顺序与sql占位符不一致的情况
+    /*table.jdbcBatchUpdate2(sql, flushInterval = 10000)(row => {
+      Seq(row.getField(0), row.getField(1), row.getField(2), row.getField(3), row.getField(4))
+    })*/
+    // 或者
+  }
+
+  /**
+   * stream hbase sink
+   */
+  def testStreamHBaseSink(stream: DataStream[Student]): Unit = {
+    // 方式一、DataStream中的数据类型为HBaseBaseBean的子类
+    // stream.hbaseOperPutDS(this.tableName)
+    this.flink.hbaseOperPutDS(stream, this.tableName)
+
+    // 方式二、将value组装为HBaseBaseBean的子类，逻辑用户自定义
+    stream.hbaseOperPutDS2(this.tableName)(value => value)
+    // 或者
+    // this.flink.hbaseOperPutDS2(stream, this.tableName)(value => value)
+  }
+
+  def testHBase: Unit = {
+    // 执行查询操作
+    val studentList = this.flink.jdbcQuery(s"select * from $tableName", clazz = classOf[Student])
+    val dataStream = this.env.fromCollection(studentList)
+    dataStream.print()
+
+    // 执行增删改操作
+    this.flink.jdbcUpdate(s"delete from $tableName")
+  }
+
+  override def process: Unit = {
+    val stream = this.ssc.createDirectStream().map(json => JSON.parseObject(json, classOf[Student]))
+
+    // this.testTableJdbcSink(stream)
+    this.testStreamHBaseSink(stream)
+    // this.testHBase
+
+    this.ssc.startAwaitTermination()
+  }
+
+  def main(args: Array[String]): Unit = {
+    this.init()
+  }
+}

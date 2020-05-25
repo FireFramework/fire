@@ -213,6 +213,26 @@ public class HBaseOper {
 
     /**
      * 通过反射获取字段数据，保存到HBase中
+     *
+     * @param tableName    表名
+     * @param list         list中的数据必须是HBaseBaseBean的子类实例集合
+     * @param insertEmpty  为空的列是否插入到hbase中
+     * @param multiVersion 是否以多版本形式插入
+     */
+    public static <T extends HBaseBaseBean> void insert(String tableName, List<T> list, boolean insertEmpty, boolean multiVersion) {
+        if (multiVersion) {
+            HBaseOper.insertMultiVersions(tableName, list);
+        } else {
+            if (insertEmpty) {
+                HBaseOper.insert(tableName, list);
+            } else {
+                HBaseOper.insertIgnoreNull(tableName, list);
+            }
+        }
+    }
+
+    /**
+     * 通过反射获取字段数据，保存到HBase中
      * 注：仅支持一个列族
      *
      * @param tableName 表名
@@ -277,6 +297,28 @@ public class HBaseOper {
      */
     public static <T extends HBaseBaseBean> void insertIgnoreNull(String tableName, ListBuffer<T> list) {
         HBaseOper.insertIgnoreNull(tableName, list.toList());
+    }
+
+    /**
+     * 通过反射获取字段数据，保存到HBase中
+     * 注：仅支持一个列族
+     *
+     * @param tableName 表名
+     * @param list      list中的数据必须是HBaseBaseBean的子类实例集合
+     */
+    public static <T extends HBaseBaseBean> void insertIgnoreNull(String tableName, List<T> list) {
+        if (list != null && list.size() > 0) {
+            List<Put> putList = new LinkedList<>();
+            Iterator<T> it = list.iterator();
+            while (it.hasNext()) {
+                Put put = convert2Put((T) it.next(), false);
+                if (put != null) {
+                    put.setDurability(GlobalConstants.hbaseDurability());
+                    putList.add(put);
+                }
+            }
+            insertPut(tableName, putList);
+        }
     }
 
     /**

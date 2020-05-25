@@ -16,6 +16,8 @@ object GlobalConstants {
   // ---------------------- 用于Java中的配置信息 ---------------------- //
   // hbase默认的列族名称，如果使用FieldName指定，则会被覆盖
   lazy val familyName = PropUtils.getString(PropKeys.HBBASE_COLUMN_FAMILY_KEY, "info")
+  // hbase操作失败最大重试次数
+  lazy val hbaseMaxRetry = PropUtils.getLong(PropKeys.HBASE_MAX_RETRY, 3)
   // hbase集群名称
   lazy val hbaseCluster = PropUtils.getString(PropKeys.HBASE_CLUSTER_URL, DefaultVals.hbaseName)
   // fire框架埋点日志开关
@@ -132,6 +134,7 @@ object GlobalConstants {
     val SAVE_MODE_KEY = "spark.saveMode"
     val PARALLELISM_KEY = "spark.parallelism"
     val HBBASE_COLUMN_FAMILY_KEY = "spark.hbase.column.family"
+    val HBASE_MAX_RETRY = "spark.hbase.max.retry"
     val HbaseDurability_KEY = "HbaseDurability"
     val KUDU_MASTER_URL = "spark.kudu.master"
     val HBASE_CLUSTER_URL = "spark.hbase.cluster"
