@@ -265,18 +265,16 @@ class DataStreamExt[T](stream: DataStream[T]) {
                      batch: Int = 100,
                      multiVersion: Boolean = false,
                      flushInterval: Long = 3000,
-                     keyNum: Int = 1): DataStreamSink[T] = {
-    this.stream.addSink(new FlinkHBaseSink[T](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
-      /**
-       * 将数据构建成sink的格式
-       */
-      override def map(value: T): HBaseBaseBean[T] = {
+                     keyNum: Int = 1): DataStreamSink[_] = {
+
+    this.hbaseOperPutDS2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
+      value => {
         if (!value.isInstanceOf[HBaseBaseBean[T]]) {
           throw new IllegalArgumentException("hbase sink 失败，DataStream中的数据类型必须为DataStream[HBaseBaseBean]")
         }
         value.asInstanceOf[HBaseBaseBean[T]]
       }
-    })
+    }
   }
 
   /**
@@ -302,12 +300,12 @@ class DataStreamExt[T](stream: DataStream[T]) {
                       batch: Int = 100,
                       multiVersion: Boolean = false,
                       flushInterval: Long = 3000,
-                      keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[T] = {
+                      keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[_] = {
     this.stream.addSink(new FlinkHBaseSink[T](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
       /**
        * 将数据构建成sink的格式
        */
-      override def map(value: T): HBaseBaseBean[T] = {
+      override def map(value: T): HBaseBaseBean[_] = {
         fun(value)
       }
     })

@@ -158,7 +158,7 @@ class StreamTableEnvExt(tableEnv: StreamTableEnvironment) extends JdbcOperBridge
                                             batch: Int = 100,
                                             multiVersion: Boolean = false,
                                             flushInterval: Long = 3000,
-                                            keyNum: Int = 1): DataStreamSink[T] = {
+                                            keyNum: Int = 1): DataStreamSink[_] = {
     stream.hbaseOperPutDS(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)
   }
 
@@ -186,7 +186,56 @@ class StreamTableEnvExt(tableEnv: StreamTableEnvironment) extends JdbcOperBridge
                          batch: Int = 100,
                          multiVersion: Boolean = false,
                          flushInterval: Long = 3000,
-                         keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[T] = {
+                         keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[_] = {
     stream.hbaseOperPutDS2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)(fun)
+  }
+
+  /**
+   * table的hbase批量sink操作，该api需用户定义row的取数规则，并映射到对应的HBaseBaseBean的子类中
+   *
+   * @param tableName
+   *                     HBase表名
+   * @param insertEmpty  为空的字段是否插入
+   * @param batch
+   *                     每次sink最大的记录数
+   * @param multiVersion 是否以多版本方式写入
+   * @param flushInterval
+   *                     多久flush一次（毫秒）
+   * @param keyNum
+   *                     配置文件中的key后缀
+   */
+  def hbaseOperPutTable[T <: HBaseBaseBean[T]](table: Table,
+                                               tableName: String,
+                                               clazz: Class[T],
+                                               insertEmpty: Boolean = true,
+                                               batch: Int = 100,
+                                               multiVersion: Boolean = false,
+                                               flushInterval: Long = 3000,
+                                               keyNum: Int = 1): DataStreamSink[_] = {
+    table.hbaseOperPutTable[T](tableName, clazz, insertEmpty, batch, multiVersion, flushInterval, keyNum)
+  }
+
+  /**
+   * table的hbase批量sink操作，该api需用户定义row的取数规则，并映射到对应的HBaseBaseBean的子类中
+   *
+   * @param tableName
+   *                     HBase表名
+   * @param insertEmpty  为空的字段是否插入
+   * @param batch
+   *                     每次sink最大的记录数
+   * @param multiVersion 是否以多版本方式写入
+   * @param flushInterval
+   *                     多久flush一次（毫秒）
+   * @param keyNum
+   *                     配置文件中的key后缀
+   */
+  def hbaseOperPutTable2(table: Table,
+                         tableName: String,
+                         insertEmpty: Boolean = true,
+                         batch: Int = 100,
+                         multiVersion: Boolean = false,
+                         flushInterval: Long = 3000,
+                         keyNum: Int = 1)(fun: Row => HBaseBaseBean[_]): DataStreamSink[_] = {
+    table.hbaseOperPutTable2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)(fun)
   }
 }

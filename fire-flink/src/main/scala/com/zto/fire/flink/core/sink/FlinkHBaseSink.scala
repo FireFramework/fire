@@ -16,7 +16,7 @@ abstract class FlinkHBaseSink[IN](tableName: String,
                                   batch: Int = 100,
                                   multiVersion: Boolean = false,
                                   flushInterval: Long = 10000,
-                                  keyNum: Int = 1) extends BaseFlinkSink[IN, HBaseBaseBean[IN]](batch, flushInterval) {
+                                  keyNum: Int = 1) extends BaseFlinkSink[IN, HBaseBaseBean[_]](batch, flushInterval) {
 
   // hbase操作失败时允许最大重试次数
   this.maxRetry = GlobalConstants.hbaseMaxRetry
