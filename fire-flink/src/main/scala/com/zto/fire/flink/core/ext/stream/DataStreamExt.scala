@@ -20,6 +20,7 @@ import org.apache.flink.streaming.api.scala.{DataStream, _}
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala._
+import org.apache.flink.types.Row
 import org.apache.flink.util.Collector
 
 import scala.collection.{JavaConversions, mutable}
@@ -159,6 +160,7 @@ class DataStreamExt[T](stream: DataStream[T]) {
 
   /**
    * jdbc批量sink操作，根据用户指定的DataStream中字段的顺序，依次填充到sql中的占位符所对应的位置
+   * 若DataStream为DataStream[Row]类型，则fields可以为空，但此时row中每列的顺序要与sql占位符顺序一致，数量和类型也要一致
    * 注：
    *  1. fieldList指定DataStream中JavaBean的字段名称，非jdbc表中的字段名称
    *  2. fieldList多个字段使用逗号分隔
@@ -183,24 +185,35 @@ class DataStreamExt[T](stream: DataStream[T]) {
     this.stream.addSink(new FlinkJdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       var fieldMap: java.util.Map[String, Field] = _
       var clazz: Class[_] = _
+      var fieldList: Array[String] = _
 
       override def map(value: T): Seq[Any] = {
         ValueUtils.requireNonNullForce(sql, "sql语句不能为空")
-        ValueUtils.requireNonNullForce(fields, "字段列表不能为空！请以逗号分隔，按照sql中的占位符顺序依次指定当前DataStream中数据字段的名称")
 
         val params = ListBuffer[Any]()
-        if (clazz == null) {
-          if (value != null) {
-            clazz = value.getClass
-            fieldMap = ReflectionUtils.getAllFields(clazz)
+        if (value.isInstanceOf[Row] || value.isInstanceOf[Tuple2[Boolean, Row]]) {
+          // 如果是Row类型的DataStream[Row]
+          val row = if (value.isInstanceOf[Row]) value.asInstanceOf[Row] else value.asInstanceOf[Tuple2[Boolean, Row]]._2
+          for (i <- 0 until row.getArity) {
+            params += row.getField(i)
           }
-        }
+        } else {
+          ValueUtils.requireNonNullForce(fields, "字段列表不能为空！请以逗号分隔，按照sql中的占位符顺序依次指定当前DataStream中数据字段的名称")
+          if (this.fieldList == null) this.fieldList = fields.split(",").map(field => StringUtils.trim(field))
 
-        fields.split(",").foreach(fieldName => {
-          val field = this.fieldMap.get(StringUtils.trim(fieldName.trim))
-          ValueUtils.requireNonNullForce(field, s"当前DataStream中不存在该列名$fieldName，请检查！")
-          params += field.get(value)
-        })
+          if (clazz == null) {
+            if (value != null) {
+              clazz = value.getClass
+              fieldMap = ReflectionUtils.getAllFields(clazz)
+            }
+          }
+
+          this.fieldList.foreach(fieldName => {
+            val field = this.fieldMap.get(fieldName)
+            ValueUtils.requireNonNullForce(field, s"当前DataStream中不存在该列名$fieldName，请检查！")
+            params += field.get(value)
+          })
+        }
         params
       }
     })

@@ -1,10 +1,11 @@
 package com.zto.fire.flink.core.sink
 
 import java.util.Collections
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 import java.util.concurrent.{Executors, ScheduledExecutorService, ScheduledFuture, TimeUnit}
 
 import com.google.common.collect.Lists
+import scala.util.control._
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.runtime.state.{FunctionInitializationContext, FunctionSnapshotContext}
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction
@@ -23,16 +24,13 @@ import org.slf4j.LoggerFactory
  * @create 2020-05-21 15:27
  */
 abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends RichSinkFunction[IN] with CheckpointedFunction {
-  @transient
-  protected var scheduler: ScheduledExecutorService = _
-  @transient
-  protected var scheduledFuture: ScheduledFuture[_] = _
-  @transient
+  protected var maxRetry: Long = 3
+  private var flushException: Exception = _
+  @transient protected var scheduler: ScheduledExecutorService = _
+  @transient protected var scheduledFuture: ScheduledFuture[_] = _
   protected lazy val closed = new AtomicBoolean(false)
-  @transient
   protected lazy val logger = LoggerFactory.getLogger(this.getClass)
-  @transient
-  protected lazy val buffer = Collections.synchronizedList[OUT](Lists.newArrayListWithCapacity(this.batch))
+  @transient protected lazy val buffer = Collections.synchronizedList[OUT](Lists.newArrayListWithCapacity(this.batch))
 
   /**
    * 初始化定时调度器，用于定时flush数据到目标组件
@@ -71,6 +69,8 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
     if (closed.get()) return
     closed.compareAndSet(false, true)
 
+    this.checkFlushException
+
     if (this.scheduledFuture != null) {
       scheduledFuture.cancel(false)
       this.scheduler.shutdown()
@@ -85,6 +85,8 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
    * 将数据sink到缓冲区中
    */
   override def invoke(value: IN, context: SinkFunction.Context[_]): Unit = {
+    this.checkFlushException
+
     val out = this.map(value)
     if (out != null) this.buffer.add(out)
     if (this.buffer.size >= this.batch) {
@@ -97,14 +99,28 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
    * 并清空缓冲区，将缓冲区大小归零
    */
   def flush: Unit = this.synchronized {
-    try {
-      if (this.buffer != null && this.buffer.size > 0) {
-        this.logger.warn(s"执行flushInternal操作 sink.size=${this.buffer.size()} batch=${this.batch} flushInterval=${this.flushInterval}")
-        this.sink
-        this.buffer.clear()
+    this.checkFlushException
+
+    if (this.buffer != null && this.buffer.size > 0) {
+      this.logger.warn(s"执行flushInternal操作 sink.size=${this.buffer.size()} batch=${this.batch} flushInterval=${this.flushInterval}")
+      val loop = new Breaks
+      loop.breakable {
+        for (i <- 1L to this.maxRetry) {
+          try {
+            this.sink
+            this.buffer.clear()
+            loop.break
+          } catch {
+            case e: Exception => {
+              this.logger.error(s"执行flushInternal操作失败，正在进行第次${i}重试。", e)
+              if (i >= this.maxRetry) {
+                this.flushException = e
+              }
+              Thread.sleep(1000 * i)
+            }
+          }
+        }
       }
-    } catch {
-      case e: Exception => e.printStackTrace()
     }
   }
 
@@ -117,5 +133,12 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
 
   override def initializeState(context: FunctionInitializationContext): Unit = {
 
+  }
+
+  /**
+   * 用于检测在flush过程中是否有异常，如果存在异常，则不再flush
+   */
+  private def checkFlushException: Unit = {
+    if (flushException != null) throw new RuntimeException(s"${this.getClass.getSimpleName} writing records failed.", flushException)
   }
 }

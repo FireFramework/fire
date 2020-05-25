@@ -1,6 +1,7 @@
 package com.zto.fire.flink.core.sink
 
 import com.zto.fire.common.db.JdbcOper
+import com.zto.fire.common.util.GlobalConstants
 
 import scala.collection.JavaConversions
 
@@ -15,6 +16,9 @@ abstract class FlinkJdbcSink[IN](sql: String,
                                  batch: Int = 10,
                                  flushInterval: Long = 1000,
                                  keyNum: Int = 1) extends BaseFlinkSink[IN, Seq[Any]](batch, flushInterval) {
+
+  // jdbc操作失败时允许最大重试次数
+  this.maxRetry = GlobalConstants.JdbcConf.maxRetry(keyNum)
 
   /**
    * 将数据sink到jdbc

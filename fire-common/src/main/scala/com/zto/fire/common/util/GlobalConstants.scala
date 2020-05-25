@@ -125,6 +125,7 @@ object GlobalConstants {
     val SPARK_DB_JDBC_MAX_IDLE_TIME_KEY = "spark.db.jdbc.maxIdleTime"
     val SPARK_DB_JDBC_BATCH_SIZE = "spark.db.jdbc.batch.size"
     val SPARK_DB_JDBC_FLUSH_INTERVAL = "spark.db.jdbc.flushInterval"
+    val SPARK_DB_JDBC_MAX_RETRY = "spark.db.jdbc.max.retry"
 
     val LOG_LEVEL = "spark.log.level"
     val KAFKA_LOG_LEVEL = "spark.kafka.log.level"
@@ -419,6 +420,9 @@ object GlobalConstants {
     // 默认多少毫秒flush一次
     def jdbcFlushInterval(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.SPARK_DB_JDBC_FLUSH_INTERVAL, keyNum, 1000)
 
+    // jdbc失败最大重试次数
+    def maxRetry(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.SPARK_DB_JDBC_MAX_RETRY, keyNum, 3)
+
     // 连接池最小连接数
     def minPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MIN_POOL_SIZE_KEY, keyNum, 1)
 
@@ -708,7 +712,7 @@ object GlobalConstants {
     }
 
     def rocketNameserverPollInterval(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_NAMESERVER_POLL_INTERVAL, keyNum,"")
+      PropUtils.getString(PropKeys.ROCKET_NAMESERVER_POLL_INTERVAL, keyNum, "")
     }
 
     def rocketBrokerserverHeartbeatInterval(keyNum: Int = 1): String = {
