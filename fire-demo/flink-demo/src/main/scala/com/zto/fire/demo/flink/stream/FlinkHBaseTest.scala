@@ -1,11 +1,10 @@
 package com.zto.fire.demo.flink.stream
 
 import com.alibaba.fastjson.JSON
-import com.zto.fire.common.bean.HBaseBaseBean
+import com.zto.fire.common.db.HBaseOper
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
-import com.zto.fire.flink.core.sink.FlinkHBaseSink
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.DataStream
 
@@ -18,7 +17,6 @@ import org.apache.flink.streaming.api.scala.DataStream
  */
 object FlinkHBaseTest extends BaseFlinkStreaming {
   lazy val tableName = "fire_test_1"
-
 
   /**
    * table的hbase sink
@@ -51,13 +49,14 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
   }
 
   def testHBase: Unit = {
-    // 执行查询操作
-    val studentList = this.flink.jdbcQuery(s"select * from $tableName", clazz = classOf[Student])
-    val dataStream = this.env.fromCollection(studentList)
-    dataStream.print()
-
-    // 执行增删改操作
-    this.flink.jdbcUpdate(s"delete from $tableName")
+    // get操作
+    val student = HBaseOper.get(this.tableName, HBaseOper.buildGet("12"), classOf[Student])
+    println(student.toString)
+    // scan操作
+    val studentList = HBaseOper.scan(this.tableName, HBaseOper.buildScan("0", "9"), classOf[Student])
+    println(studentList.toString)
+    // delete操作
+    HBaseOper.deleteRow(this.tableName, "12")
   }
 
   override def process: Unit = {

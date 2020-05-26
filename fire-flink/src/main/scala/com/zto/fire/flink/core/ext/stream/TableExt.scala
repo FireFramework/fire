@@ -82,6 +82,13 @@ class TableExt(table: Table) {
   }
 
   /**
+   * 将table映射为Retract流，仅保留新增数据和变更数据，忽略变更前为false的数据
+   */
+  def toRetractStreamSingle: DataStream[Row] = {
+    this.table.toRetractStream[Row].filter(t => t._1).map(t => t._2)
+  }
+
+  /**
    * table的jdbc批量sink操作，根据用户指定的Row中字段的顺序，依次填充到sql中的占位符所对应的位置
    * 注：
    *  1. Row中的字段顺序要与sql中占位符顺序保持一致，数量一致
@@ -130,12 +137,10 @@ class TableExt(table: Table) {
                        flushInterval: Long = 1000,
                        isMerge: Boolean = true,
                        keyNum: Int = 1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
-    if (!isMerge) throw new IllegalArgumentException("该jdbc sink api暂不支持非merge语句，delete操作需单独实现")
-
-    val dstream = this.table.toRetractStream[Row].filter(t => t._1).map(t => t._2)
+    if (!isMerge) throw new IllegalArgumentException("该jdbc sink api暂不支持非merge语义，delete操作需单独实现")
 
     import com.zto.fire.flink.core.ext.FlinkExt._
-    dstream.jdbcBatchUpdate2(sql, batch, flushInterval, keyNum) {
+    this.table.toRetractStreamSingle.jdbcBatchUpdate2(sql, batch, flushInterval, keyNum) {
       row => fun(row)
     }
   }
@@ -161,20 +166,16 @@ class TableExt(table: Table) {
                                                multiVersion: Boolean = false,
                                                flushInterval: Long = 3000,
                                                keyNum: Int = 1): DataStreamSink[_] = {
-
-    val dstream = this.table.toRetractStream[Row].filter(t => t._1).map(t => t._2)
-
     import com.zto.fire.flink.core.ext.FlinkExt._
-    dstream.addSink(new FlinkHBaseSink[Row](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
+    this.table.hbaseOperPutTable2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
       val schema = table.getTableSchema
-
-      override def map(row: Row): HBaseBaseBean[_] = {
-        val bean = row.rowToBean(schema, clazz)
-        val method = ReflectionUtils.getMethodByName(clazz, "buildRowKey")
-        if (method != null) method.invoke(bean)
-        bean
+      row => {
+        // 将row转为clazz对应的JavaBean
+        val hbaseBean = row.rowToBean(schema, clazz)
+        if (!hbaseBean.isInstanceOf[HBaseBaseBean[T]]) throw new IllegalArgumentException("clazz参数必须是HBaseBaseBean的子类")
+        hbaseBean
       }
-    })
+    }
   }
 
   /**
@@ -198,9 +199,8 @@ class TableExt(table: Table) {
                          flushInterval: Long = 3000,
                          keyNum: Int = 1)(fun: Row => HBaseBaseBean[_]): DataStreamSink[_] = {
 
-    val dstream = this.table.toRetractStream[Row].filter(t => t._1).map(t => t._2)
-
-    dstream.addSink(new FlinkHBaseSink[Row](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
+    import com.zto.fire.flink.core.ext.FlinkExt._
+    this.table.toRetractStreamSingle.addSink(new FlinkHBaseSink[Row](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
       override def map(value: Row): HBaseBaseBean[_] = fun(value)
     })
   }

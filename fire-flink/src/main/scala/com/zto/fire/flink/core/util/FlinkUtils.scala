@@ -2,7 +2,8 @@ package com.zto.fire.flink.core.util
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.util.{GlobalConstants, ValueUtils}
+import com.zto.fire.common.bean.HBaseBaseBean
+import com.zto.fire.common.util.{GlobalConstants, ReflectionUtils, ValueUtils}
 import com.zto.fire.flink.core.bean.FlinkTableSchema
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
@@ -53,6 +54,10 @@ object FlinkUtils {
             }
           }
         })
+        if (obj.isInstanceOf[HBaseBaseBean[T]]) {
+          val method = ReflectionUtils.getMethodByName(clazz, "buildRowKey")
+          if (method != null) method.invoke(obj)
+        }
       } catch {
         case e: Exception => e.printStackTrace()
       }
