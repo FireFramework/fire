@@ -37,7 +37,7 @@ object FlinkUtils {
    *
    * @return
    */
-  def flinkRowToBean[T](schema: FlinkTableSchema, row: Row, clazz: Class[T]): T = {
+  def rowToBean[T](schema: FlinkTableSchema, row: Row, clazz: Class[T]): T = {
     val obj = clazz.newInstance()
     if (row != null && clazz != null) {
       try {

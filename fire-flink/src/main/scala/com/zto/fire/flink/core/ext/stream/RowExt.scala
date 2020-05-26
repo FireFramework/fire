@@ -20,6 +20,6 @@ class RowExt(row: Row) {
    *              目标JavaBean类型
    */
   def rowToBean[T](schema: FlinkTableSchema, clazz: Class[T]): T = {
-    FlinkUtils.flinkRowToBean(schema, row, clazz)
+    FlinkUtils.rowToBean(schema, row, clazz)
   }
 }

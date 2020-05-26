@@ -1,15 +1,15 @@
 package com.zto.fire.flink.core.ext.stream
 
 import com.zto.fire.common.bean.HBaseBaseBean
-import com.zto.fire.common.util.{ReflectionUtils, ValueUtils}
+import com.zto.fire.common.util.ValueUtils
 import com.zto.fire.flink.core.bean.FlinkTableSchema
 import com.zto.fire.flink.core.sink.FlinkHBaseSink
-import com.zto.fire.flink.core.util.{FlinkSingletonFactory, FlinkUtils}
+import com.zto.fire.flink.core.util.FlinkSingletonFactory
+import org.apache.flink.api.scala._
+import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.scala._
-import org.apache.flink.api.scala._
-import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.types.Row
 
 import scala.collection.mutable.ListBuffer
