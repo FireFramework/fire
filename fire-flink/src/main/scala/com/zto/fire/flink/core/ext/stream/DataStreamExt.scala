@@ -7,7 +7,7 @@ import com.zto.fire.common.bean.ogg.OGGBean
 import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, ReflectionUtils, ValueUtils}
 import com.zto.fire.core.util.FireUtils
 import com.zto.fire.flink.core.ext.functions.FireMapFunction
-import com.zto.fire.flink.core.sink.{FlinkHBaseSink, FlinkJdbcSink, HBaseOperSink, HBaseOperSinkBatch}
+import com.zto.fire.flink.core.sink.{FlinkHBaseSink, FlinkJdbcSink}
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.accumulators.SimpleAccumulator
@@ -66,28 +66,6 @@ class DataStreamExt[T](stream: DataStream[T]) {
 
       override def map(value: T): String = value.toString
     })
-  }
-
-  /**
-   * 将流数据实时写入到hbase中
-   *
-   * @param tableName
-   * hbase 表名
-   * @param insertEmpty
-   * 为空的字段是否插入
-   * @param batchSize
-   * 一个批次写入的数据量
-   * @param multiVersion
-   * 是否支持多版本插入
-   * @author ChengLong 2020年1月15日 16:11:08
-   * @since 0.4.1
-   */
-  def hbaseOperPut[E <: HBaseBaseBean[E] : ClassTag](tableName: String, insertEmpty: Boolean = true, batchSize: Int = GlobalConstants.HBaseConf.hbaseBatchSize, multiVersion: Boolean = false): Unit = {
-    if (Math.abs(batchSize) == 1) {
-      this.stream.asInstanceOf[DataStream[E]].addSink(new HBaseOperSink[E](tableName, insertEmpty, multiVersion))
-    } else {
-      this.countWindowSimple(batchSize).addSink(new HBaseOperSinkBatch[E](tableName, insertEmpty, multiVersion))
-    }
   }
 
   /**
