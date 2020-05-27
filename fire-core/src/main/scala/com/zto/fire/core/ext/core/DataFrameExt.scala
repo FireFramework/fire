@@ -56,7 +56,7 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
    * @return
    * 生成的DataFrame
    */
-  def saveAsHiveTable(tableName: String, partitionName: String, saveMode: SaveMode = GlobalConstants.SparkConf.saveMode): DataFrame = {
+  def saveAsHiveTable(tableName: String, partitionName: String, saveMode: SaveMode = SaveMode.valueOf(GlobalConstants.SparkConf.saveMode)): DataFrame = {
     if (StringUtils.isNotBlank(tableName)) {
       if (StringUtils.isNotBlank(partitionName)) {
         dataFrame.write.mode(saveMode).partitionBy(partitionName).saveAsTable(tableName)

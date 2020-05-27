@@ -3,11 +3,13 @@ package com.zto.fire.flink.core.util
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.bean.HBaseBaseBean
-import com.zto.fire.common.util.{GlobalConstants, ReflectionUtils, ValueUtils}
+import com.zto.fire.common.util.{GlobalConstants, PropUtils, ReflectionUtils, ValueUtils}
 import com.zto.fire.flink.core.bean.FlinkTableSchema
+import com.zto.fire.flink.core.ext.functions.FireMapFunction
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
+import org.apache.flink.configuration.Configuration
 import org.apache.flink.types.Row
 
 /**
@@ -139,5 +141,22 @@ object FlinkUtils {
     config.setUseSnapshotCompression(GlobalConstants.FlinkConf.useSnapshotCompression)
 
     config
+  }
+
+  /**
+   * 用于构建fire框架初始化的MapFunction对象
+   */
+  def initMapFunction: FireMapFunction[Int, Int] = {
+    new FireMapFunction[Int, Int]() {
+      override def open(parameters: Configuration): Unit = {
+        // 加载必要的配置信息
+        PropUtils.compatible("flink")
+        PropUtils.load("flink")
+        val clientClass = this.getRuntimeContext.getExecutionConfig.getGlobalJobParameters.toMap.getOrDefault("flink.client.simple.class.name", "")
+        PropUtils.load(clientClass)
+      }
+
+      override def map(value: Int): Int = value
+    }
   }
 }

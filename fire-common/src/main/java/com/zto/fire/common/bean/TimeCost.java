@@ -1,11 +1,8 @@
 package com.zto.fire.common.bean;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import com.zto.fire.common.util.DateFormatUtils;
-import com.zto.fire.common.util.StackTraceUtils;
-import com.zto.fire.common.util.SystemInfoUtils;
+import com.zto.fire.common.util.*;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.spark.SparkEnv;
 import org.apache.spark.TaskContext;
 
 import java.io.Serializable;
@@ -102,24 +99,28 @@ public class TimeCost implements Serializable {
         return isFire;
     }
 
-    public String getApplicationId() {
+    public static String getApplicationId() {
         return applicationId;
     }
 
-    public void setApplicationId(String applicationId) {
-        this.applicationId = applicationId;
+    public static void setApplicationId(String applicationId) {
+        TimeCost.applicationId = applicationId;
     }
 
-    public String getExecutorId() {
+    public static String getExecutorId() {
         return executorId;
     }
 
-    public String getMainClass() {
+    public static String getMainClass() {
         return mainClass;
     }
 
-    public void setMainClass(String mainClass) {
-        this.mainClass = mainClass;
+    public static void setExecutorId(String executorId) {
+        TimeCost.executorId = executorId;
+    }
+
+    public static void setMainClass(String mainClass) {
+        TimeCost.mainClass = mainClass;
     }
 
     public void setMsg(String msg) {
@@ -224,17 +225,9 @@ public class TimeCost implements Serializable {
         this.ip = SystemInfoUtils.getIp();
         this.load = SystemInfoUtils.getLoadAverageCache();
         this.cpuUsage = SystemInfoUtils.getCpuUsageCache();
-
-        if (SparkEnv.get() != null) {
-            if (StringUtils.isBlank(executorId)) {
-                executorId = SparkEnv.get().executorId();
-            }
-            if (StringUtils.isBlank(applicationId)) {
-                applicationId = SparkEnv.get().conf().get("spark.app.id", "");
-            }
-            if (StringUtils.isBlank(mainClass)) {
-                mainClass = SparkEnv.get().conf().get("spark.driver.class.name", "");
-            }
+        if (GlobalConstants.isSparkEngine()) {
+            // 如果是spark引擎，则获取spark相关运行时信息
+            TimeCostUtils.getEngineInfo();
         }
     }
 

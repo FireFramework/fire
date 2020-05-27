@@ -1,12 +1,11 @@
 package com.zto.fire.core.util
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.bean.ogg.OGGBean
 import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, ValueUtils}
 import org.apache.commons.lang3.StringUtils
+import org.apache.spark.SparkEnv
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
@@ -153,4 +152,19 @@ object FireUtils {
 
     ogg
   }
+
+  /**
+   * 判断是否为spark引擎
+   */
+  def isSparkEngine: Boolean = {
+    GlobalConstants.isSparkEngine
+  }
+
+  /**
+   * 判断是否为flink引擎
+   */
+  def isFlinkEngine: Boolean = {
+    GlobalConstants.isFlinkEngine
+  }
+
 }

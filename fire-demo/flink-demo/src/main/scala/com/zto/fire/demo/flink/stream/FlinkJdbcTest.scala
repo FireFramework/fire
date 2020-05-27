@@ -1,9 +1,7 @@
 package com.zto.fire.demo.flink.stream
 
 import com.alibaba.fastjson.JSON
-import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.demo.bean.Student
-import com.zto.fire.demo.flink.stream.FlinkRetractStreamTest.tableName
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
 import org.apache.flink.api.scala._
@@ -61,9 +59,9 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
     }.setParallelism(1)*/
 
     // 或者
-    this.flink.jdbcBatchUpdateStream2(stream, sql) {
+    /*this.flink.jdbcBatchUpdateStream2(stream, sql) {
       value => Seq(value.getName, value.getAge, DateFormatUtils.formatCurrentDateTime(), value.getLength, value.getSex)
-    }.setParallelism(1)
+    }.setParallelism(3)*/
   }
 
   def testJdbc: Unit = {
@@ -79,7 +77,7 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
   override def process: Unit = {
     val stream = this.ssc.createDirectStream().map(json => JSON.parseObject(json, classOf[Student]))
 
-    // this.testTableJdbcSink(stream)
+    this.testTableJdbcSink(stream)
     this.testStreamJdbcSink(stream)
     this.testJdbc
 

@@ -31,9 +31,9 @@ trait BaseFlink extends BaseFire {
    */
   override private[fire] def boot: Unit = {
     PropUtils.compatible("flink")
-    PropUtils.load("flink")
-    PropUtils.load(this.appName)
+    PropUtils.load("flink", this.appName)
     PropUtils.setProperty("flink.client.class.name", this.className)
+    PropUtils.setProperty("flink.client.simple.class.name", this.driverClass)
     FlinkSingletonFactory.setAppName(this.appName)
     this.splash
   }
@@ -50,11 +50,15 @@ trait BaseFlink extends BaseFire {
     // 注册到zrc平台，并覆盖配置信息
     if (this.jobType == JobType.FLINK_STREAMING && GlobalConstants.FireConf.zrcEnable) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     PropUtils.print()
-
     SchedulerManager.registerTasks(this)
     // 创建HiveCatalog
     this.hive = new HiveCatalog(GlobalConstants.HiveConf.hiveCatalogName, GlobalConstants.SparkConf.defaultDB, GlobalConstants.HiveConf.getHiveConfDir, GlobalConstants.HiveConf.hiveVersion)
   }
+
+  /**
+   * 用于fire框架初始化，传递累加器与配置信息到taskManager端
+   */
+  protected def fireInit: Unit = {}
 
   /**
    * 构建或合并Configuration

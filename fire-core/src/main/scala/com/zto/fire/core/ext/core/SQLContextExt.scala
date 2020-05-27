@@ -92,7 +92,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * @return
     * 生成的DataFrame
     */
-  def sqlForPersistent(sqlStr: String, tmpTableName: String, partitionName: String, saveMode: SaveMode = GlobalConstants.SparkConf.saveMode, cache: Boolean = true): DataFrame = {
+  def sqlForPersistent(sqlStr: String, tmpTableName: String, partitionName: String, saveMode: SaveMode = SaveMode.valueOf(GlobalConstants.SparkConf.saveMode), cache: Boolean = true): DataFrame = {
     val dataFrame = sqlContext.sql(sqlStr)
     val dataFrameWriter = dataFrame.write.mode(saveMode)
     if (StringUtils.isNotBlank(partitionName)) {

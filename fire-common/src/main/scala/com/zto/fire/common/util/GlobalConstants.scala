@@ -3,9 +3,6 @@ package com.zto.fire.common.util
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.client.Durability
-import org.apache.rocketmq.spark.ConsumerStrategy
-import org.apache.spark.sql.SaveMode
-import org.apache.spark.storage.StorageLevel
 
 /**
  * 常量配置类
@@ -351,16 +348,12 @@ object GlobalConstants {
     /**
      * 获取配置的HBase缓存策略
      */
-    def hbaseStorageLevel: StorageLevel = {
-      StorageLevel.fromString(hbaseStorageLevelConf)
-    }
+    def hbaseStorageLevel: String = hbaseStorageLevelConf
 
     /**
      * 获取配置的JDBC缓存策略
      */
-    def jdbcStorageLevel: StorageLevel = {
-      StorageLevel.fromString(jdbcStorageLevelConf)
-    }
+    def jdbcStorageLevel: String = jdbcStorageLevelConf
   }
 
   /**
@@ -449,7 +442,7 @@ object GlobalConstants {
     val appName = PropUtils.getString(PropKeys.APP_NAME_KEY, "")
     val sparkConf = PropUtils.getString(PropKeys.SPARK_CONF_KEY)
     val logLevel = PropUtils.getString(PropKeys.LOG_LEVEL, DefaultVals.logLevel).toUpperCase
-    val saveMode = if ("Overwrite".equalsIgnoreCase(PropUtils.getString(PropKeys.SAVE_MODE_KEY))) SaveMode.Overwrite else SaveMode.Append
+    val saveMode = PropUtils.getString(PropKeys.SAVE_MODE_KEY, "Append")
     val parallelism = PropUtils.getInt(PropKeys.PARALLELISM_KEY)
     val chkPointDirPrefix = PropUtils.getString(PropKeys.SPARK_CHK_POINT_DIR, DefaultVals.sparkChkPointDir)
     val defaultDB = PropUtils.getString(PropKeys.SPARK_DEFAULT_DATABASE_NAME, DefaultVals.dbName)
@@ -647,13 +640,8 @@ object GlobalConstants {
      *
      * @return
      */
-    def rocketStartingOffset(keyNum: Int = 1): ConsumerStrategy = {
-      val offset = PropUtils.getString(PropKeys.ROCKET_STARTING_OFFSET, keyNum, DefaultVals.rocketStartingOffset)
-      if (rocketOffsetLargest.equalsIgnoreCase(offset)) {
-        ConsumerStrategy.lastest
-      } else {
-        ConsumerStrategy.earliest
-      }
+    def rocketStartingOffset(keyNum: Int = 1): String = {
+      PropUtils.getString(PropKeys.ROCKET_STARTING_OFFSET, keyNum, DefaultVals.rocketStartingOffset)
     }
 
     // 丢失数据时是否失败

@@ -2,7 +2,8 @@ package com.zto.fire.flink.core
 
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{GlobalConstants, PropUtils, SystemInfoUtils}
-import com.zto.fire.flink.core.util.FlinkSingletonFactory
+import com.zto.fire.flink.core.ext.functions.FireMapFunction
+import com.zto.fire.flink.core.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
 import org.apache.flink.streaming.api.scala.{OutputTag, StreamExecutionEnvironment}
@@ -77,8 +78,20 @@ trait BaseFlinkStreaming extends BaseFlink {
     this.tableEnv.registerCatalog(GlobalConstants.HiveConf.hiveCatalogName, this.hive)
     this.tableEnv.useCatalog(GlobalConstants.HiveConf.hiveCatalogName)
     this.flink = this.tableEnv
-
+    this.fireInit
     FlinkSingletonFactory.setStreamEnv(this.env).setStreamTableEnv(this.tableEnv)
+  }
+
+
+  /**
+   * 用于fire框架初始化，传递累加器与配置信息到taskManager端
+   */
+  override protected def fireInit: Unit = {
+    // fire框架初始化操作，将配置信息分发到每个slot中
+    this.ssc.fromCollection(1 to this.env.getMaxParallelism)
+      .map(FlinkUtils.initMapFunction)
+      .setParallelism(this.env.getMaxParallelism)
+      .name("fire init")
   }
 
   /**

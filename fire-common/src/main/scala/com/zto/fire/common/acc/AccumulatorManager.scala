@@ -1,12 +1,10 @@
 package com.zto.fire.common.acc
 
 import java.nio.ByteBuffer
-import java.util
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 
 import com.google.common.collect.HashBasedTable
-import com.zto.fire.common.acc.AccumulatorManager.envAccumulator
 import com.zto.fire.common.bean.TimeCost
 import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{GlobalConstants, StringsUtils, SystemInfoUtils}
@@ -14,10 +12,10 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.LongAccumulator
 import org.apache.spark.{SparkContext, SparkEnv}
 
-import scala.collection.{JavaConversions, mutable}
+import scala.collection.mutable
 
 /**
- * fire内置累加器工具类
+ * fire内置Spark累加器工具类
  *
  * @author ChengLong 2019-7-25 19:11:16
  */

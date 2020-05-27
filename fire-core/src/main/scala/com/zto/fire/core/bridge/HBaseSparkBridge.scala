@@ -159,7 +159,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     hbaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
     hbaseConf.set(TableInputFormat.SCAN, HBaseUtils.convertScanToString(scan))
     // 将指定范围内的hbase数据转为rdd
-    val resultRDD = spark.sparkContext.newAPIHadoopRDD(hbaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result]).repartition(FireConf.hbaseHadoopScanRepartitions).persist(FireConf.hbaseStorageLevel)
+    val resultRDD = spark.sparkContext.newAPIHadoopRDD(hbaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result]).repartition(FireConf.hbaseHadoopScanRepartitions).persist(StorageLevel.fromString(FireConf.hbaseStorageLevel))
     this.logFire(s"hbaseHadoopScanRS(tableName: $tableName)", "hbase", 1)
     resultRDD
   }
@@ -307,7 +307,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
       } else {
         HBaseOper.hbaseRow2BeanList(it, clazz)
       }
-    }).persist(FireConf.hbaseStorageLevel)
+    }).persist(StorageLevel.fromString(FireConf.hbaseStorageLevel))
     this.logFire(s"hbaseOperScanRDD(tableName: $tableName)", "hbase", 1)
     scanRDD
   }
@@ -429,7 +429,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
       }
       this.logFire(s"hbaseOperGetRDD(tableName: ${tableName}) count: ${beanList.size}", "hbase", 1)
       JavaConversions.asScalaIterator(beanList.iterator())
-    }).persist(FireConf.hbaseStorageLevel)
+    }).persist(StorageLevel.fromString(FireConf.hbaseStorageLevel))
     this.logFire(s"hbaseOperGetRDD(tableName: ${tableName})", "hbase", 1)
     getRDD
   }

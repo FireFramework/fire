@@ -2,9 +2,9 @@ package com.zto.fire.flink.core
 
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{GlobalConstants, PropUtils, SystemInfoUtils}
-import com.zto.fire.flink.core.util.FlinkSingletonFactory
+import com.zto.fire.flink.core.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.api.scala.ExecutionEnvironment
+import org.apache.flink.api.scala.{ExecutionEnvironment, _}
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
 import org.apache.flink.table.api.scala.BatchTableEnvironment
 
@@ -75,8 +75,19 @@ trait BaseFlinkBatch extends BaseFlink {
     this.tableEnv.registerCatalog(GlobalConstants.HiveConf.hiveCatalogName, this.hive)
     this.tableEnv.useCatalog(GlobalConstants.HiveConf.hiveCatalogName)
     this.flink = this.tableEnv
-
+    this.fireInit
     FlinkSingletonFactory.setEnv(this.env).setTableEnv(this.tableEnv)
+  }
+
+
+  /**
+   * 用于fire框架初始化，传递累加器与配置信息到taskManager端
+   */
+  override protected def fireInit: Unit = {
+    this.sc.fromCollection(1 to this.sc.getParallelism)
+      .map(FlinkUtils.initMapFunction)
+      .setParallelism(this.sc.getParallelism)
+      .name("fire init")
   }
 
   /**

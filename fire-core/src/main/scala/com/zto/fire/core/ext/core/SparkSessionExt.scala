@@ -21,6 +21,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.DStream
 
 import scala.collection.mutable
@@ -103,7 +104,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * @return
    * 生成的DataFrame
    */
-  def sqlForPersistent(sqlStr: String, tmpTableName: String, partitionName: String, saveMode: SaveMode = GlobalConstants.SparkConf.saveMode, cache: Boolean = true): DataFrame = {
+  def sqlForPersistent(sqlStr: String, tmpTableName: String, partitionName: String, saveMode: SaveMode = SaveMode.valueOf(GlobalConstants.SparkConf.saveMode), cache: Boolean = true): DataFrame = {
     spark.sqlContext.sqlForPersistent(sqlStr, tmpTableName, partitionName, saveMode, cache)
   }
 
@@ -1320,7 +1321,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    */
   def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): RDD[T] = {
     val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
-    this.sc.parallelize(rsList, FireConf.jdbcQueryPartitions).persist(FireConf.jdbcStorageLevel)
+    this.sc.parallelize(rsList, FireConf.jdbcQueryPartitions).persist(StorageLevel.fromString(FireConf.jdbcStorageLevel))
   }
 
   /**

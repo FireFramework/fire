@@ -1,11 +1,10 @@
 package com.zto.fire.common.db
 
 import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}
-import java.util.concurrent.atomic.AtomicBoolean
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.common.bean.BaseLogging
+import com.zto.fire.common.data.DataPool
 import com.zto.fire.common.util.{DBUtils, GlobalConstants, StringsUtils}
 import org.apache.commons.lang3.StringUtils
 
@@ -58,7 +57,7 @@ object JdbcOper extends BaseLogging {
         }
       } catch {
         case ex: Exception => {
-          AccumulatorManager.addMultiTimer(module, "init", "init", "", "ERROR", keyNum.toString, 1)
+          DataPool.addMultiTimer(module, "init", "init", "", "ERROR", keyNum.toString, 1)
           this.log(s"初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", this.module, null, ex)
           throw ex
         }
@@ -82,11 +81,11 @@ object JdbcOper extends BaseLogging {
       val pool = this.init(keyNum)
       this.mark()
       connection = pool.getConnection
-      AccumulatorManager.addMultiTimer(module, "getConnection", "getConnection", "", "INFO", keyNum.toString, 1)
+      DataPool.addMultiTimer(module, "getConnection", "getConnection", "", "INFO", keyNum.toString, 1)
       this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${keyNum} ]成功", this.module)
     } catch {
       case ex: Exception => {
-        AccumulatorManager.addMultiTimer(module, "getConnection", "getConnection", "", "ERROR", keyNum.toString, 1)
+        DataPool.addMultiTimer(module, "getConnection", "getConnection", "", "ERROR", keyNum.toString, 1)
         this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]出现异常，请检查配置文件", this.module, null, ex)
         throw ex
       }
@@ -136,11 +135,11 @@ object JdbcOper extends BaseLogging {
       retVal = stat.executeUpdate
       if (commit) conn.commit()
       this.log(s"executeUpdate: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响记录数：$retVal", this.module, 0)
-      AccumulatorManager.addMultiTimer(module, "executeUpdate", "update", "", "INFO", keyNum.toString, retVal)
+      DataPool.addMultiTimer(module, "executeUpdate", "update", "", "INFO", keyNum.toString, retVal)
     }
     catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(module, "executeUpdate", "update", "", "ERROR", keyNum.toString, 1)
+        DataPool.addMultiTimer(module, "executeUpdate", "update", "", "ERROR", keyNum.toString, 1)
         this.log(s"executeUpdate: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", this.module, 0, e)
         throw e
       }
@@ -211,10 +210,10 @@ object JdbcOper extends BaseLogging {
       retVal = stat.executeBatch
       if (commit) conn.commit()
       this.log(s"executeBatch: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响总记录数：$batch", this.module, 0)
-      AccumulatorManager.addMultiTimer(module, "executeBatch", "batch", "", "INFO", keyNum.toString, batch)
+      DataPool.addMultiTimer(module, "executeBatch", "batch", "", "INFO", keyNum.toString, batch)
     } catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(module, "executeBatch", "batch", "", "ERROR", keyNum.toString, 1)
+        DataPool.addMultiTimer(module, "executeBatch", "batch", "", "ERROR", keyNum.toString, 1)
         this.log(s"executeBatch: executeBatch sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", this.module, 0, e)
         throw e
       }
@@ -300,10 +299,10 @@ object JdbcOper extends BaseLogging {
         count = callback.process(rs)
       }
       this.log(s"executeQueryCall: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->success 查询记录数：$count", this.module, 1)
-      AccumulatorManager.addMultiTimer(module, "executeQueryCall", "query", "", "INFO", keyNum.toString, count)
+      DataPool.addMultiTimer(module, "executeQueryCall", "query", "", "INFO", keyNum.toString, count)
     } catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(module, "executeQueryCall", "query", "", "ERROR", keyNum.toString, 1)
+        DataPool.addMultiTimer(module, "executeQueryCall", "query", "", "ERROR", keyNum.toString, 1)
         this.log(s"executeQueryCall: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", this.module, 1, e)
         throw e
       }

@@ -67,7 +67,7 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
 
     this.testTableHBaseSink(stream)
     this.testStreamHBaseSink(stream)
-    this.testHBase
+    // this.testHBase
 
     this.ssc.startAwaitTermination()
   }

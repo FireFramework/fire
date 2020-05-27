@@ -194,7 +194,7 @@ class DataStreamExt[T](stream: DataStream[T]) {
         }
         params
       }
-    })
+    }).name("fire jdbc stream sink")
   }
 
   /**
@@ -219,7 +219,7 @@ class DataStreamExt[T](stream: DataStream[T]) {
       override def map(value: T): Seq[Any] = {
         fun(value)
       }
-    })
+    }).name("fire jdbc stream sink")
   }
 
   /**
@@ -286,7 +286,7 @@ class DataStreamExt[T](stream: DataStream[T]) {
       override def map(value: T): HBaseBaseBean[_] = {
         fun(value)
       }
-    })
+    }).name("fire hbase stream sink")
   }
 
 }

@@ -1,5 +1,6 @@
 package com.zto.fire.core.ext.core
 
+import com.zto.fire.common.util.GlobalConstants.RocketConf.rocketOffsetLargest
 import com.zto.fire.common.util.{GlobalConstants, ValueUtils}
 import com.zto.fire.core.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
@@ -91,7 +92,17 @@ class StreamingContextExt(ssc: StreamingContext) {
     val finalGroupId = if (StringUtils.isBlank(groupId)) GlobalConstants.RocketConf.rocketGroupId(keyNum) else groupId
     val finalRocketParam = if (rocketParam == null || rocketParam.size() == 0) this.rocketParams(finalGroupId, keyNum = keyNum) else rocketParam
     val finalTopics = if (StringUtils.isBlank(topics)) GlobalConstants.RocketConf.rocketTopics(keyNum) else topics
-    val finalConsumerStrategy = if (consumerStrategy == null) GlobalConstants.RocketConf.rocketStartingOffset(keyNum) else consumerStrategy
+    val finalConsumerStrategy = if (consumerStrategy == null) {
+      val offset = GlobalConstants.RocketConf.rocketStartingOffset(keyNum)
+      if (rocketOffsetLargest.equalsIgnoreCase(offset)) {
+        ConsumerStrategy.lastest
+      } else {
+        ConsumerStrategy.earliest
+      }
+    } else {
+      consumerStrategy
+    }
+
     val finalAutoCommit = if (autoCommit == null) GlobalConstants.RocketConf.rocketEnableAutoCommit(keyNum) else autoCommit
 
     RocketMqUtils.createMQPullStream(this.ssc, finalGroupId, JavaConversions.asJavaCollection(finalTopics.split(",").toList),

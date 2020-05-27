@@ -1,16 +1,17 @@
 package com.zto.fire.flink.core.sink
 
 import java.util.Collections
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{Executors, ScheduledExecutorService, ScheduledFuture, TimeUnit}
 
 import com.google.common.collect.Lists
-import scala.util.control._
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.runtime.state.{FunctionInitializationContext, FunctionSnapshotContext}
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 import org.slf4j.LoggerFactory
+
+import scala.util.control._
 
 /**
  * fire框架基础的flink sink类

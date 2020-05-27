@@ -142,7 +142,7 @@ class TableExt(table: Table) {
     import com.zto.fire.flink.core.ext.FlinkExt._
     this.table.toRetractStreamSingle.jdbcBatchUpdate2(sql, batch, flushInterval, keyNum) {
       row => fun(row)
-    }
+    }.name("fire jdbc table sink")
   }
 
   /**
@@ -202,6 +202,6 @@ class TableExt(table: Table) {
     import com.zto.fire.flink.core.ext.FlinkExt._
     this.table.toRetractStreamSingle.addSink(new FlinkHBaseSink[Row](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
       override def map(value: Row): HBaseBaseBean[_] = fun(value)
-    })
+    }).name("fire hbase table sink")
   }
 }

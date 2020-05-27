@@ -19,6 +19,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Encoders, Row}
 import org.apache.spark.streaming.dstream.DStream
 import com.zto.fire.core.ext.SparkExt._
+import org.apache.spark.storage.StorageLevel
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -118,7 +119,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     val rowKeyRDD = rdd.filter(StringUtils.isNotBlank(_)).map(rowKey => Bytes.toBytes(rowKey))
     val getRDD = this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
       HBaseOper.hbaseRow2Bean(result, clazz)
-    }).filter(bean => bean != null).persist(FireConf.hbaseStorageLevel)
+    }).filter(bean => bean != null).persist(StorageLevel.fromString(FireConf.hbaseStorageLevel))
     this.logFire(s"bulkGetRDD(tableName: ${tableName})", "hbase", 1)
 
     getRDD
@@ -266,7 +267,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     if (scan.getCaching == -1) {
       scan.setCaching(this.batchSize)
     }
-    val scanRDD = this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz)).persist(FireConf.hbaseStorageLevel)
+    val scanRDD = this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz)).persist(StorageLevel.fromString(FireConf.hbaseStorageLevel))
     this.logFire(s"bulkScanRDD(tableName: ${tableName})", "hbase", 1)
 
     scanRDD

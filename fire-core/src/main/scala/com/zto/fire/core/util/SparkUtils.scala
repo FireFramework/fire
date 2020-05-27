@@ -379,7 +379,14 @@ object SparkUtils {
    * executor id或driver
    */
   def getExecutorId: String = {
-    SparkEnv.get.executorId
+    if (SparkEnv.get != null) SparkEnv.get.executorId else ""
+  }
+
+  /**
+   * 获取入口类名
+   */
+  def getMainClass: String = {
+    if (SparkEnv.get != null) SparkEnv.get.conf.get("spark.driver.class.name", "") else ""
   }
 
   /**
