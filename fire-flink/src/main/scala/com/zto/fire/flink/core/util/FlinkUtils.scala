@@ -12,13 +12,15 @@ import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDepende
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.types.Row
 
+import scala.collection.JavaConversions
+
 /**
  * flink相关工具类
  *
  * @author ChengLong 2020年1月16日 16:28:23
  * @since 0.4.1
  */
-object FlinkUtils {
+object FlinkUtils extends Serializable {
   // 维护schema、fieldName与fieldIndex关系
   private[this] val schemaTable = HashBasedTable.create[FlinkTableSchema, String, Int]
 
@@ -148,15 +150,22 @@ object FlinkUtils {
    */
   def initMapFunction: FireMapFunction[Int, Int] = {
     new FireMapFunction[Int, Int]() {
-      override def open(parameters: Configuration): Unit = {
-        // 加载必要的配置信息
-        PropUtils.compatible("flink")
-        PropUtils.load("flink")
-        val clientClass = this.getRuntimeContext.getExecutionConfig.getGlobalJobParameters.toMap.getOrDefault("flink.client.simple.class.name", "")
-        PropUtils.load(clientClass)
-      }
-
+      override def open(parameters: Configuration): Unit = FlinkUtils.syncConf(this.getExecutionConfig)
       override def map(value: Int): Int = value
+    }
+  }
+
+  /**
+   * 用于task-manager端同步配置信息
+   */
+  def syncConf(config: ExecutionConfig): Unit = {
+    PropUtils.compatible("flink")
+    PropUtils.load("flink")
+    if (config != null) {
+      val configMap = config.getGlobalJobParameters.toMap
+      val clientClass = configMap.getOrDefault("flink.client.simple.class.name", "")
+      PropUtils.load(clientClass)
+      PropUtils.setProperties(JavaConversions.mapAsScalaMap(configMap))
     }
   }
 }

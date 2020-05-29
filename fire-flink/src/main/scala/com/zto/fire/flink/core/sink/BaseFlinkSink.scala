@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{Executors, ScheduledExecutorService, ScheduledFuture, TimeUnit}
 
 import com.google.common.collect.Lists
+import com.zto.fire.flink.core.util.FlinkUtils
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.runtime.state.{FunctionInitializationContext, FunctionSnapshotContext}
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction
@@ -37,6 +38,8 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
    * 初始化定时调度器，用于定时flush数据到目标组件
    */
   override def open(parameters: Configuration): Unit = {
+    // 将配置文件同步到task-manager端
+    FlinkUtils.syncConf(this.getRuntimeContext.getExecutionConfig)
     if (this.flushInterval > 0 && batch > 0) {
       this.scheduler = Executors.newScheduledThreadPool(1)
       this.scheduledFuture = this.scheduler.scheduleWithFixedDelay(new Runnable {
