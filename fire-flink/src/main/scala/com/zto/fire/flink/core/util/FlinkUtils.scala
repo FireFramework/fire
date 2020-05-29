@@ -1,9 +1,12 @@
 package com.zto.fire.flink.core.util
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.util.{GlobalConstants, PropUtils, ReflectionUtils, ValueUtils}
+import com.zto.fire.core.util.FireUtils
 import com.zto.fire.flink.core.bean.FlinkTableSchema
 import com.zto.fire.flink.core.ext.functions.FireMapFunction
 import org.apache.commons.lang3.StringUtils
@@ -23,6 +26,8 @@ import scala.collection.JavaConversions
 object FlinkUtils extends Serializable {
   // 维护schema、fieldName与fieldIndex关系
   private[this] val schemaTable = HashBasedTable.create[FlinkTableSchema, String, Int]
+  // 用于判断是否已同步配置信息到task-manager端
+  private lazy val isSyncConf = new AtomicBoolean(false)
 
   /**
    * 将schema、fieldName与fieldIndex信息维护到table中
@@ -151,6 +156,7 @@ object FlinkUtils extends Serializable {
   def initMapFunction: FireMapFunction[Int, Int] = {
     new FireMapFunction[Int, Int]() {
       override def open(parameters: Configuration): Unit = FlinkUtils.syncConf(this.getExecutionConfig)
+
       override def map(value: Int): Int = value
     }
   }
@@ -159,13 +165,18 @@ object FlinkUtils extends Serializable {
    * 用于task-manager端同步配置信息
    */
   def syncConf(config: ExecutionConfig): Unit = {
-    PropUtils.compatible("flink")
-    PropUtils.load("flink")
-    if (config != null) {
-      val configMap = config.getGlobalJobParameters.toMap
-      val clientClass = configMap.getOrDefault("flink.client.simple.class.name", "")
-      PropUtils.load(clientClass)
-      PropUtils.setProperties(JavaConversions.mapAsScalaMap(configMap))
+    if (this.isSyncConf.compareAndSet(false, true)) {
+      PropUtils.compatible("flink")
+      // 切换为flink引擎后才能调用splash
+      FireUtils.splash
+      PropUtils.load("flink")
+      if (config != null) {
+        val configMap = config.getGlobalJobParameters.toMap
+        val clientClass = configMap.getOrDefault("flink.client.simple.class.name", "")
+        PropUtils.load(clientClass)
+        PropUtils.setProperties(JavaConversions.mapAsScalaMap(configMap))
+      }
+      PropUtils.print()
     }
   }
 }

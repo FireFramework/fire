@@ -340,7 +340,7 @@ object PropUtils extends BaseLogging {
     JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
       if (key != null && !key.toString.contains("pass")) {
         // 如果是spark引擎，则忽略flink相关配置；如果是flink引擎，则忽略spark相关配置
-        if (("spark".equals(this.keyPrefix) && !key.toString.contains("flink")) || ("flink".equals(this.keyPrefix) && !key.toString.contains("spark"))) {
+        if (("spark".equals(this.keyPrefix) && !key.toString.startsWith("flink")) || ("flink".equals(this.keyPrefix) && !key.toString.startsWith("spark"))) {
           println(">> " + GlobalConstants.PS1.PINK + key + " --> " + this.props.get(key) + GlobalConstants.PS1.DEFAULT)
         }
       }

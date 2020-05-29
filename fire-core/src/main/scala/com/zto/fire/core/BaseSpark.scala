@@ -8,7 +8,7 @@ import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
 import com.zto.fire.core.rest.{RestfulRegister, SparkSystemRestful}
 import com.zto.fire.core.task.InternalTask
-import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
+import com.zto.fire.core.util.{FireUtils, SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.scheduler.SparkListener
@@ -39,7 +39,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 注：该方法会同时在driver端与executor端执行
    */
   override private[fire] final def boot: Unit = {
-    this.splash
+    FireUtils.splash
     PropUtils.load(this.appName)
     PropUtils.setProperty("spark.driver.class.name", this.className)
     if (StringUtils.isNotBlank(GlobalConstants.SparkConf.appName)) {

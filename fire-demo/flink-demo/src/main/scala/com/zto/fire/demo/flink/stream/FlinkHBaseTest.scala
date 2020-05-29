@@ -1,6 +1,7 @@
 package com.zto.fire.demo.flink.stream
 
 import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.db.HBaseOper
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
@@ -25,8 +26,8 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
     stream.createOrReplaceTempView("student")
     val table = this.flink.sql("select id, name, age, createTime, length from student group by id, name, age, createTime, length")
     // 方式一、自动将row转为对应的JavaBean
-    table.hbaseOperPutTable(this.tableName, classOf[Student])
-    // this.flink.hbaseOperPutTable(table, this.tableName, classOf[Student], multiVersion = true)
+    // table.hbaseOperPutTable(this.tableName, classOf[Student])
+    this.flink.hbaseOperPutTable(table, this.tableName, classOf[Student], multiVersion = true)
 
     // 方式二、用户自定义取数规则，从row中创建HBaseBaseBean的子类
     // table.hbaseOperPutTable2(this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
@@ -39,13 +40,13 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
    */
   def testStreamHBaseSink(stream: DataStream[Student]): Unit = {
     // 方式一、DataStream中的数据类型为HBaseBaseBean的子类
-    stream.hbaseOperPutDS(this.tableName)
-    // this.flink.hbaseOperPutDS(stream, this.tableName)
+    // stream.hbaseOperPutDS(this.tableName)
+    this.flink.hbaseOperPutDS(stream, this.tableName)
 
     // 方式二、将value组装为HBaseBaseBean的子类，逻辑用户自定义
     //stream.hbaseOperPutDS2(this.tableName)(value => value)
     // 或者
-    this.flink.hbaseOperPutDS2(stream, this.tableName)(value => value)
+    // this.flink.hbaseOperPutDS2(stream, this.tableName)(value => value)
   }
 
   /**
@@ -54,10 +55,10 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
   def testHBase: Unit = {
     // get操作
     val student = HBaseOper.get(this.tableName, HBaseOper.buildGet("12"), classOf[Student])
-    println(student.toString)
+    if (student != null) println(JSON.toJSONString(student, SerializerFeature.NotWriteDefaultValue))
     // scan操作
     val studentList = HBaseOper.scan(this.tableName, HBaseOper.buildScan("0", "9"), classOf[Student])
-    println(studentList.toString)
+    if (studentList != null) println(JSON.toJSONString(studentList, SerializerFeature.NotWriteDefaultValue))
     // delete操作
     HBaseOper.deleteRow(this.tableName, "12")
   }
@@ -65,9 +66,9 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
   override def process: Unit = {
     val stream = this.ssc.createDirectStream().map(json => JSON.parseObject(json, classOf[Student]))
 
-    this.testTableHBaseSink(stream)
+    // this.testTableHBaseSink(stream)
     this.testStreamHBaseSink(stream)
-    // this.testHBase
+    this.testHBase
 
     this.ssc.startAwaitTermination()
   }

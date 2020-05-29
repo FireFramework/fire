@@ -75,19 +75,7 @@ trait BaseFlinkBatch extends BaseFlink {
     this.tableEnv.registerCatalog(GlobalConstants.HiveConf.hiveCatalogName, this.hive)
     this.tableEnv.useCatalog(GlobalConstants.HiveConf.hiveCatalogName)
     this.flink = this.tableEnv
-    this.fireInit
     FlinkSingletonFactory.setEnv(this.env).setTableEnv(this.tableEnv)
-  }
-
-
-  /**
-   * 用于fire框架初始化，传递累加器与配置信息到taskManager端
-   */
-  override protected def fireInit: Unit = {
-    this.sc.fromCollection(1 to this.sc.getParallelism)
-      .map(FlinkUtils.initMapFunction)
-      .setParallelism(this.sc.getParallelism)
-      .name("fire init")
   }
 
   /**

@@ -182,27 +182,4 @@ trait BaseFire {
    * 返回fn执行结果
    */
   def retry[T](retryNum: Int = 3, duration: Long = 3000)(fun: => T): T = FireUtils.retry(retryNum, duration)(fun)
-
-  /**
-   * 用于在fire框架启动时展示信息
-   */
-  private[fire] def splash: Unit = {
-    val info =
-      """
-        |       ___                       ___           ___
-        |     /\  \          ___        /\  \         /\  \
-        |    /::\  \        /\  \      /::\  \       /::\  \
-        |   /:/\:\  \       \:\  \    /:/\:\  \     /:/\:\  \
-        |  /::\~\:\  \      /::\__\  /::\~\:\  \   /::\~\:\  \
-        | /:/\:\ \:\__\  __/:/\/__/ /:/\:\ \:\__\ /:/\:\ \:\__\
-        | \/__\:\ \/__/ /\/:/  /    \/_|::\/:/  / \:\~\:\ \/__/
-        |      \:\__\   \::/__/        |:|::/  /   \:\ \:\__\
-        |       \/__/    \:\__\        |:|\/__/     \:\ \/__/
-        |                 \/__/        |:|  |        \:\__\
-        |                               \|__|         \/__/     version
-        |
-        |""".stripMargin.replace("version", s"version ${GlobalConstants.PS1.PINK + PropUtils.getString("spark.fire.version", "1.0.0")}")
-
-    println(GlobalConstants.PS1.GREEN + info + GlobalConstants.PS1.DEFAULT)
-  }
 }

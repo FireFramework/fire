@@ -3,10 +3,8 @@ package com.zto.fire.core.util
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.bean.ogg.OGGBean
-import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, ValueUtils}
+import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, PropUtils, ValueUtils}
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.SparkEnv
-
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -14,12 +12,13 @@ import scala.util.Try
 
 /**
  * fire框架通用的工具方法
+ * 注：该工具类中不可包含Spark或Flink的依赖
  *
  * @author ChengLong
  * @since 1.0.0
  * @create: 2020-05-17 10:17
  */
-object FireUtils {
+object FireUtils extends Serializable {
 
   /**
    * 重试指定的函数fn retryNum次
@@ -167,4 +166,26 @@ object FireUtils {
     GlobalConstants.isFlinkEngine
   }
 
+  /**
+   * 用于在fire框架启动时展示信息
+   */
+  private[fire] def splash: Unit = {
+    val info =
+      """
+        |       ___                       ___           ___
+        |     /\  \          ___        /\  \         /\  \
+        |    /::\  \        /\  \      /::\  \       /::\  \
+        |   /:/\:\  \       \:\  \    /:/\:\  \     /:/\:\  \
+        |  /::\~\:\  \      /::\__\  /::\~\:\  \   /::\~\:\  \
+        | /:/\:\ \:\__\  __/:/\/__/ /:/\:\ \:\__\ /:/\:\ \:\__\
+        | \/__\:\ \/__/ /\/:/  /    \/_|::\/:/  / \:\~\:\ \/__/
+        |      \:\__\   \::/__/        |:|::/  /   \:\ \:\__\
+        |       \/__/    \:\__\        |:|\/__/     \:\ \/__/
+        |                 \/__/        |:|  |        \:\__\
+        |                               \|__|         \/__/     version
+        |
+        |""".stripMargin.replace("version", s"version ${GlobalConstants.PS1.PINK + PropUtils.getString("spark.fire.version", "1.0.0")}")
+
+    println(GlobalConstants.PS1.GREEN + info + GlobalConstants.PS1.DEFAULT)
+  }
 }
