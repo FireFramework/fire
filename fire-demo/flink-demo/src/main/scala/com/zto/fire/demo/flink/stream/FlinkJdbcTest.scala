@@ -17,7 +17,7 @@ import org.apache.flink.streaming.api.scala.DataStream
 object FlinkJdbcTest extends BaseFlinkStreaming {
   lazy val tableName = "spark_test"
 
-  val fields = "name, age, createTime, length, sex"
+  val fields = "name,age,createTime,length,sex".split(",")
   val sql = s"INSERT INTO $tableName ($fields) VALUES (?, ?, ?, ?, ?)"
 
   /**

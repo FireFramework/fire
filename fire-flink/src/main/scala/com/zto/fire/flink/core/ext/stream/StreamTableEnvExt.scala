@@ -62,7 +62,7 @@ class StreamTableEnvExt(tableEnv: StreamTableEnvironment) extends JdbcOperBridge
    */
   def jdbcBatchUpdateStream[T](stream: DataStream[T],
                                sql: String,
-                               fields: String,
+                               fields: Seq[String],
                                batch: Int = 10,
                                flushInterval: Long = 1000,
                                keyNum: Int = 1): DataStreamSink[T] = {

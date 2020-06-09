@@ -156,14 +156,13 @@ class DataStreamExt[T](stream: DataStream[T]) {
    * 配置文件中的key后缀
    */
   def jdbcBatchUpdate(sql: String,
-                      fields: String,
+                      fields: Seq[String],
                       batch: Int = 10,
                       flushInterval: Long = 1000,
                       keyNum: Int = 1): DataStreamSink[T] = {
     this.stream.addSink(new FlinkJdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       var fieldMap: java.util.Map[String, Field] = _
       var clazz: Class[_] = _
-      var fieldList: Array[String] = _
 
       override def map(value: T): Seq[Any] = {
         ValueUtils.requireNonNullForce(sql, "sql语句不能为空")
@@ -176,8 +175,7 @@ class DataStreamExt[T](stream: DataStream[T]) {
             params += row.getField(i)
           }
         } else {
-          ValueUtils.requireNonNullForce(fields, "字段列表不能为空！请以逗号分隔，按照sql中的占位符顺序依次指定当前DataStream中数据字段的名称")
-          if (this.fieldList == null) this.fieldList = fields.split(",").map(field => StringUtils.trim(field))
+          ValueUtils.requireNonNullForce(fields, "字段列表不能为空！需按照sql中的占位符顺序依次指定当前DataStream中数据字段的名称")
 
           if (clazz == null) {
             if (value != null) {
@@ -186,7 +184,7 @@ class DataStreamExt[T](stream: DataStream[T]) {
             }
           }
 
-          this.fieldList.foreach(fieldName => {
+          fields.foreach(fieldName => {
             val field = this.fieldMap.get(fieldName)
             ValueUtils.requireNonNullForce(field, s"当前DataStream中不存在该列名$fieldName，请检查！")
             params += field.get(value)
