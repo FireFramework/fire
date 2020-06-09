@@ -17,8 +17,8 @@ import org.apache.flink.streaming.api.scala.DataStream
 object FlinkJdbcTest extends BaseFlinkStreaming {
   lazy val tableName = "spark_test"
 
-  val fields = "name,age,createTime,length,sex".split(",")
-  val sql = s"INSERT INTO $tableName ($fields) VALUES (?, ?, ?, ?, ?)"
+  val fields = "name, age, createTime, length, sex".split(",")
+  val sql = s"INSERT INTO $tableName (${fields.mkString(",")}) VALUES (?, ?, ?, ?, ?)"
 
   /**
    * table的jdbc sink
@@ -50,7 +50,7 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
     // 注：要保证DataStream中字段名称是JavaBean的名称，非表中字段名称 顺序要与占位符顺序一致，个数也要一致
     stream.jdbcBatchUpdate(sql, fields).setParallelism(1)
     // 或者
-    this.flink.jdbcBatchUpdateStream(stream, sql, fields, keyNum = 3).setParallelism(10)
+    //this.flink.jdbcBatchUpdateStream(stream, sql, fields, keyNum = 3).setParallelism(10)
 
     // 方式二、通过用户指定的匿名函数方式进行数据的组装，适用于上面方法无法反射获取值的情况，适用面更广
     /*stream.jdbcBatchUpdate2(sql, 3, 30000) {
