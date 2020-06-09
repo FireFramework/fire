@@ -185,7 +185,7 @@ class DataStreamExt[T](stream: DataStream[T]) {
           }
 
           fields.foreach(fieldName => {
-            val field = this.fieldMap.get(fieldName)
+            val field = this.fieldMap.get(StringUtils.trim(fieldName))
             ValueUtils.requireNonNullForce(field, s"当前DataStream中不存在该列名$fieldName，请检查！")
             params += field.get(value)
           })
