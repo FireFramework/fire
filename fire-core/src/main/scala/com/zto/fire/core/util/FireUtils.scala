@@ -19,6 +19,7 @@ import scala.util.Try
  * @create: 2020-05-17 10:17
  */
 object FireUtils extends Serializable {
+  private var isSplash = false
 
   /**
    * 重试指定的函数fn retryNum次
@@ -170,22 +171,25 @@ object FireUtils extends Serializable {
    * 用于在fire框架启动时展示信息
    */
   private[fire] def splash: Unit = {
-    val info =
-      """
-        |       ___                       ___           ___
-        |     /\  \          ___        /\  \         /\  \
-        |    /::\  \        /\  \      /::\  \       /::\  \
-        |   /:/\:\  \       \:\  \    /:/\:\  \     /:/\:\  \
-        |  /::\~\:\  \      /::\__\  /::\~\:\  \   /::\~\:\  \
-        | /:/\:\ \:\__\  __/:/\/__/ /:/\:\ \:\__\ /:/\:\ \:\__\
-        | \/__\:\ \/__/ /\/:/  /    \/_|::\/:/  / \:\~\:\ \/__/
-        |      \:\__\   \::/__/        |:|::/  /   \:\ \:\__\
-        |       \/__/    \:\__\        |:|\/__/     \:\ \/__/
-        |                 \/__/        |:|  |        \:\__\
-        |                               \|__|         \/__/     version
-        |
-        |""".stripMargin.replace("version", s"version ${GlobalConstants.PS1.PINK + PropUtils.getString("spark.fire.version", "1.0.0")}")
+    if (!isSplash) {
+      val info =
+        """
+          |       ___                       ___           ___
+          |     /\  \          ___        /\  \         /\  \
+          |    /::\  \        /\  \      /::\  \       /::\  \
+          |   /:/\:\  \       \:\  \    /:/\:\  \     /:/\:\  \
+          |  /::\~\:\  \      /::\__\  /::\~\:\  \   /::\~\:\  \
+          | /:/\:\ \:\__\  __/:/\/__/ /:/\:\ \:\__\ /:/\:\ \:\__\
+          | \/__\:\ \/__/ /\/:/  /    \/_|::\/:/  / \:\~\:\ \/__/
+          |      \:\__\   \::/__/        |:|::/  /   \:\ \:\__\
+          |       \/__/    \:\__\        |:|\/__/     \:\ \/__/
+          |                 \/__/        |:|  |        \:\__\
+          |                               \|__|         \/__/     version
+          |
+          |""".stripMargin.replace("version", s"version ${GlobalConstants.PS1.PINK + PropUtils.getString("spark.fire.version", "1.0.0")}")
 
-    println(GlobalConstants.PS1.GREEN + info + GlobalConstants.PS1.DEFAULT)
+      println(GlobalConstants.PS1.GREEN + info + GlobalConstants.PS1.DEFAULT)
+      this.isSplash = true
+    }
   }
 }

@@ -63,6 +63,11 @@ trait BaseFire {
   }
 
   /**
+   * 用于将不同引擎的配置信息、累计器信息等传递到executor端或taskmanager端
+   */
+  protected def deployConf: Unit = {}
+
+  /**
    * 生命周期方法：用于在SparkSession初始化之前完成用户需要的动作
    * 注：该方法会在进行init之前自动被系统调用
    *

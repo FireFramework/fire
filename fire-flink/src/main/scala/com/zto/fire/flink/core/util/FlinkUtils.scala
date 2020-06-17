@@ -14,6 +14,7 @@ import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.types.Row
+import org.apache.log4j.{Level, Logger}
 
 import scala.collection.JavaConversions
 
@@ -176,6 +177,7 @@ object FlinkUtils extends Serializable {
         PropUtils.load(clientClass)
         PropUtils.setProperties(JavaConversions.mapAsScalaMap(configMap))
       }
+      PropUtils.sliceKeys("flink.log.level.fire_conf.").foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
       PropUtils.print()
     }
   }

@@ -26,6 +26,8 @@ object PropUtils extends BaseLogging {
   private var compatible = false
   // 加载默认配置文件
   this.load("default.properties")
+  // 避免已被加载的配置文件被重复加载
+  private[this] lazy val alreadyLoadMap = new mutable.HashMap[String, String]()
 
   /**
    * 用于设置兼容的key的前缀
@@ -46,7 +48,7 @@ object PropUtils extends BaseLogging {
   def load(fileNames: String*): this.type = {
     if (fileNames != null && fileNames.size > 0) {
       fileNames.foreach(fileName => {
-        if (StringUtils.isNotBlank(fileName)) {
+        if (StringUtils.isNotBlank(fileName) && !this.alreadyLoadMap.contains(fileName)) {
           val fullName = if (fileName.endsWith(".properties")) fileName else s"$fileName.properties"
           var resource: InputStream = null
           try {
@@ -65,6 +67,7 @@ object PropUtils extends BaseLogging {
             if (resource != null) {
               println(s"${GlobalConstants.PS1.YELLOW} --------------------------------- load ${fullName} --------------------------------- ${GlobalConstants.PS1.DEFAULT}")
               props.load(resource)
+              this.alreadyLoadMap.put(fileName, fileName)
             }
           } finally {
             if (resource != null) {
@@ -401,9 +404,6 @@ object PropUtils extends BaseLogging {
    * 合并Conf中的配置信息
    */
   def mergeSparkConf: Unit = {
-    println("--------------------------------------")
-    println("---------------> compatible=" + this.compatible + " boolean=" + (!this.compatible && "spark".equals(this.keyPrefix)))
-    println("---------------> compatible=" + this.compatible + " boolean=" + (!this.compatible && "spark".equals(this.keyPrefix)))
     if (!this.compatible && "spark".equals(this.keyPrefix)) {
       DataPool.mergeConf
     }

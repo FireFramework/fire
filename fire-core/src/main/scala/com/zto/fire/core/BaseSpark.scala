@@ -33,6 +33,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
   var hbaseContext: HBaseContextExt = _
   val acc = AccumulatorManager
   var batchDuration: Long = _
+  var listener: SparkListener = _
 
   /**
    * 生命周期方法：初始化fire框架必要的信息
@@ -127,8 +128,8 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     GlobalConstants.HdfsConf.linkHiveCluster(this.sc.hadoopConfiguration)
     this.catalog = this.spark.catalog
     this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
-    val sparkListener = new BaseSparkListener(this)
-    this.sc.addSparkListener(sparkListener)
+    this.listener = new BaseSparkListener(this)
+    this.sc.addSparkListener(listener)
     this.initLogging(this.className)
     this.hiveContext = this.spark.sqlContext
     this.sqlContext = this.hiveContext
@@ -137,16 +138,23 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     this.applicationId = SparkUtils.getApplicationId(this.spark)
     this.webUI = SparkUtils.getWebUI(this.spark)
     this.conf = tmpConf
+    this.deployConf
+
+    this.wrapLogInfo("<-- 完成Spark运行时信息初始化 -->")
+  }
+
+  /**
+   * 用于fire框架初始化，传递累加器与配置信息到taskManager端
+   */
+  override protected def deployConf: Unit = {
     // 向driver和executor注册定时任务
     val taskSchedule = new InternalTask(this)
     // driver端注册定时任务
-    SchedulerManager.registerTasks(this, taskSchedule, sparkListener)
+    SchedulerManager.registerTasks(this, taskSchedule, this.listener)
     // executor端与自定义累加器一同完成定时任务注册
     AccumulatorManager.registerTasks(this, taskSchedule)
     // 向executor端注册自定义累加器
     if (this.jobType != JobType.SPARK_CORE) this.acc.registerAccumulators(this.sc)
-
-    this.wrapLogInfo("<-- 完成Spark运行时信息初始化 -->")
   }
 
   /**

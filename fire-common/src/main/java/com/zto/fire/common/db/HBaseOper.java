@@ -17,8 +17,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import scala.Tuple2;
 import scala.collection.JavaConversions;
 import scala.collection.mutable.ListBuffer;
@@ -49,7 +48,7 @@ public class HBaseOper {
     private static Map<String, String> hbaseClusterMap;
     private static final Map<Class, Map<String, Field>> cacheFieldMap = new ConcurrentHashMap<>();
     private static final String module = "HBaseOper";
-    private static final Logger logger = LoggerFactory.getLogger(HBaseOper.class);
+    private static final Logger logger = Logger.getLogger(HBaseOper.class);
 
     /**
      * 根据conf信息获取一个单例的连接
@@ -61,10 +60,10 @@ public class HBaseOper {
             try {
                 connection = ConnectionFactory.createConnection(getConfiguration());
                 DataPool.addMultiTimer(module, "getConnection", "getConnection", "", "INFO", GlobalConstants.hbaseCluster(), 1);
-                logger.error("HBaseOper {} {}", "get", "connection");
-                logger.warn("HBaseOper {} {}", "get", "connection");
-                logger.info("HBaseOper {} {}", "get", "connection");
-                logger.debug("HBaseOper {} {}", "get", "connection");
+                logger.error("HBaseOper {} {} connection");
+                logger.warn("HBaseOper {} {} connection");
+                logger.info("HBaseOper {} {} connection");
+                logger.debug("HBaseOper {} {} connection");
             } catch (IOException e) {
                 DataPool.addMultiTimer(module, "getConnection", "getConnection", "", "error", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();

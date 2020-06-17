@@ -7,6 +7,7 @@ import com.zto.fire.core.ext.SparkExt._
 object Test extends BaseSparkStreaming {
 
   override def process: Unit = {
+    HBaseOper.scan("test", HBaseOper.buildScan("0", "1"))
     this.spark.parallelize(1 to 10).foreach(i => {
       HBaseOper.scan("test", HBaseOper.buildScan("0", "1"))
     })
@@ -16,6 +17,7 @@ object Test extends BaseSparkStreaming {
     })*/
     // dstream.print()
     // this.ssc.startAwaitTermination()
+    Thread.currentThread().join()
   }
 
   def main(args: Array[String]): Unit = {

@@ -79,7 +79,17 @@ trait BaseFlinkStreaming extends BaseFlink {
     this.tableEnv.useCatalog(GlobalConstants.HiveConf.hiveCatalogName)
     this.flink = this.tableEnv
     FlinkSingletonFactory.setStreamEnv(this.env).setStreamTableEnv(this.tableEnv)
+    this.deployConf
   }
+
+  /**
+   * 用于fire框架初始化，传递累加器与配置信息到taskManager端
+   */
+  override protected def deployConf: Unit = {
+    // fire框架初始化操作，将配置信息分发到每个slot中
+    this.ssc.fromCollection(1 to this.env.getMaxParallelism).map(FlinkUtils.initMapFunction).setParallelism(this.env.getMaxParallelism).name("fire init")
+  }
+
 
   /**
    * 生命周期方法：具体的用户开发的业务逻辑代码

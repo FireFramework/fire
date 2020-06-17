@@ -2,7 +2,6 @@ package com.zto.fire.demo.flink.stream
 
 import com.alibaba.fastjson.JSON
 import com.zto.fire.common.db.HBaseOper
-import com.zto.fire.common.util.PropUtils
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
@@ -18,11 +17,6 @@ object FlinkTest extends BaseFlinkStreaming {
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
   override def process: Unit = {
-    val maxParallelism = this.env.getMaxParallelism
-    println("最大并行度：" + maxParallelism + " 默认并行度：" + this.env.getParallelism)
-    this.env.parallelize(1 to maxParallelism).map(t => {
-      PropUtils.compatible("flink")
-    }).setParallelism(maxParallelism).print()
     HBaseOper.scan("test", HBaseOper.buildScan("0", "1"))
     val dstream = this.ssc.createDirectStream().map(json => {
       logger.error("FlinkTest {}", "task")
@@ -31,7 +25,7 @@ object FlinkTest extends BaseFlinkStreaming {
       logger.debug("FlinkTest {}", "task")
       HBaseOper.scan("test", HBaseOper.buildScan("0", "1"))
       JSON.parseObject(json, classOf[Student])
-    }).setParallelism(10)
+    }).setParallelism(2)
 
     dstream.createOrReplaceTempView("student")
     val table = this.flink.sql("select * from student")
