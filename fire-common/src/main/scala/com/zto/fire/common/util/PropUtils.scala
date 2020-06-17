@@ -9,7 +9,7 @@ import com.zto.fire.common.bean.BaseLogging
 import com.zto.fire.common.data.DataPool
 import org.apache.commons.lang3.StringUtils
 
-import scala.collection.JavaConversions
+import scala.collection.{JavaConversions, mutable}
 import scala.collection.mutable.Map
 
 /**
@@ -365,6 +365,23 @@ object PropUtils extends BaseLogging {
   }
 
   /**
+   * 指定key的前缀获取所有该前缀的key与value
+   */
+  def sliceKeys(keyStart: String): collection.immutable.Map[String, String] = {
+    val confMap = new mutable.HashMap[String, String]()
+    JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
+      // 舍弃key前缀的前缀，兼容不同的引擎导致的key前缀不同的问题
+      val keyStartContent = keyStart.substring(keyStart.indexOf("."), keyStart.length)
+      if (key != null && key.toString.contains(keyStartContent)) {
+        val keyStr = key.toString
+        val keySuffix = keyStr.substring(keyStr.indexOf(keyStartContent) + keyStartContent.length, keyStr.length)
+        confMap.put(keySuffix, this.getProperty(keyStr))
+      }
+    })
+    confMap.toMap
+  }
+
+  /**
    * 将配置信息转为Map，并设置到Flink Configuration中
    *
    * @return
@@ -384,7 +401,10 @@ object PropUtils extends BaseLogging {
    * 合并Conf中的配置信息
    */
   def mergeSparkConf: Unit = {
-    if ("spark".equals(this.keyPrefix)) {
+    println("--------------------------------------")
+    println("---------------> compatible=" + this.compatible + " boolean=" + (!this.compatible && "spark".equals(this.keyPrefix)))
+    println("---------------> compatible=" + this.compatible + " boolean=" + (!this.compatible && "spark".equals(this.keyPrefix)))
+    if (!this.compatible && "spark".equals(this.keyPrefix)) {
       DataPool.mergeConf
     }
   }

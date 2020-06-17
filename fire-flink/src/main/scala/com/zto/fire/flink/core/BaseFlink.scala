@@ -32,12 +32,11 @@ trait BaseFlink extends BaseFire {
    */
   override private[fire] def boot: Unit = {
     PropUtils.compatible("flink")
-    // 切换为flink引擎后才能调用splash
-    FireUtils.splash
     PropUtils.load("flink", this.appName)
     PropUtils.setProperty("flink.client.class.name", this.className)
     PropUtils.setProperty("flink.client.simple.class.name", this.driverClass)
     FlinkSingletonFactory.setAppName(this.appName)
+    super.boot
   }
 
   /**

@@ -48,8 +48,6 @@ object GlobalConstants {
     // rest接口filter的开关
     val restFilter = true
 
-    // 默认的kafka broker地址
-    val kafkaBrokers = "192.168.25.80:9092,192.168.25.81:9092,192.168.25.82:9092,192.168.25.129:9092,192.168.25.130:9092,192.168.25.131:9092"
     // 默认的broker名称
     val kafkaBrokersName = "bigdata"
     // 启动应用时默认的kafka消费位点
@@ -72,8 +70,6 @@ object GlobalConstants {
     // 订阅的tag
     val rocketConsumerTag = "*"
 
-    // 默认的zookeeper地址
-    val zkUrl = "192.168.25.38:2181,192.168.25.39:2181,192.168.25.40:2181,192.168.25.41:2181,192.168.25.42:2181"
     // spark 默认的checkpoint地址
     val sparkChkPointDir = "hdfs://nameservice1/user/spark/ckpoint/"
     // hive metastore地址
@@ -110,6 +106,7 @@ object GlobalConstants {
     val RUNMODEL_KEY = "spark.runModel"
     val APP_NAME_KEY = "spark.appName"
     val SPARK_CONF_KEY = "SparkConf"
+    val SPARK_LOCAL_CORES = "spark.local.cores"
 
     // c3p0连接池相关配置
     val SPARK_DB_JDBC_URL_KEY = "spark.db.jdbc.url"
@@ -127,7 +124,6 @@ object GlobalConstants {
     val SPARK_DB_JDBC_MAX_RETRY = "spark.db.jdbc.max.retry"
 
     val LOG_LEVEL = "spark.log.level"
-    val KAFKA_LOG_LEVEL = "spark.kafka.log.level"
     val SAVE_MODE_KEY = "spark.saveMode"
     val PARALLELISM_KEY = "spark.parallelism"
     val HBBASE_COLUMN_FAMILY_KEY = "spark.hbase.column.family"
@@ -185,6 +181,7 @@ object GlobalConstants {
     val SPARK_STREAMING_BATCH_DURATION = "spark.streaming.batch.duration"
 
     // ---------------------------- hive 相关配置 ---------------------------- //
+    val HIVE_SUPPORT_ENABLE = "spark.hive.support.enable"
     val HIVE_CLUSTER = "spark.hive.cluster"
     // 默认的库名
     val SPARK_DEFAULT_DATABASE_NAME = "spark.default.database.name"
@@ -371,7 +368,7 @@ object GlobalConstants {
     lazy val defaultInputDependencyConstraint = PropUtils.getString(GlobalConstants.PropKeys.FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT)
     lazy val executionMode = PropUtils.getString(GlobalConstants.PropKeys.FLINK_EXECUTION_MODE)
     lazy val latencyTrackingInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_LATENCY_TRACKING_INTERVAL, -1)
-    lazy val maxParallelism = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_MAX_PARALLELISM, -1)
+    lazy val maxParallelism = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_MAX_PARALLELISM, 8)
     lazy val defaultParallelism = PropUtils.getInt(GlobalConstants.PropKeys.FLINK_DEFAULT_PARALLELISM, -1)
     lazy val taskCancellationInterval = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_TASK_CANCELLATION_INTERVAL, -1)
     lazy val taskCancellationTimeoutMillis = PropUtils.getLong(GlobalConstants.PropKeys.FLINK_TASK_CANCELLATION_TIMEOUT_MILLIS, -1)
@@ -440,6 +437,7 @@ object GlobalConstants {
    */
   object SparkConf extends Enumeration {
     val appName = PropUtils.getString(PropKeys.APP_NAME_KEY, "")
+    val localCores = PropUtils.getString(PropKeys.SPARK_LOCAL_CORES, "*")
     val sparkConf = PropUtils.getString(PropKeys.SPARK_CONF_KEY)
     val logLevel = PropUtils.getString(PropKeys.LOG_LEVEL, DefaultVals.logLevel).toUpperCase
     val saveMode = PropUtils.getString(PropKeys.SAVE_MODE_KEY, "Append")
@@ -456,16 +454,9 @@ object GlobalConstants {
     val offsetLargest = "latest"
     val offsetSmallest = "earliest"
     val offsetNone = "none"
-    val logLevel = PropUtils.getString(PropKeys.KAFKA_LOG_LEVEL, DefaultVals.logLevel).toUpperCase
 
-    // 大数据kafka地址
-    private val bigdataKafkaUrl = "192.168.25.80:9092,192.168.25.81:9092,192.168.25.82:9092,192.168.25.129:9092,192.168.25.130:9092,192.168.25.131:9092"
-    // zms kafka地址
-    private val zmsKafkaUrl = "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092,192.168.1.173:9092,192.168.5.29:9092,192.168.5.30:9092"
-    // zms new 地址
-    private val zmsNewKafkaUrl = "192.168.73.31:9092,192.168.73.32:9092,192.168.73.33:9092,192.168.73.34:9092,192.168.73.35:9092,192.168.73.36:9092"
-    // 测试kafka集群地址
-    private val testKafkaUrl = "10.9.45.97:9092,10.9.15.38:9092,10.9.36.49:9092,10.9.36.50:9092"
+    // 初始化kafka集群名称与地址映射
+    private lazy val kafkaMap = PropUtils.sliceKeys("spark.kafka.cluster.map.")
 
     // kafka消费起始位点
     def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
@@ -511,19 +502,14 @@ object GlobalConstants {
      */
     def kafkaBrokers(keyNum: Int = 1): String = {
       val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME, keyNum, DefaultVals.kafkaBrokersName)
-      if ("bigdata".equalsIgnoreCase(brokerName)) {
-        bigdataKafkaUrl
-      } else if ("zms".equalsIgnoreCase(brokerName)) {
-        zmsKafkaUrl
-      } else if ("zmsNew".equalsIgnoreCase(brokerName)) {
-        zmsNewKafkaUrl
-      } else if ("test".equalsIgnoreCase(brokerName)) {
-        testKafkaUrl
-      } else if (StringUtils.isNotBlank(brokerName) && brokerName.contains(":")) {
+      val kafkaAddress = if (StringUtils.isNotBlank(brokerName) && brokerName.contains(":")) {
         brokerName
+      } else if (this.kafkaMap.contains(brokerName)) {
+        this.kafkaMap.get(brokerName).get
       } else {
-        zmsKafkaUrl
+        throw new IllegalArgumentException(s"未找到匹配的kafka地址，请检查参数：spark.kafka.brokers.name$keyNum")
       }
+      kafkaAddress
     }
 
     /**
@@ -924,14 +910,14 @@ object GlobalConstants {
    * hive相关配置
    */
   object HiveConf extends Enumeration {
+    // 是否启用hive支持
+    lazy val hiveSupportEnable = PropUtils.getBoolean(PropKeys.HIVE_SUPPORT_ENABLE, true)
     // hive集群标识（batch/streaming/test）
     lazy val hiveCluster = PropUtils.getString(PropKeys.HIVE_CLUSTER, DefaultVals.hiveCluster)
-    // 离线hive集群
-    private val batchMetastore = "thrift://192.168.25.36:9083,thrift://HZPL025050:9083,thrift://HZPL025051:9083,thrift://HZPL025052:9083"
-    // 实时hive集群
-    private val streamingMetastore = "thrift://192.168.25.180:9083"
-    // 测试hive集群
-    private val testMetastore = "thrift://10.9.46.107:9083"
+    // 初始化hive集群名称与metastore映射
+    private lazy val hiveMetastoreMap = PropUtils.sliceKeys("spark.hive.cluster.map.")
+    // hive-site.xml存放路径映射
+    private lazy val hiveSiteMap = PropUtils.sliceKeys("spark.hive.site.path.map.")
     // hive版本号
     lazy val hiveVersion = PropUtils.getString(PropKeys.HIVE_VERSION, "1.1.0")
     // hive catalog名称
@@ -944,17 +930,14 @@ object GlobalConstants {
      * uri
      */
     def getMetastoreUrl: String = {
-      if ("batch".equalsIgnoreCase(hiveCluster)) {
-        batchMetastore
-      } else if ("streaming".equalsIgnoreCase(hiveCluster)) {
-        streamingMetastore
-      } else if ("test".equalsIgnoreCase(hiveCluster)) {
-        testMetastore
-      } else if (StringUtils.isNotBlank(hiveCluster) && hiveCluster.contains(":")) {
+      val metastore = if (StringUtils.isNotBlank(hiveCluster) && hiveCluster.contains(":")) {
         hiveCluster
+      } else if (this.hiveMetastoreMap.contains(hiveCluster)) {
+        this.hiveMetastoreMap.get(hiveCluster).get
       } else {
-        streamingMetastore
+        throw new IllegalArgumentException(s"未找到匹配的hive metastore地址，请检查参数：spark.hive.cluster")
       }
+      metastore
     }
 
     /**
@@ -964,15 +947,14 @@ object GlobalConstants {
      * /path/to/hive-site.xml
      */
     def getHiveConfDir: String = {
-      if ("batch".equalsIgnoreCase(hiveCluster)) {
-        "/home/hadoop/flink/conf/hive/batch"
-      } else if ("streaming".equalsIgnoreCase(hiveCluster)) {
-        "/home/hadoop/flink/conf/hive/streaming"
-      } else if ("test".equalsIgnoreCase(hiveCluster)) {
-        "/home/hadoop/app/flink/conf"
-      } else {
+      val hiveSitePath = if (StringUtils.isNotBlank(hiveCluster) && hiveCluster.contains("""/""")) {
         hiveCluster
+      } else if (this.hiveSiteMap.contains(hiveCluster)) {
+        this.hiveSiteMap.get(hiveCluster).get
+      } else {
+        throw new IllegalArgumentException(s"未找到匹配的hive-site.xml存放路径，请检查参数：spark.hive.cluster")
       }
+      hiveSitePath
     }
   }
 
@@ -1011,52 +993,15 @@ object GlobalConstants {
     lazy val hdfsHAEnable = PropUtils.getBoolean(PropKeys.HDFS_HA, DefaultVals.enableHdfsHA)
 
     /**
-     * 离线集群默认的配置
-     *
-     * @param hadoopConf
-     * sc.hadoopConfiguration
-     */
-    def setBatchHdfsHAConf(hadoopConf: Configuration): Unit = {
-      if (hadoopConf != null && this.hdfsHAEnable) {
-        hadoopConf.set("fs.defaultFS", "hdfs://nameservice1")
-        hadoopConf.set("dfs.nameservices", "nameservice1")
-        hadoopConf.set("dfs.ha.namenodes.nameservice1", "namenode61,namenode99")
-        hadoopConf.set("dfs.namenode.rpc-address.nameservice1.namenode61", "HZPL025036:8020")
-        hadoopConf.set("dfs.namenode.rpc-address.nameservice1.namenode99", "HZPL025037:8020")
-        hadoopConf.set("dfs.client.failover.proxy.provider.nameservice1", "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider")
-      }
-    }
-
-    /**
-     * 实时集群默认的配置
-     *
-     * @param hadoopConf
-     * sc.hadoopConfiguration
-     */
-    def setStreamingHdfsHAConf(hadoopConf: Configuration): Unit = {
-      if (hadoopConf != null && this.hdfsHAEnable) {
-        hadoopConf.set("fs.defaultFS", "hdfs://appcluster")
-        hadoopConf.set("dfs.nameservices", "appcluster")
-        hadoopConf.set("dfs.ha.namenodes.appcluster", "nn1,nn2")
-        hadoopConf.set("dfs.namenode.rpc-address.appcluster.nn1", "HZPL025180:8020")
-        hadoopConf.set("dfs.namenode.rpc-address.appcluster.nn2", "HZPL025181:8020")
-        hadoopConf.set("dfs.client.failover.proxy.provider.appcluster", "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider")
-      }
-    }
-
-    /**
      * hdfs高可用关联hive集群
      */
     def linkHiveCluster(hadoopConf: Configuration): Unit = {
       if (hadoopConf != null && this.hdfsHAEnable) {
-        // 根据hive集群选择启用对应集群的HA
-        if (StringUtils.isNotBlank(HiveConf.hiveCluster)) {
-          if ("batch".equalsIgnoreCase(HiveConf.hiveCluster)) {
-            this.setBatchHdfsHAConf(hadoopConf)
-          } else if ("streaming".equalsIgnoreCase(HiveConf.hiveCluster)) {
-            this.setStreamingHdfsHAConf(hadoopConf)
-          }
-        }
+        val hdfsHAConf = PropUtils.sliceKeys(s"spark.hdfs.ha.fire_conf.${HiveConf.hiveCluster}.")
+        hdfsHAConf.foreach(kv => {
+          if (StringUtils.isBlank(kv._2)) throw new IllegalArgumentException(s"hdfs HA参数不合法，请检查配置项：${kv._1}")
+          hadoopConf.set(kv._1, kv._2)
+        })
       }
     }
   }

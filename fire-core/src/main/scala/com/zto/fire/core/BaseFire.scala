@@ -9,6 +9,7 @@ import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, PropUtils, SystemInfoUtils, ThreadUtils, ValueUtils}
 import com.zto.fire.core.rest.{RestfulRegister, SparkSystemRestful, SystemRestful}
 import com.zto.fire.core.util.FireUtils
+import org.apache.log4j.{Level, Logger}
 import spark.Spark
 
 /**
@@ -56,7 +57,10 @@ trait BaseFire {
    * 生命周期方法：初始化fire框架必要的信息
    * 注：该方法会同时在driver端与executor端执行
    */
-  private[fire] def boot: Unit
+  private[fire] def boot: Unit = {
+    FireUtils.splash
+    PropUtils.sliceKeys("spark.log.level.fire_conf.").foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
+  }
 
   /**
    * 生命周期方法：用于在SparkSession初始化之前完成用户需要的动作

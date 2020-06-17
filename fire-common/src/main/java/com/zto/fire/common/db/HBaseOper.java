@@ -1,12 +1,12 @@
 package com.zto.fire.common.db;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.zto.fire.common.anno.FieldName;
 import com.zto.fire.common.bean.HBaseBaseBean;
 import com.zto.fire.common.bean.MultiVersionsBean;
 import com.zto.fire.common.data.DataPool;
 import com.zto.fire.common.util.GlobalConstants;
+import com.zto.fire.common.util.PropUtils;
 import com.zto.fire.common.util.ReflectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -17,7 +17,10 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Tuple2;
+import scala.collection.JavaConversions;
 import scala.collection.mutable.ListBuffer;
 
 import java.io.IOException;
@@ -43,17 +46,10 @@ public class HBaseOper {
     private static Configuration conf;
     private static Connection connection;
     private static Gson gson = new Gson();
-    private static Map<String, String> hbaseCluster;
+    private static Map<String, String> hbaseClusterMap;
     private static final Map<Class, Map<String, Field>> cacheFieldMap = new ConcurrentHashMap<>();
     private static final String module = "HBaseOper";
-
-    static {
-        hbaseCluster = ImmutableMap.<String, String>builder()
-                .put("old", "hadoop10.zto:2181,hadoop11.zto:2181,hadoop12.zto:2181")
-                .put("batch", "HZPL025041:2181,HZPL025040:2181,HZPL025042:2181,HZPL025039:2181,HZPL025038:2181")
-                .put("streaming", "HZPL025024:2181,HZPL025027:2181,HZPL025025:2181,HZPL025023:2181,HZPL025026:2181")
-                .put("test", "SHTL009046110:2181,SHTL009046111:2181,SHTL009046109:2181").build();
-    }
+    private static final Logger logger = LoggerFactory.getLogger(HBaseOper.class);
 
     /**
      * 根据conf信息获取一个单例的连接
@@ -65,6 +61,10 @@ public class HBaseOper {
             try {
                 connection = ConnectionFactory.createConnection(getConfiguration());
                 DataPool.addMultiTimer(module, "getConnection", "getConnection", "", "INFO", GlobalConstants.hbaseCluster(), 1);
+                logger.error("HBaseOper {} {}", "get", "connection");
+                logger.warn("HBaseOper {} {}", "get", "connection");
+                logger.info("HBaseOper {} {}", "get", "connection");
+                logger.debug("HBaseOper {} {}", "get", "connection");
             } catch (IOException e) {
                 DataPool.addMultiTimer(module, "getConnection", "getConnection", "", "error", GlobalConstants.hbaseCluster(), 1);
                 e.printStackTrace();
@@ -81,24 +81,18 @@ public class HBaseOper {
      */
     public static Configuration getConfiguration() {
         if (conf == null) {
+            hbaseClusterMap = JavaConversions.mapAsJavaMap(PropUtils.sliceKeys("spark.hbase.cluster.map."));
             conf = HBaseConfiguration.create();
             String clusterName = GlobalConstants.hbaseCluster();
-            if (!clusterName.contains(":")) {
-                String zkUrl = hbaseCluster.get(clusterName);
-                if (StringUtils.isNotBlank(zkUrl)) {
-                    conf.set("hbase.zookeeper.quorum", zkUrl);
-                } else {
-                    conf.set("hbase.zookeeper.quorum", hbaseCluster.get("batch"));
-                }
-            } else {
+            if (StringUtils.isNotBlank(clusterName) && clusterName.contains(":")) {
                 conf.set("hbase.zookeeper.quorum", clusterName);
+            } else if (hbaseClusterMap.containsKey(clusterName)) {
+                conf.set("hbase.zookeeper.quorum", hbaseClusterMap.get(clusterName));
+            } else {
+                throw new IllegalArgumentException("未找到匹配的hbase cluster标识，请检查参数：spark.hbase.cluster");
             }
-            conf.set("hbase.zookeeper.property.clientPort", "2181");
-            conf.set("zookeeper.znode.parent", "/hbase");
-            conf.set("hbase.rpc.timeout", "600000");
-            conf.set("hbase.snapshot.master.timeoutMillis", "600000");
-            conf.set("hbase.snapshot.region.timeout", "600000");
-            conf.set("hbase.snapshot.master.timeout.millis", "600000");
+            // 以spark.hbase.fire_conf.为前缀的配置项为hbase client专项配置，统一设置到hbase的Configuration中
+            JavaConversions.mapAsJavaMap(PropUtils.sliceKeys("spark.hbase.fire_conf.")).forEach((k, v) -> conf.set(k, v));
         }
         return conf;
     }

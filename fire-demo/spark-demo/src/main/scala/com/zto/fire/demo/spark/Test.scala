@@ -1,17 +1,21 @@
 package com.zto.fire.demo.spark
 
+import com.zto.fire.common.db.HBaseOper
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
-import com.zto.fire.demo.bean.Student
 
 object Test extends BaseSparkStreaming {
 
   override def process: Unit = {
-    val dstream = this.ssc.createDirectStream()
-    dstream.mapOgg(classOf[Student]).foreachRDD(rdd => {
-      rdd.foreach(t => println(t.getTable + " " + t.getBefore.getId + " " + t.getAfter.getName + " rowkey=" + t.getBefore.getRowKey + " " + t.getAfter.getRowKey))
+    this.spark.parallelize(1 to 10).foreach(i => {
+      HBaseOper.scan("test", HBaseOper.buildScan("0", "1"))
     })
-    this.ssc.startAwaitTermination()
+    // val dstream = this.ssc.createDirectStream()
+    /*dstream.mapOgg(classOf[Student]).foreachRDD(rdd => {
+      rdd.foreach(t => println(t.getTable + " " + t.getBefore.getId + " " + t.getAfter.getName + " rowkey=" + t.getBefore.getRowKey + " " + t.getAfter.getRowKey))
+    })*/
+    // dstream.print()
+    // this.ssc.startAwaitTermination()
   }
 
   def main(args: Array[String]): Unit = {

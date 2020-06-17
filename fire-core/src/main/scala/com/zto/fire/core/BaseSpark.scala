@@ -39,15 +39,12 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 注：该方法会同时在driver端与executor端执行
    */
   override private[fire] final def boot: Unit = {
-    FireUtils.splash
     PropUtils.load(this.appName)
     PropUtils.setProperty("spark.driver.class.name", this.className)
     if (StringUtils.isNotBlank(GlobalConstants.SparkConf.appName)) {
       this.appName = GlobalConstants.SparkConf.appName
     }
-    Logger.getLogger("org.apache.spark").setLevel(Level.toLevel(GlobalConstants.SparkConf.logLevel, Level.WARN))
-    Logger.getLogger("org.apache.kafka").setLevel(Level.toLevel(GlobalConstants.KafkaConf.logLevel, Level.WARN))
-    Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.ERROR)
+    super.boot
     this.wrapLogInfo("<-- 完成fire框架初始化 -->")
   }
 
@@ -110,15 +107,19 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     // 注册到zrc平台，并覆盖配置信息
     if (this.jobType != JobType.SPARK_CORE && GlobalConstants.FireConf.zrcEnable) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     PropUtils.print()
+
+    // 构建SparkConf信息
     val tmpConf = if (conf == null) this.buildConf(null) else conf.asInstanceOf[SparkConf]
     tmpConf.setAll(PropUtils.toMap)
     tmpConf.set("spark.driver.class.simple.name", this.driverClass)
     tmpConf.set("hive.metastore.uris", GlobalConstants.HiveConf.getMetastoreUrl)
-    if (SystemInfoUtils.isLocal) {
-      this.spark = SparkSession.builder().config(tmpConf).master("local[*]").enableHiveSupport().getOrCreate()
-    } else {
-      this.spark = SparkSession.builder().config(tmpConf).enableHiveSupport().getOrCreate()
-    }
+
+    // 构建SparkSession对象
+    val sessionBuilder = SparkSession.builder().config(tmpConf)
+    if (GlobalConstants.HiveConf.hiveSupportEnable) sessionBuilder.enableHiveSupport()
+    if (SystemInfoUtils.isLocal) sessionBuilder.master(s"local[${GlobalConstants.SparkConf.localCores}]")
+    this.spark = sessionBuilder.getOrCreate()
+
     SingletonFactory.setSparkSession(this.spark)
     this.spark.registerUDF()
     this.sc = this.spark.sparkContext
