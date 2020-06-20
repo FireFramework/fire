@@ -19,7 +19,7 @@ import scala.reflect.ClassTag
   */
 object JdbcOper extends BaseLogging {
   private lazy val connPoolMap = collection.mutable.Map[String, ComboPooledDataSource]()
-  private val logger = LogManager.getLogger(classOf[HBaseOper])
+  private val logger = LogManager.getLogger(this.getClass)
   // 日志中sql截取的长度
   private lazy val logSqlLength = GlobalConstants.FireConf.logSqlLength
   private val jdbcPoolKey = "cpds"
