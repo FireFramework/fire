@@ -33,7 +33,6 @@ object JdbcOper extends BaseLogging {
     * 连接池
     */
   def init(keyNum: Int = 1): ComboPooledDataSource = {
-    this.mark()
     var pool = this.connPoolMap.get(s"${this.jdbcPoolKey}$keyNum").getOrElse(null)
     if (pool == null) {
       try {
@@ -78,7 +77,6 @@ object JdbcOper extends BaseLogging {
     var connection: Connection = null
     try {
       val pool = this.init(keyNum)
-      this.mark()
       connection = pool.getConnection
       this.logger.info(s"getConnection(${keyNum}) 获取数据库连接[ ${keyNum} ]成功")
     } catch {
@@ -118,7 +116,6 @@ object JdbcOper extends BaseLogging {
         conn = this.getConnection(keyNum)
         conn.setAutoCommit(false)
       }
-      this.mark
       stat = conn.prepareStatement(sql)
 
       // 设置值参数
@@ -183,7 +180,6 @@ object JdbcOper extends BaseLogging {
         conn = this.getConnection(keyNum)
         conn.setAutoCommit(false)
       }
-      this.mark
       stat = conn.prepareStatement(sql)
       var batch = 0
       if (paramsList != null && paramsList.size > 0) {
@@ -277,7 +273,6 @@ object JdbcOper extends BaseLogging {
       if (conn == null) {
         conn = this.getConnection(keyNum)
       }
-      this.mark
       stat = conn.prepareStatement(sql)
       if (params != null && params.length > 0) {
         var i = 1
