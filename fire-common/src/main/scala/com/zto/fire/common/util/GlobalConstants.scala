@@ -173,6 +173,8 @@ object GlobalConstants {
     val KAFKA_MAX_POLL_RECORDS = "spark.kafka.max.poll.records"
     // 每个分区返回的最大数据量：max.partition.fetch.bytes
     val KAFKA_MAX_PARTITION_FETCH_BYTES = "spark.kafka.max.partition.fetch.bytes"
+    // 是否启用新的配置方式，以支持kafka所有配置，默认为false
+    val KAFKA_ENABLE_NEW_CONFIG_STYLE = "spark.kafka.enable.new_config_style"
 
     // ---------------------------- spark 相关配置 ---------------------------- //
     val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
@@ -249,9 +251,9 @@ object GlobalConstants {
     // 用于限定fire框架中sql日志的字符串长度
     val SPARK_FIRE_LOG_SQL_LENGTH = "spark.fire.log.sql.length"
     // fire框架针对hbase操作后数据集的缓存策略，配置列表详见：StorageLevel.scala（配置不区分大小写）
-    val SPARK_FIRE_HBASE_STORAGE_LEVEL = "spark.fire.hbase.storage.level"
+    val SPARK_FIRE_HBASE_STORAGE_LEVEL = "spark.hbase.storage.level"
     // 通过HBase scan后repartition的分区数
-    val SPARK_FIRE_HBASE_SCAN_REPARTITIONS = "spark.fire.hbase.scan.repartitions"
+    val SPARK_FIRE_HBASE_SCAN_REPARTITIONS = "spark.hbase.scan.repartitions"
 
     // fire框架针对jdbc操作后数据集的缓存策略
     val SPARK_FIRE_JDBC_STORAGE_LEVEL = "spark.fire.jdbc.storage.level"
@@ -481,6 +483,9 @@ object GlobalConstants {
 
     // enable.auto.commit
     def kafkaEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.kafkaEnableAutoCommit)
+
+    // 是否启用新的配置方式，以支持kafka所有配置，默认为false
+    lazy val kafkaEnableNewConfigStyle = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_NEW_CONFIG_STYLE, false)
 
     /**
      * 配置文件中的groupId
