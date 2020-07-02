@@ -17,36 +17,36 @@ import spark.{Request, Response}
 import scala.collection.JavaConversions
 
 /**
-  * 实时平台Spark通用父类
-  * Created by ChengLong on 2018-03-28.
-  */
+ * 实时平台Spark通用父类
+ * Created by ChengLong on 2018-03-28.
+ */
 trait BaseSparkStreaming extends BaseSpark {
   var checkPointDir: String = _
   var externalConf: RestartParams = _
   override val jobType = JobType.SPARK_STREAMING
 
   /**
-    * 程序初始化方法，用于初始化必要的值
-    *
-    * @param batchDuration
-    * Streaming每个批次间隔时间
-    * @param isCheckPoint
-    * 是否做checkpoint
-    */
+   * 程序初始化方法，用于初始化必要的值
+   *
+   * @param batchDuration
+   * Streaming每个批次间隔时间
+   * @param isCheckPoint
+   * 是否做checkpoint
+   */
   def init(batchDuration: Long, isCheckPoint: Boolean): Unit = {
     this.init(batchDuration, isCheckPoint, null)
   }
 
   /**
-    * 程序初始化方法，用于初始化必要的值
-    *
-    * @param batchDuration
-    * Streaming每个批次间隔时间
-    * @param isCheckPoint
-    * 是否做checkpoint
-    * @param conf
-    * 传入自己构建的sparkConf对象，可以为空
-    */
+   * 程序初始化方法，用于初始化必要的值
+   *
+   * @param batchDuration
+   * Streaming每个批次间隔时间
+   * @param isCheckPoint
+   * 是否做checkpoint
+   * @param conf
+   * 传入自己构建的sparkConf对象，可以为空
+   */
   def init(batchDuration: Long, isCheckPoint: Boolean, conf: SparkConf): Unit = {
     val tmpConf = buildConf(conf)
     if (this.sc == null) {
@@ -93,8 +93,8 @@ trait BaseSparkStreaming extends BaseSpark {
   }
 
   /**
-    * 构建内部使用的SparkConf对象
-    */
+   * 构建内部使用的SparkConf对象
+   */
   override def buildConf(conf: SparkConf = null): SparkConf = {
     val tmpConf = if (conf == null) {
       new SparkConf()
@@ -130,47 +130,37 @@ trait BaseSparkStreaming extends BaseSpark {
   }
 
   /**
-    * Streaming的处理过程强烈建议放到process中，保持风格统一
-    * 注：此方法会被自动调用，在以下两种情况下，必须将逻辑写在process中
-    * 1. 开启checkpoint
-    * 2. 支持streaming热重启（可在不关闭streaming任务的前提下修改batch时间）
-    */
+   * Streaming的处理过程强烈建议放到process中，保持风格统一
+   * 注：此方法会被自动调用，在以下两种情况下，必须将逻辑写在process中
+   * 1. 开启checkpoint
+   * 2. 支持streaming热重启（可在不关闭streaming任务的前提下修改batch时间）
+   */
   override def process: Unit = {
     ValueUtils.requireNull(this.checkPointDir, "当开启checkPoint机制时，必须将对接kafka的代码写在process方法内")
     ValueUtils.requireNull(this.externalConf, "当需要使用热重启功能时，必须将对接kafka的代码写在process方法内")
   }
 
   /**
-    * kafka配置信息
-    *
-    * @param groupId
-    * 消费组
-    * @param offset
-    * offset位点，smallest、largest，默认为largest
-    * @return
-    * kafka相关配置
-    */
-  def kafkaParams(groupId: String = null, kafkaBrokers: String = null, offset: String = null, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
-    // 如果配置文件中没有指定spark.kafka.group.id，则默认为appName
-    val finalKafkaGroupId = if (StringUtils.isBlank(groupId)) {
-      if (StringUtils.isNotBlank(GlobalConstants.KafkaConf.kafkaGroupId(keyNum))) {
-        GlobalConstants.KafkaConf.kafkaGroupId(keyNum)
-      } else {
-        ssc.sparkContext.appName
-      }
-    } else {
-      groupId
-    }
-
-    KafkaUtils.kafkaParams(finalKafkaGroupId, kafkaBrokers, offset, autoCommit, keyNum)
+   * kafka配置信息
+   *
+   * @param groupId
+   * 消费组
+   * @param offset
+   * offset位点，smallest、largest，默认为largest
+   * @return
+   * kafka相关配置
+   */
+  @Deprecated
+  def kafkaParams(groupId: String = this.appName, kafkaBrokers: String = null, offset: String = GlobalConstants.KafkaConf.offsetLargest, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
+    KafkaUtils.kafkaParams(null, groupId, kafkaBrokers, offset, autoCommit, keyNum)
   }
 
   /**
-    * 用于重置StreamingContext（仅支持batch时间的修改）
-    *
-    * @return
-    * 响应结果
-    */
+   * 用于重置StreamingContext（仅支持batch时间的修改）
+   *
+   * @return
+   * 响应结果
+   */
   @Rest("/system/streaming/hotRestart")
   def hotRestart(request: Request, response: Response): AnyRef = {
     this.mark

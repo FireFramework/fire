@@ -3,6 +3,7 @@ package com.zto.fire.common.util;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 /**
@@ -126,8 +127,108 @@ public class StringsUtils {
         }
     }
 
-    public static void main(String[] args) {
-        String str = "#,$@,#";
-        System.out.println(replace(str, ImmutableMap.of("#", "", ",", "")));
+    /**
+     * 判断一个字符串是否为整型
+     * 1. 包号空字符串的不能看作是整数
+     * 2. 超过Int最大值的不能作为整数
+     */
+    public static boolean isInt(String str) {
+        if (StringUtils.isBlank(str)) return false;
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (Exception e) {
+            // 如果超过精度，则不能看做是整型
+            return false;
+        }
     }
+
+    /**
+     * 判断字符串是否为整数（前面是数值类型，最后是L或l结尾，也认为是长整数）
+     */
+    public static boolean isLong(String str) {
+        if (StringUtils.isBlank(str)) return false;
+        str = str.toUpperCase();
+        if (str.endsWith("L")) {
+            try {
+                Long.parseLong(str.replace("L", ""));
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 用于判断字符串是否为布尔类型
+     */
+    public static boolean isBoolean(String str) {
+        if (StringUtils.isBlank(str)) return false;
+        try {
+            if ("true".equalsIgnoreCase(str) || "false".equalsIgnoreCase(str)) {
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 用于判断字符串是否为float类型
+     * 以字母F或f结尾的合法数值型字符串认为是float类型
+     */
+    public static boolean isFloat(String str) {
+        if (StringUtils.isBlank(str)) return false;
+        str = str.toUpperCase();
+        if (str.endsWith("F")) {
+            try {
+                Float.parseFloat(str.replace("F", ""));
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 用于判断字符串是否为float类型
+     * 以字母F或f结尾的合法数值型字符串认为是float类型
+     */
+    public static boolean isDouble(String str) {
+        if (StringUtils.isBlank(str)) return false;
+        str = str.toUpperCase();
+        if (str.endsWith("D")) {
+            try {
+                Double.parseDouble(str.replace("D", ""));
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 根据字符串具体的类型进行转换，返回转换类型之后的数据
+     */
+    public static Object parseString(String str) {
+        if (StringsUtils.isLong(str)) {
+            return Long.parseLong(str.toUpperCase().replace("L", ""));
+        } else if (StringsUtils.isInt(str)) {
+            return Integer.parseInt(str);
+        } else if (StringsUtils.isBoolean(str)) {
+            return Boolean.parseBoolean(str);
+        } else if (StringsUtils.isFloat(str)) {
+            return Float.parseFloat(str.toUpperCase().replace("F", ""));
+        } else if (StringsUtils.isDouble(str)) {
+            return Double.parseDouble(str.toUpperCase().replace("D", ""));
+        } else {
+            return str;
+        }
+    }
+
 }

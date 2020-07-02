@@ -8,9 +8,10 @@ import com.alibaba.fastjson.JSON
 import com.zto.fire.common.bean.BaseLogging
 import com.zto.fire.common.data.DataPool
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.LoggerFactory
 
-import scala.collection.{JavaConversions, mutable}
 import scala.collection.mutable.Map
+import scala.collection.{JavaConversions, mutable}
 
 /**
  * 读取配置文件工具类
@@ -28,6 +29,9 @@ object PropUtils extends BaseLogging {
   this.load("default.properties")
   // 避免已被加载的配置文件被重复加载
   private[this] lazy val alreadyLoadMap = new mutable.HashMap[String, String]()
+  // 缓存已经加载的配置map
+  private[this] lazy val cachedConfMap = new mutable.HashMap[String, collection.immutable.Map[String, String]]()
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 用于设置兼容的key的前缀
@@ -63,9 +67,9 @@ object PropUtils extends BaseLogging {
                 }
               }
             }
-            if (resource == null) println(s"${GlobalConstants.PS1.RED} ------> 未找到配置文件[ $fullName ]，请核实！<------ ${GlobalConstants.PS1.DEFAULT}")
+            if (resource == null) this.logger.warn(s"未找到配置文件[ $fullName ]，请核实！")
             if (resource != null) {
-              println(s"${GlobalConstants.PS1.YELLOW} --------------------------------- load ${fullName} --------------------------------- ${GlobalConstants.PS1.DEFAULT}")
+              this.logger.warn(s"${GlobalConstants.PS1.YELLOW} -------------> loaded ${fullName} <------------- ${GlobalConstants.PS1.DEFAULT}")
               props.load(resource)
               this.alreadyLoadMap.put(fileName, fileName)
             }
@@ -339,16 +343,16 @@ object PropUtils extends BaseLogging {
    * 打印配置文件中的kv
    */
   def print(): Unit = {
-    println(s"${GlobalConstants.PS1.YELLOW} < --------------------------------------- 配置信息 ---------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
-    JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
-      if (key != null && !key.toString.contains("pass")) {
-        // 如果是spark引擎，则忽略flink相关配置；如果是flink引擎，则忽略spark相关配置
-        if (("spark".equals(this.keyPrefix) && !key.toString.startsWith("flink")) || ("flink".equals(this.keyPrefix) && !key.toString.startsWith("spark"))) {
-          println(">> " + GlobalConstants.PS1.PINK + key + " --> " + this.props.get(key) + GlobalConstants.PS1.DEFAULT)
+    LogUtils.logStyle(this.logger, "Fire configuration.")(logger => {
+      JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
+        if (key != null && !key.toString.contains("pass")) {
+          // 如果是spark引擎，则忽略flink相关配置；如果是flink引擎，则忽略spark相关配置
+          if (("spark".equals(this.keyPrefix) && !key.toString.startsWith("flink")) || ("flink".equals(this.keyPrefix) && !key.toString.startsWith("spark"))) {
+            logger.warn(s">>${GlobalConstants.PS1.PINK} $key --> ${this.props.get(key)} ${GlobalConstants.PS1.DEFAULT}")
+          }
         }
-      }
+      })
     })
-    println(s"${GlobalConstants.PS1.YELLOW} < ----------------------------------------------------------------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
   }
 
   /**
@@ -371,17 +375,50 @@ object PropUtils extends BaseLogging {
    * 指定key的前缀获取所有该前缀的key与value
    */
   def sliceKeys(keyStart: String): collection.immutable.Map[String, String] = {
-    val confMap = new mutable.HashMap[String, String]()
-    JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
-      // 舍弃key前缀的前缀，兼容不同的引擎导致的key前缀不同的问题
-      val keyStartContent = keyStart.substring(keyStart.indexOf("."), keyStart.length)
-      if (key != null && key.toString.contains(keyStartContent)) {
-        val keyStr = key.toString
-        val keySuffix = keyStr.substring(keyStr.indexOf(keyStartContent) + keyStartContent.length, keyStr.length)
-        confMap.put(keySuffix, this.getProperty(keyStr))
+    if (!this.cachedConfMap.contains(keyStart)) {
+      val confMap = new mutable.HashMap[String, String]()
+      JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
+        // 舍弃key前缀的前缀，兼容不同的引擎导致的key前缀不同的问题
+        val keyStartContent = keyStart.substring(keyStart.indexOf("."), keyStart.length)
+        if (key != null && key.toString.contains(keyStartContent)) {
+          val keyStr = key.toString
+          val keySuffix = keyStr.substring(keyStr.indexOf(keyStartContent) + keyStartContent.length, keyStr.length)
+          confMap.put(keySuffix, this.getProperty(keyStr))
+        }
+      })
+      this.cachedConfMap.put(keyStart, confMap.toMap)
+    }
+    this.cachedConfMap.get(keyStart).get
+  }
+
+  /**
+   * 根据keyNum选择对应的kafka配置
+   */
+  def sliceKeysByNum(keyStart: String, keyNum: Int = 1): collection.immutable.Map[String, String] = {
+    // 用于匹配以指定keyNum结尾的key
+    val reg = "\\D" + keyNum + "$"
+    val map = new mutable.HashMap[String, String]()
+    this.sliceKeys(keyStart).foreach(kv => {
+      val keyLength = kv._1.length
+      val keyNumStr = keyNum.toString
+      // 末尾匹配keyNum并且keyNum的前一位非整数
+      val isMatch = reg.r.findFirstMatchIn(kv._1).isDefined
+      // 提前key，如key=session.timeout.ms33，则提前后的key=session.timeout.ms
+      val trimKey = if (isMatch) kv._1.substring(0, keyLength - keyNumStr.length) else kv._1
+
+      // 配置的key的末尾与keyNum匹配
+      if (isMatch) {
+        map += (trimKey -> kv._2)
+      } else if (keyNum <= 1) {
+        // 匹配没有数字后缀的key，session.timeout.ms与session.timeout.ms1认为是同一个配置
+        val lastChar = kv._1.substring(keyLength - 1, keyLength)
+        // 如果配置的结尾是字母
+        if (!StringsUtils.isInt(lastChar)) {
+          map += (kv._1 -> kv._2)
+        }
       }
     })
-    confMap.toMap
+    map.toMap
   }
 
   /**

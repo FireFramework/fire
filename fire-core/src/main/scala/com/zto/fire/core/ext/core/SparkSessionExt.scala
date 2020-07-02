@@ -6,6 +6,7 @@ import java.util.Properties
 import com.zto.fire.common.bean.{BaseLogging, HBaseBaseBean}
 import com.zto.fire.common.db.{HBaseOper, JdbcOper, QueryCallback}
 import com.zto.fire.common.util.GlobalConstants.FireConf
+import com.zto.fire.common.util.KafkaUtils.logger
 import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ValueUtils}
 import com.zto.fire.core.bridge.{HBaseSparkBridge, JdbcOperBridge}
 import com.zto.fire.core.ext.SparkExt._
@@ -23,6 +24,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.DStream
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -41,6 +43,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
   // 获取单例的HBaseContext对象
   lazy val hbaseContext: HBaseContextExt = SingletonFactory.getHBaseContextInstance(spark.sparkContext)
   val sc: SparkContext = spark.sparkContext
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 根据给定的集合，创建rdd
@@ -1104,72 +1107,39 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * @param extraOptions
    * 消费kafka额外的参数，如果有key同时出现在配置文件中和extraOptions中，将被extraOptions覆盖
    * @param keyNum
-   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   * 配置文件中key的数字后缀
    * @return
    * 转换成json字符串后的Dataset
    */
-  def loadKafka(extraOptions: mutable.HashMap[String, String] = null, keyNum: Int = 1): Dataset[(String, String)] = {
-    val groupId = if (StringUtils.isNotBlank(GlobalConstants.KafkaConf.kafkaGroupId(keyNum))) GlobalConstants.KafkaConf.kafkaGroupId(keyNum) else this.sc.appName
+  def loadKafka(extraOptions: Map[String, String] = null, keyNum: Int = 1): Dataset[(String, String)] = {
+    val extraOptionsMap = new scala.collection.mutable.HashMap[String, String]
+    if (extraOptions != null && extraOptions.nonEmpty) extraOptionsMap ++= extraOptions
+
+    val confGroupId = GlobalConstants.KafkaConf.kafkaGroupId(keyNum)
+    val groupId = if (StringUtils.isNotBlank(confGroupId)) confGroupId else this.sc.appName
+    extraOptionsMap += ("group.id" -> groupId)
+
     val finalBrokers = GlobalConstants.KafkaConf.kafkaBrokers(keyNum)
-    ValueUtils.requireNonNullForce(finalBrokers, s"kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name$keyNum ]指定")
-    val kafkaReader = spark.readStream.format("kafka").option("group.id", groupId).option("kafka.bootstrap.servers", finalBrokers)
+    if (StringUtils.isNotBlank(finalBrokers)) extraOptionsMap += ("kafka.bootstrap.servers" -> finalBrokers)
+    assert(!extraOptionsMap.contains("kafka.bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：spark.kafka.brokers.name$keyNum")
+
     val topics = GlobalConstants.KafkaConf.kafkaTopics()
-    ValueUtils.requireNonNullForce(topics, s"kafka topic不能为空，可在配置文件中[ spark.kafka.topics$keyNum ]指定")
-    kafkaReader.option("subscribe", topics)
-    // 是否在数据丢失时失败
-    val failOnDataLoss = GlobalConstants.KafkaConf.kafkaFailOnDataLoss(keyNum)
-    if (failOnDataLoss != null) kafkaReader.option("failOnDataLoss", failOnDataLoss)
-    // 指定起始消费位点
-    val startingOffsets = GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum)
-    if (StringUtils.isNotBlank(startingOffsets)) kafkaReader.option("startingOffsets", startingOffsets)
-    // 指定结束消费位点
-    val endingOffsets = GlobalConstants.KafkaConf.kafkaEndingOffsets(keyNum)
-    if (StringUtils.isNotBlank(endingOffsets)) kafkaReader.option("endingOffsets", endingOffsets)
-    // 轮询数据的超时时间（以毫秒为单位）
-    val pollTimeoutMs = GlobalConstants.KafkaConf.kafkaPollTimeoutMs(keyNum)
-    if (pollTimeoutMs != null) kafkaReader.option("kafkaConsumer.pollTimeoutMs", pollTimeoutMs)
-    // 放弃获取Kafka偏移前重试的次数
-    val fetchOffsetNumRetries = GlobalConstants.KafkaConf.kafkaFetchOffsetNumRetries(keyNum)
-    if (fetchOffsetNumRetries != null) kafkaReader.option("fetchOffset.numRetries", fetchOffsetNumRetries)
-    // 重试获取Kafka偏移之前要等待的毫秒数
-    val fetchOffsetRetryIntervalMs = GlobalConstants.KafkaConf.kafkaFetchOffsetRetryIntervalMs(keyNum)
-    if (fetchOffsetRetryIntervalMs != null) kafkaReader.option("fetchOffset.retryIntervalMs", fetchOffsetRetryIntervalMs)
-    // 每个触发间隔处理的最大偏移量的速率限制
-    val maxOffsetsPerTrigger = GlobalConstants.KafkaConf.kafkaMaxOffsetsPerTrigger(keyNum)
-    if (maxOffsetsPerTrigger > 0) kafkaReader.option("maxOffsetsPerTrigger", maxOffsetsPerTrigger)
+    if (StringUtils.isNotBlank(topics)) extraOptionsMap += ("subscribe" -> topics)
+    assert(!extraOptionsMap.contains("subscribe"), s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
 
-    // ------------------- kafka相关参数 ------------------- //
-    // 心跳间隔时间
-    val heartbeatInterval = GlobalConstants.KafkaConf.kafkaHeartbeatInterval(keyNum)
-    if (heartbeatInterval > 0) {
-      kafkaReader.option("kafka.heartbeat.interval.ms", heartbeatInterval.toString)
-    }
-    // 消费者组最大的session超时时间
-    val groupMaxSessionTimeOut = GlobalConstants.KafkaConf.kafkaGroupMaxSessionTimeOut(keyNum)
-    if (groupMaxSessionTimeOut > 0) {
-      kafkaReader.option("kafka.group.max.session.timeout.ms", groupMaxSessionTimeOut.toString)
-    }
-    // 消费者组最小的session超时时间
-    val groupMinSessionTimeOut = GlobalConstants.KafkaConf.kafkaGroupMinSessionTimeOut(keyNum)
-    if (groupMinSessionTimeOut > 0) {
-      kafkaReader.option("kafka.group.min.session.timeout.ms", groupMinSessionTimeOut.toString)
-    }
-    // 一次调用pool返回的最大记录数
-    val maxPollRecords = GlobalConstants.KafkaConf.kafkaMaxPollRecords(keyNum)
-    if (maxPollRecords > 0) {
-      kafkaReader.option("kafka.max.poll.records", maxPollRecords.toString)
-    }
-    // 每个分区返回的最大数据量
-    val maxPartitionFetchBytes = GlobalConstants.KafkaConf.kafkaMaxPartitionFetchBytes(keyNum)
-    if (maxPartitionFetchBytes > 0) {
-      kafkaReader.option("kafka.max.partition.fetch.bytes", maxPartitionFetchBytes.toString)
-    }
+    // 以spark.kafka.conf.开头的配置优先级最高
+    val configMap = GlobalConstants.KafkaConf.kafkaConfMap(keyNum)
+    extraOptionsMap ++= configMap
 
-    // 用户指定参数
-    if (extraOptions != null && extraOptions.size > 0) kafkaReader.options(extraOptions)
+    KafkaUtils.logConf(extraOptionsMap, keyNum)
 
-    kafkaReader.load().selectExpr("CAST(key AS STRING)", "CAST(value AS STRING) as value").as[(String, String)]
+    val kafkaReader = spark.readStream
+      .format("kafka")
+      .options(extraOptionsMap)
+      .load()
+      .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING) as value")
+      .as[(String, String)]
+    kafkaReader
   }
 
   /**
@@ -1189,7 +1159,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * 转换成json字符串后的Dataset
    */
   def loadKafkaParse(schemaClass: Class[_],
-                     extraOptions: mutable.HashMap[String, String] = null,
+                     extraOptions: Map[String, String] = null,
                      parseAll: Boolean = false,
                      isMySQL: Boolean = true,
                      fieldNameUpper: Boolean = false, keyNum: Int = 1): DataFrame = {
@@ -1212,7 +1182,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * 转换成json字符串后的Dataset
    */
   def loadKafkaParseJson(tableName: String = "kafka",
-                         extraOptions: mutable.HashMap[String, String] = null,
+                         extraOptions: Map[String, String] = null,
                          keyNum: Int = 1): DataFrame = {
     val msg = FireUtils.retry(5, 1000) {
       KafkaUtils.getMsg(GlobalConstants.KafkaConf.kafkaBrokers(keyNum), GlobalConstants.KafkaConf.kafkaTopics(keyNum), null)

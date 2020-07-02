@@ -10,6 +10,7 @@ import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, PropUtils, Sy
 import com.zto.fire.core.rest.{RestfulRegister, SparkSystemRestful, SystemRestful}
 import com.zto.fire.core.util.FireUtils
 import org.apache.log4j.{Level, Logger}
+import org.slf4j.LoggerFactory
 import spark.Spark
 
 /**
@@ -46,6 +47,7 @@ trait BaseFire {
   val className = this.getClass.getName.replace("$", "")
   // 当前任务的类名
   val driverClass = this.getClass.getSimpleName.replace("$", "")
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
   // 默认的任务名称为类名
   var appName = this.driverClass
   // fire内置线程池
@@ -59,7 +61,7 @@ trait BaseFire {
    */
   private[fire] def boot: Unit = {
     FireUtils.splash
-    PropUtils.sliceKeys("spark.log.level.fire_conf.").foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
+    PropUtils.sliceKeys(GlobalConstants.PropKeys.SPARK_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
   }
 
   /**
@@ -84,7 +86,7 @@ trait BaseFire {
    */
   def init(conf: Any = null, args: Array[String] = null): Unit = {
     this.before(args)
-    println(s" ${GlobalConstants.PS1.YELLOW}< ----------------------------------- 完成用户资源初始化，任务类型：${this.jobType.getJobType} ---------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
+    this.logger.warn(s" ${GlobalConstants.PS1.YELLOW}---> 完成用户资源初始化，任务类型：${this.jobType.getJobType} <--- ${GlobalConstants.PS1.DEFAULT}")
     this.args = args
     this.createContext(conf)
   }
@@ -123,7 +125,7 @@ trait BaseFire {
       ThreadUtils.shutdown
       Spark.stop()
       SchedulerManager.shutdown(stopGracefully)
-      println("---> 完成fire资源回收 <---")
+      this.logger.warn(s" ${GlobalConstants.PS1.YELLOW}---> 完成fire资源回收 <---${GlobalConstants.PS1.DEFAULT}")
       GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
       // TODO: yarn kill; system.exit(0)
     }

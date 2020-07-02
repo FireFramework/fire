@@ -25,6 +25,10 @@ object GlobalConstants {
   lazy val quartzMaxThread = PropUtils.getString(PropKeys.SPARK_FIRE_QUARTZ_MAX_THREAD, "8")
   // 定时任务黑名单，配置的value为方法名，多个以逗号分隔
   lazy val schedulerBlackList = PropUtils.getString(PropKeys.SPARK_FIRE_SCHEDULER_BLACKLIST, "")
+  // hbase集群映射配置前缀
+  lazy val hbaseClusterMapPrefix = "spark.hbase.cluster.map."
+  // hbase java api 配置前缀
+  lazy val hbaseConfPrefix = "spark.hbase.conf."
   // 用于区分不同的流计算引擎类型
   private[fire] lazy val engine = PropUtils.keyPrefix
 
@@ -48,8 +52,6 @@ object GlobalConstants {
     // rest接口filter的开关
     val restFilter = true
 
-    // 默认的broker名称
-    val kafkaBrokersName = "bigdata"
     // 启动应用时默认的kafka消费位点
     val kafkaStartingOffset = KafkaConf.offsetLargest
     // 数据丢失时执行失败
@@ -140,45 +142,24 @@ object GlobalConstants {
     val KAFKA_BROKERS_NAME = "spark.kafka.brokers.name"
     // kafka的topic列表，以逗号分隔
     val KAFKA_TOPICS = "spark.kafka.topics"
+    // group.id
+    val KAFKA_GROUP_ID = "spark.kafka.group.id"
     // kafka起始消费位点
     val KAFKA_STARTING_OFFSET = "spark.kafka.starting.offsets"
     // kafka结束消费位点
     val KAFKA_ENDING_OFFSET = "spark.kafka.ending.offsets"
-    // 从Kafka轮询数据的超时时间（以毫秒为单位）
-    val KAFKA_POLL_TIMEOUT_MS = "spark.kafka.poll.timeout.ms"
-    // 放弃获取Kafka偏移前重试的次数
-    val KAFKA_FETCH_OFFSET_NUM_RETRIES = "spark.kafka.fetch.offset.num.retries"
-    // 重试获取Kafka偏移之前要等待的毫秒数
-    val KAFKA_FETCH_OFFSET_RETRY_INTERVAL_MS = "spark.kafka.fetch.offset.retry.interval.ms"
-    // 每个触发间隔处理的最大偏移量的速率限制，指定的偏移总数将在不同卷的topicPartitions中按比例分配
-    val KAFKA_MAX_OFFSETS_PER_TRIGGER = "spark.kafka.max.offsets.per.trigger"
-    // 丢失数据是否失败
-    val KAFKA_FAIL_ON_DATA_LOSS = "spark.kafka.failOnDataLoss"
     // 是否自动维护offset
     val KAFKA_ENABLE_AUTO_COMMIT = "spark.kafka.enable.auto.commit"
-    // group.id
-    val KAFKA_GROUP_ID = "spark.kafka.group.id"
+    // 丢失数据是否失败
+    val KAFKA_FAIL_ON_DATA_LOSS = "spark.kafka.failOnDataLoss"
     // kafka session超时时间
     val KAFKA_SESSION_TIMEOUT_MS = "spark.kafka.session.timeout.ms"
     // kafka request超时时间
     val KAFKA_REQUEST_TIMEOUT_MS = "spark.kafka.request.timeout.ms"
     val KAFKA_MAX_POLL_INTERVAL_MS = "spark.kafka.max.poll.interval.ms"
-    // 心跳间隔时间：heartbeat.interval.ms
-    val KAFKA_HEARTBEAT_INTERVAL_MS = "spark.kafka.heartbeat.interval.ms"
-    // 消费者组最大的session超时时间：group.max.session.timeout.ms
-    val KAFKA_GROUP_MAX_SESSION_TIMEOUT_MS = "spark.kafka.group.max.session.timeout.ms"
-    // 消费者组最小的session超时时间：group.min.session.timeout.ms
-    val KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS = "spark.kafka.group.min.session.timeout.ms"
-    // 一次调用pool返回的最大记录数：max.poll.records
-    val KAFKA_MAX_POLL_RECORDS = "spark.kafka.max.poll.records"
-    // 每个分区返回的最大数据量：max.partition.fetch.bytes
-    val KAFKA_MAX_PARTITION_FETCH_BYTES = "spark.kafka.max.partition.fetch.bytes"
-    // 是否启用新的配置方式，以支持kafka所有配置，默认为false
-    val KAFKA_ENABLE_NEW_CONFIG_STYLE = "spark.kafka.enable.new_config_style"
 
     // ---------------------------- spark 相关配置 ---------------------------- //
     val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
-    val SPARK_LOG_LEVEL = "spark.log.level"
     // spark streaming批次时间
     val SPARK_STREAMING_BATCH_DURATION = "spark.streaming.batch.duration"
 
@@ -205,21 +186,13 @@ object GlobalConstants {
     val ROCKET_GROUP_ID = "spark.rocket.group.id"
     // 丢失数据是否失败
     val ROCKET_FAIL_ON_DATA_LOSS = "spark.rocket.failOnDataLoss"
+    val ROCKET_FORCE_SPECIAL = "spark.rocket.forceSpecial"
     // 是否自动维护offset
     val ROCKET_ENABLE_AUTO_COMMIT = "spark.rocket.enable.auto.commit"
     // RocketMQ起始消费位点
     val ROCKET_STARTING_OFFSET = "spark.rocket.starting.offsets"
     // rocketMq订阅的tag
     val ROCKET_CONSUMER_TAG = "spark.rocket.consumer.tag"
-    val ROCKET_NAMESERVER_POLL_INTERVAL = "spark.rocket.nameserver.poll.interval"
-    val ROCKET_BROKERSERVER_HEARTBEAT_INTERVAL = "spark.rocket.brokerserver.heartbeat.interval"
-    val ROCKET_CONSUMER_OFFSET_PERSIST_INTERVAL = "spark.rocket.consumer.offset.persist.interval"
-    val ROCKET_CONSUMER_MIN_THREADS = "spark.rocket.consumer.min.threads"
-    val ROCKET_CONSUMER_MAX_THREADS = "spark.rocket.consumer.max.threads"
-    val ROCKET_SPOUT_MESSAGES_MAX_RETRY = "spark.rocket.spout.messages.max.retry"
-    val ROCKET_PULL_MAX_SPEED_PER_PARTITION = "spark.rocket.pull.max.speed.per.partition"
-    val ROCKET_PULL_MAX_BATCH_SIZE = "spark.rocket.pull.max.batch.size"
-    val ROCKET_PULL_TIMEOUT_MS = "spark.rocket.pull.timeout.ms"
 
     // ---------------------------- Fire 相关配置 ---------------------------- //
     // 日志记录器保留最少的记录数
@@ -273,10 +246,12 @@ object GlobalConstants {
     val SPARK_FIRE_RESTFUL_PORT_RETRY_NUM = "spark.fire.restful.port.retry_num"
     // fire框架restful端口冲突重试时间（ms）
     val SPARK_FIRE_RESTFUL_PORT_RETRY_DURATION = "spark.fire.restful.port.retry_duration"
+    val SPARK_LOG_LEVEL_CONF_PREFIX = "spark.log.level.fire_conf."
 
     // ---------------------------- HDFS 相关配置 ---------------------------- //
     // 是否启用高可用
     val HDFS_HA = "spark.hdfs.ha.enable"
+    val HDFS_HA_PREFIX = "spark.hdfs.ha.conf."
 
     // ---------------------------- FLINK 相关配置 ---------------------------- //
     val FLINK_AUTO_GENERATE_UID_ENABLE = "flink.auto.generate.uid.enable"
@@ -456,36 +431,30 @@ object GlobalConstants {
     val offsetLargest = "latest"
     val offsetSmallest = "earliest"
     val offsetNone = "none"
+    val clusterMapConfStart = "spark.kafka.cluster.map."
+    val kafkaConfStart = "spark.kafka.conf."
 
     // 初始化kafka集群名称与地址映射
-    private lazy val kafkaMap = PropUtils.sliceKeys("spark.kafka.cluster.map.")
+    private lazy val kafkaMap = PropUtils.sliceKeys(clusterMapConfStart)
 
     // kafka消费起始位点
     def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
-
     // kafka消费结束位点
     def kafkaEndingOffsets(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_ENDING_OFFSET, keyNum, "")
-
-    // 从Kafka轮询数据的超时时间（以毫秒为单位，默认1024）
-    def kafkaPollTimeoutMs(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_POLL_TIMEOUT_MS, keyNum, 1024)
-
-    // 放弃获取Kafka偏移前重试的次数，默认3次
-    def kafkaFetchOffsetNumRetries(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.KAFKA_FETCH_OFFSET_NUM_RETRIES, keyNum, 3)
-
-    // 重试获取Kafka偏移之前要等待的毫秒数，默认10毫秒
-    def kafkaFetchOffsetRetryIntervalMs(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_FETCH_OFFSET_RETRY_INTERVAL_MS, keyNum, 10)
-
-    // 每个触发间隔处理的最大偏移量的速率限制，指定的偏移总数将在不同卷的topicPartitions中按比例分配
-    def kafkaMaxOffsetsPerTrigger(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.KAFKA_MAX_OFFSETS_PER_TRIGGER, keyNum, -1)
-
     // 丢失数据时是否失败
     def kafkaFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.kafkaFailOnDataLoss)
-
     // enable.auto.commit
     def kafkaEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.kafkaEnableAutoCommit)
 
-    // 是否启用新的配置方式，以支持kafka所有配置，默认为false
-    lazy val kafkaEnableNewConfigStyle = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_NEW_CONFIG_STYLE, false)
+    // kafka-client配置信息
+    def kafkaConfMap(keyNum: Int = 1): Map[String, String] = PropUtils.sliceKeysByNum(kafkaConfStart, keyNum)
+    def kafkaConfMapWithType(keyNum: Int = 1): Map[String, Object] = {
+      val map = new collection.mutable.HashMap[String, Object]()
+      this.kafkaConfMap(keyNum).foreach(kv => {
+        map.put(kv._1, StringsUtils.parseString(kv._2))
+      })
+      map.toMap
+    }
 
     /**
      * 配置文件中的groupId
@@ -506,13 +475,13 @@ object GlobalConstants {
      * 配置信息
      */
     def kafkaBrokers(keyNum: Int = 1): String = {
-      val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME, keyNum, DefaultVals.kafkaBrokersName)
+      val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME, keyNum, "")
       val kafkaAddress = if (StringUtils.isNotBlank(brokerName) && brokerName.contains(":")) {
         brokerName
       } else if (this.kafkaMap.contains(brokerName)) {
         this.kafkaMap.get(brokerName).get
       } else {
-        throw new IllegalArgumentException(s"未找到匹配的kafka地址，请检查参数：spark.kafka.brokers.name$keyNum")
+        ""
       }
       kafkaAddress
     }
@@ -523,11 +492,7 @@ object GlobalConstants {
      * @param keyNum
      * @return
      */
-    def kafkaTopics(keyNum: Int = 1): String = {
-      val topics = PropUtils.getString(PropKeys.KAFKA_TOPICS, keyNum, null)
-      ValueUtils.requireNonNullForce(topics, "配置未找到：spark.kafka.topics" + keyNum)
-      topics
-    }
+    def kafkaTopics(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_TOPICS, keyNum, null)
 
     /**
      * kafka session超时时间，默认5分钟
@@ -538,17 +503,6 @@ object GlobalConstants {
      */
     def kafkaSessionTimeOut(keyNum: Int = 1): java.lang.Integer = {
       PropUtils.getInt(PropKeys.KAFKA_SESSION_TIMEOUT_MS, keyNum, 300000)
-    }
-
-    /**
-     * kafka request超时时间
-     *
-     * @param keyNum
-     * 配置的key后缀
-     * @return
-     */
-    def kafkaRequestTimeOut(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_REQUEST_TIMEOUT_MS, keyNum, 400000)
     }
 
     /**
@@ -563,58 +517,14 @@ object GlobalConstants {
     }
 
     /**
-     * 心跳间隔时间：heartbeat.interval.ms
+     * kafka request超时时间
      *
      * @param keyNum
      * 配置的key后缀
      * @return
      */
-    def kafkaHeartbeatInterval(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_HEARTBEAT_INTERVAL_MS, keyNum, -1)
-    }
-
-    /**
-     * 消费者组最大的session超时时间：group.max.session.timeout.ms
-     *
-     * @param keyNum
-     * 配置的key后缀
-     * @return
-     */
-    def kafkaGroupMaxSessionTimeOut(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_GROUP_MAX_SESSION_TIMEOUT_MS, keyNum, -1)
-    }
-
-    /**
-     * 消费者组最小的session超时时间：group.min.session.timeout.ms
-     *
-     * @param keyNum
-     * 配置的key后缀
-     * @return
-     */
-    def kafkaGroupMinSessionTimeOut(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_GROUP_MIN_SESSION_TIMEOUT_MS, keyNum, -1)
-    }
-
-    /**
-     * 一次调用pool返回的最大记录数：max.poll.records
-     *
-     * @param keyNum
-     * 配置的key后缀
-     * @return
-     */
-    def kafkaMaxPollRecords(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_MAX_POLL_RECORDS, keyNum, -1)
-    }
-
-    /**
-     * 每个分区返回的最大数据量：max.partition.fetch.bytes
-     *
-     * @param keyNum
-     * 配置的key后缀
-     * @return
-     */
-    def kafkaMaxPartitionFetchBytes(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_MAX_PARTITION_FETCH_BYTES, keyNum, -1)
+    def kafkaRequestTimeOut(keyNum: Int = 1): java.lang.Integer = {
+      PropUtils.getInt(PropKeys.KAFKA_REQUEST_TIMEOUT_MS, keyNum, 400000)
     }
   }
 
@@ -625,6 +535,10 @@ object GlobalConstants {
     val rocketOffsetLargest = "latest"
     val rocketOffsetSmallest = "earliest"
     val rocketConsumerTag = "*"
+    val rocketConfStart = "spark.rocket.conf."
+
+    // rocket-client配置信息
+    def rocketConfMap(keyNum: Int = 1): Map[String, String] = PropUtils.sliceKeysByNum(rocketConfStart, keyNum)
 
     /**
      * 获取消费位点
@@ -637,6 +551,7 @@ object GlobalConstants {
 
     // 丢失数据时是否失败
     def rocketFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.rocketFailOnDataLoss)
+    def rocketForceSpecial(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_FORCE_SPECIAL, keyNum, false)
 
     // enable.auto.commit
     def rocketEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.rocketEnableAutoCommit)
@@ -691,42 +606,6 @@ object GlobalConstants {
       val topics = PropUtils.getString(PropKeys.ROCKET_TOPICS, keyNum, null)
       ValueUtils.requireNonNullForce(topics, "配置未找到：spark.rocket.topics" + keyNum)
       topics
-    }
-
-    def rocketNameserverPollInterval(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_NAMESERVER_POLL_INTERVAL, keyNum, "")
-    }
-
-    def rocketBrokerserverHeartbeatInterval(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_BROKERSERVER_HEARTBEAT_INTERVAL, keyNum, "")
-    }
-
-    def rocketConsumerOffsetPersistInterval(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_CONSUMER_OFFSET_PERSIST_INTERVAL, keyNum, "")
-    }
-
-    def rocketConsumerMinThreads(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MIN_THREADS, keyNum, "")
-    }
-
-    def rocketConsumerMaxThreads(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_CONSUMER_MAX_THREADS, keyNum, "")
-    }
-
-    def rocketSpoutMessagesMaxRetry(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_SPOUT_MESSAGES_MAX_RETRY, keyNum, "")
-    }
-
-    def rocketPullMaxSpeedPerPartition(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_SPEED_PER_PARTITION, keyNum, "")
-    }
-
-    def rocketPullMaxBatchSize(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_PULL_MAX_BATCH_SIZE, keyNum, "")
-    }
-
-    def rocketPullTimeoutMs(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_PULL_TIMEOUT_MS, keyNum, "")
     }
   }
 
@@ -1002,7 +881,7 @@ object GlobalConstants {
      */
     def linkHiveCluster(hadoopConf: Configuration): Unit = {
       if (hadoopConf != null && this.hdfsHAEnable) {
-        val hdfsHAConf = PropUtils.sliceKeys(s"spark.hdfs.ha.fire_conf.${HiveConf.hiveCluster}.")
+        val hdfsHAConf = PropUtils.sliceKeys(s"${PropKeys.HDFS_HA_PREFIX}${HiveConf.hiveCluster}.")
         hdfsHAConf.foreach(kv => {
           if (StringUtils.isBlank(kv._2)) throw new IllegalArgumentException(s"hdfs HA参数不合法，请检查配置项：${kv._1}")
           hadoopConf.set(kv._1, kv._2)

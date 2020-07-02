@@ -113,7 +113,8 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     val tmpConf = if (conf == null) this.buildConf(null) else conf.asInstanceOf[SparkConf]
     tmpConf.setAll(PropUtils.toMap)
     tmpConf.set("spark.driver.class.simple.name", this.driverClass)
-    tmpConf.set("hive.metastore.uris", GlobalConstants.HiveConf.getMetastoreUrl)
+    val hiveMetastoreUrl = GlobalConstants.HiveConf.getMetastoreUrl
+    if (StringUtils.isNotBlank(hiveMetastoreUrl)) tmpConf.set("hive.metastore.uris", GlobalConstants.HiveConf.getMetastoreUrl)
 
     // 构建SparkSession对象
     val sessionBuilder = SparkSession.builder().config(tmpConf)

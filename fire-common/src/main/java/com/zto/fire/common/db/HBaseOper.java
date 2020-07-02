@@ -74,7 +74,7 @@ public class HBaseOper {
      */
     public static Configuration getConfiguration() {
         if (conf == null) {
-            hbaseClusterMap = JavaConversions.mapAsJavaMap(PropUtils.sliceKeys("spark.hbase.cluster.map."));
+            hbaseClusterMap = JavaConversions.mapAsJavaMap(PropUtils.sliceKeys(GlobalConstants.hbaseClusterMapPrefix()));
             conf = HBaseConfiguration.create();
             String clusterName = GlobalConstants.hbaseCluster();
             if (StringUtils.isNotBlank(clusterName) && clusterName.contains(":")) {
@@ -84,8 +84,8 @@ public class HBaseOper {
             } else {
                 throw new IllegalArgumentException("未找到匹配的hbase cluster标识，请检查参数：spark.hbase.cluster");
             }
-            // 以spark.hbase.fire_conf.为前缀的配置项为hbase client专项配置，统一设置到hbase的Configuration中
-            JavaConversions.mapAsJavaMap(PropUtils.sliceKeys("spark.hbase.fire_conf.")).forEach((k, v) -> {
+            // 以spark.hbase.conf.为前缀的配置项为hbase client专项配置，统一设置到hbase的Configuration中
+            JavaConversions.mapAsJavaMap(PropUtils.sliceKeys(GlobalConstants.hbaseConfPrefix())).forEach((k, v) -> {
                 logger.info(String.format("hbase configuration: key=%s value=%s", k, v));
                 conf.set(k, v);
             });

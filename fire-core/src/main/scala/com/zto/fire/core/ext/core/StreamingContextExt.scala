@@ -1,7 +1,7 @@
 package com.zto.fire.core.ext.core
 
 import com.zto.fire.common.util.GlobalConstants.RocketConf.rocketOffsetLargest
-import com.zto.fire.common.util.{GlobalConstants, ValueUtils}
+import com.zto.fire.common.util.{GlobalConstants, RocketUtils, ValueUtils}
 import com.zto.fire.core.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -10,124 +10,108 @@ import org.apache.rocketmq.spark.{ConsumerStrategy, LocationStrategy, RocketMqUt
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.KafkaUtils
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions
 
 /**
-  * StreamingContext扩展
-  *
-  * @param ssc
-  * StreamingContext对象
-  * @author ChengLong 2019-5-18 11:03:59
-  */
+ * StreamingContext扩展
+ *
+ * @param ssc
+ * StreamingContext对象
+ * @author ChengLong 2019-5-18 11:03:59
+ */
 class StreamingContextExt(ssc: StreamingContext) {
 
   import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
   import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
+  private[this] lazy val appName = ssc.sparkContext.appName
+
   /**
-    * 创建DStream流
-    *
-    * @param kafkaParams
-    * kafka参数
-    * @param topics
-    * topic列表
-    * @return
-    * DStream
-    */
-  def createDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, keyNum: Int = 1): DStream[ConsumerRecord[String, String]] = {
-    val finalKafkaTopic = if (topics == null) SparkUtils.topicSplit(GlobalConstants.KafkaConf.kafkaTopics(keyNum)) else topics
-    ValueUtils.requireNonNull(finalKafkaTopic, s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
-    val finalKafkaParams = if (kafkaParams == null) this.kafkaParams(keyNum = keyNum) else kafkaParams
+   * 创建DStream流
+   *
+   * @param kafkaParams
+   * kafka参数
+   * @param topics
+   * topic列表
+   * @return
+   * DStream
+   */
+  def createDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, groupId: String = null, keyNum: Int = 1): DStream[ConsumerRecord[String, String]] = {
+    // kafka topic优先级：配置文件 > topics参数
+    val confTopic = GlobalConstants.KafkaConf.kafkaTopics(keyNum)
+    val finalKafkaTopic = if (StringUtils.isNotBlank(confTopic)) SparkUtils.topicSplit(confTopic) else topics
+    assert(finalKafkaTopic != null && finalKafkaTopic.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
+    this.logger.warn(s"kafka topic is $finalKafkaTopic")
+
+    val confKafkaParams = com.zto.fire.common.util.KafkaUtils.kafkaParams(kafkaParams, groupId, keyNum = keyNum)
+    assert(confKafkaParams.nonEmpty, "kafka相关配置不能为空！")
+    assert(confKafkaParams.contains("bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：spark.kafka.brokers.name$keyNum")
+    assert(confKafkaParams.contains("group.id"), s"kafka group.id不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum")
 
     KafkaUtils.createDirectStream[String, String](
-      ssc, PreferConsistent, Subscribe[String, String](finalKafkaTopic, finalKafkaParams))
+      ssc, PreferConsistent, Subscribe[String, String](finalKafkaTopic, confKafkaParams))
   }
 
   /**
-    * kafka配置信息
-    *
-    * @param groupId
-    * 消费组
-    * @param offset
-    * offset位点，smallest、largest，默认为largest
-    * @param keyNum
-    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-    * @return
-    * kafka相关配置
-    */
-  def kafkaParams(groupId: String = null, kafkaBrokers: String = null, offset: String = null, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
-    // 如果配置文件中没有指定spark.kafka.group.id，则默认为appName
-    val finalKafkaGroupId = if (StringUtils.isBlank(groupId)) {
-      if (StringUtils.isNotBlank(GlobalConstants.KafkaConf.kafkaGroupId(keyNum))) {
-        GlobalConstants.KafkaConf.kafkaGroupId(keyNum)
-      } else {
-        ssc.sparkContext.appName
-      }
-    } else {
-      groupId
-    }
+   * 构建RocketMQ拉取消息的DStream流
+   *
+   * @param rocketParam
+   * rocketMQ相关消费参数
+   * @param groupId
+   * groupId
+   * @param topics
+   * topic列表
+   * @param consumerStrategy
+   * 从何处开始消费
+   * @param autoCommit
+   * 是否自动提交
+   * @return
+   * rocketMQ DStream
+   */
+  def createRocketPullStream(rocketParam: java.util.Map[String, String] = null,
+                             groupId: String = this.appName,
+                             topics: String = null,
+                             consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
+                             autoCommit: Boolean = false,
+                             locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
+                             keyNum: Int = 1): InputDStream[MessageExt] = {
 
-    com.zto.fire.common.util.KafkaUtils.kafkaParams(finalKafkaGroupId, kafkaBrokers, offset, autoCommit, keyNum)
-  }
+    // 获取topic信息，配置文件优先级高于代码中指定的
+    val confTopics = GlobalConstants.RocketConf.rocketTopics(keyNum)
+    val finalTopics = if (StringUtils.isNotBlank(confTopics)) confTopics else topics
+    ValueUtils.requireNonNull(finalTopics, s"RocketMQ的Topics不能为空，请在配置文件中指定：spark.rocket.topics$keyNum")
 
-  /**
-    * 构建RocketMQ拉取消息的DStream流
-    *
-    * @param rocketParam
-    * rocketMQ相关消费参数
-    * @param groupId
-    * groupId
-    * @param topics
-    * topic列表
-    * @param consumerStrategy
-    * 从何处开始消费
-    * @param autoCommit
-    * 是否自动提交
-    * @return
-    * rocketMQ DStream
-    */
-  def createRocketPullStream(rocketParam: java.util.Map[String, String] = null, groupId: String = null, topics: String = null, consumerStrategy: ConsumerStrategy = null, autoCommit: Boolean = false, keyNum: Int = 1): InputDStream[MessageExt] = {
-    val finalGroupId = if (StringUtils.isBlank(groupId)) GlobalConstants.RocketConf.rocketGroupId(keyNum) else groupId
-    val finalRocketParam = if (rocketParam == null || rocketParam.size() == 0) this.rocketParams(finalGroupId, keyNum = keyNum) else rocketParam
-    val finalTopics = if (StringUtils.isBlank(topics)) GlobalConstants.RocketConf.rocketTopics(keyNum) else topics
-    val finalConsumerStrategy = if (consumerStrategy == null) {
-      val offset = GlobalConstants.RocketConf.rocketStartingOffset(keyNum)
-      if (rocketOffsetLargest.equalsIgnoreCase(offset)) {
-        ConsumerStrategy.lastest
-      } else {
-        ConsumerStrategy.earliest
-      }
-    } else {
-      consumerStrategy
-    }
+    // 起始消费位点
+    val confOffset = GlobalConstants.RocketConf.rocketStartingOffset(keyNum)
+    val finalConsumerStrategy = if (StringUtils.isNotBlank(confOffset)) RocketUtils.valueOfStrategy(confOffset) else consumerStrategy
 
-    val finalAutoCommit = if (autoCommit == null) GlobalConstants.RocketConf.rocketEnableAutoCommit(keyNum) else autoCommit
+    // 是否自动提交offset
+    val confAutoCommit = GlobalConstants.RocketConf.rocketEnableAutoCommit(keyNum)
+    val finalAutoCommit = if (confAutoCommit != null) confAutoCommit else if (autoCommit != null) autoCommit else false
 
-    RocketMqUtils.createMQPullStream(this.ssc, finalGroupId, JavaConversions.asJavaCollection(finalTopics.split(",").toList),
+    // groupId信息
+    val confGroupId = GlobalConstants.RocketConf.rocketGroupId(keyNum)
+    val finalGroupId = if (StringUtils.isNotBlank(confGroupId)) confGroupId else groupId
+
+    // 详细的RocketMQ配置信息
+    val finalRocketParam = RocketUtils.rocketParams(rocketParam, finalGroupId, rocketNameServer = null, tag = null, keyNum)
+
+    RocketMqUtils.createMQPullStream(this.ssc,
+      finalGroupId,
+      JavaConversions.asJavaCollection(finalTopics.split(",").toList),
       finalConsumerStrategy,
-      finalAutoCommit, forceSpecial = false, failOnDataLoss = false,
-      LocationStrategy.PreferConsistent, finalRocketParam)
+      finalAutoCommit,
+      forceSpecial = GlobalConstants.RocketConf.rocketForceSpecial(keyNum),
+      failOnDataLoss = GlobalConstants.RocketConf.rocketFailOnDataLoss(keyNum),
+      locationStrategy, finalRocketParam)
   }
 
   /**
-    * rocket配置信息
-    *
-    * @param groupId
-    * 消费组
-    * @return
-    * kafka相关配置
-    */
-  def rocketParams(groupId: String = null, rocketNameServer: String = null, tag: String = null, keyNum: Int = 1): java.util.Map[String, String] = {
-    // 如果配置文件中没有指定spark.rocket.group.id，则默认为appName
-    val rocketGroupId = if (StringUtils.isNotBlank(groupId)) groupId else ssc.sparkContext.appName
-    SparkUtils.rocketParams(rocketGroupId, rocketNameServer, tag, keyNum)
-  }
-
-  /**
-    * 开启streaming
-    */
+   * 开启streaming
+   */
   def startAwaitTermination(): Unit = {
     ssc.start()
     ssc.awaitTermination()

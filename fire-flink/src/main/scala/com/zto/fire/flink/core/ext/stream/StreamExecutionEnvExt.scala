@@ -31,17 +31,16 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
    * DStream
    */
   def createDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, keyNum: Int = 1): DataStream[String] = {
-    val groupId = GlobalConstants.KafkaConf.kafkaGroupId(keyNum)
+    val confTopics = GlobalConstants.KafkaConf.kafkaTopics(keyNum)
+    val topicList = if (StringUtils.isNotBlank(confTopics)) confTopics.split(",") else topics.toArray
+    assert(topicList != null && topicList.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：flink.kafka.topics$keyNum")
 
-    // 配置文件中的group.id优先级更高，若位置的，则取当前appName
-    val finalGroupId = if (ValueUtils.isNotEmpty(groupId)) groupId else FlinkSingletonFactory.getAppName
-    val kafkaProps = if (ValueUtils.isNotEmpty(kafkaParams)) kafkaParams else KafkaUtils.kafkaParams(finalGroupId, keyNum = keyNum)
-    ValueUtils.requireNonNullForce(kafkaProps, "kafka相关配置不能为空！")
-    val topicList = if (ValueUtils.isNotEmpty(topics)) topics.toArray else GlobalConstants.KafkaConf.kafkaTopics(keyNum).split(",")
-    if (topicList == null || topicList.size == 0) throw new IllegalArgumentException(s"kafka topic不能为空，请在配置文件中指定：flink.kafka.topics$keyNum")
+    val confKafkaParams = KafkaUtils.kafkaParams(kafkaParams, FlinkSingletonFactory.getAppName, keyNum = keyNum)
+    // 配置文件中相同的key优先级高于代码中的
+    assert(confKafkaParams.nonEmpty, "kafka相关配置不能为空！")
 
-    val properties = new Properties();
-    kafkaProps.foreach(t => properties.setProperty(t._1, t._2.toString))
+    val properties = new Properties()
+    confKafkaParams.foreach(t => properties.setProperty(t._1, t._2.toString))
 
     val kafkaConsumer = new FlinkKafkaConsumer011[String](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
       new SimpleStringSchema(), properties)

@@ -1,27 +1,21 @@
 package com.zto.fire.demo.spark
 
 import com.zto.fire.common.db.HBaseOper
-import com.zto.fire.core.BaseSparkStreaming
+import com.zto.fire.common.util.GlobalConstants
+import com.zto.fire.core.{BaseSparkCore, BaseSparkStreaming}
 import com.zto.fire.core.ext.SparkExt._
+import org.apache.spark.sql.Encoders
 
 object Test extends BaseSparkStreaming {
 
   override def process: Unit = {
-    HBaseOper.scan("test", HBaseOper.buildScan("0", "1"))
-    this.spark.parallelize(1 to 10).foreach(i => {
-      HBaseOper.scan("test", HBaseOper.buildScan("0", "1"))
-    })
-    // val dstream = this.ssc.createDirectStream()
-    /*dstream.mapOgg(classOf[Student]).foreachRDD(rdd => {
-      rdd.foreach(t => println(t.getTable + " " + t.getBefore.getId + " " + t.getAfter.getName + " rowkey=" + t.getBefore.getRowKey + " " + t.getAfter.getRowKey))
-    })*/
-    // dstream.print()
-    // this.ssc.startAwaitTermination()
-    Thread.currentThread().join()
+    val param = Map[String, Object]("bootstrap.servers" -> "localhost:9092", "group.id" -> "fire1")
+    val dstream = this.ssc.createDirectStream(param, topics = Set("fire1", "flink1"), groupId = "fire2")
+    dstream.print()
+    this.ssc.startAwaitTermination()
   }
 
   def main(args: Array[String]): Unit = {
     this.init(10, false)
-    this.stop
   }
 }

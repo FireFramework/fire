@@ -285,47 +285,6 @@ object SparkUtils {
   }
 
   /**
-   * rocketMQ配置信息
-   *
-   * @param groupId
-   * 消费组
-   * @return
-   * rocketMQ相关配置
-   */
-  def rocketParams(groupId: String = null, rocketNameServer: String = null, tag: String = null, keyNum: Int = 1): java.util.Map[String, String] = {
-    ValueUtils.requireNonNull(groupId, s"RocketMQ的groupId不能为空，请在配置文件中指定：spark.rocket.group.id$keyNum")
-    val finalNameServer = if (StringUtils.isBlank(rocketNameServer)) GlobalConstants.RocketConf.rocketNameServer(keyNum) else rocketNameServer
-    val finalTag = if (StringUtils.isBlank(tag)) GlobalConstants.RocketConf.rocketConsumerTag(keyNum) else tag
-
-    val optionParams = new java.util.HashMap[String, String]()
-    optionParams.put(RocketMQConfig.NAME_SERVER_ADDR, finalNameServer)
-    optionParams.put(RocketMQConfig.MAX_PULL_SPEED_PER_PARTITION, "5000")
-    optionParams.put(RocketMQConfig.CONSUMER_GROUP, groupId)
-    optionParams.put(RocketMQConfig.CONSUMER_TAG, finalTag)
-
-    val nameserverPollInterval = GlobalConstants.RocketConf.rocketNameserverPollInterval(keyNum)
-    if (StringUtils.isNotBlank(nameserverPollInterval)) optionParams.put(RocketMQConfig.NAME_SERVER_POLL_INTERVAL, nameserverPollInterval)
-    val brokerserverHeartbeatInterval = GlobalConstants.RocketConf.rocketBrokerserverHeartbeatInterval(keyNum)
-    if (StringUtils.isNotBlank(brokerserverHeartbeatInterval)) optionParams.put(RocketMQConfig.BROKER_HEART_BEAT_INTERVAL, brokerserverHeartbeatInterval)
-    val consumerOffsetPersistInterval = GlobalConstants.RocketConf.rocketConsumerOffsetPersistInterval(keyNum)
-    if (StringUtils.isNotBlank(consumerOffsetPersistInterval)) optionParams.put(RocketMQConfig.CONSUMER_OFFSET_PERSIST_INTERVAL, consumerOffsetPersistInterval)
-    val consumerMaxThreads = GlobalConstants.RocketConf.rocketConsumerMaxThreads(keyNum)
-    if (StringUtils.isNotBlank(consumerMaxThreads)) optionParams.put(RocketMQConfig.CONSUMER_MAX_THREADS, consumerMaxThreads)
-    val consumerMinThreads = GlobalConstants.RocketConf.rocketConsumerMinThreads(keyNum)
-    if (StringUtils.isNotBlank(consumerMinThreads)) optionParams.put(RocketMQConfig.CONSUMER_MIN_THREADS, consumerMinThreads)
-    val spoutMessagesMaxRetry = GlobalConstants.RocketConf.rocketSpoutMessagesMaxRetry(keyNum)
-    if (StringUtils.isNotBlank(spoutMessagesMaxRetry)) optionParams.put(RocketMQConfig.MESSAGES_MAX_RETRY, spoutMessagesMaxRetry)
-    val pullMaxSpeedPerPartition = GlobalConstants.RocketConf.rocketPullMaxSpeedPerPartition(keyNum)
-    if (StringUtils.isNotBlank(pullMaxSpeedPerPartition)) optionParams.put(RocketMQConfig.MAX_PULL_SPEED_PER_PARTITION, pullMaxSpeedPerPartition)
-    val pullMaxBatchSize = GlobalConstants.RocketConf.rocketPullMaxBatchSize(keyNum)
-    if (StringUtils.isNotBlank(pullMaxBatchSize)) optionParams.put(RocketMQConfig.PULL_MAX_BATCH_SIZE, pullMaxBatchSize)
-    val pullTimeoutMs = GlobalConstants.RocketConf.rocketPullTimeoutMs(keyNum)
-    if (StringUtils.isNotBlank(pullTimeoutMs)) optionParams.put(RocketMQConfig.PULL_TIMEOUT_MS, pullTimeoutMs)
-
-    optionParams
-  }
-
-  /**
    * 使用配置文件中的spark.streaming.batch.duration覆盖传参的batchDuration
    *
    * @param batchDuration

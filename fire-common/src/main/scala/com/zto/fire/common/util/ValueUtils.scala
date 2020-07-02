@@ -7,6 +7,8 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset}
 
+import scala.collection.JavaConversions
+
 /**
  * 值校验工具，支持任意对象、字符串、集合、map、rdd、dataset是否为空的校验
  *
@@ -295,4 +297,26 @@ object ValueUtils {
   def requireNotStreaming(dataFrame: DataFrame, api: String = ""): Unit = {
     if (dataFrame.isStreaming) throw new RuntimeException(s"不合法的API调用，不允许在structured streaming中调用此方法 $api")
   }
+
+  /**
+   * 判断map中是否包含所有指定的key
+   */
+  def containsKeys(map: Map[String, Any], keys: String *): Boolean = {
+    if (map == null || map.isEmpty) return false
+    if (keys != null) keys.foreach(key => {
+      if (!map.contains(key)) return false
+    })
+    true
+  }
+
+  /**
+   * 判断map中是否包含所有指定的key
+   */
+  def containsKeys(map: collection.mutable.Map[String, Any], keys: String *): Boolean = this.containsKeys(map.toMap, keys: _*)
+
+  /**
+   * 判断map中是否包含所有指定的key
+   */
+  def containsKeys(map: java.util.Map[String, Object], keys: String *): Boolean = this.containsKeys(JavaConversions.mapAsScalaMap(map).toMap, keys: _*)
+
 }

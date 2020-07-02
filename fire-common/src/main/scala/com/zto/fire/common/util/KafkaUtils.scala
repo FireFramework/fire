@@ -3,6 +3,7 @@ package com.zto.fire.common.util
 import java.util
 import java.util.Properties
 
+import com.zto.fire.common.util.KafkaUtils.logger
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetAndTimestamp}
 import org.apache.kafka.common.TopicPartition
@@ -152,6 +153,8 @@ object KafkaUtils {
   /**
    * kafka配置信息
    *
+   * @param kafkaParams
+   * 代码中指定的kafka配置信息，如果配置文件中也有配置，则配置文件中的优先级高
    * @param groupId
    * 消费组
    * @param offset
@@ -159,54 +162,62 @@ object KafkaUtils {
    * @return
    * kafka相关配置
    */
-  def kafkaParams(groupId: String = null, kafkaBrokers: String = null, offset: String = null, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
-    ValueUtils.requireNonNull(groupId, s"kafka groupId不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum")
+  def kafkaParams(kafkaParams: Map[String, Object] = null,
+                  groupId: String = null,
+                  kafkaBrokers: String = null,
+                  offset: String = GlobalConstants.KafkaConf.offsetLargest,
+                  autoCommit: Boolean = false,
+                  keyNum: Int = 1): Map[String, Object] = {
 
-    val finalKafkaBrokers = if (StringUtils.isBlank(kafkaBrokers)) GlobalConstants.KafkaConf.kafkaBrokers(keyNum) else kafkaBrokers
-    ValueUtils.requireNonNull(finalKafkaBrokers, s"kafka broker地址不能为空，可在配置文件中指定[ spark.kafka.brokers.name$keyNum ]")
+    val consumerMap = collection.mutable.Map[String, Object]()
+    // 代码中指定的kafka配置优先级最低
+    if (kafkaParams != null && kafkaParams.nonEmpty) consumerMap ++= kafkaParams
 
-    val finalOffset = if (StringUtils.isBlank(offset)) GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum) else offset
-    val finalAutoCommit = if (GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum) != null) GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum) else autoCommit
+    // 如果没有在配置文件中指定brokers，则认为从代码中获取，此处返回空的map，用于上层判断
+    val confBrokers = GlobalConstants.KafkaConf.kafkaBrokers(keyNum)
+    val finalKafkaBrokers = if (StringUtils.isNotBlank(confBrokers)) confBrokers else kafkaBrokers
+    if (StringUtils.isNotBlank(finalKafkaBrokers)) consumerMap += ("bootstrap.servers" -> finalKafkaBrokers)
 
-    val consumerMap = collection.mutable.Map[String, Object](
-      "bootstrap.servers" -> finalKafkaBrokers,
+    // 如果配置文件中没有指定spark.kafka.group.id，则默认获取用户指定的groupId
+    val confGroupId = GlobalConstants.KafkaConf.kafkaGroupId(keyNum)
+    val finalKafkaGroupId = if (StringUtils.isNotBlank(confGroupId)) confGroupId else groupId
+    if (StringUtils.isNotBlank(finalKafkaGroupId)) consumerMap += ("group.id" -> finalKafkaGroupId)
+
+    val confOffset = GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum)
+    val finalOffset = if (StringUtils.isNotBlank(confOffset)) confOffset else offset
+    if (StringUtils.isNotBlank(finalOffset)) consumerMap += ("auto.offset.reset" -> finalOffset)
+
+    val confAutoCommit = GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum)
+    val finalAutoCommit = if (confAutoCommit != null) confAutoCommit else autoCommit
+    if (finalAutoCommit != null) consumerMap += ("enable.auto.commit" -> (finalAutoCommit: java.lang.Boolean))
+
+    // 最基本的配置项
+    consumerMap ++= collection.mutable.Map[String, Object](
       "key.deserializer" -> classOf[StringDeserializer],
       "value.deserializer" -> classOf[StringDeserializer],
-      "group.id" -> groupId,
-      "auto.offset.reset" -> finalOffset,
-      "enable.auto.commit" -> (finalAutoCommit: java.lang.Boolean),
       "session.timeout.ms" -> GlobalConstants.KafkaConf.kafkaSessionTimeOut(keyNum),
       "request.timeout.ms" -> GlobalConstants.KafkaConf.kafkaRequestTimeOut(keyNum),
       "max.poll.interval.ms" -> GlobalConstants.KafkaConf.kafkaPollInterval(keyNum)
     )
 
-    // 心跳间隔时间
-    val heartbeatInterval = GlobalConstants.KafkaConf.kafkaHeartbeatInterval(keyNum)
-    if (heartbeatInterval > 0) {
-      consumerMap += ("heartbeat.interval.ms" -> heartbeatInterval)
-    }
-    // 消费者组最大的session超时时间
-    val groupMaxSessionTimeOut = GlobalConstants.KafkaConf.kafkaGroupMaxSessionTimeOut(keyNum)
-    if (groupMaxSessionTimeOut > 0) {
-      consumerMap += ("group.max.session.timeout.ms" -> groupMaxSessionTimeOut)
-    }
-    // 消费者组最小的session超时时间
-    val groupMinSessionTimeOut = GlobalConstants.KafkaConf.kafkaGroupMinSessionTimeOut(keyNum)
-    if (groupMinSessionTimeOut > 0) {
-      consumerMap += ("group.min.session.timeout.ms" -> groupMinSessionTimeOut)
-    }
-    // 一次调用pool返回的最大记录数
-    val maxPollRecords = GlobalConstants.KafkaConf.kafkaMaxPollRecords(keyNum)
-    if (maxPollRecords > 0) {
-      consumerMap += ("max.poll.records" -> maxPollRecords)
-    }
-    // 每个分区返回的最大数据量
-    val maxPartitionFetchBytes = GlobalConstants.KafkaConf.kafkaMaxPartitionFetchBytes(keyNum)
-    if (maxPartitionFetchBytes > 0) {
-      consumerMap += ("max.partition.fetch.bytes" -> maxPartitionFetchBytes)
-    }
+    // 以spark.kafka.conf.开头的配置优先级最高
+    val configMap = GlobalConstants.KafkaConf.kafkaConfMapWithType(keyNum)
+    if (configMap.nonEmpty) consumerMap ++= configMap
+    // 日志记录最终生效的kafka配置
+    this.logConf(consumerMap, keyNum)
 
     consumerMap.toMap
+  }
+
+  /**
+   * 日志记录kafka的配置信息
+   */
+  def logConf(confMap: collection.mutable.Map[String, _], keyNum: Int = 1): Unit = {
+    if (confMap != null && confMap.nonEmpty) {
+      LogUtils.logStyle(this.logger, s"Kafka client configuration. keyNum=$keyNum.")(logger => {
+        confMap.foreach(kv => logger.warn(s"---> ${kv._1} = ${kv._2}"))
+      })
+    }
   }
 
 }
