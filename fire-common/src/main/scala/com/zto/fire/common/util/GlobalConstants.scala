@@ -1,5 +1,6 @@
 package com.zto.fire.common.util
 
+import com.zto.fire.common.util.GlobalConstants.KafkaConf.clusterMapConfStart
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.client.Durability
@@ -535,6 +536,9 @@ object GlobalConstants {
     val rocketOffsetLargest = "latest"
     val rocketOffsetSmallest = "earliest"
     val rocketConsumerTag = "*"
+    val rocketClusterMapConfStart = "spark.rocket.cluster.map."
+    // 初始化kafka集群名称与地址映射
+    private lazy val rocketClusterMap = PropUtils.sliceKeys(rocketClusterMapConfStart)
     val rocketConfStart = "spark.rocket.conf."
 
     // rocket-client配置信息
@@ -566,8 +570,12 @@ object GlobalConstants {
      */
     def rocketNameServer(keyNum: Int = 1): String = {
       val brokerName = PropUtils.getString(PropKeys.ROCKET_BROKERS_NAME, keyNum, "")
-      ValueUtils.requireNonNullForce(brokerName, "配置未找到：spark.rocket.brokers.name" + keyNum)
-      brokerName
+      val nameServiceAddress = if (StringUtils.isNotBlank(brokerName) && brokerName.contains(":")) {
+        brokerName
+      } else {
+        this.rocketClusterMap.getOrElse(brokerName, "")
+      }
+      nameServiceAddress
     }
 
     /**

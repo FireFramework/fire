@@ -16,6 +16,7 @@ object Test extends BaseSparkStreaming {
   }
 
   def main(args: Array[String]): Unit = {
-    this.init(10, false)
+    // this.init(10, false)
+    println(GlobalConstants.RocketConf.rocketNameServer())
   }
 }
