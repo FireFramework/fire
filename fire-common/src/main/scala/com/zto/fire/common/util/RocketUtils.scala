@@ -43,9 +43,15 @@ object RocketUtils {
     val finalTag = if (StringUtils.isNotBlank(confTag)) confTag else tag
     if (StringUtils.isNotBlank(finalTag)) optionParams.put(RocketMQConfig.CONSUMER_TAG, finalTag)
 
+    // 每个分区拉取的消息数
+    val maxSpeed = GlobalConstants.RocketConf.rocketPullMaxSpeedPerPartition(keyNum)
+    if (StringUtils.isNotBlank(maxSpeed) && StringsUtils.isInt(maxSpeed)) optionParams.put(RocketMQConfig.MAX_PULL_SPEED_PER_PARTITION, maxSpeed)
+
     // 以spark.rocket.conf.开头的配置优先级最高
     val confMap = GlobalConstants.RocketConf.rocketConfMap(keyNum)
     if (confMap.nonEmpty) optionParams.putAll(JavaConversions.mapAsJavaMap(confMap))
+    // 日志记录RocketMQ的配置信息
+    LogUtils.logMap(this.logger, JavaConversions.mapAsScalaMap(optionParams).toMap, s"RocketMQ configuration. keyNum=$keyNum.")
 
     optionParams
   }
@@ -62,4 +68,5 @@ object RocketUtils {
       ConsumerStrategy.earliest
     }
   }
+
 }

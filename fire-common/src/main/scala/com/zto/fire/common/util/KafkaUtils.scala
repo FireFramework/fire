@@ -10,6 +10,8 @@ import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 
+import scala.collection.JavaConversions
+
 /**
  * Kafka工具类
  *
@@ -204,20 +206,9 @@ object KafkaUtils {
     val configMap = GlobalConstants.KafkaConf.kafkaConfMapWithType(keyNum)
     if (configMap.nonEmpty) consumerMap ++= configMap
     // 日志记录最终生效的kafka配置
-    this.logConf(consumerMap, keyNum)
+    LogUtils.logMap(this.logger, consumerMap.toMap, s"Kafka client configuration. keyNum=$keyNum.")
 
     consumerMap.toMap
-  }
-
-  /**
-   * 日志记录kafka的配置信息
-   */
-  def logConf(confMap: collection.mutable.Map[String, _], keyNum: Int = 1): Unit = {
-    if (confMap != null && confMap.nonEmpty) {
-      LogUtils.logStyle(this.logger, s"Kafka client configuration. keyNum=$keyNum.")(logger => {
-        confMap.foreach(kv => logger.warn(s"---> ${kv._1} = ${kv._2}"))
-      })
-    }
   }
 
 }

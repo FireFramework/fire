@@ -1,9 +1,7 @@
 package com.zto.fire.common.util
 
-import com.zto.fire.common.util.GlobalConstants.KafkaConf.clusterMapConfStart
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.hbase.client.Durability
 
 /**
  * 常量配置类
@@ -32,15 +30,12 @@ object GlobalConstants {
   lazy val hbaseConfPrefix = "spark.hbase.conf."
   // 用于区分不同的流计算引擎类型
   private[fire] lazy val engine = PropUtils.keyPrefix
+  lazy val hbaseDurability = PropUtils.getString(PropKeys.HBASE_DURABILITY, "")
 
-  /**
-   * 用于判断是否为spark引擎
-   */
+  // 用于判断是否为spark引擎
   def isSparkEngine = "spark".equals(this.engine)
 
-  /**
-   * 用于判断是否为flink引擎
-   */
+  // 用于判断是否为flink引擎
   def isFlinkEngine = "flink".equals(this.engine)
 
   /**
@@ -131,7 +126,7 @@ object GlobalConstants {
     val PARALLELISM_KEY = "spark.parallelism"
     val HBBASE_COLUMN_FAMILY_KEY = "spark.hbase.column.family"
     val HBASE_MAX_RETRY = "spark.hbase.max.retry"
-    val HbaseDurability_KEY = "HbaseDurability"
+    val HBASE_DURABILITY = "spark.hbase.durability"
     val KUDU_MASTER_URL = "spark.kudu.master"
     val HBASE_CLUSTER_URL = "spark.hbase.cluster"
     val HBASE_BATCH = "spark.hbase.batch.size"
@@ -194,6 +189,8 @@ object GlobalConstants {
     val ROCKET_STARTING_OFFSET = "spark.rocket.starting.offsets"
     // rocketMq订阅的tag
     val ROCKET_CONSUMER_TAG = "spark.rocket.consumer.tag"
+    // 每次拉取每个partition的消息数
+    val ROCKET_PULL_MAX_SPEED_PER_PARTITION = "spark.rocket.pull.max.speed.per.partition"
 
     // ---------------------------- Fire 相关配置 ---------------------------- //
     // 日志记录器保留最少的记录数
@@ -320,14 +317,10 @@ object GlobalConstants {
     // fire框架restful端口冲突重试时间（ms）
     lazy val restfulPortRetryDuration = PropUtils.getLong(PropKeys.SPARK_FIRE_RESTFUL_PORT_RETRY_DURATION, 1000L)
 
-    /**
-     * 获取配置的HBase缓存策略
-     */
+    // 获取配置的HBase缓存策略
     def hbaseStorageLevel: String = hbaseStorageLevelConf
 
-    /**
-     * 获取配置的JDBC缓存策略
-     */
+    // 获取配置的JDBC缓存策略
     def jdbcStorageLevel: String = jdbcStorageLevelConf
   }
 
@@ -440,15 +433,34 @@ object GlobalConstants {
 
     // kafka消费起始位点
     def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
+
     // kafka消费结束位点
     def kafkaEndingOffsets(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_ENDING_OFFSET, keyNum, "")
+
     // 丢失数据时是否失败
     def kafkaFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.kafkaFailOnDataLoss)
+
     // enable.auto.commit
     def kafkaEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.kafkaEnableAutoCommit)
 
+    // 获取topic列表
+    def kafkaTopics(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_TOPICS, keyNum, null)
+
+    // kafka session超时时间，默认5分钟
+    def kafkaSessionTimeOut(keyNum: Int = 1): java.lang.Integer = PropUtils.getInt(PropKeys.KAFKA_SESSION_TIMEOUT_MS, keyNum, 300000)
+
+    // kafka request超时时间，默认10分钟
+    def kafkaPollInterval(keyNum: Int = 1): java.lang.Integer = PropUtils.getInt(PropKeys.KAFKA_MAX_POLL_INTERVAL_MS, keyNum, 600000)
+
+    // kafka request超时时间
+    def kafkaRequestTimeOut(keyNum: Int = 1): java.lang.Integer = PropUtils.getInt(PropKeys.KAFKA_REQUEST_TIMEOUT_MS, keyNum, 400000)
+
+    // 配置文件中的groupId
+    def kafkaGroupId(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_GROUP_ID, keyNum, "")
+
     // kafka-client配置信息
     def kafkaConfMap(keyNum: Int = 1): Map[String, String] = PropUtils.sliceKeysByNum(kafkaConfStart, keyNum)
+
     def kafkaConfMapWithType(keyNum: Int = 1): Map[String, Object] = {
       val map = new collection.mutable.HashMap[String, Object]()
       this.kafkaConfMap(keyNum).foreach(kv => {
@@ -458,22 +470,7 @@ object GlobalConstants {
     }
 
     /**
-     * 配置文件中的groupId
-     *
-     * @param keyNum
-     * 序列
-     * @return
-     * 配置信息
-     */
-    def kafkaGroupId(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_GROUP_ID, keyNum, "")
-
-    /**
      * 根据名称获取kafka broker地址
-     *
-     * @param keyNum
-     * 序列
-     * @return
-     * 配置信息
      */
     def kafkaBrokers(keyNum: Int = 1): String = {
       val brokerName = PropUtils.getString(PropKeys.KAFKA_BROKERS_NAME, keyNum, "")
@@ -487,46 +484,6 @@ object GlobalConstants {
       kafkaAddress
     }
 
-    /**
-     * 获取topic列表
-     *
-     * @param keyNum
-     * @return
-     */
-    def kafkaTopics(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_TOPICS, keyNum, null)
-
-    /**
-     * kafka session超时时间，默认5分钟
-     *
-     * @param keyNum
-     * 配置的key后缀
-     * @return
-     */
-    def kafkaSessionTimeOut(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_SESSION_TIMEOUT_MS, keyNum, 300000)
-    }
-
-    /**
-     * kafka request超时时间，默认10分钟
-     *
-     * @param keyNum
-     * 配置的key后缀
-     * @return
-     */
-    def kafkaPollInterval(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_MAX_POLL_INTERVAL_MS, keyNum, 600000)
-    }
-
-    /**
-     * kafka request超时时间
-     *
-     * @param keyNum
-     * 配置的key后缀
-     * @return
-     */
-    def kafkaRequestTimeOut(keyNum: Int = 1): java.lang.Integer = {
-      PropUtils.getInt(PropKeys.KAFKA_REQUEST_TIMEOUT_MS, keyNum, 400000)
-    }
   }
 
   /**
@@ -544,30 +501,30 @@ object GlobalConstants {
     // rocket-client配置信息
     def rocketConfMap(keyNum: Int = 1): Map[String, String] = PropUtils.sliceKeysByNum(rocketConfStart, keyNum)
 
-    /**
-     * 获取消费位点
-     *
-     * @return
-     */
-    def rocketStartingOffset(keyNum: Int = 1): String = {
-      PropUtils.getString(PropKeys.ROCKET_STARTING_OFFSET, keyNum, DefaultVals.rocketStartingOffset)
-    }
+    // 获取消费位点
+    def rocketStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_STARTING_OFFSET, keyNum, "")
 
     // 丢失数据时是否失败
     def rocketFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.rocketFailOnDataLoss)
+
     def rocketForceSpecial(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_FORCE_SPECIAL, keyNum, false)
 
     // enable.auto.commit
     def rocketEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.rocketEnableAutoCommit)
 
-    /**
-     * 获取rocketMQ name server 地址
-     *
-     * @param keyNum
-     * 序列
-     * @return
-     * 配置信息
-     */
+    // 获取rocketMQ 订阅的tag
+    def rocketConsumerTag(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_CONSUMER_TAG, keyNum, "")
+
+    // 获取groupId
+    def rocketGroupId(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_GROUP_ID, keyNum, "")
+
+    // 获取rocket topic列表
+    def rocketTopics(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_TOPICS, keyNum, null)
+
+    // 每次拉取每个partition的消息数
+    def rocketPullMaxSpeedPerPartition(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_PULL_MAX_SPEED_PER_PARTITION, keyNum, "")
+
+    // 获取rocketMQ name server 地址
     def rocketNameServer(keyNum: Int = 1): String = {
       val brokerName = PropUtils.getString(PropKeys.ROCKET_BROKERS_NAME, keyNum, "")
       val nameServiceAddress = if (StringUtils.isNotBlank(brokerName) && brokerName.contains(":")) {
@@ -576,60 +533,6 @@ object GlobalConstants {
         this.rocketClusterMap.getOrElse(brokerName, "")
       }
       nameServiceAddress
-    }
-
-    /**
-     * 获取rocketMQ 订阅的tag
-     *
-     * @param keyNum
-     * 序列
-     * @return
-     * 配置信息
-     */
-    def rocketConsumerTag(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_CONSUMER_TAG, keyNum, "*")
-
-    /**
-     * 获取groupId
-     *
-     * @param keyNum
-     * 序列
-     * @return
-     * 配置信息
-     */
-    def rocketGroupId(keyNum: Int = 1): String = {
-      val groupId = PropUtils.getString(PropKeys.ROCKET_GROUP_ID, keyNum, "")
-      ValueUtils.requireNonNullForce(groupId, "配置未找到：spark.rocket.group.id" + keyNum)
-      groupId
-    }
-
-    /**
-     * 获取rocket topic列表
-     *
-     * @param keyNum
-     * 序列
-     * @return
-     * 配置信息
-     */
-    def rocketTopics(keyNum: Int = 1): String = {
-      val topics = PropUtils.getString(PropKeys.ROCKET_TOPICS, keyNum, null)
-      ValueUtils.requireNonNullForce(topics, "配置未找到：spark.rocket.topics" + keyNum)
-      topics
-    }
-  }
-
-  val hbaseDurability = if (StringUtils.isBlank(PropUtils.getString(PropKeys.HbaseDurability_KEY))) Durability.USE_DEFAULT
-  else {
-    val durability = PropUtils.getString(PropKeys.HbaseDurability_KEY)
-    if ("ASYNC_WAL".equalsIgnoreCase(durability)) {
-      Durability.ASYNC_WAL
-    } else if ("FSYNC_WAL".equalsIgnoreCase(durability)) {
-      Durability.FSYNC_WAL
-    } else if ("SKIP_WAL".equalsIgnoreCase(durability)) {
-      Durability.SKIP_WAL
-    } else if ("SYNC_WAL".equalsIgnoreCase(durability)) {
-      Durability.SYNC_WAL
-    } else {
-      Durability.USE_DEFAULT
     }
   }
 
@@ -670,7 +573,7 @@ object GlobalConstants {
    * 颜色预定义
    */
   object PS1 extends Enumeration {
-    // 颜色
+    // 颜色相关
     val GREEN = "\u001B[32m"
     val DEFAULT = "\u001B[0m"
     val RED = "\u001B[31m"
@@ -678,8 +581,7 @@ object GlobalConstants {
     val BLUE = "\u001B[34m"
     val PURPLE = "\u001B[35m"
     val PINK = "\u001B[35m"
-
-    // 字体
+    // 字体相关
     val HIGH_LIGHT = "\u001B[1m"
     val ITALIC = "\u001B[3m"
     val UNDER_LINE = "\u001B[4m"
@@ -814,12 +716,11 @@ object GlobalConstants {
     lazy val hiveVersion = PropUtils.getString(PropKeys.HIVE_VERSION, "1.1.0")
     // hive catalog名称
     lazy val hiveCatalogName = PropUtils.getString(PropKeys.HIVE_CATALOG_NAME, "hive")
+    // hive的set配置，如：this.spark.sql("set hive.exec.dynamic.partition=true")
+    lazy val hiveConfMap = PropUtils.sliceKeys("spark.hive.conf.")
 
     /**
      * 根据hive集群名称获取metastore地址
-     *
-     * @return
-     * uri
      */
     def getMetastoreUrl: String = {
       val metastore = if (StringUtils.isNotBlank(hiveCluster) && hiveCluster.contains(":")) {
@@ -871,9 +772,7 @@ object GlobalConstants {
     val HOUR = "yyyy-MM-dd HH:00:00"
     val DAY = "yyyy-MM-dd 00:00:00"
 
-    /**
-     * 其他用于自定义日期格式
-     */
+    // 其他用于自定义日期格式
     def other(schema: String): String = schema
   }
 

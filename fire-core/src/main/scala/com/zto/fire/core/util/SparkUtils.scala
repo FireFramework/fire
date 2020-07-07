@@ -19,6 +19,7 @@ import org.apache.spark.sql.catalyst.{CatalystTypeConverters, InternalRow}
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -31,6 +32,7 @@ import scala.util.Try
  * Created by ChengLong on 2016-11-24.
  */
 object SparkUtils {
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 将Row转为自定义bean，以JavaBean中的Field为基准
@@ -454,5 +456,15 @@ object SparkUtils {
       rows.map(converter(_).asInstanceOf[Row])
     }
     SingletonFactory.getSparkSession.createDataFrame(mapedRowRDD, schema)
+  }
+
+  /**
+   * 从配置文件中读取并执行hive set的sql
+   */
+  def executeHiveConfSQL(spark: SparkSession): Unit = {
+    if (spark != null) {
+      val confMap = GlobalConstants.HiveConf.hiveConfMap
+      LogUtils.logMap(this.logger, confMap, "Execute hive sql conf.")
+    }
   }
 }

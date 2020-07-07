@@ -140,8 +140,8 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     this.webUI = SparkUtils.getWebUI(this.spark)
     this.conf = tmpConf
     this.deployConf
-
     this.wrapLogInfo("<-- 完成Spark运行时信息初始化 -->")
+    SparkUtils.executeHiveConfSQL(this.spark)
   }
 
   /**

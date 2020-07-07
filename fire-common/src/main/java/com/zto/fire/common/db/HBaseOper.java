@@ -48,6 +48,7 @@ public class HBaseOper {
     private static Map<String, String> hbaseClusterMap;
     private static final Map<Class, Map<String, Field>> cacheFieldMap = new ConcurrentHashMap<>();
     private static final Logger logger = LogManager.getLogger(HBaseOper.class);
+    private static Durability durability = null;
 
     /**
      * 根据conf信息获取一个单例的连接
@@ -261,7 +262,7 @@ public class HBaseOper {
                 Put put = convert2Put((T) it.next(), true);
                 if (put != null) {
                     // put.setWriteToWAL(false);
-                    put.setDurability(GlobalConstants.hbaseDurability());
+                    put.setDurability(getHBaseDurability());
                     putList.add(put);
                 }
             }
@@ -294,7 +295,7 @@ public class HBaseOper {
             while (it.hasNext()) {
                 Put put = convert2Put((T) it.next(), false);
                 if (put != null) {
-                    put.setDurability(GlobalConstants.hbaseDurability());
+                    put.setDurability(getHBaseDurability());
                     putList.add(put);
                 }
             }
@@ -316,7 +317,7 @@ public class HBaseOper {
             while (it.hasNext()) {
                 Put put = convert2Put((T) it.next(), false);
                 if (put != null) {
-                    put.setDurability(GlobalConstants.hbaseDurability());
+                    put.setDurability(getHBaseDurability());
                     putList.add(put);
                 }
             }
@@ -1596,7 +1597,7 @@ public class HBaseOper {
                 byte[] rowKey = rowKeyObj.toString().getBytes();
                 Map<String, Field> allFields = ReflectionUtils.getAllFields(obj.getClass());
                 Put put = new Put(rowKey);
-                put.setDurability(GlobalConstants.hbaseDurability());
+                put.setDurability(getHBaseDurability());
                 // put.setWriteToWAL(false);
                 if (allFields != null && allFields.size() > 0) {
                     for (Field field : allFields.values()) {
@@ -1664,4 +1665,28 @@ public class HBaseOper {
         return new Tuple2(new ImmutableBytesWritable(), convert2Put(obj, true));
     }
 
+    /**
+     * 获取hbase的durability
+     */
+    public static Durability getHBaseDurability() {
+        if (durability == null) {
+            String hbaseDurability = GlobalConstants.hbaseDurability();
+            if (StringUtils.isBlank(hbaseDurability)) {
+                durability = Durability.USE_DEFAULT;
+            } else {
+                if ("ASYNC_WAL".equalsIgnoreCase(hbaseDurability)) {
+                    durability = Durability.ASYNC_WAL;
+                } else if ("FSYNC_WAL".equalsIgnoreCase(hbaseDurability)) {
+                    durability = Durability.FSYNC_WAL;
+                } else if ("SKIP_WAL".equalsIgnoreCase(hbaseDurability)) {
+                    durability = Durability.SKIP_WAL;
+                } else if ("SYNC_WAL".equalsIgnoreCase(hbaseDurability)) {
+                    durability = Durability.SYNC_WAL;
+                } else {
+                    durability = Durability.USE_DEFAULT;
+                }
+            }
+        }
+        return durability;
+    }
 }

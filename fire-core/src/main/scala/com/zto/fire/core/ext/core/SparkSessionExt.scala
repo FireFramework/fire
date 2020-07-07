@@ -7,7 +7,7 @@ import com.zto.fire.common.bean.{BaseLogging, HBaseBaseBean}
 import com.zto.fire.common.db.{HBaseOper, JdbcOper, QueryCallback}
 import com.zto.fire.common.util.GlobalConstants.FireConf
 import com.zto.fire.common.util.KafkaUtils.logger
-import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ValueUtils}
+import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, LogUtils, ValueUtils}
 import com.zto.fire.core.bridge.{HBaseSparkBridge, JdbcOperBridge}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.HBaseContextExt
@@ -1130,8 +1130,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
     // 以spark.kafka.conf.开头的配置优先级最高
     val configMap = GlobalConstants.KafkaConf.kafkaConfMap(keyNum)
     extraOptionsMap ++= configMap
-
-    KafkaUtils.logConf(extraOptionsMap, keyNum)
+    LogUtils.logMap(this.logger, extraOptionsMap.toMap, s"Kafka client configuration. keyNum=$keyNum.")
 
     val kafkaReader = spark.readStream
       .format("kafka")

@@ -6,7 +6,7 @@ import com.zto.fire.core.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.common.message.MessageExt
-import org.apache.rocketmq.spark.{ConsumerStrategy, LocationStrategy, RocketMqUtils}
+import org.apache.rocketmq.spark.{ConsumerStrategy, LocationStrategy, RocketMQConfig, RocketMqUtils}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.KafkaUtils
@@ -66,38 +66,39 @@ class StreamingContextExt(ssc: StreamingContext) {
    * topic列表
    * @param consumerStrategy
    * 从何处开始消费
-   * @param autoCommit
-   * 是否自动提交
    * @return
    * rocketMQ DStream
    */
   def createRocketPullStream(rocketParam: java.util.Map[String, String] = null,
                              groupId: String = this.appName,
                              topics: String = null,
+                             tag: String = null,
                              consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
-                             autoCommit: Boolean = false,
                              locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                              keyNum: Int = 1): InputDStream[MessageExt] = {
 
     // 获取topic信息，配置文件优先级高于代码中指定的
     val confTopics = GlobalConstants.RocketConf.rocketTopics(keyNum)
     val finalTopics = if (StringUtils.isNotBlank(confTopics)) confTopics else topics
-    ValueUtils.requireNonNull(finalTopics, s"RocketMQ的Topics不能为空，请在配置文件中指定：spark.rocket.topics$keyNum")
+    assert(StringUtils.isNotBlank(finalTopics), s"RocketMQ的Topics不能为空，请在配置文件中指定：spark.rocket.topics$keyNum")
 
     // 起始消费位点
     val confOffset = GlobalConstants.RocketConf.rocketStartingOffset(keyNum)
     val finalConsumerStrategy = if (StringUtils.isNotBlank(confOffset)) RocketUtils.valueOfStrategy(confOffset) else consumerStrategy
 
     // 是否自动提交offset
-    val confAutoCommit = GlobalConstants.RocketConf.rocketEnableAutoCommit(keyNum)
-    val finalAutoCommit = if (confAutoCommit != null) confAutoCommit else if (autoCommit != null) autoCommit else false
+    val finalAutoCommit = GlobalConstants.RocketConf.rocketEnableAutoCommit(keyNum)
 
     // groupId信息
     val confGroupId = GlobalConstants.RocketConf.rocketGroupId(keyNum)
     val finalGroupId = if (StringUtils.isNotBlank(confGroupId)) confGroupId else groupId
+    assert(StringUtils.isNotBlank(finalGroupId), s"RocketMQ的groupId不能为空，请在配置文件中指定：spark.rocket.group.id$keyNum")
 
     // 详细的RocketMQ配置信息
-    val finalRocketParam = RocketUtils.rocketParams(rocketParam, finalGroupId, rocketNameServer = null, tag = null, keyNum)
+    val finalRocketParam = RocketUtils.rocketParams(rocketParam, finalGroupId, rocketNameServer = null, tag = tag, keyNum)
+    assert(!finalRocketParam.isEmpty, "RocketMQ相关配置不能为空！")
+    assert(finalRocketParam.containsKey(RocketMQConfig.NAME_SERVER_ADDR), s"RocketMQ nameserver.addr不能为空，请在配置文件中指定：spark.rocket.brokers.name$keyNum")
+    assert(finalRocketParam.containsKey(RocketMQConfig.CONSUMER_TAG), s"RocketMQ tag不能为空，请在配置文件中指定：spark.rocket.consumer.tag$keyNum")
 
     RocketMqUtils.createMQPullStream(this.ssc,
       finalGroupId,
