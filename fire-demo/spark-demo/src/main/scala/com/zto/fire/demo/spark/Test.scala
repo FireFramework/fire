@@ -2,6 +2,7 @@ package com.zto.fire.demo.spark
 
 import java.util
 
+import com.zto.fire.common.data.DataPool
 import com.zto.fire.common.db.HBaseOper
 import com.zto.fire.common.util.GlobalConstants
 import com.zto.fire.core.{BaseSparkCore, BaseSparkStreaming}
@@ -21,7 +22,7 @@ object Test extends BaseSparkStreaming {
   }
 
   def main(args: Array[String]): Unit = {
-     this.init(10, false)
-    //println(GlobalConstants.RocketConf.rocketNameServer())
+     // this.init(10, false)
+    println(DataPool.getDatasource)
   }
 }

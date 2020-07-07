@@ -45,7 +45,6 @@ public class HBaseOper {
     private static Configuration conf;
     private static Connection connection;
     private static Gson gson = new Gson();
-    private static Map<String, String> hbaseClusterMap;
     private static final Map<Class, Map<String, Field>> cacheFieldMap = new ConcurrentHashMap<>();
     private static final Logger logger = LogManager.getLogger(HBaseOper.class);
     private static Durability durability = null;
@@ -75,13 +74,12 @@ public class HBaseOper {
      */
     public static Configuration getConfiguration() {
         if (conf == null) {
-            hbaseClusterMap = JavaConversions.mapAsJavaMap(PropUtils.sliceKeys(GlobalConstants.hbaseClusterMapPrefix()));
             conf = HBaseConfiguration.create();
             String clusterName = GlobalConstants.hbaseCluster();
             if (StringUtils.isNotBlank(clusterName) && clusterName.contains(":")) {
                 conf.set("hbase.zookeeper.quorum", clusterName);
-            } else if (hbaseClusterMap.containsKey(clusterName)) {
-                conf.set("hbase.zookeeper.quorum", hbaseClusterMap.get(clusterName));
+            } else if (GlobalConstants.hbaseClusterMap().containsKey(clusterName)) {
+                conf.set("hbase.zookeeper.quorum", GlobalConstants.hbaseClusterMap().get(clusterName));
             } else {
                 throw new IllegalArgumentException("未找到匹配的hbase cluster标识，请检查参数：spark.hbase.cluster");
             }

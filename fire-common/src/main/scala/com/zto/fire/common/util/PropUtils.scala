@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.alibaba.fastjson.JSON
 import com.zto.fire.common.bean.BaseLogging
 import com.zto.fire.common.data.DataPool
+import com.zto.fire.common.enu.DataSource
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
@@ -481,4 +482,57 @@ object PropUtils extends BaseLogging {
     }
   }
 
+  /**
+   * 获取所有的数据源信息
+   *
+   * @return
+   * 数据源列表
+   */
+  private[fire] def getDatasource: mutable.HashMap[DataSource, String] = {
+    val dataSourceMap = new mutable.HashMap[DataSource, String]()
+
+    /**
+     * 相同数据源进行merge操作
+     */
+    def merge(datasource: DataSource, key: String, datasourceKey: String): Unit = {
+      if (key.contains(datasourceKey.replaceFirst("spark", this.keyPrefix))) {
+        val currentConf = this.getString(key)
+        mergeMap(datasource, currentConf)
+      }
+    }
+
+    /**
+     * 合并map的value
+     */
+    def mergeMap(dataSource: DataSource, appendValue: String): Unit = {
+      val value = dataSourceMap.getOrElse(dataSource, "")
+      if (StringUtils.isNotBlank(value) && !value.contains(appendValue)) dataSourceMap.put(dataSource, value + " | " + appendValue) else dataSourceMap.put(dataSource, appendValue)
+    }
+
+    JavaConversions.asScalaSet(this.props.keySet()).map(key => key.toString).filter(key => !key.contains("cluster.map")).foreach(key => {
+      // 配置的Hive源
+      merge(DataSource.Hive, key, GlobalConstants.PropKeys.HIVE_CLUSTER)
+      // 配置的HBase源
+      merge(DataSource.HBase, key, GlobalConstants.PropKeys.HBASE_CLUSTER_URL)
+      // 配置的Kafka源
+      merge(DataSource.Kafka, key, GlobalConstants.PropKeys.KAFKA_BROKERS_NAME)
+      // 配置的RocketMQ源
+      merge(DataSource.RocketMQ, key, GlobalConstants.PropKeys.ROCKET_BROKERS_NAME)
+      // JDBC源
+      if (key.contains(GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY.replaceFirst("spark", this.keyPrefix))) {
+        val value = this.getString(key)
+        if (value.contains("mysql")) {
+          mergeMap(DataSource.MySQL, value)
+        } else if (value.contains("oracle")) {
+          mergeMap(DataSource.Oracle, value)
+        } else if (value.contains("tidb")) {
+          mergeMap(DataSource.Tidb, value)
+        } else if (value.contains("sqlserver")) {
+          mergeMap(DataSource.SqlServer, value)
+        }
+      }
+    })
+
+    dataSourceMap
+  }
 }

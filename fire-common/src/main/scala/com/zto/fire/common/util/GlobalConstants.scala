@@ -1,7 +1,12 @@
 package com.zto.fire.common.util
 
+import java.util
+import java.util.Map
+
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
+
+import scala.collection.JavaConversions
 
 /**
  * 常量配置类
@@ -26,6 +31,8 @@ object GlobalConstants {
   lazy val schedulerBlackList = PropUtils.getString(PropKeys.SPARK_FIRE_SCHEDULER_BLACKLIST, "")
   // hbase集群映射配置前缀
   lazy val hbaseClusterMapPrefix = "spark.hbase.cluster.map."
+  // hbase集群映射地址
+  lazy val hbaseClusterMap: util.Map[String, String] = JavaConversions.mapAsJavaMap(PropUtils.sliceKeys(hbaseClusterMapPrefix))
   // hbase java api 配置前缀
   lazy val hbaseConfPrefix = "spark.hbase.conf."
   // 用于区分不同的流计算引擎类型
@@ -429,39 +436,29 @@ object GlobalConstants {
     val kafkaConfStart = "spark.kafka.conf."
 
     // 初始化kafka集群名称与地址映射
-    private lazy val kafkaMap = PropUtils.sliceKeys(clusterMapConfStart)
-
+    private[fire] lazy val kafkaMap = PropUtils.sliceKeys(clusterMapConfStart)
     // kafka消费起始位点
     def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
-
     // kafka消费结束位点
     def kafkaEndingOffsets(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_ENDING_OFFSET, keyNum, "")
-
     // 丢失数据时是否失败
     def kafkaFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.kafkaFailOnDataLoss)
-
     // enable.auto.commit
     def kafkaEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.kafkaEnableAutoCommit)
-
     // 获取topic列表
     def kafkaTopics(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_TOPICS, keyNum, null)
-
     // kafka session超时时间，默认5分钟
     def kafkaSessionTimeOut(keyNum: Int = 1): java.lang.Integer = PropUtils.getInt(PropKeys.KAFKA_SESSION_TIMEOUT_MS, keyNum, 300000)
-
     // kafka request超时时间，默认10分钟
     def kafkaPollInterval(keyNum: Int = 1): java.lang.Integer = PropUtils.getInt(PropKeys.KAFKA_MAX_POLL_INTERVAL_MS, keyNum, 600000)
-
     // kafka request超时时间
     def kafkaRequestTimeOut(keyNum: Int = 1): java.lang.Integer = PropUtils.getInt(PropKeys.KAFKA_REQUEST_TIMEOUT_MS, keyNum, 400000)
-
     // 配置文件中的groupId
     def kafkaGroupId(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_GROUP_ID, keyNum, "")
-
     // kafka-client配置信息
-    def kafkaConfMap(keyNum: Int = 1): Map[String, String] = PropUtils.sliceKeysByNum(kafkaConfStart, keyNum)
+    def kafkaConfMap(keyNum: Int = 1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(kafkaConfStart, keyNum)
 
-    def kafkaConfMapWithType(keyNum: Int = 1): Map[String, Object] = {
+    def kafkaConfMapWithType(keyNum: Int = 1): collection.immutable.Map[String, Object] = {
       val map = new collection.mutable.HashMap[String, Object]()
       this.kafkaConfMap(keyNum).foreach(kv => {
         map.put(kv._1, StringsUtils.parseString(kv._2))
@@ -497,30 +494,21 @@ object GlobalConstants {
     // 初始化kafka集群名称与地址映射
     private lazy val rocketClusterMap = PropUtils.sliceKeys(rocketClusterMapConfStart)
     val rocketConfStart = "spark.rocket.conf."
-
     // rocket-client配置信息
-    def rocketConfMap(keyNum: Int = 1): Map[String, String] = PropUtils.sliceKeysByNum(rocketConfStart, keyNum)
-
+    def rocketConfMap(keyNum: Int = 1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(rocketConfStart, keyNum)
     // 获取消费位点
     def rocketStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_STARTING_OFFSET, keyNum, "")
-
     // 丢失数据时是否失败
     def rocketFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.rocketFailOnDataLoss)
-
     def rocketForceSpecial(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_FORCE_SPECIAL, keyNum, false)
-
     // enable.auto.commit
     def rocketEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.rocketEnableAutoCommit)
-
     // 获取rocketMQ 订阅的tag
     def rocketConsumerTag(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_CONSUMER_TAG, keyNum, "")
-
     // 获取groupId
     def rocketGroupId(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_GROUP_ID, keyNum, "")
-
     // 获取rocket topic列表
     def rocketTopics(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_TOPICS, keyNum, null)
-
     // 每次拉取每个partition的消息数
     def rocketPullMaxSpeedPerPartition(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_PULL_MAX_SPEED_PER_PARTITION, keyNum, "")
 
