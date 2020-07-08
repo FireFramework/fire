@@ -1,7 +1,6 @@
 package com.zto.fire.common.util
 
 import java.util
-import java.util.Map
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
@@ -20,7 +19,7 @@ object GlobalConstants {
   // hbase操作失败最大重试次数
   lazy val hbaseMaxRetry = PropUtils.getLong(PropKeys.HBASE_MAX_RETRY, 3)
   // hbase集群名称
-  lazy val hbaseCluster = PropUtils.getString(PropKeys.HBASE_CLUSTER_URL, DefaultVals.hbaseName)
+  lazy val hbaseCluster = PropUtils.getString(PropKeys.HBASE_CLUSTER_URL, "")
   // fire框架埋点日志开关
   lazy val fireLogEnable = FireConf.logEnable
   // 用于设置是否启用任务定时调度
@@ -41,7 +40,6 @@ object GlobalConstants {
 
   // 用于判断是否为spark引擎
   def isSparkEngine = "spark".equals(this.engine)
-
   // 用于判断是否为flink引擎
   def isFlinkEngine = "flink".equals(this.engine)
 
@@ -51,10 +49,8 @@ object GlobalConstants {
   object DefaultVals extends Enumeration {
     // hbase集群名称标识
     val hbaseName = "batch"
-
     // rest接口filter的开关
     val restFilter = true
-
     // 启动应用时默认的kafka消费位点
     val kafkaStartingOffset = KafkaConf.offsetLargest
     // 数据丢失时执行失败
@@ -74,11 +70,8 @@ object GlobalConstants {
     val rocketEnableAutoCommit = false
     // 订阅的tag
     val rocketConsumerTag = "*"
-
     // spark 默认的checkpoint地址
     val sparkChkPointDir = "hdfs://nameservice1/user/spark/ckpoint/"
-    // hive metastore地址
-    val hiveCluster = "batch"
     // 默认的日志级别
     val logLevel = LogLevel.INFO
     // 累加器保留日志默认的最少记录数
@@ -107,8 +100,6 @@ object GlobalConstants {
    * 对应conf.properties的key
    */
   object PropKeys extends Enumeration {
-    // 运行模式
-    val RUNMODEL_KEY = "spark.runModel"
     val APP_NAME_KEY = "spark.appName"
     val SPARK_CONF_KEY = "SparkConf"
     val SPARK_LOCAL_CORES = "spark.local.cores"
@@ -137,8 +128,8 @@ object GlobalConstants {
     val KUDU_MASTER_URL = "spark.kudu.master"
     val HBASE_CLUSTER_URL = "spark.hbase.cluster"
     val HBASE_BATCH = "spark.hbase.batch.size"
-    val IMPALA_CONNECTION_URL_KEY: String = "spark.impala.connection.url"
-    val IMPALA_JDBC_DRIVER_NAME_KEY: String = "spark.impala.jdbc.driver.class.name"
+    val IMPALA_CONNECTION_URL_KEY = "spark.impala.connection.url"
+    val IMPALA_JDBC_DRIVER_NAME_KEY = "spark.impala.jdbc.driver.class.name"
     val IMPALA_DAEMONS_URL = "spark.impala.daemons.url"
 
     // ---------------------------- kafka 相关配置 ---------------------------- //
@@ -323,10 +314,8 @@ object GlobalConstants {
     lazy val restfulPortRetryNum = PropUtils.getInt(PropKeys.SPARK_FIRE_RESTFUL_PORT_RETRY_NUM, 3)
     // fire框架restful端口冲突重试时间（ms）
     lazy val restfulPortRetryDuration = PropUtils.getLong(PropKeys.SPARK_FIRE_RESTFUL_PORT_RETRY_DURATION, 1000L)
-
     // 获取配置的HBase缓存策略
     def hbaseStorageLevel: String = hbaseStorageLevelConf
-
     // 获取配置的JDBC缓存策略
     def jdbcStorageLevel: String = jdbcStorageLevelConf
   }
@@ -372,40 +361,28 @@ object GlobalConstants {
   object JdbcConf extends Enumeration {
     // spark.db.jdbc.url
     def url(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_URL_KEY, keyNum)
-
     // spark.db.jdbc.driver
     def driverClass(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_DRIVER_KEY, keyNum)
-
     // spark.db.jdbc.user
     def user(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_USER_KEY, keyNum)
-
     // spark.db.jdbc.password
     def password(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_PASSWORD_KEY, keyNum)
-
     // 事务的隔离级别：NONE, READ_COMMITTED, READ_UNCOMMITTED, REPEATABLE_READ, SERIALIZABLE，默认为READ_UNCOMMITTED
     def isolationLevel(keyNum: Int = 1): String = PropUtils.getString(PropKeys.SPARK_DB_JDBC_ISOLATION_LEVEL, keyNum, DefaultVals.jdbcIsolationLevel)
-
     // 批量操作的记录数
     def batchSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_BATCH_SIZE, keyNum, DefaultVals.jdbcBatchSize)
-
     // 默认多少毫秒flush一次
     def jdbcFlushInterval(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.SPARK_DB_JDBC_FLUSH_INTERVAL, keyNum, 1000)
-
     // jdbc失败最大重试次数
     def maxRetry(keyNum: Int = 1): Long = PropUtils.getLong(PropKeys.SPARK_DB_JDBC_MAX_RETRY, keyNum, 3)
-
     // 连接池最小连接数
     def minPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MIN_POOL_SIZE_KEY, keyNum, 1)
-
     // 连接池初始化连接数
     def initialPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_INITIAL_POOL_SIZE_KEY, keyNum, 1)
-
     // 连接池最大连接数
     def maxPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_POOL_SIZE_KEY, keyNum, 5)
-
     // 连接池每次自增连接数
     def acquireIncrement(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_ACQUIRE_INCREMENT_KEY, keyNum, 1)
-
     // 多久释放没有用到的连接
     def maxIdleTime(keyNum: Int = 1): Int = PropUtils.getInt(PropKeys.SPARK_DB_JDBC_MAX_IDLE_TIME_KEY, keyNum, 30)
   }
@@ -500,6 +477,7 @@ object GlobalConstants {
     def rocketStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.ROCKET_STARTING_OFFSET, keyNum, "")
     // 丢失数据时是否失败
     def rocketFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_FAIL_ON_DATA_LOSS, keyNum, DefaultVals.rocketFailOnDataLoss)
+    // spark.rocket.forceSpecial
     def rocketForceSpecial(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_FORCE_SPECIAL, keyNum, false)
     // enable.auto.commit
     def rocketEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.ROCKET_ENABLE_AUTO_COMMIT, keyNum, DefaultVals.rocketEnableAutoCommit)
@@ -609,28 +587,21 @@ object GlobalConstants {
    */
   object PrintModule extends Enumeration {
     // 打印多值累加器开始
-    def MULTI_ACC_START = println(s"[${GlobalConstants.PS1.PINK}${DateFormatUtils.formatCurrentDateTime()}${GlobalConstants.PS1.DEFAULT}]--- ${GlobalConstants.PS1.GREEN}MultiAccumulators Start ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------")
-
+    def MULTI_ACC_START: Unit = println(s"[${GlobalConstants.PS1.PINK}${DateFormatUtils.formatCurrentDateTime()}${GlobalConstants.PS1.DEFAULT}]--- ${GlobalConstants.PS1.GREEN}MultiAccumulators Start ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------")
     // 打印多值多日期累加器开始
-    def MULTI_ACC_DATE_TIME_START = println(s"[${GlobalConstants.PS1.PINK}${DateFormatUtils.formatCurrentDateTime()}${GlobalConstants.PS1.DEFAULT}]--- ${GlobalConstants.PS1.GREEN}MultiDateTimeAccumulators Start ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------")
-
+    def MULTI_ACC_DATE_TIME_START: Unit = println(s"[${GlobalConstants.PS1.PINK}${DateFormatUtils.formatCurrentDateTime()}${GlobalConstants.PS1.DEFAULT}]--- ${GlobalConstants.PS1.GREEN}MultiDateTimeAccumulators Start ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------")
     // 打印多值累加器结束
-    def MULTI_ACC_END = println(s"------------------------ ${GlobalConstants.PS1.GREEN}MultiAccumulators End   ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------\n\n")
-
+    def MULTI_ACC_END: Unit = println(s"------------------------ ${GlobalConstants.PS1.GREEN}MultiAccumulators End   ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------\n\n")
     // 打印多值多日期累加器结束
-    def MULTI_ACC_DATE_TIME_END = println(s"------------------------ ${GlobalConstants.PS1.GREEN}MultiDateTimeAccumulators End   ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------\n\n")
-
+    def MULTI_ACC_DATE_TIME_END: Unit = println(s"------------------------ ${GlobalConstants.PS1.GREEN}MultiDateTimeAccumulators End   ... ${GlobalConstants.PS1.DEFAULT}---------------------------------------------\n\n")
     // 打印多值累加器清零
-    def MULTI_ACC_CLEAR = println(s"------------------------ ${GlobalConstants.PS1.RED}*********** 清零累加器 ***********${GlobalConstants.PS1.DEFAULT}  ---------------------------------------------")
-
+    def MULTI_ACC_CLEAR: Unit = println(s"------------------------ ${GlobalConstants.PS1.RED}*********** 清零累加器 ***********${GlobalConstants.PS1.DEFAULT}  ---------------------------------------------")
     // 打印多值累加器中的值
-    def MULTI_ACC_VALUE(t: (String, Long)) = println(s"${t._1} : ${GlobalConstants.PS1.YELLOW}${t._2}${GlobalConstants.PS1.DEFAULT}")
-
+    def MULTI_ACC_VALUE(t: (String, Long)): Unit = println(s"${t._1} : ${GlobalConstants.PS1.YELLOW}${t._2}${GlobalConstants.PS1.DEFAULT}")
     // 总耗时打印
-    def END_TIME_COST(startTime: Long) = println(s"总耗时：${GlobalConstants.PS1.RED}${DateFormatUtils.runTime(startTime)}${GlobalConstants.PS1.DEFAULT} The end...${GlobalConstants.PS1.DEFAULT}")
-
+    def END_TIME_COST(startTime: Long): Unit = println(s"总耗时：${GlobalConstants.PS1.RED}${DateFormatUtils.runTime(startTime)}${GlobalConstants.PS1.DEFAULT} The end...${GlobalConstants.PS1.DEFAULT}")
     // 实时相关
-    def REAL_TIME_PROCESS_METHOD = s"${GlobalConstants.PS1.RED}子类必须通过覆写process()方法实现具体逻辑${GlobalConstants.PS1.DEFAULT}"
+    def REAL_TIME_PROCESS_METHOD: String = s"${GlobalConstants.PS1.RED}子类必须通过覆写process()方法实现具体逻辑${GlobalConstants.PS1.DEFAULT}"
   }
 
   /**
@@ -695,7 +666,7 @@ object GlobalConstants {
     // 是否启用hive支持
     lazy val hiveSupportEnable = PropUtils.getBoolean(PropKeys.HIVE_SUPPORT_ENABLE, true)
     // hive集群标识（batch/streaming/test）
-    lazy val hiveCluster = PropUtils.getString(PropKeys.HIVE_CLUSTER, DefaultVals.hiveCluster)
+    lazy val hiveCluster = PropUtils.getString(PropKeys.HIVE_CLUSTER, "")
     // 初始化hive集群名称与metastore映射
     private lazy val hiveMetastoreMap = PropUtils.sliceKeys("spark.hive.cluster.map.")
     // hive-site.xml存放路径映射
@@ -716,7 +687,7 @@ object GlobalConstants {
       } else if (this.hiveMetastoreMap.contains(hiveCluster)) {
         this.hiveMetastoreMap.get(hiveCluster).get
       } else {
-        throw new IllegalArgumentException(s"未找到匹配的hive metastore地址，请检查参数：spark.hive.cluster")
+        ""
       }
       metastore
     }

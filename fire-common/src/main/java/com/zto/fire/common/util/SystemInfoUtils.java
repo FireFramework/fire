@@ -590,22 +590,22 @@ public class SystemInfoUtils {
     }
 
     /**
-     * 是否为mac os环境
+     * 判断当前是否运行在本地环境下
+     * 本地环境包括：Windows、Mac OS
      */
-    public static boolean isMac() {
-        String os = System.getProperty("os.name");
-        if (os.toLowerCase().contains("mac")) {
+    public static boolean isLocal() {
+        if (isWindows() || isMac()) {
             return true;
         }
         return false;
     }
 
     /**
-     * 判断当前是否运行在本地环境下
-     * 本地环境包括：Windows、Mac OS
+     * 是否为mac os环境
      */
-    public static boolean isLocal() {
-        if (isWindows() || isMac()) {
+    public static boolean isMac() {
+        String os = System.getProperty("os.name");
+        if (os.toLowerCase().contains("mac")) {
             return true;
         }
         return false;

@@ -1,9 +1,7 @@
 package com.zto.fire.common.util;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
 /**

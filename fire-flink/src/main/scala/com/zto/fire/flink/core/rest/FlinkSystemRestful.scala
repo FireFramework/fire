@@ -24,6 +24,7 @@ private[fire] class FlinkSystemRestful(val baseFlink: BaseFlink) extends SystemR
   override protected def register: Unit = {
     this.baseFlink.restfulRegister
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/kill", kill))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/dataSource", dataSource))
   }
 
   /**

@@ -8,9 +8,8 @@ import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
 import com.zto.fire.core.rest.{RestfulRegister, SparkSystemRestful}
 import com.zto.fire.core.task.InternalTask
-import com.zto.fire.core.util.{FireUtils, SingletonFactory, SparkUtils}
+import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
-import org.apache.log4j.{Level, Logger}
 import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.{SQLContext, SparkSession}
@@ -113,12 +112,19 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     val tmpConf = if (conf == null) this.buildConf(null) else conf.asInstanceOf[SparkConf]
     tmpConf.setAll(PropUtils.toMap)
     tmpConf.set("spark.driver.class.simple.name", this.driverClass)
-    val hiveMetastoreUrl = GlobalConstants.HiveConf.getMetastoreUrl
-    if (StringUtils.isNotBlank(hiveMetastoreUrl)) tmpConf.set("hive.metastore.uris", GlobalConstants.HiveConf.getMetastoreUrl)
+
+    // 如果启用hive，则获取hive metastore地址
+    if (GlobalConstants.HiveConf.hiveSupportEnable) {
+      val hiveMetastoreUrl = GlobalConstants.HiveConf.getMetastoreUrl
+      assert(StringUtils.isNotBlank(hiveMetastoreUrl), "未找到匹配的hive metastore地址，请配置：spark.hive.cluster")
+      tmpConf.set("hive.metastore.uris", hiveMetastoreUrl)
+    }
 
     // 构建SparkSession对象
     val sessionBuilder = SparkSession.builder().config(tmpConf)
+    // spark.hive.support.enable
     if (GlobalConstants.HiveConf.hiveSupportEnable) sessionBuilder.enableHiveSupport()
+    // 在mac或windows环境下执行local模式，cpu数通过spark.local.cores指定，默认local[*]
     if (SystemInfoUtils.isLocal) sessionBuilder.master(s"local[${GlobalConstants.SparkConf.localCores}]")
     this.spark = sessionBuilder.getOrCreate()
 
