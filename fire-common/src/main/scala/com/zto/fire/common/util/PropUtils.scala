@@ -5,7 +5,6 @@ import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.alibaba.fastjson.JSON
-import com.zto.fire.common.bean.BaseLogging
 import com.zto.fire.common.data.DataPool
 import com.zto.fire.common.enu.DataSource
 import org.apache.commons.lang3.StringUtils
@@ -18,7 +17,7 @@ import scala.collection.{JavaConversions, mutable}
  * 读取配置文件工具类
  * Created by ChengLong on 2016-11-22.
  */
-object PropUtils extends BaseLogging {
+object PropUtils {
   private val props = new Properties()
   // 用于判断是否merge过
   private[fire] val isMerge = new AtomicBoolean(false)
@@ -451,10 +450,9 @@ object PropUtils extends BaseLogging {
    * 获取zrc配置信息
    */
   def invokeZrcConf(className: String, rest: String): Unit = {
-    if ("spark".equals(this.keyPrefix)) this.mark
     val param =
       s"""
-         |{"className": "$className", "url": "http://$rest", "fireVersion": "${this.getString("spark.fire.version")}", "zrcKey": "21fa30b7f2082b1b12dfbc7c8c6d70b9"}
+         |{"className": "$className", "url": "http://$rest", "fireVersion": "${this.getString("spark.fire.version")}", "zrcKey": "${GlobalConstants.FireConf.zrcSecret}"}
       """.stripMargin
     this.setProperty("spark.rest.url", s"http://$rest")
     var conf = ""
@@ -462,12 +460,12 @@ object PropUtils extends BaseLogging {
       conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.prod.address", "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack"), param)
     } catch {
       case e: Exception => {
-        if ("spark".equals(this.keyPrefix)) this.log("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", null, null, e)
+        if ("spark".equals(this.keyPrefix)) this.logger.error("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", e)
         conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.test.address"), param)
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {
-        if ("spark".equals(this.keyPrefix)) this.log("成功获取zrc配置信息：" + conf)
+        if ("spark".equals(this.keyPrefix)) this.logger.info("成功获取zrc配置信息：" + conf)
         val msg = JSON.parseObject(conf)
         if (msg != null && msg.get("code") == 200) {
           val content = msg.get("content")

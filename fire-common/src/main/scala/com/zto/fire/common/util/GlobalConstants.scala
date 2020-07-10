@@ -93,7 +93,7 @@ object GlobalConstants {
     // 启用高可用
     val enableHdfsHA = true
     // fire框架中sql日志的默认打印长度
-    val logSqlLength = 100
+    val logSqlLength = 50
   }
 
   /**
@@ -238,6 +238,8 @@ object GlobalConstants {
     val SPARK_FIRE_SCHEDULER_BLACKLIST = "spark.fire.scheduler.blacklist"
     // 用于配置是否抛弃zrc独立运行，配置为false表示不向zrc注册，不获取zrc配置
     val SPARK_FIRE_ZRC_ENABLE = "spark.fire.zrc.enable"
+    // zrc接口调用秘钥
+    val SPARK_FIRE_ZRC_SECRET = "spark.zrc.register.conf.secret"
     // fire框架restful端口冲突重试次数
     val SPARK_FIRE_RESTFUL_PORT_RETRY_NUM = "spark.fire.restful.port.retry_num"
     // fire框架restful端口冲突重试时间（ms）
@@ -310,6 +312,8 @@ object GlobalConstants {
     lazy val restfulMaxThread = PropUtils.getInt(PropKeys.SPARK_FIRE_RESTFUL_MAX_THREAD, 8)
     // 用于配置是否抛弃zrc独立运行，配置为false表示不向zrc注册，不获取zrc配置
     lazy val zrcEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ZRC_ENABLE, true)
+    // zrc接口调用秘钥
+    lazy val zrcSecret = PropUtils.getString(PropKeys.SPARK_FIRE_ZRC_SECRET, "21fa30b7f2082b1b12dfbc7c8c6d70b9")
     // fire框架restful端口冲突重试次数
     lazy val restfulPortRetryNum = PropUtils.getInt(PropKeys.SPARK_FIRE_RESTFUL_PORT_RETRY_NUM, 3)
     // fire框架restful端口冲突重试时间（ms）
