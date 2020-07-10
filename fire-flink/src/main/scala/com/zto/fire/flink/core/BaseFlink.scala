@@ -53,7 +53,9 @@ trait BaseFlink extends BaseFire {
     PropUtils.print()
     SchedulerManager.registerTasks(this)
     // 创建HiveCatalog
-    this.hive = new HiveCatalog(GlobalConstants.HiveConf.hiveCatalogName, GlobalConstants.SparkConf.defaultDB, GlobalConstants.HiveConf.getHiveConfDir, GlobalConstants.HiveConf.hiveVersion)
+    if (GlobalConstants.HiveConf.hiveSupportEnable) {
+      this.hive = new HiveCatalog(GlobalConstants.HiveConf.hiveCatalogName, GlobalConstants.SparkConf.defaultDB, GlobalConstants.HiveConf.getHiveConfDir, GlobalConstants.HiveConf.hiveVersion)
+    }
   }
 
   /**

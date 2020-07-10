@@ -708,7 +708,7 @@ object GlobalConstants {
       } else if (this.hiveSiteMap.contains(hiveCluster)) {
         this.hiveSiteMap.get(hiveCluster).get
       } else {
-        throw new IllegalArgumentException(s"未找到匹配的hive-site.xml存放路径，请检查参数：spark.hive.cluster")
+        throw new IllegalArgumentException(s"未找到匹配的hive-site.xml存放路径，请检查参数：flink.hive.cluster")
       }
       hiveSitePath
     }
