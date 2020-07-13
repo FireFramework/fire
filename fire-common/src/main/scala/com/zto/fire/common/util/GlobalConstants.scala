@@ -151,6 +151,9 @@ object GlobalConstants {
     // kafka request超时时间
     val KAFKA_REQUEST_TIMEOUT_MS = "spark.kafka.request.timeout.ms"
     val KAFKA_MAX_POLL_INTERVAL_MS = "spark.kafka.max.poll.interval.ms"
+    val KAFKA_COMMIT_OFFSETS_ON_CHECKPOINTS = "spark.kafka.CommitOffsetsOnCheckpoints"
+    val KAFKA_START_FROM_TIMESTAMP = "spark.kafka.StartFromTimestamp"
+    val KAFKA_START_FROM_GROUP_OFFSETS = "spark.kafka.StartFromGroupOffsets"
 
     // ---------------------------- spark 相关配置 ---------------------------- //
     val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
@@ -419,7 +422,7 @@ object GlobalConstants {
     // 初始化kafka集群名称与地址映射
     private[fire] lazy val kafkaMap = PropUtils.sliceKeys(clusterMapConfStart)
     // kafka消费起始位点
-    def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, DefaultVals.kafkaStartingOffset)
+    def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_STARTING_OFFSET, keyNum, "")
     // kafka消费结束位点
     def kafkaEndingOffsets(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_ENDING_OFFSET, keyNum, "")
     // 丢失数据时是否失败
@@ -436,6 +439,12 @@ object GlobalConstants {
     def kafkaRequestTimeOut(keyNum: Int = 1): java.lang.Integer = PropUtils.getInt(PropKeys.KAFKA_REQUEST_TIMEOUT_MS, keyNum, 400000)
     // 配置文件中的groupId
     def kafkaGroupId(keyNum: Int = 1): String = PropUtils.getString(PropKeys.KAFKA_GROUP_ID, keyNum, "")
+    // 是否在checkpoint时记录offset值
+    def kafkaCommitOnCheckpoint(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_COMMIT_OFFSETS_ON_CHECKPOINTS, false)
+    // 设置从指定时间戳位置开始消费kafka
+    def kafkaStartFromTimeStamp(keyNum: Int = 1): java.lang.Long = PropUtils.getLong(PropKeys.KAFKA_START_FROM_TIMESTAMP, 0L)
+    // 从topic中指定的group上次消费的位置开始消费，必须配置group.id参数
+    def kafkaStartFromGroupOffsets(keyNum: Int = 1): Boolean = PropUtils.getBoolean(PropKeys.KAFKA_START_FROM_GROUP_OFFSETS, false)
     // kafka-client配置信息
     def kafkaConfMap(keyNum: Int = 1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(kafkaConfStart, keyNum)
 
