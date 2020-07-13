@@ -33,9 +33,9 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
    * @return
    * FlinkKafkaConsumer011
    */
-  def createDirectConsumer(kafkaParams: Map[String, Object] = null,
-                           topics: Set[String] = null,
-                           keyNum: Int = 1): FlinkKafkaConsumer011[String] = {
+  def createKafkaConsumer(kafkaParams: Map[String, Object] = null,
+                          topics: Set[String] = null,
+                          keyNum: Int = 1): FlinkKafkaConsumer011[String] = {
     val confTopics = GlobalConstants.KafkaConf.kafkaTopics(keyNum)
     val topicList = if (StringUtils.isNotBlank(confTopics)) confTopics.split(",") else topics.toArray
     assert(topicList != null && topicList.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：flink.kafka.topics$keyNum")
@@ -61,12 +61,12 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
    */
   def createDirectStream(kafkaParams: Map[String, Object] = null,
                          topics: Set[String] = null,
-                         specificStartupOffsets: Map[KafkaTopicPartition, Long] = null,
+                         specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
                          runtimeContext: RuntimeContext = null,
                          rateLimiter: FlinkConnectorRateLimiter = null,
                          keyNum: Int = 1): DataStream[String] = {
 
-    val kafkaConsumer = this.createDirectConsumer(kafkaParams, topics, keyNum)
+    val kafkaConsumer = this.createKafkaConsumer(kafkaParams, topics, keyNum)
 
     if (rateLimiter != null) kafkaConsumer.setRateLimiter(rateLimiter)
     if (runtimeContext != null) kafkaConsumer.setRuntimeContext(runtimeContext)
@@ -82,7 +82,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
     // 从topic中指定的group上次消费的位置开始消费，必须配置group.id参数
     if (GlobalConstants.KafkaConf.kafkaStartFromGroupOffsets(keyNum)) kafkaConsumer.setStartFromGroupOffsets()
 
-    env.addSource(kafkaConsumer)
+    this.env.addSource(kafkaConsumer)
   }
 
   /**
