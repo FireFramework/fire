@@ -5,7 +5,6 @@ import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{GlobalConstants, PropUtils, SystemInfoUtils, ValueUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestfulRegister
-import com.zto.fire.core.util.FireUtils
 import com.zto.fire.flink.core.rest.FlinkSystemRestful
 import com.zto.fire.flink.core.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
@@ -13,8 +12,8 @@ import org.apache.flink.api.common.ExecutionConfig
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
-import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.table.catalog.hive.HiveCatalog
 
 /**
