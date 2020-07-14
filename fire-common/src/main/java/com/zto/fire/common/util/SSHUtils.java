@@ -1,6 +1,9 @@
 package com.zto.fire.common.util;
 
 import com.jcraft.jsch.*;
+import com.zto.fire.common.task.SchedulerManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 
@@ -12,6 +15,7 @@ import java.io.InputStream;
 public class SSHUtils {
     // ssh session会话
     private Session session;
+    private static final Logger logger = LoggerFactory.getLogger(SchedulerManager.class);
 
     /**
      * @param host
@@ -48,8 +52,7 @@ public class SSHUtils {
             // 30秒连接超时
             session.connect(10000);
         } catch (JSchException e) {
-            e.printStackTrace();
-            System.out.println("SFTPUitl 获取连接发生错误");
+            logger.error("SFTPUitl 获取连接发生错误", e);
             throw e;
         }
         return session;
@@ -211,7 +214,7 @@ public class SSHUtils {
             String command = "ls";
             try {
                 SSHResInfo resInfo = helper.sendCmd(command);
-                System.out.println(resInfo.toString());
+                logger.info(resInfo.toString());
                 helper.close();
             } catch (Exception e) {
                 e.printStackTrace();

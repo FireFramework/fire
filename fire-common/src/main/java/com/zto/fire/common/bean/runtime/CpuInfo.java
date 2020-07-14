@@ -180,10 +180,4 @@ public class CpuInfo {
         return cpuInfo;
     }
 
-    public static void main(String[] args) throws Exception {
-        while (true) {
-            System.out.println(JSON.toJSONString(getCpuInfo()));
-            Thread.sleep(1000);
-        }
-    }
 }

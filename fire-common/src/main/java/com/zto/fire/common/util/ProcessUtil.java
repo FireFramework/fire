@@ -1,7 +1,8 @@
 package com.zto.fire.common.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,7 +15,7 @@ import java.io.InputStreamReader;
  * @author ChengLong 2019-4-10 15:50:23
  */
 public class ProcessUtil {
-    private final static Logger LOGGER = Logger.getLogger(ProcessUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProcessUtil.class);
 
     /**
      * 执行多条linux命令，不返回命令执行日志
@@ -108,10 +109,10 @@ public class ProcessUtil {
                             }
                         }
                         if (buffer.length() > 0) {
-                            LOGGER.info("ProcessUtil errorInputStreams is " + buffer.toString());
+                            logger.info("ProcessUtil errorInputStreams is " + buffer.toString());
                         }
                     } catch (IOException e) {
-                        LOGGER.info("ProcessUtil errorInputStreams is " + e.getMessage());
+                        logger.info("ProcessUtil errorInputStreams is " + e.getMessage());
                     } finally {
                         try {
                             if (inputStream != null)
@@ -139,7 +140,7 @@ public class ProcessUtil {
                         String line = null;
                         while ((line = br.readLine()) != null) {
                             if (line != null) {
-                                System.out.println(line);
+                                logger.info(line);
                             }
                         }
                     } catch (IOException e) {

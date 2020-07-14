@@ -45,9 +45,4 @@ public class ClassLoaderInfo {
         return classLoaderInfo;
     }
 
-    public static void main(String[] args) {
-        System.out.println(JSON.toJSONString(getClassLoaderInfo()));
-        System.out.println(JSON.toJSONString(getClassLoaderInfo()));
-        System.out.println(JSON.toJSONString(getClassLoaderInfo()));
-    }
 }

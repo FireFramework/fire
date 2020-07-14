@@ -15,27 +15,8 @@ import org.slf4j.LoggerFactory
  * @author ChengLong 2020-4-17 09:50:50
  */
 object KafkaUtils {
-  // 当前kafka监控的groupId
-  private lazy val kafkaMonitor = "bigdata_kafka_monitor"
+  private lazy val kafkaMonitor = "fire_kafka_consumer"
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
-  private lazy val kafkaCluster = new java.util.HashMap[String, String]
-  this.init
-
-  /**
-   * 初始化kafka连接信息
-   */
-  private def init: Unit = {
-    // 大数据kafka集群
-    kafkaCluster.put("bigdata", "192.168.25.80:9092,192.168.25.81:9092,192.168.25.82:9092,192.168.25.129:9092,192.168.25.130:9092,192.168.25.131:9092")
-    // zms kafka集群
-    kafkaCluster.put("zms", "192.168.11.101:9092,192.168.11.102:9092,192.168.11.103:9092,192.168.1.173:9092,192.168.5.29:9092,192.168.5.30:9092")
-    // 新的kafka集群
-    kafkaCluster.put("zmsNew", "192.168.73.31:9092,192.168.73.32:9092,192.168.73.33:9092,192.168.73.34:9092,192.168.73.35:9092,192.168.73.36:9092")
-    // 测试环境集群
-    kafkaCluster.put("test", "10.9.45.97:9092,10.9.15.38:9092,10.9.36.49:9092,10.9.36.50:9092")
-    // 新增kafka集群(宋昉)
-    kafkaCluster.put("kafka-ai", "10.9.30.13:9092,10.9.30.14:9092,10.9.30.15:9092,10.9.30.16:9092,10.9.30.17:9092")
-  }
 
   /**
    * 根据kafka集群名称获取broker地址
@@ -43,30 +24,7 @@ object KafkaUtils {
    * @param clusterName 集群名称
    * @return broker地址
    */
-  def getBorkers(clusterName: String): String = {
-    if (StringUtils.isNotBlank(clusterName)) return kafkaCluster.get(clusterName)
-    kafkaCluster.get("zms")
-  }
-
-  /*
-  /**
-   * 获取指定topic每一个partition的最新offset
-   *
-   * @param host  broker地址
-   * @param topic topic名称
-   * @return partition offset
-   */
-  def getLogEndOffset(host: String, topic: String): util.Map[TopicPartition, Long] = {
-    val endOffsets = new ConcurrentHashMap[TopicPartition, Long]
-    val consumer = createNewConsumer(host, kafkaMonitor)
-    val partitionInfoList = consumer.partitionsFor(topic)
-    val topicPartitions: java.util.List[TopicPartition] = partitionInfoList.stream.map((pi: PartitionInfo) => new TopicPartition(topic, pi.partition)).collect(Collectors.toList)
-    consumer.assign(topicPartitions)
-    consumer.seekToEnd(topicPartitions)
-    topicPartitions.forEach((topicPartition: TopicPartition) => endOffsets.put(topicPartition, consumer.position(topicPartition)))
-    consumer.close()
-    endOffsets
-  }*/
+  def getBorkers(clusterName: String): String = GlobalConstants.KafkaConf.kafkaMap.getOrElse(clusterName, "")
 
   /**
    * 创建新的kafka consumer
@@ -113,20 +71,19 @@ object KafkaUtils {
         kafkaConsumer.assign(topicPartitions)
         // 获取每个partition指定时间戳的偏移量
         val map = kafkaConsumer.offsetsForTimes(timestampsToSearch)
-        System.out.println("根据时间戳获取偏移量：map.size=" + map.size)
+        this.logger.info("根据时间戳获取偏移量：map.size={}", map.size())
         var offsetTimestamp: OffsetAndTimestamp = null
-        System.out.println("开始设置各分区初始偏移量...")
+        this.logger.info("开始设置各分区初始偏移量...")
         import scala.collection.JavaConversions._
         for (entry <- map.entrySet) { // 如果设置的查询偏移量的时间点大于最大的索引记录时间，那么value就为空
           offsetTimestamp = entry.getValue
           if (offsetTimestamp != null) { // 设置读取消息的偏移量
             val offset: java.lang.Long = offsetTimestamp.offset
             kafkaConsumer.seek(entry.getKey, offset)
-            System.out.println("seek: id=" + entry.getKey.partition + " offset=" + offset)
+            this.logger.info("seek: id=" + entry.getKey.partition + " offset=" + offset)
           }
         }
-      }
-      else { // 如果未指定时间戳，则直接获取消息
+      } else { // 如果未指定时间戳，则直接获取消息
         kafkaConsumer.subscribe(util.Arrays.asList(topic))
       }
       // 消费消息
@@ -143,9 +100,10 @@ object KafkaUtils {
         }
       }
     } catch {
-      case e: Exception =>
-        logger.error("获取消息失败", e)
-    } finally if (kafkaConsumer != null) kafkaConsumer.close()
+      case e: Exception => logger.error("获取消息失败", e)
+    } finally {
+      if (kafkaConsumer != null) kafkaConsumer.close()
+    }
     msg
   }
 

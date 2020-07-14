@@ -9,12 +9,13 @@ import org.apache.flink.api.common.state.*;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.metrics.MetricGroup;
 import org.apache.flink.util.Collector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
 import scala.collection.mutable.Buffer;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * 增强的MapFunction
@@ -24,6 +25,7 @@ import java.util.List;
  * @author ChengLong 2020-4-9 09:39:55
  */
 public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction implements MapFunction<IN, OUT>, MapPartitionFunction<IN, OUT>, FlatMapFunction<IN, OUT> {
+    private static final Logger logger = LoggerFactory.getLogger(FireMapFunction.class);
 
     @Override
     public void open(Configuration parameters) throws Exception {
@@ -219,7 +221,7 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
         try {
             intCounter = this.getIntCounter(name);
         } catch (Exception e) {
-            System.out.println("获取Int计数器失败，尝试注册新的Int计数器");
+            logger.error("获取Int计数器失败，尝试注册新的Int计数器", e);
         }
         intCounter.add(value);
         return intCounter;

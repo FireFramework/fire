@@ -11,6 +11,8 @@ import org.apache.commons.lang.time.DateUtils;
 import org.apache.spark.SparkEnv;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -39,6 +41,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
     private static AtomicBoolean isInit = new AtomicBoolean(false);
     // 定时任务黑名单，存放带有@Scheduler标识的方法名
     private static Map<String, String> blacklistMap = Maps.newHashMap();
+    private static final Logger logger = LoggerFactory.getLogger(SchedulerManager.class);
 
     static {
         String blacklistMethod = GlobalConstants.schedulerBlackList();
@@ -163,7 +166,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
                                     scheduler.scheduleJob(job, triggerBuilder.build());
                                     // 将已注册的task放到已注册标记列表中，防止重复注册同一个类的同一个定时方法
                                     alreadyRegisteredTaskMap.put(entry.getKey(), entry.getValue());
-                                    System.out.println("\u001B[33m---> 已注册定时任务[ " + entry.getKey() + "." + method.getName() + " ]，" + buildSchedulerInfo(anno) + ". \u001B[33m<---\u001B[0m");
+                                    logger.info("\u001B[33m---> 已注册定时任务[ {}.{} ]，{}. \u001B[33m<---\u001B[0m", entry.getKey(), method.getName(), buildSchedulerInfo(anno));
                                 }
                             }
                         }
@@ -173,8 +176,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
                     scheduler.start();
             }
         } catch (Exception e) {
-            System.err.println("定时任务注册失败：作为定时任务的类必须可序列化，并且标记有@Scheduled的方法必须是无参的！");
-            e.printStackTrace();
+            logger.error("定时任务注册失败：作为定时任务的类必须可序列化，并且标记有@Scheduled的方法必须是无参的！", e);
         }
     }
 
@@ -239,8 +241,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
         try {
             return scheduler.isStarted();
         } catch (Exception e) {
-            System.err.println("获取调度器是否启用失败");
-            e.printStackTrace();
+            logger.error("获取调度器是否启用失败", e);
         }
         return false;
     }
@@ -255,11 +256,10 @@ public class SchedulerManager extends BaseLogging implements Serializable {
             if (scheduler != null && !scheduler.isShutdown()) {
                 scheduler.shutdown(waitForJobsToComplete);
                 scheduler = null;
-                System.out.println("\u001B[33m---> 完成定时任务的资源回收. <---\u001B[0m");
+                logger.info("\u001B[33m---> 完成定时任务的资源回收. <---\u001B[0m");
             }
         } catch (Exception e) {
-            System.err.println("定时任务注册失败：作为定时任务的类必须可序列化，并且标记有@Scheduled的方法必须是无参的！");
-            e.printStackTrace();
+            logger.error("定时任务注册失败：作为定时任务的类必须可序列化，并且标记有@Scheduled的方法必须是无参的！", e);
         }
     }
 }

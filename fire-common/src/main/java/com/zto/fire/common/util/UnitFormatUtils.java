@@ -372,12 +372,4 @@ public class UnitFormatUtils {
         }
     }
 
-    public static void main(String[] args) {
-        System.out.println(readable(480070426624L, DateUnitEnum.BYTE));
-        System.out.println(format(1, DateUnitEnum.GB, DateUnitEnum.MB));
-        System.out.println(readable(1000, MoneyUnitEnum.分));
-        System.out.println(format(10000, MoneyUnitEnum.分, MoneyUnitEnum.元));
-        System.out.println(readable(65655889, TimeUnitEnum.s));
-        System.out.println(format(100, TimeUnitEnum.d, TimeUnitEnum.s));
-    }
 }
