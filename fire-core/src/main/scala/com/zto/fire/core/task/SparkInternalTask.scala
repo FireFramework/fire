@@ -23,9 +23,7 @@ private[fire] class SparkInternalTask(baseSpark: BaseSpark) extends FireInternal
    * 并将采集到的数据存放到EnvironmentAccumulator中
    */
   @Scheduled(fixedInterval = 60000, scope = "all", initialDelay = 60000L, concurrent = false)
-  override def jvmMonitor: Unit = {
-    super.jvmMonitor
-  }
+  override def jvmMonitor: Unit = super.jvmMonitor
 
   /**
    * 定时同步最新的conf信息到executor端
