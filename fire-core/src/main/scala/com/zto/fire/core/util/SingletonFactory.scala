@@ -94,7 +94,7 @@ object SingletonFactory {
     * @return
     */
   def getHBaseContextInstance(sparkContext: SparkContext): HBaseContextExt = {
-    if (this.hbaseContext == null) {
+    if (this.hbaseContext == null && StringUtils.isNotBlank(GlobalConstants.hbaseCluster)) {
       this.hbaseContext = new HBaseContextExt(sparkContext, HBaseOper.getConfiguration)
     }
     this.hbaseContext
