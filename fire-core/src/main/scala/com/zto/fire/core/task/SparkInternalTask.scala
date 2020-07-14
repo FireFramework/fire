@@ -1,37 +1,30 @@
 package com.zto.fire.core.task
 
 import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializerFeature
-import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.common.anno.Scheduled
-import com.zto.fire.common.bean.runtime.RuntimeInfo
 import com.zto.fire.common.util.{DateFormatUtils, EncryptUtils, HttpClientUtils, ValueUtils}
 import com.zto.fire.core.BaseSpark
 import org.apache.commons.httpclient.Header
-import org.apache.log4j.LogManager
 import org.apache.spark.{SparkConf, SparkEnv}
 
 import scala.collection.JavaConversions
 
 /**
- * 定时任务调度器，用于定时执行fire框架内部指定的任务
+ * 定时任务调度器，用于定时执行Spark框架内部指定的任务
  *
  * @author ChengLong 2019年11月5日 10:11:31
  */
-private[fire] class InternalTask(baseSpark: BaseSpark) extends Serializable {
+private[fire] class SparkInternalTask(baseSpark: BaseSpark) extends FireInternalTask(baseSpark) {
   // fire框架restful地址
   private var restful: String = _
-  private val logger = LogManager.getLogger(this.getClass)
 
   /**
    * 定时采集运行时的jvm、gc、thread、cpu、memory、disk等信息
    * 并将采集到的数据存放到EnvironmentAccumulator中
    */
-  @Scheduled(fixedInterval = 10000, scope = "all", initialDelay = 0L, concurrent = false)
-  def jvmMonitor: Unit = {
-    val jvmInfo = JSON.toJSONString(RuntimeInfo.getRuntimeInfo, SerializerFeature.NotWriteRootClassName)
-    AccumulatorManager.addEnv(jvmInfo)
-    logger.info("Jvm收集结果：" + jvmInfo)
+  @Scheduled(fixedInterval = 60000, scope = "all", initialDelay = 60000L, concurrent = false)
+  override def jvmMonitor: Unit = {
+    super.jvmMonitor
   }
 
   /**

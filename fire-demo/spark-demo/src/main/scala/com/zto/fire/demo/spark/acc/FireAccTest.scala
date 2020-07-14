@@ -2,6 +2,7 @@ package com.zto.fire.demo.spark.acc
 
 import java.util.concurrent.TimeUnit
 
+import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
@@ -54,6 +55,22 @@ object FireAccTest extends BaseSparkStreaming {
 
     println(s"======multiTimer.size=${size}==log.size=${this.acc.getLog.size()}======")
   }
+
+  @Scheduled(fixedInterval = 60 * 1000, scope = "all")
+  def loadTable: Unit = {
+    println(s"${DateFormatUtils.formatCurrentDateTime()}=================== 每分钟执行loadTable ===================")
+  }
+
+  @Scheduled(cron = "0 0 * * * ?")
+  def loadTable2: Unit = {
+    println(s"${DateFormatUtils.formatCurrentDateTime()}=================== 每小时执行loadTable2 ===================")
+  }
+
+  @Scheduled(cron = "0 0 9 * * ?")
+  def loadTable3: Unit = {
+    println(s"${DateFormatUtils.formatCurrentDateTime()}=================== 每天9点执行loadTable3 ===================")
+  }
+
 
   def main(args: Array[String]): Unit = {
     this.init(1, false)

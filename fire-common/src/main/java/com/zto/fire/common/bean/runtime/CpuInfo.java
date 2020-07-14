@@ -3,7 +3,6 @@ package com.zto.fire.common.bean.runtime;
 import com.alibaba.fastjson.JSON;
 import com.sun.management.OperatingSystemMXBean;
 import com.zto.fire.common.util.MathUtils;
-import com.zto.fire.common.util.alarm.MailUtils;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.CentralProcessor.TickType;

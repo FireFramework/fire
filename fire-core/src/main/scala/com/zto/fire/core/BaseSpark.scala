@@ -7,7 +7,7 @@ import com.zto.fire.common.util._
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
 import com.zto.fire.core.rest.{RestfulRegister, SparkSystemRestful}
-import com.zto.fire.core.task.InternalTask
+import com.zto.fire.core.task.SparkInternalTask
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.scheduler.SparkListener
@@ -155,7 +155,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    */
   override protected def deployConf: Unit = {
     // 向driver和executor注册定时任务
-    val taskSchedule = new InternalTask(this)
+    val taskSchedule = new SparkInternalTask(this)
     // driver端注册定时任务
     SchedulerManager.registerTasks(this, taskSchedule, this.listener)
     // executor端与自定义累加器一同完成定时任务注册
