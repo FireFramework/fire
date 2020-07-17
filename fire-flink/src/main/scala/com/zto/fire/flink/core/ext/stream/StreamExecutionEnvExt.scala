@@ -2,7 +2,8 @@ package com.zto.fire.flink.core.ext.stream
 
 import java.util.Properties
 
-import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ValueUtils}
+import com.zto.fire.common.conf.FireKafkaConf
+import com.zto.fire.common.util.{KafkaUtils, ValueUtils}
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.JobExecutionResult
@@ -36,7 +37,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
   def createKafkaConsumer(kafkaParams: Map[String, Object] = null,
                           topics: Set[String] = null,
                           keyNum: Int = 1): FlinkKafkaConsumer011[String] = {
-    val confTopics = GlobalConstants.KafkaConf.kafkaTopics(keyNum)
+    val confTopics = FireKafkaConf.kafkaTopics(keyNum)
     val topicList = if (StringUtils.isNotBlank(confTopics)) confTopics.split(",") else topics.toArray
     assert(topicList != null && topicList.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：flink.kafka.topics$keyNum")
 
@@ -72,15 +73,15 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
     if (runtimeContext != null) kafkaConsumer.setRuntimeContext(runtimeContext)
     if (specificStartupOffsets != null) kafkaConsumer.setStartFromSpecificOffsets(JavaConversions.mapAsJavaMap(specificStartupOffsets))
     // 设置从指定时间戳位置开始消费kafka
-    kafkaConsumer.setStartFromTimestamp(GlobalConstants.KafkaConf.kafkaStartFromTimeStamp(keyNum))
+    kafkaConsumer.setStartFromTimestamp(FireKafkaConf.kafkaStartFromTimeStamp(keyNum))
     // 是否在checkpoint时记录offset值
-    kafkaConsumer.setCommitOffsetsOnCheckpoints(GlobalConstants.KafkaConf.kafkaCommitOnCheckpoint(keyNum))
+    kafkaConsumer.setCommitOffsetsOnCheckpoints(FireKafkaConf.kafkaCommitOnCheckpoint(keyNum))
     // 设置从最早的位置开始消费
-    if (GlobalConstants.KafkaConf.offsetSmallest.equalsIgnoreCase(GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum))) kafkaConsumer.setStartFromEarliest()
+    if (FireKafkaConf.offsetSmallest.equalsIgnoreCase(FireKafkaConf.kafkaStartingOffset(keyNum))) kafkaConsumer.setStartFromEarliest()
     // 设置从最新位置开始消费
-    if (GlobalConstants.KafkaConf.offsetLargest.equalsIgnoreCase(GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum))) kafkaConsumer.setStartFromLatest()
+    if (FireKafkaConf.offsetLargest.equalsIgnoreCase(FireKafkaConf.kafkaStartingOffset(keyNum))) kafkaConsumer.setStartFromLatest()
     // 从topic中指定的group上次消费的位置开始消费，必须配置group.id参数
-    if (GlobalConstants.KafkaConf.kafkaStartFromGroupOffsets(keyNum)) kafkaConsumer.setStartFromGroupOffsets()
+    if (FireKafkaConf.kafkaStartFromGroupOffsets(keyNum)) kafkaConsumer.setStartFromGroupOffsets()
 
     this.env.addSource(kafkaConsumer)
   }

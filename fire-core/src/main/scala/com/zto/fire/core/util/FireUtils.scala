@@ -3,8 +3,10 @@ package com.zto.fire.core.util
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.bean.ogg.OGGBean
-import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, PropUtils, ValueUtils}
+import com.zto.fire.common.conf.{FireConf, FirePS1Conf}
+import com.zto.fire.common.util.{DateFormatUtils, PropUtils, ValueUtils}
 import org.apache.commons.lang3.StringUtils
+
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -48,7 +50,7 @@ object FireUtils extends Serializable {
         case _ if retryNum > 1 => {
           Thread.sleep(duration)
           count += 1
-          println(s"${GlobalConstants.PS1.RED}第${count}次执行. 时间:${DateFormatUtils.formatCurrentDateTime()}. 间隔:${duration}.${GlobalConstants.PS1.DEFAULT}")
+          println(s"${FirePS1Conf.RED}第${count}次执行. 时间:${DateFormatUtils.formatCurrentDateTime()}. 间隔:${duration}.${FirePS1Conf.DEFAULT}")
           redo(retryNum - 1, duration)(fun)
         }
         case util.Failure(e) => throw e
@@ -157,14 +159,14 @@ object FireUtils extends Serializable {
    * 判断是否为spark引擎
    */
   def isSparkEngine: Boolean = {
-    GlobalConstants.isSparkEngine
+    FireConf.isSparkEngine
   }
 
   /**
    * 判断是否为flink引擎
    */
   def isFlinkEngine: Boolean = {
-    GlobalConstants.isFlinkEngine
+    FireConf.isFlinkEngine
   }
 
   /**
@@ -186,9 +188,9 @@ object FireUtils extends Serializable {
           |                 \/__/        |:|  |        \:\__\
           |                               \|__|         \/__/     version
           |
-          |""".stripMargin.replace("version", s"version ${GlobalConstants.PS1.PINK + PropUtils.getString("spark.fire.version", "1.0.0")}")
+          |""".stripMargin.replace("version", s"version ${FirePS1Conf.PINK + PropUtils.getString("spark.fire.version", "1.0.0")}")
 
-      println(GlobalConstants.PS1.GREEN + info + GlobalConstants.PS1.DEFAULT)
+      println(FirePS1Conf.GREEN + info + FirePS1Conf.DEFAULT)
       this.isSplash = true
     }
   }

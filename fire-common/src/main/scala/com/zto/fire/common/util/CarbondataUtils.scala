@@ -1,6 +1,7 @@
 package com.zto.fire.common.util
 
 import com.zto.fire.common.anno.FieldName
+import com.zto.fire.common.conf.FireSparkConf
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.JavaConversions
@@ -23,7 +24,7 @@ object CarbondataUtils {
     * 是否创建成streaming表
     * @return
     */
-  def buildCreateTableSQL(dbName: String, tableName: String, tableSchema: Class[_], partition: String = GlobalConstants.SparkConf.partitionName, isStreaming: Boolean = false): String = {
+  def buildCreateTableSQL(dbName: String, tableName: String, tableSchema: Class[_], partition: String = FireSparkConf.partitionName, isStreaming: Boolean = false): String = {
     val schema = JavaConversions.mapAsScalaMap(ReflectionUtils.getAllFields(tableSchema))
     val sql = new StringBuilder(s"CREATE TABLE IF NOT EXISTS ${dbName}.${tableName}(\n")
     schema.foreach(t => {
@@ -64,7 +65,7 @@ object CarbondataUtils {
     * 表的schema信息，与javabean对应
     * @return
     */
-  def buildCreatePartitioinTableSQL(dbName: String, tableName: String, tableSchema: Class[_], partition: String = GlobalConstants.SparkConf.partitionName): String = {
+  def buildCreatePartitioinTableSQL(dbName: String, tableName: String, tableSchema: Class[_], partition: String = FireSparkConf.partitionName): String = {
     this.buildCreateTableSQL(dbName, tableName, tableSchema, partition, false)
   }
 
@@ -76,7 +77,7 @@ object CarbondataUtils {
     * @param tableName
     * 表名
     */
-  def dropCarbonTable(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
+  def dropCarbonTable(dbName: String = FireSparkConf.defaultDB, tableName: String): String = {
     s"""
        |DROP TABLE IF EXISTS ${dbName}.${tableName}
      """.stripMargin
@@ -88,7 +89,7 @@ object CarbondataUtils {
     * @param tableName
     * @return
     */
-  def minorCompact(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
+  def minorCompact(dbName: String = FireSparkConf.defaultDB, tableName: String): String = {
     s"""
        |ALTER TABLE ${dbName}.${tableName} COMPACT 'MINOR'
      """.stripMargin
@@ -100,7 +101,7 @@ object CarbondataUtils {
     * @param tableName
     * @return
     */
-  def majorCompact(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
+  def majorCompact(dbName: String = FireSparkConf.defaultDB, tableName: String): String = {
     s"""
        |ALTER TABLE ${dbName}.${tableName} COMPACT 'MAJOR'
      """.stripMargin
@@ -112,7 +113,7 @@ object CarbondataUtils {
     * @param tableName
     * @return
     */
-  def enableStreamingTable(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
+  def enableStreamingTable(dbName: String = FireSparkConf.defaultDB, tableName: String): String = {
     s"""
        |ALTER TABLE ${dbName}.${tableName} SET TBLPROPERTIES('streaming'='true')
      """.stripMargin

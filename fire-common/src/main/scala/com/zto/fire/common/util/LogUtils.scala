@@ -1,8 +1,9 @@
 package com.zto.fire.common.util
 
+import com.zto.fire.common.conf.FirePS1Conf
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.{Logger, LoggerFactory}
 import org.slf4j.event.Level
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
  * 日志工具类
@@ -29,12 +30,12 @@ object LogUtils {
    * @param fun
    * 用户自定义的操作
    */
-  def logStyle(logger: Logger, title: String = "", style: String = "-", level: Level = Level.WARN)(fun: Logger => Unit): Unit = {
+  def logStyle(logger: Logger, title: String = "", style: String = "-", level: Level = Level.INFO)(fun: Logger => Unit): Unit = {
     val styleRepeat = StringUtils.repeat(style, 19)
-    val titleStart = styleRepeat + s"${GlobalConstants.PS1.GREEN}> start: " + title + s" <${GlobalConstants.PS1.DEFAULT}" + styleRepeat
+    val titleStart = styleRepeat + s"${FirePS1Conf.GREEN}> start: " + title + s" <${FirePS1Conf.DEFAULT}" + styleRepeat
     this.logLevel(logger, titleStart, level)
     fun(logger)
-    val titleEnd = styleRepeat + s"${GlobalConstants.PS1.GREEN}> end:   " + title + s" <${GlobalConstants.PS1.DEFAULT}" + styleRepeat
+    val titleEnd = styleRepeat + s"${FirePS1Conf.GREEN}> end:   " + title + s" <${FirePS1Conf.DEFAULT}" + styleRepeat
     this.logLevel(logger, titleEnd, level)
   }
 
@@ -44,7 +45,7 @@ object LogUtils {
   def logMap(logger: Logger, map: Map[_, _], title: String): Unit = {
     if (logger != null && map != null && map.nonEmpty) {
       LogUtils.logStyle(this.logger, title)(logger => {
-        map.foreach(kv => logger.warn(s"---> ${kv._1} = ${kv._2}"))
+        map.foreach(kv => logger.info(s"---> ${kv._1} = ${kv._2}"))
       })
     }
   }
@@ -60,7 +61,7 @@ object LogUtils {
    * 日志的级别
    */
   def logLevel(logger: Logger, log: String, level: Level = Level.INFO, ps: String = null): Unit = {
-    val logMsg = if (StringUtils.isNotBlank(ps)) s"$ps $log ${GlobalConstants.PS1.DEFAULT}" else log
+    val logMsg = if (StringUtils.isNotBlank(ps)) s"$ps $log ${FirePS1Conf.DEFAULT}" else log
     level match {
       case Level.DEBUG => logger.debug(logMsg)
       case Level.INFO => logger.info(logMsg)

@@ -1,7 +1,7 @@
 package com.zto.fire.core.ext.core
 
-import com.zto.fire.common.util.GlobalConstants.RocketConf.rocketOffsetLargest
-import com.zto.fire.common.util.{GlobalConstants, RocketUtils, ValueUtils}
+import com.zto.fire.common.conf.{FireKafkaConf, FireRocketConf}
+import com.zto.fire.common.util.RocketUtils
 import com.zto.fire.core.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -41,10 +41,10 @@ class StreamingContextExt(ssc: StreamingContext) {
    */
   def createDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, groupId: String = null, keyNum: Int = 1): DStream[ConsumerRecord[String, String]] = {
     // kafka topic优先级：配置文件 > topics参数
-    val confTopic = GlobalConstants.KafkaConf.kafkaTopics(keyNum)
+    val confTopic = FireKafkaConf.kafkaTopics(keyNum)
     val finalKafkaTopic = if (StringUtils.isNotBlank(confTopic)) SparkUtils.topicSplit(confTopic) else topics
     assert(finalKafkaTopic != null && finalKafkaTopic.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
-    this.logger.warn(s"kafka topic is $finalKafkaTopic")
+    this.logger.info(s"kafka topic is $finalKafkaTopic")
 
     val confKafkaParams = com.zto.fire.common.util.KafkaUtils.kafkaParams(kafkaParams, groupId, keyNum = keyNum)
     assert(confKafkaParams.nonEmpty, "kafka相关配置不能为空！")
@@ -78,19 +78,19 @@ class StreamingContextExt(ssc: StreamingContext) {
                              keyNum: Int = 1): InputDStream[MessageExt] = {
 
     // 获取topic信息，配置文件优先级高于代码中指定的
-    val confTopics = GlobalConstants.RocketConf.rocketTopics(keyNum)
+    val confTopics = FireRocketConf.rocketTopics(keyNum)
     val finalTopics = if (StringUtils.isNotBlank(confTopics)) confTopics else topics
     assert(StringUtils.isNotBlank(finalTopics), s"RocketMQ的Topics不能为空，请在配置文件中指定：spark.rocket.topics$keyNum")
 
     // 起始消费位点
-    val confOffset = GlobalConstants.RocketConf.rocketStartingOffset(keyNum)
+    val confOffset = FireRocketConf.rocketStartingOffset(keyNum)
     val finalConsumerStrategy = if (StringUtils.isNotBlank(confOffset)) RocketUtils.valueOfStrategy(confOffset) else consumerStrategy
 
     // 是否自动提交offset
-    val finalAutoCommit = GlobalConstants.RocketConf.rocketEnableAutoCommit(keyNum)
+    val finalAutoCommit = FireRocketConf.rocketEnableAutoCommit(keyNum)
 
     // groupId信息
-    val confGroupId = GlobalConstants.RocketConf.rocketGroupId(keyNum)
+    val confGroupId = FireRocketConf.rocketGroupId(keyNum)
     val finalGroupId = if (StringUtils.isNotBlank(confGroupId)) confGroupId else groupId
     assert(StringUtils.isNotBlank(finalGroupId), s"RocketMQ的groupId不能为空，请在配置文件中指定：spark.rocket.group.id$keyNum")
 
@@ -105,8 +105,8 @@ class StreamingContextExt(ssc: StreamingContext) {
       JavaConversions.asJavaCollection(finalTopics.split(",").toList),
       finalConsumerStrategy,
       finalAutoCommit,
-      forceSpecial = GlobalConstants.RocketConf.rocketForceSpecial(keyNum),
-      failOnDataLoss = GlobalConstants.RocketConf.rocketFailOnDataLoss(keyNum),
+      forceSpecial = FireRocketConf.rocketForceSpecial(keyNum),
+      failOnDataLoss = FireRocketConf.rocketFailOnDataLoss(keyNum),
       locationStrategy, finalRocketParam)
   }
 

@@ -4,7 +4,7 @@ import java.lang.reflect.Field
 
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.bean.ogg.OGGBean
-import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, ReflectionUtils, ValueUtils}
+import com.zto.fire.common.util.{DateFormatUtils, ReflectionUtils, ValueUtils}
 import com.zto.fire.core.util.FireUtils
 import com.zto.fire.flink.core.ext.functions.FireMapFunction
 import com.zto.fire.flink.core.sink.{FlinkHBaseSink, FlinkJdbcSink}

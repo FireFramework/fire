@@ -4,6 +4,7 @@ import java.sql.ResultSet
 import java.util.{Date, Properties}
 
 import com.zto.fire.common.anno.FieldName
+import com.zto.fire.common.conf.FireJdbcConf
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable.ListBuffer
@@ -119,11 +120,11 @@ object DBUtils {
   def getJdbcProps(jdbcProps: Properties = null, keyNum: Int = 1): Properties = {
     if (jdbcProps == null || jdbcProps.size() == 0) {
       val defaultProps = new Properties()
-      defaultProps.setProperty("user", GlobalConstants.JdbcConf.user(keyNum))
-      defaultProps.setProperty("password", GlobalConstants.JdbcConf.password(keyNum))
-      defaultProps.setProperty("driver", GlobalConstants.JdbcConf.driverClass(keyNum))
-      defaultProps.setProperty("batchsize", GlobalConstants.JdbcConf.batchSize(keyNum).toString)
-      defaultProps.setProperty("isolationLevel", GlobalConstants.JdbcConf.isolationLevel(keyNum).toUpperCase)
+      defaultProps.setProperty("user", FireJdbcConf.user(keyNum))
+      defaultProps.setProperty("password", FireJdbcConf.password(keyNum))
+      defaultProps.setProperty("driver", FireJdbcConf.driverClass(keyNum))
+      defaultProps.setProperty("batchsize", FireJdbcConf.batchSize(keyNum).toString)
+      defaultProps.setProperty("isolationLevel", FireJdbcConf.isolationLevel(keyNum).toUpperCase)
       defaultProps
     } else {
       jdbcProps

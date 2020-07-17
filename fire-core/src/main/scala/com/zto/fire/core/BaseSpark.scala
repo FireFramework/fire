@@ -1,6 +1,7 @@
 package com.zto.fire.core
 
 import com.zto.fire.common.acc.AccumulatorManager
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf, FireSparkConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util._
@@ -39,10 +40,11 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 注：该方法会同时在driver端与executor端执行
    */
   override private[fire] final def boot: Unit = {
+    this.loadConf
     PropUtils.load(this.appName)
     PropUtils.setProperty("spark.driver.class.name", this.className)
-    if (StringUtils.isNotBlank(GlobalConstants.SparkConf.appName)) {
-      this.appName = GlobalConstants.SparkConf.appName
+    if (StringUtils.isNotBlank(FireSparkConf.appName)) {
+      this.appName = FireSparkConf.appName
     }
     super.boot
     this.wrapLogInfo("<-- 完成fire框架初始化 -->")
@@ -92,20 +94,23 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * @return
    * 合并后的SparkConf对象
    */
-  def buildConf(conf: SparkConf = null): SparkConf
+  def buildConf(conf: SparkConf): SparkConf = {
+    if (conf == null) new SparkConf().setAppName(this.appName) else conf
+  }
+
 
   /**
    * 构建一系列context对象
    */
   override private[fire] final def createContext(conf: Any): Unit = {
-    this.retry(GlobalConstants.FireConf.restfulPortRetryNum, GlobalConstants.FireConf.restfulPortRetryDuration) {
+    this.retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
       this.restPort = SystemInfoUtils.getRundomPort
       this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
     }
     this.systemRestful = new SparkSystemRestful(this)
 
     // 注册到zrc平台，并覆盖配置信息
-    if (this.jobType != JobType.SPARK_CORE && GlobalConstants.FireConf.zrcEnable) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
+    if (this.jobType != JobType.SPARK_CORE && FireFrameworkConf.zrcEnable) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     PropUtils.print()
 
     // 构建SparkConf信息
@@ -114,8 +119,8 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     tmpConf.set("spark.driver.class.simple.name", this.driverClass)
 
     // 如果启用hive，则获取hive metastore地址
-    if (GlobalConstants.HiveConf.hiveSupportEnable) {
-      val hiveMetastoreUrl = GlobalConstants.HiveConf.getMetastoreUrl
+    if (FireHiveConf.hiveSupportEnable) {
+      val hiveMetastoreUrl = FireHiveConf.getMetastoreUrl
       assert(StringUtils.isNotBlank(hiveMetastoreUrl), "未找到匹配的hive metastore地址，请配置：spark.hive.cluster")
       tmpConf.set("hive.metastore.uris", hiveMetastoreUrl)
     }
@@ -123,18 +128,18 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     // 构建SparkSession对象
     val sessionBuilder = SparkSession.builder().config(tmpConf)
     // spark.hive.support.enable
-    if (GlobalConstants.HiveConf.hiveSupportEnable) sessionBuilder.enableHiveSupport()
+    if (FireHiveConf.hiveSupportEnable) sessionBuilder.enableHiveSupport()
     // 在mac或windows环境下执行local模式，cpu数通过spark.local.cores指定，默认local[*]
-    if (SystemInfoUtils.isLocal) sessionBuilder.master(s"local[${GlobalConstants.SparkConf.localCores}]")
+    if (SystemInfoUtils.isLocal) sessionBuilder.master(s"local[${FireSparkConf.localCores}]")
     this.spark = sessionBuilder.getOrCreate()
 
     SingletonFactory.setSparkSession(this.spark)
     this.spark.registerUDF()
     this.sc = this.spark.sparkContext
     // 关联所连接的hive集群，根据预制方案启用HDFS HA
-    GlobalConstants.HdfsConf.linkHiveCluster(this.sc.hadoopConfiguration)
+    FireHDFSConf.linkHiveCluster(this.sc.hadoopConfiguration)
     this.catalog = this.spark.catalog
-    this.sc.setLogLevel(GlobalConstants.SparkConf.logLevel)
+    this.sc.setLogLevel(FireSparkConf.logLevel)
     this.listener = new BaseSparkListener(this)
     this.sc.addSparkListener(listener)
     this.initLogging(this.className)
@@ -161,7 +166,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     // executor端与自定义累加器一同完成定时任务注册
     AccumulatorManager.registerTasks(this, taskSchedule)
     // 向executor端注册自定义累加器
-    if (this.jobType != JobType.SPARK_CORE) this.acc.registerAccumulators(this.sc)
+    if (FireFrameworkConf.accEnable) this.acc.registerAccumulators(this.sc)
   }
 
   /**

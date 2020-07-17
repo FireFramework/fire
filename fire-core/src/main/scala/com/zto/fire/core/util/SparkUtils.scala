@@ -1,29 +1,20 @@
 package com.zto.fire.core.util
 
 import java.lang.reflect.Field
-import java.sql.ResultSet
-import java.text.NumberFormat
-import java.util.{Locale, Properties}
 
 import com.zto.fire.common.anno.FieldName
+import com.zto.fire.common.conf.{FireHiveConf, FireSparkConf, FireStringConf}
 import com.zto.fire.common.util._
 import com.zto.fire.core.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils
-import org.apache.hadoop.hbase.client.Scan
-import org.apache.hadoop.hbase.protobuf.ProtobufUtil
-import org.apache.hadoop.hbase.util.{Base64, Bytes}
-import org.apache.kafka.common.serialization.StringDeserializer
-import org.apache.rocketmq.spark.RocketMQConfig
 import org.apache.spark.SparkEnv
-import org.apache.spark.sql.catalyst.{CatalystTypeConverters, InternalRow}
+import org.apache.spark.sql.catalyst.CatalystTypeConverters
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.reflect._
 import scala.util.Try
 
 
@@ -242,8 +233,8 @@ object SparkUtils {
    * @return
    * 库名.表名
    */
-  def getFullTableName(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
-    val dbNameStr = if (StringUtils.isBlank(dbName)) GlobalConstants.SparkConf.defaultDB else dbName
+  def getFullTableName(dbName: String = FireSparkConf.defaultDB, tableName: String): String = {
+    val dbNameStr = if (StringUtils.isBlank(dbName)) FireSparkConf.defaultDB else dbName
     s"$dbNameStr.$tableName"
   }
 
@@ -270,9 +261,9 @@ object SparkUtils {
 
     if (optConf.isDefined && StringUtils.isNotBlank(optConf.get)) {
       optConf.get.replace("\\", "")
-        .replace(GlobalConstants.Strings.hostNamePrefix, GlobalConstants.Strings.ipPrefxi)
+        .replace(FireStringConf.hostNamePrefix, FireStringConf.ipPrefxi)
     } else {
-      spark.sparkContext.uiWebUrl.get.replace(GlobalConstants.Strings.hostNamePrefix, GlobalConstants.Strings.ipPrefxi)
+      spark.sparkContext.uiWebUrl.get.replace(FireStringConf.hostNamePrefix, FireStringConf.ipPrefxi)
     }
   }
 
@@ -297,7 +288,7 @@ object SparkUtils {
    */
   def overrideBatchDuration(batchDuration: Long, hotRestart: Boolean): Long = {
     if (hotRestart) return batchDuration
-    val confBathDuration = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_STREAMING_BATCH_DURATION, -1)
+    val confBathDuration = FireSparkConf.confBathDuration
     if (confBathDuration == -1) {
       batchDuration
     } else {
@@ -463,7 +454,7 @@ object SparkUtils {
    */
   def executeHiveConfSQL(spark: SparkSession): Unit = {
     if (spark != null) {
-      val confMap = GlobalConstants.HiveConf.hiveConfMap
+      val confMap = FireHiveConf.hiveConfMap
       LogUtils.logMap(this.logger, confMap, "Execute hive sql conf.")
     }
   }

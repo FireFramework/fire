@@ -3,6 +3,7 @@ package com.zto.fire.common.util
 import java.util
 import java.util.Properties
 
+import com.zto.fire.common.conf.FireKafkaConf
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetAndTimestamp}
 import org.apache.kafka.common.TopicPartition
@@ -24,7 +25,7 @@ object KafkaUtils {
    * @param clusterName 集群名称
    * @return broker地址
    */
-  def getBorkers(clusterName: String): String = GlobalConstants.KafkaConf.kafkaMap.getOrElse(clusterName, "")
+  def getBorkers(clusterName: String): String = FireKafkaConf.kafkaMap.getOrElse(clusterName, "")
 
   /**
    * 创建新的kafka consumer
@@ -122,7 +123,7 @@ object KafkaUtils {
   def kafkaParams(kafkaParams: Map[String, Object] = null,
                   groupId: String = null,
                   kafkaBrokers: String = null,
-                  offset: String = GlobalConstants.KafkaConf.offsetLargest,
+                  offset: String = FireKafkaConf.offsetLargest,
                   autoCommit: Boolean = false,
                   keyNum: Int = 1): Map[String, Object] = {
 
@@ -131,20 +132,20 @@ object KafkaUtils {
     if (kafkaParams != null && kafkaParams.nonEmpty) consumerMap ++= kafkaParams
 
     // 如果没有在配置文件中指定brokers，则认为从代码中获取，此处返回空的map，用于上层判断
-    val confBrokers = GlobalConstants.KafkaConf.kafkaBrokers(keyNum)
+    val confBrokers = FireKafkaConf.kafkaBrokers(keyNum)
     val finalKafkaBrokers = if (StringUtils.isNotBlank(confBrokers)) confBrokers else kafkaBrokers
     if (StringUtils.isNotBlank(finalKafkaBrokers)) consumerMap += ("bootstrap.servers" -> finalKafkaBrokers)
 
     // 如果配置文件中没有指定spark.kafka.group.id，则默认获取用户指定的groupId
-    val confGroupId = GlobalConstants.KafkaConf.kafkaGroupId(keyNum)
+    val confGroupId = FireKafkaConf.kafkaGroupId(keyNum)
     val finalKafkaGroupId = if (StringUtils.isNotBlank(confGroupId)) confGroupId else groupId
     if (StringUtils.isNotBlank(finalKafkaGroupId)) consumerMap += ("group.id" -> finalKafkaGroupId)
 
-    val confOffset = GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum)
+    val confOffset = FireKafkaConf.kafkaStartingOffset(keyNum)
     val finalOffset = if (StringUtils.isNotBlank(confOffset)) confOffset else offset
     if (StringUtils.isNotBlank(finalOffset)) consumerMap += ("auto.offset.reset" -> finalOffset)
 
-    val confAutoCommit = GlobalConstants.KafkaConf.kafkaEnableAutoCommit(keyNum)
+    val confAutoCommit = FireKafkaConf.kafkaEnableAutoCommit(keyNum)
     val finalAutoCommit = if (confAutoCommit != null) confAutoCommit else autoCommit
     if (finalAutoCommit != null) consumerMap += ("enable.auto.commit" -> (finalAutoCommit: java.lang.Boolean))
 
@@ -152,13 +153,13 @@ object KafkaUtils {
     consumerMap ++= collection.mutable.Map[String, Object](
       "key.deserializer" -> classOf[StringDeserializer],
       "value.deserializer" -> classOf[StringDeserializer],
-      "session.timeout.ms" -> GlobalConstants.KafkaConf.kafkaSessionTimeOut(keyNum),
-      "request.timeout.ms" -> GlobalConstants.KafkaConf.kafkaRequestTimeOut(keyNum),
-      "max.poll.interval.ms" -> GlobalConstants.KafkaConf.kafkaPollInterval(keyNum)
+      "session.timeout.ms" -> FireKafkaConf.kafkaSessionTimeOut(keyNum),
+      "request.timeout.ms" -> FireKafkaConf.kafkaRequestTimeOut(keyNum),
+      "max.poll.interval.ms" -> FireKafkaConf.kafkaPollInterval(keyNum)
     )
 
     // 以spark.kafka.conf.开头的配置优先级最高
-    val configMap = GlobalConstants.KafkaConf.kafkaConfMapWithType(keyNum)
+    val configMap = FireKafkaConf.kafkaConfMapWithType(keyNum)
     if (configMap.nonEmpty) consumerMap ++= configMap
     // 日志记录最终生效的kafka配置
     LogUtils.logMap(this.logger, consumerMap.toMap, s"Kafka client configuration. keyNum=$keyNum.")

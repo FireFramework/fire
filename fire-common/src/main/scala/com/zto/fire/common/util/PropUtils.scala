@@ -5,6 +5,7 @@ import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.alibaba.fastjson.JSON
+import com.zto.fire.common.conf._
 import com.zto.fire.common.data.DataPool
 import com.zto.fire.common.enu.DataSource
 import org.apache.commons.lang3.StringUtils
@@ -69,7 +70,7 @@ object PropUtils {
             }
             if (resource == null) this.logger.warn(s"未找到配置文件[ $fullName ]，请核实！")
             if (resource != null) {
-              this.logger.warn(s"${GlobalConstants.PS1.YELLOW} -------------> loaded ${fullName} <------------- ${GlobalConstants.PS1.DEFAULT}")
+              this.logger.info(s"${FirePS1Conf.YELLOW} -------------> loaded ${fullName} <------------- ${FirePS1Conf.DEFAULT}")
               props.load(resource)
               this.alreadyLoadMap.put(fileName, fileName)
             }
@@ -348,7 +349,7 @@ object PropUtils {
         if (key != null && !key.toString.contains("pass")) {
           // 如果是spark引擎，则忽略flink相关配置；如果是flink引擎，则忽略spark相关配置
           if (("spark".equals(this.keyPrefix) && !key.toString.startsWith("flink")) || ("flink".equals(this.keyPrefix) && !key.toString.startsWith("spark"))) {
-            logger.warn(s">>${GlobalConstants.PS1.PINK} $key --> ${this.props.get(key)} ${GlobalConstants.PS1.DEFAULT}")
+            logger.info(s">>${FirePS1Conf.PINK} $key --> ${this.props.get(key)} ${FirePS1Conf.DEFAULT}")
           }
         }
       })
@@ -452,7 +453,7 @@ object PropUtils {
   def invokeZrcConf(className: String, rest: String): Unit = {
     val param =
       s"""
-         |{"className": "$className", "url": "http://$rest", "fireVersion": "${this.getString("spark.fire.version")}", "zrcKey": "${GlobalConstants.FireConf.zrcSecret}"}
+         |{"className": "$className", "url": "http://$rest", "fireVersion": "${this.getString("spark.fire.version")}", "zrcKey": "${FireFrameworkConf.zrcSecret}"}
       """.stripMargin
     this.setProperty("spark.rest.url", s"http://$rest")
     var conf = ""
@@ -509,15 +510,15 @@ object PropUtils {
 
     JavaConversions.asScalaSet(this.props.keySet()).map(key => key.toString).filter(key => !key.contains("cluster.map")).foreach(key => {
       // 配置的Hive源
-      merge(DataSource.Hive, key, GlobalConstants.PropKeys.HIVE_CLUSTER)
+      merge(DataSource.Hive, key, FireHiveConf.HIVE_CLUSTER)
       // 配置的HBase源
-      merge(DataSource.HBase, key, GlobalConstants.PropKeys.HBASE_CLUSTER_URL)
+      merge(DataSource.HBase, key, FireHBaseConf.HBASE_CLUSTER_URL)
       // 配置的Kafka源
-      merge(DataSource.Kafka, key, GlobalConstants.PropKeys.KAFKA_BROKERS_NAME)
+      merge(DataSource.Kafka, key, FireKafkaConf.KAFKA_BROKERS_NAME)
       // 配置的RocketMQ源
-      merge(DataSource.RocketMQ, key, GlobalConstants.PropKeys.ROCKET_BROKERS_NAME)
+      merge(DataSource.RocketMQ, key, FireRocketConf.ROCKET_BROKERS_NAME)
       // JDBC源
-      if (key.contains(GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY.replaceFirst("spark", this.keyPrefix))) {
+      if (key.contains(FireJdbcConf.SPARK_DB_JDBC_URL_KEY.replaceFirst("spark", this.keyPrefix))) {
         val value = this.getString(key)
         if (value.contains("mysql")) {
           mergeMap(DataSource.MySQL, value)

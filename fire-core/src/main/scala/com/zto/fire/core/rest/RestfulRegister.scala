@@ -4,12 +4,12 @@ import java.util.concurrent.ExecutorService
 
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
+import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.enu.ErrorCode
-import com.zto.fire.common.util.{EncryptUtils, GlobalConstants, PropUtils, ReflectionUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{EncryptUtils, PropUtils, ReflectionUtils, SystemInfoUtils}
 import com.zto.fire.core.ext.SparkExt._
-import org.apache.commons.lang3.StringUtils
 import org.apache.spark.Logging
-import spark.{Filter, Request, Response, Route, Spark}
+import spark._
 
 import scala.collection.JavaConversions
 import scala.collection.mutable._
@@ -44,7 +44,7 @@ class RestfulRegister(val threadPool: ExecutorService) extends Logging {
     * @return
     */
   def port(port: Int): this.type = {
-    Spark.threadPool(GlobalConstants.FireConf.restfulMaxThread, 2, -1)
+    Spark.threadPool(FireFrameworkConf.restfulMaxThread, 2, -1)
     Spark.port(port)
     this.port = port
     this
@@ -54,6 +54,8 @@ class RestfulRegister(val threadPool: ExecutorService) extends Logging {
     * 注册并以子线程方式开启rest服务
     */
   def startRestServer: Unit = {
+    if (!FireFrameworkConf.restEnable) return
+
     if (this.port == null) {
       this.port(SystemInfoUtils.getRundomPort)
     }
@@ -62,7 +64,7 @@ class RestfulRegister(val threadPool: ExecutorService) extends Logging {
     this.threadPool.execute(new Runnable {
       override def run(): Unit = {
         restList.foreach(rest => {
-          println(s"---------> start rest: ${GlobalConstants.PS1.wrap(restPrefix + rest.path, GlobalConstants.PS1.BLUE, GlobalConstants.PS1.UNDER_LINE)} successfully. <---------")
+          println(s"---------> start rest: ${FirePS1Conf.wrap(restPrefix + rest.path, FirePS1Conf.BLUE, FirePS1Conf.UNDER_LINE)} successfully. <---------")
           rest.method match {
             case "get" | "GET" => Spark.get(rest.path, new Route {
               override def handle(request: Request, response: Response): AnyRef = {
@@ -90,7 +92,7 @@ class RestfulRegister(val threadPool: ExecutorService) extends Logging {
         // 注册过滤器，用于进行权限校验
         Spark.before(new Filter {
           override def handle(request: Request, response: Response): Unit = {
-            if (GlobalConstants.FireConf.restFilter) {
+            if (FireFrameworkConf.restFilter) {
               val msg = checkAuth(request)
               if (msg.getCode != null && ErrorCode.UNAUTHORIZED == msg.getCode) {
                 Spark.halt(401, msg.toString)

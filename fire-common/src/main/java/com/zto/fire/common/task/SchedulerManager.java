@@ -3,8 +3,9 @@ package com.zto.fire.common.task;
 import com.google.common.collect.Maps;
 import com.zto.fire.common.anno.Scheduled;
 import com.zto.fire.common.bean.BaseLogging;
+import com.zto.fire.common.conf.FireConf;
+import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.DateFormatUtils;
-import com.zto.fire.common.util.GlobalConstants;
 import com.zto.fire.common.util.ValueUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -44,7 +45,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(SchedulerManager.class);
 
     static {
-        String blacklistMethod = GlobalConstants.schedulerBlackList();
+        String blacklistMethod = FireFrameworkConf.schedulerBlackList();
         if (ValueUtils.isNotEmpty(blacklistMethod)) {
             String[] methods = blacklistMethod.split(",");
             if (ValueUtils.isNotEmpty(methods)) {
@@ -67,7 +68,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
             try {
                 StdSchedulerFactory factory = new StdSchedulerFactory();
                 Properties quartzProp = new Properties();
-                quartzProp.setProperty("org.quartz.threadPool.threadCount", GlobalConstants.quartzMaxThread());
+                quartzProp.setProperty("org.quartz.threadPool.threadCount", FireFrameworkConf.quartzMaxThread());
                 factory.initialize(quartzProp);
                 scheduler = factory.getScheduler();
             } catch (Exception e) {
@@ -95,7 +96,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
      * 判断当前是否为driver
      */
     private static String label() {
-        if (GlobalConstants.isFlinkEngine()) return "driver";
+        if (FireConf.isFlinkEngine()) return "driver";
         SparkEnv sparkEnv = SparkEnv.get();
         if (sparkEnv == null || "driver".equalsIgnoreCase(sparkEnv.executorId())) {
             return "driver";
@@ -113,7 +114,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
      */
     public synchronized static void registerTasks(Object... taskInstances) {
         try {
-            if (!GlobalConstants.scheduleEnable()) return;
+            if (!FireFrameworkConf.scheduleEnable()) return;
             SchedulerManager.init();
             addScanTask(taskInstances);
             if (taskMap != null && taskMap.size() > 0) {

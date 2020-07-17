@@ -1,7 +1,7 @@
 package com.zto.fire.core
 
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.GlobalConstants
+import com.zto.fire.common.util.PropUtils
 import org.apache.spark.SparkConf
 
 /**
@@ -22,31 +22,11 @@ class BaseSparkCore extends BaseSpark {
     this.process
   }
 
-
   /**
-    * 构建或合并SparkConf
-    *
-    * @param conf
-    * 在conf基础上构建
-    * @return
-    * 合并后的SparkConf对象
-    */
-  override def buildConf(conf: SparkConf): SparkConf = {
-    if (conf == null) {
-      new SparkConf()
-        .setAppName(this.appName)
-        .set("spark.ui.killEnabled", "false")
-        .set("spark.port.maxRetries", "200")
-        .set("spark.default.parallelism", "1000")
-        .set("spark.sql.broadcastTimeout", "3000")
-        .set("spark.storage.memoryFraction", "0.4")
-        .set("spark.ui.timeline.tasks.maximum", "300")
-        .set("spark.sql.parquet.writeLegacyFormat", "true")
-        .set("spark.scheduler.listenerbus.eventqueue.size", "130000")
-        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    } else {
-      conf
-    }
+   * 在加载任务配置文件前将被加载
+   */
+  override private[fire] def loadConf: Unit = {
+    PropUtils.load("spark-core.properties")
   }
 
   /**

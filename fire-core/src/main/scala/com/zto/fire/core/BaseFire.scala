@@ -3,6 +3,7 @@ package com.zto.fire.core
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
 
+import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf, FirePrintModuleConf}
 import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.enu.{JobType, ThreadPoolType}
 import com.zto.fire.common.task.SchedulerManager
@@ -61,8 +62,13 @@ trait BaseFire {
    */
   private[fire] def boot: Unit = {
     FireUtils.splash
-    PropUtils.sliceKeys(GlobalConstants.PropKeys.SPARK_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
+    PropUtils.sliceKeys(FireFrameworkConf.SPARK_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
   }
+
+  /**
+   * 在加载任务配置文件前将被加载
+   */
+  private[fire] def loadConf: Unit = {}
 
   /**
    * 用于将不同引擎的配置信息、累计器信息等传递到executor端或taskmanager端
@@ -86,7 +92,7 @@ trait BaseFire {
    */
   def init(conf: Any = null, args: Array[String] = null): Unit = {
     this.before(args)
-    this.logger.warn(s" ${GlobalConstants.PS1.YELLOW}---> 完成用户资源初始化，任务类型：${this.jobType.getJobType} <--- ${GlobalConstants.PS1.DEFAULT}")
+    this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成用户资源初始化，任务类型：${this.jobType.getJobType} <--- ${FirePS1Conf.DEFAULT}")
     this.args = args
     this.createContext(conf)
   }
@@ -125,8 +131,8 @@ trait BaseFire {
       ThreadUtils.shutdown
       Spark.stop()
       SchedulerManager.shutdown(stopGracefully)
-      this.logger.warn(s" ${GlobalConstants.PS1.YELLOW}---> 完成fire资源回收 <---${GlobalConstants.PS1.DEFAULT}")
-      GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
+      this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成fire资源回收 <---${FirePS1Conf.DEFAULT}")
+      FirePrintModuleConf.END_TIME_COST(this.startTime)
       // TODO: yarn kill; system.exit(0)
     }
   }

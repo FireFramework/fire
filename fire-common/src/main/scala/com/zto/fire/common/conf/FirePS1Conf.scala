@@ -7,20 +7,20 @@ package com.zto.fire.common.conf
  * @since 1.0.0
  * @create 2020-07-13 15:01
  */
-class PS1Configuration extends Enumeration {
+private[fire] object FirePS1Conf {
   // 颜色相关
-  val GREEN = "\u001B[32m"
-  val DEFAULT = "\u001B[0m"
-  val RED = "\u001B[31m"
-  val YELLOW = "\u001B[33m"
-  val BLUE = "\u001B[34m"
-  val PURPLE = "\u001B[35m"
-  val PINK = "\u001B[35m"
+  lazy val GREEN = "\u001B[32m"
+  lazy val DEFAULT = "\u001B[0m"
+  lazy val RED = "\u001B[31m"
+  lazy val YELLOW = "\u001B[33m"
+  lazy val BLUE = "\u001B[34m"
+  lazy val PURPLE = "\u001B[35m"
+  lazy val PINK = "\u001B[35m"
   // 字体相关
-  val HIGH_LIGHT = "\u001B[1m"
-  val ITALIC = "\u001B[3m"
-  val UNDER_LINE = "\u001B[4m"
-  val FLICKER = "\u001B[5m"
+  lazy val HIGH_LIGHT = "\u001B[1m"
+  lazy val ITALIC = "\u001B[3m"
+  lazy val UNDER_LINE = "\u001B[4m"
+  lazy val FLICKER = "\u001B[5m"
 
   /**
    * 包裹处理

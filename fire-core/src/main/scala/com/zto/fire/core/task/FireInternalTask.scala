@@ -1,8 +1,9 @@
 package com.zto.fire.core.task
 
 import com.zto.fire.common.bean.runtime.RuntimeInfo
+import com.zto.fire.common.conf.FirePS1Conf
 import com.zto.fire.common.util.UnitFormatUtils.DateUnitEnum
-import com.zto.fire.common.util.{GlobalConstants, LogUtils, UnitFormatUtils}
+import com.zto.fire.common.util.{LogUtils, UnitFormatUtils}
 import com.zto.fire.core.BaseFire
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -27,13 +28,13 @@ private[fire] class FireInternalTask(baseFir: BaseFire) extends Serializable {
         val jvmInfo = runtimeInfo.getJvmInfo
         val cpuInfo = runtimeInfo.getCpuInfo
         val threadInfo = runtimeInfo.getThreadInfo
-        logger.warn(
-          s"""${GlobalConstants.PS1.PINK}
+        logger.info(
+          s"""${FirePS1Conf.PINK}
              |GC      -> YGC: ${jvmInfo.getMinorGCCount}   YGCT: ${UnitFormatUtils.readable(jvmInfo.getMinorGCTime, UnitFormatUtils.TimeUnitEnum.ms)}    FGC: ${jvmInfo.getFullGCCount}   FGCT: ${UnitFormatUtils.readable(jvmInfo.getFullGCTime, UnitFormatUtils.TimeUnitEnum.ms)}
              |OnHeap  -> Total: ${UnitFormatUtils.readable(jvmInfo.getMemoryTotal, DateUnitEnum.BYTE)}    Used: ${UnitFormatUtils.readable(jvmInfo.getMemoryUsed, DateUnitEnum.BYTE)}   Free: ${UnitFormatUtils.readable(jvmInfo.getMemoryFree, DateUnitEnum.BYTE)}   HeapMax: ${UnitFormatUtils.readable(jvmInfo.getHeapMaxSize, DateUnitEnum.BYTE)}   HeapUsed: ${UnitFormatUtils.readable(jvmInfo.getHeapUseSize, DateUnitEnum.BYTE)}    Committed: ${UnitFormatUtils.readable(jvmInfo.getHeapCommitedSize, DateUnitEnum.BYTE)}
              |OffHeap -> Total: ${UnitFormatUtils.readable(jvmInfo.getNonHeapMaxSize, DateUnitEnum.BYTE)}   Used: ${UnitFormatUtils.readable(jvmInfo.getNonHeapUseSize, DateUnitEnum.BYTE)}   Committed: ${UnitFormatUtils.readable(jvmInfo.getNonHeapCommittedSize, DateUnitEnum.BYTE)}
              |CPUInfo -> Load: ${cpuInfo.getCpuLoad}   LoadAverage: ${cpuInfo.getLoadAverage.mkString(",")}   IoWait: ${cpuInfo.getIoWait}   IrqTick: ${cpuInfo.getIrqTick}
-             |Thread  -> Total: ${threadInfo.getTotalCount}    TotalStarted: ${threadInfo.getTotalStartedCount}   Peak: ${threadInfo.getPeakCount}   Deamon: ${threadInfo.getDeamonCount}   CpuTime: ${UnitFormatUtils.readable(threadInfo.getCpuTime, UnitFormatUtils.TimeUnitEnum.ms)}    UserTime: ${UnitFormatUtils.readable(threadInfo.getUserTime, UnitFormatUtils.TimeUnitEnum.ms)} ${GlobalConstants.PS1.DEFAULT}
+             |Thread  -> Total: ${threadInfo.getTotalCount}    TotalStarted: ${threadInfo.getTotalStartedCount}   Peak: ${threadInfo.getPeakCount}   Deamon: ${threadInfo.getDeamonCount}   CpuTime: ${UnitFormatUtils.readable(threadInfo.getCpuTime, UnitFormatUtils.TimeUnitEnum.ms)}    UserTime: ${UnitFormatUtils.readable(threadInfo.getUserTime, UnitFormatUtils.TimeUnitEnum.ms)} ${FirePS1Conf.DEFAULT}
              |""".stripMargin)
       })
     }

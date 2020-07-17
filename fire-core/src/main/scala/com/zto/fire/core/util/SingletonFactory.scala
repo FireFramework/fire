@@ -2,14 +2,14 @@ package com.zto.fire.core.util
 
 import java.util.Properties
 
+import com.zto.fire.common.conf.{FireHBaseConf, FireKuduConf}
 import com.zto.fire.common.db.HBaseOper
-import com.zto.fire.common.util.GlobalConstants
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kudu.spark.kudu.KuduContext
-import org.apache.spark.{SparkContext, SparkEnv}
 import org.apache.spark.sql.{SQLContext, SparkSession}
+import org.apache.spark.{SparkContext, SparkEnv}
 
 /**
   * 单例工厂，用于创建单例的对象
@@ -94,7 +94,7 @@ object SingletonFactory {
     * @return
     */
   def getHBaseContextInstance(sparkContext: SparkContext): HBaseContextExt = {
-    if (this.hbaseContext == null && StringUtils.isNotBlank(GlobalConstants.hbaseCluster)) {
+    if (this.hbaseContext == null && StringUtils.isNotBlank(FireHBaseConf.hbaseCluster)) {
       this.hbaseContext = new HBaseContextExt(sparkContext, HBaseOper.getConfiguration)
     }
     this.hbaseContext
@@ -108,8 +108,8 @@ object SingletonFactory {
     * @return
     */
   def getKuduContextInstance(sparkContext: SparkContext): KuduContextExt = {
-    if (this.kuduContext == null && StringUtils.isNotBlank(GlobalConstants.KuduConf.kuduMaster)) {
-      val kuduContextTmp = new KuduContext(GlobalConstants.KuduConf.kuduMaster, sparkContext)
+    if (this.kuduContext == null && StringUtils.isNotBlank(FireKuduConf.kuduMaster)) {
+      val kuduContextTmp = new KuduContext(FireKuduConf.kuduMaster, sparkContext)
       this.kuduContext = new KuduContextExt(SingletonFactory.getSQLContextInstance(sparkContext), kuduContextTmp)
     }
     this.kuduContext

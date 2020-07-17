@@ -1,7 +1,8 @@
 package com.zto.fire.common.bean;
 
 import com.zto.fire.common.acc.AccumulatorManager;
-import com.zto.fire.common.util.GlobalConstants;
+import com.zto.fire.common.conf.FireConf;
+import com.zto.fire.common.conf.FireFrameworkConf;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,15 +94,15 @@ public class BaseLogging implements Serializable {
         if (timeCostLocal.get() == null) this.mark();
         TimeCost timeCost = timeCostLocal.get();
         timeCost.info(msg, module, io, isFire, throwable);
-        if (GlobalConstants.isSparkEngine()) AccumulatorManager.addLog(timeCost);
+        if (FireConf.isSparkEngine()) AccumulatorManager.addLog(timeCost);
         // TODO: Flink日志存入到flink累加器中
         String log = timeCost.toString();
         if (throwable == null) {
-            if (!isFire || (isFire && GlobalConstants.fireLogEnable())) {
+            if (!isFire || (isFire && FireFrameworkConf.logEnable())) {
                 logger.warn(log);
             }
         } else {
-            if (!isFire || (isFire && GlobalConstants.fireLogEnable())) {
+            if (!isFire || (isFire && FireFrameworkConf.logEnable())) {
                 logger.error(log, throwable);
             }
         }

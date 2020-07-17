@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.zto.fire.common.anno.FieldName;
 import com.zto.fire.common.bean.HBaseBaseBean;
 import com.zto.fire.common.bean.MultiVersionsBean;
-import com.zto.fire.common.util.GlobalConstants;
+import com.zto.fire.common.conf.FireHBaseConf;
 import com.zto.fire.common.util.PropUtils;
 import com.zto.fire.common.util.ReflectionUtils;
 import com.zto.fire.common.util.StackTraceUtils;
@@ -76,16 +76,16 @@ public class HBaseOper {
     public static Configuration getConfiguration() {
         if (conf == null) {
             conf = HBaseConfiguration.create();
-            String clusterName = GlobalConstants.hbaseCluster();
+            String clusterName = FireHBaseConf.hbaseCluster();
             if (StringUtils.isNotBlank(clusterName) && clusterName.contains(":")) {
                 conf.set("hbase.zookeeper.quorum", clusterName);
-            } else if (GlobalConstants.hbaseClusterMap().containsKey(clusterName)) {
-                conf.set("hbase.zookeeper.quorum", GlobalConstants.hbaseClusterMap().get(clusterName));
+            } else if (FireHBaseConf.hbaseClusterMap().containsKey(clusterName)) {
+                conf.set("hbase.zookeeper.quorum", FireHBaseConf.hbaseClusterMap().get(clusterName));
             } else {
                 throw new IllegalArgumentException("未找到匹配的hbase cluster标识，请检查参数：spark.hbase.cluster");
             }
             // 以spark.hbase.conf.为前缀的配置项为hbase client专项配置，统一设置到hbase的Configuration中
-            JavaConversions.mapAsJavaMap(PropUtils.sliceKeys(GlobalConstants.hbaseConfPrefix())).forEach((k, v) -> {
+            JavaConversions.mapAsJavaMap(PropUtils.sliceKeys(FireHBaseConf.hbaseConfPrefix())).forEach((k, v) -> {
                 logger.info("hbase configuration: key={} value={}", k, v);
                 conf.set(k, v);
             });
@@ -111,9 +111,9 @@ public class HBaseOper {
                 Table table = getConnection().getTable(tbName);
                 table.put(put);
                 table.close();
-                logger.info("数据成功写入到hbase中, cluster={} tableName={} rowKey={} family={} qualifier={} value={}", GlobalConstants.hbaseCluster(), tableName, rowKey, family, qualifier, value);
+                logger.info("数据成功写入到hbase中, cluster={} tableName={} rowKey={} family={} qualifier={} value={}", FireHBaseConf.hbaseCluster(), tableName, rowKey, family, qualifier, value);
             } catch (Exception e) {
-                logger.error("数据写入hbase失败, cluster={} tableName={} rowKey={} family={} qualifier={} value={} exception={}", GlobalConstants.hbaseCluster(), tableName, rowKey, family, qualifier, value, StackTraceUtils.stackTraceInfo(e));
+                logger.error("数据写入hbase失败, cluster={} tableName={} rowKey={} family={} qualifier={} value={} exception={}", FireHBaseConf.hbaseCluster(), tableName, rowKey, family, qualifier, value, StackTraceUtils.stackTraceInfo(e));
             }
         }
     }
@@ -131,9 +131,9 @@ public class HBaseOper {
                 Table table = getConnection().getTable(tbName);
                 table.put(put);
                 table.close();
-                logger.info("数据成功写入到hbase中, cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+                logger.info("数据成功写入到hbase中, cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
             } catch (Exception e) {
-                logger.error("数据写入hbase失败, cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("数据写入hbase失败, cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
             }
         }
     }
@@ -151,9 +151,9 @@ public class HBaseOper {
                 TableName tbName = TableName.valueOf(tableName);
                 table = getConnection().getTable(tbName);
                 table.put(putList);
-                logger.info("数据成功写入到hbase中, cluster={} tableName={} size={}", GlobalConstants.hbaseCluster(), tableName, putList.size());
+                logger.info("数据成功写入到hbase中, cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(), tableName, putList.size());
             } catch (Exception e) {
-                logger.error("数据写入hbase失败, cluster={} tableName={} size={} exception={}", GlobalConstants.hbaseCluster(), tableName, putList.size(), StackTraceUtils.stackTraceInfo(e));
+                logger.error("数据写入hbase失败, cluster={} tableName={} size={} exception={}", FireHBaseConf.hbaseCluster(), tableName, putList.size(), StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeTable(table);
             }
@@ -339,10 +339,10 @@ public class HBaseOper {
                 table = getConnection().getTable(TableName.valueOf(tableName));
                 Get get = new Get(rowKey.getBytes());
                 get.setMaxVersions(versionCount);
-                logger.info("hbase get成功. cluster={} tableName={} rowKey={}", GlobalConstants.hbaseCluster(), tableName, rowKey);
+                logger.info("hbase get成功. cluster={} tableName={} rowKey={}", FireHBaseConf.hbaseCluster(), tableName, rowKey);
                 return table.get(get);
             } catch (Exception e) {
-                logger.error("hbase get失败. cluster={} tableName={} rowKey={} exception={}", GlobalConstants.hbaseCluster(), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase get失败. cluster={} tableName={} rowKey={} exception={}", FireHBaseConf.hbaseCluster(), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeTable(table);
             }
@@ -377,15 +377,15 @@ public class HBaseOper {
             Table table = null;
             try {
                 table = getConnection().getTable(TableName.valueOf(tableName));
-                logger.info("hbase get成功. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+                logger.info("hbase get成功. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
                 return table.get(get);
             } catch (Exception e) {
-                logger.error("hbase get失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase get失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeTable(table);
             }
         }
-        logger.warn("hbase get失败，未找到表. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+        logger.warn("hbase get失败，未找到表. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
         return null;
     }
 
@@ -401,15 +401,15 @@ public class HBaseOper {
             Table table = null;
             try {
                 table = getConnection().getTable(TableName.valueOf(tableName));
-                logger.info("hbase get成功. cluster={} tableName={} size={}", GlobalConstants.hbaseCluster(), tableName, getList.size());
+                logger.info("hbase get成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(), tableName, getList.size());
                 return table.get(getList);
             } catch (Exception e) {
-                logger.error("hbase get失败. cluster={} tableName={} size={} exception={}", GlobalConstants.hbaseCluster(), tableName, getList.size(), StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase get失败. cluster={} tableName={} size={} exception={}", FireHBaseConf.hbaseCluster(), tableName, getList.size(), StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeTable(table);
             }
         }
-        logger.warn("hbase get失败，请检查表是否存在，或getList可能为空. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+        logger.warn("hbase get失败，请检查表是否存在，或getList可能为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
         return null;
     }
 
@@ -425,7 +425,7 @@ public class HBaseOper {
     public static <T extends HBaseBaseBean> T get(String tableName, Get get, Class<T> clazz) {
         Result rs = get(tableName, get);
         if (rs == null || rs.isEmpty()) {
-            logger.warn("hbase get失败，未get到结果. cluster={} tableName={} rowKey={}", GlobalConstants.hbaseCluster(), tableName, new String(get.getRow()));
+            logger.warn("hbase get失败，未get到结果. cluster={} tableName={} rowKey={}", FireHBaseConf.hbaseCluster(), tableName, new String(get.getRow()));
             return null;
         }
         return hbaseRow2Bean(rs, clazz);
@@ -443,7 +443,7 @@ public class HBaseOper {
     public static <T extends HBaseBaseBean> List<T> getMultiVersions(String tableName, Get get, Class<T> clazz) {
         Result rs = get(tableName, get);
         if (rs == null || rs.isEmpty()) {
-            logger.warn("hbase get多版本失败，未get到结果. cluster={} tableName={} rowKey={}", GlobalConstants.hbaseCluster(), tableName, new String(get.getRow()));
+            logger.warn("hbase get多版本失败，未get到结果. cluster={} tableName={} rowKey={}", FireHBaseConf.hbaseCluster(), tableName, new String(get.getRow()));
             return null;
         }
         return hbaseMultiRow2Bean(rs, clazz);
@@ -478,12 +478,12 @@ public class HBaseOper {
             get.setMaxVersions(versionCount);
             Result rs = get(tableName, get);
             if (rs == null || rs.isEmpty()) {
-                logger.warn("hbase get失败，未get到结果. cluster={} tableName={} rowKey={}", GlobalConstants.hbaseCluster(), tableName, rowKey);
+                logger.warn("hbase get失败，未get到结果. cluster={} tableName={} rowKey={}", FireHBaseConf.hbaseCluster(), tableName, rowKey);
                 return null;
             }
             return hbaseMultiRow2Bean(rs, clazz);
         } catch (Exception e) {
-            logger.error("hbase get失败. cluster={} tableName={} rowKey={} exception={}", GlobalConstants.hbaseCluster(), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
+            logger.error("hbase get失败. cluster={} tableName={} rowKey={} exception={}", FireHBaseConf.hbaseCluster(), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
         }
         return Collections.emptyList();
     }
@@ -500,7 +500,7 @@ public class HBaseOper {
     public static <T extends HBaseBaseBean> List<T> get(String tableName, List<Get> getList, Class<T> clazz) {
         Result[] rsArr = get(tableName, getList);
         if (rsArr == null || rsArr.length == 0) {
-            logger.warn("hbase get多版本失败，未get到结果. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+            logger.warn("hbase get多版本失败，未get到结果. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
             return null;
         }
         return hbaseRow2Bean(rsArr, clazz);
@@ -545,7 +545,7 @@ public class HBaseOper {
     public static <T extends HBaseBaseBean> List<T> getMultiVersions(String tableName, List<Get> getList, Class<T> clazz) {
         Result[] rsArr = get(tableName, getList);
         if (rsArr == null || rsArr.length == 0) {
-            logger.warn("hbase get多版本失败，未get到结果. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+            logger.warn("hbase get多版本失败，未get到结果. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
             return null;
         }
         return hbaseMultiRow2Bean(rsArr, clazz);
@@ -594,15 +594,15 @@ public class HBaseOper {
                     get.setMaxVersions(versionCount);
                     gets.add(get);
                 }
-                logger.info("hbase gets成功. cluster={} tableName={} getSize={}", GlobalConstants.hbaseCluster(), tableName, gets.size());
+                logger.info("hbase gets成功. cluster={} tableName={} getSize={}", FireHBaseConf.hbaseCluster(), tableName, gets.size());
                 return table.get(gets);
             } catch (Exception e) {
-                logger.error("hbase gets失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase gets失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeTable(table);
             }
         }
-        logger.warn("hbase gets失败，请检查表是否存在，或rowKey可能为空. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+        logger.warn("hbase gets失败，请检查表是否存在，或rowKey可能为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
         return null;
     }
 
@@ -638,10 +638,10 @@ public class HBaseOper {
                 }
                 return table.getScanner(scan);
             } catch (Exception e) {
-                logger.error("hbase scan失败. cluster={} tableName={} startRow={} endRow={} exception={}", GlobalConstants.hbaseCluster(), tableName, startRow, stopRow, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scan失败. cluster={} tableName={} startRow={} endRow={} exception={}", FireHBaseConf.hbaseCluster(), tableName, startRow, stopRow, StackTraceUtils.stackTraceInfo(e));
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或rowKey的起止是否为空. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+        logger.warn("hbase scan失败，请检查表是否存在，或rowKey的起止是否为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
         return null;
     }
 
@@ -670,12 +670,12 @@ public class HBaseOper {
             try {
                 return table.getScanner(scan);
             } catch (Exception e) {
-                logger.error("hbase scan失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scan失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeTable(table);
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
         return null;
     }
 
@@ -701,15 +701,15 @@ public class HBaseOper {
                         list.add(obj);
                     }
                 }
-                logger.info("hbase scan成功. cluster={} tableName={} size={}", GlobalConstants.hbaseCluster(), tableName, list.size());
+                logger.info("hbase scan成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(), tableName, list.size());
                 return list;
             } catch (Exception e) {
-                logger.error("hbase scan失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scan失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeResultAndTable(rsScanner, table);
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
         return Collections.emptyList();
     }
 
@@ -736,15 +736,15 @@ public class HBaseOper {
                         list.add(obj);
                     }
                 }
-                logger.info("hbase scanMaxVersions成功. cluster={} tableName={} size={}", GlobalConstants.hbaseCluster(), tableName, list.size());
+                logger.info("hbase scanMaxVersions成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(), tableName, list.size());
                 return list;
             } catch (Exception e) {
-                logger.error("hbase scanMaxVersions失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scanMaxVersions失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeResultAndTable(rsScanner, table);
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
         return Collections.emptyList();
     }
 
@@ -770,15 +770,15 @@ public class HBaseOper {
                         list.add(obj);
                     }
                 }
-                logger.info("hbase scanAll成功. cluster={} tableName={} size={}", GlobalConstants.hbaseCluster(), tableName, list.size());
+                logger.info("hbase scanAll成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(), tableName, list.size());
                 return list;
             } catch (Exception e) {
-                logger.error("hbase scanAll失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scanAll失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeResultAndTable(rsScanner, table);
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
         return Collections.emptyList();
     }
 
@@ -814,15 +814,15 @@ public class HBaseOper {
                         }
                     }
                 }
-                logger.info("hbase scan成功. cluster={} tableName={} startRow={} stopRow={} size={}", GlobalConstants.hbaseCluster(), tableName, startRow, stopRow, list.size());
+                logger.info("hbase scan成功. cluster={} tableName={} startRow={} stopRow={} size={}", FireHBaseConf.hbaseCluster(), tableName, startRow, stopRow, list.size());
                 return list;
             } catch (Exception e) {
-                logger.error("hbase scan失败. cluster={} tableName={} startRow={} stopRow={} exception={}", GlobalConstants.hbaseCluster(), tableName, startRow, stopRow, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scan失败. cluster={} tableName={} startRow={} stopRow={} exception={}", FireHBaseConf.hbaseCluster(), tableName, startRow, stopRow, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeResultAndTable(rsScanner, table);
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或startRow、stopRow对象为空. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+        logger.warn("hbase scan失败，请检查表是否存在，或startRow、stopRow对象为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
         return null;
     }
 
@@ -852,14 +852,14 @@ public class HBaseOper {
                     }
                 }
             }
-            logger.info("hbase scan成功. cluster={} tableName={} size={}", GlobalConstants.hbaseCluster(), tableName, list.size());
+            logger.info("hbase scan成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(), tableName, list.size());
             return list;
         } catch (Exception e) {
-            logger.error("hbase scan失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+            logger.error("hbase scan失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
         } finally {
             closeResultAndTable(rsScanner, table);
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或scan对象为空. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+        logger.warn("hbase scan失败，请检查表是否存在，或scan对象为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
         return null;
     }
 
@@ -938,7 +938,7 @@ public class HBaseOper {
                 }
                 table.delete(deletes);
                 table.close();
-                logger.info("delete row成功. cluster={} tableName={} size={}", GlobalConstants.hbaseCluster(), tableName, deletes.size());
+                logger.info("delete row成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(), tableName, deletes.size());
             }
         } catch (Exception e) {
             logger.error("delete row失败.", e);
@@ -960,7 +960,7 @@ public class HBaseOper {
             admin = getConnection().getAdmin();
             isExist = admin.tableExists(TableName.valueOf(tableName));
         } catch (Exception e) {
-            logger.error("判断HBase表存在失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+            logger.error("判断HBase表存在失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
         } finally {
             closeAdmin(admin);
         }
@@ -991,7 +991,7 @@ public class HBaseOper {
                 admin.createTable(tableDesc);
             }
         } catch (Exception e) {
-            logger.error("创建HBase表失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+            logger.error("创建HBase表失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
         } finally {
             closeAdmin(admin);
         }
@@ -1012,7 +1012,7 @@ public class HBaseOper {
                 admin.deleteTable(tbName);
             }
         } catch (Exception e) {
-            logger.error("drop HBase表存在失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+            logger.error("drop HBase表存在失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
         } finally {
             closeAdmin(admin);
         }
@@ -1032,7 +1032,7 @@ public class HBaseOper {
                 admin.enableTable(tbName);
             }
         } catch (Exception e) {
-            logger.error("Enable HBase表存在失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+            logger.error("Enable HBase表存在失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
         } finally {
             closeAdmin(admin);
         }
@@ -1052,7 +1052,7 @@ public class HBaseOper {
                 admin.disableTable(tbName);
             }
         } catch (Exception e) {
-            logger.error("Disable HBase表存在失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+            logger.error("Disable HBase表存在失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
         } finally {
             closeAdmin(admin);
         }
@@ -1075,7 +1075,7 @@ public class HBaseOper {
                 admin.truncateTable(tbName, true);
             }
         } catch (Exception e) {
-            logger.error("Truncate HBase表存在失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+            logger.error("Truncate HBase表存在失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
         } finally {
             closeAdmin(admin);
         }
@@ -1101,7 +1101,7 @@ public class HBaseOper {
                     table.delete(delete);
                     table.close();
                 } catch (Exception e) {
-                    logger.error("Delete HBase表Family失败. cluster={} tableName={} rowKey={} exception={}", GlobalConstants.hbaseCluster(), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
+                    logger.error("Delete HBase表Family失败. cluster={} tableName={} rowKey={} exception={}", FireHBaseConf.hbaseCluster(), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
                 }
             }
         }
@@ -1161,7 +1161,7 @@ public class HBaseOper {
                 table.close();
             }
         } catch (Exception e) {
-            logger.error("擅长HBase列失败. cluster={} tableName={} rowKey={} exception={}", GlobalConstants.hbaseCluster(), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
+            logger.error("擅长HBase列失败. cluster={} tableName={} rowKey={} exception={}", FireHBaseConf.hbaseCluster(), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
         }
     }
 
@@ -1216,11 +1216,11 @@ public class HBaseOper {
     private static Table getTable(String tableName) {
         try {
             if (isExists(tableName)) {
-                logger.info("HBase getTable成功. cluster={} tableName={}", GlobalConstants.hbaseCluster(), tableName);
+                logger.info("HBase getTable成功. cluster={} tableName={}", FireHBaseConf.hbaseCluster(), tableName);
                 return getConnection().getTable(TableName.valueOf(tableName));
             }
         } catch (Exception e) {
-            logger.error("HBase getTable失败. cluster={} tableName={} exception={}", GlobalConstants.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
+            logger.error("HBase getTable失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(), tableName, StackTraceUtils.stackTraceInfo(e));
         }
         return null;
     }
@@ -1233,7 +1233,7 @@ public class HBaseOper {
      */
     public static Get buildGet(String rowKey) {
         Get get = new Get(rowKey.getBytes());
-        get.addFamily(GlobalConstants.familyName().getBytes());
+        get.addFamily(FireHBaseConf.familyName().getBytes());
         return get;
     }
 
@@ -1294,7 +1294,7 @@ public class HBaseOper {
                         qualifier = fieldName.value();
                     }
                     if (StringUtils.isBlank(family)) {
-                        family = GlobalConstants.familyName();
+                        family = FireHBaseConf.familyName();
                     }
                     if (StringUtils.isBlank(qualifier)) {
                         qualifier = field.getName();
@@ -1372,7 +1372,7 @@ public class HBaseOper {
                 }
             }
         } catch (Exception e) {
-            logger.error("HBase multiCell2Field失败. cluster={} exception={}", GlobalConstants.hbaseCluster(), StackTraceUtils.stackTraceInfo(e));
+            logger.error("HBase multiCell2Field失败. cluster={} exception={}", FireHBaseConf.hbaseCluster(), StackTraceUtils.stackTraceInfo(e));
         }
         return objList;
     }
@@ -1398,7 +1398,7 @@ public class HBaseOper {
             idField.setAccessible(true);
             idField.set(obj, rowKey);
         } catch (Exception e) {
-            logger.error("HBase cell2Field失败. cluster={} exception={}", GlobalConstants.hbaseCluster(), StackTraceUtils.stackTraceInfo(e));
+            logger.error("HBase cell2Field失败. cluster={} exception={}", FireHBaseConf.hbaseCluster(), StackTraceUtils.stackTraceInfo(e));
         }
         return obj;
     }
@@ -1545,7 +1545,7 @@ public class HBaseOper {
                 beanList.$plus$eq(obj);
             }
         } catch (Exception e) {
-            logger.error("HBase hbaseRow2BeanList失败. cluster={} exception={}", GlobalConstants.hbaseCluster(), StackTraceUtils.stackTraceInfo(e));
+            logger.error("HBase hbaseRow2BeanList失败. cluster={} exception={}", FireHBaseConf.hbaseCluster(), StackTraceUtils.stackTraceInfo(e));
         }
         return beanList.iterator();
     }
@@ -1564,7 +1564,7 @@ public class HBaseOper {
                 beanList.addAll(hbaseMultiRow2Bean(it.next()._2, clazz));
             }
         } catch (Exception e) {
-            logger.error("HBase hbaseMultiVersionRow2BeanList失败. cluster={} exception={}", GlobalConstants.hbaseCluster(), StackTraceUtils.stackTraceInfo(e));
+            logger.error("HBase hbaseMultiVersionRow2BeanList失败. cluster={} exception={}", FireHBaseConf.hbaseCluster(), StackTraceUtils.stackTraceInfo(e));
         }
         return beanList;
     }
@@ -1614,7 +1614,7 @@ public class HBaseOper {
                             name = fieldName.value();
                         }
                         if (StringUtils.isBlank(familyName)) {
-                            familyName = GlobalConstants.familyName();
+                            familyName = FireHBaseConf.familyName();
                         }
                         if (StringUtils.isBlank(name)) {
                             name = field.getName();
@@ -1647,7 +1647,7 @@ public class HBaseOper {
                 }
                 return put;
             } catch (Exception e) {
-                logger.error("HBase convert2Put失败. cluster={} exception={}", GlobalConstants.hbaseCluster(), StackTraceUtils.stackTraceInfo(e));
+                logger.error("HBase convert2Put失败. cluster={} exception={}", FireHBaseConf.hbaseCluster(), StackTraceUtils.stackTraceInfo(e));
             }
         }
         return null;
@@ -1669,7 +1669,7 @@ public class HBaseOper {
      */
     public static Durability getHBaseDurability() {
         if (durability == null) {
-            String hbaseDurability = GlobalConstants.hbaseDurability();
+            String hbaseDurability = FireHBaseConf.hbaseDurability();
             if (StringUtils.isBlank(hbaseDurability)) {
                 durability = Durability.USE_DEFAULT;
             } else {

@@ -1,9 +1,10 @@
 package com.zto.fire.common.util
 
 import java.util.Objects
-import java.util.concurrent.{ConcurrentHashMap, ExecutorService, Executors, ScheduledExecutorService, TimeUnit}
+import java.util.concurrent._
 
 import com.zto.fire.common.bean.BaseLogging
+import com.zto.fire.common.conf.FirePS1Conf
 import com.zto.fire.common.enu.ThreadPoolType
 import org.apache.commons.lang3.StringUtils
 
@@ -208,10 +209,10 @@ object ThreadUtils extends BaseLogging {
       JavaConversions.mapAsScalaConcurrentMap(this.threadPoolMap).foreach(pool => {
         if (pool != null && pool._2 != null) {
           pool._2.shutdownNow()
-          println(s"${GlobalConstants.PS1.GREEN}---> 完成线程池[ ${pool._1} ]的资源回收. <---${GlobalConstants.PS1.DEFAULT}")
+          println(s"${FirePS1Conf.GREEN}---> 完成线程池[ ${pool._1} ]的资源回收. <---${FirePS1Conf.DEFAULT}")
         }
       })
     }
-    println(s"${GlobalConstants.PS1.PINK}---> 完成所有线程池回收，总计：${poolNum}个. <---${GlobalConstants.PS1.DEFAULT}")
+    println(s"${FirePS1Conf.PINK}---> 完成所有线程池回收，总计：${poolNum}个. <---${FirePS1Conf.DEFAULT}")
   }
 }

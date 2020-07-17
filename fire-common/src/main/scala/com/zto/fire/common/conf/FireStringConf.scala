@@ -7,9 +7,9 @@ package com.zto.fire.common.conf
  * @since 1.0.0
  * @create 2020-07-13 15:03
  */
-class StringsConfiguration extends Enumeration {
+private[fire] object FireStringConf {
   // 集群hostname前缀
-  val hostNamePrefix = "HZPL025"
+  lazy val hostNamePrefix = "HZPL025"
   // 集群ip前缀
-  val ipPrefxi = "192.168.25."
+  lazy val ipPrefxi = "192.168.25."
 }

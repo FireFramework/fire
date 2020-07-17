@@ -4,10 +4,9 @@ import java.sql.Connection
 import java.util.Properties
 
 import com.zto.fire.common.bean.{BaseLogging, HBaseBaseBean}
-import com.zto.fire.common.db.{HBaseOper, JdbcOper, QueryCallback}
-import com.zto.fire.common.util.GlobalConstants.FireConf
-import com.zto.fire.common.util.KafkaUtils.logger
-import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, LogUtils, ValueUtils}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf, FireKafkaConf, FireSparkConf}
+import com.zto.fire.common.db.{HBaseOper, JdbcOper}
+import com.zto.fire.common.util.{KafkaUtils, LogUtils, ValueUtils}
 import com.zto.fire.core.bridge.{HBaseSparkBridge, JdbcOperBridge}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.HBaseContextExt
@@ -26,7 +25,6 @@ import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.DStream
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
@@ -107,7 +105,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * @return
    * 生成的DataFrame
    */
-  def sqlForPersistent(sqlStr: String, tmpTableName: String, partitionName: String, saveMode: SaveMode = SaveMode.valueOf(GlobalConstants.SparkConf.saveMode), cache: Boolean = true): DataFrame = {
+  def sqlForPersistent(sqlStr: String, tmpTableName: String, partitionName: String, saveMode: SaveMode = SaveMode.valueOf(FireSparkConf.saveMode), cache: Boolean = true): DataFrame = {
     spark.sqlContext.sqlForPersistent(sqlStr, tmpTableName, partitionName, saveMode, cache)
   }
 
@@ -192,7 +190,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * @param partitionName
    * 分区字段名称，默认ds
    */
-  def addPartition(tableName: String, partition: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def addPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     spark.sqlContext.addPartition(tableName, partition, partitionName)
   }
 
@@ -204,7 +202,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * @param partition
    * 分区
    */
-  def dropPartition(tableName: String, partition: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def dropPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     spark.sqlContext.dropPartition(tableName, partition, partitionName)
   }
 
@@ -270,7 +268,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * @param cols
    * 多个列，逗号分隔
    */
-  def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     spark.sqlContext.insertIntoPartition(srcTableName, destTableName, ds, cols, partitionName)
   }
 
@@ -284,7 +282,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * @param querySQL
    * 查询语句
    */
-  def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = GlobalConstants.SparkConf.partitionName, overwrite: Boolean = false): Unit = {
+  def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = FireSparkConf.partitionName, overwrite: Boolean = false): Unit = {
     spark.sqlContext.insertIntoPartitionAsSelect(destTableName, ds, querySQL, partitionName, overwrite)
   }
 
@@ -296,7 +294,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * @param querySQL
    * 查询sql语句
    */
-  def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     spark.sqlContext.insertIntoDymPartitionAsSelect(destTableName, querySQL, partitionName)
   }
 
@@ -1115,20 +1113,20 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
     val extraOptionsMap = new scala.collection.mutable.HashMap[String, String]
     if (extraOptions != null && extraOptions.nonEmpty) extraOptionsMap ++= extraOptions
 
-    val confGroupId = GlobalConstants.KafkaConf.kafkaGroupId(keyNum)
+    val confGroupId = FireKafkaConf.kafkaGroupId(keyNum)
     val groupId = if (StringUtils.isNotBlank(confGroupId)) confGroupId else this.sc.appName
     extraOptionsMap += ("group.id" -> groupId)
 
-    val finalBrokers = GlobalConstants.KafkaConf.kafkaBrokers(keyNum)
+    val finalBrokers = FireKafkaConf.kafkaBrokers(keyNum)
     if (StringUtils.isNotBlank(finalBrokers)) extraOptionsMap += ("kafka.bootstrap.servers" -> finalBrokers)
     assert(!extraOptionsMap.contains("kafka.bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：spark.kafka.brokers.name$keyNum")
 
-    val topics = GlobalConstants.KafkaConf.kafkaTopics()
+    val topics = FireKafkaConf.kafkaTopics()
     if (StringUtils.isNotBlank(topics)) extraOptionsMap += ("subscribe" -> topics)
     assert(!extraOptionsMap.contains("subscribe"), s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
 
     // 以spark.kafka.conf.开头的配置优先级最高
-    val configMap = GlobalConstants.KafkaConf.kafkaConfMap(keyNum)
+    val configMap = FireKafkaConf.kafkaConfMap(keyNum)
     extraOptionsMap ++= configMap
     LogUtils.logMap(this.logger, extraOptionsMap.toMap, s"Kafka client configuration. keyNum=$keyNum.")
 
@@ -1184,9 +1182,9 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
                          extraOptions: Map[String, String] = null,
                          keyNum: Int = 1): DataFrame = {
     val msg = FireUtils.retry(5, 1000) {
-      KafkaUtils.getMsg(GlobalConstants.KafkaConf.kafkaBrokers(keyNum), GlobalConstants.KafkaConf.kafkaTopics(keyNum), null)
+      KafkaUtils.getMsg(FireKafkaConf.kafkaBrokers(keyNum), FireKafkaConf.kafkaTopics(keyNum), null)
     }
-    ValueUtils.requireNonNullForce(msg, s"获取样例消息失败！请重启任务尝试重新获取，并保证topic[${GlobalConstants.KafkaConf.kafkaTopics(keyNum)}]持续的有新消息。")
+    ValueUtils.requireNonNullForce(msg, s"获取样例消息失败！请重启任务尝试重新获取，并保证topic[${FireKafkaConf.kafkaTopics(keyNum)}]持续的有新消息。")
     val jsonDS = this.spark.createDataset(Seq(msg))(Encoders.STRING)
     val jsonDF = this.spark.read.json(jsonDS)
 
@@ -1290,7 +1288,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    */
   def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): RDD[T] = {
     val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
-    this.sc.parallelize(rsList, FireConf.jdbcQueryPartitions).persist(StorageLevel.fromString(FireConf.jdbcStorageLevel))
+    this.sc.parallelize(rsList, FireJdbcConf.jdbcQueryPartitions).persist(StorageLevel.fromString(FireJdbcConf.jdbcStorageLevel))
   }
 
   /**
@@ -1419,7 +1417,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
-  def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = GlobalConstants.JdbcConf.batchSize(), keyNum: Int = 1): Unit = {
+  def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = 1): Unit = {
     if (ValueUtils.isEmpty(dataFrame)) {
       this.log("执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
       return

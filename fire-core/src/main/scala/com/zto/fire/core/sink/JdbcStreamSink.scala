@@ -1,6 +1,7 @@
 package com.zto.fire.core.sink
 
-import com.zto.fire.common.util.{GlobalConstants, ValueUtils}
+import com.zto.fire.common.conf.FireJdbcConf
+import com.zto.fire.common.util.ValueUtils
 import com.zto.fire.core.ext.SparkExt._
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.DataFrame
@@ -23,7 +24,7 @@ class JdbcStreamSink(options: Map[String, String]) extends FireSink {
       val sql = options.getOrElse("sql", "")
       ValueUtils.requireNonNull(sql, "sql语句不能为空.")
       val fields = options.getOrElse("fields", "")
-      val batch = options.getOrElse("batch", GlobalConstants.JdbcConf.batchSize() + "").toInt
+      val batch = options.getOrElse("batch", FireJdbcConf.batchSize() + "").toInt
       val keyNum = options.getOrElse("keyNum", "1").toInt
 
       this.toExternalRow(data).jdbcBatchUpdate(sql, if (StringUtils.isNotBlank(fields)) fields.split(",") else null, batch, keyNum)

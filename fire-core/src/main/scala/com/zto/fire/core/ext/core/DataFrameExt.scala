@@ -3,15 +3,15 @@ package com.zto.fire.core.ext.core
 import java.util.Properties
 
 import com.zto.fire.common.bean.{BaseLogging, HBaseBaseBean}
+import com.zto.fire.common.conf.{FireJdbcConf, FireSparkConf}
 import com.zto.fire.common.db.JdbcOper
-import com.zto.fire.common.util.{DBUtils, GlobalConstants, ValueUtils}
+import com.zto.fire.common.util.{DBUtils, ValueUtils}
 import com.zto.fire.core.bridge.HBaseSparkBridge
 import com.zto.fire.core.ext.module.HBaseContextExt
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.apache.spark.sql.streaming.{OutputMode, Trigger}
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect._
@@ -56,7 +56,7 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
    * @return
    * 生成的DataFrame
    */
-  def saveAsHiveTable(tableName: String, partitionName: String, saveMode: SaveMode = SaveMode.valueOf(GlobalConstants.SparkConf.saveMode)): DataFrame = {
+  def saveAsHiveTable(tableName: String, partitionName: String, saveMode: SaveMode = SaveMode.valueOf(FireSparkConf.saveMode)): DataFrame = {
     if (StringUtils.isNotBlank(tableName)) {
       if (StringUtils.isNotBlank(partitionName)) {
         dataFrame.write.mode(saveMode).partitionBy(partitionName).saveAsTable(tableName)
@@ -78,7 +78,7 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
    * @return
    */
   def jdbcTableSave(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, keyNum: Int = 1): Unit = {
-    dataFrame.write.mode(saveMode).jdbc(GlobalConstants.JdbcConf.url(keyNum), tableName, DBUtils.getJdbcProps(jdbcProps, keyNum))
+    dataFrame.write.mode(saveMode).jdbc(FireJdbcConf.url(keyNum), tableName, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
   /**
@@ -95,7 +95,7 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
-  def jdbcBatchUpdate(sql: String, fields: Seq[String] = null, batch: Int = GlobalConstants.JdbcConf.batchSize(), keyNum: Int = 1): Unit = {
+  def jdbcBatchUpdate(sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = 1): Unit = {
     if (ValueUtils.isEmpty(sql)) {
       this.log("执行jdbcBatchUpdate失败，sql语句不能为空")
       return
@@ -104,7 +104,7 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
     if (dataFrame.isStreaming) {
       // 如果是streaming流
       dataFrame.writeStream.format("fire-jdbc")
-        .option("checkpointLocation", GlobalConstants.SparkConf.chkPointDirPrefix)
+        .option("checkpointLocation", FireSparkConf.chkPointDirPrefix)
         .option("sql", sql)
         .option("batch", batch)
         .option("keyNum", keyNum)

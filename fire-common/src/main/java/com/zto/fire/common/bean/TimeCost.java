@@ -1,7 +1,11 @@
 package com.zto.fire.common.bean;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import com.zto.fire.common.util.*;
+import com.zto.fire.common.conf.FireConf;
+import com.zto.fire.common.util.DateFormatUtils;
+import com.zto.fire.common.util.StackTraceUtils;
+import com.zto.fire.common.util.SystemInfoUtils;
+import com.zto.fire.common.util.TimeCostUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.TaskContext;
 
@@ -225,7 +229,7 @@ public class TimeCost implements Serializable {
         this.ip = SystemInfoUtils.getIp();
         this.load = SystemInfoUtils.getLoadAverageCache();
         this.cpuUsage = SystemInfoUtils.getCpuUsageCache();
-        if (GlobalConstants.isSparkEngine()) {
+        if (FireConf.isSparkEngine()) {
             // 如果是spark引擎，则获取spark相关运行时信息
             TimeCostUtils.getEngineInfo();
         }

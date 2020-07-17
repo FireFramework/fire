@@ -1,8 +1,8 @@
 package com.zto.fire.flink.core.sink
 
 import com.zto.fire.common.bean.HBaseBaseBean
+import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.common.db.HBaseOper
-import com.zto.fire.common.util.GlobalConstants
 
 /**
  * flink HBase sink组件，底层基于HBaseOper
@@ -19,7 +19,7 @@ abstract class FlinkHBaseSink[IN](tableName: String,
                                   keyNum: Int = 1) extends BaseFlinkSink[IN, HBaseBaseBean[_]](batch, flushInterval) {
 
   // hbase操作失败时允许最大重试次数
-  this.maxRetry = GlobalConstants.hbaseMaxRetry
+  this.maxRetry = FireHBaseConf.hbaseMaxRetry
 
   /**
    * 将数据sink到hbase

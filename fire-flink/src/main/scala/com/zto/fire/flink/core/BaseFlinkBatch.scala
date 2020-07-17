@@ -1,7 +1,8 @@
 package com.zto.fire.flink.core
 
+import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.{GlobalConstants, PropUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
 import com.zto.fire.flink.core.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala.{ExecutionEnvironment, _}
@@ -72,8 +73,8 @@ trait BaseFlinkBatch extends BaseFlink {
     this.configParse(this.env)
     this.sc = this.env
     this.tableEnv = BatchTableEnvironment.create(this.env)
-    this.tableEnv.registerCatalog(GlobalConstants.HiveConf.hiveCatalogName, this.hive)
-    this.tableEnv.useCatalog(GlobalConstants.HiveConf.hiveCatalogName)
+    this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hive)
+    this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
     this.flink = this.tableEnv
     FlinkSingletonFactory.setEnv(this.env).setTableEnv(this.tableEnv)
     this.deployConf
@@ -87,6 +88,13 @@ trait BaseFlinkBatch extends BaseFlink {
       .map(FlinkUtils.initMapFunction)
       .setParallelism(this.sc.getParallelism)
       .name("fire init")
+  }
+
+  /**
+   * 在加载任务配置文件前将被加载
+   */
+  override private[fire] def loadConf: Unit = {
+    PropUtils.load("flink-batch.properties")
   }
 
   /**

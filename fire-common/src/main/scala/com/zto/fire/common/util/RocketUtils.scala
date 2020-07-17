@@ -1,5 +1,6 @@
 package com.zto.fire.common.util
 
+import com.zto.fire.common.conf.FireRocketConf
 import org.apache.commons.lang3.StringUtils
 import org.apache.rocketmq.spark.{ConsumerStrategy, RocketMQConfig}
 import org.slf4j.LoggerFactory
@@ -34,21 +35,21 @@ object RocketUtils {
     if (StringUtils.isNotBlank(groupId)) optionParams.put(RocketMQConfig.CONSUMER_GROUP, groupId)
 
     // rocket name server 配置
-    val confNameServer = GlobalConstants.RocketConf.rocketNameServer(keyNum)
+    val confNameServer = FireRocketConf.rocketNameServer(keyNum)
     val finalNameServer = if (StringUtils.isNotBlank(confNameServer)) confNameServer else rocketNameServer
     if (StringUtils.isNotBlank(finalNameServer)) optionParams.put(RocketMQConfig.NAME_SERVER_ADDR, finalNameServer)
 
     // tag配置
-    val confTag = GlobalConstants.RocketConf.rocketConsumerTag(keyNum)
+    val confTag = FireRocketConf.rocketConsumerTag(keyNum)
     val finalTag = if (StringUtils.isNotBlank(confTag)) confTag else tag
     if (StringUtils.isNotBlank(finalTag)) optionParams.put(RocketMQConfig.CONSUMER_TAG, finalTag)
 
     // 每个分区拉取的消息数
-    val maxSpeed = GlobalConstants.RocketConf.rocketPullMaxSpeedPerPartition(keyNum)
+    val maxSpeed = FireRocketConf.rocketPullMaxSpeedPerPartition(keyNum)
     if (StringUtils.isNotBlank(maxSpeed) && StringsUtils.isInt(maxSpeed)) optionParams.put(RocketMQConfig.MAX_PULL_SPEED_PER_PARTITION, maxSpeed)
 
     // 以spark.rocket.conf.开头的配置优先级最高
-    val confMap = GlobalConstants.RocketConf.rocketConfMap(keyNum)
+    val confMap = FireRocketConf.rocketConfMap(keyNum)
     if (confMap.nonEmpty) optionParams.putAll(JavaConversions.mapAsJavaMap(confMap))
     // 日志记录RocketMQ的配置信息
     LogUtils.logMap(this.logger, JavaConversions.mapAsScalaMap(optionParams).toMap, s"RocketMQ configuration. keyNum=$keyNum.")

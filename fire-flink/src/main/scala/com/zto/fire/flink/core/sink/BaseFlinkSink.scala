@@ -106,7 +106,7 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
     this.checkFlushException
 
     if (this.buffer != null && this.buffer.size > 0) {
-      this.logger.warn(s"执行flushInternal操作 sink.size=${this.buffer.size()} batch=${this.batch} flushInterval=${this.flushInterval}")
+      this.logger.info(s"执行flushInternal操作 sink.size=${this.buffer.size()} batch=${this.batch} flushInterval=${this.flushInterval}")
       val loop = new Breaks
       loop.breakable {
         for (i <- 1L to this.maxRetry) {

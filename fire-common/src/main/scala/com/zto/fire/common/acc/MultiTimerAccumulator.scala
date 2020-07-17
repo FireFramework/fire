@@ -3,8 +3,8 @@ package com.zto.fire.common.acc
 import java.util.Date
 
 import com.google.common.collect.HashBasedTable
-import com.zto.fire.common.util.GlobalConstants.PropKeys
-import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, PropUtils}
+import com.zto.fire.common.conf.{FireDateSchemaConf, FireFrameworkConf}
+import com.zto.fire.common.util.DateFormatUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.AccumulatorV2
 
@@ -16,15 +16,11 @@ import scala.collection.{JavaConversions, mutable}
   * @author ChengLong 2019-8-21 14:22:12
   */
 class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBasedTable[String, String, Long]] {
-  private[fire] val timerCountTable = HashBasedTable.create[String, String, Long]
-  // 用于限定最大保存量，防止数据量过大，撑爆driver
-  private lazy val maxTimerSize = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_FIRE_ACC_TIMER_MAX_SIZE, GlobalConstants.DefaultVals.maxTimerSize).abs
-  // 用于指定清理指定小时数之前的记录
-  private lazy val maxTimerHour = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_FIRE_ACC_TIMER_MAX_HOUR, GlobalConstants.DefaultVals.maxTimerHour).abs
+  private[fire] lazy val timerCountTable = HashBasedTable.create[String, String, Long]
   // 用于记录上次清理过期累加数据的时间
   private var lastClearTime = new Date
   // 判断是否打开多时间维度累加器
-  private lazy val isEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_ENABLE, true) && PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_MULTI_TIMER_ENABLE, true)
+  private lazy val isEnable = FireFrameworkConf.accEnable && FireFrameworkConf.accMultiCounterEnable
 
   /**
     * 用于判断当前累加器是否为空
@@ -60,7 +56,7 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBa
   override def add(kv: (String, Long, String)): Unit = {
     if (!isEnable || kv == null) return
     val schema = if (StringUtils.isBlank(kv._3)) {
-      GlobalConstants.MultiTimerSchema.MIN
+      FireDateSchemaConf.MIN
     } else kv._3
     if (StringUtils.isNotBlank(kv._1) && kv._2 != null) {
       this.mergeTable(kv._1, DateFormatUtils.formatCurrentBySchema(schema), kv._2)
@@ -110,8 +106,8 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBa
     */
   private[this] def clear: Unit = {
     val currentDate = new Date
-    if (this.timerCountTable.size() >= this.maxTimerSize && DateFormatUtils.betweenHours(currentDate, lastClearTime) >= this.maxTimerHour) {
-      val criticalTime = DateFormatUtils.addHours(currentDate, -Math.abs(this.maxTimerHour))
+    if (this.timerCountTable.size() >= FireFrameworkConf.maxTimerSize && DateFormatUtils.betweenHours(currentDate, lastClearTime) >= FireFrameworkConf.maxTimerHour) {
+      val criticalTime = DateFormatUtils.addHours(currentDate, -Math.abs(FireFrameworkConf.maxTimerHour))
 
       val timeOutSet = new mutable.HashSet[String]()
       JavaConversions.mapAsScalaMap(this.timerCountTable.rowMap()).foreach(kmap => {

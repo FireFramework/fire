@@ -1,14 +1,14 @@
 package com.zto.fire.flink.core
 
+import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.{GlobalConstants, PropUtils, SystemInfoUtils}
-import com.zto.fire.flink.core.ext.functions.FireMapFunction
+import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
 import com.zto.fire.flink.core.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.flink.api.java.utils.ParameterTool
+import org.apache.flink.api.scala._
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
 import org.apache.flink.streaming.api.scala.{OutputTag, StreamExecutionEnvironment}
 import org.apache.flink.table.api.EnvironmentSettings
-import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala.StreamTableEnvironment
 
 /**
@@ -75,8 +75,8 @@ trait BaseFlinkStreaming extends BaseFlink {
     this.ssc = this.env
     val settings = EnvironmentSettings.newInstance.useBlinkPlanner.inStreamingMode.build
     this.tableEnv = StreamTableEnvironment.create(this.env, settings)
-    this.tableEnv.registerCatalog(GlobalConstants.HiveConf.hiveCatalogName, this.hive)
-    this.tableEnv.useCatalog(GlobalConstants.HiveConf.hiveCatalogName)
+    this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hive)
+    this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
     this.flink = this.tableEnv
     FlinkSingletonFactory.setStreamEnv(this.env).setStreamTableEnv(this.tableEnv)
     this.deployConf
@@ -90,6 +90,13 @@ trait BaseFlinkStreaming extends BaseFlink {
     this.ssc.fromCollection(1 to this.env.getMaxParallelism).map(FlinkUtils.initMapFunction).setParallelism(this.env.getMaxParallelism).name("fire init")
   }
 
+
+  /**
+   * 在加载任务配置文件前将被加载
+   */
+  override private[fire] def loadConf: Unit = {
+    PropUtils.load("flink-streaming.properties")
+  }
 
   /**
    * 生命周期方法：具体的用户开发的业务逻辑代码

@@ -7,7 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.bean.KuduBaseBean
-import com.zto.fire.common.util.{DBUtils, GlobalConstants, KuduUtils, ValueUtils}
+import com.zto.fire.common.conf.{FireKuduConf, FireSparkConf}
+import com.zto.fire.common.util.{DBUtils, KuduUtils, ValueUtils}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
@@ -18,7 +19,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 
 import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 import scala.reflect._
 
 /**
@@ -74,7 +75,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * 具体类型
    */
   def insertIgnoreList[T: ClassTag](tableName: String, beanSeq: Seq[T]): Unit = {
-    val beanRDD = sqlContext.sparkContext.parallelize(beanSeq, GlobalConstants.SparkConf.parallelism)
+    val beanRDD = sqlContext.sparkContext.parallelize(beanSeq, FireSparkConf.parallelism)
     this.insertIgnoreRDD(tableName, beanRDD)
   }
 
@@ -143,7 +144,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * 具体类型
    */
   def insertList[T: ClassTag](tableName: String, beanSeq: Seq[T]): Unit = {
-    val beanRDD = sqlContext.sparkContext.parallelize(beanSeq, GlobalConstants.SparkConf.parallelism)
+    val beanRDD = sqlContext.sparkContext.parallelize(beanSeq, FireSparkConf.parallelism)
     this.insertRDD(tableName, beanRDD)
   }
 
@@ -259,7 +260,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * 与表结构对应的多个实体bean
    */
   def upsertList[T: ClassTag](tableName: String, beanSeq: Seq[T]): Unit = {
-    val beanRDD = sqlContext.sparkContext.parallelize(beanSeq, GlobalConstants.SparkConf.parallelism)
+    val beanRDD = sqlContext.sparkContext.parallelize(beanSeq, FireSparkConf.parallelism)
     val df = sqlContext.createDataFrame(beanRDD, classTag[T].runtimeClass)
     this.upsertRows(tableName, df)
   }
@@ -312,7 +313,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * 与表结构对应的多个实体bean
    */
   def updateList[T: ClassTag](tableName: String, beanSeq: Seq[T]): Unit = {
-    val beanRDD = sqlContext.sparkContext.parallelize(beanSeq, GlobalConstants.SparkConf.parallelism)
+    val beanRDD = sqlContext.sparkContext.parallelize(beanSeq, FireSparkConf.parallelism)
     val df = sqlContext.createDataFrame(beanRDD, classTag[T].runtimeClass)
     this.updateRows(tableName, df)
   }
@@ -594,7 +595,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * @return
    */
   def loadKuduTable(tableName: String): DataFrame = {
-    sqlContext.read.options(Map("kudu.master" -> GlobalConstants.KuduConf.kuduMaster, "kudu.table" -> KuduUtils.packageKuduTableName(tableName))).kudu
+    sqlContext.read.options(Map("kudu.master" -> FireKuduConf.kuduMaster, "kudu.table" -> KuduUtils.packageKuduTableName(tableName))).kudu
   }
 
   /**
@@ -765,7 +766,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
 }
 
 object KuduContextExt {
-  private lazy val impalaDaemons = GlobalConstants.KuduConf.impalaDaemons.split(",").toSet[String]
+  private lazy val impalaDaemons = FireKuduConf.impalaDaemons.split(",").toSet[String]
   private lazy val dataSource: util.LinkedList[Connection] = new util.LinkedList[Connection]()
   private lazy val isInit = new AtomicBoolean(false)
 
@@ -774,7 +775,7 @@ object KuduContextExt {
    */
   private[this] def initPool: Unit = {
     if (isInit.compareAndSet(false, true)) {
-      if (ValueUtils.isNotEmpty(GlobalConstants.KuduConf.impalaJdbcDriverName)) Class.forName(GlobalConstants.KuduConf.impalaJdbcDriverName)
+      if (ValueUtils.isNotEmpty(FireKuduConf.impalaJdbcDriverName)) Class.forName(FireKuduConf.impalaJdbcDriverName)
 
       impalaDaemons.filter(ValueUtils.isNotEmpty(_)).map(_.trim).foreach(ip => {
         val conn: Connection = DriverManager.getConnection(s"jdbc:hive2://$ip:21050/;auth=noSasl")

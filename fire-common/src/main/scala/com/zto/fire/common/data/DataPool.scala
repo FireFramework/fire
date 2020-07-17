@@ -2,8 +2,9 @@ package com.zto.fire.common.data
 
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
+import com.zto.fire.common.conf.FireConf
 import com.zto.fire.common.enu.DataSource
-import com.zto.fire.common.util.{GlobalConstants, PropUtils}
+import com.zto.fire.common.util.PropUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkEnv
 
@@ -35,7 +36,7 @@ object DataPool {
    * 当传输到executor或taskManager端时进行配置的merge
    */
   private[fire] def mergeConf: Unit = {
-    if (GlobalConstants.isSparkEngine) {
+    if (FireConf.isSparkEngine) {
       val env = SparkEnv.get
       if (env != null && env.conf != null) {
         env.conf.getAll.foreach(t => {

@@ -4,7 +4,8 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Stateme
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.bean.BaseLogging
-import com.zto.fire.common.util.{DBUtils, GlobalConstants, StringsUtils}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf}
+import com.zto.fire.common.util.{DBUtils, StringsUtils}
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
@@ -21,7 +22,7 @@ object JdbcOper {
   private lazy val connPoolMap = collection.mutable.Map[String, ComboPooledDataSource]()
   private val logger = LoggerFactory.getLogger(this.getClass)
   // 日志中sql截取的长度
-  private lazy val logSqlLength = GlobalConstants.FireConf.logSqlLength
+  private lazy val logSqlLength = FireFrameworkConf.logSqlLength
   private val jdbcPoolKey = "cpds"
 
   /**
@@ -37,26 +38,26 @@ object JdbcOper {
     if (pool == null) {
       try {
         // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
-        if (StringUtils.isNotBlank(GlobalConstants.JdbcConf.url(keyNum)) && StringUtils.isNotBlank(GlobalConstants.JdbcConf.user(keyNum))) {
-          this.logger.info(s"准备初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
+        if (StringUtils.isNotBlank(FireJdbcConf.url(keyNum)) && StringUtils.isNotBlank(FireJdbcConf.user(keyNum))) {
+          this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
           pool = new ComboPooledDataSource(true)
-          pool.setJdbcUrl(GlobalConstants.JdbcConf.url(keyNum))
-          pool.setDriverClass(GlobalConstants.JdbcConf.driverClass(keyNum))
-          pool.setUser(GlobalConstants.JdbcConf.user(keyNum))
-          pool.setPassword(GlobalConstants.JdbcConf.password(keyNum))
-          pool.setMaxPoolSize(GlobalConstants.JdbcConf.maxPoolSize(keyNum))
-          pool.setMinPoolSize(GlobalConstants.JdbcConf.minPoolSize(keyNum))
-          pool.setAcquireIncrement(GlobalConstants.JdbcConf.acquireIncrement(keyNum))
-          pool.setInitialPoolSize(GlobalConstants.JdbcConf.initialPoolSize(keyNum))
+          pool.setJdbcUrl(FireJdbcConf.url(keyNum))
+          pool.setDriverClass(FireJdbcConf.driverClass(keyNum))
+          pool.setUser(FireJdbcConf.user(keyNum))
+          pool.setPassword(FireJdbcConf.password(keyNum))
+          pool.setMaxPoolSize(FireJdbcConf.maxPoolSize(keyNum))
+          pool.setMinPoolSize(FireJdbcConf.minPoolSize(keyNum))
+          pool.setAcquireIncrement(FireJdbcConf.acquireIncrement(keyNum))
+          pool.setInitialPoolSize(FireJdbcConf.initialPoolSize(keyNum))
           pool.setMaxStatements(0)
           pool.setMaxStatementsPerConnection(0)
-          pool.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime(keyNum))
+          pool.setMaxIdleTime(FireJdbcConf.maxIdleTime(keyNum))
           this.connPoolMap += (s"cpds$keyNum" -> pool)
-          this.logger.info(s"完成数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ] 初始化：url: ${GlobalConstants.JdbcConf.url(keyNum)} driver: ${GlobalConstants.JdbcConf.driverClass(keyNum)} ")
+          this.logger.info(s"完成数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ] 初始化：url: ${FireJdbcConf.url(keyNum)} driver: ${FireJdbcConf.driverClass(keyNum)} ")
         }
       } catch {
         case ex: Exception => {
-          this.logger.error(s"初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", ex)
+          this.logger.error(s"初始化数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", ex)
           throw ex
         }
       }
@@ -81,7 +82,7 @@ object JdbcOper {
       this.logger.info(s"获取数据库连接[ ${keyNum} ]成功")
     } catch {
       case ex: Exception => {
-        this.logger.error(s"获取数据库连接[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]发生异常，请检查配置文件", ex)
+        this.logger.error(s"获取数据库连接[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]发生异常，请检查配置文件", ex)
         throw ex
       }
     }
@@ -180,7 +181,7 @@ object JdbcOper {
           })
           batch += 1
           stat.addBatch()
-          if (batch % GlobalConstants.JdbcConf.batchSize(keyNum) == 0) {
+          if (batch % FireJdbcConf.batchSize(keyNum) == 0) {
             stat.executeBatch()
             stat.clearBatch()
           }

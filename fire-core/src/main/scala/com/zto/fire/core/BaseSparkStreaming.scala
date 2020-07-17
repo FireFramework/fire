@@ -4,12 +4,12 @@ import com.alibaba.fastjson.JSON
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.RestartParams
 import com.zto.fire.common.bean.rest.ResultMsg
+import com.zto.fire.common.conf.{FireKafkaConf, FireSparkConf}
 import com.zto.fire.common.enu.{ErrorCode, JobType, RequestMethod}
-import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, SystemInfoUtils, ValueUtils}
+import com.zto.fire.common.util.{KafkaUtils, PropUtils, ValueUtils}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.rest.RestCase
 import com.zto.fire.core.util.SparkUtils
-import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import spark.{Request, Response}
@@ -52,11 +52,9 @@ trait BaseSparkStreaming extends BaseSpark {
     if (this.sc == null) {
       // 添加streaming相关的restful接口，并启动
       this.init(tmpConf)
-      if (SystemInfoUtils.isLinux) {
-        this.restfulRegister
-          .addRest(RestCase(RequestMethod.POST.toString, "/system/streaming/hotRestart", this.hotRestart))
-          .startRestServer
-      }
+      this.restfulRegister
+        .addRest(RestCase(RequestMethod.POST.toString, "/system/streaming/hotRestart", this.hotRestart))
+        .startRestServer
     }
     // 判断是否为热重启，batchDuration优先级分别为 [ 代码<配置文件<热重启 ]
     this.batchDuration = SparkUtils.overrideBatchDuration(batchDuration, this.externalConf != null && this.externalConf.getBatchDuration != null)
@@ -71,7 +69,7 @@ trait BaseSparkStreaming extends BaseSpark {
       this.ssc.remember(Seconds(Math.abs(this.batchDuration) * 10))
       this.process
     } else {
-      this.checkPointDir = GlobalConstants.SparkConf.chkPointDirPrefix + this.appName
+      this.checkPointDir = FireSparkConf.chkPointDirPrefix + this.appName
       this.ssc = StreamingContext.getOrCreate(this.checkPointDir, createStreamingContext _)
 
       // 初始化Streaming
@@ -96,28 +94,7 @@ trait BaseSparkStreaming extends BaseSpark {
    * 构建内部使用的SparkConf对象
    */
   override def buildConf(conf: SparkConf = null): SparkConf = {
-    val tmpConf = if (conf == null) {
-      new SparkConf()
-        .setAppName(this.appName)
-        // 开启后可能会导致streaming不稳定
-        // .set("spark.speculation", "true")
-        .set("spark.port.maxRetries", "200")
-        .set("spark.ui.retainedJobs", "500")
-        .set("spark.ui.killEnabled", "false")
-        .set("spark.ui.retailedStages", "300")
-        .set("spark.default.parallelism", "300")
-        .set("spark.sql.broadcastTimeout", "3000")
-        .set("spark.storage.memoryFraction", "0.4")
-        .set("spark.streaming.concurrentJobs", "1")
-        .set("spark.ui.timeline.tasks.maximum", "300")
-        .set("spark.sql.parquet.writeLegacyFormat", "true")
-        .set("spark.streaming.backpressure.enabled", "true")
-        .set("spark.streaming.stopGracefullyOnShutdown", "true")
-        // 解决cluster模式下不稳定的问题
-        // .set("spark.streaming.kafka.maxRatePerPartition", "100") // 每个批次从每个partition中每秒中最大拉取的数据量
-        .set("spark.streaming.kafka.consumer.cache.enabled", "false")
-        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    } else conf
+    val tmpConf = super.buildConf(conf)
 
     // 若重启SparkContext对象，则设置restful传递过来的新的配置信息
     if (this.externalConf != null && this.externalConf.isRestartSparkContext) {
@@ -127,6 +104,13 @@ trait BaseSparkStreaming extends BaseSpark {
     }
 
     tmpConf
+  }
+
+  /**
+   * 在加载任务配置文件前将被加载
+   */
+  override private[fire] def loadConf: Unit = {
+    PropUtils.load("spark-streaming.properties")
   }
 
   /**
@@ -151,7 +135,7 @@ trait BaseSparkStreaming extends BaseSpark {
    * kafka相关配置
    */
   @Deprecated
-  def kafkaParams(groupId: String = this.appName, kafkaBrokers: String = null, offset: String = GlobalConstants.KafkaConf.offsetLargest, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
+  def kafkaParams(groupId: String = this.appName, kafkaBrokers: String = null, offset: String = FireKafkaConf.offsetLargest, autoCommit: Boolean = false, keyNum: Int = 1): Map[String, Object] = {
     KafkaUtils.kafkaParams(null, groupId, kafkaBrokers, offset, autoCommit, keyNum)
   }
 

@@ -1,0 +1,76 @@
+package com.zto.fire.common.conf
+
+import com.zto.fire.common.util.PropUtils
+import org.apache.commons.lang3.StringUtils
+
+/**
+ * RocketMQ相关配置
+ *
+ * @author ChengLong
+ * @since 1.0.0
+ * @create 2020-07-13 14:58
+ */
+private[fire] object FireRocketConf {
+  lazy val rocketOffsetLargest = "latest"
+  lazy val rocketOffsetSmallest = "earliest"
+  lazy val rocketConsumerTag = "*"
+  lazy val rocketClusterMapConfStart = "spark.rocket.cluster.map."
+  // 初始化kafka集群名称与地址映射
+  private lazy val rocketClusterMap = PropUtils.sliceKeys(rocketClusterMapConfStart)
+  lazy val rocketConfStart = "spark.rocket.conf."
+  // rocketMQ name server
+  lazy val ROCKET_BROKERS_NAME = "spark.rocket.brokers.name"
+  // rocketMQ topic信息，多个以逗号分隔
+  lazy val ROCKET_TOPICS = "spark.rocket.topics"
+  // rocketMQ groupId
+  val ROCKET_GROUP_ID = "spark.rocket.group.id"
+  // 丢失数据是否失败
+  lazy val ROCKET_FAIL_ON_DATA_LOSS = "spark.rocket.failOnDataLoss"
+  lazy val ROCKET_FORCE_SPECIAL = "spark.rocket.forceSpecial"
+  // 是否自动维护offset
+  lazy val ROCKET_ENABLE_AUTO_COMMIT = "spark.rocket.enable.auto.commit"
+  // RocketMQ起始消费位点
+  lazy val ROCKET_STARTING_OFFSET = "spark.rocket.starting.offsets"
+  // rocketMq订阅的tag
+  lazy val ROCKET_CONSUMER_TAG = "spark.rocket.consumer.tag"
+  // 每次拉取每个partition的消息数
+  lazy val ROCKET_PULL_MAX_SPEED_PER_PARTITION = "spark.rocket.pull.max.speed.per.partition"
+
+  // rocket-client配置信息
+  def rocketConfMap(keyNum: Int = 1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(rocketConfStart, keyNum)
+
+  // 获取消费位点
+  def rocketStartingOffset(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_STARTING_OFFSET, keyNum, "")
+
+  // 丢失数据时是否失败
+  def rocketFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.ROCKET_FAIL_ON_DATA_LOSS, keyNum, true)
+
+  // spark.rocket.forceSpecial
+  def rocketForceSpecial(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.ROCKET_FORCE_SPECIAL, keyNum, false)
+
+  // enable.auto.commit
+  def rocketEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.ROCKET_ENABLE_AUTO_COMMIT, keyNum, false)
+
+  // 获取rocketMQ 订阅的tag
+  def rocketConsumerTag(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_CONSUMER_TAG, keyNum, "")
+
+  // 获取groupId
+  def rocketGroupId(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_GROUP_ID, keyNum, "")
+
+  // 获取rocket topic列表
+  def rocketTopics(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_TOPICS, keyNum, null)
+
+  // 每次拉取每个partition的消息数
+  def rocketPullMaxSpeedPerPartition(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_PULL_MAX_SPEED_PER_PARTITION, keyNum, "")
+
+  // 获取rocketMQ name server 地址
+  def rocketNameServer(keyNum: Int = 1): String = {
+    val brokerName = PropUtils.getString(this.ROCKET_BROKERS_NAME, keyNum, "")
+    val nameServiceAddress = if (StringUtils.isNotBlank(brokerName) && brokerName.contains(":")) {
+      brokerName
+    } else {
+      this.rocketClusterMap.getOrElse(brokerName, "")
+    }
+    nameServiceAddress
+  }
+}
