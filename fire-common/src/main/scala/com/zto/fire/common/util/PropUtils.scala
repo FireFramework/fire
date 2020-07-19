@@ -23,7 +23,7 @@ object PropUtils {
   // 用于判断是否merge过
   private[fire] val isMerge = new AtomicBoolean(false)
   // key的前缀
-  private[fire] var keyPrefix = "spark"
+  private[fire] var engine = "spark"
   // 是否兼容key的前缀配置
   private var compatible = false
   // 加载默认配置文件
@@ -39,7 +39,7 @@ object PropUtils {
    */
   private[fire] def compatible(keyPrefix: String): Unit = {
     if (StringUtils.isNotBlank(keyPrefix.trim) && !keyPrefix.equals("spark")) {
-      this.keyPrefix = keyPrefix.trim
+      this.engine = keyPrefix.trim
       this.compatible = true
     }
   }
@@ -95,10 +95,10 @@ object PropUtils {
    * 配置的value
    */
   def getProperty(key: String): String = {
-    if (!this.isMerge.get && "spark".equals(this.keyPrefix)) this.mergeSparkConf
+    if (!this.isMerge.get && "spark".equals(this.engine)) this.mergeSparkConf
     if (this.compatible) {
       // 兼容配置key的前缀变化，适配flink.为前缀的配置项
-      val value = this.props.getProperty(key.replaceFirst("spark", this.keyPrefix))
+      val value = this.props.getProperty(key.replaceFirst("spark", this.engine))
       if (StringUtils.isNotBlank(value)) value else this.props.getProperty(key)
     } else {
       this.props.getProperty(key)
@@ -348,7 +348,7 @@ object PropUtils {
       JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
         if (key != null && !key.toString.contains("pass")) {
           // 如果是spark引擎，则忽略flink相关配置；如果是flink引擎，则忽略spark相关配置
-          if (("spark".equals(this.keyPrefix) && !key.toString.startsWith("flink")) || ("flink".equals(this.keyPrefix) && !key.toString.startsWith("spark"))) {
+          if (("spark".equals(this.engine) && !key.toString.startsWith("flink")) || ("flink".equals(this.engine) && !key.toString.startsWith("spark"))) {
             logger.info(s">>${FirePS1Conf.PINK} $key --> ${this.props.get(key)} ${FirePS1Conf.DEFAULT}")
           }
         }
@@ -442,7 +442,7 @@ object PropUtils {
    * 合并Conf中的配置信息
    */
   def mergeSparkConf: Unit = {
-    if (!this.compatible && "spark".equals(this.keyPrefix)) {
+    if (!this.compatible && "spark".equals(this.engine)) {
       DataPool.mergeConf
     }
   }
@@ -461,12 +461,12 @@ object PropUtils {
       conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.prod.address", "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack"), param)
     } catch {
       case e: Exception => {
-        if ("spark".equals(this.keyPrefix)) this.logger.error("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", e)
+        if ("spark".equals(this.engine)) this.logger.error("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", e)
         conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.test.address"), param)
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {
-        if ("spark".equals(this.keyPrefix)) this.logger.info("成功获取zrc配置信息：" + conf)
+        if ("spark".equals(this.engine)) this.logger.info("成功获取zrc配置信息：" + conf)
         val msg = JSON.parseObject(conf)
         if (msg != null && msg.get("code") == 200) {
           val content = msg.get("content")
@@ -494,7 +494,7 @@ object PropUtils {
      * 相同数据源进行merge操作
      */
     def merge(datasource: DataSource, key: String, datasourceKey: String): Unit = {
-      if (key.contains(datasourceKey.replaceFirst("spark", this.keyPrefix))) {
+      if (key.contains(datasourceKey.replaceFirst("spark", this.engine))) {
         val currentConf = this.getString(key)
         mergeMap(datasource, currentConf)
       }
@@ -518,7 +518,7 @@ object PropUtils {
       // 配置的RocketMQ源
       merge(DataSource.RocketMQ, key, FireRocketConf.ROCKET_BROKERS_NAME)
       // JDBC源
-      if (key.contains(FireJdbcConf.SPARK_DB_JDBC_URL_KEY.replaceFirst("spark", this.keyPrefix))) {
+      if (key.contains(FireJdbcConf.SPARK_DB_JDBC_URL_KEY.replaceFirst("spark", this.engine))) {
         val value = this.getString(key)
         if (value.contains("mysql")) {
           mergeMap(DataSource.MySQL, value)
@@ -534,4 +534,5 @@ object PropUtils {
 
     dataSourceMap
   }
+
 }

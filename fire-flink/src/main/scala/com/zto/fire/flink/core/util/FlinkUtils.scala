@@ -6,8 +6,7 @@ import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.conf.FireFlinkConf
-import com.zto.fire.common.util.{PropUtils, ReflectionUtils, ValueUtils}
-import com.zto.fire.core.util.FireUtils
+import com.zto.fire.common.util.{FireUtils, PropUtils, ReflectionUtils, ValueUtils}
 import com.zto.fire.flink.core.bean.FlinkTableSchema
 import com.zto.fire.flink.core.ext.functions.FireMapFunction
 import org.apache.commons.lang3.StringUtils

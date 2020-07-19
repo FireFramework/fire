@@ -8,7 +8,7 @@ import com.zto.fire.common.util.PropUtils
  */
 private[fire] class FireConf {
   // 用于区分不同的流计算引擎类型
-  private[fire] lazy val engine = PropUtils.keyPrefix
+  private[fire] lazy val engine = PropUtils.engine
 
   // Fire框架相关配置
   val frameworkConf = FireFrameworkConf
@@ -51,10 +51,4 @@ private[fire] class FireConf {
 
 }
 
-object FireConf extends FireConf {
-  // 用于判断是否为spark引擎
-  def isSparkEngine = "spark".equals(this.engine)
-
-  // 用于判断是否为flink引擎
-  def isFlinkEngine = "flink".equals(this.engine)
-}
+object FireConf extends FireConf

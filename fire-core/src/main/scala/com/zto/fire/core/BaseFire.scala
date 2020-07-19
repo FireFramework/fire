@@ -7,9 +7,8 @@ import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf, FirePrintModule
 import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.enu.{JobType, ThreadPoolType}
 import com.zto.fire.common.task.SchedulerManager
-import com.zto.fire.common.util._
+import com.zto.fire.common.util.{FireUtils, _}
 import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
-import com.zto.fire.core.util.FireUtils
 import org.apache.log4j.{Level, Logger}
 import org.slf4j.LoggerFactory
 import spark.Spark

@@ -1,10 +1,9 @@
-package com.zto.fire.core.util
+package com.zto.fire.common.util
 
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.bean.ogg.OGGBean
-import com.zto.fire.common.conf.{FireConf, FirePS1Conf}
-import com.zto.fire.common.util.{DateFormatUtils, PropUtils, ValueUtils}
+import com.zto.fire.common.conf.FirePS1Conf
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.JavaConversions
@@ -20,7 +19,7 @@ import scala.util.Try
  * @since 1.0.0
  * @create: 2020-05-17 10:17
  */
-object FireUtils extends Serializable {
+private[fire] object FireUtils extends Serializable {
   private var isSplash = false
 
   /**
@@ -158,16 +157,12 @@ object FireUtils extends Serializable {
   /**
    * 判断是否为spark引擎
    */
-  def isSparkEngine: Boolean = {
-    FireConf.isSparkEngine
-  }
+  def isSparkEngine: Boolean = "spark".equals(PropUtils.engine)
 
   /**
    * 判断是否为flink引擎
    */
-  def isFlinkEngine: Boolean = {
-    FireConf.isFlinkEngine
-  }
+  def isFlinkEngine: Boolean = PropUtils.equals(PropUtils.engine)
 
   /**
    * 用于在fire框架启动时展示信息

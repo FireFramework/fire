@@ -3,9 +3,9 @@ package com.zto.fire.common.task;
 import com.google.common.collect.Maps;
 import com.zto.fire.common.anno.Scheduled;
 import com.zto.fire.common.bean.BaseLogging;
-import com.zto.fire.common.conf.FireConf;
 import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.DateFormatUtils;
+import com.zto.fire.common.util.FireUtils;
 import com.zto.fire.common.util.ValueUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -96,7 +96,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
      * 判断当前是否为driver
      */
     private static String label() {
-        if (FireConf.isFlinkEngine()) return "driver";
+        if (FireUtils.isFlinkEngine()) return "driver";
         SparkEnv sparkEnv = SparkEnv.get();
         if (sparkEnv == null || "driver".equalsIgnoreCase(sparkEnv.executorId())) {
             return "driver";

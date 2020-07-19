@@ -6,12 +6,12 @@ import java.util.Properties
 import com.zto.fire.common.bean.{BaseLogging, HBaseBaseBean}
 import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf, FireKafkaConf, FireSparkConf}
 import com.zto.fire.common.db.{HBaseOper, JdbcOper}
-import com.zto.fire.common.util.{KafkaUtils, LogUtils, ValueUtils}
+import com.zto.fire.common.util.{FireUtils, KafkaUtils, LogUtils, ValueUtils}
 import com.zto.fire.core.bridge.{HBaseSparkBridge, JdbcOperBridge}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.HBaseContextExt
 import com.zto.fire.core.udf.UDFs
-import com.zto.fire.core.util.{FireUtils, SingletonFactory, SparkUtils}
+import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
 import org.apache.hadoop.hbase.filter.{Filter, FilterList}

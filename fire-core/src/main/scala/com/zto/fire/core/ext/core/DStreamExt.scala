@@ -2,8 +2,9 @@ package com.zto.fire.core.ext.core
 
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.bean.ogg.OGGBean
+import com.zto.fire.common.util.FireUtils
 import com.zto.fire.core.ext.module.HBaseContextExt
-import com.zto.fire.core.util.{FireUtils, SingletonFactory}
+import com.zto.fire.core.util.SingletonFactory
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.common.message.MessageExt
