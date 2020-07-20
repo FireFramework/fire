@@ -70,7 +70,7 @@ object PropUtils {
             }
             if (resource == null) this.logger.warn(s"未找到配置文件[ $fullName ]，请核实！")
             if (resource != null) {
-              this.logger.info(s"${FirePS1Conf.YELLOW} -------------> loaded ${fullName} <------------- ${FirePS1Conf.DEFAULT}")
+              this.logger.warn(s"${FirePS1Conf.YELLOW} -------------> loaded ${fullName} <------------- ${FirePS1Conf.DEFAULT}")
               props.load(resource)
               this.alreadyLoadMap.put(fileName, fileName)
             }
@@ -453,16 +453,16 @@ object PropUtils {
   def invokeZrcConf(className: String, rest: String): Unit = {
     val param =
       s"""
-         |{"className": "$className", "url": "http://$rest", "fireVersion": "${this.getString("spark.fire.version")}", "zrcKey": "${FireFrameworkConf.zrcSecret}"}
+         |{"className": "$className", "url": "http://$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.zrcSecret}"}
       """.stripMargin
-    this.setProperty("spark.rest.url", s"http://$rest")
+    this.setProperty(FireFrameworkConf.SPARK_FIRE_REST_URL, s"http://$rest")
     var conf = ""
     try {
-      conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.prod.address", "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack"), param)
+      conf = HttpClientUtils.doPost(FireFrameworkConf.zrcProdAddress, param)
     } catch {
       case e: Exception => {
         if ("spark".equals(this.engine)) this.logger.error("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", e)
-        conf = HttpClientUtils.doPost(this.getString("spark.zrc.register.conf.test.address"), param)
+        conf = HttpClientUtils.doPost(FireFrameworkConf.zrcTestAddress, param)
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {

@@ -10,6 +10,8 @@ import com.zto.fire.common.util.PropUtils
  * @create 2020-07-13 14:54
  */
 private[fire] object FireFrameworkConf {
+  // fire版本号
+  lazy val SPARK_FIRE_VERSION = "spark.fire.version"
   // 是否启用fire框架restful服务
   lazy val SPARK_FIRE_REST_ENABLE = "spark.fire.rest.enable"
   // rest接口权限认证
@@ -57,8 +59,16 @@ private[fire] object FireFrameworkConf {
   lazy val SPARK_FIRE_TASK_SCHEDULE_ENABLE = "spark.fire.task.schedule.enable"
   // quartz最大线程池大小
   lazy val SPARK_FIRE_QUARTZ_MAX_THREAD = "spark.fire.quartz.max.thread"
+  // fire框架restful地址
+  lazy val SPARK_FIRE_REST_URL = "spark.fire.rest.url"
+  // zrc生产环境注册地址
+  lazy val SPARK_ZRC_REGISTER_CONF_PROD_ADDRESS = "spark.zrc.register.conf.prod.address"
+  // zrc测试环境注册地址
+  lazy val SPARK_ZRC_REGISTER_CONF_TEST_ADDRESS = "spark.zrc.register.conf.test.address"
 
 
+
+  lazy val fireVersion = PropUtils.getString(this.SPARK_FIRE_VERSION, "1.0.0")
   // quartz最大线程池大小
   lazy val quartzMaxThread = PropUtils.getString(this.SPARK_FIRE_QUARTZ_MAX_THREAD, "8")
   // 用于设置是否启用任务定时调度
@@ -83,6 +93,10 @@ private[fire] object FireFrameworkConf {
   lazy val logEnable = PropUtils.getBoolean(this.SPARK_FIRE_LOG_ENABLE, true)
   // 用于限定fire框架中sql日志的字符串长度
   lazy val logSqlLength = PropUtils.getInt(this.SPARK_FIRE_LOG_SQL_LENGTH, 50)
+  // zrc生产环境注册地址
+  lazy val zrcProdAddress = PropUtils.getString(this.SPARK_ZRC_REGISTER_CONF_PROD_ADDRESS, "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack")
+  // zrc测试环境注册地址
+  lazy val zrcTestAddress = PropUtils.getString(this.SPARK_ZRC_REGISTER_CONF_TEST_ADDRESS)
 
 
   // fire框架rest接口服务最大线程数

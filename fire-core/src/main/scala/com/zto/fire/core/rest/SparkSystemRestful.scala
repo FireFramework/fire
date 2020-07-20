@@ -9,6 +9,7 @@ import com.google.common.collect.Table
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.bean.rest.spark.{ColumnMeta, FunctionMeta, SparkInfo, TableMeta}
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
 import com.zto.fire.core.BaseSpark
@@ -525,7 +526,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.sparkInfoBean = new SparkInfo
         this.sparkInfoBean.setAppName(this.baseSpark.appName)
         this.sparkInfoBean.setClassName(this.baseSpark.className)
-        this.sparkInfoBean.setFireVersion(PropUtils.getString("spark.fire.version", "1.0.0"))
+        this.sparkInfoBean.setFireVersion(FireFrameworkConf.fireVersion)
         this.sparkInfoBean.setConf(JavaConversions.mapAsJavaMap(this.baseSpark.spark.conf.getAll))
         this.sparkInfoBean.setVersion(this.baseSpark.sc.version)
         this.sparkInfoBean.setMaster(this.baseSpark.sc.master)
