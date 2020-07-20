@@ -59,7 +59,7 @@ private[fire] object FireHiveConf {
     } else if (this.hiveSiteMap.contains(hiveCluster)) {
       this.hiveSiteMap.get(hiveCluster).get
     } else {
-      throw new IllegalArgumentException(s"未找到匹配的hive-site.xml存放路径，请检查参数：flink.hive.cluster")
+      throw new IllegalArgumentException(s"未找到匹配的hive-site.xml存放路径，请检查参数：flink.hive.cluster或通过flink.hive.support.enable=false禁用hive.")
     }
     hiveSitePath
   }

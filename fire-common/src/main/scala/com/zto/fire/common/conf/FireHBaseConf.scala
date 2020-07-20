@@ -20,9 +20,9 @@ private[fire] object FireHBaseConf {
   lazy val HBASE_CLUSTER_URL = "spark.hbase.cluster"
   lazy val HBASE_DURABILITY = "spark.hbase.durability"
   // fire框架针对hbase操作后数据集的缓存策略，配置列表详见：StorageLevel.scala（配置不区分大小写）
-  lazy val SPARK_FIRE_HBASE_STORAGE_LEVEL = "spark.hbase.storage.level"
+  lazy val SPARK_FIRE_HBASE_STORAGE_LEVEL = "spark.fire.hbase.storage.level"
   // 通过HBase scan后repartition的分区数
-  lazy val SPARK_FIRE_HBASE_SCAN_REPARTITIONS = "spark.hbase.scan.repartitions"
+  lazy val SPARK_FIRE_HBASE_SCAN_REPARTITIONS = "spark.fire.hbase.scan.repartitions"
   // hbase集群映射配置前缀
   lazy val hbaseClusterMapPrefix = "spark.hbase.cluster.map."
 

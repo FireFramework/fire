@@ -121,7 +121,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     // 如果启用hive，则获取hive metastore地址
     if (FireHiveConf.hiveSupportEnable) {
       val hiveMetastoreUrl = FireHiveConf.getMetastoreUrl
-      assert(StringUtils.isNotBlank(hiveMetastoreUrl), "未找到匹配的hive metastore地址，请配置：spark.hive.cluster")
+      assert(StringUtils.isNotBlank(hiveMetastoreUrl), "未找到匹配的hive metastore地址，请配置：spark.hive.cluster=xxx或通过spark.hive.support.enable=false禁用hive.")
       tmpConf.set("hive.metastore.uris", hiveMetastoreUrl)
     }
 
