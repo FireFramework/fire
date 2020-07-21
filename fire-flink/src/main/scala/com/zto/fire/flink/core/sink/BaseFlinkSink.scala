@@ -43,11 +43,9 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
     if (this.flushInterval > 0 && batch > 0) {
       this.scheduler = Executors.newScheduledThreadPool(1)
       this.scheduledFuture = this.scheduler.scheduleWithFixedDelay(new Runnable {
-        override def run(): Unit = {
-          this.synchronized {
-            if (closed.get()) return
-            flush
-          }
+        override def run(): Unit = this.synchronized {
+          if (closed.get()) return
+          flush
         }
       }, this.flushInterval, this.flushInterval, TimeUnit.MILLISECONDS)
     }

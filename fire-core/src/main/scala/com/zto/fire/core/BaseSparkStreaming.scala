@@ -4,14 +4,14 @@ import com.alibaba.fastjson.JSON
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.RestartParams
 import com.zto.fire.common.bean.rest.ResultMsg
-import com.zto.fire.common.conf.{FireKafkaConf, FireSparkConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireKafkaConf, FireSparkConf}
 import com.zto.fire.common.enu.{ErrorCode, JobType, RequestMethod}
 import com.zto.fire.common.util.{KafkaUtils, PropUtils, ValueUtils}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.rest.RestCase
 import com.zto.fire.core.util.SparkUtils
 import org.apache.spark.SparkConf
-import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import spark.{Request, Response}
 
 import scala.collection.JavaConversions
@@ -66,7 +66,8 @@ trait BaseSparkStreaming extends BaseSpark {
       } else {
         this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(this.batchDuration)))
       }
-      this.ssc.remember(Seconds(Math.abs(this.batchDuration) * 10))
+      val rememberTime = FireFrameworkConf.streamingRemember
+      if (rememberTime > 0) this.ssc.remember(Milliseconds(Math.abs(rememberTime)))
       this.process
     } else {
       this.checkPointDir = FireSparkConf.chkPointDirPrefix + this.appName

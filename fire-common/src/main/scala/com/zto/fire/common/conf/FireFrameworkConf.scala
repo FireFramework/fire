@@ -65,9 +65,12 @@ private[fire] object FireFrameworkConf {
   lazy val SPARK_ZRC_REGISTER_CONF_PROD_ADDRESS = "spark.zrc.register.conf.prod.address"
   // zrc测试环境注册地址
   lazy val SPARK_ZRC_REGISTER_CONF_TEST_ADDRESS = "spark.zrc.register.conf.test.address"
+  // spark streaming的remember时间，-1表示不生效(ms)
+  lazy val SPARK_FIRE_STREAMING_REMEMBER = "spark.fire.streaming.remember"
 
-
-
+  // spark streaming的remember时间，-1表示不生效(ms)
+  lazy val streamingRemember = PropUtils.getLong(this.SPARK_FIRE_STREAMING_REMEMBER, -1)
+  // 用于获取fire版本号
   lazy val fireVersion = PropUtils.getString(this.SPARK_FIRE_VERSION, "1.0.0")
   // quartz最大线程池大小
   lazy val quartzMaxThread = PropUtils.getString(this.SPARK_FIRE_QUARTZ_MAX_THREAD, "8")
