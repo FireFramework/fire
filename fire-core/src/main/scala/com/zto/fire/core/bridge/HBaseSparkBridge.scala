@@ -28,7 +28,7 @@ import scala.reflect.ClassTag
   * @author ChengLong 2019-5-10 14:39:39
   */
 object HBaseSparkBridge extends HBaseOper with Logging {
-  lazy val batchSize = FireHBaseConf.hbaseBatchSize
+  def batchSize: Int = FireHBaseConf.hbaseBatchSize
 
   /**
     * 使用Java API的方式将DataFrame中的数据分多个批次插入到HBase中

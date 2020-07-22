@@ -1,6 +1,7 @@
 package com.zto.fire.common.conf
 
 import com.zto.fire.common.util.PropUtils
+import org.apache.commons.lang3.StringUtils
 
 /**
  * Fire框架相关配置
@@ -67,9 +68,17 @@ private[fire] object FireFrameworkConf {
   lazy val SPARK_ZRC_REGISTER_CONF_TEST_ADDRESS = "spark.zrc.register.conf.test.address"
   // spark streaming的remember时间，-1表示不生效(ms)
   lazy val SPARK_FIRE_STREAMING_REMEMBER = "spark.fire.streaming.remember"
+  // 配置打印黑名单，配置项以逗号分隔
+  lazy val SPARK_FIRE_CONF_PRINT_BLACKLIST = "spark.fire.conf.print.blacklist"
+
+  // fire日志打印黑名单
+  lazy val fireConfBlackList: Set[String] = {
+    val blacklist = PropUtils.getString(this.SPARK_FIRE_CONF_PRINT_BLACKLIST, "")
+    if (StringUtils.isNotBlank(blacklist)) blacklist.split(",").toSet else Set.empty
+  }
 
   // spark streaming的remember时间，-1表示不生效(ms)
-  lazy val streamingRemember = PropUtils.getLong(this.SPARK_FIRE_STREAMING_REMEMBER, -1)
+  def streamingRemember: Long = PropUtils.getLong(this.SPARK_FIRE_STREAMING_REMEMBER, -1)
   // 用于获取fire版本号
   lazy val fireVersion = PropUtils.getString(this.SPARK_FIRE_VERSION, "1.0.0")
   // quartz最大线程池大小
@@ -77,7 +86,7 @@ private[fire] object FireFrameworkConf {
   // 用于设置是否启用任务定时调度
   lazy val scheduleEnable = PropUtils.getBoolean(this.SPARK_FIRE_TASK_SCHEDULE_ENABLE, true)
   // 定时任务黑名单，配置的value为方法名，多个以逗号分隔
-  lazy val schedulerBlackList = PropUtils.getString(this.SPARK_FIRE_SCHEDULER_BLACKLIST, "")
+  def schedulerBlackList: String = PropUtils.getString(this.SPARK_FIRE_SCHEDULER_BLACKLIST, "")
   // env累加器开关
   lazy val accEnvEnable = PropUtils.getBoolean(this.SPARK_FIRE_ACC_ENV_ENABLE, true)
   // 是否启用Fire内置的restful服务

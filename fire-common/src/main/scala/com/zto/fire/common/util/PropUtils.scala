@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.Map
 import scala.collection.{JavaConversions, mutable}
+import scala.util.control.Breaks
 
 /**
  * 读取配置文件工具类
@@ -346,7 +347,8 @@ object PropUtils {
   def print(): Unit = {
     LogUtils.logStyle(this.logger, "Fire configuration.")(logger => {
       JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
-        if (key != null && !key.toString.contains("pass")) {
+        // 如果包含配置黑名单，则不打印
+        if (key != null && FireFrameworkConf.fireConfBlackList.filter(conf => key.toString.contains(conf)).isEmpty) {
           // 如果是spark引擎，则忽略flink相关配置；如果是flink引擎，则忽略spark相关配置
           if (("spark".equals(this.engine) && !key.toString.startsWith("flink")) || ("flink".equals(this.engine) && !key.toString.startsWith("spark"))) {
             logger.info(s">>${FirePS1Conf.PINK} $key --> ${this.props.get(key)} ${FirePS1Conf.DEFAULT}")
@@ -462,7 +464,14 @@ object PropUtils {
     } catch {
       case e: Exception => {
         if ("spark".equals(this.engine)) this.logger.error("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", e)
-        conf = HttpClientUtils.doPost(FireFrameworkConf.zrcTestAddress, param)
+        try {
+          conf = HttpClientUtils.doPost(FireFrameworkConf.zrcTestAddress, param)
+        } catch {
+          case e: Exception => {
+            this.logger.error("无法从zrc获取到该任务的配置信息，如遇zrc注册接口不可用，仍需紧急发布，请将zrc中配置复制到当前任务的配置文件中，并通过以下配置关闭获取zrc配置的接口，并重启任务：spark.fire.zrc.enable=false。", e)
+            throw e
+          }
+        }
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {
@@ -472,7 +481,7 @@ object PropUtils {
           val content = msg.get("content")
           if (content != null) {
             val confMap = JSON.parseObject(content.toString, classOf[java.util.HashMap[String, String]])
-            if (confMap != null && conf.size > 0) {
+            if (confMap != null && !confMap.isEmpty) {
               PropUtils.setProperties(JavaConversions.mapAsScalaMap(confMap))
             }
           }

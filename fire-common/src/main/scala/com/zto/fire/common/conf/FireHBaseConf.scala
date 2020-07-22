@@ -31,7 +31,7 @@ private[fire] object FireHBaseConf {
   // hbase java api 配置前缀
   lazy val hbaseConfPrefix = "spark.hbase.conf."
   // HBase操作默认的批次大小
-  lazy val hbaseBatchSize = PropUtils.getInt(this.HBASE_BATCH, 10000)
+  def hbaseBatchSize: Int = PropUtils.getInt(this.HBASE_BATCH, 10000)
   // hbase默认的列族名称，如果使用FieldName指定，则会被覆盖
   lazy val familyName = PropUtils.getString(this.HBBASE_COLUMN_FAMILY_KEY, "info")
   // hbase操作失败最大重试次数
@@ -40,7 +40,7 @@ private[fire] object FireHBaseConf {
   lazy val hbaseCluster = PropUtils.getString(this.HBASE_CLUSTER_URL, "")
   lazy val hbaseDurability = PropUtils.getString(this.HBASE_DURABILITY, "")
   // HBase结果集的缓存策略配置
-  lazy val hbaseStorageLevel = PropUtils.getString(this.SPARK_FIRE_HBASE_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
+  def hbaseStorageLevel: String = PropUtils.getString(this.SPARK_FIRE_HBASE_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
   // 通过HBase scan后repartition的分区数，默认1200
-  lazy val hbaseHadoopScanRepartitions = PropUtils.getInt(this.SPARK_FIRE_HBASE_SCAN_REPARTITIONS, 1200)
+  def hbaseHadoopScanRepartitions: Int = PropUtils.getInt(this.SPARK_FIRE_HBASE_SCAN_REPARTITIONS, 1200)
 }
