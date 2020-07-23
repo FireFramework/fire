@@ -75,8 +75,10 @@ trait BaseFlinkStreaming extends BaseFlink {
     this.ssc = this.env
     val settings = EnvironmentSettings.newInstance.useBlinkPlanner.inStreamingMode.build
     this.tableEnv = StreamTableEnvironment.create(this.env, settings)
-    this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hive)
-    this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
+    if (FireHiveConf.hiveSupportEnable) {
+      this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hive)
+      this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
+    }
     this.flink = this.tableEnv
     FlinkSingletonFactory.setStreamEnv(this.env).setStreamTableEnv(this.tableEnv)
     this.deployConf
