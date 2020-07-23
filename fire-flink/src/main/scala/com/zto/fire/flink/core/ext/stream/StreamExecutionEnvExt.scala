@@ -23,14 +23,16 @@ import scala.collection.JavaConversions
 class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
 
   /**
-   * 创建DStream流
+   * 根据配置信息创建Kafka Consumer
    *
    * @param kafkaParams
    * kafka相关的配置参数
    * @return
-   * DStream
+   * FlinkKafkaConsumer011
    */
-  def createDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, keyNum: Int = 1): DataStream[String] = {
+  def createKafkaConsumer(kafkaParams: Map[String, Object] = null,
+                          topics: Set[String] = null,
+                          keyNum: Int = 1): FlinkKafkaConsumer011[String] = {
     val groupId = GlobalConstants.KafkaConf.kafkaGroupId(keyNum)
 
     // 配置文件中的group.id优先级更高，若位置的，则取当前appName
@@ -45,6 +47,19 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
 
     val kafkaConsumer = new FlinkKafkaConsumer011[String](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
       new SimpleStringSchema(), properties)
+    kafkaConsumer
+  }
+
+  /**
+   * 创建DStream流
+   *
+   * @param kafkaParams
+   * kafka相关的配置参数
+   * @return
+   * DStream
+   */
+  def createDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, keyNum: Int = 1): DataStream[String] = {
+    val kafkaConsumer = this.createKafkaConsumer(kafkaParams, topics, keyNum)
     env.addSource(kafkaConsumer)
   }
 
