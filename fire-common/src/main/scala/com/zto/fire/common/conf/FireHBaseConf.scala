@@ -22,7 +22,10 @@ private[fire] object FireHBaseConf {
   // fire框架针对hbase操作后数据集的缓存策略，配置列表详见：StorageLevel.scala（配置不区分大小写）
   lazy val SPARK_FIRE_HBASE_STORAGE_LEVEL = "spark.fire.hbase.storage.level"
   // 通过HBase scan后repartition的分区数
+  @deprecated("use spark.fire.hbase.scan.partitions", "v1.0.0")
   lazy val SPARK_FIRE_HBASE_SCAN_REPARTITIONS = "spark.fire.hbase.scan.repartitions"
+  lazy val SPARK_FIRE_HBASE_SCAN_PARTITIONS = "spark.fire.hbase.scan.partitions"
+
   // hbase集群映射配置前缀
   lazy val hbaseClusterMapPrefix = "spark.hbase.cluster.map."
 
@@ -42,5 +45,8 @@ private[fire] object FireHBaseConf {
   // HBase结果集的缓存策略配置
   def hbaseStorageLevel: String = PropUtils.getString(this.SPARK_FIRE_HBASE_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
   // 通过HBase scan后repartition的分区数，默认1200
-  def hbaseHadoopScanRepartitions: Int = PropUtils.getInt(this.SPARK_FIRE_HBASE_SCAN_REPARTITIONS, 1200)
+  def hbaseHadoopScanPartitions: Int = {
+    val partitions = PropUtils.getInt(this.SPARK_FIRE_HBASE_SCAN_PARTITIONS, -1)
+    if (partitions != -1) partitions else PropUtils.getInt(this.SPARK_FIRE_HBASE_SCAN_REPARTITIONS, 1200)
+  }
 }

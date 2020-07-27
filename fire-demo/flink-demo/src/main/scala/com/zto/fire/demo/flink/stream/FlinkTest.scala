@@ -10,7 +10,6 @@ import org.apache.flink.types.Row
 import org.slf4j.LoggerFactory
 
 object FlinkTest extends BaseFlinkStreaming {
-  private val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 生命周期方法：具体的用户开发的业务逻辑代码

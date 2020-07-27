@@ -159,7 +159,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     hbaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
     hbaseConf.set(TableInputFormat.SCAN, HBaseUtils.convertScanToString(scan))
     // 将指定范围内的hbase数据转为rdd
-    val resultRDD = spark.sparkContext.newAPIHadoopRDD(hbaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result]).repartition(FireHBaseConf.hbaseHadoopScanRepartitions).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
+    val resultRDD = spark.sparkContext.newAPIHadoopRDD(hbaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result]).repartition(FireHBaseConf.hbaseHadoopScanPartitions).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
     this.logFire(s"hbaseHadoopScanRS(tableName: $tableName)", "hbase", 1)
     resultRDD
   }
