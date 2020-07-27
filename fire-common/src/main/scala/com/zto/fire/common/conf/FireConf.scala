@@ -21,7 +21,7 @@ private[fire] class FireConf {
   // kafka相关配置
   val kafkaConf = FireKafkaConf
   // rocketMQ相关配置
-  val rocketConf = FireRocketConf
+  val rocketMQConf = FireRocketMQConf
   // hbase相关配置
   val hbaseConf = FireHBaseConf
   // impala相关配置
@@ -48,7 +48,6 @@ private[fire] class FireConf {
   val statusConf = FireStatusConf
   // HDFS配置
   val hdfsConf = FireHDFSConf
-
 }
 
 object FireConf extends FireConf

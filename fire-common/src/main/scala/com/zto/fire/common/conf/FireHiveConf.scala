@@ -37,14 +37,7 @@ private[fire] object FireHiveConf {
    * 根据hive集群名称获取metastore地址
    */
   def getMetastoreUrl: String = {
-    val metastore = if (StringUtils.isNotBlank(hiveCluster) && hiveCluster.contains(":")) {
-      hiveCluster
-    } else if (this.hiveMetastoreMap.contains(hiveCluster)) {
-      this.hiveMetastoreMap.get(hiveCluster).get
-    } else {
-      ""
-    }
-    metastore
+    if (this.hiveMetastoreMap.contains(hiveCluster)) this.hiveMetastoreMap(hiveCluster) else hiveCluster
   }
 
   /**
@@ -54,13 +47,6 @@ private[fire] object FireHiveConf {
    * /path/to/hive-site.xml
    */
   def getHiveConfDir: String = {
-    val hiveSitePath = if (StringUtils.isNotBlank(hiveCluster) && hiveCluster.contains("""/""")) {
-      hiveCluster
-    } else if (this.hiveSiteMap.contains(hiveCluster)) {
-      this.hiveSiteMap.get(hiveCluster).get
-    } else {
-      throw new IllegalArgumentException(s"未找到匹配的hive-site.xml存放路径，请检查参数：flink.hive.cluster或通过flink.hive.support.enable=false禁用hive.")
-    }
-    hiveSitePath
+    if (this.hiveSiteMap.contains(hiveCluster)) this.hiveSiteMap(hiveCluster) else hiveCluster
   }
 }

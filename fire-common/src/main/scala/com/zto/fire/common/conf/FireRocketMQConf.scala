@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils
  * @since 1.0.0
  * @create 2020-07-13 14:58
  */
-private[fire] object FireRocketConf {
+private[fire] object FireRocketMQConf {
   lazy val rocketOffsetLargest = "latest"
   lazy val rocketOffsetSmallest = "earliest"
   lazy val rocketConsumerTag = "*"
@@ -66,11 +66,6 @@ private[fire] object FireRocketConf {
   // 获取rocketMQ name server 地址
   def rocketNameServer(keyNum: Int = 1): String = {
     val brokerName = PropUtils.getString(this.ROCKET_BROKERS_NAME, keyNum, "")
-    val nameServiceAddress = if (StringUtils.isNotBlank(brokerName) && brokerName.contains(":")) {
-      brokerName
-    } else {
-      this.rocketClusterMap.getOrElse(brokerName, "")
-    }
-    nameServiceAddress
+    if (this.rocketClusterMap.contains(brokerName)) this.rocketClusterMap(brokerName) else brokerName
   }
 }

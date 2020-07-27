@@ -93,13 +93,6 @@ private[fire] object FireKafkaConf {
    */
   def kafkaBrokers(keyNum: Int = 1): String = {
     val brokerName = PropUtils.getString(this.KAFKA_BROKERS_NAME, keyNum, "")
-    val kafkaAddress = if (StringUtils.isNotBlank(brokerName) && brokerName.contains(":")) {
-      brokerName
-    } else if (this.kafkaMap.contains(brokerName)) {
-      this.kafkaMap.get(brokerName).get
-    } else {
-      ""
-    }
-    kafkaAddress
+    if (this.kafkaMap.contains(brokerName)) this.kafkaMap(brokerName) else brokerName
   }
 }

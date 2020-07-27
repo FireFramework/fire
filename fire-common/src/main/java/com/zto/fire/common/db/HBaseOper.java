@@ -77,12 +77,12 @@ public class HBaseOper {
         if (conf == null) {
             conf = HBaseConfiguration.create();
             String clusterName = FireHBaseConf.hbaseCluster();
-            if (StringUtils.isNotBlank(clusterName) && clusterName.contains(":")) {
-                conf.set("hbase.zookeeper.quorum", clusterName);
-            } else if (FireHBaseConf.hbaseClusterMap().containsKey(clusterName)) {
+            if (FireHBaseConf.hbaseClusterMap().containsKey(clusterName)) {
                 conf.set("hbase.zookeeper.quorum", FireHBaseConf.hbaseClusterMap().get(clusterName));
+            } else if (StringUtils.isNotBlank(clusterName)) {
+                conf.set("hbase.zookeeper.quorum", clusterName);
             } else {
-                throw new IllegalArgumentException("未找到匹配的hbase cluster标识，请检查参数：spark.hbase.cluster");
+                throw new IllegalArgumentException("未配置HBase集群信息，请通过以下参数指定：spark.hbase.cluster=xxx");
             }
             // 以spark.hbase.conf.为前缀的配置项为hbase client专项配置，统一设置到hbase的Configuration中
             JavaConversions.mapAsJavaMap(PropUtils.sliceKeys(FireHBaseConf.hbaseConfPrefix())).forEach((k, v) -> {

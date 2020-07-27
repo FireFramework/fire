@@ -525,7 +525,7 @@ object PropUtils {
       // 配置的Kafka源
       merge(DataSource.Kafka, key, FireKafkaConf.KAFKA_BROKERS_NAME)
       // 配置的RocketMQ源
-      merge(DataSource.RocketMQ, key, FireRocketConf.ROCKET_BROKERS_NAME)
+      merge(DataSource.RocketMQ, key, FireRocketMQConf.ROCKET_BROKERS_NAME)
       // JDBC源
       if (key.contains(FireJdbcConf.SPARK_DB_JDBC_URL_KEY.replaceFirst("spark", this.engine))) {
         val value = this.getString(key)

@@ -47,7 +47,7 @@ trait BaseFire {
   val className = this.getClass.getName.replace("$", "")
   // 当前任务的类名
   val driverClass = this.getClass.getSimpleName.replace("$", "")
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
+  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
   // 默认的任务名称为类名
   var appName = this.driverClass
   // fire内置线程池
