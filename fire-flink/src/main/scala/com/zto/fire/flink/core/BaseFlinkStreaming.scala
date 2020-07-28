@@ -98,6 +98,7 @@ trait BaseFlinkStreaming extends BaseFlink {
    */
   override private[fire] def loadConf: Unit = {
     PropUtils.load("flink-streaming.properties")
+    PropUtils.setProperty("flink.fire.configuration", "flink-streaming.properties")
   }
 
   /**

@@ -463,7 +463,7 @@ object PropUtils {
       conf = HttpClientUtils.doPost(FireFrameworkConf.zrcProdAddress, param)
     } catch {
       case e: Exception => {
-        if ("spark".equals(this.engine)) this.logger.error("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", e)
+        this.logger.error("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", e)
         try {
           conf = HttpClientUtils.doPost(FireFrameworkConf.zrcTestAddress, param)
         } catch {
@@ -475,7 +475,7 @@ object PropUtils {
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {
-        if ("spark".equals(this.engine)) this.logger.info("成功获取zrc配置信息：" + conf)
+        this.logger.info("成功获取zrc配置信息：" + conf)
         val msg = JSON.parseObject(conf)
         if (msg != null && msg.get("code") == 200) {
           val content = msg.get("content")

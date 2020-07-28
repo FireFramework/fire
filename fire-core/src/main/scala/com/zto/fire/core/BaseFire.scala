@@ -9,6 +9,7 @@ import com.zto.fire.common.enu.{JobType, ThreadPoolType}
 import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{FireUtils, _}
 import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
+import com.zto.fire.core.util.SingletonFactory
 import org.apache.log4j.{Level, Logger}
 import org.slf4j.LoggerFactory
 import spark.Spark
@@ -91,6 +92,7 @@ trait BaseFire {
    */
   def init(conf: Any = null, args: Array[String] = null): Unit = {
     this.before(args)
+    SingletonFactory.jobType = this.jobType
     this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成用户资源初始化，任务类型：${this.jobType.getJobType} <--- ${FirePS1Conf.DEFAULT}")
     this.args = args
     this.createContext(conf)

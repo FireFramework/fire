@@ -174,7 +174,8 @@ object FlinkUtils extends Serializable {
       if (config != null) {
         val configMap = config.getGlobalJobParameters.toMap
         val clientClass = configMap.getOrDefault("flink.client.simple.class.name", "")
-        PropUtils.load(clientClass)
+        val jobType = configMap.getOrDefault("flink.fire.configuration", "")
+        PropUtils.load(jobType, clientClass)
         PropUtils.setProperties(JavaConversions.mapAsScalaMap(configMap))
       }
       PropUtils.sliceKeys("flink.log.level.fire_conf.").foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))

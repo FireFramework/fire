@@ -4,6 +4,7 @@ import java.util.Properties
 
 import com.zto.fire.common.conf.{FireHBaseConf, FireKuduConf}
 import com.zto.fire.common.db.HBaseOper
+import com.zto.fire.common.enu.JobType
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.{HBaseContextExt, KuduContextExt}
 import org.apache.commons.lang3.StringUtils
@@ -22,6 +23,12 @@ object SingletonFactory {
   private var hbase: HBaseOper = _
   private var sparkSession: SparkSession = _
   private var jobClassName: String = _
+  private[fire] var jobType: JobType = JobType.UNDEFINED
+
+  /**
+   * 获取任务的类型
+   */
+  def getJobType: JobType = this.jobType
 
   /**
    * 获取SparkSession实例
