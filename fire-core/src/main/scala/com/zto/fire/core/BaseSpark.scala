@@ -22,7 +22,7 @@ import org.apache.spark.{Logging, SparkConf, SparkContext}
  * Created by ChengLong on 2018-03-06.
  */
 trait BaseSpark extends SparkListener with BaseFire with Logging with Serializable {
-  var conf: SparkConf = _
+  private[fire] var _conf: SparkConf = _
   var spark: SparkSession = _
   var sc: SparkContext = _
   var catalog: Catalog = _
@@ -34,6 +34,11 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
   val acc = AccumulatorManager
   var batchDuration: Long = _
   var listener: SparkListener = _
+
+  /**
+   * 获取配置信息
+   */
+  def conf = this.acc.getConf
 
   /**
    * 生命周期方法：初始化fire框架必要的信息
@@ -149,7 +154,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     this.kuduContext = SingletonFactory.getKuduContextInstance(this.sc)
     this.applicationId = SparkUtils.getApplicationId(this.spark)
     this.webUI = SparkUtils.getWebUI(this.spark)
-    this.conf = tmpConf
+    this._conf = tmpConf
     this.deployConf
     this.wrapLogInfo("<-- 完成Spark运行时信息初始化 -->")
     SparkUtils.executeHiveConfSQL(this.spark)
@@ -180,7 +185,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
       // 向driver端注册定时任务
       SchedulerManager.registerTasks(instances: _*)
       // 向executor端注册定时任务
-      val executors = this.conf.get("spark.executor.instances").toInt
+      val executors = this._conf.get("spark.executor.instances").toInt
       if (executors > 0 && this.sc != null) {
         this.sc.parallelize(1 to executors, executors).foreachPartition(i => SchedulerManager.registerTasks(instances: _*))
       }

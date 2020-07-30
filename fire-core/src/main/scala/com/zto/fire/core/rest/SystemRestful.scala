@@ -14,7 +14,6 @@ import spark.{Request, Response}
  * @author ChengLong 2020年4月2日 13:58:08
  */
 protected[fire] abstract class SystemRestful(engine: BaseFire) {
-  protected val module = "restful"
   protected lazy val logger = LoggerFactory.getLogger(this.getClass)
   this.register
 

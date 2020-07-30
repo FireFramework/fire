@@ -70,6 +70,8 @@ private[fire] object FireFrameworkConf {
   lazy val SPARK_FIRE_STREAMING_REMEMBER = "spark.fire.streaming.remember"
   // 配置打印黑名单，配置项以逗号分隔
   lazy val SPARK_FIRE_CONF_PRINT_BLACKLIST = "spark.fire.conf.print.blacklist"
+  // 是否启用动态配置功能
+  lazy val SPARK_FIRE_DYNAMIC_CONF_ENABLE = "spark.fire.dynamic.conf.enable"
 
   // fire日志打印黑名单
   lazy val fireConfBlackList: Set[String] = {
@@ -77,6 +79,8 @@ private[fire] object FireFrameworkConf {
     if (StringUtils.isNotBlank(blacklist)) blacklist.split(",").toSet else Set.empty
   }
 
+  // 获取动态配置参数
+  lazy val dynamicConf: Boolean = PropUtils.getBoolean(this.SPARK_FIRE_DYNAMIC_CONF_ENABLE, true)
   // spark streaming的remember时间，-1表示不生效(ms)
   def streamingRemember: Long = PropUtils.getLong(this.SPARK_FIRE_STREAMING_REMEMBER, -1)
   // 用于获取fire版本号

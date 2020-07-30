@@ -88,7 +88,7 @@ trait BaseSparkStreaming extends BaseSpark {
         this.ssc
       }
     }
-    this.conf = tmpConf
+    this._conf = tmpConf
   }
 
   /**

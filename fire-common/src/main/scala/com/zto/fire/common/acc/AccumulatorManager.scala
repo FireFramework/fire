@@ -8,10 +8,13 @@ import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.bean.TimeCost
 import com.zto.fire.common.conf.{FireDateSchemaConf, FireFrameworkConf}
 import com.zto.fire.common.task.SchedulerManager
-import com.zto.fire.common.util.{FireUtils, StringsUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{FireUtils, PropUtils, StringsUtils, SystemInfoUtils}
 import org.apache.commons.lang3.StringUtils
+import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.util.LongAccumulator
-import org.apache.spark.{SparkContext, SparkEnv}
+import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 
@@ -21,6 +24,7 @@ import scala.collection.mutable
  * @author ChengLong 2019-7-25 19:11:16
  */
 private[fire] object AccumulatorManager {
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
   // 累加器名称，含有fire的名字将会显示在webui中
   private[this] val counterLabel = "fire-counter"
   private[fire] val counter = new LongAccumulator
@@ -49,6 +53,8 @@ private[fire] object AccumulatorManager {
   private[this] lazy val jobClassName = SparkEnv.get.conf.get("spark.driver.class.name", "")
   // 用于注册定时任务的列表
   private[this] val taskRegisterSet = mutable.HashSet[Object]()
+  // 用于广播spark配置信息
+  private[fire] var broadcastConf: Broadcast[SparkConf] = _
 
   /**
    * 注册定时任务实例
@@ -230,6 +236,36 @@ private[fire] object AccumulatorManager {
   def getMultiTimer: HashBasedTable[String, String, Long] = this.multiTimer.value
 
   /**
+   * 获取动态配置信息
+   */
+  def getConf: SparkConf = {
+    if (this.broadcastConf != null) {
+      this.broadcastConf.value
+    } else {
+      new SparkConf().setAll(PropUtils.toMap)
+    }
+  }
+
+  /**
+   * 广播新的配置
+   */
+  private[fire] def broadcastNewConf(sc: SparkContext, conf: SparkConf): Unit = {
+    if (sc != null && conf != null && FireFrameworkConf.dynamicConf) {
+      val broadcastConf = sc.broadcast(conf)
+      this.broadcastConf = broadcastConf
+      val rdd = sc.parallelize(1 to this.initExecutors.get, this.initExecutors.get)
+      rdd.foreachPartitionAsync(i => {
+        this.broadcastConf = broadcastConf
+        this.broadcastConf.value.getAll.foreach(kv => {
+          PropUtils.setProperty(kv._1, kv._2)
+        })
+        this.logger.info("The Executor side configuration has been reloaded.")
+      })
+      this.logger.info("The Driver side configuration has been reloaded.")
+    }
+  }
+
+  /**
    * 注册多个自定义累加器到每个executor
    *
    * @param sc
@@ -237,11 +273,12 @@ private[fire] object AccumulatorManager {
    * [key, accumulator]
    */
   private[fire] def registerAccumulators(sc: SparkContext): Unit = this.synchronized {
-    if (sc != null && accMap != null && accMap.size > 0) {
+    if (sc != null && accMap != null && accMap.nonEmpty) {
       if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (SystemInfoUtils.isLinux) "10000" else "10").toInt)
       // 将定时任务所在类的实例广播到每个executor端
       val taskSet = sc.broadcast(taskRegisterSet)
-
+      val broadcastConf = sc.broadcast(SparkEnv.get.conf)
+      this.broadcastConf = broadcastConf
       // 序列化内置的累加器
       val accumulatorMap = accMap.map(accInfo => {
         // 注册每个累加器，必须是合法的名称并且未被注册过
@@ -258,6 +295,7 @@ private[fire] object AccumulatorManager {
       // 获取申请的executor数，设置累加器到conf中
       val rdd = sc.parallelize(1 to this.initExecutors.get, this.initExecutors.get)
       rdd.foreachPartition(i => {
+        this.broadcastConf = broadcastConf
         // 将序列化后的累加器放置到conf中
         accumulatorMap.foreach(accSer => SparkEnv.get.conf.set(accSer._1, StringsUtils.toHexString(accSer._2)))
         if (FireFrameworkConf.scheduleEnable) {
