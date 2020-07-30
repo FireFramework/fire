@@ -1,14 +1,8 @@
 package com.zto.fire.common.data
 
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializerFeature
-import com.zto.fire.common.conf.FireConf
-import com.zto.fire.common.enu.DataSource
 import com.zto.fire.common.util.{FireUtils, PropUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkEnv
-
-import scala.collection.JavaConversions
 
 /**
  * 数据池，用于收集埋点数据
@@ -19,18 +13,6 @@ import scala.collection.JavaConversions
  * @create 2020-05-26 16:13
  */
 object DataPool {
-  // 用于记录当前任务所访问的数据源
-  private lazy val dataSource = collection.mutable.Map[DataSource, String]()
-
-  /**
-   * 获取当前任务所用到的所有数据源
-   */
-  def getDatasource: String = {
-    if (dataSource.isEmpty) {
-      dataSource ++= PropUtils.getDatasource
-    }
-    JSON.toJSONString(JavaConversions.mapAsJavaMap(this.dataSource), SerializerFeature.NotWriteRootClassName)
-  }
 
   /**
    * 当传输到executor或taskManager端时进行配置的merge

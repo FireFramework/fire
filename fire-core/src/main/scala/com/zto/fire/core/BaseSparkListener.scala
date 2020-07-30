@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.common.anno.Scheduled
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.core.ext.SparkExt._
 import org.apache.spark.Logging
@@ -152,6 +153,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
   private[fire] def registerAcc: Unit = {
     if (this.needRegister.compareAndSet(true, false)) {
       AccumulatorManager.registerAccumulators(this.baseSpark.sc)
+      AccumulatorManager.broadcastNewConf(this.baseSpark.sc, this.baseSpark._conf)
       this.logFire(s"完成系统累加器注册.", this.module)
     }
   }

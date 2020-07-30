@@ -15,7 +15,7 @@ import scala.collection.JavaConversions
 import scala.collection.mutable._
 
 /**
-  * Spark的restful服务注册
+  * Fire框架的restful服务注册
   *
   * @author ChengLong 2019-3-16 09:56:56
   */

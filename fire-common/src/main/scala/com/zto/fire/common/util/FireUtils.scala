@@ -164,7 +164,7 @@ private[fire] object FireUtils extends Serializable {
   /**
    * 判断是否为flink引擎
    */
-  def isFlinkEngine: Boolean = PropUtils.equals(PropUtils.engine)
+  def isFlinkEngine: Boolean = "flink".equals(PropUtils.engine)
 
   /**
    * 用于在fire框架启动时展示信息

@@ -1,12 +1,16 @@
 package com.zto.fire.core.rest
 
+import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
-import com.zto.fire.common.data.DataPool
-import com.zto.fire.common.enu.ErrorCode
+import com.zto.fire.common.enu.{DataSource, ErrorCode}
+import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.BaseFire
 import org.slf4j.LoggerFactory
 import spark.{Request, Response}
+
+import scala.collection.JavaConversions
 
 /**
  * 系统预定义的restful服务抽象
@@ -15,6 +19,8 @@ import spark.{Request, Response}
  */
 protected[fire] abstract class SystemRestful(engine: BaseFire) {
   protected lazy val logger = LoggerFactory.getLogger(this.getClass)
+  // 用于记录当前任务所访问的数据源
+  private lazy val dataSource = collection.mutable.Map[DataSource, String]()
   this.register
 
   /**
@@ -32,7 +38,10 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
   protected def dataSource(request: Request, response: Response): AnyRef = {
     val msg = new ResultMsg
     try {
-      val dataSource = DataPool.getDatasource
+      if (this.dataSource.isEmpty) {
+        this.dataSource ++= PropUtils.getDatasource
+      }
+      val dataSource = JSON.toJSONString(JavaConversions.mapAsJavaMap(this.dataSource), SerializerFeature.NotWriteRootClassName)
       this.logger.info(s"[DataSource] 获取数据源列表成功：counter=$dataSource")
       msg.buildSuccess(dataSource, "获取数据源列表成功")
     } catch {
