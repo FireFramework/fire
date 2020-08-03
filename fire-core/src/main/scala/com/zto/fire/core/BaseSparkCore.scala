@@ -1,5 +1,6 @@
 package com.zto.fire.core
 
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.PropUtils
 import org.apache.spark.SparkConf
@@ -26,7 +27,7 @@ class BaseSparkCore extends BaseSpark {
    * 在加载任务配置文件前将被加载
    */
   override private[fire] def loadConf: Unit = {
-    PropUtils.load("spark-core.properties")
+    PropUtils.load(FireFrameworkConf.SPARK_CORE_CONF_FILE)
   }
 
   /**

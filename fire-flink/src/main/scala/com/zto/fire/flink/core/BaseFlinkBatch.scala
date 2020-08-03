@@ -1,6 +1,6 @@
 package com.zto.fire.flink.core
 
-import com.zto.fire.common.conf.FireHiveConf
+import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
 import com.zto.fire.flink.core.util.{FlinkSingletonFactory, FlinkUtils}
@@ -96,8 +96,8 @@ trait BaseFlinkBatch extends BaseFlink {
    * 在加载任务配置文件前将被加载
    */
   override private[fire] def loadConf: Unit = {
-    PropUtils.load("flink-batch.properties")
-    PropUtils.setProperty("flink.fire.configuration", "flink-batch.properties")
+    PropUtils.load(FireFrameworkConf.FLINK_BATCH_CONF_FILE)
+    PropUtils.setProperty(FireFlinkConf.FLINK_FIRE_CONFIGURATION, FireFrameworkConf.FLINK_BATCH_CONF_FILE)
   }
 
   /**

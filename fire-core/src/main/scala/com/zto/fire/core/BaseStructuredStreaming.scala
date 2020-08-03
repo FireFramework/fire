@@ -1,8 +1,8 @@
 package com.zto.fire.core
 
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.PropUtils
-import org.apache.spark.SparkConf
 
 /**
   * Structured Streaming通用父类
@@ -37,6 +37,6 @@ class BaseStructuredStreaming extends BaseSpark {
    * 在加载任务配置文件前将被加载
    */
   override private[fire] def loadConf: Unit = {
-    PropUtils.load("structured-streaming.properties")
+    PropUtils.load(FireFrameworkConf.SPARK_STRUCTURED_STREAMING_CONF_FILE)
   }
 }

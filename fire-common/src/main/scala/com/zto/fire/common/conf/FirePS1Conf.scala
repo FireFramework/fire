@@ -4,7 +4,7 @@ package com.zto.fire.common.conf
  * 颜色预定义
  *
  * @author ChengLong
- * @since 1.0.0
+ * @since 1.1.0
  * @create 2020-07-13 15:01
  */
 private[fire] object FirePS1Conf {

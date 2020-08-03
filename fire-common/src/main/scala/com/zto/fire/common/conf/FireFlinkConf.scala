@@ -6,7 +6,7 @@ import com.zto.fire.common.util.PropUtils
  * flink相关配置
  *
  * @author ChengLong
- * @since 1.0.0
+ * @since 1.1.0
  * @create 2020-07-13 14:55
  */
 private[fire] object FireFlinkConf {
@@ -29,6 +29,9 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_STREAM_BUFFER_TIMEOUT_MILLIS = "flink.stream.buffer.timeout.millis"
   lazy val FLINK_STREAM_NUMBER_EXECUTION_RETRIES = "flink.stream.number.execution.retries"
   lazy val FLINK_STREAM_TIME_CHARACTERISTIC = "flink.stream.time.characteristic"
+  lazy val FLINK_DRIVER_CLASS_NAME = "flink.driver.class.name"
+  lazy val FLINK_CLIENT_SIMPLE_CLASS_NAME = "flink.client.simple.class.name"
+  lazy val FLINK_FIRE_CONFIGURATION = "flink.fire.configuration"
 
   // checkpoint相关配置项
   lazy val FLINK_STREAM_CHECKPOINT_INTERVAL = "flink.stream.checkpoint.interval"

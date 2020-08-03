@@ -111,7 +111,7 @@ trait BaseSparkStreaming extends BaseSpark {
    * 在加载任务配置文件前将被加载
    */
   override private[fire] def loadConf: Unit = {
-    PropUtils.load("spark-streaming.properties")
+    PropUtils.load(FireFrameworkConf.SPARK_STREAMING_CONF_FILE)
   }
 
   /**

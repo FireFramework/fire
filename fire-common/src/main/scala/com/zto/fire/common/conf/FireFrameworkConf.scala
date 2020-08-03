@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils
  * Fire框架相关配置
  *
  * @author ChengLong
- * @since 1.0.0
+ * @since 1.1.0
  * @create 2020-07-13 14:54
  */
 private[fire] object FireFrameworkConf {
@@ -42,7 +42,7 @@ private[fire] object FireFrameworkConf {
   lazy val SPARK_FIRE_RESTFUL_PORT_RETRY_NUM = "spark.fire.restful.port.retry_num"
   // fire框架restful端口冲突重试时间（ms）
   lazy val SPARK_FIRE_RESTFUL_PORT_RETRY_DURATION = "spark.fire.restful.port.retry_duration"
-  lazy val SPARK_LOG_LEVEL_CONF_PREFIX = "spark.fire.log.level.fire_conf."
+  lazy val SPARK_LOG_LEVEL_CONF_PREFIX = "spark.fire.log.level.conf."
   // 日志记录器保留最少的记录数
   lazy val SPARK_FIRE_ACC_LOG_MIN_SIZE = "spark.fire.acc.log.min.size"
   // 日志记录器保留最多的记录数
@@ -75,6 +75,15 @@ private[fire] object FireFrameworkConf {
   lazy val SPARK_FIRE_DYNAMIC_CONF_ENABLE = "spark.fire.dynamic.conf.enable"
   // 是否将fire restful地址以日志形式打印
   lazy val SPARK_FIRE_REST_URL_SHOW_ENABLE = "spark.fire.rest.url.show.enable"
+  // 各引擎单独配置文件名称（省略扩展名.properties）
+  lazy val FIRE_CONF_FILE = "fire"
+  lazy val SPARK_CONF_FILE = "spark"
+  lazy val SPARK_STREAMING_CONF_FILE = "spark-streaming"
+  lazy val SPARK_STRUCTURED_STREAMING_CONF_FILE = "structured-streaming"
+  lazy val SPARK_CORE_CONF_FILE = "spark-core"
+  lazy val FLINK_CONF_FILE = "flink"
+  lazy val FLINK_STREAMING_CONF_FILE = "flink-streaming"
+  lazy val FLINK_BATCH_CONF_FILE = "flink-batch"
 
   // fire日志打印黑名单
   lazy val fireConfBlackList: Set[String] = {

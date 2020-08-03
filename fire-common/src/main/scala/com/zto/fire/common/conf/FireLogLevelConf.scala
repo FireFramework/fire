@@ -4,7 +4,7 @@ package com.zto.fire.common.conf
  * 日志的级别
  *
  * @author ChengLong
- * @since 1.0.0
+ * @since 1.1.0
  * @create 2020-07-13 15:05
  */
 private[fire] object FireLogLevelConf {

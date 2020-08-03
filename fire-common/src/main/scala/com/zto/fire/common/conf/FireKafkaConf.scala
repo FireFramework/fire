@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils
  * kafka相关配置
  *
  * @author ChengLong
- * @since 1.0.0
+ * @since 1.1.0
  * @create 2020-07-13 14:58
  */
 private[fire] object FireKafkaConf {

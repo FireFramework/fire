@@ -6,7 +6,7 @@ import com.zto.fire.common.util.PropUtils
  * hive相关配置
  *
  * @author ChengLong
- * @since 1.0.0
+ * @since 1.1.0
  * @create 2020-07-13 15:02
  */
 private[fire] object FireHiveConf {

@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.bean.HBaseBaseBean
-import com.zto.fire.common.conf.FireFlinkConf
+import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf}
 import com.zto.fire.common.util.{FireUtils, PropUtils, ReflectionUtils, ValueUtils}
 import com.zto.fire.flink.core.bean.FlinkTableSchema
 import com.zto.fire.flink.core.ext.functions.FireMapFunction
@@ -173,12 +173,12 @@ object FlinkUtils extends Serializable {
       PropUtils.load("flink")
       if (config != null) {
         val configMap = config.getGlobalJobParameters.toMap
-        val clientClass = configMap.getOrDefault("flink.client.simple.class.name", "")
-        val jobType = configMap.getOrDefault("flink.fire.configuration", "")
+        val clientClass = configMap.getOrDefault(FireFlinkConf.FLINK_CLIENT_SIMPLE_CLASS_NAME, "")
+        val jobType = configMap.getOrDefault(FireFlinkConf.FLINK_FIRE_CONFIGURATION, "")
         PropUtils.load(jobType, clientClass)
         PropUtils.setProperties(JavaConversions.mapAsScalaMap(configMap))
       }
-      PropUtils.sliceKeys("flink.log.level.fire_conf.").foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
+      PropUtils.sliceKeys(FireFrameworkConf.SPARK_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
       PropUtils.print()
     }
   }

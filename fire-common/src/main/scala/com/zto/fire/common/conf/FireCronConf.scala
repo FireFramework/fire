@@ -4,7 +4,7 @@ package com.zto.fire.common.conf
  * cron表达式相关配置
  *
  * @author ChengLong
- * @since 1.0.0
+ * @since 1.1.0
  * @create 2020-07-13 15:00
  */
 private[fire] object FireCronConf {

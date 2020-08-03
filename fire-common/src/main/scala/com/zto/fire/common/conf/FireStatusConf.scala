@@ -4,7 +4,7 @@ package com.zto.fire.common.conf
  * 预设状态
  *
  * @author ChengLong
- * @since 1.0.0
+ * @since 1.1.0
  * @create 2020-07-13 15:06
  */
 private[fire] object FireStatusConf {

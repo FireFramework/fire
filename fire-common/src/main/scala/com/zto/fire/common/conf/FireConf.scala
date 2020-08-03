@@ -4,7 +4,9 @@ import com.zto.fire.common.util.PropUtils
 
 /**
  * 常量配置类
- * Created by ChengLong on 2016-11-22.
+ * @author ChengLong
+ * @since 1.1.0
+ * @create 2020-07-13 15:00
  */
 private[fire] class FireConf {
   // 用于区分不同的流计算引擎类型

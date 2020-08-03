@@ -4,8 +4,8 @@ package com.zto.fire.common.conf
  * log相关常量
  *
  * @author ChengLong
- * @since 1.0.0
- * @create 2020-07-13 15:04
+ * @since 1.1.0
+ * @create 2020-07-13 15:05
  */
 private[fire] object FireLogValConf {
   // log info级别开始

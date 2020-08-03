@@ -27,7 +27,7 @@ object PropUtils {
   // 是否兼容key的前缀配置
   private var compatible = false
   // 加载默认配置文件
-  this.load("fire.properties")
+  this.load(FireFrameworkConf.FIRE_CONF_FILE)
   // 避免已被加载的配置文件被重复加载
   private[this] lazy val alreadyLoadMap = new mutable.HashMap[String, String]()
   // 缓存已经加载的配置map

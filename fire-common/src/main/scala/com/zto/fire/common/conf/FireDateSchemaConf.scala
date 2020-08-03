@@ -4,7 +4,7 @@ package com.zto.fire.common.conf
  * 日期模式类型
  *
  * @author ChengLong
- * @since 1.0.0
+ * @since 1.1.0
  * @create 2020-07-13 14:47
  */
 private[fire] object FireDateSchemaConf {
