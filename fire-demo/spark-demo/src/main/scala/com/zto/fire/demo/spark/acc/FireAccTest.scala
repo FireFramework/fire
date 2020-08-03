@@ -3,7 +3,7 @@ package com.zto.fire.demo.spark.acc
 import java.util.concurrent.TimeUnit
 
 import com.zto.fire.common.anno.Scheduled
-import com.zto.fire.common.util.DateFormatUtils
+import com.zto.fire.common.util.{DateFormatUtils, PropUtils}
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.util.SparkUtils
@@ -16,11 +16,13 @@ import scala.collection.JavaConversions
  * @author ChengLong 2019年9月10日 09:50:16
  */
 object FireAccTest extends BaseSparkStreaming {
+  val key = "fire.partitions"
 
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream()
     dstream.foreachRDD(rdd => {
-      rdd.foreachPartition(t => {
+      rdd.coalesce(this.conf.getInt(key, 10)).foreachPartition(t => {
+        println("conf=" + this.conf.getInt(key, 10) + " PropUtils=" + PropUtils.getString(key))
         this.mark
         // 单值累加器
         this.acc.addCounter(1)

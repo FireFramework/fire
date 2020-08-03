@@ -344,6 +344,7 @@ object PropUtils {
    * 打印配置文件中的kv
    */
   def print(): Unit = {
+    if (!FireFrameworkConf.fireConfShow) return
     LogUtils.logStyle(this.logger, "Fire configuration.")(logger => {
       JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
         // 如果包含配置黑名单，则不打印

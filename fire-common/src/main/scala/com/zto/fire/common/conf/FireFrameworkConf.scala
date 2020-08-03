@@ -73,6 +73,8 @@ private[fire] object FireFrameworkConf {
   lazy val SPARK_FIRE_CONF_PRINT_BLACKLIST = "spark.fire.conf.print.blacklist"
   // 是否启用动态配置功能
   lazy val SPARK_FIRE_DYNAMIC_CONF_ENABLE = "spark.fire.dynamic.conf.enable"
+  // 是否打印配置信息
+  lazy val SPARK_FIRE_CONF_SHOW_ENABLE = "spark.fire.conf.show.enable"
   // 是否将fire restful地址以日志形式打印
   lazy val SPARK_FIRE_REST_URL_SHOW_ENABLE = "spark.fire.rest.url.show.enable"
   // 各引擎单独配置文件名称（省略扩展名.properties）
@@ -93,6 +95,8 @@ private[fire] object FireFrameworkConf {
 
   // 获取driver的class name
   lazy val driverClassName = PropUtils.getString(this.DRIVER_CLASS_NAME)
+  // 是否打印配置信息
+  lazy val fireConfShow: Boolean = PropUtils.getBoolean(this.SPARK_FIRE_CONF_SHOW_ENABLE, true)
   // 是否将restful地址以日志方式打印
   lazy val fireRestUrlShow: Boolean = PropUtils.getBoolean(this.SPARK_FIRE_REST_URL_SHOW_ENABLE, false)
   // 获取动态配置参数

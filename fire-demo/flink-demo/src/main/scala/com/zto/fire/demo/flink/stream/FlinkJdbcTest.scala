@@ -1,7 +1,7 @@
 package com.zto.fire.demo.flink.stream
 
 import com.alibaba.fastjson.JSON
-import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
@@ -28,16 +28,16 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
     stream.createOrReplaceTempView("student")
     val table = this.flink.sql("select name, age, createTime, length, sex from student group by name, age, createTime, length, sex")
     // 方式一、table中的列顺序和类型需与jdbc sql中的占位符顺序保持一致
-    table.jdbcBatchUpdate(sql).setParallelism(1)
+    // table.jdbcBatchUpdate(sql).setParallelism(1)
     // 或者
-    this.flink.jdbcBatchUpdateTable(table, sql, keyNum = 3).setParallelism(1)
+    // this.flink.jdbcBatchUpdateTable(table, sql, keyNum = 3).setParallelism(1)
 
     // 方式二、自定义row取数规则，适用于row中的列个数和顺序与sql占位符不一致的情况
     /*table.jdbcBatchUpdate2(sql, flushInterval = 10000)(row => {
       Seq(row.getField(0), row.getField(1), row.getField(2), row.getField(3), row.getField(4))
     })*/
     // 或者
-    this.flink.jdbcBatchUpdateTable2(table, sql)(row => {
+    this.flink.jdbcBatchUpdateTable2(table, sql, keyNum = 3)(row => {
       Seq(row.getField(0), row.getField(1), row.getField(2), row.getField(3), row.getField(4))
     }).setParallelism(1)
   }
@@ -49,7 +49,7 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
     // 方式一、指定字段列表，内部根据反射，自动获取DataStream中的数据并填充到sql中的占位符
     // 此处fields有两层含义：1. sql中的字段顺序（对应表） 2. DataStream中的JavaBean字段数据（对应JavaBean）
     // 注：要保证DataStream中字段名称是JavaBean的名称，非表中字段名称 顺序要与占位符顺序一致，个数也要一致
-    stream.jdbcBatchUpdate(sql, fields).setParallelism(3)
+    // stream.jdbcBatchUpdate(sql, fields, keyNum = 3).setParallelism(3)
     // 或者
     //this.flink.jdbcBatchUpdateStream(stream, sql, fields, keyNum = 3).setParallelism(10)
 
@@ -60,9 +60,9 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
     }.setParallelism(1)*/
 
     // 或者
-    /*this.flink.jdbcBatchUpdateStream2(stream, sql) {
+    this.flink.jdbcBatchUpdateStream2(stream, sql, keyNum = 3) {
       value => Seq(value.getName, value.getAge, DateFormatUtils.formatCurrentDateTime(), value.getLength, value.getSex)
-    }.setParallelism(3)*/
+    }.setParallelism(3)
   }
 
   def testJdbc: Unit = {
@@ -78,8 +78,8 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
   override def process: Unit = {
     val stream = this.ssc.createDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student]))
 
-    //this.testTableJdbcSink(stream)
-    this.testStreamJdbcSink(stream)
+    this.testTableJdbcSink(stream)
+    // this.testStreamJdbcSink(stream)
     //this.testJdbc
 
     this.ssc.startAwaitTermination()
