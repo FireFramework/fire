@@ -50,7 +50,7 @@ private[fire] object AccumulatorManager {
   private[this] val initExecutors: AtomicInteger = new AtomicInteger(0)
 
   // 获取当前任务的全类名
-  private[this] lazy val jobClassName = SparkEnv.get.conf.get("spark.driver.class.name", "")
+  private[this] lazy val jobClassName = SparkEnv.get.conf.get(FireFrameworkConf.DRIVER_CLASS_NAME, "")
   // 用于注册定时任务的列表
   private[this] val taskRegisterSet = mutable.HashSet[Object]()
   // 用于广播spark配置信息

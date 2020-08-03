@@ -45,9 +45,10 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 注：该方法会同时在driver端与executor端执行
    */
   override private[fire] final def boot: Unit = {
+    PropUtils.load("spark")
     this.loadConf
     PropUtils.load(this.appName)
-    PropUtils.setProperty("spark.driver.class.name", this.className)
+    PropUtils.setProperty(FireFrameworkConf.DRIVER_CLASS_NAME, this.className)
     if (StringUtils.isNotBlank(FireSparkConf.appName)) {
       this.appName = FireSparkConf.appName
     }

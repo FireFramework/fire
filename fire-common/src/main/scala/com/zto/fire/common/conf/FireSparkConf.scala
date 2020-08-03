@@ -20,11 +20,11 @@ private[fire] object FireSparkConf {
   // spark 默认的checkpoint地址
   lazy val sparkChkPointDir = "hdfs://nameservice1/user/spark/ckpoint/"
   // 默认的库名
-  lazy val SPARK_DEFAULT_DATABASE_NAME = "spark.default.database.name"
+  lazy val SPARK_DEFAULT_DATABASE_NAME = "spark.fire.hive.default.database.name"
   // 默认的数据库名称
   lazy val dbName = "tmp"
   // 默认的分区名称
-  lazy val SPARK_DEFAULT_TABLE_PARTITION_NAME = "spark.default.table.partition.name"
+  lazy val SPARK_DEFAULT_TABLE_PARTITION_NAME = "spark.fire.hive.table.default.partition.name"
   // 默认的partition名称
   lazy val defaultPartitionName = "ds"
   // spark streaming批次时间

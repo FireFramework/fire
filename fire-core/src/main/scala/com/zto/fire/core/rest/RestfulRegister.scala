@@ -7,8 +7,7 @@ import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.enu.ErrorCode
 import com.zto.fire.common.util.{EncryptUtils, PropUtils, ReflectionUtils, SystemInfoUtils}
-import com.zto.fire.core.ext.SparkExt._
-import org.apache.spark.Logging
+import org.slf4j.LoggerFactory
 import spark._
 
 import scala.collection.JavaConversions
@@ -19,10 +18,11 @@ import scala.collection.mutable._
   *
   * @author ChengLong 2019-3-16 09:56:56
   */
-class RestfulRegister(val threadPool: ExecutorService) extends Logging {
+class RestfulRegister(val threadPool: ExecutorService) {
   private val restList = ListBuffer[RestCase]()
   private var port: Integer = _
-  private[this] lazy val mainClassName: String = PropUtils.getString("spark.driver.class.name")
+  private val logger = LoggerFactory.getLogger(this.getClass)
+  private[this] lazy val mainClassName: String = FireFrameworkConf.driverClassName
 
   /**
     * 注册新的rest接口
@@ -64,7 +64,7 @@ class RestfulRegister(val threadPool: ExecutorService) extends Logging {
     this.threadPool.execute(new Runnable {
       override def run(): Unit = {
         restList.foreach(rest => {
-          println(s"---------> start rest: ${FirePS1Conf.wrap(restPrefix + rest.path, FirePS1Conf.BLUE, FirePS1Conf.UNDER_LINE)} successfully. <---------")
+          if (FireFrameworkConf.fireRestUrlShow) logger.info(s"---------> start rest: ${FirePS1Conf.wrap(restPrefix + rest.path, FirePS1Conf.BLUE, FirePS1Conf.UNDER_LINE)} successfully. <---------")
           rest.method match {
             case "get" | "GET" => Spark.get(rest.path, new Route {
               override def handle(request: Request, response: Response): AnyRef = {
@@ -112,12 +112,12 @@ class RestfulRegister(val threadPool: ExecutorService) extends Logging {
     val auth = request.headers("Authorization")
     try {
       if (!EncryptUtils.checkAuth(auth, this.mainClassName)) {
-        this.logFire(s"[log] 非法请求：用户身份校验失败！ip=${request.ip()} auth=$auth", "filter")
+        this.logger.warn(s"非法请求：用户身份校验失败！ip=${request.ip()} auth=$auth")
         msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
       }
     } catch {
       case e => {
-        this.logFire(s"[log] 非法请求：请检查请求参数！ip=${request.ip()} auth=$auth", "filter")
+        this.logger.error(s"非法请求：请检查请求参数！ip=${request.ip()} auth=$auth", e)
         msg.buildError(s"非法请求：请检查请求参数！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
       }
     }

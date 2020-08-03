@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.Map
 import scala.collection.{JavaConversions, mutable}
-import scala.util.control.Breaks
 
 /**
  * 读取配置文件工具类
@@ -28,7 +27,7 @@ object PropUtils {
   // 是否兼容key的前缀配置
   private var compatible = false
   // 加载默认配置文件
-  this.load("default.properties")
+  this.load("fire.properties")
   // 避免已被加载的配置文件被重复加载
   private[this] lazy val alreadyLoadMap = new mutable.HashMap[String, String]()
   // 缓存已经加载的配置map
@@ -39,7 +38,7 @@ object PropUtils {
    * 用于设置兼容的key的前缀
    */
   private[fire] def compatible(keyPrefix: String): Unit = {
-    if (StringUtils.isNotBlank(keyPrefix.trim) && !keyPrefix.equals("spark")) {
+    if (StringUtils.isNotBlank(keyPrefix) && !keyPrefix.equals("spark")) {
       this.engine = keyPrefix.trim
       this.compatible = true
     }

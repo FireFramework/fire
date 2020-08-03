@@ -3,7 +3,7 @@ package com.zto.fire.core.util
 import java.lang.reflect.Field
 
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.conf.{FireHiveConf, FireSparkConf, FireStringConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf, FireSparkConf, FireStringConf}
 import com.zto.fire.common.util._
 import com.zto.fire.core.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils
@@ -338,7 +338,7 @@ object SparkUtils {
    * 获取入口类名
    */
   def getMainClass: String = {
-    if (SparkEnv.get != null) SparkEnv.get.conf.get("spark.driver.class.name", "") else ""
+    if (SparkEnv.get != null) SparkEnv.get.conf.get(FireFrameworkConf.DRIVER_CLASS_NAME, "") else ""
   }
 
   /**

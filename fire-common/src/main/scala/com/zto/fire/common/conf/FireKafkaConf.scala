@@ -14,7 +14,7 @@ private[fire] object FireKafkaConf {
   lazy val offsetLargest = "latest"
   lazy val offsetSmallest = "earliest"
   lazy val offsetNone = "none"
-  lazy val clusterMapConfStart = "spark.kafka.cluster.map."
+  lazy val clusterMapConfStart = "spark.fire.kafka.cluster.map."
   lazy val kafkaConfStart = "spark.kafka.conf."
   lazy val KAFKA_BROKERS_NAME = "spark.kafka.brokers.name"
   // kafka的topic列表，以逗号分隔

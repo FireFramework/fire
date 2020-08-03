@@ -31,11 +31,12 @@ trait BaseFlink extends BaseFire {
    * 注：该方法会同时在driver端与executor端执行
    */
   override private[fire] def boot: Unit = {
-    PropUtils.compatible("flink")
-    PropUtils.load("flink")
+    val engine = "flink"
+    PropUtils.compatible(engine)
+    PropUtils.load(engine)
     this.loadConf
     PropUtils.load(this.appName)
-    PropUtils.setProperty("flink.client.class.name", this.className)
+    PropUtils.setProperty("flink.driver.class.name", this.className)
     PropUtils.setProperty("flink.client.simple.class.name", this.driverClass)
     FlinkSingletonFactory.setAppName(this.appName)
     super.boot

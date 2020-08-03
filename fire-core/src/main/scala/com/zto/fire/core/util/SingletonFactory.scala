@@ -2,7 +2,7 @@ package com.zto.fire.core.util
 
 import java.util.Properties
 
-import com.zto.fire.common.conf.{FireHBaseConf, FireKuduConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHBaseConf, FireKuduConf}
 import com.zto.fire.common.db.HBaseOper
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.core.ext.SparkExt._
@@ -52,7 +52,7 @@ object SingletonFactory {
    */
   def getJobClassName: String = this.synchronized {
     if (StringUtils.isBlank(this.jobClassName)) {
-      this.jobClassName = SparkEnv.get.conf.get("spark.driver.class.name", "")
+      this.jobClassName = SparkEnv.get.conf.get(FireFrameworkConf.DRIVER_CLASS_NAME, "")
     }
     this.jobClassName
   }

@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils
 private[fire] object FireFrameworkConf {
   // fire版本号
   lazy val SPARK_FIRE_VERSION = "spark.fire.version"
+  lazy val DRIVER_CLASS_NAME = "spark.driver.class.name"
   // 是否启用fire框架restful服务
   lazy val SPARK_FIRE_REST_ENABLE = "spark.fire.rest.enable"
   // rest接口权限认证
@@ -36,12 +37,12 @@ private[fire] object FireFrameworkConf {
   // 用于配置是否抛弃zrc独立运行，配置为false表示不向zrc注册，不获取zrc配置
   lazy val SPARK_FIRE_ZRC_ENABLE = "spark.fire.zrc.enable"
   // zrc接口调用秘钥
-  lazy val SPARK_FIRE_ZRC_SECRET = "spark.zrc.register.conf.secret"
+  lazy val SPARK_FIRE_ZRC_SECRET = "spark.fire.zrc.register.conf.secret"
   // fire框架restful端口冲突重试次数
   lazy val SPARK_FIRE_RESTFUL_PORT_RETRY_NUM = "spark.fire.restful.port.retry_num"
   // fire框架restful端口冲突重试时间（ms）
   lazy val SPARK_FIRE_RESTFUL_PORT_RETRY_DURATION = "spark.fire.restful.port.retry_duration"
-  lazy val SPARK_LOG_LEVEL_CONF_PREFIX = "spark.log.level.fire_conf."
+  lazy val SPARK_LOG_LEVEL_CONF_PREFIX = "spark.fire.log.level.fire_conf."
   // 日志记录器保留最少的记录数
   lazy val SPARK_FIRE_ACC_LOG_MIN_SIZE = "spark.fire.acc.log.min.size"
   // 日志记录器保留最多的记录数
@@ -63,15 +64,17 @@ private[fire] object FireFrameworkConf {
   // fire框架restful地址
   lazy val SPARK_FIRE_REST_URL = "spark.fire.rest.url"
   // zrc生产环境注册地址
-  lazy val SPARK_ZRC_REGISTER_CONF_PROD_ADDRESS = "spark.zrc.register.conf.prod.address"
+  lazy val SPARK_ZRC_REGISTER_CONF_PROD_ADDRESS = "spark.fire.zrc.register.conf.prod.address"
   // zrc测试环境注册地址
-  lazy val SPARK_ZRC_REGISTER_CONF_TEST_ADDRESS = "spark.zrc.register.conf.test.address"
+  lazy val SPARK_ZRC_REGISTER_CONF_TEST_ADDRESS = "spark.fire.zrc.register.conf.test.address"
   // spark streaming的remember时间，-1表示不生效(ms)
   lazy val SPARK_FIRE_STREAMING_REMEMBER = "spark.fire.streaming.remember"
   // 配置打印黑名单，配置项以逗号分隔
   lazy val SPARK_FIRE_CONF_PRINT_BLACKLIST = "spark.fire.conf.print.blacklist"
   // 是否启用动态配置功能
   lazy val SPARK_FIRE_DYNAMIC_CONF_ENABLE = "spark.fire.dynamic.conf.enable"
+  // 是否将fire restful地址以日志形式打印
+  lazy val SPARK_FIRE_REST_URL_SHOW_ENABLE = "spark.fire.rest.url.show.enable"
 
   // fire日志打印黑名单
   lazy val fireConfBlackList: Set[String] = {
@@ -79,6 +82,10 @@ private[fire] object FireFrameworkConf {
     if (StringUtils.isNotBlank(blacklist)) blacklist.split(",").toSet else Set.empty
   }
 
+  // 获取driver的class name
+  lazy val driverClassName = PropUtils.getString(this.DRIVER_CLASS_NAME)
+  // 是否将restful地址以日志方式打印
+  lazy val fireRestUrlShow: Boolean = PropUtils.getBoolean(this.SPARK_FIRE_REST_URL_SHOW_ENABLE, false)
   // 获取动态配置参数
   lazy val dynamicConf: Boolean = PropUtils.getBoolean(this.SPARK_FIRE_DYNAMIC_CONF_ENABLE, true)
   // spark streaming的remember时间，-1表示不生效(ms)

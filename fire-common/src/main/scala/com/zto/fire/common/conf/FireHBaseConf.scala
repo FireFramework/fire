@@ -14,7 +14,7 @@ import scala.collection.JavaConversions
  * @create 2020-07-13 15:08
  */
 private[fire] object FireHBaseConf {
-  lazy val HBASE_BATCH = "spark.hbase.batch.size"
+  lazy val HBASE_BATCH = "spark.fire.hbase.batch.size"
   lazy val HBBASE_COLUMN_FAMILY_KEY = "spark.hbase.column.family"
   lazy val HBASE_MAX_RETRY = "spark.hbase.max.retry"
   lazy val HBASE_CLUSTER_URL = "spark.hbase.cluster"
@@ -25,14 +25,13 @@ private[fire] object FireHBaseConf {
   @deprecated("use spark.fire.hbase.scan.partitions", "v1.0.0")
   lazy val SPARK_FIRE_HBASE_SCAN_REPARTITIONS = "spark.fire.hbase.scan.repartitions"
   lazy val SPARK_FIRE_HBASE_SCAN_PARTITIONS = "spark.fire.hbase.scan.partitions"
-
   // hbase集群映射配置前缀
-  lazy val hbaseClusterMapPrefix = "spark.hbase.cluster.map."
+  lazy val hbaseClusterMapPrefix = "spark.fire.hbase.cluster.map."
 
   // hbase集群映射地址
   lazy val hbaseClusterMap: util.Map[String, String] = JavaConversions.mapAsJavaMap(PropUtils.sliceKeys(hbaseClusterMapPrefix))
   // hbase java api 配置前缀
-  lazy val hbaseConfPrefix = "spark.hbase.conf."
+  lazy val hbaseConfPrefix = "spark.fire.hbase.conf."
   // HBase操作默认的批次大小
   def hbaseBatchSize: Int = PropUtils.getInt(this.HBASE_BATCH, 10000)
   // hbase默认的列族名称，如果使用FieldName指定，则会被覆盖

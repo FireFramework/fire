@@ -1,6 +1,7 @@
 package com.zto.fire.common.util;
 
 import com.zto.fire.common.bean.TimeCost;
+import com.zto.fire.common.conf.FireFrameworkConf;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.SparkEnv;
 
@@ -31,7 +32,7 @@ public class TimeCostUtils {
                 TimeCost.setApplicationId(SparkEnv.get().conf().get("spark.app.id", ""));
             }
             if (StringUtils.isBlank(TimeCost.getMainClass())) {
-                TimeCost.setMainClass(SparkEnv.get().conf().get("spark.driver.class.name", ""));
+                TimeCost.setMainClass(SparkEnv.get().conf().get(FireFrameworkConf.DRIVER_CLASS_NAME(), ""));
             }
         }
     }
