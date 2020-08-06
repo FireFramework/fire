@@ -4,11 +4,9 @@ import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
-import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.rest.{RestCase, SystemRestful}
 import com.zto.fire.flink.core.BaseFlink
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.Logging
 import spark._
 
 /**
@@ -16,7 +14,7 @@ import spark._
  *
  * @author ChengLong 2020年4月2日 13:50:01
  */
-private[fire] class FlinkSystemRestful(val baseFlink: BaseFlink) extends SystemRestful(baseFlink) with Logging {
+private[fire] class FlinkSystemRestful(val baseFlink: BaseFlink) extends SystemRestful(baseFlink) {
 
   /**
    * 注册Flink引擎restful接口
@@ -24,6 +22,7 @@ private[fire] class FlinkSystemRestful(val baseFlink: BaseFlink) extends SystemR
   override protected def register: Unit = {
     this.baseFlink.restfulRegister
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/kill", kill))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/dataSource", dataSource))
   }
 
   /**
@@ -37,11 +36,11 @@ private[fire] class FlinkSystemRestful(val baseFlink: BaseFlink) extends SystemR
       // 参数校验与参数获取
       this.baseFlink.shutdown()
       // ProcessUtil.executeCmds(s"yarn application -kill ${this.baseFlink.applicationId}", s"kill -9 ${SystemInfoUtils.getPid}")
-      this.logFire(s"[kill] kill任务成功：json=$json", this.module)
+      this.logger.info(s"[kill] kill任务成功：json=$json")
       msg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire(s"[kill] 执行kill任务失败：json=$json", this.module, throwable = e)
+        this.logger.error(s"[kill] 执行kill任务失败：json=$json", e)
         msg.buildError("执行kill任务失败", ErrorCode.ERROR)
       }
     } finally {
@@ -55,14 +54,13 @@ private[fire] class FlinkSystemRestful(val baseFlink: BaseFlink) extends SystemR
    */
   @Rest("/system/loadInfo")
   def loadInfo(request: Request, response: Response): AnyRef = {
-    this.mark
     val msg = new ResultMsg
     val json = request.body
     try {
       msg.buildSuccess(SystemInfoUtils.getSystemLoadInfo, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logFire(s"[loadInfo] 获取driver所在主机负载信息失败：json=$json", this.module, throwable = e)
+        this.logger.error(s"[loadInfo] 获取driver所在主机负载信息失败：json=$json", e)
         msg.buildError("获取driver所在主机负载信息失败", ErrorCode.ERROR)
       }
     } finally {
@@ -75,7 +73,6 @@ private[fire] class FlinkSystemRestful(val baseFlink: BaseFlink) extends SystemR
    */
   @Rest(value = "/system/sql", method = "post")
   def sql(request: Request, response: Response): AnyRef = {
-    this.mark
     val msg = new ResultMsg
     val json = request.body
     try {
@@ -84,12 +81,12 @@ private[fire] class FlinkSystemRestful(val baseFlink: BaseFlink) extends SystemR
 
       // sql合法性检查
       if (StringUtils.isBlank(sql) || !sql.toLowerCase.trim.startsWith("select ")) {
-        this.logFire(s"[sql] sql不合法，在线调试功能只支持查询操作：json=$json", this.module)
+        this.logger.warn(s"[sql] sql不合法，在线调试功能只支持查询操作：json=$json")
         return msg.buildError(s"sql不合法，在线调试功能只支持查询操作", ErrorCode.ERROR)
       }
 
       if (this.baseFlink == null || this.baseFlink == null) {
-        this.logFire(s"[sql] 系统正在初始化，请稍后再试：json=$json", this.module)
+        this.logger.warn(s"[sql] 系统正在初始化，请稍后再试：json=$json")
         return "系统正在初始化，请稍后再试"
       }
 
@@ -99,7 +96,7 @@ private[fire] class FlinkSystemRestful(val baseFlink: BaseFlink) extends SystemR
       ""
     } catch {
       case e: Exception => {
-        this.logFire(s"[sql] 执行用户sql失败：json=$json", this.module, throwable = e)
+        this.logger.error(s"[sql] 执行用户sql失败：json=$json", e)
         msg.buildError("执行用户sql失败，异常堆栈：" + StackTraceUtils.stackTraceInfo(e), ErrorCode.ERROR)
       }
     } finally {

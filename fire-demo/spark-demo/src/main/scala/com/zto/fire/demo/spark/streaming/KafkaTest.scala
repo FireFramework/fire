@@ -48,7 +48,7 @@ object KafkaTest extends BaseSparkStreaming {
 
     val dstream2 = this.ssc.createDirectStream(keyNum = 2)
     dstream2.print(1)
-    val dstream3 = this.ssc.createDirectStream(keyNum = 1)
+    val dstream3 = this.ssc.createDirectStream(keyNum = 3)
     dstream3.count().foreachRDD(rdd => {
       println("count=" + rdd.count())
     })
@@ -62,6 +62,7 @@ object KafkaTest extends BaseSparkStreaming {
   @Scheduled(fixedInterval = 60 * 1000, scope = "all")
   def loadTable: Unit = {
     println(s"${DateFormatUtils.formatCurrentDateTime()}=================== 每分钟执行loadTable ===================")
+    this._conf.getAll.foreach(conf => println(conf._1 + " -> " + conf._2))
   }
 
   @Scheduled(cron = "0 0 * * * ?")

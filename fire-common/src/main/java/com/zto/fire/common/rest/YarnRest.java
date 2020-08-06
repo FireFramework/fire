@@ -158,16 +158,4 @@ public class YarnRest {
         return invokeYarnRest(RestUrl.yarnAppUrl(applicationId) + "/state", json, RequestMethod.PUT().toString());
     }
 
-
-    public static void main(String[] args) throws Exception {
-        /*long start = System.currentTimeMillis();
-        List<App> list = getAppInfoByState(YarnState.NULL);
-        System.out.println(list.size() + " 耗时：" + (System.currentTimeMillis() - start));
-        start = System.currentTimeMillis();
-        list = getAppInfoByState(YarnState.RUNNING);
-        System.out.println(list.size() + " 耗时：" + (System.currentTimeMillis() - start));
-        System.out.println(getAppStateById("application_1557472996243_3449"));
-        System.out.println(killAppById("application_1557472996243_3486"));*/
-        System.out.println(getLastAppStateByName("test", YarnState.RUNNING).getId());
-    }
 }

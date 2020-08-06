@@ -2,8 +2,7 @@ package com.zto.fire.common.acc
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.zto.fire.common.util.{GlobalConstants, PropUtils}
-import com.zto.fire.common.util.GlobalConstants.PropKeys
+import com.zto.fire.common.conf.FireFrameworkConf
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.AccumulatorV2
 
@@ -17,7 +16,7 @@ import scala.collection.JavaConversions
 class MultiCounterAccumulator extends AccumulatorV2[(String, Long), ConcurrentHashMap[String, Long]] {
   private[fire] val multiCounter = new ConcurrentHashMap[String, Long]()
   // 判断是否打开多值累加器
-  private lazy val isEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_ENABLE, true) && PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_MULTI_COUNTER_ENABLE, true)
+  private lazy val isEnable = FireFrameworkConf.accEnable && FireFrameworkConf.accMultiCounterEnable
 
   /**
     * 用于判断当前累加器是否为空

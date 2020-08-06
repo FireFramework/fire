@@ -41,7 +41,7 @@ public class JvmInfo {
     // jvm Non-Heap已使用空间
     private long nonHeapUseSize;
     // jvm Non-Heap已提交空间
-    private long nonHeapCommitedSize;
+    private long nonHeapCommittedSize;
     // minor gc 次数
     private long minorGCCount;
     // minor gc 总耗时
@@ -107,8 +107,8 @@ public class JvmInfo {
         return nonHeapUseSize;
     }
 
-    public long getNonHeapCommitedSize() {
-        return nonHeapCommitedSize;
+    public long getNonHeapCommittedSize() {
+        return nonHeapCommittedSize;
     }
 
     public String getJavaVersion() {
@@ -170,7 +170,7 @@ public class JvmInfo {
         jvmInfo.nonHeapInitSize = nonHeapUsage.getInit();
         jvmInfo.nonHeapMaxSize = nonHeapUsage.getMax();
         jvmInfo.nonHeapUseSize = nonHeapUsage.getUsed();
-        jvmInfo.nonHeapCommitedSize = nonHeapUsage.getCommitted();
+        jvmInfo.nonHeapCommittedSize = nonHeapUsage.getCommitted();
 
         // 获取jvm版本与安装信息
         jvmInfo.javaVersion = System.getProperty("java.version");

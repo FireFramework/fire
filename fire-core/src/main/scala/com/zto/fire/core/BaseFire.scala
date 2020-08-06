@@ -3,12 +3,15 @@ package com.zto.fire.core
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
 
+import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf, FirePrintModuleConf}
 import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.enu.{JobType, ThreadPoolType}
 import com.zto.fire.common.task.SchedulerManager
-import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, PropUtils, SystemInfoUtils, ThreadUtils, ValueUtils}
-import com.zto.fire.core.rest.{RestfulRegister, SparkSystemRestful, SystemRestful}
-import com.zto.fire.core.util.FireUtils
+import com.zto.fire.common.util.{FireUtils, _}
+import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
+import com.zto.fire.core.util.SingletonFactory
+import org.apache.log4j.{Level, Logger}
+import org.slf4j.LoggerFactory
 import spark.Spark
 
 /**
@@ -45,6 +48,7 @@ trait BaseFire {
   val className = this.getClass.getName.replace("$", "")
   // 当前任务的类名
   val driverClass = this.getClass.getSimpleName.replace("$", "")
+  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
   // 默认的任务名称为类名
   var appName = this.driverClass
   // fire内置线程池
@@ -56,7 +60,20 @@ trait BaseFire {
    * 生命周期方法：初始化fire框架必要的信息
    * 注：该方法会同时在driver端与executor端执行
    */
-  private[fire] def boot: Unit
+  private[fire] def boot: Unit = {
+    FireUtils.splash
+    PropUtils.sliceKeys(FireFrameworkConf.SPARK_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
+  }
+
+  /**
+   * 在加载任务配置文件前将被加载
+   */
+  private[fire] def loadConf: Unit = {}
+
+  /**
+   * 用于将不同引擎的配置信息、累计器信息等传递到executor端或taskmanager端
+   */
+  protected def deployConf: Unit = {}
 
   /**
    * 生命周期方法：用于在SparkSession初始化之前完成用户需要的动作
@@ -75,7 +92,8 @@ trait BaseFire {
    */
   def init(conf: Any = null, args: Array[String] = null): Unit = {
     this.before(args)
-    println(s" ${GlobalConstants.PS1.YELLOW}< ----------------------------------- 完成用户资源初始化，任务类型：${this.jobType.getJobType} ---------------------------------- > ${GlobalConstants.PS1.DEFAULT}")
+    SingletonFactory.jobType = this.jobType
+    this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成用户资源初始化，任务类型：${this.jobType.getJobType} <--- ${FirePS1Conf.DEFAULT}")
     this.args = args
     this.createContext(conf)
   }
@@ -114,8 +132,8 @@ trait BaseFire {
       ThreadUtils.shutdown
       Spark.stop()
       SchedulerManager.shutdown(stopGracefully)
-      println("---> 完成fire资源回收 <---")
-      GlobalConstants.PrintModule.END_TIME_COST(this.startTime)
+      this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成fire资源回收 <---${FirePS1Conf.DEFAULT}")
+      FirePrintModuleConf.END_TIME_COST(this.startTime)
       // TODO: yarn kill; system.exit(0)
     }
   }
@@ -182,27 +200,4 @@ trait BaseFire {
    * 返回fn执行结果
    */
   def retry[T](retryNum: Int = 3, duration: Long = 3000)(fun: => T): T = FireUtils.retry(retryNum, duration)(fun)
-
-  /**
-   * 用于在fire框架启动时展示信息
-   */
-  private[fire] def splash: Unit = {
-    val info =
-      """
-        |       ___                       ___           ___
-        |     /\  \          ___        /\  \         /\  \
-        |    /::\  \        /\  \      /::\  \       /::\  \
-        |   /:/\:\  \       \:\  \    /:/\:\  \     /:/\:\  \
-        |  /::\~\:\  \      /::\__\  /::\~\:\  \   /::\~\:\  \
-        | /:/\:\ \:\__\  __/:/\/__/ /:/\:\ \:\__\ /:/\:\ \:\__\
-        | \/__\:\ \/__/ /\/:/  /    \/_|::\/:/  / \:\~\:\ \/__/
-        |      \:\__\   \::/__/        |:|::/  /   \:\ \:\__\
-        |       \/__/    \:\__\        |:|\/__/     \:\ \/__/
-        |                 \/__/        |:|  |        \:\__\
-        |                               \|__|         \/__/     version
-        |
-        |""".stripMargin.replace("version", s"version ${GlobalConstants.PS1.PINK + PropUtils.getString("spark.fire.version", "1.0.0")}")
-
-    println(GlobalConstants.PS1.GREEN + info + GlobalConstants.PS1.DEFAULT)
-  }
 }

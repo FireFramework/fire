@@ -3,6 +3,7 @@ package com.zto.fire.common.util
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Date, TimeZone}
 
+import com.zto.fire.common.conf.{FireCronConf, FireDateSchemaConf}
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.DateUtils
 
@@ -20,7 +21,7 @@ object DateFormatUtils {
     * @return
     */
   def getTimeFormat(): SimpleDateFormat = {
-    val timeFormat: SimpleDateFormat = new SimpleDateFormat(GlobalConstants.DateTimeSchema.yyyy_MM_ddHHmmss)
+    val timeFormat: SimpleDateFormat = new SimpleDateFormat(FireDateSchemaConf.yyyy_MM_ddHHmmss)
     timeFormat.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
     timeFormat
   }
@@ -62,7 +63,7 @@ object DateFormatUtils {
     *
     * @return
     */
-  def getSchemaFormat(schema: String = GlobalConstants.DateTimeSchema.yyyy_MM_dd): SimpleDateFormat = {
+  def getSchemaFormat(schema: String = FireDateSchemaConf.yyyy_MM_dd): SimpleDateFormat = {
     val dateFormat: SimpleDateFormat = new SimpleDateFormat(schema)
     dateFormat.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
     dateFormat
@@ -420,17 +421,17 @@ object DateFormatUtils {
     * 计算后的日期
     */
   def addTimer(field: String, dateTimeStr: String, count: Int): String = {
-    if (GlobalConstants.Cron.YEAR.equalsIgnoreCase(field)) {
+    if (FireCronConf.YEAR.equalsIgnoreCase(field)) {
       this.addYears(dateTimeStr, count)
-    } else if (GlobalConstants.Cron.MONTH.equalsIgnoreCase(field)) {
+    } else if (FireCronConf.MONTH.equalsIgnoreCase(field)) {
       this.addMons(dateTimeStr, count)
-    } else if (GlobalConstants.Cron.DAY.equalsIgnoreCase(field)) {
+    } else if (FireCronConf.DAY.equalsIgnoreCase(field)) {
       this.addDays(dateTimeStr, count)
-    } else if (GlobalConstants.Cron.HOUR.equalsIgnoreCase(field)) {
+    } else if (FireCronConf.HOUR.equalsIgnoreCase(field)) {
       this.addHours(dateTimeStr, count)
-    } else if (GlobalConstants.Cron.MINUTE.equalsIgnoreCase(field)) {
+    } else if (FireCronConf.MINUTE.equalsIgnoreCase(field)) {
       this.addMins(dateTimeStr, count)
-    } else if (GlobalConstants.Cron.SECOND.equalsIgnoreCase(field)) {
+    } else if (FireCronConf.SECOND.equalsIgnoreCase(field)) {
       this.addSecs(dateTimeStr, count)
     } else {
       ""
@@ -711,16 +712,16 @@ object DateFormatUtils {
     */
   def getDistanceDays(startDate: String, endDate: String, con: String = "|"): String = {
     if (StringUtils.isNotBlank(startDate) && StringUtils.isNotBlank(endDate)) {
-      val startDateStr = this.dateSchemaFormat(startDate, GlobalConstants.DateTimeSchema.yyyy_MM_ddHHmmss, GlobalConstants.DateTimeSchema.yyyyMMdd)
+      val startDateStr = this.dateSchemaFormat(startDate, FireDateSchemaConf.yyyy_MM_ddHHmmss, FireDateSchemaConf.yyyyMMdd)
       val sb: StringBuilder = new StringBuilder(startDateStr + con)
       var tmpDay: String = ""
       tmpDay = this.addDays(startDate, 1)
       while (this.isBetween(tmpDay, startDate, endDate) && !sb.toString().contains(tmpDay)) {
-        sb.append(this.dateSchemaFormat(tmpDay, GlobalConstants.DateTimeSchema.yyyy_MM_ddHHmmss, GlobalConstants.DateTimeSchema.yyyyMMdd) + con)
+        sb.append(this.dateSchemaFormat(tmpDay, FireDateSchemaConf.yyyy_MM_ddHHmmss, FireDateSchemaConf.yyyyMMdd) + con)
         tmpDay = this.addDays(tmpDay, 1)
       }
-      if (!sb.toString().contains(this.dateSchemaFormat(endDate, GlobalConstants.DateTimeSchema.yyyy_MM_ddHHmmss, GlobalConstants.DateTimeSchema.yyyyMMdd))) {
-        sb.append(this.dateSchemaFormat(endDate, GlobalConstants.DateTimeSchema.yyyy_MM_ddHHmmss, GlobalConstants.DateTimeSchema.yyyyMMdd))
+      if (!sb.toString().contains(this.dateSchemaFormat(endDate, FireDateSchemaConf.yyyy_MM_ddHHmmss, FireDateSchemaConf.yyyyMMdd))) {
+        sb.append(this.dateSchemaFormat(endDate, FireDateSchemaConf.yyyy_MM_ddHHmmss, FireDateSchemaConf.yyyyMMdd))
       }
       if (sb.charAt(sb.length - 1).toString.equals(con)) {
         sb.substring(0, sb.length - 1)
@@ -808,8 +809,8 @@ object DateFormatUtils {
     * @param dateTime
     * @param schema
     */
-  def getPartitionTime(dateTime: String = this.formatCurrentDateTime(), schema: String = GlobalConstants.DateTimeSchema.yyyyMMdd): String = {
-    this.dateSchemaFormat(dateTime, GlobalConstants.DateTimeSchema.yyyy_MM_ddHHmmss, schema)
+  def getPartitionTime(dateTime: String = this.formatCurrentDateTime(), schema: String = FireDateSchemaConf.yyyyMMdd): String = {
+    this.dateSchemaFormat(dateTime, FireDateSchemaConf.yyyy_MM_ddHHmmss, schema)
   }
 
   /**
@@ -817,7 +818,7 @@ object DateFormatUtils {
     *
     * @param schema
     */
-  def getCurrentPartitionTime(schema: String = GlobalConstants.DateTimeSchema.yyyyMMdd) = {
+  def getCurrentPartitionTime(schema: String = FireDateSchemaConf.yyyyMMdd) = {
     getPartitionTime(this.formatCurrentDateTime(), schema)
   }
 
@@ -848,7 +849,7 @@ object DateFormatUtils {
     */
   def truncateMinute(dateTime: String): String = {
     val date = this.formatDateTime(dateTime)
-    val prefix = this.dateSchemaFormat(dateTime, GlobalConstants.DateTimeSchema.yyyy_MM_ddHHmmss, "yyyy-MM-dd HH")
+    val prefix = this.dateSchemaFormat(dateTime, FireDateSchemaConf.yyyy_MM_ddHHmmss, "yyyy-MM-dd HH")
     val minute = date.getMinutes
     if (minute >= 0 && minute < 10) {
       s"$prefix:00"
@@ -879,7 +880,7 @@ object DateFormatUtils {
     * @return
     */
   def truncateHour(dateStr: String): String = {
-    this.dateSchemaFormat(dateStr, GlobalConstants.DateTimeSchema.yyyy_MM_ddHHmmss, GlobalConstants.DateTimeSchema.yyyyMMddHH)
+    this.dateSchemaFormat(dateStr, FireDateSchemaConf.yyyy_MM_ddHHmmss, FireDateSchemaConf.yyyyMMddHH)
   }
 
   /**
@@ -911,7 +912,7 @@ object DateFormatUtils {
     */
   def oggDateSchemaFormat(dateTime: String, schema: String): String = {
     if (StringUtils.isNotBlank(dateTime) && StringUtils.isNotBlank(schema)) {
-      DateFormatUtils.dateSchemaFormat(this.formatOggTime2GeneralTime(dateTime), GlobalConstants.DateTimeSchema.yyyy_MM_ddHHmmss, schema)
+      DateFormatUtils.dateSchemaFormat(this.formatOggTime2GeneralTime(dateTime), FireDateSchemaConf.yyyy_MM_ddHHmmss, schema)
     } else {
       dateTime
     }
@@ -928,20 +929,20 @@ object DateFormatUtils {
     * 是否替换掉日期字符串中的特殊字符
     * @return
     */
-  def truncate(date: String, cron: String = GlobalConstants.Cron.DAY, replace: Boolean = true): String = {
+  def truncate(date: String, cron: String = FireCronConf.DAY, replace: Boolean = true): String = {
     if (StringUtils.isBlank(date) || StringUtils.isBlank(cron) || date.length != 19) {
       throw new IllegalArgumentException("日期不能为空，格式为yyyy-MM-dd HH:mm:ss")
     }
-    if (!GlobalConstants.Cron.enumSet.contains(cron)) {
+    if (!FireCronConf.enumSet.contains(cron)) {
       throw new IllegalArgumentException("where参数必须是hour/day/week/month/year中的一个")
     }
-    val index: Int = if (GlobalConstants.Cron.HOUR.equals(cron)) {
+    val index: Int = if (FireCronConf.HOUR.equals(cron)) {
       13
-    } else if (GlobalConstants.Cron.DAY.equals(cron)) {
+    } else if (FireCronConf.DAY.equals(cron)) {
       10
-    } else if (GlobalConstants.Cron.MONTH.equals(cron)) {
+    } else if (FireCronConf.MONTH.equals(cron)) {
       7
-    } else if (GlobalConstants.Cron.MINUTE.equals(cron)) {
+    } else if (FireCronConf.MINUTE.equals(cron)) {
       15
     } else {
       4

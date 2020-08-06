@@ -5,8 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.bean.TimeCost
-import com.zto.fire.common.util.GlobalConstants.{DefaultVals, PropKeys}
-import com.zto.fire.common.util.PropUtils
+import com.zto.fire.common.conf.FireFrameworkConf
 import org.apache.spark.util.AccumulatorV2
 
 /**
@@ -15,14 +14,10 @@ import org.apache.spark.util.AccumulatorV2
   * @author ChengLong 2019-7-23 14:22:16
   */
 class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[String]] {
-  // 用于限定日志最少保存量，防止当日志量达到maxLogSize时频繁的进行clear操作
-  private lazy val minLogSize = PropUtils.getInt(PropKeys.SPARK_FIRE_ACC_LOG_MIN_SIZE, DefaultVals.minLogSize).abs
-  // 用于限定日志最大保存量，防止日志量过大，撑爆driver
-  private lazy val maxLogSize = PropUtils.getInt(PropKeys.SPARK_FIRE_ACC_LOG_MAX_SIZE, DefaultVals.maxLogSize).abs
   // 用于存放日志的队列
   private val logQueue = new ConcurrentLinkedQueue[String]
   // 判断是否打开日志累加器
-  private lazy val isEnable = PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_ENABLE, true) && PropUtils.getBoolean(PropKeys.SPARK_FIRE_ACC_LOG_ENABLE, true)
+  private lazy val isEnable = FireFrameworkConf.accEnable && FireFrameworkConf.accLogEnable
 
   /**
     * 判断累加器是否为空
@@ -78,8 +73,8 @@ class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[Strin
     * 直到达到minLogSize所设定的最小值，防止频繁的进行清理
     */
   def clear: Unit = {
-    if (this.logQueue.size() > this.maxLogSize) {
-      while (this.logQueue.size() > this.minLogSize) {
+    if (this.logQueue.size() > FireFrameworkConf.maxLogSize) {
+      while (this.logQueue.size() > FireFrameworkConf.minLogSize) {
         this.logQueue.poll
       }
     }

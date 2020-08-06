@@ -65,8 +65,4 @@ public class ThreadInfo {
         return threadInfo;
     }
 
-    public static void main(String[] args) {
-        ThreadMXBean threadMBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
-        System.out.println(JSON.toJSONString(threadMBean.getThreadInfo(threadMBean.getAllThreadIds())));
-    }
 }

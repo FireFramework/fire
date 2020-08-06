@@ -1,28 +1,20 @@
 package com.zto.fire.core.util
 
 import java.lang.reflect.Field
-import java.sql.ResultSet
-import java.text.NumberFormat
-import java.util.{Locale, Properties}
 
 import com.zto.fire.common.anno.FieldName
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf, FireSparkConf, FireStringConf}
 import com.zto.fire.common.util._
 import com.zto.fire.core.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils
-import org.apache.hadoop.hbase.client.Scan
-import org.apache.hadoop.hbase.protobuf.ProtobufUtil
-import org.apache.hadoop.hbase.util.{Base64, Bytes}
-import org.apache.kafka.common.serialization.StringDeserializer
-import org.apache.rocketmq.spark.RocketMQConfig
 import org.apache.spark.SparkEnv
-import org.apache.spark.sql.catalyst.{CatalystTypeConverters, InternalRow}
+import org.apache.spark.sql.catalyst.CatalystTypeConverters
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.reflect._
 import scala.util.Try
 
 
@@ -31,6 +23,7 @@ import scala.util.Try
  * Created by ChengLong on 2016-11-24.
  */
 object SparkUtils {
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 将Row转为自定义bean，以JavaBean中的Field为基准
@@ -240,8 +233,8 @@ object SparkUtils {
    * @return
    * 库名.表名
    */
-  def getFullTableName(dbName: String = GlobalConstants.SparkConf.defaultDB, tableName: String): String = {
-    val dbNameStr = if (StringUtils.isBlank(dbName)) GlobalConstants.SparkConf.defaultDB else dbName
+  def getFullTableName(dbName: String = FireSparkConf.defaultDB, tableName: String): String = {
+    val dbNameStr = if (StringUtils.isBlank(dbName)) FireSparkConf.defaultDB else dbName
     s"$dbNameStr.$tableName"
   }
 
@@ -268,9 +261,9 @@ object SparkUtils {
 
     if (optConf.isDefined && StringUtils.isNotBlank(optConf.get)) {
       optConf.get.replace("\\", "")
-        .replace(GlobalConstants.Strings.hostNamePrefix, GlobalConstants.Strings.ipPrefxi)
+        .replace(FireStringConf.hostNamePrefix, FireStringConf.ipPrefxi)
     } else {
-      spark.sparkContext.uiWebUrl.get.replace(GlobalConstants.Strings.hostNamePrefix, GlobalConstants.Strings.ipPrefxi)
+      spark.sparkContext.uiWebUrl.get.replace(FireStringConf.hostNamePrefix, FireStringConf.ipPrefxi)
     }
   }
 
@@ -285,47 +278,6 @@ object SparkUtils {
   }
 
   /**
-   * rocketMQ配置信息
-   *
-   * @param groupId
-   * 消费组
-   * @return
-   * rocketMQ相关配置
-   */
-  def rocketParams(groupId: String = null, rocketNameServer: String = null, tag: String = null, keyNum: Int = 1): java.util.Map[String, String] = {
-    ValueUtils.requireNonNull(groupId, s"RocketMQ的groupId不能为空，请在配置文件中指定：spark.rocket.group.id$keyNum")
-    val finalNameServer = if (StringUtils.isBlank(rocketNameServer)) GlobalConstants.RocketConf.rocketNameServer(keyNum) else rocketNameServer
-    val finalTag = if (StringUtils.isBlank(tag)) GlobalConstants.RocketConf.rocketConsumerTag(keyNum) else tag
-
-    val optionParams = new java.util.HashMap[String, String]()
-    optionParams.put(RocketMQConfig.NAME_SERVER_ADDR, finalNameServer)
-    optionParams.put(RocketMQConfig.MAX_PULL_SPEED_PER_PARTITION, "5000")
-    optionParams.put(RocketMQConfig.CONSUMER_GROUP, groupId)
-    optionParams.put(RocketMQConfig.CONSUMER_TAG, finalTag)
-
-    val nameserverPollInterval = GlobalConstants.RocketConf.rocketNameserverPollInterval(keyNum)
-    if (StringUtils.isNotBlank(nameserverPollInterval)) optionParams.put(RocketMQConfig.NAME_SERVER_POLL_INTERVAL, nameserverPollInterval)
-    val brokerserverHeartbeatInterval = GlobalConstants.RocketConf.rocketBrokerserverHeartbeatInterval(keyNum)
-    if (StringUtils.isNotBlank(brokerserverHeartbeatInterval)) optionParams.put(RocketMQConfig.BROKER_HEART_BEAT_INTERVAL, brokerserverHeartbeatInterval)
-    val consumerOffsetPersistInterval = GlobalConstants.RocketConf.rocketConsumerOffsetPersistInterval(keyNum)
-    if (StringUtils.isNotBlank(consumerOffsetPersistInterval)) optionParams.put(RocketMQConfig.CONSUMER_OFFSET_PERSIST_INTERVAL, consumerOffsetPersistInterval)
-    val consumerMaxThreads = GlobalConstants.RocketConf.rocketConsumerMaxThreads(keyNum)
-    if (StringUtils.isNotBlank(consumerMaxThreads)) optionParams.put(RocketMQConfig.CONSUMER_MAX_THREADS, consumerMaxThreads)
-    val consumerMinThreads = GlobalConstants.RocketConf.rocketConsumerMinThreads(keyNum)
-    if (StringUtils.isNotBlank(consumerMinThreads)) optionParams.put(RocketMQConfig.CONSUMER_MIN_THREADS, consumerMinThreads)
-    val spoutMessagesMaxRetry = GlobalConstants.RocketConf.rocketSpoutMessagesMaxRetry(keyNum)
-    if (StringUtils.isNotBlank(spoutMessagesMaxRetry)) optionParams.put(RocketMQConfig.MESSAGES_MAX_RETRY, spoutMessagesMaxRetry)
-    val pullMaxSpeedPerPartition = GlobalConstants.RocketConf.rocketPullMaxSpeedPerPartition(keyNum)
-    if (StringUtils.isNotBlank(pullMaxSpeedPerPartition)) optionParams.put(RocketMQConfig.MAX_PULL_SPEED_PER_PARTITION, pullMaxSpeedPerPartition)
-    val pullMaxBatchSize = GlobalConstants.RocketConf.rocketPullMaxBatchSize(keyNum)
-    if (StringUtils.isNotBlank(pullMaxBatchSize)) optionParams.put(RocketMQConfig.PULL_MAX_BATCH_SIZE, pullMaxBatchSize)
-    val pullTimeoutMs = GlobalConstants.RocketConf.rocketPullTimeoutMs(keyNum)
-    if (StringUtils.isNotBlank(pullTimeoutMs)) optionParams.put(RocketMQConfig.PULL_TIMEOUT_MS, pullTimeoutMs)
-
-    optionParams
-  }
-
-  /**
    * 使用配置文件中的spark.streaming.batch.duration覆盖传参的batchDuration
    *
    * @param batchDuration
@@ -336,7 +288,7 @@ object SparkUtils {
    */
   def overrideBatchDuration(batchDuration: Long, hotRestart: Boolean): Long = {
     if (hotRestart) return batchDuration
-    val confBathDuration = PropUtils.getInt(GlobalConstants.PropKeys.SPARK_STREAMING_BATCH_DURATION, -1)
+    val confBathDuration = FireSparkConf.confBathDuration
     if (confBathDuration == -1) {
       batchDuration
     } else {
@@ -379,7 +331,14 @@ object SparkUtils {
    * executor id或driver
    */
   def getExecutorId: String = {
-    SparkEnv.get.executorId
+    if (SparkEnv.get != null) SparkEnv.get.executorId else ""
+  }
+
+  /**
+   * 获取入口类名
+   */
+  def getMainClass: String = {
+    if (SparkEnv.get != null) SparkEnv.get.conf.get(FireFrameworkConf.DRIVER_CLASS_NAME, "") else ""
   }
 
   /**
@@ -488,5 +447,15 @@ object SparkUtils {
       rows.map(converter(_).asInstanceOf[Row])
     }
     SingletonFactory.getSparkSession.createDataFrame(mapedRowRDD, schema)
+  }
+
+  /**
+   * 从配置文件中读取并执行hive set的sql
+   */
+  def executeHiveConfSQL(spark: SparkSession): Unit = {
+    if (spark != null) {
+      val confMap = FireHiveConf.hiveConfMap
+      LogUtils.logMap(this.logger, confMap, "Execute hive sql conf.")
+    }
   }
 }

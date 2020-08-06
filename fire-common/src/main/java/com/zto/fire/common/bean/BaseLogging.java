@@ -1,9 +1,11 @@
 package com.zto.fire.common.bean;
 
 import com.zto.fire.common.acc.AccumulatorManager;
-import com.zto.fire.common.util.GlobalConstants;
+import com.zto.fire.common.conf.FireConf;
+import com.zto.fire.common.conf.FireFrameworkConf;
+import com.zto.fire.common.util.FireUtils;
+import com.zto.fire.common.util.PropUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.spark.SparkEnv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,8 +17,6 @@ import java.io.Serializable;
  * @author ChengLong 2019-6-23 11:58:56
  */
 public class BaseLogging implements Serializable {
-    private static String mainClass;
-    private static String applicationId;
     private static ThreadLocal<TimeCost> timeCostLocal = new ThreadLocal<>();
     protected static Logger logger;
 
@@ -37,17 +37,7 @@ public class BaseLogging implements Serializable {
      */
     public void mark() {
         TimeCost timeCost = TimeCost.build();
-        if (SparkEnv.get() != null) {
-            if (StringUtils.isBlank(applicationId)) {
-                applicationId = SparkEnv.get().conf().get("spark.app.id", "");
-                timeCost.setApplicationId(applicationId);
-            }
-            if (StringUtils.isBlank(mainClass)) {
-                mainClass = SparkEnv.get().conf().get("spark.driver.class.name", "");
-                timeCost.setMainClass(mainClass);
-            }
-        }
-        if (logger == null) this.initLogging(mainClass);
+        if (logger == null) this.initLogging(timeCost.getMainClass());
         timeCostLocal.set(timeCost);
     }
 
@@ -106,14 +96,15 @@ public class BaseLogging implements Serializable {
         if (timeCostLocal.get() == null) this.mark();
         TimeCost timeCost = timeCostLocal.get();
         timeCost.info(msg, module, io, isFire, throwable);
-        AccumulatorManager.addLog(timeCost);
+        if (FireUtils.isSparkEngine()) AccumulatorManager.addLog(timeCost);
+        // TODO: Flink日志存入到flink累加器中
         String log = timeCost.toString();
         if (throwable == null) {
-            if (!isFire || (isFire && GlobalConstants.fireLogEnable())) {
+            if (!isFire || (isFire && FireFrameworkConf.logEnable())) {
                 logger.warn(log);
             }
         } else {
-            if (!isFire || (isFire && GlobalConstants.fireLogEnable())) {
+            if (!isFire || (isFire && FireFrameworkConf.logEnable())) {
                 logger.error(log, throwable);
             }
         }

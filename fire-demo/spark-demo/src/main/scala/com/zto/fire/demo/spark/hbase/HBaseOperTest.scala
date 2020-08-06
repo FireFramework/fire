@@ -1,8 +1,7 @@
 package com.zto.fire.demo.spark.hbase
 
-import com.zto.fire.common.db.HBaseOper
-import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.BaseSparkCore
+import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.demo.bean.Student
 import org.apache.hadoop.hbase.client.Get
 import org.apache.spark.sql.Encoders
@@ -37,11 +36,6 @@ object HBaseOperTest extends BaseSparkCore {
     val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(studentList), 2)
     // 为空的字段不插入
     studentRDD.hbaseOperPutRDD(this.tableName1, false, multiVersion = multiVersion)
-
-    this.sc.parallelize(1 to 10, 3).foreach(i => {
-      val student = Student.newStudentList()
-      HBaseOper.insert(this.tableName1, student)
-    })
   }
 
   /**
@@ -132,7 +126,7 @@ object HBaseOperTest extends BaseSparkCore {
   def testHbaseOperScanRDD(multiVersion: Boolean = false): Unit = {
     println("===========testHbaseOperScanRDD===========")
     val rdd = this.spark.hbaseOperScanRDD2(this.tableName1, "1", "6", classOf[Student], multiVersion)
-    rdd.printEachPartition
+    rdd.repartition(3).printEachPartition
   }
 
   /**
@@ -141,7 +135,7 @@ object HBaseOperTest extends BaseSparkCore {
   def testHbaseOperScanDF(multiVersion: Boolean = false): Unit = {
     println("===========testHbaseOperScanDF===========")
     val dataFrame = this.spark.hbaseOperScanDF2(this.tableName1, "1", "6", classOf[Student], multiVersion)
-    dataFrame.show(100, false)
+    dataFrame.repartition(3).show(100, false)
   }
 
   /**

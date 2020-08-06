@@ -4,14 +4,10 @@
     <artifactId>fire-core</artifactId>
     <inceptionYear>2008</inceptionYear>
 
-    <properties>
-        <fire.version>1.0.0-SNAPSHOT</fire.version>
-    </properties>
-
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 

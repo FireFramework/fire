@@ -3,7 +3,6 @@ package com.zto.fire.common.bean.runtime;
 import com.alibaba.fastjson.JSON;
 import com.zto.fire.common.util.SystemInfoUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.spark.SparkEnv;
 
 import java.io.Serializable;
 import java.util.List;
@@ -32,8 +31,6 @@ public class RuntimeInfo implements Serializable {
     private Map<String, List> diskInfo;
     // 设备信息
     private HardwareInfo hardwareInfo;
-    // executorId号或driver
-    private static String executorId;
     // executor所在ip
     private static String ip;
     // executor所在主机名
@@ -80,10 +77,6 @@ public class RuntimeInfo implements Serializable {
         return hardwareInfo;
     }
 
-    public String getExecutorId() {
-        return executorId;
-    }
-
     public String getIp() {
         return ip;
     }
@@ -111,12 +104,6 @@ public class RuntimeInfo implements Serializable {
      * @return 当前运行时信息
      */
     public static RuntimeInfo getRuntimeInfo() {
-        SparkEnv sparkEnv = SparkEnv.get();
-        if (sparkEnv != null) {
-            if (StringUtils.isBlank(executorId)) {
-                executorId = sparkEnv.executorId();
-            }
-        }
         if (StringUtils.isBlank(ip)) {
             ip = SystemInfoUtils.getIp();
         }
@@ -136,12 +123,5 @@ public class RuntimeInfo implements Serializable {
         // runtimeInfo.hardwareInfo = HardwareInfo.getHardwareInfo();
 
         return runtimeInfo;
-    }
-
-    public static void main(String[] args) throws Exception {
-        for (int i = 0; i < 10; i++) {
-            System.out.println(JSON.toJSONString(RuntimeInfo.getRuntimeInfo()) + "\n");
-            Thread.sleep(1000);
-        }
     }
 }

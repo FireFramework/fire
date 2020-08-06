@@ -1,7 +1,7 @@
 package com.zto.fire.common.bean;
 
 import com.zto.fire.common.anno.FieldName;
-import com.zto.fire.common.util.GlobalConstants;
+import com.zto.fire.common.conf.FireHBaseConf;
 import com.zto.fire.common.util.ReflectionUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -50,7 +50,7 @@ public abstract class HBaseBaseBean<T> implements Serializable {
             String fieldName = entry.getKey();
             Field field = entry.getValue();
             FieldName anno =  field.getAnnotation(FieldName.class);
-            String familyName = GlobalConstants.familyName();
+            String familyName = FireHBaseConf.familyName();
             if(anno != null) {
                 if(!anno.mapping()) {
                     continue;
@@ -112,7 +112,7 @@ public abstract class HBaseBaseBean<T> implements Serializable {
             String fieldName = entry.getKey();
             Field field = entry.getValue();
             FieldName anno =  field.getAnnotation(FieldName.class);
-            String familyName = GlobalConstants.familyName();
+            String familyName = FireHBaseConf.familyName();
             if(anno != null) {
                 if(!anno.mapping()) {
                     continue;
@@ -202,7 +202,7 @@ public abstract class HBaseBaseBean<T> implements Serializable {
                 String fName = entry.getKey();
                 Field field = entry.getValue();
                 FieldName anno = field.getAnnotation(FieldName.class);
-                String familyName = GlobalConstants.familyName();
+                String familyName = FireHBaseConf.familyName();
                 if (anno != null) {
                     if (!anno.mapping() || anno.disuse()) {
                         continue;

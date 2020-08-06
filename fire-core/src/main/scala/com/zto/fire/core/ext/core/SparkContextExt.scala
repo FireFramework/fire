@@ -1,6 +1,6 @@
 package com.zto.fire.core.ext.core
 
-import com.zto.fire.common.util.GlobalConstants
+import com.zto.fire.common.conf.FireSparkConf
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.HBaseContextExt
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
@@ -46,7 +46,7 @@ class SparkContextExt(sc: SparkContext) {
     * @return
     */
   def setLogLevel2: SparkContext = {
-    val logLevel = if (StringUtils.isNotBlank(GlobalConstants.SparkConf.logLevel)) GlobalConstants.SparkConf.logLevel else "DEBUG"
+    val logLevel = if (StringUtils.isNotBlank(FireSparkConf.logLevel)) FireSparkConf.logLevel else "DEBUG"
     sc.setLogLevel(logLevel)
     sc
   }

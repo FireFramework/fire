@@ -1,12 +1,11 @@
-package com.zto.fire.core.util
-
-import java.util.concurrent.atomic.AtomicInteger
+package com.zto.fire.common.util
 
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.bean.ogg.OGGBean
-import com.zto.fire.common.util.{DateFormatUtils, GlobalConstants, ValueUtils}
+import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
@@ -15,12 +14,15 @@ import scala.util.Try
 
 /**
  * fire框架通用的工具方法
+ * 注：该工具类中不可包含Spark或Flink的依赖
  *
  * @author ChengLong
  * @since 1.0.0
  * @create: 2020-05-17 10:17
  */
-object FireUtils {
+private[fire] object FireUtils extends Serializable {
+  private var isSplash = false
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 重试指定的函数fn retryNum次
@@ -49,7 +51,7 @@ object FireUtils {
         case _ if retryNum > 1 => {
           Thread.sleep(duration)
           count += 1
-          println(s"${GlobalConstants.PS1.RED}第${count}次执行. 时间:${DateFormatUtils.formatCurrentDateTime()}. 间隔:${duration}.${GlobalConstants.PS1.DEFAULT}")
+          println(s"${FirePS1Conf.RED}第${count}次执行. 时间:${DateFormatUtils.formatCurrentDateTime()}. 间隔:${duration}.${FirePS1Conf.DEFAULT}")
           redo(retryNum - 1, duration)(fun)
         }
         case util.Failure(e) => throw e
@@ -152,5 +154,41 @@ object FireUtils {
     }
 
     ogg
+  }
+
+  /**
+   * 判断是否为spark引擎
+   */
+  def isSparkEngine: Boolean = "spark".equals(PropUtils.engine)
+
+  /**
+   * 判断是否为flink引擎
+   */
+  def isFlinkEngine: Boolean = "flink".equals(PropUtils.engine)
+
+  /**
+   * 用于在fire框架启动时展示信息
+   */
+  private[fire] def splash: Unit = {
+    if (!isSplash) {
+      val info =
+        """
+          |       ___                       ___           ___
+          |     /\  \          ___        /\  \         /\  \
+          |    /::\  \        /\  \      /::\  \       /::\  \
+          |   /:/\:\  \       \:\  \    /:/\:\  \     /:/\:\  \
+          |  /::\~\:\  \      /::\__\  /::\~\:\  \   /::\~\:\  \
+          | /:/\:\ \:\__\  __/:/\/__/ /:/\:\ \:\__\ /:/\:\ \:\__\
+          | \/__\:\ \/__/ /\/:/  /    \/_|::\/:/  / \:\~\:\ \/__/
+          |      \:\__\   \::/__/        |:|::/  /   \:\ \:\__\
+          |       \/__/    \:\__\        |:|\/__/     \:\ \/__/
+          |                 \/__/        |:|  |        \:\__\
+          |                               \|__|         \/__/     version
+          |
+          |""".stripMargin.replace("version", s"version ${FirePS1Conf.PINK + FireFrameworkConf.fireVersion}")
+
+      this.logger.warn(FirePS1Conf.GREEN + info + FirePS1Conf.DEFAULT)
+      this.isSplash = true
+    }
   }
 }

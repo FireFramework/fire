@@ -1,6 +1,6 @@
 package com.zto.fire.core.ext.core
 
-import com.zto.fire.common.util.GlobalConstants
+import com.zto.fire.common.conf.FireSparkConf
 import com.zto.fire.core.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkConf
@@ -66,12 +66,12 @@ class SparkConfExt(sparkConf: SparkConf) {
     * SparkConf实例
     */
   def buildConf(): SparkConf = {
-    sparkConf.setAppName(GlobalConstants.SparkConf.appName)
+    sparkConf.setAppName(FireSparkConf.appName)
     if (SparkUtils.isLocal) {
       sparkConf.setMaster("local[10]")
     }
 
-    val props = GlobalConstants.SparkConf.sparkConf
+    val props = FireSparkConf.sparkConf
     if (StringUtils.isNotBlank(props)) {
       val propArr = props.split("#")
       if (propArr != null && propArr.length > 0) {

@@ -1,8 +1,9 @@
 package com.zto.fire.flink.core
 
+import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf, FireSparkConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.task.SchedulerManager
-import com.zto.fire.common.util.{GlobalConstants, PropUtils, SystemInfoUtils, ValueUtils}
+import com.zto.fire.common.util.{PropUtils, SystemInfoUtils, ValueUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestfulRegister
 import com.zto.fire.flink.core.rest.FlinkSystemRestful
@@ -12,8 +13,8 @@ import org.apache.flink.api.common.ExecutionConfig
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
-import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.table.catalog.hive.HiveCatalog
 
 /**
@@ -31,29 +32,36 @@ trait BaseFlink extends BaseFire {
    */
   override private[fire] def boot: Unit = {
     PropUtils.compatible("flink")
-    PropUtils.load("flink")
+    PropUtils.load(FireFrameworkConf.FLINK_CONF_FILE)
+    this.loadConf
     PropUtils.load(this.appName)
-    PropUtils.setProperty("flink.client.class.name", this.className)
+    PropUtils.setProperty(FireFlinkConf.FLINK_DRIVER_CLASS_NAME, this.className)
+    PropUtils.setProperty(FireFlinkConf.FLINK_CLIENT_SIMPLE_CLASS_NAME, this.driverClass)
     FlinkSingletonFactory.setAppName(this.appName)
-    this.splash
+    super.boot
   }
 
   /**
    * 初始化flink运行时环境
    */
   override private[fire] def createContext(conf: Any): Unit = {
-    this.retry(GlobalConstants.FireConf.restfulPortRetryNum, GlobalConstants.FireConf.restfulPortRetryDuration) {
+    this.retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
       this.restPort = SystemInfoUtils.getRundomPort
       this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
     }
     this.systemRestful = new FlinkSystemRestful(this)
     // 注册到zrc平台，并覆盖配置信息
-    if (this.jobType == JobType.FLINK_STREAMING && GlobalConstants.FireConf.zrcEnable) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
+    if (this.jobType == JobType.FLINK_STREAMING && FireFrameworkConf.zrcEnable) PropUtils.invokeZrcConf(this.className, s"${SystemInfoUtils.getIp}:${this.restPort}")
     PropUtils.print()
-
     SchedulerManager.registerTasks(this)
     // 创建HiveCatalog
-    this.hive = new HiveCatalog(GlobalConstants.HiveConf.hiveCatalogName, GlobalConstants.SparkConf.defaultDB, GlobalConstants.HiveConf.getHiveConfDir, GlobalConstants.HiveConf.hiveVersion)
+    if (FireHiveConf.hiveSupportEnable) {
+      this.logger.info("enabled flink-hive support.")
+      val hiveConfDir = FireHiveConf.getHiveConfDir
+      this.logger.info(s"hive-site.xml path is $hiveConfDir")
+      assert(StringUtils.isNotBlank(hiveConfDir) && hiveConfDir.contains("""/"""), "未找到匹配的hive-site.xml存放路径，请检查参数：flink.hive.cluster或通过flink.hive.support.enable=false禁用hive.")
+      this.hive = new HiveCatalog(FireHiveConf.hiveCatalogName, FireSparkConf.defaultDB, hiveConfDir, FireHiveConf.hiveVersion)
+    }
   }
 
   /**
@@ -97,42 +105,42 @@ trait BaseFlink extends BaseFire {
     val config = if (env.isInstanceOf[ExecutionEnvironment]) {
       val batchEnv = env.asInstanceOf[ExecutionEnvironment]
       // flink.default.parallelism
-      if (GlobalConstants.FlinkConf.defaultParallelism != -1) batchEnv.setParallelism(GlobalConstants.FlinkConf.defaultParallelism)
+      if (FireFlinkConf.defaultParallelism != -1) batchEnv.setParallelism(FireFlinkConf.defaultParallelism)
       batchEnv.getConfig
     } else {
       val streamEnv = env.asInstanceOf[StreamExecutionEnvironment]
       // flink.max.parallelism
-      if (GlobalConstants.FlinkConf.maxParallelism != -1) streamEnv.setMaxParallelism(GlobalConstants.FlinkConf.maxParallelism)
+      if (FireFlinkConf.maxParallelism != -1) streamEnv.setMaxParallelism(FireFlinkConf.maxParallelism)
       // flink.default.parallelism
-      if (GlobalConstants.FlinkConf.defaultParallelism != -1) streamEnv.setParallelism(GlobalConstants.FlinkConf.defaultParallelism)
+      if (FireFlinkConf.defaultParallelism != -1) streamEnv.setParallelism(FireFlinkConf.defaultParallelism)
       // flink.stream.buffer.timeout.millis
-      if (GlobalConstants.FlinkConf.streamBufferTimeoutMillis != -1) streamEnv.setBufferTimeout(GlobalConstants.FlinkConf.streamBufferTimeoutMillis)
+      if (FireFlinkConf.streamBufferTimeoutMillis != -1) streamEnv.setBufferTimeout(FireFlinkConf.streamBufferTimeoutMillis)
       // flink.stream.number.execution.retries
-      if (GlobalConstants.FlinkConf.streamNumberExecutionRetries != -1) streamEnv.setNumberOfExecutionRetries(GlobalConstants.FlinkConf.streamNumberExecutionRetries)
+      if (FireFlinkConf.streamNumberExecutionRetries != -1) streamEnv.setNumberOfExecutionRetries(FireFlinkConf.streamNumberExecutionRetries)
       // flink.stream.time.characteristic
-      if (StringUtils.isNotBlank(GlobalConstants.FlinkConf.streamTimeCharacteristic)) streamEnv.setStreamTimeCharacteristic(TimeCharacteristic.valueOf(GlobalConstants.FlinkConf.streamTimeCharacteristic))
+      if (StringUtils.isNotBlank(FireFlinkConf.streamTimeCharacteristic)) streamEnv.setStreamTimeCharacteristic(TimeCharacteristic.valueOf(FireFlinkConf.streamTimeCharacteristic))
       // TODO: 支持状态保存
       // streamEnv.setStateBackend()
 
       // checkPoint相关参数
       val ckConfig = streamEnv.getCheckpointConfig
-      if (ckConfig != null && GlobalConstants.FlinkConf.streamCheckpointInterval != -1) {
+      if (ckConfig != null && FireFlinkConf.streamCheckpointInterval != -1) {
         // flink.stream.checkpoint.interval 单位：毫秒 默认：-1 关闭
-        streamEnv.enableCheckpointing(GlobalConstants.FlinkConf.streamCheckpointInterval)
+        streamEnv.enableCheckpointing(FireFlinkConf.streamCheckpointInterval)
         // flink.stream.checkpoint.mode  EXACTLY_ONCE/AT_LEAST_ONCE 默认：EXACTLY_ONCE
-        if (StringUtils.isNotBlank(GlobalConstants.FlinkConf.streamCheckpointMode)) ckConfig.setCheckpointingMode(CheckpointingMode.valueOf(GlobalConstants.FlinkConf.streamCheckpointMode.trim.toUpperCase))
+        if (StringUtils.isNotBlank(FireFlinkConf.streamCheckpointMode)) ckConfig.setCheckpointingMode(CheckpointingMode.valueOf(FireFlinkConf.streamCheckpointMode.trim.toUpperCase))
         // flink.stream.checkpoint.timeout 单位：毫秒 默认：10 * 60 * 1000
-        if (GlobalConstants.FlinkConf.streamCheckpointTimeout != null) ckConfig.setCheckpointTimeout(GlobalConstants.FlinkConf.streamCheckpointTimeout)
+        if (FireFlinkConf.streamCheckpointTimeout != null) ckConfig.setCheckpointTimeout(FireFlinkConf.streamCheckpointTimeout)
         // flink.stream.checkpoint.max.concurrent 默认：1
-        if (GlobalConstants.FlinkConf.streamCheckpointMaxConcurrent > 0) ckConfig.setMaxConcurrentCheckpoints(GlobalConstants.FlinkConf.streamCheckpointMaxConcurrent)
+        if (FireFlinkConf.streamCheckpointMaxConcurrent > 0) ckConfig.setMaxConcurrentCheckpoints(FireFlinkConf.streamCheckpointMaxConcurrent)
         // flink.stream.checkpoint.min.pause.between  默认：0
-        if (GlobalConstants.FlinkConf.streamCheckpointMinPauseBetween >= 0) ckConfig.setMinPauseBetweenCheckpoints(GlobalConstants.FlinkConf.streamCheckpointMinPauseBetween)
+        if (FireFlinkConf.streamCheckpointMinPauseBetween >= 0) ckConfig.setMinPauseBetweenCheckpoints(FireFlinkConf.streamCheckpointMinPauseBetween)
         // flink.stream.checkpoint.prefer.recovery  默认：false
-        ckConfig.setPreferCheckpointForRecovery(GlobalConstants.FlinkConf.streamCheckpointPreferRecovery)
+        ckConfig.setPreferCheckpointForRecovery(FireFlinkConf.streamCheckpointPreferRecovery)
         // flink.stream.checkpoint.tolerable.failure.number 默认：0
-        if (GlobalConstants.FlinkConf.streamCheckpointTolerableTailureNumber >= 0) ckConfig.setTolerableCheckpointFailureNumber(GlobalConstants.FlinkConf.streamCheckpointTolerableTailureNumber)
+        if (FireFlinkConf.streamCheckpointTolerableTailureNumber >= 0) ckConfig.setTolerableCheckpointFailureNumber(FireFlinkConf.streamCheckpointTolerableTailureNumber)
         // flink.stream.checkpoint.externalized
-        if (StringUtils.isNotBlank(GlobalConstants.FlinkConf.streamCheckpointExternalized)) ckConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.valueOf(GlobalConstants.FlinkConf.streamCheckpointExternalized.trim))
+        if (StringUtils.isNotBlank(FireFlinkConf.streamCheckpointExternalized)) ckConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.valueOf(FireFlinkConf.streamCheckpointExternalized.trim))
       }
 
       streamEnv.getConfig

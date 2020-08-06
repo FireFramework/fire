@@ -4,14 +4,14 @@ import java.sql.Connection
 import java.util.Properties
 
 import com.zto.fire.common.bean.{BaseLogging, HBaseBaseBean}
-import com.zto.fire.common.db.{HBaseOper, JdbcOper, QueryCallback}
-import com.zto.fire.common.util.GlobalConstants.FireConf
-import com.zto.fire.common.util.{GlobalConstants, KafkaUtils, ValueUtils}
-import com.zto.fire.core.bridge.HBaseSparkBridge
+import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf, FireKafkaConf, FireSparkConf}
+import com.zto.fire.common.db.{HBaseOper, JdbcOper}
+import com.zto.fire.common.util.{FireUtils, KafkaUtils, LogUtils, ValueUtils}
+import com.zto.fire.core.bridge.{HBaseSparkBridge, JdbcOperBridge}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.HBaseContextExt
 import com.zto.fire.core.udf.UDFs
-import com.zto.fire.core.util.{FireUtils, SingletonFactory, SparkUtils}
+import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
 import org.apache.hadoop.hbase.filter.{Filter, FilterList}
@@ -21,9 +21,10 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.DStream
+import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
@@ -33,13 +34,14 @@ import scala.reflect.ClassTag
  * sparkSession对象
  * @author ChengLong 2019-5-18 10:51:19
  */
-class SparkSessionExt(spark: SparkSession) extends BaseLogging {
+class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBridge {
 
   import spark.implicits._
 
   // 获取单例的HBaseContext对象
   lazy val hbaseContext: HBaseContextExt = SingletonFactory.getHBaseContextInstance(spark.sparkContext)
   val sc: SparkContext = spark.sparkContext
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 根据给定的集合，创建rdd
@@ -103,7 +105,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    * @return
    * 生成的DataFrame
    */
-  def sqlForPersistent(sqlStr: String, tmpTableName: String, partitionName: String, saveMode: SaveMode = GlobalConstants.SparkConf.saveMode, cache: Boolean = true): DataFrame = {
+  def sqlForPersistent(sqlStr: String, tmpTableName: String, partitionName: String, saveMode: SaveMode = SaveMode.valueOf(FireSparkConf.saveMode), cache: Boolean = true): DataFrame = {
     spark.sqlContext.sqlForPersistent(sqlStr, tmpTableName, partitionName, saveMode, cache)
   }
 
@@ -188,7 +190,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    * @param partitionName
    * 分区字段名称，默认ds
    */
-  def addPartition(tableName: String, partition: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def addPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     spark.sqlContext.addPartition(tableName, partition, partitionName)
   }
 
@@ -200,7 +202,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    * @param partition
    * 分区
    */
-  def dropPartition(tableName: String, partition: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def dropPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     spark.sqlContext.dropPartition(tableName, partition, partitionName)
   }
 
@@ -266,7 +268,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    * @param cols
    * 多个列，逗号分隔
    */
-  def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     spark.sqlContext.insertIntoPartition(srcTableName, destTableName, ds, cols, partitionName)
   }
 
@@ -280,7 +282,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    * @param querySQL
    * 查询语句
    */
-  def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = GlobalConstants.SparkConf.partitionName, overwrite: Boolean = false): Unit = {
+  def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = FireSparkConf.partitionName, overwrite: Boolean = false): Unit = {
     spark.sqlContext.insertIntoPartitionAsSelect(destTableName, ds, querySQL, partitionName, overwrite)
   }
 
@@ -292,7 +294,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    * @param querySQL
    * 查询sql语句
    */
-  def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     spark.sqlContext.insertIntoDymPartitionAsSelect(destTableName, querySQL, partitionName)
   }
 
@@ -1103,72 +1105,38 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    * @param extraOptions
    * 消费kafka额外的参数，如果有key同时出现在配置文件中和extraOptions中，将被extraOptions覆盖
    * @param keyNum
-   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   * 配置文件中key的数字后缀
    * @return
    * 转换成json字符串后的Dataset
    */
-  def loadKafka(extraOptions: mutable.HashMap[String, String] = null, keyNum: Int = 1): Dataset[(String, String)] = {
-    val groupId = if (StringUtils.isNotBlank(GlobalConstants.KafkaConf.kafkaGroupId(keyNum))) GlobalConstants.KafkaConf.kafkaGroupId(keyNum) else this.sc.appName
-    val finalBrokers = GlobalConstants.KafkaConf.kafkaBrokers(keyNum)
-    ValueUtils.requireNonNullForce(finalBrokers, s"kafka broker地址不能为空，可在配置文件中[ spark.kafka.brokers.name$keyNum ]指定")
-    val kafkaReader = spark.readStream.format("kafka").option("group.id", groupId).option("kafka.bootstrap.servers", finalBrokers)
-    val topics = GlobalConstants.KafkaConf.kafkaTopics()
-    ValueUtils.requireNonNullForce(topics, s"kafka topic不能为空，可在配置文件中[ spark.kafka.topics$keyNum ]指定")
-    kafkaReader.option("subscribe", topics)
-    // 是否在数据丢失时失败
-    val failOnDataLoss = GlobalConstants.KafkaConf.kafkaFailOnDataLoss(keyNum)
-    if (failOnDataLoss != null) kafkaReader.option("failOnDataLoss", failOnDataLoss)
-    // 指定起始消费位点
-    val startingOffsets = GlobalConstants.KafkaConf.kafkaStartingOffset(keyNum)
-    if (StringUtils.isNotBlank(startingOffsets)) kafkaReader.option("startingOffsets", startingOffsets)
-    // 指定结束消费位点
-    val endingOffsets = GlobalConstants.KafkaConf.kafkaEndingOffsets(keyNum)
-    if (StringUtils.isNotBlank(endingOffsets)) kafkaReader.option("endingOffsets", endingOffsets)
-    // 轮询数据的超时时间（以毫秒为单位）
-    val pollTimeoutMs = GlobalConstants.KafkaConf.kafkaPollTimeoutMs(keyNum)
-    if (pollTimeoutMs != null) kafkaReader.option("kafkaConsumer.pollTimeoutMs", pollTimeoutMs)
-    // 放弃获取Kafka偏移前重试的次数
-    val fetchOffsetNumRetries = GlobalConstants.KafkaConf.kafkaFetchOffsetNumRetries(keyNum)
-    if (fetchOffsetNumRetries != null) kafkaReader.option("fetchOffset.numRetries", fetchOffsetNumRetries)
-    // 重试获取Kafka偏移之前要等待的毫秒数
-    val fetchOffsetRetryIntervalMs = GlobalConstants.KafkaConf.kafkaFetchOffsetRetryIntervalMs(keyNum)
-    if (fetchOffsetRetryIntervalMs != null) kafkaReader.option("fetchOffset.retryIntervalMs", fetchOffsetRetryIntervalMs)
-    // 每个触发间隔处理的最大偏移量的速率限制
-    val maxOffsetsPerTrigger = GlobalConstants.KafkaConf.kafkaMaxOffsetsPerTrigger(keyNum)
-    if (maxOffsetsPerTrigger > 0) kafkaReader.option("maxOffsetsPerTrigger", maxOffsetsPerTrigger)
+  def loadKafka(extraOptions: Map[String, String] = null, keyNum: Int = 1): Dataset[(String, String)] = {
+    val extraOptionsMap = new scala.collection.mutable.HashMap[String, String]
+    if (extraOptions != null && extraOptions.nonEmpty) extraOptionsMap ++= extraOptions
 
-    // ------------------- kafka相关参数 ------------------- //
-    // 心跳间隔时间
-    val heartbeatInterval = GlobalConstants.KafkaConf.kafkaHeartbeatInterval(keyNum)
-    if (heartbeatInterval > 0) {
-      kafkaReader.option("kafka.heartbeat.interval.ms", heartbeatInterval.toString)
-    }
-    // 消费者组最大的session超时时间
-    val groupMaxSessionTimeOut = GlobalConstants.KafkaConf.kafkaGroupMaxSessionTimeOut(keyNum)
-    if (groupMaxSessionTimeOut > 0) {
-      kafkaReader.option("kafka.group.max.session.timeout.ms", groupMaxSessionTimeOut.toString)
-    }
-    // 消费者组最小的session超时时间
-    val groupMinSessionTimeOut = GlobalConstants.KafkaConf.kafkaGroupMinSessionTimeOut(keyNum)
-    if (groupMinSessionTimeOut > 0) {
-      kafkaReader.option("kafka.group.min.session.timeout.ms", groupMinSessionTimeOut.toString)
-    }
-    // 一次调用pool返回的最大记录数
-    val maxPollRecords = GlobalConstants.KafkaConf.kafkaMaxPollRecords(keyNum)
-    if (maxPollRecords > 0) {
-      kafkaReader.option("kafka.max.poll.records", maxPollRecords.toString)
-    }
-    // 每个分区返回的最大数据量
-    val maxPartitionFetchBytes = GlobalConstants.KafkaConf.kafkaMaxPartitionFetchBytes(keyNum)
-    if (maxPartitionFetchBytes > 0) {
-      kafkaReader.option("kafka.max.partition.fetch.bytes", maxPartitionFetchBytes.toString)
-    }
+    val confGroupId = FireKafkaConf.kafkaGroupId(keyNum)
+    val groupId = if (StringUtils.isNotBlank(confGroupId)) confGroupId else this.sc.appName
+    extraOptionsMap += ("group.id" -> groupId)
 
-    // 用户指定参数
-    if (extraOptions != null && extraOptions.size > 0) kafkaReader.options(extraOptions)
+    val finalBrokers = FireKafkaConf.kafkaBrokers(keyNum)
+    if (StringUtils.isNotBlank(finalBrokers)) extraOptionsMap += ("kafka.bootstrap.servers" -> finalBrokers)
+    assert(extraOptionsMap.contains("kafka.bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：spark.kafka.brokers.name$keyNum")
 
-    kafkaReader.load().selectExpr("CAST(key AS STRING)", "CAST(value AS STRING) as value").as[(String, String)]
+    val topics = FireKafkaConf.kafkaTopics()
+    if (StringUtils.isNotBlank(topics)) extraOptionsMap += ("subscribe" -> topics)
+    assert(extraOptionsMap.contains("subscribe"), s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
+
+    // 以spark.kafka.conf.开头的配置优先级最高
+    val configMap = FireKafkaConf.kafkaConfMap(keyNum)
+    extraOptionsMap ++= configMap
+    LogUtils.logMap(this.logger, extraOptionsMap.toMap, s"Kafka client configuration. keyNum=$keyNum.")
+
+    val kafkaReader = spark.readStream
+      .format("kafka")
+      .options(extraOptionsMap)
+      .load()
+      .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING) as value")
+      .as[(String, String)]
+    kafkaReader
   }
 
   /**
@@ -1188,7 +1156,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    * 转换成json字符串后的Dataset
    */
   def loadKafkaParse(schemaClass: Class[_],
-                     extraOptions: mutable.HashMap[String, String] = null,
+                     extraOptions: Map[String, String] = null,
                      parseAll: Boolean = false,
                      isMySQL: Boolean = true,
                      fieldNameUpper: Boolean = false, keyNum: Int = 1): DataFrame = {
@@ -1211,12 +1179,12 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    * 转换成json字符串后的Dataset
    */
   def loadKafkaParseJson(tableName: String = "kafka",
-                         extraOptions: mutable.HashMap[String, String] = null,
+                         extraOptions: Map[String, String] = null,
                          keyNum: Int = 1): DataFrame = {
     val msg = FireUtils.retry(5, 1000) {
-      KafkaUtils.getMsg(GlobalConstants.KafkaConf.kafkaBrokers(keyNum), GlobalConstants.KafkaConf.kafkaTopics(keyNum), null)
+      KafkaUtils.getMsg(FireKafkaConf.kafkaBrokers(keyNum), FireKafkaConf.kafkaTopics(keyNum), null)
     }
-    ValueUtils.requireNonNullForce(msg, s"获取样例消息失败！请重启任务尝试重新获取，并保证topic[${GlobalConstants.KafkaConf.kafkaTopics(keyNum)}]持续的有新消息。")
+    ValueUtils.requireNonNullForce(msg, s"获取样例消息失败！请重启任务尝试重新获取，并保证topic[${FireKafkaConf.kafkaTopics(keyNum)}]持续的有新消息。")
     val jsonDS = this.spark.createDataset(Seq(msg))(Encoders.STRING)
     val jsonDF = this.spark.read.json(jsonDS)
 
@@ -1303,70 +1271,6 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
 
   // ----------------------------------- 关系型数据库API ----------------------------------- //
 
-  /**
-   * 关系型数据库插入、删除、更新操作
-   *
-   * @param sql
-   * 待执行的sql语句
-   * @param params
-   * sql中的参数
-   * @param connection
-   * 传递已有的数据库连接
-   * @param commit
-   * 是否自动提交事务，默认为自动提交
-   * @param closeConnection
-   * 是否关闭connection，默认关闭
-   * @param keyNum
-   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-   * @return
-   * 影响的记录数
-   */
-  def jdbcUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
-    JdbcOper.executeUpdate(sql, params, connection, commit, closeConnection, keyNum)
-  }
-
-  /**
-   * 关系型数据库批量插入、删除、更新操作
-   *
-   * @param sql
-   * 待执行的sql语句
-   * @param paramsList
-   * sql的参数列表
-   * @param connection
-   * 传递已有的数据库连接
-   * @param commit
-   * 是否自动提交事务，默认为自动提交
-   * @param closeConnection
-   * 是否关闭connection，默认关闭
-   * @param keyNum
-   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-   * @return
-   * 影响的记录数
-   */
-  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
-    JdbcOper.executeBatch(sql, paramsList, connection, commit, closeConnection, keyNum)
-  }
-
-  /**
-   * 执行查询操作，以JavaBean方式返回结果集
-   *
-   * @param sql
-   * 查询语句
-   * @param params
-   * sql执行参数
-   * @param clazz
-   * JavaBean类型
-   * @param keyNum
-   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-   * @return
-   * 查询结果集
-   */
-  def jdbcQuery[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): List[T] = {
-    JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
-  }
 
   /**
    * 执行查询操作，以RDD方式返回结果集
@@ -1384,7 +1288,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    */
   def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): RDD[T] = {
     val rsList = JdbcOper.executeQuery[T](sql, params, clazz, connection, keyNum)
-    this.sc.parallelize(rsList, FireConf.jdbcQueryPartitions).persist(FireConf.jdbcStorageLevel)
+    this.sc.parallelize(rsList, FireJdbcConf.jdbcQueryPartitions).persist(StorageLevel.fromString(FireJdbcConf.jdbcStorageLevel))
   }
 
   /**
@@ -1422,23 +1326,6 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    */
   def jdbcQueryDS[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): Dataset[T] = {
     this.spark.createDataset[T](this.jdbcQueryRDD(sql, params, clazz, connection, keyNum))(Encoders.bean(clazz))
-  }
-
-  /**
-   * 执行查询操作，并在QueryCallback对结果集进行处理
-   *
-   * @param sql
-   * 查询语句
-   * @param params
-   * sql执行参数
-   * @param callback
-   * 查询回调
-   * @param keyNum
-   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-   */
-  def jdbcQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null, keyNum: Int = 1): Unit = {
-    JdbcOper.executeQueryCall(sql, params, callback, connection, keyNum)
   }
 
   /**
@@ -1530,7 +1417,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging {
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
-  def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = GlobalConstants.JdbcConf.batchSize(), keyNum: Int = 1): Unit = {
+  def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = 1): Unit = {
     if (ValueUtils.isEmpty(dataFrame)) {
       this.log("执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
       return

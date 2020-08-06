@@ -2,6 +2,8 @@ package com.zto.fire.demo.bean;
 
 import com.google.common.collect.Maps;
 import com.zto.fire.common.util.DateFormatUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -17,6 +19,7 @@ import java.util.concurrent.Future;
  */
 public class ThreadPoolInterrupt {
     public static Map<String, Task> taskMap = Maps.newConcurrentMap();
+    private static final Logger logger = LoggerFactory.getLogger(ThreadPoolInterrupt.class);
 
     /**
      * 线程池中执行的线程子类
@@ -46,7 +49,7 @@ public class ThreadPoolInterrupt {
         public String call() throws Exception {
             boolean flag = true;
             while (flag) {
-                System.out.println("--> " + this.taskName + " 执行中 " + DateFormatUtils.formatCurrentDateTime());
+                logger.info("--> {} 执行中 {}", this.taskName, DateFormatUtils.formatCurrentDateTime());
                 Thread.sleep(1000);
             }
             return "执行成功";
@@ -66,7 +69,7 @@ public class ThreadPoolInterrupt {
          */
         public boolean stop() {
             if ((System.currentTimeMillis() - this.time) >= this.timeOut * 1000) {
-                System.out.println("关闭线程：" + this.taskName + " 超时时间：" + this.timeOut + "s 运行时间： " + (System.currentTimeMillis() - this.time) + " ms");
+                logger.info("关闭线程：{} 超时时间：{}s 运行时间：{}ms", this.taskName, this.timeOut, System.currentTimeMillis() - this.time);
                 this.future.cancel(true);
                 return true;
             } else {

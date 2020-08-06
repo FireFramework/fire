@@ -1,8 +1,8 @@
 package com.zto.fire.core
 
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.{GlobalConstants, SystemInfoUtils}
-import org.apache.spark.SparkConf
+import com.zto.fire.common.util.PropUtils
 
 /**
   * Structured Streaming通用父类
@@ -22,7 +22,7 @@ class BaseStructuredStreaming extends BaseSpark {
     super.init(conf, args)
     // 添加时间监听器
     this.spark.streams.addListener(new BaseStreamingQueryListener)
-    if (SystemInfoUtils.isLinux) this.restfulRegister.startRestServer
+    this.restfulRegister.startRestServer
     this.process
   }
 
@@ -32,29 +32,11 @@ class BaseStructuredStreaming extends BaseSpark {
     */
   override def process: Unit = {}
 
-  /**
-    * 构建或合并SparkConf
-    *
-    * @param conf
-    * 在conf基础上构建
-    * @return
-    * 合并后的SparkConf对象
-    */
-  override def buildConf(conf: SparkConf): SparkConf = {
-    if (conf == null) {
-      new SparkConf()
-        .setAppName(this.appName)
-        .set("spark.port.maxRetries", "200")
-        .set("spark.ui.killEnabled", "false")
-        .set("spark.default.parallelism", "1000")
-        .set("spark.sql.broadcastTimeout", "3000")
-        .set("spark.storage.memoryFraction", "0.4")
-        .set("spark.ui.timeline.tasks.maximum", "300")
-        .set("spark.scheduler.listenerbus.eventqueue.size", "130000")
-        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    } else {
-      conf
-    }
-  }
 
+  /**
+   * 在加载任务配置文件前将被加载
+   */
+  override private[fire] def loadConf: Unit = {
+    PropUtils.load(FireFrameworkConf.SPARK_STRUCTURED_STREAMING_CONF_FILE)
+  }
 }

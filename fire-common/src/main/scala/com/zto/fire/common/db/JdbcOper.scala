@@ -1,65 +1,63 @@
 package com.zto.fire.common.db
 
-import java.sql.{Connection, PreparedStatement, ResultSet, SQLException}
-import java.util.concurrent.atomic.AtomicBoolean
+import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Statement}
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import com.zto.fire.common.acc.AccumulatorManager
 import com.zto.fire.common.bean.BaseLogging
-import com.zto.fire.common.util.{DBUtils, GlobalConstants, StringsUtils}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf}
+import com.zto.fire.common.util.{DBUtils, StringsUtils}
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /**
-  * 数据库连接池（c3p0）工具类
-  * 封装了数据库常用的操作方法
-  *
-  * @author ChengLong 2016-11-15 16:55:37
-  */
-object JdbcOper extends BaseLogging {
+ * 数据库连接池（c3p0）工具类
+ * 封装了数据库常用的操作方法
+ *
+ * @author ChengLong 2016-11-15 16:55:37
+ */
+object JdbcOper {
   private lazy val connPoolMap = collection.mutable.Map[String, ComboPooledDataSource]()
+  private val logger = LoggerFactory.getLogger(this.getClass)
   // 日志中sql截取的长度
-  private lazy val logSqlLength = GlobalConstants.FireConf.logSqlLength
+  private lazy val logSqlLength = FireFrameworkConf.logSqlLength
   private val jdbcPoolKey = "cpds"
-  private val module = "jdbc"
 
   /**
-    * 初始化指定的连接池，未被使用
-    *
-    * @param keyNum
-    * 连接池配置数字后缀
-    * @return
-    * 连接池
-    */
+   * 初始化指定的连接池，未被使用
+   *
+   * @param keyNum
+   * 连接池配置数字后缀
+   * @return
+   * 连接池
+   */
   def init(keyNum: Int = 1): ComboPooledDataSource = {
-    this.mark()
     var pool = this.connPoolMap.get(s"${this.jdbcPoolKey}$keyNum").getOrElse(null)
     if (pool == null) {
       try {
         // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
-        if (StringUtils.isNotBlank(GlobalConstants.JdbcConf.url(keyNum)) && StringUtils.isNotBlank(GlobalConstants.JdbcConf.user(keyNum))) {
-          this.log(s"准备初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]", "jdbc")
+        if (StringUtils.isNotBlank(FireJdbcConf.url(keyNum)) && StringUtils.isNotBlank(FireJdbcConf.user(keyNum))) {
+          this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
           pool = new ComboPooledDataSource(true)
-          pool.setJdbcUrl(GlobalConstants.JdbcConf.url(keyNum))
-          pool.setDriverClass(GlobalConstants.JdbcConf.driverClass(keyNum))
-          pool.setUser(GlobalConstants.JdbcConf.user(keyNum))
-          pool.setPassword(GlobalConstants.JdbcConf.password(keyNum))
-          pool.setMaxPoolSize(GlobalConstants.JdbcConf.maxPoolSize(keyNum))
-          pool.setMinPoolSize(GlobalConstants.JdbcConf.minPoolSize(keyNum))
-          pool.setAcquireIncrement(GlobalConstants.JdbcConf.acquireIncrement(keyNum))
-          pool.setInitialPoolSize(GlobalConstants.JdbcConf.initialPoolSize(keyNum))
+          pool.setJdbcUrl(FireJdbcConf.url(keyNum))
+          pool.setDriverClass(FireJdbcConf.driverClass(keyNum))
+          pool.setUser(FireJdbcConf.user(keyNum))
+          pool.setPassword(FireJdbcConf.password(keyNum))
+          pool.setMaxPoolSize(FireJdbcConf.maxPoolSize(keyNum))
+          pool.setMinPoolSize(FireJdbcConf.minPoolSize(keyNum))
+          pool.setAcquireIncrement(FireJdbcConf.acquireIncrement(keyNum))
+          pool.setInitialPoolSize(FireJdbcConf.initialPoolSize(keyNum))
           pool.setMaxStatements(0)
           pool.setMaxStatementsPerConnection(0)
-          pool.setMaxIdleTime(GlobalConstants.JdbcConf.maxIdleTime(keyNum))
+          pool.setMaxIdleTime(FireJdbcConf.maxIdleTime(keyNum))
           this.connPoolMap += (s"cpds$keyNum" -> pool)
-          this.log(s"完成数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]初始化：url: ${GlobalConstants.JdbcConf.url(keyNum)} driver: ${GlobalConstants.JdbcConf.driverClass(keyNum)} ", this.module)
+          this.logger.info(s"完成数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ] 初始化：url: ${FireJdbcConf.url(keyNum)} driver: ${FireJdbcConf.driverClass(keyNum)} ")
         }
       } catch {
         case ex: Exception => {
-          AccumulatorManager.addMultiTimer(module, "init", "init", "", "ERROR", keyNum.toString, 1)
-          this.log(s"初始化数据库连接池[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", this.module, null, ex)
+          this.logger.error(s"初始化数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]失败", ex)
           throw ex
         }
       }
@@ -68,26 +66,23 @@ object JdbcOper extends BaseLogging {
   }
 
   /**
-    * 从指定的连接池中获取一个连接
-    *
-    * @param keyNum
-    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-    * @return
-    * 对应配置项的数据库连接
-    */
+   * 从指定的连接池中获取一个连接
+   *
+   * @param keyNum
+   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   * @return
+   * 对应配置项的数据库连接
+   */
   def getConnection(keyNum: Int = 1): Connection = {
     var connection: Connection = null
     try {
       val pool = this.init(keyNum)
-      this.mark()
       connection = pool.getConnection
-      AccumulatorManager.addMultiTimer(module, "getConnection", "getConnection", "", "INFO", keyNum.toString, 1)
-      this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${keyNum} ]成功", this.module)
+      this.logger.info(s"获取数据库连接[ ${keyNum} ]成功")
     } catch {
       case ex: Exception => {
-        AccumulatorManager.addMultiTimer(module, "getConnection", "getConnection", "", "ERROR", keyNum.toString, 1)
-        this.log(s"getConnection(${keyNum}) 获取数据库连接[ ${GlobalConstants.PropKeys.SPARK_DB_JDBC_URL_KEY}$keyNum ]出现异常，请检查配置文件", this.module, null, ex)
+        this.logger.error(s"获取数据库连接[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]发生异常，请检查配置文件", ex)
         throw ex
       }
     }
@@ -95,24 +90,24 @@ object JdbcOper extends BaseLogging {
   }
 
   /**
-    * 更新操作
-    *
-    * @param sql
-    * 待执行的sql语句
-    * @param params
-    * sql中的参数
-    * @param connection
-    * 传递已有的数据库连接
-    * @param commit
-    * 是否自动提交事务，默认为自动提交
-    * @param closeConnection
-    * 是否关闭connection，默认关闭
-    * @param keyNum
-    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-    * @return
-    * 影响的记录数
-    */
+   * 更新操作
+   *
+   * @param sql
+   * 待执行的sql语句
+   * @param params
+   * sql中的参数
+   * @param connection
+   * 传递已有的数据库连接
+   * @param commit
+   * 是否自动提交事务，默认为自动提交
+   * @param closeConnection
+   * 是否关闭connection，默认关闭
+   * @param keyNum
+   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   * @return
+   * 影响的记录数
+   */
   def executeUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
     var retVal: Long = 0L
     var conn: Connection = connection
@@ -122,7 +117,6 @@ object JdbcOper extends BaseLogging {
         conn = this.getConnection(keyNum)
         conn.setAutoCommit(false)
       }
-      this.mark
       stat = conn.prepareStatement(sql)
 
       // 设置值参数
@@ -135,51 +129,38 @@ object JdbcOper extends BaseLogging {
       }
       retVal = stat.executeUpdate
       if (commit) conn.commit()
-      this.log(s"executeUpdate: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响记录数：$retVal", this.module, 0)
-      AccumulatorManager.addMultiTimer(module, "executeUpdate", "update", "", "INFO", keyNum.toString, retVal)
+      this.logger.info(s"executeUpdate: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响记录数：$retVal")
     }
     catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(module, "executeUpdate", "update", "", "ERROR", keyNum.toString, 1)
-        this.log(s"executeUpdate: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", this.module, 0, e)
+        this.logger.error(s"executeUpdate: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", e)
         throw e
       }
     } finally {
-      if (conn != null && closeConnection)
-        conn.close()
-      if (stat != null) {
-        try {
-          stat.close()
-        } catch {
-          case e: SQLException => {
-            this.log(s"executeUpdate: 释放连接 sql->${StringsUtils.substring(sql, 0, this.logSqlLength)}", this.module, 0, e)
-            throw e
-          }
-        }
-      }
+      this.release(sql, conn, stat, null, closeConnection)
     }
     retVal
   }
 
   /**
-    * 执行批量更新操作
-    *
-    * @param sql
-    * 待执行的sql语句
-    * @param paramsList
-    * sql的参数列表
-    * @param connection
-    * 传递已有的数据库连接
-    * @param commit
-    * 是否自动提交事务，默认为自动提交
-    * @param closeConnection
-    * 是否关闭connection，默认关闭
-    * @param keyNum
-    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-    * @return
-    * 影响的记录数
-    */
+   * 执行批量更新操作
+   *
+   * @param sql
+   * 待执行的sql语句
+   * @param paramsList
+   * sql的参数列表
+   * @param connection
+   * 传递已有的数据库连接
+   * @param commit
+   * 是否自动提交事务，默认为自动提交
+   * @param closeConnection
+   * 是否关闭connection，默认关闭
+   * @param keyNum
+   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   * @return
+   * 影响的记录数
+   */
   def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
     var retVal: Array[Int] = null
     var conn: Connection = connection
@@ -189,7 +170,6 @@ object JdbcOper extends BaseLogging {
         conn = this.getConnection(keyNum)
         conn.setAutoCommit(false)
       }
-      this.mark
       stat = conn.prepareStatement(sql)
       var batch = 0
       if (paramsList != null && paramsList.size > 0) {
@@ -201,7 +181,7 @@ object JdbcOper extends BaseLogging {
           })
           batch += 1
           stat.addBatch()
-          if (batch % GlobalConstants.JdbcConf.batchSize(keyNum) == 0) {
+          if (batch % FireJdbcConf.batchSize(keyNum) == 0) {
             stat.executeBatch()
             stat.clearBatch()
           }
@@ -210,45 +190,33 @@ object JdbcOper extends BaseLogging {
       // 执行批量更新
       retVal = stat.executeBatch
       if (commit) conn.commit()
-      this.log(s"executeBatch: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响总记录数：$batch", this.module, 0)
-      AccumulatorManager.addMultiTimer(module, "executeBatch", "batch", "", "INFO", keyNum.toString, batch)
+      this.logger.info(s"executeBatch: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响记录数：$batch")
     } catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(module, "executeBatch", "batch", "", "ERROR", keyNum.toString, 1)
-        this.log(s"executeBatch: executeBatch sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", this.module, 0, e)
+        this.logger.error(s"executeBatch sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", e)
         throw e
       }
     } finally {
-      if (conn != null && closeConnection) conn.close()
-      if (stat != null) {
-        try {
-          stat.close()
-        } catch {
-          case e: SQLException => {
-            this.log(s"executeBatch: 释放连接 sql->${StringsUtils.substring(sql, 0, this.logSqlLength)}", this.module, 0, e)
-            throw e
-          }
-        }
-      }
+      this.release(sql, conn, stat, null, closeConnection)
     }
     retVal
   }
 
   /**
-    * 执行查询操作，以JavaBean方式返回结果集
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param clazz
-    * JavaBean类型
-    * @param connection
-    * 使用制定的数据库连接
-    * @param keyNum
-    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-    */
+   * 执行查询操作，以JavaBean方式返回结果集
+   *
+   * @param sql
+   * 查询语句
+   * @param params
+   * sql执行参数
+   * @param clazz
+   * JavaBean类型
+   * @param connection
+   * 使用制定的数据库连接
+   * @param keyNum
+   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   */
   def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): List[T] = {
     val listBuffer = ListBuffer[T]()
 
@@ -263,20 +231,20 @@ object JdbcOper extends BaseLogging {
   }
 
   /**
-    * 执行查询操作
-    *
-    * @param sql
-    * 查询语句
-    * @param params
-    * sql执行参数
-    * @param callback
-    * 查询回调
-    * @param connection
-    * 使用制定的数据库连接
-    * @param keyNum
-    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-    */
+   * 执行查询操作
+   *
+   * @param sql
+   * 查询语句
+   * @param params
+   * sql执行参数
+   * @param callback
+   * 查询回调
+   * @param connection
+   * 使用制定的数据库连接
+   * @param keyNum
+   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   */
   def executeQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null, keyNum: Int = 1): Unit = {
     var conn: Connection = connection
     var stat: PreparedStatement = null
@@ -285,7 +253,6 @@ object JdbcOper extends BaseLogging {
       if (conn == null) {
         conn = this.getConnection(keyNum)
       }
-      this.mark
       stat = conn.prepareStatement(sql)
       if (params != null && params.length > 0) {
         var i = 1
@@ -299,59 +266,76 @@ object JdbcOper extends BaseLogging {
       if (rs != null && callback != null) {
         count = callback.process(rs)
       }
-      this.log(s"executeQueryCall: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->success 查询记录数：$count", this.module, 1)
-      AccumulatorManager.addMultiTimer(module, "executeQueryCall", "query", "", "INFO", keyNum.toString, count)
+      this.logger.info(s"executeQueryCall: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->success 记录数：$count")
     } catch {
       case e: Exception => {
-        AccumulatorManager.addMultiTimer(module, "executeQueryCall", "query", "", "ERROR", keyNum.toString, 1)
-        this.log(s"executeQueryCall: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", this.module, 1, e)
+        this.logger.error(s"executeQueryCall: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", e)
         throw e
       }
     } finally {
-      if (conn != null) conn.close()
-      if (rs != null) {
+      this.release(sql, conn, stat, rs)
+    }
+  }
+
+  /**
+   * 释放jdbc资源的工具类
+   *
+   * @param sql
+   * 对应的sql语句
+   * @param conn
+   * 数据库连接
+   * @param rs
+   * 查询结果集
+   * @param stat
+   * jdbc statement
+   */
+  def release(sql: String, conn: Connection, stat: Statement, rs: ResultSet, closeConnection: Boolean = true): Unit = {
+    try {
+      if (rs != null) rs.close()
+    } catch {
+      case e: SQLException => {
+        this.logger.error(s"关闭jdbc ResultSet失败: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)}", e)
+        throw e
+      }
+    } finally {
+      try {
+        if (stat != null) stat.close()
+      } catch {
+        case e: SQLException => {
+          this.logger.error(s"关闭jdbc statement失败: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)}", e)
+          throw e
+        }
+      } finally {
         try {
-          rs.close()
+          if (conn != null && closeConnection) conn.close()
         } catch {
           case e: SQLException => {
-            this.log(s"executeQueryCall: 释放连接 sql->${StringsUtils.substring(sql, 0, this.logSqlLength)}", this.module, 1, e)
-            throw e
-          }
-        }
-      }
-      if (stat != null) {
-        try {
-          stat.close()
-        }
-        catch {
-          case e: SQLException => {
-            this.log(s"executeQueryCall: 释放连接 sql->${StringsUtils.substring(sql, 0, this.logSqlLength)}", this.module, 1, e)
+            this.logger.error(s"关闭jdbc connection失败: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)}", e)
             throw e
           }
         }
       }
     }
   }
-
 }
 
 
 /**
-  * 内部回调trait
-  *
-  * @author ChengLong
-  *         2016-11-16 09:22:11
-  */
+ * 内部回调trait，用于处理ResultSet结果集
+ *
+ * @author ChengLong
+ *         2016-11-16 09:22:11
+ */
 trait QueryCallback extends BaseLogging {
 
   /**
-    * 回调方法，对返回结果进行处理
-    *
-    * @param rs
-    * 查询的结果集
-    * @return
-    * 结果集记录数
-    */
+   * 回调方法，对返回结果进行处理
+   *
+   * @param rs
+   * 查询的结果集
+   * @return
+   * 结果集记录数
+   */
   @throws[Exception]
   def process(rs: ResultSet): Int
 }

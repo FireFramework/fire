@@ -1,9 +1,10 @@
 package com.zto.fire.core.ext.module
 
 import com.zto.fire.common.bean.{HBaseBaseBean, MultiVersionsBean}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHBaseConf, FireSparkConf}
 import com.zto.fire.common.db.HBaseOper
-import com.zto.fire.common.util.GlobalConstants.FireConf
-import com.zto.fire.common.util.{GlobalConstants, ValueUtils}
+import com.zto.fire.common.util.ValueUtils
+import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
@@ -14,11 +15,11 @@ import org.apache.hadoop.hbase.mapreduce.TableOutputFormat
 import org.apache.hadoop.hbase.spark.HBaseContext
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.mapreduce.Job
-import org.apache.spark.{Logging, SparkContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Encoders, Row}
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.DStream
-import com.zto.fire.core.ext.SparkExt._
+import org.apache.spark.{Logging, SparkContext}
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -37,7 +38,7 @@ import scala.reflect.ClassTag
   * @author ChengLong 2018年4月10日 10:39:28
   */
 class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config: Configuration = HBaseOper.getConfiguration) extends HBaseContext(sc, config) with Logging {
-  lazy val batchSize = GlobalConstants.HBaseConf.hbaseBatchSize
+  lazy val batchSize = FireHBaseConf.hbaseBatchSize
 
   /**
     * 根据RDD[String]批量删除，rdd是rowkey的集合
@@ -88,7 +89,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     */
   def bulkDeleteList(tableName: String, seq: Seq[String]): Unit = {
     ValueUtils.requireNonNull(seq, "seq不能为空")
-    val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, GlobalConstants.SparkConf.parallelism)))
+    val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
     this.bulkDeleteRDD(tableName, rdd)
   }
 
@@ -118,7 +119,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     val rowKeyRDD = rdd.filter(StringUtils.isNotBlank(_)).map(rowKey => Bytes.toBytes(rowKey))
     val getRDD = this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
       HBaseOper.hbaseRow2Bean(result, clazz)
-    }).filter(bean => bean != null).persist(FireConf.hbaseStorageLevel)
+    }).filter(bean => bean != null).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
     this.logFire(s"bulkGetRDD(tableName: ${tableName})", "hbase", 1)
 
     getRDD
@@ -187,7 +188,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
   def bulkGetSeq[E <: HBaseBaseBean[E] : ClassTag](tableName: String, seq: Seq[String], clazz: Class[E]): RDD[E] = {
     ValueUtils.requireNonNull(seq, "参数不合法：seq不能为空")
 
-    val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, GlobalConstants.SparkConf.parallelism)))
+    val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
     this.bulkGetRDD(tableName, rdd, clazz)
   }
 
@@ -238,7 +239,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
   def bulkPutSeq[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean, multiVersion: Boolean = false): Unit = {
     ValueUtils.requireNonNull(seq, "参数不合法：seq不能为空")
 
-    val rdd = this.sc.parallelize(seq, math.max(1, math.min(seq.length / 2, GlobalConstants.SparkConf.parallelism)))
+    val rdd = this.sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
     this.bulkPutRDD(tableName, rdd, insertEmpty, multiVersion)
   }
 
@@ -266,7 +267,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     if (scan.getCaching == -1) {
       scan.setCaching(this.batchSize)
     }
-    val scanRDD = this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz)).persist(FireConf.hbaseStorageLevel)
+    val scanRDD = this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseOper.hbaseRow2BeanList(it, clazz)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
     this.logFire(s"bulkScanRDD(tableName: ${tableName})", "hbase", 1)
 
     scanRDD

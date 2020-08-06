@@ -32,7 +32,7 @@ object HBaseBulkTest extends BaseSparkCore {
     val rdd = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
     // rdd.hbaseBulkPutRDD(this.tableName2)
     // 方式二：使用this.spark.hbaseBulkPut将rdd中的数据写入到hbase
-    this.spark.hbaseBulkPutRDD(this.tableName2, rdd)
+    this.spark.hbaseBulkPutRDD(this.tableName2, rdd, multiVersion = multiVersion)
 
     // 第二个参数指定false表示不插入为null的字段到hbase中
     // rdd.hbaseBulkPutRDD(this.tableName2, insertEmpty = false)
@@ -48,7 +48,7 @@ object HBaseBulkTest extends BaseSparkCore {
     val rdd = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
     val studentDF = this.spark.createDataFrame(rdd, classOf[Student])
     // insertEmpty=false表示为空的字段不插入
-    studentDF.hbaseBulkPutDF(this.tableName2, classOf[Student], false, multiVersion)
+    studentDF.hbaseBulkPutDF(this.tableName2, classOf[Student], false, multiVersion = multiVersion)
     // 方式二：
     // this.spark.hbaseBulkPutDF(this.tableName2, studentDF, classOf[Student])
   }
@@ -61,7 +61,7 @@ object HBaseBulkTest extends BaseSparkCore {
     val rdd = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
     val studentDataset = this.spark.createDataset(rdd)(Encoders.bean(classOf[Student]))
     // multiVersion=true表示以多版本形式插入
-    studentDataset.hbaseBulkPutDS(this.tableName2, multiVersion)
+    studentDataset.hbaseBulkPutDS(this.tableName2, multiVersion = multiVersion)
     // 方式二：
     // this.spark.hbaseBulkPutDS(this.tableName3, studentDataset)
   }

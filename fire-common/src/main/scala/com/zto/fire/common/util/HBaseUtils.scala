@@ -1,6 +1,7 @@
 package com.zto.fire.common.util
 
 import com.zto.fire.common.anno.FieldName
+import com.zto.fire.common.conf.FireHBaseConf
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil
@@ -77,7 +78,7 @@ object HBaseUtils {
         rowKey = field.get(obj).asInstanceOf[String]
       }
       val fieldName = clazz.getAnnotation(classOf[FieldName])
-      val famliyByte = if (fieldName != null && StringUtils.isNotBlank(fieldName.family())) fieldName.family().getBytes else GlobalConstants.familyName.getBytes
+      val famliyByte = if (fieldName != null && StringUtils.isNotBlank(fieldName.family())) fieldName.family().getBytes else FireHBaseConf.familyName.getBytes
       val goOn = if (fieldName == null) true else fieldName != null && !fieldName.disuse()
       if (goOn) {
         val keyByte = key.getBytes

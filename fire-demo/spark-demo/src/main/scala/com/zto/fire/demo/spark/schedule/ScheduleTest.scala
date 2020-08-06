@@ -23,6 +23,15 @@ object ScheduleTest extends BaseSparkStreaming {
     this.log("executorId=" + SparkUtils.getExecutorId + "====方法 test1() 每5秒执行====" + DateFormatUtils.formatCurrentDateTime())
   }
 
+  /**
+   * 只在driver端执行，不允许同一时刻同时执行该方法
+   * startAt用于指定首次执行时间
+   */
+  @Scheduled(cron = "0/5 * * * * ?", scope = "all", concurrent = false)
+  def test2: Unit = {
+    this.log("executorId=" + SparkUtils.getExecutorId + "====方法 test2() 每5秒执行====" + DateFormatUtils.formatCurrentDateTime())
+  }
+
 
   // 每天凌晨4点01将锁标志设置为false，这样下一个批次就可以先更新维表再执行sql
   @Scheduled(cron = "0 1 4 * * ?")

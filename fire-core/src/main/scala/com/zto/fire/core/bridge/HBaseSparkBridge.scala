@@ -3,9 +3,10 @@ package com.zto.fire.core.bridge
 import java.util
 
 import com.zto.fire.common.bean.HBaseBaseBean
+import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.common.db.HBaseOper
-import com.zto.fire.common.util.GlobalConstants.FireConf
-import com.zto.fire.common.util.{GlobalConstants, HBaseUtils}
+import com.zto.fire.common.util.HBaseUtils
+import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
@@ -15,7 +16,6 @@ import org.apache.hadoop.hbase.mapreduce.TableInputFormat
 import org.apache.spark.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import com.zto.fire.core.ext.SparkExt._
 import org.apache.spark.storage.StorageLevel
 
 import scala.collection.JavaConversions
@@ -28,7 +28,7 @@ import scala.reflect.ClassTag
   * @author ChengLong 2019-5-10 14:39:39
   */
 object HBaseSparkBridge extends HBaseOper with Logging {
-  lazy val batchSize = GlobalConstants.HBaseConf.hbaseBatchSize
+  def batchSize: Int = FireHBaseConf.hbaseBatchSize
 
   /**
     * 使用Java API的方式将DataFrame中的数据分多个批次插入到HBase中
@@ -159,7 +159,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     hbaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
     hbaseConf.set(TableInputFormat.SCAN, HBaseUtils.convertScanToString(scan))
     // 将指定范围内的hbase数据转为rdd
-    val resultRDD = spark.sparkContext.newAPIHadoopRDD(hbaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result]).repartition(FireConf.hbaseHadoopScanRepartitions).persist(FireConf.hbaseStorageLevel)
+    val resultRDD = spark.sparkContext.newAPIHadoopRDD(hbaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result]).repartition(FireHBaseConf.hbaseHadoopScanPartitions).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
     this.logFire(s"hbaseHadoopScanRS(tableName: $tableName)", "hbase", 1)
     resultRDD
   }
@@ -307,7 +307,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
       } else {
         HBaseOper.hbaseRow2BeanList(it, clazz)
       }
-    }).persist(FireConf.hbaseStorageLevel)
+    }).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
     this.logFire(s"hbaseOperScanRDD(tableName: $tableName)", "hbase", 1)
     scanRDD
   }
@@ -429,7 +429,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
       }
       this.logFire(s"hbaseOperGetRDD(tableName: ${tableName}) count: ${beanList.size}", "hbase", 1)
       JavaConversions.asScalaIterator(beanList.iterator())
-    }).persist(FireConf.hbaseStorageLevel)
+    }).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
     this.logFire(s"hbaseOperGetRDD(tableName: ${tableName})", "hbase", 1)
     getRDD
   }

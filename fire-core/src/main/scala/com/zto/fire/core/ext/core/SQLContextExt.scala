@@ -3,7 +3,8 @@ package com.zto.fire.core.ext.core
 import java.util.Properties
 
 import com.zto.fire.common.bean.HBaseBaseBean
-import com.zto.fire.common.util.{DBUtils, GlobalConstants, KuduUtils, ValueUtils}
+import com.zto.fire.common.conf.{FireJdbcConf, FireKuduConf, FireSparkConf}
+import com.zto.fire.common.util.{DBUtils, KuduUtils, ValueUtils}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.KuduContextExt
 import com.zto.fire.core.util.SingletonFactory
@@ -64,7 +65,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * DataFrame
     */
   def loadKuduTable(tableName: String): DataFrame = {
-    sqlContext.read.options(Map("kudu.master" -> GlobalConstants.KuduConf.kuduMaster, "kudu.table" -> KuduUtils.packageKuduTableName(tableName))).kudu
+    sqlContext.read.options(Map("kudu.master" -> FireKuduConf.kuduMaster, "kudu.table" -> KuduUtils.packageKuduTableName(tableName))).kudu
   }
 
   /**
@@ -92,7 +93,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * @return
     * 生成的DataFrame
     */
-  def sqlForPersistent(sqlStr: String, tmpTableName: String, partitionName: String, saveMode: SaveMode = GlobalConstants.SparkConf.saveMode, cache: Boolean = true): DataFrame = {
+  def sqlForPersistent(sqlStr: String, tmpTableName: String, partitionName: String, saveMode: SaveMode = SaveMode.valueOf(FireSparkConf.saveMode), cache: Boolean = true): DataFrame = {
     val dataFrame = sqlContext.sql(sqlStr)
     val dataFrameWriter = dataFrame.write.mode(saveMode)
     if (StringUtils.isNotBlank(partitionName)) {
@@ -187,7 +188,7 @@ class SQLContextExt(sqlContext: SQLContext) {
   def addPartitions(tableName: String, partitions: String*): Unit = {
     if (StringUtils.isNotBlank(tableName) && ValueUtils.isAllNotEmpty(partitions)) {
       partitions.foreach(ds => {
-        this.addPartition(tableName, ds, GlobalConstants.SparkConf.partitionName)
+        this.addPartition(tableName, ds, FireSparkConf.partitionName)
       })
     }
   }
@@ -202,7 +203,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * @param partitionName
     * 分区字段名称，默认ds
     */
-  def addPartition(tableName: String, partition: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def addPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     if (StringUtils.isNotBlank(tableName) && StringUtils.isNotBlank(partition) && StringUtils.isNotBlank(partitionName)) {
       sqlContext.sql(s"ALTER TABLE $tableName ADD IF NOT EXISTS partition($partitionName='$partition')")
     }
@@ -216,7 +217,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * @param partition
     * 分区
     */
-  def dropPartition(tableName: String, partition: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def dropPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     if (StringUtils.isNotBlank(tableName) && StringUtils.isNotBlank(partition)) {
       sqlContext.sql(s"ALTER TABLE $tableName DROP IF EXISTS partition($partitionName='$partition')")
     }
@@ -233,7 +234,7 @@ class SQLContextExt(sqlContext: SQLContext) {
   def dropPartitions(tableName: String, partitions: String*): Unit = {
     if (StringUtils.isNotBlank(tableName) && ValueUtils.isAllNotEmpty(partitions)) {
       partitions.foreach(ds => {
-        this.dropPartition(tableName, ds, GlobalConstants.SparkConf.partitionName)
+        this.dropPartition(tableName, ds, FireSparkConf.partitionName)
       })
     }
   }
@@ -305,7 +306,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * @param cols
     * 多个列，逗号分隔
     */
-  def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     sqlContext.sql(
       s"""
          |INSERT INTO TABLE $destTableName partition($partitionName='$ds')
@@ -324,7 +325,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * @param querySQL
     * 查询语句
     */
-  def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = GlobalConstants.SparkConf.partitionName, overwrite: Boolean = false): Unit = {
+  def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = FireSparkConf.partitionName, overwrite: Boolean = false): Unit = {
     val overwriteVal = if (overwrite) "OVERWRITE" else "INTO"
     sqlContext.sql(
       s"""
@@ -341,7 +342,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * @param querySQL
     * 查询语句
     */
-  def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = GlobalConstants.SparkConf.partitionName): Unit = {
+  def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     sqlContext.sql(
       s"""
          |INSERT INTO TABLE $destTableName partition($partitionName)
@@ -422,7 +423,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * DataFrame
     */
   def jdbcTableLoadAll(tableName: String, jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
-    sqlContext.read.jdbc(GlobalConstants.JdbcConf.url(keyNum), tableName, DBUtils.getJdbcProps(jdbcProps, keyNum))
+    sqlContext.read.jdbc(FireJdbcConf.url(keyNum), tableName, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
   /**
@@ -440,7 +441,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * 查询结果集
     */
   def jdbcTableLoad(tableName: String, predicates: Array[String], jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
-    sqlContext.read.jdbc(GlobalConstants.JdbcConf.url(keyNum), tableName, predicates, DBUtils.getJdbcProps(jdbcProps, keyNum))
+    sqlContext.read.jdbc(FireJdbcConf.url(keyNum), tableName, predicates, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
   /**
@@ -464,7 +465,7 @@ class SQLContextExt(sqlContext: SQLContext) {
     * @return
     */
   def jdbcTableLoadBound(tableName: String, columnName: String, lowerBound: Long, upperBound: Long, numPartitions: Int = 10, jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
-    sqlContext.read.jdbc(GlobalConstants.JdbcConf.url(keyNum), tableName, columnName, lowerBound, upperBound, numPartitions, DBUtils.getJdbcProps(jdbcProps, keyNum))
+    sqlContext.read.jdbc(FireJdbcConf.url(keyNum), tableName, columnName, lowerBound, upperBound, numPartitions, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
 }

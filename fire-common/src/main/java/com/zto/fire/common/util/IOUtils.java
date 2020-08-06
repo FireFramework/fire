@@ -22,7 +22,6 @@ public class IOUtils {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    System.out.println("exception");
                     continue;
                 }
             }
