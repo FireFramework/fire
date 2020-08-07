@@ -31,12 +31,14 @@ object LogUtils {
    * 用户自定义的操作
    */
   def logStyle(logger: Logger, title: String = "", style: String = "-", level: Level = Level.INFO)(fun: Logger => Unit): Unit = {
-    val styleRepeat = StringUtils.repeat(style, 19)
-    val titleStart = styleRepeat + s"${FirePS1Conf.GREEN}> start: " + title + s" <${FirePS1Conf.DEFAULT}" + styleRepeat
-    this.logLevel(logger, titleStart, level)
-    fun(logger)
-    val titleEnd = styleRepeat + s"${FirePS1Conf.GREEN}> end:   " + title + s" <${FirePS1Conf.DEFAULT}" + styleRepeat
-    this.logLevel(logger, titleEnd, level)
+    if (this.logger != null) {
+      val styleRepeat = StringUtils.repeat(style, 19)
+      val titleStart = styleRepeat + s"${FirePS1Conf.GREEN}> start: " + title + s" <${FirePS1Conf.DEFAULT}" + styleRepeat
+      this.logLevel(logger, titleStart, level)
+      fun(logger)
+      val titleEnd = styleRepeat + s"${FirePS1Conf.GREEN}> end:   " + title + s" <${FirePS1Conf.DEFAULT}" + styleRepeat
+      this.logLevel(logger, titleEnd, level)
+    }
   }
 
   /**
