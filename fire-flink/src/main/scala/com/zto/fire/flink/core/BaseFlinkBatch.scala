@@ -86,6 +86,7 @@ trait BaseFlinkBatch extends BaseFlink {
    * 用于fire框架初始化，传递累加器与配置信息到taskManager端
    */
   override protected def deployConf: Unit = {
+    if (!FireFrameworkConf.deployConf) return
     this.sc.fromCollection(1 to this.sc.getParallelism)
       .map(FlinkUtils.initMapFunction)
       .setParallelism(this.sc.getParallelism)

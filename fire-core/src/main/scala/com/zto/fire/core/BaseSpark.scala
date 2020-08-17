@@ -165,6 +165,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 用于fire框架初始化，传递累加器与配置信息到taskManager端
    */
   override protected def deployConf: Unit = {
+    if (!FireFrameworkConf.deployConf) return
     // 向driver和executor注册定时任务
     val taskSchedule = new SparkInternalTask(this)
     // driver端注册定时任务

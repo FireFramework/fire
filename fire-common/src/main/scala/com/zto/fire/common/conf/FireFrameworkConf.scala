@@ -86,6 +86,10 @@ private[fire] object FireFrameworkConf {
   lazy val FLINK_CONF_FILE = "flink"
   lazy val FLINK_STREAMING_CONF_FILE = "flink-streaming"
   lazy val FLINK_BATCH_CONF_FILE = "flink-batch"
+  lazy val FIRE_DEPLOY_CONF_ENABLE = "spark.fire.deploy_conf.enable"
+
+  // 是否将配置同步到executor、taskmanager端
+  lazy val deployConf = PropUtils.getBoolean(this.FIRE_DEPLOY_CONF_ENABLE, true)
 
   // fire日志打印黑名单
   lazy val fireConfBlackList: Set[String] = {
