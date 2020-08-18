@@ -37,17 +37,40 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
   }
 
   /**
+   * table的hbase sink
+   */
+  def testTableHBaseSink2(stream: DataStream[Student]): Unit = {
+    stream.createOrReplaceTempView("student")
+    val table = this.flink.sql("select id, name, age from student group by id, name, age")
+
+    // 方式二、用户自定义取数规则，从row中创建HBaseBaseBean的子类
+    // table.hbaseOperPutTable2(this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+    // 或者
+    this.flink.hbaseOperPutTable2(table, this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+  }
+
+  /**
    * stream hbase sink
    */
   def testStreamHBaseSink(stream: DataStream[Student]): Unit = {
     // 方式一、DataStream中的数据类型为HBaseBaseBean的子类
     // stream.hbaseOperPutDS(this.tableName)
-    // this.flink.hbaseOperPutDS(stream, this.tableName)
+    this.flink.hbaseOperPutDS(stream, this.tableName)
 
     // 方式二、将value组装为HBaseBaseBean的子类，逻辑用户自定义
     //stream.hbaseOperPutDS2(this.tableName)(value => value)
     // 或者
     // this.flink.hbaseOperPutDS2(stream, this.tableName)(value => value)
+  }
+
+  /**
+   * stream hbase sink
+   */
+  def testStreamHBaseSink2(stream: DataStream[Student]): Unit = {
+    // 方式二、将value组装为HBaseBaseBean的子类，逻辑用户自定义
+    //stream.hbaseOperPutDS2(this.tableName)(value => value)
+    // 或者
+    this.flink.hbaseOperPutDS2(stream, this.tableName)(value => value)
   }
 
   /**
@@ -65,11 +88,17 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
   }
 
   override def process: Unit = {
+    require(this.args != null && this.args.length > 0, "请传递main方法参数")
     val stream = this.ssc.createDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student]))
 
-    this.testTableHBaseSink(stream)
-    // this.testStreamHBaseSink(stream)
-    this.testHBase
+    this.args(0) match {
+      case "testTableHBaseSink" => this.testTableHBaseSink(stream)
+      case "testTableHBaseSink2" => this.testTableHBaseSink2(stream)
+      case "testStreamHBaseSink" => this.testStreamHBaseSink(stream)
+      case "testStreamHBaseSink2" => this.testStreamHBaseSink2(stream)
+      case "testHBase" => this.testHBase
+      case _ => throw new IllegalArgumentException("未匹配到任何方法名称，请检查！")
+    }
 
     this.ssc.startAwaitTermination()
   }
