@@ -69,7 +69,7 @@ private[fire] object FireKafkaConf {
   def kafkaGroupId(keyNum: Int = 1): String = PropUtils.getString(this.KAFKA_GROUP_ID, keyNum, "")
 
   // 是否在checkpoint时记录offset值
-  def kafkaCommitOnCheckpoint(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.KAFKA_COMMIT_OFFSETS_ON_CHECKPOINTS, false)
+  def kafkaCommitOnCheckpoint(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.KAFKA_COMMIT_OFFSETS_ON_CHECKPOINTS, true)
 
   // 设置从指定时间戳位置开始消费kafka
   def kafkaStartFromTimeStamp(keyNum: Int = 1): java.lang.Long = PropUtils.getLong(this.KAFKA_START_FROM_TIMESTAMP, 0L)
