@@ -124,17 +124,14 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     tmpConf.setAll(PropUtils.toMap)
     tmpConf.set("spark.driver.class.simple.name", this.driverClass)
 
-    // 如果启用hive，则获取hive metastore地址
-    if (FireHiveConf.hiveSupportEnable) {
-      val hiveMetastoreUrl = FireHiveConf.getMetastoreUrl
-      assert(StringUtils.isNotBlank(hiveMetastoreUrl), "未找到匹配的hive metastore地址，请配置：spark.hive.cluster=xxx或通过spark.hive.support.enable=false禁用hive.")
-      tmpConf.set("hive.metastore.uris", hiveMetastoreUrl)
-    }
+    // 设置hive metastore地址
+    val hiveMetastoreUrl = FireHiveConf.getMetastoreUrl
+    if (StringUtils.isBlank(hiveMetastoreUrl)) this.logger.warn("当前任务未指定hive连接信息，将不会连接hive metastore。如需使用hive，请通过spark.hive.cluster=xxx指定。")
+    if (StringUtils.isNotBlank(hiveMetastoreUrl)) tmpConf.set("hive.metastore.uris", hiveMetastoreUrl)
 
     // 构建SparkSession对象
     val sessionBuilder = SparkSession.builder().config(tmpConf)
-    // spark.hive.support.enable
-    if (FireHiveConf.hiveSupportEnable) sessionBuilder.enableHiveSupport()
+    if (StringUtils.isNotBlank(hiveMetastoreUrl)) sessionBuilder.enableHiveSupport()
     // 在mac或windows环境下执行local模式，cpu数通过spark.local.cores指定，默认local[*]
     if (SystemInfoUtils.isLocal) sessionBuilder.master(s"local[${FireSparkConf.localCores}]")
     this.spark = sessionBuilder.getOrCreate()

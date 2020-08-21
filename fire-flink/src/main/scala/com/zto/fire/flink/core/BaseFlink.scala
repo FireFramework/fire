@@ -55,11 +55,10 @@ trait BaseFlink extends BaseFire {
     PropUtils.print()
     SchedulerManager.registerTasks(this)
     // 创建HiveCatalog
-    if (FireHiveConf.hiveSupportEnable) {
+    val hiveConfDir = FireHiveConf.getHiveConfDir
+    if (StringUtils.isNotBlank(hiveConfDir)) {
       this.logger.info("enabled flink-hive support.")
-      val hiveConfDir = FireHiveConf.getHiveConfDir
       this.logger.info(s"hive-site.xml path is $hiveConfDir")
-      assert(StringUtils.isNotBlank(hiveConfDir) && hiveConfDir.contains("""/"""), "未找到匹配的hive-site.xml存放路径，请检查参数：flink.hive.cluster或通过flink.hive.support.enable=false禁用hive.")
       this.hive = new HiveCatalog(FireHiveConf.hiveCatalogName, FireSparkConf.defaultDB, hiveConfDir, FireHiveConf.hiveVersion)
     }
   }

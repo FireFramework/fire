@@ -10,7 +10,6 @@ import com.zto.fire.common.util.PropUtils
  * @create 2020-07-13 15:02
  */
 private[fire] object FireHiveConf {
-  lazy val HIVE_SUPPORT_ENABLE = "spark.hive.support.enable"
   lazy val HIVE_CLUSTER = "spark.hive.cluster"
   // hive版本号
   lazy val HIVE_VERSION = "spark.hive.version"
@@ -20,8 +19,6 @@ private[fire] object FireHiveConf {
   lazy val HIVE_SITE_PATH_MAP_PREFIX = "spark.fire.hive.site.path.map."
   lazy val HIVE_CONF_PREFIX = "spark.hive.conf."
 
-  // 是否启用hive支持
-  lazy val hiveSupportEnable = PropUtils.getBoolean(this.HIVE_SUPPORT_ENABLE, true)
   // hive集群标识（batch/streaming/test）
   lazy val hiveCluster = PropUtils.getString(this.HIVE_CLUSTER, "")
   // 初始化hive集群名称与metastore映射

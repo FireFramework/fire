@@ -4,6 +4,7 @@ import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
 import com.zto.fire.flink.core.util.{FlinkSingletonFactory, FlinkUtils}
+import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala.{ExecutionEnvironment, _}
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
@@ -73,7 +74,7 @@ trait BaseFlinkBatch extends BaseFlink {
     this.configParse(this.env)
     this.sc = this.env
     this.tableEnv = BatchTableEnvironment.create(this.env)
-    if (FireHiveConf.hiveSupportEnable) {
+    if (StringUtils.isNotBlank(FireHiveConf.getHiveConfDir)) {
       this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hive)
       this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
     }
