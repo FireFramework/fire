@@ -114,7 +114,7 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
             loop.break
           } catch {
             case e: Exception => {
-              this.logger.error(s"执行flushInternal操作失败，正在进行第次${i}重试。", e)
+              this.logger.error(s"执行flushInternal操作失败，正在进行第${i}次重试。", e)
               if (i >= this.maxRetry) {
                 this.flushException = e
               }

@@ -25,8 +25,8 @@ object FlinkHiveZrcOnlineTest extends BaseFlinkStreaming {
     }).createOrReplaceTempView("kafka")
     this.flink.sql("select * from kafka").show
     // 查询操作
-    this.flink.sql("select * from dim.baseorganize limit 10").createOrReplaceTempView("hiveTable")
-    val joinedTable = this.flink.sql("select t1.code, t2.op_type from hiveTable t1 left join kafka t2 on t1.code=t2.op_type")
+    this.flink.sql("select * from tmp.tmp_customer_service_001 order by bill_code limit 10").createOrReplaceTempView("hiveTable")
+    val joinedTable = this.flink.sql("select t1.bill_code, t2.op_type from hiveTable t1 left join kafka t2 on t1.bill_code=t2.op_type")
     joinedTable.toRetractStream.print()
 
     this.ssc.startAwaitTermination()
