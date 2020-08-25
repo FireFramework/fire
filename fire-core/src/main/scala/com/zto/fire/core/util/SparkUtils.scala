@@ -8,10 +8,11 @@ import com.zto.fire.common.util._
 import com.zto.fire.core.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkEnv
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.CatalystTypeConverters
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -457,5 +458,81 @@ object SparkUtils {
       val confMap = FireHiveConf.hiveConfMap
       LogUtils.logMap(this.logger, confMap, "Execute hive sql conf.")
     }
+  }
+
+  /**
+   * 分配次执行指定的业务逻辑
+   *
+   * @param rdd
+   *            rdd.foreachPartition
+   * @param batch
+   *            多大批次执行一次sinkFun中定义的操作
+   * @param mapFun
+   *            将Row类型映射为E类型的逻辑，并将处理后的数据放到listBuffer中
+   * @param sinkFun
+   *            具体处理逻辑，将数据sink到目标源
+   */
+  def rddForeachPartitionBatch[T, E](rdd: RDD[T], mapFun: T => E, sinkFun: ListBuffer[E] => Unit, batch: Int = 1000): Unit = {
+    rdd.foreachPartition(it => {
+      var count: Int = 0
+      val list = ListBuffer[E]()
+
+      it.foreach(row => {
+        count += 1
+        val result = mapFun(row)
+        if (result != null) list += result
+
+        // 分批次执行
+        if (count == Math.abs(batch)) {
+          sinkFun(list)
+          count = 0
+          list.clear()
+        }
+      })
+
+      // 将剩余的数据一次执行掉
+      if (list.nonEmpty) {
+        sinkFun(list)
+        list.clear()
+      }
+    })
+  }
+
+  /**
+   * 分配次执行指定的业务逻辑
+   *
+   * @param df
+   *            df.foreachPartition
+   * @param batch
+   *            多大批次执行一次sinkFun中定义的操作
+   * @param mapFun
+   *            将Row类型映射为E类型的逻辑，并将处理后的数据放到listBuffer中
+   * @param sinkFun
+   *            具体处理逻辑，将数据sink到目标源
+   */
+  def datasetForeachPartitionBatch[T, E](df: Dataset[T], mapFun: T => E, sinkFun: ListBuffer[E] => Unit, batch: Int = 1000): Unit = {
+    df.foreachPartition(it => {
+      var count: Int = 0
+      val list = ListBuffer[E]()
+
+      it.foreach(row => {
+        count += 1
+        val result = mapFun(row)
+        if (result != null) list += result
+
+        // 分批次执行
+        if (count == Math.abs(batch)) {
+          sinkFun(list)
+          count = 0
+          list.clear()
+        }
+      })
+
+      // 将剩余的数据一次执行掉
+      if (list.nonEmpty) {
+        sinkFun(list)
+        list.clear()
+      }
+    })
   }
 }

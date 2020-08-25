@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.core.bridge.HBaseSparkBridge
 import com.zto.fire.core.ext.module.HBaseContextExt
-import com.zto.fire.core.util.SingletonFactory
+import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql._
 import org.apache.spark.sql.streaming.Trigger
@@ -142,6 +142,20 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
       dataset.show(numRows, truncate)
     }
     dataset
+  }
+
+  /**
+   * 分配次执行指定的业务逻辑
+   *
+   * @param batch
+   *            多大批次执行一次sinkFun中定义的操作
+   * @param mapFun
+   *            将Row类型映射为E类型的逻辑，并将处理后的数据放到listBuffer中
+   * @param sinkFun
+   * 具体处理逻辑，将数据sink到目标源
+   */
+  def foreachPartitionBatch[E](mapFun: T => E, sinkFun: ListBuffer[E] => Unit, batch: Int = 1000): Unit = {
+    SparkUtils.datasetForeachPartitionBatch(this.dataset, mapFun, sinkFun, batch)
   }
 
   // ------------------------------------- json 解析 ------------------------------------- //

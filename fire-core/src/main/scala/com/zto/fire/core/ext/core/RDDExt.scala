@@ -13,6 +13,7 @@ import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges}
 import com.zto.fire.core.ext.SparkExt._
 
+import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
 
 /**
@@ -319,5 +320,19 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   def rocketCommitOffsets(stream: InputDStream[MessageExt]): Unit = {
     val offsetRanges = rdd.asInstanceOf[org.apache.rocketmq.spark.HasOffsetRanges].offsetRanges
     stream.asInstanceOf[org.apache.rocketmq.spark.CanCommitOffsets].commitAsync(offsetRanges)
+  }
+
+  /**
+   * 分配次执行指定的业务逻辑
+   *
+   * @param batch
+   *            多大批次执行一次sinkFun中定义的操作
+   * @param mapFun
+   *            将Row类型映射为E类型的逻辑，并将处理后的数据放到listBuffer中
+   * @param sinkFun
+   * 具体处理逻辑，将数据sink到目标源
+   */
+  def foreachPartitionBatch[E](mapFun: T => E, sinkFun: ListBuffer[E] => Unit, batch: Int = 1000): Unit = {
+    SparkUtils.rddForeachPartitionBatch(this.rdd, mapFun, sinkFun, batch)
   }
 }
