@@ -79,7 +79,7 @@ object JdbcOper {
     try {
       val pool = this.init(keyNum)
       connection = pool.getConnection
-      this.logger.info(s"获取数据库连接[ ${keyNum} ]成功")
+      this.logger.debug(s"获取数据库连接[ ${keyNum} ]成功")
     } catch {
       case ex: Exception => {
         this.logger.error(s"获取数据库连接[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]发生异常，请检查配置文件", ex)
@@ -109,6 +109,7 @@ object JdbcOper {
    * 影响的记录数
    */
   def executeUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
+    val startTime = System.currentTimeMillis()
     var retVal: Long = 0L
     var conn: Connection = connection
     var stat: PreparedStatement = null
@@ -129,7 +130,7 @@ object JdbcOper {
       }
       retVal = stat.executeUpdate
       if (commit) conn.commit()
-      this.logger.info(s"executeUpdate: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响记录数：$retVal")
+      this.logger.info(s"executeUpdate: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响记录数：$retVal 耗时：${System.currentTimeMillis() - startTime}ms")
     }
     catch {
       case e: Exception => {
@@ -162,6 +163,7 @@ object JdbcOper {
    * 影响的记录数
    */
   def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
+    val startTime = System.currentTimeMillis()
     var retVal: Array[Int] = null
     var conn: Connection = connection
     var stat: PreparedStatement = null
@@ -190,7 +192,7 @@ object JdbcOper {
       // 执行批量更新
       retVal = stat.executeBatch
       if (commit) conn.commit()
-      this.logger.info(s"executeBatch: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响记录数：$batch")
+      this.logger.info(s"executeBatch: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} 影响记录数：$batch 耗时：${System.currentTimeMillis() - startTime}ms")
     } catch {
       case e: Exception => {
         this.logger.error(s"executeBatch sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", e)
@@ -246,6 +248,7 @@ object JdbcOper {
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    */
   def executeQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null, keyNum: Int = 1): Unit = {
+    val startTime = System.currentTimeMillis()
     var conn: Connection = connection
     var stat: PreparedStatement = null
     var rs: ResultSet = null
@@ -266,7 +269,7 @@ object JdbcOper {
       if (rs != null && callback != null) {
         count = callback.process(rs)
       }
-      this.logger.info(s"executeQueryCall: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->success 记录数：$count")
+      this.logger.info(s"executeQueryCall: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->success 记录数：$count 耗时：${System.currentTimeMillis() - startTime}ms")
     } catch {
       case e: Exception => {
         this.logger.error(s"executeQueryCall: sql->${StringsUtils.substring(sql, 0, this.logSqlLength)} result->fail", e)
