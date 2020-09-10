@@ -3,10 +3,10 @@ package com.zto.fire.common.util
 import java.util.Objects
 import java.util.concurrent._
 
-import com.zto.fire.common.bean.BaseLogging
 import com.zto.fire.common.conf.FirePS1Conf
 import com.zto.fire.common.enu.ThreadPoolType
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions
 
@@ -15,9 +15,10 @@ import scala.collection.JavaConversions
  *
  * @author ChengLong 2019-4-25 15:17:55
  */
-object ThreadUtils extends BaseLogging {
+object ThreadUtils {
   // 用于维护使用ThreadUtils创建的线程池对象，并进行统一的关闭
   private val threadPoolMap = new ConcurrentHashMap[String, ExecutorService]()
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 以子线程方式执行函数调用
@@ -35,9 +36,8 @@ object ThreadUtils extends BaseLogging {
     (1 to threadCount).foreach(_ => {
       threadPool.execute(new Runnable {
         override def run(): Unit = {
-          mark()
           fun
-          log(s"Invoke runAsThread as ${Thread.currentThread().getName}.")
+          logger.debug(s"Invoke runAsThread as ${Thread.currentThread().getName}.")
         }
       })
     })
@@ -58,9 +58,8 @@ object ThreadUtils extends BaseLogging {
       threadPool.execute(new Runnable {
         override def run(): Unit = {
           while (true) {
-            mark
             fun
-            log(s"Loop invoke runAsThreadLoop as ${Thread.currentThread().getName}. Delay is ${delay}s.")
+            logger.debug(s"Loop invoke runAsThreadLoop as ${Thread.currentThread().getName}. Delay is ${delay}s.")
             Thread.sleep(delay * 1000)
           }
         }
@@ -109,9 +108,8 @@ object ThreadUtils extends BaseLogging {
 
       // 处理传入的函数
       def wrapFun(): Unit = {
-        mark()
         fun
-        log(s"Loop invoke runAsSchedule as ${Thread.currentThread().getName}. Delay is ${period}${timeUnit.name()}.")
+        logger.debug(s"Loop invoke runAsSchedule as ${Thread.currentThread().getName}. Delay is ${period}${timeUnit.name()}.")
       }
     })
   }
