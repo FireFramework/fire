@@ -1,7 +1,8 @@
 package com.zto.fire.demo.flink.stream
 
-import com.alibaba.fastjson.JSON
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
+import java.util.concurrent.TimeUnit
+
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, SystemInfoUtils}
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
@@ -76,15 +77,17 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
   }
 
   override def process: Unit = {
-    val stream = this.ssc.createDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student]))
+    // val stream = this.ssc.createDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student]))
 
     // this.testTableJdbcSink(stream)
-    this.testStreamJdbcSink(stream)
-    this.testStreamJdbcSink(stream)
+    // this.testStreamJdbcSink(stream)
+    val stream = this.ssc.createDirectStream().filter(JSONUtils.checkJson(_))
+    stream.print()
     //this.testJdbc
 
     this.ssc.startAwaitTermination()
   }
+
 
   def main(args: Array[String]): Unit = {
     this.init()

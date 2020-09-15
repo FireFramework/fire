@@ -37,7 +37,7 @@ object PropUtils {
   /**
    * 用于设置兼容的key的前缀
    */
-  private[fire] def compatible(keyPrefix: String): Unit = {
+  def compatible(keyPrefix: String): Unit = {
     if (StringUtils.isNotBlank(keyPrefix) && !keyPrefix.equals("spark")) {
       this.engine = keyPrefix.trim
       this.compatible = true
@@ -47,39 +47,50 @@ object PropUtils {
   /**
    * 加载指定配置文件，resources根目录下优先级最高，其次是按字典顺序的目录
    *
+   * @param fileName
+   * 配置文件名称
+   */
+  def loadFile(fileName: String): this.type = {
+    if (StringUtils.isNotBlank(fileName) && !this.alreadyLoadMap.contains(fileName)) {
+      val fullName = if (fileName.endsWith(".properties")) fileName else s"$fileName.properties"
+      var resource: InputStream = null
+      try {
+        resource = FileUtils.resourceFileExists(fullName)
+        if (resource == null) {
+          val findFileName = FindClassUtils.findFileInJar(fullName)
+          if (StringUtils.isNotBlank(findFileName)) {
+            if (FindClassUtils.isJar) {
+              resource = FileUtils.resourceFileExists(findFileName)
+            } else {
+              resource = new FileInputStream(findFileName)
+            }
+          }
+        }
+        if (resource == null) this.logger.warn(s"未找到配置文件[ $fullName ]，请核实！")
+        if (resource != null) {
+          this.logger.warn(s"${FirePS1Conf.YELLOW} -------------> loaded ${fullName} <------------- ${FirePS1Conf.DEFAULT}")
+          props.load(resource)
+          this.alreadyLoadMap.put(fileName, fileName)
+        }
+      } finally {
+        if (resource != null) {
+          IOUtils.close(resource)
+        }
+      }
+    }
+    this
+  }
+
+  /**
+   * 加载多个指定配置文件，resources根目录下优先级最高，其次是按字典顺序的目录
+   *
    * @param fileNames
    * 配置文件名称
    */
   def load(fileNames: String*): this.type = {
     if (fileNames != null && fileNames.size > 0) {
       fileNames.foreach(fileName => {
-        if (StringUtils.isNotBlank(fileName) && !this.alreadyLoadMap.contains(fileName)) {
-          val fullName = if (fileName.endsWith(".properties")) fileName else s"$fileName.properties"
-          var resource: InputStream = null
-          try {
-            resource = FileUtils.resourceFileExists(fullName)
-            if (resource == null) {
-              val findFileName = FindClassUtils.findFileInJar(fullName)
-              if (StringUtils.isNotBlank(findFileName)) {
-                if (FindClassUtils.isJar) {
-                  resource = FileUtils.resourceFileExists(findFileName)
-                } else {
-                  resource = new FileInputStream(findFileName)
-                }
-              }
-            }
-            if (resource == null) this.logger.warn(s"未找到配置文件[ $fullName ]，请核实！")
-            if (resource != null) {
-              this.logger.warn(s"${FirePS1Conf.YELLOW} -------------> loaded ${fullName} <------------- ${FirePS1Conf.DEFAULT}")
-              props.load(resource)
-              this.alreadyLoadMap.put(fileName, fileName)
-            }
-          } finally {
-            if (resource != null) {
-              IOUtils.close(resource)
-            }
-          }
-        }
+        this.loadFile(fileName)
       })
     }
 
@@ -432,7 +443,7 @@ object PropUtils {
    */
   def toFlinkConfMap: Map[String, String] = {
     val confMap = scala.collection.mutable.Map[String, String]()
-    JavaConversions.asScalaSet(this.props.keySet()).filter(t => t != null && t.toString.startsWith("flink")).foreach(key => {
+    JavaConversions.asScalaSet(this.props.keySet()).filter(t => t != null && !t.toString.startsWith("spark")).foreach(key => {
       if (key != null) {
         confMap += (key.toString -> this.props.getProperty(key.toString))
       }
@@ -457,7 +468,6 @@ object PropUtils {
       s"""
          |{"className": "$className", "url": "http://$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.zrcSecret}"}
       """.stripMargin
-    this.setProperty(FireFrameworkConf.SPARK_FIRE_REST_URL, s"http://$rest")
     var conf = ""
     try {
       conf = HttpClientUtils.doPost(FireFrameworkConf.zrcProdAddress, param)

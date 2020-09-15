@@ -62,7 +62,7 @@ private[fire] object FireFrameworkConf {
   // quartz最大线程池大小
   lazy val SPARK_FIRE_QUARTZ_MAX_THREAD = "spark.fire.quartz.max.thread"
   // fire框架restful地址
-  lazy val SPARK_FIRE_REST_URL = "spark.fire.rest.url"
+  def fireRestUrl(engine: String = "spark"): String = s"$engine.fire.rest.url"
   // zrc生产环境注册地址
   lazy val SPARK_ZRC_REGISTER_CONF_PROD_ADDRESS = "spark.fire.zrc.register.conf.prod.address"
   // zrc测试环境注册地址

@@ -4,7 +4,7 @@ import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
-import com.zto.fire.core.rest.{RestCase, SystemRestful}
+import com.zto.fire.core.rest.{RestCase, RestfulRegister, SystemRestful}
 import com.zto.fire.flink.core.BaseFlink
 import org.apache.commons.lang3.StringUtils
 import spark._
@@ -14,15 +14,27 @@ import spark._
  *
  * @author ChengLong 2020年4月2日 13:50:01
  */
-private[fire] class FlinkSystemRestful(val baseFlink: BaseFlink) extends SystemRestful(baseFlink) {
+private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegister: RestfulRegister) extends SystemRestful(baseFlink) {
 
   /**
    * 注册Flink引擎restful接口
    */
   override protected def register: Unit = {
-    this.baseFlink.restfulRegister
+    this.restfulRegister
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/kill", kill))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/dataSource", dataSource))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/show", show))
+  }
+
+  /**
+   * 设置baseFlink实例
+   */
+  private[fire] def setBaseFlink(baseFlink: BaseFlink): Unit = this.baseFlink = baseFlink
+
+  @Rest("/system/flink/show")
+  def show(request: Request, response: Response): AnyRef = {
+    logger.error("show被调用")
+    "--------------> hello world"
   }
 
   /**

@@ -18,6 +18,12 @@
     </parent>
 
     <dependencies>
+        <!-- 解决由于flink-shaded-hadoop-2-uber包使用servlet2.5引起的jar包冲突导致fire rest接口异常的问题 -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+        </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-common</artifactId>
@@ -27,13 +33,6 @@
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-core</artifactId>
             <version>${fire.version}</version>
-        </dependency>
-
-        <!-- 解决由于flink-shaded-hadoop-2-uber包使用servlet2.5引起的jar包冲突导致fire rest接口异常的问题 -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
         </dependency>
 
         <!-- flink计算引擎相关依赖 -->
