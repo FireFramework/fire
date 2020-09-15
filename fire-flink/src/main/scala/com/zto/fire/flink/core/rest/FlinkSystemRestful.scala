@@ -23,19 +23,12 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
     this.restfulRegister
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/kill", kill))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/dataSource", dataSource))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/show", show))
   }
 
   /**
    * 设置baseFlink实例
    */
   private[fire] def setBaseFlink(baseFlink: BaseFlink): Unit = this.baseFlink = baseFlink
-
-  @Rest("/system/flink/show")
-  def show(request: Request, response: Response): AnyRef = {
-    logger.error("show被调用")
-    "--------------> hello world"
-  }
 
   /**
    * kill 当前 Flink 任务
