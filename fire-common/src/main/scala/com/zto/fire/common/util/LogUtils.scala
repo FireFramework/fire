@@ -31,7 +31,7 @@ object LogUtils {
    * 用户自定义的操作
    */
   def logStyle(logger: Logger, title: String = "", style: String = "-", level: Level = Level.INFO)(fun: Logger => Unit): Unit = {
-    if (this.logger != null) {
+    if (logger != null) {
       val styleRepeat = StringUtils.repeat(style, 19)
       val titleStart = styleRepeat + s"${FirePS1Conf.GREEN}> start: " + title + s" <${FirePS1Conf.DEFAULT}" + styleRepeat
       this.logLevel(logger, titleStart, level)
@@ -46,7 +46,7 @@ object LogUtils {
    */
   def logMap(logger: Logger, map: Map[_, _], title: String): Unit = {
     if (logger != null && map != null && map.nonEmpty) {
-      LogUtils.logStyle(this.logger, title)(logger => {
+      LogUtils.logStyle(logger, title)(logger => {
         map.foreach(kv => logger.info(s"---> ${kv._1} = ${kv._2}"))
       })
     }
