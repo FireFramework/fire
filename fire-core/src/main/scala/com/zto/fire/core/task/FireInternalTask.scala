@@ -23,7 +23,7 @@ private[fire] class FireInternalTask(baseFir: BaseFire) extends Serializable {
    */
   def jvmMonitor: Unit = {
     val runtimeInfo = RuntimeInfo.getRuntimeInfo
-    if (runtimeInfo != null) {
+    if (runtimeInfo != null && logger != null) {
       LogUtils.logStyle(this.logger, s"Jvm信息:${runtimeInfo.getIp}")(logger => {
         val jvmInfo = runtimeInfo.getJvmInfo
         val cpuInfo = runtimeInfo.getCpuInfo
