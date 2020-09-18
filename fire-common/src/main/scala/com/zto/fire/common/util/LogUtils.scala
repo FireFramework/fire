@@ -31,7 +31,7 @@ object LogUtils {
    * 用户自定义的操作
    */
   def logStyle(logger: Logger, title: String = "", style: String = "-", level: Level = Level.INFO)(fun: Logger => Unit): Unit = {
-    if (this.logger != null) {
+    if (logger != null) {
       val styleRepeat = StringUtils.repeat(style, 19)
       val titleStart = styleRepeat + s"${FirePS1Conf.GREEN}> start: " + title + s" <${FirePS1Conf.DEFAULT}" + styleRepeat
       this.logLevel(logger, titleStart, level)
@@ -46,7 +46,7 @@ object LogUtils {
    */
   def logMap(logger: Logger, map: Map[_, _], title: String): Unit = {
     if (logger != null && map != null && map.nonEmpty) {
-      LogUtils.logStyle(this.logger, title)(logger => {
+      LogUtils.logStyle(logger, title)(logger => {
         map.foreach(kv => logger.info(s"---> ${kv._1} = ${kv._2}"))
       })
     }
@@ -63,13 +63,15 @@ object LogUtils {
    * 日志的级别
    */
   def logLevel(logger: Logger, log: String, level: Level = Level.INFO, ps: String = null): Unit = {
-    val logMsg = if (StringUtils.isNotBlank(ps)) s"$ps $log ${FirePS1Conf.DEFAULT}" else log
-    level match {
-      case Level.DEBUG => logger.debug(logMsg)
-      case Level.INFO => logger.info(logMsg)
-      case Level.WARN => logger.warn(logMsg)
-      case Level.ERROR => logger.error(logMsg)
-      case Level.TRACE => logger.trace(logMsg)
+    if (logger != null) {
+      val logMsg = if (StringUtils.isNotBlank(ps)) s"$ps $log ${FirePS1Conf.DEFAULT}" else log
+      level match {
+        case Level.DEBUG => logger.debug(logMsg)
+        case Level.INFO => logger.info(logMsg)
+        case Level.WARN => logger.warn(logMsg)
+        case Level.ERROR => logger.error(logMsg)
+        case Level.TRACE => logger.trace(logMsg)
+      }
     }
   }
 }
