@@ -14,6 +14,10 @@ private[fire] object FireFrameworkConf {
   // fire版本号
   lazy val SPARK_FIRE_VERSION = "spark.fire.version"
   lazy val DRIVER_CLASS_NAME = "spark.driver.class.name"
+  // fire内置线程池大小
+  lazy val FIRE_THREAD_POOL_SIZE = "spark.fire.thread.pool.size"
+  // fire内置定时任务线程池大小
+  lazy val FIRE_THREAD_POOL_SCHEDULE_SIZE = "spark.fire.thread.pool.schedule.size"
   // 是否启用fire框架restful服务
   lazy val SPARK_FIRE_REST_ENABLE = "spark.fire.rest.enable"
   // rest接口权限认证
@@ -90,6 +94,11 @@ private[fire] object FireFrameworkConf {
 
   // 是否将配置同步到executor、taskmanager端
   lazy val deployConf = PropUtils.getBoolean(this.FIRE_DEPLOY_CONF_ENABLE, true)
+
+  // fire内置线程池大小
+  lazy val threadPoolSize = PropUtils.getInt(this.FIRE_THREAD_POOL_SIZE, 5)
+  // fire内置定时任务线程池大小
+  lazy val threadPoolSchedulerSize = PropUtils.getInt(this.FIRE_THREAD_POOL_SCHEDULE_SIZE, 5)
 
   // fire日志打印黑名单
   lazy val fireConfBlackList: Set[String] = {

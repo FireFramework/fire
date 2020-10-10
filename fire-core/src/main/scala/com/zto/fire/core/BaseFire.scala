@@ -52,8 +52,8 @@ trait BaseFire {
   // 默认的任务名称为类名
   var appName = this.driverClass
   // fire内置线程池
-  lazy val threadPool = ThreadUtils.createThreadPool("threadPool", ThreadPoolType.FIXED, 10)
-  lazy val threadPoolSchedule = ThreadUtils.createThreadPool("threadPoolSchedule", ThreadPoolType.SCHEDULED, 10).asInstanceOf[ScheduledExecutorService]
+  lazy val threadPool = ThreadUtils.createThreadPool("FireThreadPool", ThreadPoolType.FIXED, FireFrameworkConf.threadPoolSize)
+  lazy val threadPoolSchedule = ThreadUtils.createThreadPool("FireThreadPoolSchedule", ThreadPoolType.SCHEDULED, FireFrameworkConf.threadPoolSchedulerSize).asInstanceOf[ScheduledExecutorService]
   this.boot
 
   /**

@@ -240,7 +240,7 @@ public final class GlobalConfiguration {
                 JavaConversions.mapAsJavaMap(PropUtils.toMap()).forEach((k, v) -> {
                     if (!k.startsWith("spark.")) {
                         config.setString(k, v);
-                        LOG.info("加载配置项：{}={}", k, v);
+                        LOG.info("load configuration：{}={}", k, v);
                     }
                 });
             }
