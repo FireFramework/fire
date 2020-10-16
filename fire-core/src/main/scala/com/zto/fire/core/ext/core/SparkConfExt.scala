@@ -17,6 +17,7 @@ class SparkConfExt(sparkConf: SparkConf) {
   /**
     * 启用并注册kryo序列化
     */
+  @deprecated
   def kryoRegister(clazz: Class[_]*): SparkConf = {
     sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerialization")
     sparkConf.registerKryoClasses(clazz.toArray)
@@ -29,6 +30,7 @@ class SparkConfExt(sparkConf: SparkConf) {
     * @return
     * SparkConf实例
     */
+  @deprecated
   def setStreamingDefault(): SparkConf = {
     sparkConf.set("spark.speculation", "true")
       .set("spark.streaming.concurrentJobs", "3")
@@ -48,6 +50,7 @@ class SparkConfExt(sparkConf: SparkConf) {
     * @return
     * SparkConf实例
     */
+  @deprecated
   def setDefault(): SparkConf = {
     sparkConf.set("spark.broadcast.compress", "true")
       .set("spark.rdd.compress", "true")
@@ -65,6 +68,7 @@ class SparkConfExt(sparkConf: SparkConf) {
     * @return
     * SparkConf实例
     */
+  @deprecated
   def buildConf(): SparkConf = {
     sparkConf.setAppName(FireSparkConf.appName)
     if (SparkUtils.isLocal) {

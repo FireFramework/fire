@@ -19,6 +19,9 @@ object FireAccTest extends BaseSparkStreaming {
   val key = "fire.partitions"
 
   override def process: Unit = {
+    if (this.args != null) {
+      this.args.foreach(arg => println(arg + " "))
+    }
     val dstream = this.ssc.createDirectStream()
     dstream.foreachRDD(rdd => {
       rdd.coalesce(this.conf.getInt(key, 10)).foreachPartition(t => {
@@ -75,6 +78,6 @@ object FireAccTest extends BaseSparkStreaming {
 
 
   def main(args: Array[String]): Unit = {
-    this.init(1, false)
+    this.init(1, false, args)
   }
 }

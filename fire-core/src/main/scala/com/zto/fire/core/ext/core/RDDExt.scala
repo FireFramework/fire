@@ -22,8 +22,6 @@ import scala.reflect.{ClassTag, classTag}
   * @author ChengLong 2019-5-18 10:28:31
   */
 class RDDExt[T: ClassTag](rdd: RDD[T]) {
-  // 获取单例的SQLContext对象
-  private lazy val sqlContext: SQLContext = SingletonFactory.getSQLContextInstance(rdd.sparkContext)
   // 获取单例的HBaseContext对象
   private lazy val hbaseContext: HBaseContextExt = SingletonFactory.getHBaseContextInstance(rdd.sparkContext)
   private lazy val spark = SingletonFactory.getSparkSession
@@ -58,7 +56,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * 将rdd转为DataFrame
     */
   def toDF(): DataFrame = {
-    this.sqlContext.createDataFrame(rdd, classTag[T].runtimeClass)
+    this.spark.createDataFrame(rdd, classTag[T].runtimeClass)
   }
 
   /**
@@ -72,7 +70,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   def createOrReplaceTempView(tableName: String, cache: Boolean = false): DataFrame = {
     val dataFrame = this.toDF()
     dataFrame.createOrReplaceTempView(tableName)
-    if (cache) this.sqlContext.cacheTable(tableName)
+    if (cache) this.spark.cacheTables(tableName)
     dataFrame
   }
 
@@ -254,7 +252,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @return
     */
   def kafkaJson2DFV(schema: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): DataFrame = {
-    val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[String]])(Encoders.STRING)
+    val ds = this.spark.createDataset(rdd.asInstanceOf[RDD[String]])(Encoders.STRING)
     val df = ds.select(from_json(new ColumnName("value"), SparkUtils.buildSchema2Kafka(schema, parseAll, isMySQL, fieldNameUpper)).as("data"))
     if (parseAll)
       df.select("data.*")
@@ -276,7 +274,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @return
     */
   def kafkaJson2DF(schema: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): DataFrame = {
-    val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()))(Encoders.STRING)
+    val ds = this.spark.createDataset(rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()))(Encoders.STRING)
     // val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[String]])(Encoders.STRING)
     val structType = SparkUtils.buildSchema2Kafka(schema, parseAll, isMySQL, fieldNameUpper)
     val df = ds.select(from_json(new ColumnName("value"), structType).as("data"))
@@ -295,7 +293,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     */
   def kafkaJson2Table(tableName: String, cacheTable: Boolean = false): Unit = {
     val msgDS = rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()).toDS()
-    spark.read.json(msgDS).toLowerDF.createOrReplaceTempView(tableName)
+    this.spark.read.json(msgDS).toLowerDF.createOrReplaceTempView(tableName)
     if (cacheTable) this.spark.cacheTables(tableName)
   }
 

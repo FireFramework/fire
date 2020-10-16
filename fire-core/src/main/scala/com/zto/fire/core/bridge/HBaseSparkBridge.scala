@@ -28,6 +28,8 @@ import scala.reflect.ClassTag
   * @author ChengLong 2019-5-10 14:39:39
   */
 object HBaseSparkBridge extends HBaseOper with Logging {
+  private[this] lazy val sparkSession = SingletonFactory.getSparkSession
+
   def batchSize: Int = FireHBaseConf.hbaseBatchSize
 
   /**
@@ -450,8 +452,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     * @return
     */
   def hbaseOperGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): DataFrame = {
-    val sqlContext = SingletonFactory.getSQLContextInstance(rowKeyRDD.sparkContext)
-    sqlContext.createDataFrame(hbaseOperGetRDD(tableName, rowKeyRDD, clazz, multiVersion, versions), clazz)
+    this.sparkSession.createDataFrame(hbaseOperGetRDD(tableName, rowKeyRDD, clazz, multiVersion, versions), clazz)
   }
 
   /**
@@ -470,8 +471,7 @@ object HBaseSparkBridge extends HBaseOper with Logging {
     * @return
     */
   def hbaseOperGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[T], multiVersion: Boolean = false, versions: Int = Integer.MAX_VALUE): Dataset[T] = {
-    val sqlContext = SingletonFactory.getSQLContextInstance(rowKeyRDD.sparkContext)
-    sqlContext.createDataset(hbaseOperGetRDD(tableName, rowKeyRDD, clazz, multiVersion, versions))(Encoders.bean(clazz))
+    this.sparkSession.createDataset(hbaseOperGetRDD(tableName, rowKeyRDD, clazz, multiVersion, versions))(Encoders.bean(clazz))
   }
 
   /**

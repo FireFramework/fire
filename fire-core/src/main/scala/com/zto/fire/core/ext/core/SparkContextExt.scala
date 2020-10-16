@@ -25,6 +25,7 @@ class SparkContextExt(sc: SparkContext) {
     *
     * @return
     */
+  @deprecated("use sparkSession.sqlContext", "v1.1.1")
   def createSQLContext: SQLContext = {
     if (SparkUtils.isCluster) {
       new HiveContext(sc)
@@ -45,6 +46,7 @@ class SparkContextExt(sc: SparkContext) {
     *
     * @return
     */
+  @deprecated
   def setLogLevel2: SparkContext = {
     val logLevel = if (StringUtils.isNotBlank(FireSparkConf.logLevel)) FireSparkConf.logLevel else "DEBUG"
     sc.setLogLevel(logLevel)
@@ -57,6 +59,7 @@ class SparkContextExt(sc: SparkContext) {
     * @return
     * map
     */
+  @deprecated
   def defineLongAccumulators(accNames: String*): Map[String, Accumulator[Long]] = {
     var accMap = Map[String, Accumulator[Long]]()
     accNames.foreach(accName => {

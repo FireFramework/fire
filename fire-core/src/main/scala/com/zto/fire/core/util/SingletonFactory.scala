@@ -17,11 +17,11 @@ import org.apache.spark.{SparkContext, SparkEnv}
  * Created by ChengLong on 2018-04-25.
  */
 object SingletonFactory {
-  @transient private var sqlContext: SQLContext = _
+  @transient @deprecated private var sqlContext: SQLContext = _
   @transient private var hbaseContext: HBaseContextExt = _
   @transient private var kuduContext: KuduContextExt = _
   private var hbase: HBaseOper = _
-  private var sparkSession: SparkSession = _
+  private[fire] var sparkSession: SparkSession = _
   private var jobClassName: String = _
   private[fire] var jobType: JobType = JobType.UNDEFINED
 
@@ -81,6 +81,7 @@ object SingletonFactory {
    * 指定SQLContext的配置信息
    * @return
    */
+  @deprecated("use getSparkSession.sqlContext", "v1.1.1")
   def getSQLContextInstance(sparkContext: SparkContext, sql: String = null, props: Properties = null): SQLContext = this.synchronized {
     if (this.sqlContext == null) {
       this.sqlContext = sparkContext.createSQLContext
@@ -118,7 +119,7 @@ object SingletonFactory {
   def getKuduContextInstance(sparkContext: SparkContext): KuduContextExt = this.synchronized {
     if (this.kuduContext == null && StringUtils.isNotBlank(FireKuduConf.kuduMaster)) {
       val kuduContextTmp = new KuduContext(FireKuduConf.kuduMaster, sparkContext)
-      this.kuduContext = new KuduContextExt(SingletonFactory.getSQLContextInstance(sparkContext), kuduContextTmp)
+      this.kuduContext = new KuduContextExt(SingletonFactory.sparkSession.sqlContext, kuduContextTmp)
     }
     this.kuduContext
   }

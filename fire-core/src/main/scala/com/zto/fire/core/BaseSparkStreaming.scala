@@ -36,6 +36,17 @@ trait BaseSparkStreaming extends BaseSpark {
   def init(batchDuration: Long, isCheckPoint: Boolean): Unit = {
     this.init(batchDuration, isCheckPoint, null)
   }
+  /**
+   * 程序初始化方法，用于初始化必要的值
+   *
+   * @param batchDuration
+   * Streaming每个批次间隔时间
+   * @param isCheckPoint
+   * 是否做checkpoint
+   */
+  def init(batchDuration: Long, isCheckPoint: Boolean, args: Array[String]): Unit = {
+    this.init(batchDuration, isCheckPoint, null, args)
+  }
 
   /**
    * 程序初始化方法，用于初始化必要的值
@@ -47,11 +58,11 @@ trait BaseSparkStreaming extends BaseSpark {
    * @param conf
    * 传入自己构建的sparkConf对象，可以为空
    */
-  def init(batchDuration: Long, isCheckPoint: Boolean, conf: SparkConf): Unit = {
+  def init(batchDuration: Long, isCheckPoint: Boolean, conf: SparkConf, args: Array[String]): Unit = {
     val tmpConf = buildConf(conf)
     if (this.sc == null) {
       // 添加streaming相关的restful接口，并启动
-      this.init(tmpConf)
+      this.init(tmpConf, args)
       this.restfulRegister
         .addRest(RestCase(RequestMethod.POST.toString, "/system/streaming/hotRestart", this.hotRestart))
         .startRestServer

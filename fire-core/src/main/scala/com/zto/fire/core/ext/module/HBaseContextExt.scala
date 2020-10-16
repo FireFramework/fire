@@ -39,6 +39,7 @@ import scala.reflect.ClassTag
   */
 class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config: Configuration = HBaseOper.getConfiguration) extends HBaseContext(sc, config) with Logging {
   lazy val batchSize = FireHBaseConf.hbaseBatchSize
+  private[this] lazy val sparkSession = SingletonFactory.getSparkSession
 
   /**
     * 根据RDD[String]批量删除，rdd是rowkey的集合
@@ -143,8 +144,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     */
   def bulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], batchSize: Integer = this.batchSize): DataFrame = {
     val resultRdd = this.bulkGetRDD[E](tableName, rdd, clazz, batchSize)
-    val sqlContext = SingletonFactory.getSQLContextInstance(this.sc)
-    sqlContext.createDataFrame(resultRdd, clazz)
+    this.sparkSession.createDataFrame(resultRdd, clazz)
   }
 
   /**
@@ -165,8 +165,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     */
   def bulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], batchSize: Integer = this.batchSize): Dataset[E] = {
     val resultRdd = this.bulkGetRDD[E](tableName, rdd, clazz, batchSize)
-    val sqlContext = SingletonFactory.getSQLContextInstance(this.sc)
-    sqlContext.createDataset(resultRdd)(Encoders.bean(clazz))
+    this.sparkSession.createDataset(resultRdd)(Encoders.bean(clazz))
   }
 
   /**
