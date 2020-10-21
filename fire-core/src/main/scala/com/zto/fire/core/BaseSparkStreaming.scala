@@ -36,6 +36,7 @@ trait BaseSparkStreaming extends BaseSpark {
   def init(batchDuration: Long, isCheckPoint: Boolean): Unit = {
     this.init(batchDuration, isCheckPoint, null)
   }
+
   /**
    * 程序初始化方法，用于初始化必要的值
    *
