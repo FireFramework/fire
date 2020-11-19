@@ -91,10 +91,12 @@ private[fire] object FireFrameworkConf {
   lazy val FLINK_STREAMING_CONF_FILE = "flink-streaming"
   lazy val FLINK_BATCH_CONF_FILE = "flink-batch"
   lazy val FIRE_DEPLOY_CONF_ENABLE = "spark.fire.deploy_conf.enable"
+  lazy val FIRE_EXCEPTION_BUS_SIZE = "spark.fire.exception_bus.size"
 
+  // 每个jvm实例内部queue用于存放异常对象数最大大小，避免队列过大造成内存溢出
+  lazy val exceptionBusSize = PropUtils.getInt(this.FIRE_EXCEPTION_BUS_SIZE, 1000)
   // 是否将配置同步到executor、taskmanager端
   lazy val deployConf = PropUtils.getBoolean(this.FIRE_DEPLOY_CONF_ENABLE, true)
-
   // fire内置线程池大小
   lazy val threadPoolSize = PropUtils.getInt(this.FIRE_THREAD_POOL_SIZE, 5)
   // fire内置定时任务线程池大小

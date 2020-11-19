@@ -5,7 +5,8 @@ import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.bean.ogg.OGGBean
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
+import com.zto.fire.common.util.UnitFormatUtils._
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
@@ -191,4 +192,17 @@ private[fire] object FireUtils extends Serializable {
       this.isSplash = true
     }
   }
+
+  /**
+   * 获取当前系统时间（ms）
+   */
+  def currentTime: Long = System.currentTimeMillis
+
+  /**
+   * 以人类可读的方式计算耗时（ms）
+   * @param beginTime
+   * @return
+   */
+  def timecost(beginTime: Long): String = readable(currentTime - beginTime, TimeUnitEnum.ms)
+
 }

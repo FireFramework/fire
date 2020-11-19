@@ -29,7 +29,7 @@ public abstract class HBaseBaseBean<T> implements Serializable {
     public final String className = this.getClass().getSimpleName();
 
     /**
-     * 构建业务需要，构建rowkey
+     * 根据业务需要，构建rowkey
      *
      * @return
      */
@@ -50,7 +50,7 @@ public abstract class HBaseBaseBean<T> implements Serializable {
             String fieldName = entry.getKey();
             Field field = entry.getValue();
             FieldName anno =  field.getAnnotation(FieldName.class);
-            String familyName = FireHBaseConf.familyName();
+            String familyName = FireHBaseConf.familyName(1);
             if(anno != null) {
                 if(!anno.mapping()) {
                     continue;
@@ -112,7 +112,7 @@ public abstract class HBaseBaseBean<T> implements Serializable {
             String fieldName = entry.getKey();
             Field field = entry.getValue();
             FieldName anno =  field.getAnnotation(FieldName.class);
-            String familyName = FireHBaseConf.familyName();
+            String familyName = FireHBaseConf.familyName(1);
             if(anno != null) {
                 if(!anno.mapping()) {
                     continue;
@@ -202,7 +202,7 @@ public abstract class HBaseBaseBean<T> implements Serializable {
                 String fName = entry.getKey();
                 Field field = entry.getValue();
                 FieldName anno = field.getAnnotation(FieldName.class);
-                String familyName = FireHBaseConf.familyName();
+                String familyName = FireHBaseConf.familyName(1);
                 if (anno != null) {
                     if (!anno.mapping() || anno.disuse()) {
                         continue;

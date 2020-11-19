@@ -1,0 +1,1024 @@
+package com.zto.fire.common.db.v2
+
+import java.lang.reflect.Field
+import java.math.BigDecimal
+import java.util._
+import java.util.concurrent.ConcurrentHashMap
+
+import com.alibaba.fastjson.JSON
+import com.zto.fire.common.anno.{FieldName, HConfig, Internal}
+import com.zto.fire.common.bean.{HBaseBaseBean, MultiVersionsBean}
+import com.zto.fire.common.conf.FireHBaseConf
+import com.zto.fire.common.conf.FireHBaseConf.{familyName, _}
+import com.zto.fire.common.util.ExceptionBus._
+import com.zto.fire.common.util.FireUtils._
+import com.zto.fire.common.util.{PropUtils, ReflectionUtils}
+import org.apache.commons.lang.StringUtils
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.hbase._
+import org.apache.hadoop.hbase.client.{Durability, _}
+import org.apache.hadoop.hbase.filter.{Filter, FilterList}
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import org.apache.hadoop.hbase.io.compress.Compression
+import org.apache.hadoop.hbase.util.Bytes
+import org.slf4j.LoggerFactory
+
+import scala.collection.Iterator
+import scala.collection.JavaConversions._
+import scala.collection.mutable.ListBuffer
+import scala.reflect.{ClassTag, classTag}
+
+/**
+ * HBase操作工具类，除了涵盖CRUD等常用操作外，还提供以下功能：
+ * 1. static <T extends HBaseBaseBean> void insert(String tableName, String family, List<T> list)
+ * 将自定义的javabean集合批量插入到表中
+ * 2. scan[T <: HBaseBaseBean[T]](tableName: String, scan: Scan, clazz: Class[T], keyNum: Int = 1): ListBuffer[T]
+ * 指定查询条件，将查询结果以List[T]形式返回
+ * 注：自定义bean中的field需与hbase中的qualifier对应
+ * <p>
+ *
+ * @since 1.1.2
+ * @author ChengLong 2020-11-11
+ */
+private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 1) {
+  private[this] lazy val logger = LoggerFactory.getLogger(classOf[HBaseOper])
+  // --------------------------------------- 反射加速 --------------------------------------- //
+  private[this] lazy val cacheFieldMap = new ConcurrentHashMap[Class[_], Map[String, Field]]()
+  private[this] lazy val cacheHConfigMap = new ConcurrentHashMap[Class[_], HConfig]()
+  private[this] lazy val configuration: Configuration = this.initConfiguration
+  private[this] lazy val connection: Connection = this.initConnection
+  private[this] lazy val durability = this.initDurability
+
+  // TODO: api表名强制判断是否存在，加入缓存定时刷新机制
+
+  /**
+   * 批量插入多行多列，自动将HBaseBaseBean子类转为Put集合
+   *
+   * @param tableName 表名
+   * @param beans     HBaseBaseBean子类集合
+   */
+  def insert[T <: HBaseBaseBean[T] : ClassTag](tableName: String, beans: T*): Unit = {
+    assert(this.isExists(tableName) && beans != null && beans.nonEmpty, "参数不合法，批量HBase insert失败")
+    var table: Table = null
+    tryWithFinally {
+      table = this.getTable(tableName)
+      val beanList = if (this.getMultiVersion[T]) beans.map((bean: T) => new MultiVersionsBean(bean)) else beans
+      val putList = beanList.map(bean => convert2Put(bean.asInstanceOf[T], this.getNullable[T]))
+      this.insert(tableName, putList: _*)
+    } {
+      this.closeTable(table)
+    }(this.logger, s"HBase insert ${hbaseCluster(keyNum)}.${tableName}执行失败, 总计${beans.size}条", "close HBase table失败")
+  }
+
+  /**
+   * 批量插入多行多列
+   *
+   * @param tableName 表名
+   * @param puts      Put集合
+   */
+  def insert(tableName: String, puts: Put*): Unit = {
+    assert(this.isExists(tableName) && puts != null && puts.nonEmpty, "参数不合法，批量HBase insert失败")
+
+    var table: Table = null
+    tryWithFinally {
+      val starTime = currentTime
+      table = this.getTable(tableName)
+      table.put(puts)
+      logger.info(s"HBase insert ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${puts.size}条, 耗时：${timecost(starTime)}")
+    } {
+      this.closeTable(table)
+    }(this.logger, s"HBase insert ${hbaseCluster(keyNum)}.${tableName}执行失败, 总计${puts.size}条", "close HBase table失败")
+  }
+
+  /**
+   * 从HBase批量Get数据，并将结果封装到JavaBean中
+   *
+   * @param tableName 表名
+   * @param rowKeys   指定的多个rowKey
+   * @param clazz     目标类类型，必须是HBaseBaseBean的子类
+   * @return 目标对象实例
+   */
+  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeys: String*): ListBuffer[T] = {
+    assert(rowKeys != null && rowKeys.nonEmpty, "参数不合法，rowKey不能为空")
+    val getList = for (rowKey <- rowKeys) yield HBaseOper.buildGet(rowKey)
+    this.get[T](tableName, clazz, getList: _*)
+  }
+
+  /**
+   * 从HBase批量Get数据，并将结果封装到JavaBean中
+   *
+   * @param tableName 表名
+   * @param clazz     目标类类型，必须是HBaseBaseBean的子类
+   * @param gets      指定的多个get对象
+   * @return 目标对象实例
+   */
+  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], gets: Get*)(implicit canOverload: Boolean = true): ListBuffer[T] = {
+    tryWithReturn {
+      val resultList = this.getResult(tableName, gets: _*)
+      if (this.getMultiVersion[T]) this.hbaseMultiRow2Bean(resultList, clazz) else this.hbaseRow2Bean(resultList, clazz)
+    }(this.logger, s"批量 get ${hbaseCluster(keyNum)}.${tableName}执行失败")
+  }
+
+  /**
+   * 通过HBase Seq[Get]获取多条数据
+   *
+   * @param tableName 表名
+   * @param getList   HBase的get对象实例
+   * @return
+   * HBase Result
+   */
+  def getResult(tableName: String, getList: Get*): ListBuffer[Result] = {
+    assert(StringUtils.isNotBlank(tableName) && getList != null && getList.nonEmpty, "参数不合法，执行HBase 批量get失败")
+
+    var table: Table = null
+    val list = ListBuffer[Result]()
+    tryWithFinally {
+      val starTime = currentTime
+      table = this.getConnection.getTable(TableName.valueOf(tableName))
+      list ++= table.get(getList)
+      logger.info(s"HBase 批量get ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${list.size}条, 耗时：${timecost(starTime)}")
+      list
+    } {
+      this.closeTable(table)
+    }(this.logger, s"get ${hbaseCluster(keyNum)}.${tableName}执行失败", "close HBase table对象失败.")
+  }
+
+  /**
+   * 通过HBase Get对象获取一条数据
+   *
+   * @param tableName 表名
+   * @return
+   * HBase Result
+   */
+  def getResult[T: ClassTag](tableName: String, rowKeyList: String*): ListBuffer[Result] = {
+    assert(rowKeyList != null && rowKeyList.nonEmpty, "参数不合法，rowKey集合不能为空.")
+    val getList = for (rowKey <- rowKeyList) yield HBaseOper.buildGet(rowKey)
+    val starTime = currentTime
+    val resultList = this.getResult(tableName, getList: _*)
+    logger.info(s"HBase 批量get ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${resultList.size}条, 耗时：${timecost(starTime)}")
+    resultList
+  }
+
+  /**
+   * 表扫描，将scan后得到的ResultScanner对象直接返回
+   * 注：调用者需手动关闭ResultScanner对象实例
+   *
+   * @param tableName 表名
+   * @param scan      HBase scan对象
+   * @return 指定类型的List
+   */
+  def scanResultScanner(tableName: String, scan: Scan): ResultScanner = {
+    assert(StringUtils.isNotBlank(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
+
+    var table: Table = null
+    var rsScanner: ResultScanner = null
+    try {
+      table = this.getTable(tableName)
+      rsScanner = table.getScanner(scan)
+    } catch {
+      case e: Exception => {
+        // 当执行scan失败时，向上抛异常之前，避免ResultScanner对象因异常无法得到有效的关闭
+        // 因此在发生异常时会尝试关闭ResultScanner对象
+        logger.error(s"执行scan ${hbaseCluster(keyNum)}.${tableName}失败", e)
+        try {
+          this.closeResultScanner(rsScanner)
+        } finally {
+          throw e
+        }
+      }
+    } finally {
+      this.closeTable(table)
+    }
+
+    rsScanner
+  }
+
+  /**
+   * 表扫描，将scan后得到的ResultScanner对象直接返回
+   * 注：调用者需手动关闭ResultScanner对象实例
+   *
+   * @param tableName 表名
+   * @param startRow  开始行
+   * @param endRow    结束行
+   * @return 指定类型的List
+   */
+  def scanResultScanner(tableName: String, startRow: String, endRow: String): ResultScanner = {
+    val scan = HBaseOper.buildScan(startRow, endRow)
+    this.scanResultScanner(tableName, scan)
+  }
+
+  /**
+   * 表扫描，将查询后的数据转为JavaBean并放到List中
+   *
+   * @param tableName 表名
+   * @param startRow  开始行
+   * @param endRow    结束行
+   * @param clazz     类型
+   * @return 指定类型的List
+   */
+  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, endRow: String): ListBuffer[T] = {
+    val scan = HBaseOper.buildScan(startRow, endRow)
+    this.scan[T](tableName, clazz, scan)
+  }
+
+  /**
+   * 表扫描，将查询后的数据转为JavaBean并放到List中
+   *
+   * @param tableName 表名
+   * @param scan      HBase scan对象
+   * @param clazz     类型
+   * @return 指定类型的List
+   */
+  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): ListBuffer[T] = {
+    assert(StringUtils.isNotBlank(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
+
+    val list = ListBuffer[T]()
+    var rsScanner: ResultScanner = null
+    tryWithFinally {
+      val starTime = currentTime
+      rsScanner = this.scanResultScanner(tableName, scan)
+      rsScanner.foreach(rs => {
+        if (this.getMultiVersion[T]) {
+          val objList = this.hbaseMultiRow2Bean(rs, clazz)
+          if (objList != null && objList.nonEmpty) list ++= objList
+        } else {
+          val obj = hbaseRow2Bean(rs, clazz)
+          if (obj != null) list += obj
+        }
+      })
+      logger.info(s"HBase scan ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${list.size}条, 耗时：${timecost(starTime)}")
+      list
+    } {
+      this.closeResultScanner(rsScanner)
+    }(this.logger, s"scan ${hbaseCluster(keyNum)}.${tableName}执行失败", "关闭HBase table对象或ResultScanner失败")
+  }
+
+  /**
+   * 用于初始化单例的configuration
+   * 注：配置文件中的参数优先级更高，会覆盖调用者传入的Configuration中同名的参数
+   */
+  @Internal
+  private[this] def initConfiguration: Configuration = {
+    val finalConf = if (this.conf != null) this.conf else HBaseConfiguration.create()
+
+    val url = hbaseClusterUrl(keyNum)
+    if (StringUtils.isNotBlank(url)) finalConf.set("hbase.zookeeper.quorum", url)
+
+    // 以spark.fire.hbase.conf.xxx[keyNum]开头的配置信息
+    PropUtils.sliceKeysByNum(hbaseConfPrefix, keyNum).foreach(kv => {
+      logger.info(s"hbase configuration: key=${kv._1} value=${kv._2}")
+      finalConf.set(kv._1, kv._2)
+    })
+
+    assert(StringUtils.isNotBlank(finalConf.get("hbase.zookeeper.quorum")), s"未配置HBase集群信息，请通过以下参数指定：spark.hbase.cluster[$keyNum]=xxx")
+
+    finalConf
+  }
+
+  /**
+   * 获取Configuration实例
+   *
+   * @return HBase Configuration对象
+   */
+  def getConfiguration: Configuration = this.configuration
+
+  /**
+   * 用于初始化全局唯一的HBase connection
+   */
+  @Internal
+  def initConnection: Connection = {
+    tryWithReturn {
+      val starTime = currentTime
+      val connection = ConnectionFactory.createConnection(this.getConfiguration)
+      logger.info(s"成功获取HBase ${hbaseCluster(keyNum)}集群connection，耗时：${timecost(starTime)}")
+      connection
+    }(logger, s"获取HBase ${hbaseCluster(keyNum)}集群connection失败.")
+  }
+
+  /**
+   * 根据keyNum获取指定HBase集群的connection
+   */
+  def getConnection: Connection = this.connection
+
+  /**
+   * 将class中的field转为map映射
+   *
+   * @param clazz Class类型
+   * @return 名称与字段的映射map
+   */
+  @Internal
+  private[this] def getFieldNameMap[T <: HBaseBaseBean[T]](clazz: Class[T]): Map[String, Field] = {
+    if (!this.cacheFieldMap.containsKey(clazz)) {
+      val allFields = ReflectionUtils.getAllFields(clazz)
+      val fieldMap = new HashMap[String, Field](allFields.size)
+
+      allFields.values.filter(field => field != null).foreach(field => {
+        val fieldName = field.getAnnotation(classOf[FieldName])
+        var family = ""
+        var qualifier = ""
+        if (fieldName != null) {
+          family = fieldName.family
+          qualifier = fieldName.value
+        }
+
+        if (StringUtils.isBlank(family)) family = familyName(keyNum)
+        if (StringUtils.isBlank(qualifier)) qualifier = field.getName
+        fieldMap.put(family + ":" + qualifier, field)
+      })
+      cacheFieldMap.put(clazz, fieldMap)
+    }
+
+    this.cacheFieldMap.get(clazz)
+  }
+
+  /**
+   * 为指定对象的field赋值
+   *
+   * @param obj   目标对象
+   * @param field 指定filed
+   * @param value byte类型的数据
+   */
+  @Internal
+  private def setFieldBytesValue[T <: HBaseBaseBean[T]](obj: T, field: Field, value: Array[Byte]): Unit = {
+    tryWithLog {
+      if (field != null && value != null && value.length > 0) {
+        field.setAccessible(true)
+        val fieldType = field.getType
+        if (fieldType eq classOf[java.lang.String]) field.set(obj, Bytes.toString(value))
+        else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, Bytes.toInt(value))
+        else if (fieldType eq classOf[java.lang.Double]) field.set(obj, Bytes.toDouble(value))
+        else if (fieldType eq classOf[java.lang.Long]) field.set(obj, Bytes.toLong(value))
+        else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, Bytes.toBigDecimal(value))
+        else if (fieldType eq classOf[java.lang.Float]) field.set(obj, Bytes.toFloat(value))
+        else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, Bytes.toBoolean(value))
+        else if (fieldType eq classOf[java.lang.Short]) field.set(obj, Bytes.toShort(value))
+        else {
+          this.logger.warn(s"Fire-HBase不支持将Bytes转为类型${fieldType.getName}")
+        }
+      } else if (field != null) field.set(obj, null)
+    }(this.logger, s"为filed ${field.getName}设置赋值过程中出现异常")
+  }
+
+  /**
+   * 将含有多版本的cell映射为field
+   *
+   * @param rs       hbase 结果集
+   * @param clazz    目标类型
+   * @param fieldMap 字段映射信息
+   */
+  @Internal
+  private[this] def multiCell2Field[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T], fieldMap: Map[String, Field]): ListBuffer[T] = {
+    val objList = ListBuffer[T]()
+    tryWithLog {
+      rs.rawCells.foreach(cell => {
+        val obj = new MultiVersionsBean
+        val rowKey = new String(CellUtil.cloneRow(cell))
+        val family = new String(CellUtil.cloneFamily(cell))
+        val qualifier = new String(CellUtil.cloneQualifier(cell))
+        val value = CellUtil.cloneValue(cell)
+        val field = fieldMap.get(family + ":" + qualifier)
+        this.setFieldBytesValue(obj, field, value)
+        val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
+        assert(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
+        idField.set(obj, rowKey)
+        if (StringUtils.isNotBlank(obj.getMultiFields)) objList.add(JSON.parseObject(obj.getMultiFields, clazz))
+      })
+    }(this.logger, s"将多版本json数据转为类型${clazz.getName}过程中发生失败.")
+    objList
+  }
+
+  /**
+   * 将cell中的值转为File的值
+   *
+   * @param clazz    类类型
+   * @param fieldMap 成员变量信息
+   * @param rs       hbase查询结果集
+   * @return clazz对应的结果实例
+   */
+  @Internal
+  private[this] def cell2Field[T <: HBaseBaseBean[T]](clazz: Class[T], fieldMap: Map[String, Field], rs: Result): T = {
+    val obj = clazz.newInstance
+
+    tryWithLog {
+      val cells = rs.rawCells
+      val rowKey = convertCells2Fields(fieldMap, obj, cells)
+      val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
+      assert(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
+      idField.setAccessible(true)
+      idField.set(obj, rowKey)
+    }(this.logger, "将HBase cell中的值转换并赋值给field过程中报错.")
+
+    obj
+  }
+
+  /**
+   * 一次循环取出cell中的值赋值给各个field
+   *
+   * @param obj   对象实例
+   * @param cells hbase结果集中的cells集合
+   * @return rowkey
+   */
+  @Internal
+  private[this] def convertCells2Fields[T <: HBaseBaseBean[T]](fieldMap: Map[String, Field], obj: T, cells: Array[Cell]): String = {
+    assert(cells != null && obj != null)
+
+    var rowKey = ""
+    cells.foreach(cell => {
+      rowKey = new String(CellUtil.cloneRow(cell))
+      val family = new String(CellUtil.cloneFamily(cell))
+      val qualifier = new String(CellUtil.cloneQualifier(cell))
+      val value = CellUtil.cloneValue(cell)
+      val field = fieldMap.get(family + ":" + qualifier)
+      this.setFieldBytesValue(obj, field, value)
+    })
+    rowKey
+  }
+
+  /**
+   * 将结果映射到自定义bean中
+   *
+   * @param rs    HBase查询结果集
+   * @param clazz 映射的目标Class类型
+   * @return 目标类型实例
+   */
+  @Internal
+  private[this] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): T = {
+    assert(rs != null && !rs.isEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    val fieldMap = this.getFieldNameMap(clazz)
+    assert(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    this.cell2Field(clazz, fieldMap, rs)
+  }
+
+  /**
+   * 将结果映射到自定义bean中
+   *
+   * @param rsArr HBase查询结果集
+   * @param clazz 映射的目标Class类型
+   * @return 目标类型实例
+   */
+  @Internal
+  private[this] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
+    assert(rsArr != null && rsArr.nonEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    val fieldMap = this.getFieldNameMap(clazz)
+    assert(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    val objList = ListBuffer[T]()
+    rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList += this.cell2Field(clazz, fieldMap, rs))
+    objList
+  }
+
+  /**
+   * 将结果映射到自定义bean中
+   *
+   * @param rs    HBase查询结果集
+   * @param clazz 映射的目标Class类型
+   * @return 目标类型实例
+   */
+  @Internal
+  private[this] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): ListBuffer[T] = {
+    assert(rs != null && !rs.isEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    val fieldMap = this.getFieldNameMap(classOf[MultiVersionsBean])
+    assert(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    this.multiCell2Field(rs, clazz, fieldMap)
+  }
+
+  /**
+   * 将结果映射到自定义bean中
+   *
+   * @param rsArr HBase查询结果集
+   * @param clazz 映射的目标Class类型
+   * @return 目标类型实例
+   */
+  @Internal
+  private[this] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
+    assert(rsArr != null && rsArr.nonEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    val fieldMap = getFieldNameMap(classOf[MultiVersionsBean])
+    assert(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    val objList = ListBuffer[T]()
+    rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList ++= this.multiCell2Field(rs, clazz, fieldMap))
+    objList
+  }
+
+  /**
+   * 将结果映射到自定义bean中
+   *
+   * @param it    HBase查询结果集
+   * @param clazz 映射的目标Class类型
+   * @return 目标类型实例
+   */
+  @Internal
+  private[fire] def hbaseRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
+    assert(it != null && clazz != null, "参数不合法，无法将HBase Row转为JavaBean")
+    val fieldMap = this.getFieldNameMap(clazz)
+    assert(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    val beanList = ListBuffer[T]()
+    tryWithLog {
+      it.foreach(t => {
+        val obj = clazz.newInstance()
+        val cells = t._2.rawCells()
+        val rowKey = this.convertCells2Fields(fieldMap, obj, cells)
+        val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
+        assert(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
+        idField.set(obj, rowKey)
+        beanList += obj
+      })
+    }(this.logger, "执行hbaseRow2BeanList过程中出现异常")
+    beanList.iterator
+  }
+
+  /**
+   * 将多版本结果映射到自定义bean中
+   *
+   * @param it    HBase查询结果集
+   * @param clazz 映射的目标Class类型
+   * @return 目标类型实例
+   */
+  @Internal
+  private[fire] def hbaseMultiVersionRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
+    assert(it != null && clazz != null, "参数不合法，无法将HBase Row转为JavaBean")
+    val beanList = ListBuffer[T]()
+    tryWithLog {
+      it.foreach(t => {
+        beanList ++= this.hbaseMultiRow2Bean(t._2, clazz)
+      })
+    }(this.logger, "将HBase多版本Row转为JavaBean过程中出现异常.")
+
+    beanList.iterator
+  }
+
+  /**
+   * 将Javabean转为put对象
+   *
+   * @param obj         对象
+   * @param insertEmpty true:插入null字段，false：不插入空字段
+   * @return put对象实例
+   */
+  @Internal
+  private[fire] def convert2Put[T <: HBaseBaseBean[T]](obj: T, insertEmpty: Boolean): Put = {
+    assert(obj != null, "参数不能为空，无法将对象转为HBase Put对象")
+    tryWithReturn {
+      var tmpObj = obj
+      val clazz = tmpObj.getClass
+      val rowKeyField = ReflectionUtils.getFieldByName(clazz, "rowKey")
+      var rowKeyObj = rowKeyField.get(tmpObj)
+      if (rowKeyObj == null) {
+        val method = ReflectionUtils.getMethodByName(clazz, "buildRowKey")
+        tmpObj = method.invoke(tmpObj).asInstanceOf[T]
+        rowKeyObj = rowKeyField.get(tmpObj)
+        assert(rowKeyObj != null, s"rowKey不能为空，请检查${clazz.getName}中是否实现buildRowKey()方法！")
+      }
+
+      val allFields = ReflectionUtils.getAllFields(clazz)
+      assert(allFields != null && allFields.nonEmpty, s"在${clazz.getName}中未找到任何成员变量，请检查！")
+      val rowKey = rowKeyObj.toString.getBytes
+      val put = new Put(rowKey)
+      put.setDurability(this.durability)
+      allFields.values().foreach(field => {
+        val objValue = field.get(obj)
+        // 将objValue插入的两种情况：1. 允许插入为空的值；2. 不允许插入为空的值，并且objValue不为空
+        if (insertEmpty || (!insertEmpty && objValue != null)) {
+          val fieldName = field.getAnnotation(classOf[FieldName])
+          var name = ""
+          var familyName = ""
+          if (fieldName != null && !fieldName.disuse) {
+            familyName = fieldName.family
+            name = fieldName.value
+          }
+
+          // 如果未声明@FieldName注解或者声明了@FieldName注解但同时在注解中的disuse指定为false，则进行字段的转换
+          // 如果不满足以上两个条件，则任务当前字段不需要转为Put对象中的qualifier
+          if (fieldName == null || (fieldName != null && !fieldName.disuse())) {
+            if (StringUtils.isBlank(familyName)) familyName = FireHBaseConf.familyName(keyNum)
+            if (StringUtils.isBlank(name)) name = field.getName
+            val famliyByte = familyName.getBytes
+            val fieldType = field.getType
+            if (objValue != null) {
+              val objValueStr = objValue.toString
+              if (fieldType eq classOf[java.lang.String]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(objValueStr))
+              else if (fieldType eq classOf[java.lang.Integer]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(objValueStr.toInt))
+              else if (fieldType eq classOf[java.lang.Double]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(objValueStr.toDouble))
+              else if (fieldType eq classOf[java.lang.Long]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(java.lang.Long.parseLong(objValueStr)))
+              else if (fieldType eq classOf[java.math.BigDecimal]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(new BigDecimal(objValueStr)))
+              else if (fieldType eq classOf[java.lang.Float]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(java.lang.Float.parseFloat(objValueStr)))
+              else if (fieldType eq classOf[java.lang.Boolean]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(java.lang.Boolean.parseBoolean(objValueStr)))
+              else if (fieldType eq classOf[java.lang.Short]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(java.lang.Short.parseShort(objValueStr)))
+            } else put.addColumn(famliyByte, name.getBytes, null)
+          }
+        }
+      })
+      put
+    }(this.logger, "将JavaBean转为HBase Put对象过程中出现异常.")
+  }
+
+  /**
+   * 提供给fire-spark引擎的工具方法
+   *
+   * @param obj 继承自HBaseBaseBean的子类实例
+   * @return HBaseBaseBean的子类实例
+   */
+  @Internal
+  private[fire] def convert2PutTuple[T <: HBaseBaseBean[T]](obj: T, insertEmpty: Boolean = true): (ImmutableBytesWritable, Put) = {
+    (new ImmutableBytesWritable(), convert2Put(obj, insertEmpty))
+  }
+
+  /**
+   * 获取类注解HConfig中的nullable
+   */
+  @Internal
+  private[this] def getNullable[T <: HBaseBaseBean[T] : ClassTag]: Boolean = {
+    val hConfig = this.getHConfig[T]
+    if (hConfig == null) return true
+    hConfig.nullable()
+  }
+
+  /**
+   * 获取类注解HConfig中的multiVersion
+   */
+  @Internal
+  private[this] def getMultiVersion[T <: HBaseBaseBean[T] : ClassTag]: Boolean = {
+    val hConfig = this.getHConfig[T]
+    if (hConfig == null) return false
+    hConfig.multiVersion()
+  }
+
+  /**
+   * 获取类上声明的HConfig注解
+   */
+  @Internal
+  private[this] def getHConfig[T <: HBaseBaseBean[T] : ClassTag]: HConfig = {
+    val clazz = classTag[T].runtimeClass
+    if (!this.cacheHConfigMap.containsKey(clazz)) {
+      val hConfig = clazz.getAnnotation(classOf[HConfig])
+      if (hConfig != null) {
+        this.cacheHConfigMap.put(clazz, hConfig)
+      }
+    }
+    this.cacheHConfigMap.get(clazz)
+  }
+
+  /**
+   * 根据keyNum获取对应配置的durability
+   */
+  @Internal
+  private[this] def initDurability: Durability = {
+    val hbaseDurability = FireHBaseConf.hbaseDurability(keyNum)
+
+    // 将匹配到的配置转为Durability对象
+    hbaseDurability.toUpperCase match {
+      case "ASYNC_WAL" => Durability.ASYNC_WAL
+      case "FSYNC_WAL" => Durability.FSYNC_WAL
+      case "SKIP_WAL" => Durability.SKIP_WAL
+      case "SYNC_WAL" => Durability.SYNC_WAL
+      case _ => Durability.USE_DEFAULT
+    }
+  }
+
+  /**
+   * 创建HBase表
+   *
+   * @param tableName
+   * 表名
+   * @param families
+   * 列族
+   */
+  private[fire] def createTable(tableName: String, families: String*): Unit = {
+    var admin: Admin = null
+    tryWithFinally {
+      val starTime = currentTime
+      admin = this.getConnection.getAdmin
+      val tbName = TableName.valueOf(tableName)
+      if (!admin.tableExists(tbName)) {
+        val tableDesc = new HTableDescriptor(tbName)
+        // 在描述里添加列族
+        for (columnFamily <- families) {
+          val desc = new HColumnDescriptor(columnFamily)
+          // 启用压缩
+          desc.setCompressionType(Compression.Algorithm.SNAPPY)
+          tableDesc.addFamily(desc)
+        }
+        admin.createTable(tableDesc)
+        logger.info(s"HBase createTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
+      }
+    } {
+      this.closeAdmin(admin)
+    }(logger, s"创建HBase表${hbaseCluster(keyNum)}.${tableName}失败.", "close admin执行失败")
+  }
+
+  /**
+   * 删除指定的HBase表
+   *
+   * @param tableName 表名
+   */
+  private[fire] def dropTable(tableName: String): Unit = {
+    var admin: Admin = null
+    tryWithFinally {
+      val starTime = currentTime
+      admin = this.getConnection.getAdmin
+      val tbName = TableName.valueOf(tableName)
+      if (admin.tableExists(tbName)) {
+        admin.disableTable(tbName)
+        admin.deleteTable(tbName)
+        logger.info(s"HBase createTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
+      }
+    } {
+      this.closeAdmin(admin)
+    }(this.logger, s"drop ${hbaseCluster(keyNum)}.${tableName}表操作失败", "close admin执行失败")
+  }
+
+  /**
+   * 启用指定的HBase表
+   *
+   * @param tableName 表名
+   */
+  private[fire] def enableTable(tableName: String): Unit = {
+    var admin: Admin = null
+    tryWithFinally {
+      val starTime = currentTime
+      admin = this.getConnection.getAdmin
+      val tbName = TableName.valueOf(tableName)
+      if (admin.tableExists(tbName) && !admin.isTableEnabled(tbName)) {
+        admin.enableTable(tbName)
+        logger.info(s"HBase enableTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
+      }
+    } {
+      this.closeAdmin(admin)
+    }(this.logger, s"enable ${hbaseCluster(keyNum)}.${tableName}表失败", "close admin执行失败")
+  }
+
+  /**
+   * disable指定的HBase表
+   *
+   * @param tableName 表名
+   */
+  private[fire] def disableTable(tableName: String): Unit = {
+    var admin: Admin = null
+    tryWithFinally {
+      val starTime = currentTime
+      admin = this.getConnection.getAdmin
+      val tbName = TableName.valueOf(tableName)
+      if (admin.tableExists(tbName) && admin.isTableEnabled(tbName)) {
+        admin.disableTable(tbName)
+        logger.info(s"HBase disableTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
+      }
+    } {
+      this.closeAdmin(admin)
+    }(this.logger, s"disable ${hbaseCluster(keyNum)}.${tableName}表失败", "close admin执行失败")
+  }
+
+  /**
+   * 清空指定的HBase表
+   *
+   * @param tableName
+   * @param preserveSplits 是否保留所有的split信息
+   */
+  private[fire] def truncateTable(tableName: String, preserveSplits: Boolean = true): Unit = {
+    var admin: Admin = null
+    tryWithFinally {
+      val starTime = currentTime
+      admin = this.getConnection.getAdmin
+      val tbName = TableName.valueOf(tableName)
+      if (admin.tableExists(tbName)) {
+        this.disableTable(tableName)
+        admin.truncateTable(tbName, preserveSplits)
+        logger.info(s"HBase truncateTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
+      }
+    } {
+      this.closeAdmin(admin)
+    }(this.logger, s"truncate ${hbaseCluster(keyNum)}.${tableName}表失败", "close admin执行失败")
+  }
+
+  /**
+   * 关闭ResultScanner与Table对象
+   */
+  @Internal
+  private[this] def closeResultAndTable(rsScanner: ResultScanner, table: Table) {
+    tryWithFinally {
+      if (rsScanner != null) rsScanner.close()
+    } {
+      this.closeTable(table)
+    }(logger, "关闭HBase table对象失败")
+  }
+
+  /**
+   * 释放对象
+   *
+   * @param admin admin对象实例
+   */
+  @Internal
+  private[this] def closeAdmin(admin: Admin): Unit = {
+    tryWithLog {
+      if (admin != null) admin.close()
+    }(logger, "关闭HBase admin对象失败")
+  }
+
+  /**
+   * 关闭ResultScanner对象
+   */
+  @Internal
+  private[this] def closeResultScanner(rs: ResultScanner): Unit = {
+    tryWithLog {
+      if (rs != null) rs.close
+    }(this.logger, "关闭ResultScanner对象失败", false)
+  }
+
+  /**
+   * 关闭table对象
+   */
+  def closeTable(table: Table): Unit = {
+    tryWithLog {
+      if (table != null) table.close()
+    }(logger, "关闭HBase table对象失败", false)
+  }
+
+  /**
+   * 根据表名获取Table实例
+   *
+   * @param tableName 表名
+   */
+  def getTable(tableName: String): Table = {
+    tryWithReturn {
+      assert(this.isExists(tableName), s"表${tableName}不存在，请检查")
+      this.getConnection.getTable(TableName.valueOf(tableName))
+    }(logger, s"HBase getTable操作失败. ${hbaseCluster(keyNum)}.${tableName}")
+  }
+
+  /**
+   * 判断给定的表名是否存在
+   *
+   * @param tableName
+   * HBase表名
+   */
+  def isExists(tableName: String): Boolean = {
+    if (StringUtils.isBlank(tableName)) return false
+
+    var admin: Admin = null
+    tryWithFinally {
+      admin = this.getConnection.getAdmin
+      admin.tableExists(TableName.valueOf(tableName))
+    } {
+      closeAdmin(admin)
+    }(logger, s"判断HBase表${hbaseCluster(keyNum)}.${tableName}是否存在失败")
+  }
+
+  /**
+   * 根据多个rowKey删除对应的整行记录
+   *
+   * @param tableName 表名
+   * @param rowKeys   待删除的rowKey集合
+   */
+  def deleteRows(tableName: String, rowKeys: String*): Unit = {
+    if (StringUtils.isNotBlank(tableName) && rowKeys != null && rowKeys.nonEmpty) {
+      var table: Table = null
+      tryWithFinally {
+        val starTime = currentTime
+        val tbName = TableName.valueOf(tableName)
+        table = this.getConnection.getTable(tbName)
+
+        val deletes = ListBuffer[Delete]()
+        rowKeys.filter(StringUtils.isNotBlank).foreach(rowKey => {
+          deletes += new Delete(rowKey.getBytes)
+        })
+
+        table.delete(deletes)
+        logger.info(s"HBase deleteRows ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
+      } {
+        this.closeTable(table)
+      }(this.logger, s"执行${tableName}表rowKey删除失败", "close HBase table对象失败")
+    }
+  }
+
+  /**
+   * 批量删除指定RowKey的多个列族
+   *
+   * @param tableName 表名
+   * @param rowKey    rowKey
+   * @param families  多个列族
+   */
+  @Internal
+  private[fire] def deleteFamilies(tableName: String, rowKey: String, families: Seq[String]): Unit = {
+    if (families != null && families.nonEmpty && StringUtils.isNotBlank(tableName)
+      && StringUtils.isNotBlank(rowKey) && isExists(tableName)) {
+      val starTime = currentTime
+      val delete = new Delete(rowKey.getBytes())
+      families.filter(StringUtils.isNotBlank).foreach(family => delete.addFamily(family.getBytes()))
+
+      var table: Table = null
+      tryWithFinally {
+        val tbName = TableName.valueOf(tableName)
+        table = this.getConnection.getTable(tbName)
+        table.delete(delete)
+        logger.info(s"HBase deleteFamilies ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
+      } {
+        this.closeTable(table)
+      }(this.logger, s"delete ${hbaseCluster(keyNum)}.${tableName} families failed. RowKey is ${rowKey}, families is ${families}", "close HBase table对象出现异常.")
+    }
+  }
+
+  /**
+   * 批量删除指定列族下的多个字段
+   *
+   * @param tableName  表名
+   * @param rowKey     rowKey字段
+   * @param family     列族
+   * @param qualifiers 列名
+   */
+  @Internal
+  private[fire] def deleteQualifiers(tableName: String, rowKey: String, family: String, qualifiers: String*): Unit = {
+    if (StringUtils.isNotBlank(tableName) && StringUtils.isNotBlank(rowKey)
+      && StringUtils.isNotBlank(family) && qualifiers != null && qualifiers.nonEmpty) {
+      val starTime = currentTime
+      val delete = new Delete(rowKey.getBytes)
+      qualifiers.foreach(qualifier => delete.addColumns(family.getBytes, qualifier.getBytes))
+      var table: Table = null
+
+      tryWithFinally {
+        val tbName = TableName.valueOf(tableName)
+        table = this.getConnection.getTable(tbName)
+        table.delete(delete)
+        logger.info(s"HBase deleteQualifiers ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
+      } {
+        this.closeTable(table)
+      }(this.logger, s"delete ${hbaseCluster(keyNum)}.${tableName} qualifiers failed. RowKey is ${rowKey}, qualifiers is ${qualifiers}", "close HBase table对象出现异常.")
+    }
+  }
+
+}
+
+/**
+ * 用于单例构建伴生类HBaseOper的实例对象
+ * 每个HBaseOper实例使用keyNum作为标识，并且与每个HBase集群一一对应
+ */
+object HBaseOper {
+  private[fire] lazy val instanceMap = new ConcurrentHashMap[Int, HBaseOper]()
+
+  def apply(conf: Configuration = null, keyNum: Int = 1): HBaseOper = {
+    if (!this.instanceMap.containsKey(keyNum)) {
+      this.instanceMap.put(keyNum, new HBaseOper(conf, keyNum))
+    }
+    this.instanceMap.get(keyNum)
+  }
+
+  /**
+   * 根据指定的keyNum返回单例的HBaseOper实例
+   */
+  def getInstance(keyNum: Int = 1): HBaseOper = this.instanceMap.get(keyNum)
+
+  /**
+   * 构建Get对象
+   *
+   * @param rowKey    rowKey
+   * @param family    列族名称
+   * @param qualifier 表的qualifier名称
+   */
+  def buildGet(rowKey: String,
+               family: String = null,
+               qualifier: String = "",
+               maxVersions: Int = 1,
+               filter: Filter = null): Get = {
+    assert(StringUtils.isNotBlank(rowKey), "buildGet执行失败，rowKey不能为空！")
+    val get = new Get(rowKey.getBytes())
+    if (StringUtils.isNotBlank(family) && StringUtils.isNotBlank(qualifier)) {
+      get.addColumn(family.getBytes, qualifier.getBytes)
+    } else if (StringUtils.isNotBlank(family)) {
+      get.addFamily(family.getBytes)
+    }
+    if (filter != null) get.setFilter(filter)
+    if (maxVersions > 0) get.setMaxVersions(maxVersions)
+    get
+  }
+
+  /**
+   * 构建Scan对象
+   *
+   * @param startRow   指定起始rowkey
+   * @param endRow     指定结束rowkey
+   * @param filterList 过滤器
+   * @return scan实例
+   */
+  def buildScan(startRow: String, endRow: String,
+                family: String = null,
+                qualifier: String = "",
+                maxVersions: Int = 1,
+                filterList: FilterList = null,
+                caching: Int = -1,
+                maxResultSize: Long = -1,
+                batch: Int = -1,
+                cacheBlocks: Boolean = true,
+                reversed: Boolean = false): Scan = {
+    val scan = new Scan
+    if (StringUtils.isNotBlank(startRow)) scan.setStartRow(startRow.getBytes)
+    if (StringUtils.isNotBlank(endRow)) scan.setStopRow(endRow.getBytes)
+    if (StringUtils.isNotBlank(family) && StringUtils.isNotBlank(qualifier)) {
+      scan.addColumn(family.getBytes, qualifier.getBytes)
+    } else if (StringUtils.isNotBlank(family)) {
+      scan.addFamily(family.getBytes)
+    }
+    if (filterList != null) scan.setFilter(filterList)
+    if (caching > 0) scan.setCaching(caching)
+    if (maxResultSize > 0) scan.setMaxResultSize(maxResultSize)
+    if (maxVersions > 0) scan.setMaxVersions(maxVersions)
+    if (batch > 0) scan.setBatch(batch)
+    scan.setCacheBlocks(cacheBlocks)
+    scan.setReversed(reversed)
+    scan
+  }
+}

@@ -5,6 +5,7 @@ package com.zto.fire.common.util;
  *
  * @author ChengLong 2019-7-19 14:33:36
  */
+@Deprecated
 public class StackTraceUtils {
 
     /**
@@ -13,6 +14,7 @@ public class StackTraceUtils {
      * @param throwable 异常对象
      * @return 堆栈描述信息
      */
+    @Deprecated
     public static String stackTraceInfo(Throwable throwable) {
         if (throwable == null) {
             return "";

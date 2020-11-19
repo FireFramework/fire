@@ -12,5 +12,5 @@ object GlobalConstants extends FireConf {
   val KafkaConf = this.kafkaConf
 
   @deprecated("use FireConf.hbaseConf.familyName", "v1.0.0")
-  val familyName = this.hbaseConf.familyName
+  val familyName = this.hbaseConf.familyName(1)
 }

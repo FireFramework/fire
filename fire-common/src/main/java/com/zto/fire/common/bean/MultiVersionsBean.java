@@ -24,6 +24,7 @@ public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
 
     @FieldName(value = "BIGDECIMAL_ZERO", disuse = true)
     private static final BigDecimal BIGDECIMAL_ZERO = new BigDecimal("0");
+
     static {
         // 这里一定要注册默认值，使用null也可以
         BigDecimalConverter bd = new BigDecimalConverter(BIGDECIMAL_ZERO);

@@ -456,6 +456,7 @@ object SparkUtils {
   def executeHiveConfSQL(spark: SparkSession): Unit = {
     if (spark != null) {
       val confMap = FireHiveConf.hiveConfMap
+      confMap.foreach(kv => spark.sql(s"set ${kv._1}=${kv._2}"))
       LogUtils.logMap(this.logger, confMap, "Execute hive sql conf.")
     }
   }
