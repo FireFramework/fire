@@ -28,12 +28,28 @@ private[fire] object FireHBaseConf {
   lazy val SPARK_FIRE_HBASE_SCAN_PARTITIONS = "spark.fire.hbase.scan.partitions"
   // hbase集群映射配置前缀
   lazy val hbaseClusterMapPrefix = "spark.fire.hbase.cluster.map."
+  // 是否开启HBase表存在判断的缓存
+  lazy val TABLE_EXISTS_CACHE_ENABLE = "spark.fire.hbase.table.exists.cache.enable"
+  // 是否开启HBase表存在列表缓存的定时更新任务
+  lazy val TABLE_EXISTS_CACHE_RELOAD_ENABLE = "spark.fire.hbase.table.exists.cache.reload.enable"
+  // 定时刷新缓存HBase表任务的初始延迟
+  lazy val TABLE_EXISTS_CACHE_INITIAL_DELAY = "spark.fire.hbase.table.exists.cache.initialDelay"
+  // 定时刷新缓存HBase表任务的执行频率
+  lazy val TABLE_EXISTS_CACHE_PERIOD = "spark.fire.hbase.table.exists.cache.period"
 
   // hbase集群映射地址
   lazy val hbaseClusterMap: util.Map[String, String] = JavaConversions.mapAsJavaMap(PropUtils.sliceKeys(hbaseClusterMapPrefix))
   // hbase java api 配置前缀
   lazy val hbaseConfPrefix = "spark.fire.hbase.conf."
 
+  // 是否开启HBase表存在判断的缓存
+  def tableExistsCache(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.TABLE_EXISTS_CACHE_ENABLE, true)
+  // 是否开启HBase表存在列表缓存的定时更新任务
+  def tableExistsCacheReload(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.TABLE_EXISTS_CACHE_RELOAD_ENABLE, true)
+  // 定时刷新缓存HBase表任务的初始延迟
+  def tableExistCacheInitialDelay(keyNum: Int = 1): Long = PropUtils.getLong(this.TABLE_EXISTS_CACHE_INITIAL_DELAY, 60)
+  // 定时刷新缓存HBase表任务的执行频率
+  def tableExistCachePeriod(keyNum: Int = 1): Long = PropUtils.getLong(this.TABLE_EXISTS_CACHE_PERIOD, 600)
   // HBase操作默认的批次大小
   def hbaseBatchSize(keyNum: Int = 1): Int = PropUtils.getInt(this.HBASE_BATCH, keyNum, 10000)
 

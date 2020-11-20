@@ -3,16 +3,17 @@ package com.zto.fire.common.db.v2
 import java.lang.reflect.Field
 import java.math.BigDecimal
 import java.util._
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{ConcurrentHashMap, ScheduledExecutorService, TimeUnit}
 
 import com.alibaba.fastjson.JSON
 import com.zto.fire.common.anno.{FieldName, HConfig, Internal}
 import com.zto.fire.common.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.common.conf.FireHBaseConf.{familyName, _}
+import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.util.ExceptionBus._
 import com.zto.fire.common.util.FireUtils._
-import com.zto.fire.common.util.{PropUtils, ReflectionUtils}
+import com.zto.fire.common.util.{PropUtils, ReflectionUtils, ThreadUtils}
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase._
@@ -41,15 +42,18 @@ import scala.reflect.{ClassTag, classTag}
  * @author ChengLong 2020-11-11
  */
 private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 1) {
-  private[this] lazy val logger = LoggerFactory.getLogger(classOf[HBaseOper])
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
   // --------------------------------------- 反射加速 --------------------------------------- //
   private[this] lazy val cacheFieldMap = new ConcurrentHashMap[Class[_], Map[String, Field]]()
   private[this] lazy val cacheHConfigMap = new ConcurrentHashMap[Class[_], HConfig]()
+  private[this] lazy val cacheTableExistsMap = new ConcurrentHashMap[String, Boolean]()
   private[this] lazy val configuration: Configuration = this.initConfiguration
   private[this] lazy val connection: Connection = this.initConnection
   private[this] lazy val durability = this.initDurability
-
-  // TODO: api表名强制判断是否存在，加入缓存定时刷新机制
+  private[this] lazy val threadPool = ThreadUtils.createThreadPool("HBaseOperPool", ThreadPoolType.SCHEDULED)
+  private[this] lazy val tableExistsCacheEnable = tableExistsCache(this.keyNum)
+  this.registerReoload
+  this.registerClose
 
   /**
    * 批量插入多行多列，自动将HBaseBaseBean子类转为Put集合
@@ -58,7 +62,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @param beans     HBaseBaseBean子类集合
    */
   def insert[T <: HBaseBaseBean[T] : ClassTag](tableName: String, beans: T*): Unit = {
-    assert(this.isExists(tableName) && beans != null && beans.nonEmpty, "参数不合法，批量HBase insert失败")
+    assert(beans != null && beans.nonEmpty, "参数不合法，批量HBase insert失败")
     var table: Table = null
     tryWithFinally {
       table = this.getTable(tableName)
@@ -128,7 +132,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * HBase Result
    */
   def getResult(tableName: String, getList: Get*): ListBuffer[Result] = {
-    assert(StringUtils.isNotBlank(tableName) && getList != null && getList.nonEmpty, "参数不合法，执行HBase 批量get失败")
+    assert(this.isExists(tableName) && getList != null && getList.nonEmpty, "参数不合法，执行HBase 批量get失败")
 
     var table: Table = null
     val list = ListBuffer[Result]()
@@ -168,7 +172,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @return 指定类型的List
    */
   def scanResultScanner(tableName: String, scan: Scan): ResultScanner = {
-    assert(StringUtils.isNotBlank(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
+    assert(this.isExists(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
 
     var table: Table = null
     var rsScanner: ResultScanner = null
@@ -230,7 +234,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @return 指定类型的List
    */
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): ListBuffer[T] = {
-    assert(StringUtils.isNotBlank(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
+    assert(this.isExists(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
 
     val list = ListBuffer[T]()
     var rsScanner: ResultScanner = null
@@ -696,6 +700,8 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
           tableDesc.addFamily(desc)
         }
         admin.createTable(tableDesc)
+        // 如果开启表缓存，则更新缓存信息
+        if (this.tableExistsCacheEnable && this.tableExists(tableName)) this.cacheTableExistsMap.update(tableName, true)
         logger.info(s"HBase createTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       }
     } {
@@ -717,6 +723,8 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       if (admin.tableExists(tbName)) {
         admin.disableTable(tbName)
         admin.deleteTable(tbName)
+        // 如果开启表缓存，则更新缓存信息
+        if (this.tableExistsCacheEnable && !this.tableExists(tableName)) this.cacheTableExistsMap.update(tableName, false)
         logger.info(s"HBase createTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       }
     } {
@@ -787,18 +795,6 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
   }
 
   /**
-   * 关闭ResultScanner与Table对象
-   */
-  @Internal
-  private[this] def closeResultAndTable(rsScanner: ResultScanner, table: Table) {
-    tryWithFinally {
-      if (rsScanner != null) rsScanner.close()
-    } {
-      this.closeTable(table)
-    }(logger, "关闭HBase table对象失败")
-  }
-
-  /**
    * 释放对象
    *
    * @param admin admin对象实例
@@ -849,11 +845,33 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   def isExists(tableName: String): Boolean = {
     if (StringUtils.isBlank(tableName)) return false
+    if (this.tableExistsCacheEnable) {
+      // 如果走缓存
+      if (!this.cacheTableExistsMap.containsKey(tableName)) {
+        this.logger.info(s"已缓存${tableName}是否存在信息，后续将走缓存.")
+        this.cacheTableExistsMap.put(tableName, this.tableExists(tableName))
+      }
+      this.cacheTableExistsMap.get(tableName)
+    } else {
+      // 不走缓存则每次连接HBase获取表是否存在的信息
+      this.tableExists(tableName)
+    }
+  }
 
+  /**
+   * 用于判断HBase表是否存在
+   * 注：内部api，每次需连接HBase获取表信息
+   */
+  @Internal
+  private[fire] def tableExists(tableName: String): Boolean = {
+    if (StringUtils.isBlank(tableName)) return false
     var admin: Admin = null
     tryWithFinally {
+      val starTime = currentTime
       admin = this.getConnection.getAdmin
-      admin.tableExists(TableName.valueOf(tableName))
+      val isExists = admin.tableExists(TableName.valueOf(tableName))
+      logger.info(s"HBase tableExists ${hbaseCluster(keyNum)}.${tableName}获取成功, 耗时：${timecost(starTime)}")
+      isExists
     } {
       closeAdmin(admin)
     }(logger, s"判断HBase表${hbaseCluster(keyNum)}.${tableName}是否存在失败")
@@ -866,7 +884,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @param rowKeys   待删除的rowKey集合
    */
   def deleteRows(tableName: String, rowKeys: String*): Unit = {
-    if (StringUtils.isNotBlank(tableName) && rowKeys != null && rowKeys.nonEmpty) {
+    if (this.isExists(tableName) && rowKeys != null && rowKeys.nonEmpty) {
       var table: Table = null
       tryWithFinally {
         val starTime = currentTime
@@ -938,6 +956,36 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       } {
         this.closeTable(table)
       }(this.logger, s"delete ${hbaseCluster(keyNum)}.${tableName} qualifiers failed. RowKey is ${rowKey}, qualifiers is ${qualifiers}", "close HBase table对象出现异常.")
+    }
+  }
+
+  /**
+   * 用于注册jvm退出前关闭连接
+   */
+  @Internal
+  private[this] def registerClose: Unit = {
+    Runtime.getRuntime.addShutdownHook(new Thread(new Runnable {
+      override def run(): Unit = {
+        if (connection != null) connection.close()
+        logger.info("jvm虚拟机即将退出，回收HBase connection.")
+      }
+    }))
+  }
+
+  /**
+   * 用于定时reload表是否存在的数据
+   */
+  @Internal
+  private[this] def registerReoload: Unit = {
+    if (tableExistsCacheReload(this.keyNum)) {
+      threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(new Runnable {
+        override def run(): Unit = {
+          cacheTableExistsMap.foreach(kv => {
+            cacheTableExistsMap.update(kv._1, tableExists(kv._1))
+            logger.error(s"成功更新${kv._1}表是否存在的信息.")
+          })
+        }
+      }, tableExistCacheInitialDelay(this.keyNum), tableExistCachePeriod(this.keyNum), TimeUnit.SECONDS)
     }
   }
 

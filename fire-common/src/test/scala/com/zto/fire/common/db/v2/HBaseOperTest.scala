@@ -7,9 +7,11 @@ import com.codahale.metrics.jvm.{FileDescriptorRatioGauge, GarbageCollectorMetri
 import com.codahale.metrics.{ConsoleReporter, MetricRegistry}
 import com.zto.fire.common.anno.{Internal, TestStep}
 import com.zto.fire.common.db.v2.bean.Student
-import com.zto.fire.common.util.PropUtils
+import com.zto.fire.common.util.{FireUtils, PropUtils}
+import org.apache.log4j.{Level, Logger}
 import org.junit.Assert._
 import org.junit.{Before, Test}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions
 
@@ -26,6 +28,7 @@ class HBaseOperTest {
   var hbase: HBaseOper = null
   var hbase2: HBaseOper = null
   val metrics = new MetricRegistry()
+  Logger.getLogger(classOf[HBaseOper]).setLevel(Level.toLevel("INFO"))
 
   @Before
   def init: Unit = {
@@ -68,6 +71,27 @@ class HBaseOperTest {
     val scanList = this.hbase.scan(this.tableName, classOf[Student], "1", "3")
     assertEquals(scanList.size, 2)
     scanList.foreach(println)
+  }
+
+  @Test
+  def testTableExists: Unit = {
+    (1 to 1).foreach(i => {
+      this.hbase.isExists(this.tableName)
+    })
+    Thread.sleep(100000)
+    val starTime = FireUtils.currentTime
+    (1 to 100).foreach(i => {
+      this.hbase.tableExists(this.tableName)
+    })
+    println("未开启缓存总耗时：" + (FireUtils.timecost(starTime)))
+
+    val starTime2 = FireUtils.currentTime
+    (1 to 100).foreach(i => {
+      this.hbase.isExists(this.tableName)
+    })
+    println("开启缓存总耗时：" + (FireUtils.timecost(starTime2)))
+
+    Thread.sleep(100000)
   }
 
   /**
