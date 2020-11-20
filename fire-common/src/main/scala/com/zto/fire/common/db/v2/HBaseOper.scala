@@ -13,7 +13,7 @@ import com.zto.fire.common.conf.FireHBaseConf.{familyName, _}
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.util.ExceptionBus._
 import com.zto.fire.common.util.FireUtils._
-import com.zto.fire.common.util.{PropUtils, ReflectionUtils, ThreadUtils}
+import com.zto.fire.common.util.{PropUtils, ReflectionUtils, ShutdownHookManager, ThreadUtils}
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase._
@@ -43,7 +43,7 @@ import scala.reflect.{ClassTag, classTag}
  */
 private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 1) {
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
-  // --------------------------------------- 反射加速 --------------------------------------- //
+  // --------------------------------------- 反射缓存 --------------------------------------- //
   private[this] lazy val cacheFieldMap = new ConcurrentHashMap[Class[_], Map[String, Field]]()
   private[this] lazy val cacheHConfigMap = new ConcurrentHashMap[Class[_], HConfig]()
   private[this] lazy val cacheTableExistsMap = new ConcurrentHashMap[String, Boolean]()
@@ -51,6 +51,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
   private[this] lazy val connection: Connection = this.initConnection
   private[this] lazy val durability = this.initDurability
   private[this] lazy val threadPool = ThreadUtils.createThreadPool("HBaseOperPool", ThreadPoolType.SCHEDULED)
+  // ------------------------------------ 表存在判断缓存 ------------------------------------ //
   private[this] lazy val tableExistsCacheEnable = tableExistsCache(this.keyNum)
   this.registerReoload
   this.registerClose
@@ -963,13 +964,10 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * 用于注册jvm退出前关闭连接
    */
   @Internal
-  private[this] def registerClose: Unit = {
-    Runtime.getRuntime.addShutdownHook(new Thread(new Runnable {
-      override def run(): Unit = {
-        if (connection != null) connection.close()
-        logger.info("jvm虚拟机即将退出，回收HBase connection.")
-      }
-    }))
+  private[this] def registerClose: Unit = ShutdownHookManager.addShutdownHook() { () => {
+    if (connection != null) connection.close()
+    logger.info("HBase connection closed successfully.")
+  }
   }
 
   /**
@@ -982,7 +980,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         override def run(): Unit = {
           cacheTableExistsMap.foreach(kv => {
             cacheTableExistsMap.update(kv._1, tableExists(kv._1))
-            logger.error(s"成功更新${kv._1}表是否存在的信息.")
+            logger.info(s"定时reload HBase表：${kv._1} 信息成功.")
           })
         }
       }, tableExistCacheInitialDelay(this.keyNum), tableExistCachePeriod(this.keyNum), TimeUnit.SECONDS)

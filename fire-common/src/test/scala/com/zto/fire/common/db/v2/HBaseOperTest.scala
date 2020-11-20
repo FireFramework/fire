@@ -11,7 +11,6 @@ import com.zto.fire.common.util.{FireUtils, PropUtils}
 import org.apache.log4j.{Level, Logger}
 import org.junit.Assert._
 import org.junit.{Before, Test}
-import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions
 
@@ -48,10 +47,29 @@ class HBaseOperTest {
   def testDDL: Unit = this.createTestTable
 
   /**
-   * 测试插入多条记录
+   * 测试表是否存在的缓存功能
    */
   @Test
   @TestStep(step = 2, desc = "增删改查API测试")
+  def testTableExists: Unit = {
+    val starTime = FireUtils.currentTime
+    (1 to 10).foreach(i => {
+      this.hbase.tableExists(this.tableName)
+    })
+    println("未开启缓存总耗时：" + (FireUtils.timecost(starTime)))
+
+    val starTime2 = FireUtils.currentTime
+    (1 to 10).foreach(i => {
+      this.hbase.isExists(this.tableName)
+    })
+    println("开启缓存总耗时：" + (FireUtils.timecost(starTime2)))
+  }
+
+  /**
+   * 测试插入多条记录
+   */
+  @Test
+  @TestStep(step = 3, desc = "增删改查API测试")
   def testInsert: Unit = {
     this.hbase.truncateTable(this.tableName)
     // 批量插入
@@ -73,32 +91,11 @@ class HBaseOperTest {
     scanList.foreach(println)
   }
 
-  @Test
-  def testTableExists: Unit = {
-    (1 to 1).foreach(i => {
-      this.hbase.isExists(this.tableName)
-    })
-    Thread.sleep(100000)
-    val starTime = FireUtils.currentTime
-    (1 to 100).foreach(i => {
-      this.hbase.tableExists(this.tableName)
-    })
-    println("未开启缓存总耗时：" + (FireUtils.timecost(starTime)))
-
-    val starTime2 = FireUtils.currentTime
-    (1 to 100).foreach(i => {
-      this.hbase.isExists(this.tableName)
-    })
-    println("开启缓存总耗时：" + (FireUtils.timecost(starTime2)))
-
-    Thread.sleep(100000)
-  }
-
   /**
    * 测试跨集群支持
    */
   @Test
-  @TestStep(step = 3, desc = "多集群测试")
+  @TestStep(step = 4, desc = "多集群测试")
   def testMultiCluster: Unit = {
     this.hbase.truncateTable(this.tableName)
     this.hbase2.truncateTable(this.tableName2)
@@ -117,7 +114,7 @@ class HBaseOperTest {
    * 注：多版本需要在Student类上声明@HConfig注解：@HConfig(nullable = true, multiVersion = true)
    */
   @Test
-  @TestStep(step = 4, desc = "多版本测试")
+  @TestStep(step = 5, desc = "多版本测试")
   def testMultiInsert: Unit = {
     this.hbase2.truncateTable(this.tableName2)
     val studentList = Student.build(5)
@@ -138,11 +135,11 @@ class HBaseOperTest {
 
     if (this.hbase2.isExists(this.tableName2)) this.hbase2.dropTable(this.tableName2)
     assertEquals(this.hbase2.isExists(this.tableName2), false)
-    this.hbase2.createTable(this.tableName2, "info")
+    this.hbase2.createTable(this.tableName2, "info", "data")
     assertEquals(this.hbase2.isExists(this.tableName2), true)
   }
 
-  @Test
+  // @Test
   def testMeter: Unit = {
     val reporter = ConsoleReporter.forRegistry(metrics).convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build
     reporter.start(1, TimeUnit.SECONDS)
@@ -155,7 +152,7 @@ class HBaseOperTest {
     Thread.sleep(1000)
   }
 
-  @Test
+  // @Test
   def testHistogram: Unit = {
     val reporter = ConsoleReporter.forRegistry(metrics).convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build
     reporter.start(1, TimeUnit.SECONDS)
@@ -169,7 +166,7 @@ class HBaseOperTest {
     Thread.sleep(1000)
   }
 
-  @Test
+  // @Test
   def testJvm: Unit = {
     val reporter = ConsoleReporter.forRegistry(metrics)
       .convertRatesTo(TimeUnit.SECONDS)
