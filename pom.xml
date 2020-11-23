@@ -30,6 +30,7 @@
         <module>fire-demo</module>
         <module>fire-flink</module>
         <module>fire-apollo</module>
+        <module>fire-metrics</module>
     </modules>
 
     <pluginRepositories>

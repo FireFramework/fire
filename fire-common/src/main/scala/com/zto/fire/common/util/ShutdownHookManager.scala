@@ -96,7 +96,8 @@ object ShutdownHookManager {
   private val DEFAULT_PRIORITY = 10
   private val HIGHT_PRIORITY = 100
   private val LOW_PRIORITY = 5
-  private[this] lazy val hookManager: ShutdownHookManager = new ShutdownHookManager()
+  private[this] lazy val hookManager = new ShutdownHookManager()
+
   this.hookManager.install
 
   def addShutdownHook(priority: Int = DEFAULT_PRIORITY)(hook: () => Unit): Unit = {
