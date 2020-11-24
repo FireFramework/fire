@@ -1,0 +1,278 @@
+package com.zto.fire.apollo.util
+
+import java.util.Properties
+
+import com.ctrip.framework.apollo.core.enums.EnvUtils
+import com.ctrip.framework.apollo.model.{ConfigChange, ConfigChangeEvent}
+import com.ctrip.framework.apollo.{Config, ConfigChangeListener, ConfigService}
+import com.zto.fire.common.util.PropUtils
+import org.apache.commons.lang3.StringUtils
+import org.slf4j.LoggerFactory
+
+import scala.collection.JavaConversions._
+
+object ApolloConfigUtil {
+
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
+
+  private val props = new Properties()
+
+  this.load()
+
+  def load(): Unit = {
+
+    var apolloEnv = System.getProperty(ApolloConstant.APOLLO_ENV)
+
+    if(StringUtils.isNotBlank(apolloEnv)){
+      apolloEnv = apolloEnv +  ApolloConstant.APOLLO_META_SUFFIX
+    }else{
+      apolloEnv = ApolloConstant.APOLLO_META_DEV
+    }
+
+    PropUtils.load(ApolloConstant.APOLLO_CONFIG_FILE)
+
+    val appId = PropUtils.getString(ApolloConstant.APOLLO_APP_ID)
+    val apolloMeta = PropUtils.getString(apolloEnv)
+
+    if(StringUtils.isBlank(System.getProperty(ApolloConstant.APOLLO_APP_ID))) {
+      System.setProperty(ApolloConstant.APOLLO_APP_ID, appId)
+    }
+
+    if(StringUtils.isBlank(System.getProperty(ApolloConstant.APOLLO_META))) {
+      System.setProperty(ApolloConstant.APOLLO_META, apolloMeta)
+    }
+
+    val config = ConfigService.getAppConfig
+    for (key <- config.getPropertyNames) {
+      props.setProperty(key, config.getProperty(key, null))
+    }
+
+    val changeListener = new ConfigChangeListener() {
+      override def onChange(changeEvent: ConfigChangeEvent): Unit = {
+        logger.info("Changes for namespace {}", changeEvent.getNamespace)
+        for (key <- changeEvent.changedKeys) {
+          val change = changeEvent.getChange(key)
+          props.setProperty(change.getPropertyName, change.getNewValue)
+          logger.info("Change - key: {}, oldValue: {}, newValue: {}, changeType: {}", change.getPropertyName, change.getOldValue, change.getNewValue, change.getChangeType)
+        }
+      }
+    }
+    config.addChangeListener(changeListener)
+  }
+
+  /**
+   * 返回配置
+   * @return
+   */
+  def getProp(): Properties ={
+    props
+  }
+
+  /**
+   * 根据key获取配置信息
+   *
+   * @param key
+   * 配置的key
+   * @return
+   * 配置的value
+   */
+  def getProperty(key: String, default: String = null): String = {
+    //val config = ConfigService.getAppConfig
+    props.getProperty(key, default)
+  }
+
+  /**
+   * 获取字符串
+   *
+   * @param key
+   * @return
+   */
+  def getString(key: String): String = {
+    this.getProperty(key)
+  }
+
+  /**
+   * 获取拼接后数值的配置字符串
+   *
+   * @param key    配置的前缀
+   * @param keyNum 拼接到key后的数值后缀
+   * @return
+   * 对应的配置信息
+   */
+  def getString(key: String, keyNum: Int = 0, default: String = ""): String = {
+    if (keyNum == null || keyNum <= 1) {
+      var value = this.getProperty(key)
+      if (StringUtils.isBlank(value)) {
+        value = this.getString(key + "1", default)
+      }
+      value
+    } else {
+      this.getString(key + keyNum, default)
+    }
+  }
+
+  /**
+   * 获取字符串，为空则取默认值
+   *
+   * @param key
+   * @return
+   */
+  def getString(key: String, default: String): String = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value else default
+  }
+
+  /**
+   * 获取整型数据
+   *
+   * @param key
+   * @return
+   */
+  def getInt(key: String): Int = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toInt else -1
+  }
+
+  /**
+   * 获取整型数据
+   *
+   * @param key
+   * @return
+   */
+  def getInt(key: String, default: Int): Int = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toInt else default
+  }
+
+  /**
+   * 获取拼接后数值的配置整数
+   *
+   * @param key    配置的前缀
+   * @param keyNum 拼接到key后的数值后缀
+   * @return
+   * 对应的配置信息
+   */
+  def getInt(key: String, keyNum: Int = 0, default: Int): Int = {
+    val value = this.getString(key, keyNum, default + "")
+    if (StringUtils.isNotBlank(value)) value.toInt else default
+  }
+
+  /**
+   * 获取长整型数据
+   *
+   * @param key
+   * @return
+   */
+  def getLong(key: String): Long = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toLong else -1L
+  }
+
+  /**
+   * 获取长整型数据
+   *
+   * @param key
+   * @return
+   */
+  def getLong(key: String, default: Long): Long = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toLong else default
+  }
+
+  /**
+   * 获取float型数据
+   *
+   * @param key
+   * @return
+   */
+  def getFloat(key: String): Float = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toFloat else -1
+  }
+
+  /**
+   * 获取float型数据
+   *
+   * @param key
+   * @return
+   */
+  def getFloat(key: String, default: Float): Float = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toFloat else default
+  }
+
+  /**
+   * 获取float型数据
+   *
+   * @param key
+   * @return
+   */
+  def getDouble(key: String): Double = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toDouble else -1.0
+  }
+
+  /**
+   * 获取float型数据
+   *
+   * @param key
+   * @return
+   */
+  def getDouble(key: String, default: Double): Double = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toDouble else default
+  }
+
+  /**
+   * 获取拼接后数值的配置长整数
+   *
+   * @param key    配置的前缀
+   * @param keyNum 拼接到key后的数值后缀
+   * @return
+   * 对应的配置信息
+   */
+  def getLong(key: String, keyNum: Int = 0, default: Long): Long = {
+    val value = this.getString(key, keyNum, default + "")
+    if (StringUtils.isNotBlank(value)) value.toLong else default
+  }
+
+  /**
+   * 获取布尔值数据
+   *
+   * @param key
+   * @return
+   */
+  def getBoolean(key: String): Boolean = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value.toBoolean else false
+  }
+
+  /**
+   * 获取布尔值数据
+   *
+   * @param key
+   * @return
+   */
+  def getBoolean(key: String, default: Boolean): Boolean = {
+    val value = this.getBoolean(key)
+    if (value != null) value else default
+  }
+
+  /**
+   * 获取拼接后数值的配置布尔值
+   *
+   * @param key    配置的前缀
+   * @param keyNum 拼接到key后的数值后缀
+   * @return
+   * 对应的配置信息
+   */
+  def getBoolean(key: String, keyNum: Int = 0, default: Boolean): Boolean = {
+    val value = this.getString(key, keyNum, default + "")
+    if (StringUtils.isNotBlank(value)) value.toBoolean else default
+  }
+
+  def getEvn(env:String) {
+    val environment = EnvUtils.transformEnv(env);
+  }
+
+}

@@ -4,12 +4,48 @@
   <artifactId>fire-apollo</artifactId>
   <version>1.1.2-SNAPSHOT</version>
   <name>${project.artifactId}</name>
-  <description>My wonderfull scala app</description>
   <inceptionYear>2010</inceptionYear>
+  <packaging>jar</packaging>
+
+  <properties>
+    <flink.version>1.10.0</flink.version>
+  </properties>
+
+  <parent>
+    <groupId>com.zto.fire</groupId>
+    <artifactId>fire-parent</artifactId>
+    <version>1.1.2-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
 
   <dependencies>
-  </dependencies>
 
+    <dependency>
+      <groupId>com.ctrip.framework.apollo</groupId>
+      <artifactId>apollo-client</artifactId>
+      <version>1.7.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>29.0-android</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.8.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.zto.fire</groupId>
+      <artifactId>fire-common</artifactId>
+      <version>${fire.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.zto.fire</groupId>
+      <artifactId>fire-core</artifactId>
+      <version>${fire.version}</version>
+    </dependency>
+  </dependencies>
   <build>
     <plugins>
       <plugin>
@@ -21,5 +57,11 @@
         </configuration>
       </plugin>
     </plugins>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
   </build>
 </project>
