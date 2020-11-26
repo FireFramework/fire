@@ -5,7 +5,7 @@
     <artifactId>fire-metrics</artifactId>
     <version>1.1.2-SNAPSHOT</version>
     <name>${project.artifactId}</name>
-    <description>My wonderfull scala app</description>
+    <description>fire metrics module</description>
     <inceptionYear>2010</inceptionYear>
     <dependencies>
     </dependencies>

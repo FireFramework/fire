@@ -4,7 +4,7 @@ import java.util.Random
 import java.util.concurrent.TimeUnit
 
 import com.codahale.metrics.jvm.{FileDescriptorRatioGauge, GarbageCollectorMetricSet, MemoryUsageGaugeSet, ThreadStatesGaugeSet}
-import com.codahale.metrics.{ConsoleReporter, MetricRegistry}
+import com.codahale.metrics.{ConsoleReporter, MetricRegistry, Slf4jReporter}
 import com.zto.fire.common.anno.{Internal, TestStep}
 import com.zto.fire.common.db.v2.bean.Student
 import com.zto.fire.common.util.{FireUtils, PropUtils}
@@ -152,10 +152,13 @@ class HBaseOperTest {
     Thread.sleep(1000)
   }
 
-  // @Test
+  @Test
   def testHistogram: Unit = {
     val reporter = ConsoleReporter.forRegistry(metrics).convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build
     reporter.start(1, TimeUnit.SECONDS)
+
+    val reporter2 = Slf4jReporter.forRegistry(metrics).convertDurationsTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).withLoggingLevel(Slf4jReporter.LoggingLevel.ERROR).build
+    reporter2.start(1, TimeUnit.SECONDS)
 
     val resultCounts = metrics.histogram(MetricRegistry.name(classOf[HBaseOperTest], "result-counts"))
     val random = new Random()
@@ -166,13 +169,15 @@ class HBaseOperTest {
     Thread.sleep(1000)
   }
 
-  // @Test
+  @Test
   def testJvm: Unit = {
-    val reporter = ConsoleReporter.forRegistry(metrics)
+    val reporter2 = ConsoleReporter.forRegistry(metrics)
       .convertRatesTo(TimeUnit.SECONDS)
       .convertDurationsTo(TimeUnit.MILLISECONDS)
       .build
-    reporter.start(3, TimeUnit.SECONDS)
+    reporter2.start(3, TimeUnit.SECONDS)
+    val reporter = Slf4jReporter.forRegistry(metrics).convertDurationsTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).withLoggingLevel(Slf4jReporter.LoggingLevel.ERROR).build
+    reporter.start(5, TimeUnit.SECONDS)
 
     metrics.register("jvm.gc", new GarbageCollectorMetricSet())
     metrics.register("jvm.memroy", new MemoryUsageGaugeSet())
@@ -181,4 +186,5 @@ class HBaseOperTest {
 
     Thread.sleep(100000)
   }
+
 }

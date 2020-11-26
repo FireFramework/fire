@@ -128,7 +128,7 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
             })
           } else {
             // 否则取当前DataFrame全部的列，顺序要与sql问号占位符保持一致
-            (0 to row.size - 1).foreach(index => {
+            (0 until row.size).foreach(index => {
               params += row.get(index)
             })
           }

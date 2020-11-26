@@ -130,6 +130,8 @@ object JdbcTest extends BaseSparkCore {
     // 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序，batch用于指定批次大小，默认取spark.db.jdbc.batch.size配置的值
     df.jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
 
+    df.repartition(3).jdbcBatchUpdate(s"delete from yuncang.$tableName where pri_id=?", Seq("pri_id"), batch = 100)
+
     df.createOrReplaceTempViewCache("student")
     val sqlDF = this.spark.sql("select name, age, createTime from student where id>=1").repartition(1)
     // 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
