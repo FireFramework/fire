@@ -529,24 +529,24 @@ object PropUtils {
 
     JavaConversions.asScalaSet(this.props.keySet()).map(key => key.toString).filter(key => !key.contains("cluster.map")).foreach(key => {
       // 配置的Hive源
-      merge(DataSource.Hive, key, FireHiveConf.HIVE_CLUSTER)
+      merge(DataSource.HIVE, key, FireHiveConf.HIVE_CLUSTER)
       // 配置的HBase源
-      merge(DataSource.HBase, key, FireHBaseConf.HBASE_CLUSTER_URL)
+      merge(DataSource.HBASE, key, FireHBaseConf.HBASE_CLUSTER_URL)
       // 配置的Kafka源
-      merge(DataSource.Kafka, key, FireKafkaConf.KAFKA_BROKERS_NAME)
+      merge(DataSource.KAFKA, key, FireKafkaConf.KAFKA_BROKERS_NAME)
       // 配置的RocketMQ源
-      merge(DataSource.RocketMQ, key, FireRocketMQConf.ROCKET_BROKERS_NAME)
+      merge(DataSource.ROCKETMQ, key, FireRocketMQConf.ROCKET_BROKERS_NAME)
       // JDBC源
       if (key.contains(FireJdbcConf.SPARK_DB_JDBC_URL_KEY.replaceFirst("spark", this.engine))) {
         val value = this.getString(key)
         if (value.contains("mysql")) {
-          mergeMap(DataSource.MySQL, value)
+          mergeMap(DataSource.MYSQL, value)
         } else if (value.contains("oracle")) {
-          mergeMap(DataSource.Oracle, value)
+          mergeMap(DataSource.ORACLE, value)
         } else if (value.contains("tidb")) {
-          mergeMap(DataSource.Tidb, value)
+          mergeMap(DataSource.TIDB, value)
         } else if (value.contains("sqlserver")) {
-          mergeMap(DataSource.SqlServer, value)
+          mergeMap(DataSource.SQLSERVER, value)
         }
       }
     })

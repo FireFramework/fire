@@ -7,12 +7,12 @@ import com.codahale.metrics.jvm.{FileDescriptorRatioGauge, GarbageCollectorMetri
 import com.codahale.metrics.{ConsoleReporter, MetricRegistry, Slf4jReporter}
 import com.zto.fire.common.anno.{Internal, TestStep}
 import com.zto.fire.common.db.v2.bean.Student
-import com.zto.fire.common.util.{FireUtils, PropUtils}
+import com.zto.fire.common.util.{DataSourceManager, FireUtils, PropUtils}
 import org.apache.log4j.{Level, Logger}
 import org.junit.Assert._
 import org.junit.{Before, Test}
 
-import scala.collection.JavaConversions
+import scala.collection.JavaConversions._
 
 /**
  * 用于单元测试HBaseOper中的API
@@ -74,7 +74,7 @@ class HBaseOperTest {
     this.hbase.truncateTable(this.tableName)
     // 批量插入
     val studentList = Student.build(5)
-    this.hbase.insert(this.tableName, JavaConversions.asScalaBuffer(studentList): _*)
+    this.hbase.insert(this.tableName, studentList: _*)
 
     // get操作
     println("===========get=============")
@@ -100,13 +100,18 @@ class HBaseOperTest {
     this.hbase.truncateTable(this.tableName)
     this.hbase2.truncateTable(this.tableName2)
     val studentList1 = Student.build(5)
-    this.hbase.insert(this.tableName, JavaConversions.asScalaBuffer(studentList1): _*)
+    this.hbase.insert(this.tableName, studentList1: _*)
     val scanStudentList1 = this.hbase.scan(this.tableName, classOf[Student], "1", "6")
     assertEquals(scanStudentList1.size, 5)
     val studentList2 = Student.build(3)
-    this.hbase2.insert(this.tableName2, JavaConversions.asScalaBuffer(studentList2): _*)
+    this.hbase2.insert(this.tableName2, studentList2: _*)
     val scanStudentList2 = this.hbase2.scan(this.tableName2, classOf[Student], "1", "6")
     assertEquals(scanStudentList2.size, 3)
+
+    assertEquals(DataSourceManager.get.size(), 1)
+    DataSourceManager.get.foreach(t => {
+      t._2.foreach(println)
+    })
   }
 
   /**
@@ -118,7 +123,7 @@ class HBaseOperTest {
   def testMultiInsert: Unit = {
     this.hbase2.truncateTable(this.tableName2)
     val studentList = Student.build(5)
-    this.hbase2.insert(this.tableName2, JavaConversions.asScalaBuffer(studentList): _*)
+    this.hbase2.insert(this.tableName2, studentList: _*)
     val students = this.hbase2.get(this.tableName2, classOf[Student], "1", "2")
     students.foreach(println)
   }
@@ -152,7 +157,7 @@ class HBaseOperTest {
     Thread.sleep(1000)
   }
 
-  @Test
+  // @Test
   def testHistogram: Unit = {
     val reporter = ConsoleReporter.forRegistry(metrics).convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build
     reporter.start(1, TimeUnit.SECONDS)

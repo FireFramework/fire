@@ -13,7 +13,7 @@ import com.zto.fire.common.conf.FireHBaseConf.{familyName, _}
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.util.ExceptionBus._
 import com.zto.fire.common.util.FireUtils._
-import com.zto.fire.common.util.{PropUtils, ReflectionUtils, ShutdownHookManager, ThreadUtils}
+import com.zto.fire.common.util._
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase._
@@ -38,10 +38,14 @@ import scala.reflect.{ClassTag, classTag}
  * 注：自定义bean中的field需与hbase中的qualifier对应
  * <p>
  *
+ * @param conf
+ * 代码级别的配置信息，允许为空，配置文件会覆盖相同配置项，也就是说配置文件拥有着跟高的优先级
+ * @param keyNum
+ * 用于区分连接不同的数据源，不同配置源对应不同的Oper实例
  * @since 1.1.2
  * @author ChengLong 2020-11-11
  */
-private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 1) {
+private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 1) extends DBBaseOper(conf, keyNum) {
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
   // --------------------------------------- 反射缓存 --------------------------------------- //
   private[this] lazy val cacheFieldMap = new ConcurrentHashMap[Class[_], Map[String, Field]]()
@@ -89,6 +93,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       val starTime = currentTime
       table = this.getTable(tableName)
       table.put(puts)
+      DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
       logger.info(s"HBase insert ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${puts.size}条, 耗时：${timecost(starTime)}")
     } {
       this.closeTable(table)
@@ -139,6 +144,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
     val list = ListBuffer[Result]()
     tryWithFinally {
       val starTime = currentTime
+      DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), false, tableName)
       table = this.getConnection.getTable(TableName.valueOf(tableName))
       list ++= table.get(getList)
       logger.info(s"HBase 批量get ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${list.size}条, 耗时：${timecost(starTime)}")
@@ -179,6 +185,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
     var rsScanner: ResultScanner = null
     try {
       table = this.getTable(tableName)
+      DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), false, tableName)
       rsScanner = table.getScanner(scan)
     } catch {
       case e: Exception => {
@@ -701,6 +708,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
           tableDesc.addFamily(desc)
         }
         admin.createTable(tableDesc)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
         // 如果开启表缓存，则更新缓存信息
         if (this.tableExistsCacheEnable && this.tableExists(tableName)) this.cacheTableExistsMap.update(tableName, true)
         logger.info(s"HBase createTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
@@ -726,6 +734,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         admin.deleteTable(tbName)
         // 如果开启表缓存，则更新缓存信息
         if (this.tableExistsCacheEnable && !this.tableExists(tableName)) this.cacheTableExistsMap.update(tableName, false)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
         logger.info(s"HBase createTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       }
     } {
@@ -746,6 +755,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName) && !admin.isTableEnabled(tbName)) {
         admin.enableTable(tbName)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
         logger.info(s"HBase enableTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       }
     } {
@@ -766,6 +776,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName) && admin.isTableEnabled(tbName)) {
         admin.disableTable(tbName)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
         logger.info(s"HBase disableTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       }
     } {
@@ -788,6 +799,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       if (admin.tableExists(tbName)) {
         this.disableTable(tableName)
         admin.truncateTable(tbName, preserveSplits)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
         logger.info(s"HBase truncateTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       }
     } {
@@ -898,6 +910,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         })
 
         table.delete(deletes)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
         logger.info(s"HBase deleteRows ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       } {
         this.closeTable(table)
@@ -925,6 +938,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         val tbName = TableName.valueOf(tableName)
         table = this.getConnection.getTable(tbName)
         table.delete(delete)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
         logger.info(s"HBase deleteFamilies ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       } {
         this.closeTable(table)
@@ -953,6 +967,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         val tbName = TableName.valueOf(tableName)
         table = this.getConnection.getTable(tbName)
         table.delete(delete)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
         logger.info(s"HBase deleteQualifiers ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       } {
         this.closeTable(table)
@@ -980,6 +995,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         override def run(): Unit = {
           cacheTableExistsMap.foreach(kv => {
             cacheTableExistsMap.update(kv._1, tableExists(kv._1))
+            // 将用到的表信息加入到数据源管理器中
             logger.info(s"定时reload HBase表：${kv._1} 信息成功.")
           })
         }
@@ -993,20 +1009,17 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
  * 用于单例构建伴生类HBaseOper的实例对象
  * 每个HBaseOper实例使用keyNum作为标识，并且与每个HBase集群一一对应
  */
-object HBaseOper {
-  private[fire] lazy val instanceMap = new ConcurrentHashMap[Int, HBaseOper]()
+object HBaseOper extends DBBaseOperFactory {
 
+  /**
+   * 创建指定集群标识的HBaseOper对象实例
+   */
   def apply(conf: Configuration = null, keyNum: Int = 1): HBaseOper = {
     if (!this.instanceMap.containsKey(keyNum)) {
       this.instanceMap.put(keyNum, new HBaseOper(conf, keyNum))
     }
-    this.instanceMap.get(keyNum)
+    this.instanceMap.get(keyNum).asInstanceOf[HBaseOper]
   }
-
-  /**
-   * 根据指定的keyNum返回单例的HBaseOper实例
-   */
-  def getInstance(keyNum: Int = 1): HBaseOper = this.instanceMap.get(keyNum)
 
   /**
    * 构建Get对象

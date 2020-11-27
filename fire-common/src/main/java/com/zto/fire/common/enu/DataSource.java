@@ -1,5 +1,7 @@
 package com.zto.fire.common.enu;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * 数据源类型
  * @author ChengLong
@@ -7,5 +9,24 @@ package com.zto.fire.common.enu;
  * @since 1.0.0
  */
 public enum DataSource {
-    Hive, HBase, Kafka, RocketMQ, Redis, ES, MySQL, Tidb, Oracle, SqlServer
+    HIVE(1), HBASE(2), KAFKA(3), ROCKETMQ(4), REDIS(5),
+    ES(6), MYSQL(7), TIDB(8), ORACLE(9), SQLSERVER(10), CLICKHOUSE(11), UNKNOWN(20);
+
+    private int type;
+
+    DataSource(int type) {
+        this.type = type;
+    }
+
+    /**
+     * 将字符串解析成指定的枚举类型
+     */
+    public static DataSource parse(String dataSource) {
+        if (StringUtils.isBlank(dataSource)) return UNKNOWN;
+        try {
+            return Enum.valueOf(DataSource.class, dataSource.trim().toUpperCase());
+        } catch (Exception e) {
+            return UNKNOWN;
+        }
+    }
 }

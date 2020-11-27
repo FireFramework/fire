@@ -92,7 +92,13 @@ private[fire] object FireFrameworkConf {
   lazy val FLINK_BATCH_CONF_FILE = "flink-batch"
   lazy val FIRE_DEPLOY_CONF_ENABLE = "spark.fire.deploy_conf.enable"
   lazy val FIRE_EXCEPTION_BUS_SIZE = "spark.fire.exception_bus.size"
+  lazy val FIRE_BURIED_POINT_DATASOURCE_ENABLE = "spark.fire.buried_point.datasource.enable"
+  lazy val FIRE_BURIED_POINT_DATASOURCE_MAX_SIZE = "spark.fire.buried_point.datasource.max.size"
 
+  // 用于存放埋点的队列最大大小，超过该大小将会被丢弃
+  lazy val buriedPointDatasourceMaxSize = PropUtils.getInt(this.FIRE_BURIED_POINT_DATASOURCE_MAX_SIZE, 300)
+  // 是否开启数据源埋点
+  lazy val buriedPointDatasourceEnable = PropUtils.getBoolean(this.FIRE_BURIED_POINT_DATASOURCE_ENABLE, true)
   // 每个jvm实例内部queue用于存放异常对象数最大大小，避免队列过大造成内存溢出
   lazy val exceptionBusSize = PropUtils.getInt(this.FIRE_EXCEPTION_BUS_SIZE, 1000)
   // 是否将配置同步到executor、taskmanager端

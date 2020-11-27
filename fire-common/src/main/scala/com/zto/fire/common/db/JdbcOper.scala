@@ -18,6 +18,7 @@ import scala.reflect.ClassTag
  *
  * @author ChengLong 2016-11-15 16:55:37
  */
+@deprecated("user com.zto.fire.common.db.v2.JdbcOper", "v1.1.2")
 object JdbcOper {
   private lazy val connPoolMap = collection.mutable.Map[String, ComboPooledDataSource]()
   private val logger = LoggerFactory.getLogger(this.getClass)
