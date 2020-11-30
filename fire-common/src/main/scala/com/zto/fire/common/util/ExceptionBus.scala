@@ -3,6 +3,7 @@ package com.zto.fire.common.util
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
+import com.google.common.collect.EvictingQueue
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf
 import org.slf4j.{Logger, LoggerFactory}
@@ -19,7 +20,7 @@ import scala.collection.JavaConversions
 object ExceptionBus {
   private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
   // 用于保存收集而来的异常对象
-  private[this] lazy val queue = new ConcurrentLinkedQueue[Throwable]()
+  private[this] lazy val queue = EvictingQueue.create[(Long, Throwable)](FireFrameworkConf.exceptionBusSize)
   // 队列大小，对比queue.size有性能优势
   private[fire] lazy val queueSize = new AtomicInteger(0)
   // 异常总数计数器
@@ -30,21 +31,8 @@ object ExceptionBus {
   /**
    * 向异常总线中添加异常对象
    */
-  def offer(t: Throwable): Boolean = {
-    if (t == null) return false
-
-    var dropCount = 0
-    // 限制queue的大小，避免内存溢出
-    while (this.queueSize.get() >= FireFrameworkConf.exceptionBusSize) {
-      dropCount += 1
-      this.queue.poll()
-      queueSize.decrementAndGet()
-    }
-
-    if (dropCount > 0) this.logger.warn(s"Fire异常总线队列已满，将丢失${dropCount}条异常信息.当前队列大小为${FireFrameworkConf.exceptionBusSize}，可通过spark.fire.exception_bus.size参数调大")
-    queueSize.incrementAndGet()
-    exceptionCount.incrementAndGet()
-    this.queue.offer(t)
+  def offer(timestamp: Long, t: Throwable): Boolean = this.synchronized {
+    this.queue.offer((timestamp, t))
   }
 
   /**
@@ -53,7 +41,7 @@ object ExceptionBus {
    * @return (ip, 异常集合)
    */
   @Internal
-  private[fire] def getAndClear: (String, List[Throwable]) = this.synchronized {
+  private[fire] def getAndClear: (String, List[(Long, Throwable)]) = this.synchronized {
     val list = JavaConversions.collectionAsScalaIterable(this.queue).toList
     this.queue.clear()
     queueSize.set(0)
@@ -66,7 +54,7 @@ object ExceptionBus {
    */
   @Internal
   private[this] def offAndLogError(logger: Logger, msg: String, t: Throwable): Unit = {
-    this.offer(t)
+    this.offer(FireUtils.currentTime, t)
     if (logger != null) logger.error(msg, t) else t.printStackTrace()
   }
 

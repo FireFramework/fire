@@ -93,7 +93,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       val starTime = currentTime
       table = this.getTable(tableName)
       table.put(puts)
-      DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
+      DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName)
       logger.info(s"HBase insert ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${puts.size}条, 耗时：${timecost(starTime)}")
     } {
       this.closeTable(table)
@@ -144,7 +144,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
     val list = ListBuffer[Result]()
     tryWithFinally {
       val starTime = currentTime
-      DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), false, tableName)
+      DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName, sink = false)
       table = this.getConnection.getTable(TableName.valueOf(tableName))
       list ++= table.get(getList)
       logger.info(s"HBase 批量get ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${list.size}条, 耗时：${timecost(starTime)}")
@@ -185,7 +185,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
     var rsScanner: ResultScanner = null
     try {
       table = this.getTable(tableName)
-      DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), false, tableName)
+      DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName, sink = false)
       rsScanner = table.getScanner(scan)
     } catch {
       case e: Exception => {
@@ -708,7 +708,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
           tableDesc.addFamily(desc)
         }
         admin.createTable(tableDesc)
-        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName)
         // 如果开启表缓存，则更新缓存信息
         if (this.tableExistsCacheEnable && this.tableExists(tableName)) this.cacheTableExistsMap.update(tableName, true)
         logger.info(s"HBase createTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
@@ -734,7 +734,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         admin.deleteTable(tbName)
         // 如果开启表缓存，则更新缓存信息
         if (this.tableExistsCacheEnable && !this.tableExists(tableName)) this.cacheTableExistsMap.update(tableName, false)
-        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName)
         logger.info(s"HBase createTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       }
     } {
@@ -755,7 +755,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName) && !admin.isTableEnabled(tbName)) {
         admin.enableTable(tbName)
-        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName)
         logger.info(s"HBase enableTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       }
     } {
@@ -776,7 +776,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName) && admin.isTableEnabled(tbName)) {
         admin.disableTable(tbName)
-        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName)
         logger.info(s"HBase disableTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       }
     } {
@@ -799,7 +799,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       if (admin.tableExists(tbName)) {
         this.disableTable(tableName)
         admin.truncateTable(tbName, preserveSplits)
-        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName)
         logger.info(s"HBase truncateTable ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       }
     } {
@@ -910,7 +910,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         })
 
         table.delete(deletes)
-        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName)
         logger.info(s"HBase deleteRows ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       } {
         this.closeTable(table)
@@ -938,7 +938,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         val tbName = TableName.valueOf(tableName)
         table = this.getConnection.getTable(tbName)
         table.delete(delete)
-        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName)
         logger.info(s"HBase deleteFamilies ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       } {
         this.closeTable(table)
@@ -967,7 +967,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         val tbName = TableName.valueOf(tableName)
         table = this.getConnection.getTable(tbName)
         table.delete(delete)
-        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), true, tableName)
+        DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName)
         logger.info(s"HBase deleteQualifiers ${hbaseCluster(keyNum)}.${tableName}执行成功, 耗时：${timecost(starTime)}")
       } {
         this.closeTable(table)
@@ -993,11 +993,13 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
     if (tableExistsCacheReload(this.keyNum)) {
       threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(new Runnable {
         override def run(): Unit = {
+          val start = currentTime
           cacheTableExistsMap.foreach(kv => {
             cacheTableExistsMap.update(kv._1, tableExists(kv._1))
             // 将用到的表信息加入到数据源管理器中
             logger.info(s"定时reload HBase表：${kv._1} 信息成功.")
           })
+          logger.info(s"定时reload HBase耗时：${timecost(start)}")
         }
       }, tableExistCacheInitialDelay(this.keyNum), tableExistCachePeriod(this.keyNum), TimeUnit.SECONDS)
     }

@@ -7,7 +7,7 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf}
 import com.zto.fire.common.util.ExceptionBus._
 import com.zto.fire.common.util.FireUtils._
-import com.zto.fire.common.util.{DBUtils, StringsUtils}
+import com.zto.fire.common.util.{DBUtils, DataSourceManager, StringsUtils}
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
@@ -29,6 +29,9 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
   private val logger = LoggerFactory.getLogger(this.getClass)
   // 日志中sql截取的长度
   private lazy val logSqlLength = FireFrameworkConf.logSqlLength
+  private[this] var username: String = _
+  private[this] var url: String = _
+  private[this] var dbType: String = "unknown"
 
   /**
    * 初始化指定的连接池，未被使用
@@ -41,19 +44,22 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
     tryWithReturn {
       // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
       this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
-      val url = if (StringUtils.isBlank(FireJdbcConf.url(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.url)) this.conf.url else FireJdbcConf.url(keyNum)
-      assert(StringUtils.isNotBlank(url), "数据库url不能为空")
+      this.url = if (StringUtils.isBlank(FireJdbcConf.url(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.url)) this.conf.url else FireJdbcConf.url(keyNum)
+      assert(StringUtils.isNotBlank(this.url), "数据库url不能为空")
       val driverClass = if (StringUtils.isBlank(FireJdbcConf.driverClass(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
       assert(StringUtils.isNotBlank(driverClass), "数据库driverClass不能为空")
-      val username = if (StringUtils.isBlank(FireJdbcConf.user(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.username)) this.conf.username else FireJdbcConf.user(keyNum)
-      assert(StringUtils.isNotBlank(username), "数据库username不能为空")
+      this.username = if (StringUtils.isBlank(FireJdbcConf.user(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.username)) this.conf.username else FireJdbcConf.user(keyNum)
+      assert(StringUtils.isNotBlank(this.username), "数据库username不能为空")
       val password = if (StringUtils.isBlank(FireJdbcConf.password(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.password)) this.conf.password else FireJdbcConf.password(keyNum)
+      // 识别数据源类型是oracle、mysql等
+      this.dbType = DBUtils.dbTypeParser(driverClass, this.url)
+      logger.info(s"架识别到当前jdbc数据源标识为：${this.dbType}")
 
       // 创建c3p0数据库连接池实例
       val pool = new ComboPooledDataSource(true)
-      pool.setJdbcUrl(url)
+      pool.setJdbcUrl(this.url)
       pool.setDriverClass(driverClass)
-      pool.setUser(username)
+      pool.setUser(this.username)
       pool.setPassword(password)
       pool.setMaxPoolSize(FireJdbcConf.maxPoolSize(keyNum))
       pool.setMinPoolSize(FireJdbcConf.minPoolSize(keyNum))
@@ -89,7 +95,7 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
    * @param params
    * sql中的参数
    * @param connection
-   * 传递已有的数据库连接
+   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
    * @param commit
    * 是否自动提交事务，默认为自动提交
    * @param closeConnection
@@ -98,15 +104,12 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
    * 影响的记录数
    */
   def executeUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
+    val conn = if (connection == null) this.getConnection else connection
     var retVal: Long = 0L
-    var conn: Connection = connection
     var stat: PreparedStatement = null
     tryWithFinally {
       val startTime = currentTime
-      if (conn == null) {
-        conn = this.getConnection
-        conn.setAutoCommit(false)
-      }
+      conn.setAutoCommit(false)
       stat = conn.prepareStatement(sql)
 
       // 设置值参数
@@ -134,7 +137,7 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
    * @param paramsList
    * sql的参数列表
    * @param connection
-   * 传递已有的数据库连接
+   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
    * @param commit
    * 是否自动提交事务，默认为自动提交
    * @param closeConnection
@@ -143,15 +146,12 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
    * 影响的记录数
    */
   def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
-    var conn: Connection = connection
+    val conn = if (connection == null) this.getConnection else connection
     var stat: PreparedStatement = null
 
     tryWithFinally {
       val startTime = currentTime
-      if (conn == null) {
-        conn = this.getConnection
-        conn.setAutoCommit(false)
-      }
+      conn.setAutoCommit(false)
       stat = conn.prepareStatement(sql)
       var batch = 0
       if (paramsList != null && paramsList.nonEmpty) {
@@ -189,7 +189,7 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
    * @param clazz
    * JavaBean类型
    * @param connection
-   * 使用制定的数据库连接
+   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
    */
   def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null): List[T] = {
     val listBuffer = ListBuffer[T]()
@@ -214,18 +214,15 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
    * @param callback
    * 查询回调
    * @param connection
-   * 使用制定的数据库连接
+   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
    */
   def executeQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null): Unit = {
-    var conn: Connection = connection
+    val conn = if (connection == null) this.getConnection else connection
     var stat: PreparedStatement = null
     var rs: ResultSet = null
 
     tryWithFinally {
       val startTime = currentTime
-      if (conn == null) {
-        conn = this.getConnection
-      }
       stat = conn.prepareStatement(sql)
       if (params != null && params.nonEmpty) {
         var i = 1
@@ -239,10 +236,10 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
       if (rs != null && callback != null) {
         count = callback.process(rs)
       }
-      this.logger.info(s"executeQueryCall success. keyNum: ${keyNum} count: $count cost: ${timecost(startTime)}\n${this.sqlBuriedPoint(sql)}")
+      this.logger.info(s"executeQueryCall success. keyNum: ${keyNum} count: $count cost: ${timecost(startTime)}\n${this.sqlBuriedPoint(sql, false)}")
     } {
       this.release(sql, conn, stat, rs)
-    }(this.logger, s"executeQueryCall failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", "释放jdbc资源失败")
+    }(this.logger, s"executeQueryCall failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, false)}", "释放jdbc资源失败")
   }
 
   /**
@@ -262,7 +259,7 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
       if (rs != null) rs.close()
     } catch {
       case e: SQLException => {
-        this.logger.error(s"close jdbc ResultSet failed. keyNum: ${keyNum} sql: ${this.sqlBuriedPoint(sql)}", e)
+        this.logger.error(s"close jdbc ResultSet failed. keyNum: ${keyNum}", e)
         throw e
       }
     } finally {
@@ -270,7 +267,7 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
         if (stat != null) stat.close()
       } catch {
         case e: SQLException => {
-          this.logger.error(s"close jdbc statement failed. keyNum: ${keyNum} sql: ${this.sqlBuriedPoint(sql)}", e)
+          this.logger.error(s"close jdbc statement failed. keyNum: ${keyNum}", e)
           throw e
         }
       } finally {
@@ -278,7 +275,7 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
           if (conn != null && closeConnection) conn.close()
         } catch {
           case e: SQLException => {
-            this.logger.error(s"close jdbc connection failed. keyNum: ${keyNum} sql: ${this.sqlBuriedPoint(sql)}", e)
+            this.logger.error(s"close jdbc connection failed. keyNum: ${keyNum}", e)
             throw e
           }
         }
@@ -290,10 +287,12 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
    * 工具方法，截取给定的SQL语句
    */
   @Internal
-  private[this] def sqlBuriedPoint(sql: String): String = {
+  private[this] def sqlBuriedPoint(sql: String, sink: Boolean = true): String = {
+    DataSourceManager.addSql(this.dbType, this.url, this.username, sql, sink)
     // TODO: sql埋点解析
     StringsUtils.substring(sql, 0, this.logSqlLength)
   }
+
 }
 
 
@@ -345,5 +344,94 @@ object JdbcOper extends DBBaseOperFactory {
       this.instanceMap.put(keyNum, new JdbcOper(conf, keyNum))
     }
     this.instanceMap.get(keyNum).asInstanceOf[JdbcOper]
+  }
+
+  /**
+   * 根据指定的keyNum获取对应的数据库连接
+   */
+  def getConnection(keyNum: Int = 1): Connection = JdbcOper(keyNum = keyNum).getConnection
+
+  /**
+   * 更新操作
+   *
+   * @param sql
+   * 待执行的sql语句
+   * @param params
+   * sql中的参数
+   * @param connection
+   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
+   * @param commit
+   * 是否自动提交事务，默认为自动提交
+   * @param closeConnection
+   * 是否关闭connection，默认关闭
+   * @param keyNum
+   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   * @return
+   * 影响的记录数
+   */
+  def executeUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
+    JdbcOper(keyNum = keyNum).executeUpdate(sql, params, connection, commit, closeConnection)
+  }
+
+  /**
+   * 执行批量更新操作
+   *
+   * @param sql
+   * 待执行的sql语句
+   * @param paramsList
+   * sql的参数列表
+   * @param connection
+   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
+   * @param commit
+   * 是否自动提交事务，默认为自动提交
+   * @param closeConnection
+   * 是否关闭connection，默认关闭
+   * @param keyNum
+   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   * @return
+   * 影响的记录数
+   */
+  def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
+    JdbcOper(keyNum = keyNum).executeBatch(sql, paramsList, connection, commit, closeConnection)
+  }
+
+  /**
+   * 执行查询操作，以JavaBean方式返回结果集
+   *
+   * @param sql
+   * 查询语句
+   * @param params
+   * sql执行参数
+   * @param clazz
+   * JavaBean类型
+   * @param connection
+   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
+   * @param keyNum
+   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   */
+  def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): List[T] = {
+    JdbcOper(keyNum = keyNum).executeQuery(sql, params, clazz, connection)
+  }
+
+  /**
+   * 执行查询操作
+   *
+   * @param sql
+   * 查询语句
+   * @param params
+   * sql执行参数
+   * @param callback
+   * 查询回调
+   * @param connection
+   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
+   * @param keyNum
+   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   */
+  def executeQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null, keyNum: Int = 1): Unit = {
+    JdbcOper(keyNum = keyNum).executeQueryCall(sql, params, callback, connection)
   }
 }

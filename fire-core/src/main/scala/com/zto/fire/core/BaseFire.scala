@@ -200,4 +200,14 @@ trait BaseFire {
    * 返回fn执行结果
    */
   def retry[T](retryNum: Int = 3, duration: Long = 3000)(fun: => T): T = FireUtils.retry(retryNum, duration)(fun)
+
+  /**
+   * 用于统计指定代码块执行的耗时时间
+   *
+   * @param msg
+   * 用于描述当前代码块的用户
+   * @param block
+   * try的具体逻辑
+   */
+  def timecost[T](msg: String)(block: => T): T = FireUtils.timecost(msg, this.logger)(block)
 }

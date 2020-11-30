@@ -94,7 +94,20 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_EXCEPTION_BUS_SIZE = "spark.fire.exception_bus.size"
   lazy val FIRE_BURIED_POINT_DATASOURCE_ENABLE = "spark.fire.buried_point.datasource.enable"
   lazy val FIRE_BURIED_POINT_DATASOURCE_MAX_SIZE = "spark.fire.buried_point.datasource.max.size"
+  lazy val FIRE_BURIED_POINT_DATASOURCE_INITIAL_DELAY = "spark.fire.buried_point.datasource.initialDelay"
+  lazy val FIRE_BURIED_POINT_DATASOURCE_PERIOD = "spark.fire.buried_point.datasource.period"
+  lazy val FIRE_BURIED_POINT_DATASOURCE_MAP = "spark.fire.buried_point.datasource.map."
 
+  /**
+   * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
+   * 不同数据配置使用统一的前缀：spark.fire.buried_point.datasource.map.
+   */
+  def buriedPointDatasourceMap: Map[String, String] = PropUtils.sliceKeys(this.FIRE_BURIED_POINT_DATASOURCE_MAP)
+
+  // 定时解析埋点SQL的执行频率（s）
+  lazy val buriedPointDatasourcePeriod = PropUtils.getInt(this.FIRE_BURIED_POINT_DATASOURCE_PERIOD, 60)
+  // 定时解析埋点SQL的初始延迟（s）
+  lazy val buriedPointDatasourceInitialDelay = PropUtils.getInt(this.FIRE_BURIED_POINT_DATASOURCE_INITIAL_DELAY, 30)
   // 用于存放埋点的队列最大大小，超过该大小将会被丢弃
   lazy val buriedPointDatasourceMaxSize = PropUtils.getInt(this.FIRE_BURIED_POINT_DATASOURCE_MAX_SIZE, 300)
   // 是否开启数据源埋点

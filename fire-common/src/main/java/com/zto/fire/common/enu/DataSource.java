@@ -4,13 +4,15 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * 数据源类型
+ *
  * @author ChengLong
  * @create 2020-07-07 16:36
  * @since 1.0.0
  */
 public enum DataSource {
     HIVE(1), HBASE(2), KAFKA(3), ROCKETMQ(4), REDIS(5),
-    ES(6), MYSQL(7), TIDB(8), ORACLE(9), SQLSERVER(10), CLICKHOUSE(11), UNKNOWN(20);
+    ES(6), MYSQL(7), TIDB(8), ORACLE(9), SQLSERVER(10),
+    DB2(11), CLICKHOUSE(12), PRESTO(13), KYLIN(14), UNKNOWN(20);
 
     private int type;
 
@@ -29,4 +31,5 @@ public enum DataSource {
             return UNKNOWN;
         }
     }
+
 }

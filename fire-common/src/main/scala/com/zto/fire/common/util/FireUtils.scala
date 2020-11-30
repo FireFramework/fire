@@ -200,9 +200,26 @@ private[fire] object FireUtils extends Serializable {
 
   /**
    * 以人类可读的方式计算耗时（ms）
+   *
    * @param beginTime
    * @return
    */
   def timecost(beginTime: Long): String = readable(currentTime - beginTime, TimeUnitEnum.ms)
 
+  /**
+   * 用于统计指定代码块执行的耗时时间
+   *
+   * @param msg
+   * 用于描述当前代码块的用户
+   * @param logger
+   * 日志记录器
+   * @param block
+   * try的具体逻辑
+   */
+  def timecost[T](msg: String, logger: Logger = this.logger)(block: => T): T = {
+    val startTime = this.currentTime
+    val retVal = block
+    logger.info(s"执行${msg}耗时：${timecost(startTime)}")
+    retVal
+  }
 }

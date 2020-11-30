@@ -5,10 +5,10 @@ import java.util.concurrent.TimeUnit
 
 import com.codahale.metrics.jvm.{FileDescriptorRatioGauge, GarbageCollectorMetricSet, MemoryUsageGaugeSet, ThreadStatesGaugeSet}
 import com.codahale.metrics.{ConsoleReporter, MetricRegistry, Slf4jReporter}
+import com.zto.fire.common.UnitTest
 import com.zto.fire.common.anno.{Internal, TestStep}
 import com.zto.fire.common.db.v2.bean.Student
 import com.zto.fire.common.util.{DataSourceManager, FireUtils, PropUtils}
-import org.apache.log4j.{Level, Logger}
 import org.junit.Assert._
 import org.junit.{Before, Test}
 
@@ -21,13 +21,12 @@ import scala.collection.JavaConversions._
  * @since 1.1.2
  * @create 2020-11-13 15:06
  */
-class HBaseOperTest {
+class HBaseOperTest extends UnitTest {
   val tableName = "fire_test_1"
   val tableName2 = "fire_test_2"
   var hbase: HBaseOper = null
   var hbase2: HBaseOper = null
   val metrics = new MetricRegistry()
-  Logger.getLogger(classOf[HBaseOper]).setLevel(Level.toLevel("INFO"))
 
   @Before
   def init: Unit = {
@@ -89,6 +88,16 @@ class HBaseOperTest {
     val scanList = this.hbase.scan(this.tableName, classOf[Student], "1", "3")
     assertEquals(scanList.size, 2)
     scanList.foreach(println)
+
+    for (i <- 1 to 5) {
+      DataSourceManager.get.foreach(t => {
+        t._2.foreach(source => {
+          println("数据源：" + t._1.toString + " " + source)
+        })
+      })
+      println("=====================================")
+      Thread.sleep(10000)
+    }
   }
 
   /**
