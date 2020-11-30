@@ -46,7 +46,6 @@ import scala.reflect.{ClassTag, classTag}
  * @author ChengLong 2020-11-11
  */
 private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 1) extends DBBaseOper(conf, keyNum) {
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
   // --------------------------------------- 反射缓存 --------------------------------------- //
   private[this] lazy val cacheFieldMap = new ConcurrentHashMap[Class[_], Map[String, Field]]()
   private[this] lazy val cacheHConfigMap = new ConcurrentHashMap[Class[_], HConfig]()

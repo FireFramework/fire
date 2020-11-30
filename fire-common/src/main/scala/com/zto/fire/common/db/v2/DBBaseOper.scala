@@ -2,6 +2,8 @@ package com.zto.fire.common.db.v2
 
 import java.util.concurrent.ConcurrentHashMap
 
+import org.slf4j.LoggerFactory
+
 /**
  * 数据库操作公共父类
  *
@@ -13,7 +15,9 @@ import java.util.concurrent.ConcurrentHashMap
  * @since 1.1.2
  * @create 2020-11-27 10:32
  */
-private[fire] abstract class DBBaseOper(conf: Any = null, keyNum: Int = 1)
+private[fire] abstract class DBBaseOper(conf: Any = null, keyNum: Int = 1) {
+  lazy val logger = LoggerFactory.getLogger(this.getClass)
+}
 
 /**
  * 用于根据指定的keyNum创建不同的数据库连接实例

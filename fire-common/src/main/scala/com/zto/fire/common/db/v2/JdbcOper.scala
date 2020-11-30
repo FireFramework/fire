@@ -26,7 +26,6 @@ import scala.reflect.ClassTag
  */
 private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBBaseOper(conf, keyNum) {
   private[this] lazy val connPool = this.init
-  private val logger = LoggerFactory.getLogger(this.getClass)
   // 日志中sql截取的长度
   private lazy val logSqlLength = FireFrameworkConf.logSqlLength
   private[this] var username: String = _
