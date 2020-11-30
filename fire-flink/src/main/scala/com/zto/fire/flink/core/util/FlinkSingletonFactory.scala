@@ -3,8 +3,7 @@ package com.zto.fire.flink.core.util
 import com.zto.fire.common.util.ValueUtils
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
-import org.apache.flink.table.api.TableEnvironment
-import org.apache.flink.table.api.scala.{BatchTableEnvironment, StreamTableEnvironment}
+import org.apache.flink.table.api.bridge.scala.{BatchTableEnvironment, StreamTableEnvironment}
 
 /**
   * 单例工厂，用于创建单例的对象

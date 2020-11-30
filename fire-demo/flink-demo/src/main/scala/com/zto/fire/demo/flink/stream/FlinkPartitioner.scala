@@ -4,8 +4,6 @@ import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
 import org.apache.flink.api.common.functions.Partitioner
 import org.apache.flink.api.scala._
-import org.apache.flink.table.api.TableEnvironment
-import org.apache.flink.table.api.java.BatchTableEnvironment
 
 /**
  * flink重分区

@@ -18,11 +18,10 @@ import org.apache.flink.streaming.api.scala.function.AllWindowFunction
 import org.apache.flink.streaming.api.scala.{DataStream, _}
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.api.scala._
+import org.apache.flink.table.api.bridge.scala._
 import org.apache.flink.types.Row
 import org.apache.flink.util.Collector
 
-import scala.collection.{JavaConversions, mutable}
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
