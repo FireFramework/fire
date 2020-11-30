@@ -345,6 +345,8 @@ object JdbcOper extends DBBaseOperFactory {
     this.instanceMap.get(keyNum).asInstanceOf[JdbcOper]
   }
 
+  // ------------------------------- 兼容老API的使用方法，模拟静态方法的API使用方式 ------------------------------- //
+
   /**
    * 根据指定的keyNum获取对应的数据库连接
    */
