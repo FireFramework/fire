@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala.{ExecutionEnvironment, _}
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
-import org.apache.flink.table.api.scala.BatchTableEnvironment
+import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
 
 /**
  * flink batch通用父接口

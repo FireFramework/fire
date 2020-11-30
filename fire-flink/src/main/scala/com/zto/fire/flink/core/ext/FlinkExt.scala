@@ -1,14 +1,13 @@
 package com.zto.fire.flink.core.ext
 
 import com.zto.fire.flink.core.ext.batch.{BatchExecutionEnvExt, BatchTableEnvExt, DataSetExt}
-import com.zto.fire.flink.core.ext.stream.{DataStreamExt, RowExt, StreamExecutionEnvExt, StreamTableEnvExt, TableExt}
+import com.zto.fire.flink.core.ext.stream._
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.api.scala.{BatchTableEnvironment, StreamTableEnvironment}
+import org.apache.flink.table.api.bridge.scala.{BatchTableEnvironment, StreamTableEnvironment}
 import org.apache.flink.types.Row
 
-import scala.reflect.ClassTag
 
 /**
  * Flink扩展工具类，利用隐式转换对已有的类追加自定义函数

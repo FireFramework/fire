@@ -9,7 +9,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.api.scala._
+import org.apache.flink.table.api.bridge.scala._
 import org.apache.flink.types.Row
 
 import scala.collection.mutable.ListBuffer

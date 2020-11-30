@@ -2,7 +2,7 @@ package com.zto.fire.flink.core.ext.batch
 
 import com.zto.fire.core.bridge.JdbcOperBridge
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.api.scala.BatchTableEnvironment
+import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
 
 /**
  * 用于flink BatchTableEnvironment API库扩展

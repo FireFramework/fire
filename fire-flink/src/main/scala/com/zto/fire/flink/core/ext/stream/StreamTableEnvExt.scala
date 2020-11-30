@@ -5,10 +5,10 @@ import com.zto.fire.core.bridge.JdbcOperBridge
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.api.scala.StreamTableEnvironment
 import org.apache.flink.table.functions.ScalarFunction
 import org.apache.flink.types.Row
 import com.zto.fire.flink.core.ext.FlinkExt._
+import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 
 /**
  * 用于对Flink StreamTableEnvironment的API库扩展
