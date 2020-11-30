@@ -4,7 +4,6 @@ import com.zto.fire.common.UnitTest
 import com.zto.fire.common.anno.TestStep
 import com.zto.fire.common.db.v2.bean.Student
 import com.zto.fire.common.util.{DataSourceManager, PropUtils}
-import org.apache.log4j.{Level, Logger}
 import org.junit.{Before, Test}
 import org.junit.Assert._
 
@@ -59,7 +58,7 @@ class JdbcOperTest extends UnitTest {
         })
       })
       println("=====================================")
-      Thread.sleep(10000)
+      Thread.sleep(1000)
     }
   }
 }

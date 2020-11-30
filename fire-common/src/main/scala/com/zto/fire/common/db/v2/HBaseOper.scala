@@ -24,7 +24,7 @@ import org.apache.hadoop.hbase.io.compress.Compression
 import org.apache.hadoop.hbase.util.Bytes
 import org.slf4j.LoggerFactory
 
-import scala.collection.Iterator
+import scala.collection.{Iterator, mutable}
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
@@ -925,7 +925,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @param families  多个列族
    */
   @Internal
-  private[fire] def deleteFamilies(tableName: String, rowKey: String, families: Seq[String]): Unit = {
+  private[fire] def deleteFamilies(tableName: String, rowKey: String, families: String*): Unit = {
     if (families != null && families.nonEmpty && StringUtils.isNotBlank(tableName)
       && StringUtils.isNotBlank(rowKey) && isExists(tableName)) {
       val starTime = currentTime
@@ -1080,5 +1080,219 @@ object HBaseOper extends DBBaseOperFactory {
     scan.setCacheBlocks(cacheBlocks)
     scan.setReversed(reversed)
     scan
+  }
+
+  /**
+   * 批量插入多行多列，自动将HBaseBaseBean子类转为Put集合
+   *
+   * @param tableName 表名
+   * @param beans     HBaseBaseBean子类集合
+   */
+  def insert[T <: HBaseBaseBean[T] : ClassTag](tableName: String, beans: Seq[T], keyNum: Int = 1): Unit = {
+    HBaseOper(keyNum = keyNum).insert[T](tableName, beans: _*)
+  }
+
+  /**
+   * 批量插入多行多列
+   *
+   * @param tableName 表名
+   * @param puts      Put集合
+   */
+  def insert(tableName: String, puts: Seq[Put], keyNum: Int): Unit = {
+    HBaseOper(keyNum = keyNum).insert(tableName, puts: _*)
+  }
+
+  /**
+   * 从HBase批量Get数据，并将结果封装到JavaBean中
+   *
+   * @param tableName 表名
+   * @param rowKeys   指定的多个rowKey
+   * @param clazz     目标类类型，必须是HBaseBaseBean的子类
+   * @return 目标对象实例
+   */
+  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeys: Seq[String], keyNum: Int = 1): ListBuffer[T] = {
+    HBaseOper(keyNum = keyNum).get[T](tableName, clazz, rowKeys: _*)
+  }
+
+  /**
+   * 从HBase批量Get数据，并将结果封装到JavaBean中
+   *
+   * @param tableName 表名
+   * @param clazz     目标类类型，必须是HBaseBaseBean的子类
+   * @param gets      指定的多个get对象
+   * @return 目标对象实例
+   */
+  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], gets: ListBuffer[Get], keyNum: Int): ListBuffer[T] = {
+    HBaseOper(keyNum = keyNum).get[T](tableName, clazz, gets: _*)
+  }
+
+  /**
+   * 通过HBase Seq[Get]获取多条数据
+   *
+   * @param tableName 表名
+   * @param getList   HBase的get对象实例
+   * @return
+   * HBase Result
+   */
+  def getResult(tableName: String, getList: Seq[Get], keyNum: Int): ListBuffer[Result] = {
+    HBaseOper(keyNum = keyNum).getResult(tableName, getList: _*)
+  }
+
+  /**
+   * 通过HBase Get对象获取一条数据
+   *
+   * @param tableName 表名
+   * @return
+   * HBase Result
+   */
+  def getResult[T: ClassTag](tableName: String, rowKeyList: Seq[String], keyNum: Int = 1): ListBuffer[Result] = {
+    HBaseOper(keyNum = keyNum).getResult[T](tableName, rowKeyList: _*)
+  }
+
+  /**
+   * 表扫描，将scan后得到的ResultScanner对象直接返回
+   * 注：调用者需手动关闭ResultScanner对象实例
+   *
+   * @param tableName 表名
+   * @param scan      HBase scan对象
+   * @return 指定类型的List
+   */
+  def scanResultScanner(tableName: String, scan: Scan, keyNum: Int): ResultScanner = {
+    HBaseOper(keyNum = keyNum).scanResultScanner(tableName, scan)
+  }
+
+  /**
+   * 表扫描，将scan后得到的ResultScanner对象直接返回
+   * 注：调用者需手动关闭ResultScanner对象实例
+   *
+   * @param tableName 表名
+   * @param startRow  开始行
+   * @param endRow    结束行
+   * @return 指定类型的List
+   */
+  def scanResultScanner(tableName: String, startRow: String, endRow: String, keyNum: Int = 1): ResultScanner = {
+    HBaseOper(keyNum = keyNum).scanResultScanner(tableName, startRow, endRow)
+  }
+
+  /**
+   * 表扫描，将查询后的数据转为JavaBean并放到List中
+   *
+   * @param tableName 表名
+   * @param startRow  开始行
+   * @param endRow    结束行
+   * @param clazz     类型
+   * @return 指定类型的List
+   */
+  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, endRow: String, keyNum: Int = 1): ListBuffer[T] = {
+    HBaseOper(keyNum = keyNum).scan[T](tableName, clazz, startRow, endRow)
+  }
+
+  /**
+   * 表扫描，将查询后的数据转为JavaBean并放到List中
+   *
+   * @param tableName 表名
+   * @param scan      HBase scan对象
+   * @param clazz     类型
+   * @return 指定类型的List
+   */
+  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int): ListBuffer[T] = {
+    HBaseOper(keyNum = keyNum).scan[T](tableName, clazz, scan)
+  }
+
+  /**
+   * 根据keyNum获取指定HBase集群的connection
+   */
+  def getConnection(keyNum: Int = 1): Connection = HBaseOper(keyNum = keyNum).getConnection
+
+  /**
+   * 创建HBase表
+   *
+   * @param tableName
+   * 表名
+   * @param families
+   * 列族
+   */
+  private[fire] def createTable(tableName: String, families: Seq[String], keyNum: Int = 1): Unit = {
+    HBaseOper(keyNum = keyNum).createTable(tableName, families: _*)
+  }
+
+  /**
+   * 删除指定的HBase表
+   *
+   * @param tableName 表名
+   */
+  private[fire] def dropTable(tableName: String, keyNum: Int = 1): Unit = {
+    HBaseOper(keyNum = keyNum).dropTable(tableName)
+  }
+
+  /**
+   * 启用指定的HBase表
+   *
+   * @param tableName 表名
+   */
+  private[fire] def enableTable(tableName: String, keyNum: Int = 1): Unit = {
+    HBaseOper(keyNum = keyNum).enableTable(tableName)
+  }
+
+  /**
+   * disable指定的HBase表
+   *
+   * @param tableName 表名
+   */
+  private[fire] def disableTable(tableName: String, keyNum: Int = 1): Unit = {
+    HBaseOper(keyNum = keyNum).disableTable(tableName)
+  }
+
+  /**
+   * 清空指定的HBase表
+   *
+   * @param tableName
+   *                       表名
+   * @param preserveSplits 是否保留所有的split信息
+   */
+  private[fire] def truncateTable(tableName: String, preserveSplits: Boolean = true, keyNum: Int = 1): Unit = {
+    HBaseOper(keyNum = keyNum).truncateTable(tableName, preserveSplits)
+  }
+
+  /**
+   * 用于判断HBase表是否存在
+   */
+  def tableExists(tableName: String, keyNum: Int = 1): Boolean = {
+    HBaseOper(keyNum = keyNum).tableExists(tableName)
+  }
+
+  /**
+   * 根据多个rowKey删除对应的整行记录
+   *
+   * @param tableName 表名
+   * @param rowKeys   待删除的rowKey集合
+   */
+  def deleteRows(tableName: String, rowKeys: Seq[String], keyNum: Int = 1): Unit = {
+    HBaseOper(keyNum = keyNum).deleteRows(tableName, rowKeys: _*)
+  }
+
+  /**
+   * 批量删除指定RowKey的多个列族
+   *
+   * @param tableName 表名
+   * @param rowKey    rowKey
+   * @param families  多个列族
+   */
+  @Internal
+  private[fire] def deleteFamilies(tableName: String, rowKey: String, families: Seq[String], keyNum: Int = 1): Unit = {
+    HBaseOper(keyNum = keyNum).deleteFamilies(tableName, rowKey, families: _*)
+  }
+
+  /**
+   * 批量删除指定列族下的多个字段
+   *
+   * @param tableName  表名
+   * @param rowKey     rowKey字段
+   * @param family     列族
+   * @param qualifiers 列名
+   */
+  @Internal
+  private[fire] def deleteQualifiers(tableName: String, rowKey: String, family: String, qualifiers: Seq[String], keyNum: Int = 1): Unit = {
+    HBaseOper(keyNum = keyNum).deleteQualifiers(tableName, rowKey, family, qualifiers: _*)
   }
 }

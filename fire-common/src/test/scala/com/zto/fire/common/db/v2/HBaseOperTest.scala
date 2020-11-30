@@ -138,6 +138,19 @@ class HBaseOperTest extends UnitTest {
   }
 
   /**
+   * 测试老的api使用方式
+   */
+  @Test
+  @TestStep(step = 6, desc = "静态类型API测试")
+  def testOldStyle: Unit = {
+    val hbaseOper1 = HBaseOper(keyNum = 2)
+    val hbaseOper2 = HBaseOper(keyNum = 2)
+    assertEquals(hbaseOper1 == hbaseOper2, true)
+    println(HBaseOper.tableExists("fire_test_1"))
+    println(HBaseOper.tableExists("fire_test_1"))
+  }
+
+  /**
    * 创建必要的表信息
    */
   @Internal
