@@ -32,6 +32,7 @@ object ExceptionBus {
    * 向异常总线中添加异常对象
    */
   def offer(timestamp: Long, t: Throwable): Boolean = this.synchronized {
+    exceptionCount.incrementAndGet()
     this.queue.offer((timestamp, t))
   }
 

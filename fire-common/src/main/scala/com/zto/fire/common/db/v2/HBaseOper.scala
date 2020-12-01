@@ -10,6 +10,7 @@ import com.zto.fire.common.anno.{FieldName, HConfig, Internal}
 import com.zto.fire.common.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.common.conf.FireHBaseConf.{familyName, _}
+import com.zto.fire.common.db.{DBBaseOper, DBBaseOperFactory}
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.util.ExceptionBus._
 import com.zto.fire.common.util.FireUtils._

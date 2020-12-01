@@ -3,6 +3,7 @@ package com.zto.fire.demo.flink.stream
 import java.util.concurrent.TimeUnit
 
 import com.alibaba.fastjson.JSON
+import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, SystemInfoUtils}
 import com.zto.fire.demo.bean.Student
 import com.zto.fire.flink.core.BaseFlinkStreaming
@@ -75,6 +76,8 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
 
     // 执行增删改操作
     this.flink.jdbcUpdate(s"delete from $tableName", keyNum = 3)
+
+    JdbcOper
   }
 
   override def process: Unit = {

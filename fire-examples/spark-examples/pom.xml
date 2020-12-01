@@ -1,15 +1,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.zto.fire</groupId>
-  <artifactId>spark-demo</artifactId>
+  <artifactId>spark-examples</artifactId>
   <name>${project.artifactId}</name>
-  <description>fire-spark demo</description>
+  <description>spark-examples</description>
   <inceptionYear>2010</inceptionYear>
   <packaging>jar</packaging>
 
   <parent>
     <groupId>com.zto.fire</groupId>
-    <artifactId>fire-demo</artifactId>
+    <artifactId>fire-examples</artifactId>
     <version>1.1.2-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>

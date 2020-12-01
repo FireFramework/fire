@@ -19,7 +19,7 @@ abstract class FlinkHBaseSink[IN](tableName: String,
                                   keyNum: Int = 1) extends BaseFlinkSink[IN, HBaseBaseBean[_]](batch, flushInterval) {
 
   // hbase操作失败时允许最大重试次数
-  this.maxRetry = FireHBaseConf.hbaseMaxRetry
+  this.maxRetry = FireHBaseConf.hbaseMaxRetry()
 
   /**
    * 将数据sink到hbase

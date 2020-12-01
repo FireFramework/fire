@@ -196,7 +196,7 @@ class HBaseOperTest extends UnitTest {
     Thread.sleep(1000)
   }
 
-  @Test
+  // @Test
   def testJvm: Unit = {
     val reporter2 = ConsoleReporter.forRegistry(metrics)
       .convertRatesTo(TimeUnit.SECONDS)

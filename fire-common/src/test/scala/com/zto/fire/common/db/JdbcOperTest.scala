@@ -1,11 +1,11 @@
-package com.zto.fire.common.db.v2
+package com.zto.fire.common.db
 
 import com.zto.fire.common.UnitTest
 import com.zto.fire.common.anno.TestStep
 import com.zto.fire.common.db.v2.bean.Student
 import com.zto.fire.common.util.{DataSourceManager, PropUtils}
-import org.junit.{Before, Test}
 import org.junit.Assert._
+import org.junit.{Before, Test}
 
 import scala.collection.JavaConversions._
 

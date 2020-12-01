@@ -146,15 +146,15 @@ object JdbcTest extends BaseSparkCore {
   def testExecutor: Unit = {
     this.jdbc.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
       override def process(rs: ResultSet): Int = {
-        this.mark()
+        // this.mark()
         Thread.sleep(1000)
-        this.log(s"=============driver123 $tableName2=============")
+        // this.log(s"=============driver123 $tableName2=============")
         1
       }
     }, keyNum = 3)
     JdbcOper.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
       override def process(rs: ResultSet): Int = {
-        this.log(s"=============driver $tableName2=============")
+        // this.log(s"=============driver $tableName2=============")
         1
       }
     }, keyNum = 5)
@@ -164,7 +164,7 @@ object JdbcTest extends BaseSparkCore {
       it.foreach(i => {
         this.jdbc.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
           override def process(rs: ResultSet): Int = {
-            this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+            // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
             1
           }
         }, keyNum = 3)
@@ -177,7 +177,7 @@ object JdbcTest extends BaseSparkCore {
       it.foreach(i => {
         JdbcOper.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
           override def process(rs: ResultSet): Int = {
-            this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+            // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
             1
           }
         }, keyNum = 5)

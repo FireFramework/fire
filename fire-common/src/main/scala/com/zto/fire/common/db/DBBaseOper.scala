@@ -1,4 +1,4 @@
-package com.zto.fire.common.db.v2
+package com.zto.fire.common.db
 
 import java.util.concurrent.ConcurrentHashMap
 

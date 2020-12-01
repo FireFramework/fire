@@ -30,7 +30,7 @@ import scala.reflect.ClassTag
 object HBaseSparkBridge extends HBaseOper with Logging {
   private[this] lazy val sparkSession = SingletonFactory.getSparkSession
 
-  def batchSize: Int = FireHBaseConf.hbaseBatchSize
+  def batchSize: Int = FireHBaseConf.hbaseBatchSize()
 
   /**
     * 使用Java API的方式将DataFrame中的数据分多个批次插入到HBase中

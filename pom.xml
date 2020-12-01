@@ -27,7 +27,7 @@
     <modules>
         <module>fire-common</module>
         <module>fire-core</module>
-        <module>fire-demo</module>
+        <module>fire-examples</module>
         <module>fire-flink</module>
         <module>fire-apollo</module>
         <module>fire-metrics</module>

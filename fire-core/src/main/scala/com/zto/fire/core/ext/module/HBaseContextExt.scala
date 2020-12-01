@@ -38,7 +38,7 @@ import scala.reflect.ClassTag
   * @author ChengLong 2018年4月10日 10:39:28
   */
 class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config: Configuration = HBaseOper.getConfiguration) extends HBaseContext(sc, config) with Logging {
-  lazy val batchSize = FireHBaseConf.hbaseBatchSize
+  lazy val batchSize = FireHBaseConf.hbaseBatchSize()
   private[this] lazy val sparkSession = SingletonFactory.getSparkSession
 
   /**
