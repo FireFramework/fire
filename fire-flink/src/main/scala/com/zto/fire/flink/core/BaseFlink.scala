@@ -17,7 +17,6 @@ import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.table.catalog.hive.HiveCatalog
 
-import scala.util.Random
 
 /**
  * Flink引擎通用父接口
