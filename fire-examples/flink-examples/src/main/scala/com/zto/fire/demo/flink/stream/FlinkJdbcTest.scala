@@ -79,17 +79,25 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
   }
 
   override def process: Unit = {
+    println("=========execute process method========")
     val stream = this.ssc.createDirectStream().filter(JSONUtils.checkJson _).map(json => JSON.parseObject(json, classOf[Student]))
+    println("=========execute stream========")
 
     // this.testTableJdbcSink(stream)
     this.testStreamJdbcSink(stream)
+    println("=========execute testStreamJdbcSink========")
     this.testJdbc
+    println("=========execute testJdbc========")
 
     this.env.execute("JdbcTest")
+    println("=========execute()========")
   }
 
 
   def main(args: Array[String]): Unit = {
+    println("==========execute main==========")
     this.init()
+    this.process
+    println("=========main end========")
   }
 }

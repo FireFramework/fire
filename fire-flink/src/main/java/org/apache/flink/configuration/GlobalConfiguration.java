@@ -214,8 +214,6 @@ public final class GlobalConfiguration {
      */
     private static void fireBootstrap(Configuration config) {
         if (isStart.compareAndSet(false, true)) {
-            // 启动fire rest server
-            startRestServer();
             // 加载必要的配置文件
             loadTaskConfiguration(config);
         }
@@ -247,23 +245,6 @@ public final class GlobalConfiguration {
         } else {
             LOG.warn("请通过-yD参数指定flink.fire.className任务的类名称，若不指定，则类同名配置文件中的flink相关参数将无法生效.");
         }
-    }
-
-    /**
-     * 启动fire框架rest服务
-     */
-    public static void startRestServer() {
-        PropUtils.compatible("flink");
-        restPort = 10086;// SystemInfoUtils.getRundomPort();
-        LOG.warn("端口号：" + restPort);
-        threadPool = ThreadUtils.createThreadPool("restServerPool", ThreadPoolType.SINGLE, 1);
-        restfulRegister = new RestfulRegister(threadPool).port(restPort);
-        flinkSystemRestful = new FlinkSystemRestful(null, restfulRegister);
-        restAddress = SystemInfoUtils.getIp() + ":" + restPort;
-        // TODO: 启动rest server会报错，暂时先不启用该服务
-        // restfulRegister.startRestServer();
-        LOG.info("start fire rest server successfully. rest address is:" + restAddress);
-        // PropUtils.setProperty(FireFrameworkConf.fireRestUrl(PropUtils.engine()), "http://" + restAddress);
     }
 
     /**
