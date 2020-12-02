@@ -540,11 +540,15 @@ public class SystemInfoUtils {
     /**
      * 随机获取系统未被使用的端口号
      *
-     * @return
      */
-    public static int getRundomPort() {
+    public static int getRundomPort(int bound) {
         try {
-            return new ServerSocket(0).getLocalPort();
+            int port = new ServerSocket(0).getLocalPort();
+            if (bound > 0) {
+                return port + new Random().nextInt(bound);
+            } else {
+                return port;
+            }
         } catch (Exception e) {
             return new Random().nextInt(65535);
         }

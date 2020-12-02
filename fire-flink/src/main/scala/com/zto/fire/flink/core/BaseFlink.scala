@@ -17,6 +17,8 @@ import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.table.catalog.hive.HiveCatalog
 
+import scala.util.Random
+
 /**
  * Flink引擎通用父接口
  *
@@ -46,7 +48,7 @@ trait BaseFlink extends BaseFire {
    */
   override private[fire] def createContext(conf: Any): Unit = {
     this.retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
-      this.restPort = SystemInfoUtils.getRundomPort
+      this.restPort = SystemInfoUtils.getRundomPort(FireFrameworkConf.restPortRandomBound)
       this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
     }
     this.systemRestful = new FlinkSystemRestful(this, this.restfulRegister)

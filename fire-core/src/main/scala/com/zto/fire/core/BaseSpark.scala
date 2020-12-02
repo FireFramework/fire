@@ -110,7 +110,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    */
   override private[fire] final def createContext(conf: Any): Unit = {
     this.retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
-      this.restPort = SystemInfoUtils.getRundomPort
+      this.restPort = SystemInfoUtils.getRundomPort(FireFrameworkConf.restPortRandomBound)
       this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
     }
     this.systemRestful = new SparkSystemRestful(this)

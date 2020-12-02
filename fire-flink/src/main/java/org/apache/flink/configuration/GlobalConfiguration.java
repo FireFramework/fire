@@ -223,6 +223,7 @@ public final class GlobalConfiguration {
      * 加载必要的配置文件
      */
     private static void loadTaskConfiguration(Configuration config) {
+        PropUtils.compatible("flink");
         // 二次开发代码，用于加载任务同名配置文件中的flink参数
         String className = config.getString("flink.fire.className", "");
         if (className != null && className.contains(".")) {

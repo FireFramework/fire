@@ -57,7 +57,7 @@ class RestfulRegister(val threadPool: ExecutorService) {
     if (!FireFrameworkConf.restEnable) return
 
     if (this.port == null) {
-      this.port(SystemInfoUtils.getRundomPort)
+      this.port(SystemInfoUtils.getRundomPort(FireFrameworkConf.restPortRandomBound))
     }
     val restPrefix = s"http://${SystemInfoUtils.getIp}:${this.port}"
 
