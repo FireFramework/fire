@@ -19,10 +19,7 @@
 package org.apache.flink.configuration;
 
 import com.zto.fire.common.conf.FireFrameworkConf;
-import com.zto.fire.common.enu.ThreadPoolType;
 import com.zto.fire.common.util.PropUtils;
-import com.zto.fire.common.util.SystemInfoUtils;
-import com.zto.fire.common.util.ThreadUtils;
 import com.zto.fire.core.rest.RestfulRegister;
 import com.zto.fire.flink.core.rest.FlinkSystemRestful;
 import org.apache.flink.annotation.Internal;
@@ -58,6 +55,8 @@ public final class GlobalConfiguration {
 
     // the hidden content to be displayed
     public static final String HIDDEN_CONTENT = "******";
+
+    public static boolean isJobManager = false;
 
     // --------------------------------------------------------------------------------------------
 
@@ -102,6 +101,7 @@ public final class GlobalConfiguration {
      * @param configDir the directory which contains the configuration files
      */
     public static Configuration loadConfiguration(final String configDir) {
+        isJobManager = true;
         return loadConfiguration(configDir, null);
     }
 
@@ -224,6 +224,7 @@ public final class GlobalConfiguration {
      */
     private static void loadTaskConfiguration(Configuration config) {
         PropUtils.compatible("flink");
+
         // 二次开发代码，用于加载任务同名配置文件中的flink参数
         String className = config.getString("flink.fire.className", "");
         if (className != null && className.contains(".")) {
@@ -234,7 +235,7 @@ public final class GlobalConfiguration {
                 // 加载任务同名的配置文件
                 PropUtils.loadFile(simpleClassName);
                 // 加载外部系统配置信息，覆盖同名配置文件中的配置，实现动态替换
-                if (FireFrameworkConf.zrcEnable()) PropUtils.invokeZrcConf(className, restAddress);
+                if (FireFrameworkConf.configCenterEnable() && isJobManager) PropUtils.invokeConfigCenter(className, restAddress);
 
                 JavaConversions.mapAsJavaMap(PropUtils.toMap()).forEach((k, v) -> {
                     if (!k.startsWith("spark.")) {
@@ -242,6 +243,10 @@ public final class GlobalConfiguration {
                         LOG.info("load configuration：{}={}", k, v);
                     }
                 });
+
+                // 将所有configuration信息同步到PropUtils中
+                config.setString("flink.jobmanager.label", Boolean.toString(isJobManager));
+                PropUtils.setProperties(config.confData);
             }
         } else {
             LOG.warn("请通过-yD参数指定flink.fire.className任务的类名称，若不指定，则类同名配置文件中的flink相关参数将无法生效.");

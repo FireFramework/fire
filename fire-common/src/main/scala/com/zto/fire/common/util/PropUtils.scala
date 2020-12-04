@@ -12,7 +12,8 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.Map
-import scala.collection.{JavaConversions, mutable}
+import scala.collection.JavaConversions._
+import scala.collection.mutable
 
 /**
  * 读取配置文件工具类
@@ -118,9 +119,6 @@ object PropUtils {
 
   /**
    * 获取字符串
-   *
-   * @param key
-   * @return
    */
   def getString(key: String): String = {
     this.getProperty(key)
@@ -148,9 +146,6 @@ object PropUtils {
 
   /**
    * 获取字符串，为空则取默认值
-   *
-   * @param key
-   * @return
    */
   def getString(key: String, default: String): String = {
     val value = this.getProperty(key)
@@ -159,9 +154,6 @@ object PropUtils {
 
   /**
    * 获取整型数据
-   *
-   * @param key
-   * @return
    */
   def getInt(key: String): Int = {
     val value = this.getProperty(key)
@@ -170,9 +162,6 @@ object PropUtils {
 
   /**
    * 获取整型数据
-   *
-   * @param key
-   * @return
    */
   def getInt(key: String, default: Int): Int = {
     val value = this.getProperty(key)
@@ -194,9 +183,6 @@ object PropUtils {
 
   /**
    * 获取长整型数据
-   *
-   * @param key
-   * @return
    */
   def getLong(key: String): Long = {
     val value = this.getProperty(key)
@@ -205,9 +191,6 @@ object PropUtils {
 
   /**
    * 获取长整型数据
-   *
-   * @param key
-   * @return
    */
   def getLong(key: String, default: Long): Long = {
     val value = this.getProperty(key)
@@ -216,9 +199,6 @@ object PropUtils {
 
   /**
    * 获取float型数据
-   *
-   * @param key
-   * @return
    */
   def getFloat(key: String): Float = {
     val value = this.getProperty(key)
@@ -227,9 +207,6 @@ object PropUtils {
 
   /**
    * 获取float型数据
-   *
-   * @param key
-   * @return
    */
   def getFloat(key: String, default: Float): Float = {
     val value = this.getProperty(key)
@@ -238,9 +215,6 @@ object PropUtils {
 
   /**
    * 获取float型数据
-   *
-   * @param key
-   * @return
    */
   def getDouble(key: String): Double = {
     val value = this.getProperty(key)
@@ -249,9 +223,6 @@ object PropUtils {
 
   /**
    * 获取float型数据
-   *
-   * @param key
-   * @return
    */
   def getDouble(key: String, default: Double): Double = {
     val value = this.getProperty(key)
@@ -273,9 +244,6 @@ object PropUtils {
 
   /**
    * 获取布尔值数据
-   *
-   * @param key
-   * @return
    */
   def getBoolean(key: String): Boolean = {
     val value = this.getProperty(key)
@@ -284,9 +252,6 @@ object PropUtils {
 
   /**
    * 获取布尔值数据
-   *
-   * @param key
-   * @return
    */
   def getBoolean(key: String, default: Boolean): Boolean = {
     val value = this.getBoolean(key)
@@ -323,6 +288,22 @@ object PropUtils {
   }
 
   /**
+   * 使用map设置多个值
+   *
+   * @param map
+   * java map，存放多个配置信息
+   */
+  def setProperties(map: java.util.Map[String, Object]): Unit = {
+    if (map != null) {
+      map.foreach(kv => {
+        if (StringUtils.isNotBlank(kv._1) && kv._2!= null) {
+          this.props.setProperty(kv._1, kv._2.toString)
+        }
+      })
+    }
+  }
+
+  /**
    * 设置指定的配置
    *
    * @param key
@@ -338,12 +319,10 @@ object PropUtils {
 
   /**
    * 隐蔽密码信息后返回
-   *
-   * @return
    */
   def cover: Properties = {
     val conf = new Properties()
-    JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
+    this.props.keySet().foreach(key => {
       if (key != null && !key.toString.contains("pass")) {
         conf.setProperty(key.toString, this.props.getProperty(key.toString))
       }
@@ -357,7 +336,7 @@ object PropUtils {
   def print(): Unit = {
     if (!FireFrameworkConf.fireConfShow) return
     LogUtils.logStyle(this.logger, "Fire configuration.")(logger => {
-      JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
+      this.props.keySet().foreach(key => {
         // 如果包含配置黑名单，则不打印
         if (key != null && FireFrameworkConf.fireConfBlackList.filter(conf => key.toString.contains(conf)).isEmpty) {
           // 如果是spark引擎，则忽略flink相关配置；如果是flink引擎，则忽略spark相关配置
@@ -377,7 +356,7 @@ object PropUtils {
    */
   def toMap: Map[String, String] = {
     val confMap = scala.collection.mutable.Map[String, String]()
-    JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
+    this.props.keySet().foreach(key => {
       if (key != null) {
         confMap += (key.toString -> this.props.getProperty(key.toString))
       }
@@ -391,7 +370,7 @@ object PropUtils {
   def sliceKeys(keyStart: String): collection.immutable.Map[String, String] = {
     if (!this.cachedConfMap.contains(keyStart)) {
       val confMap = new mutable.HashMap[String, String]()
-      JavaConversions.asScalaSet(this.props.keySet()).foreach(key => {
+      this.props.keySet().foreach(key => {
         // 舍弃key前缀的前缀，兼容不同的引擎导致的key前缀不同的问题
         val keyStartContent = keyStart.substring(keyStart.indexOf("."), keyStart.length)
         if (key != null && key.toString.contains(keyStartContent)) {
@@ -443,7 +422,7 @@ object PropUtils {
    */
   def toFlinkConfMap: Map[String, String] = {
     val confMap = scala.collection.mutable.Map[String, String]()
-    JavaConversions.asScalaSet(this.props.keySet()).filter(t => t != null && !t.toString.startsWith("spark")).foreach(key => {
+    this.props.keySet().filter(t => t != null && !t.toString.startsWith("spark")).foreach(key => {
       if (key != null) {
         confMap += (key.toString -> this.props.getProperty(key.toString))
       }
@@ -461,38 +440,38 @@ object PropUtils {
   }
 
   /**
-   * 获取zrc配置信息
+   * 调用外部配置中心接口获取配合信息
    */
-  def invokeZrcConf(className: String, rest: String): Unit = {
+  def invokeConfigCenter(className: String, rest: String): Unit = {
     val param =
       s"""
-         |{"className": "$className", "url": "http://$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.zrcSecret}"}
+         |{"className": "$className", "url": "http://$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.configCenterSecret}"}
       """.stripMargin
     var conf = ""
     try {
-      conf = HttpClientUtils.doPost(FireFrameworkConf.zrcProdAddress, param)
+      conf = HttpClientUtils.doPost(FireFrameworkConf.configCenterProdAddress, param)
     } catch {
       case e: Exception => {
-        this.logger.error("调用zrc注册接口失败，开始尝试调用测试环境zrc注册接口。", e)
+        this.logger.error("调用配置中心接口失败，开始尝试调用测试环境配置中心接口。", e)
         try {
-          conf = HttpClientUtils.doPost(FireFrameworkConf.zrcTestAddress, param)
+          conf = HttpClientUtils.doPost(FireFrameworkConf.configCenterTestAddress, param)
         } catch {
           case e: Exception => {
-            this.logger.error("无法从zrc获取到该任务的配置信息，如遇zrc注册接口不可用，仍需紧急发布，请将zrc中配置复制到当前任务的配置文件中，并通过以下配置关闭获取zrc配置的接口，并重启任务：spark.fire.zrc.enable=false。", e)
+            this.logger.error("无法从配置中心获取到该任务的配置信息，如遇配置中心注册接口不可用，仍需紧急发布，请将配置中心中的配置复制到当前任务的配置文件中，并通过以下配置关闭获取配置中心配置的接口，并重启任务：spark.fire.config_center.enable=false", e)
             throw e
           }
         }
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {
-        this.logger.info("成功获取zrc配置信息：" + conf)
+        this.logger.info("成功获取配置中心配置信息：" + conf)
         val msg = JSON.parseObject(conf)
         if (msg != null && msg.get("code") == 200) {
           val content = msg.get("content")
           if (content != null) {
             val confMap = JSON.parseObject(content.toString, classOf[java.util.HashMap[String, String]])
             if (confMap != null && !confMap.isEmpty) {
-              PropUtils.setProperties(JavaConversions.mapAsScalaMap(confMap))
+              PropUtils.setProperties(confMap)
             }
           }
         }
@@ -527,7 +506,7 @@ object PropUtils {
       if (StringUtils.isNotBlank(value) && !value.contains(appendValue)) dataSourceMap.put(dataSource, value + " | " + appendValue) else dataSourceMap.put(dataSource, appendValue)
     }
 
-    JavaConversions.asScalaSet(this.props.keySet()).map(key => key.toString).filter(key => !key.contains("cluster.map")).foreach(key => {
+    this.props.keySet().map(key => key.toString).filter(key => !key.contains("cluster.map")).foreach(key => {
       // 配置的Hive源
       merge(DataSource.HIVE, key, FireHiveConf.HIVE_CLUSTER)
       // 配置的HBase源

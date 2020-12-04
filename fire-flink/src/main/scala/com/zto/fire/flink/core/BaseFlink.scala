@@ -54,8 +54,8 @@ trait BaseFlink extends BaseFire {
     val restAddress = s"${SystemInfoUtils.getIp}:${this.restPort}"
     PropUtils.setProperty(FireFrameworkConf.fireRestUrl(PropUtils.engine), s"http://$restAddress")
 
-    // 注册到zrc平台，并覆盖配置信息
-    if (this.jobType == JobType.FLINK_STREAMING && FireFrameworkConf.zrcEnable) PropUtils.invokeZrcConf(this.className, restAddress)
+    // 注册到实时平台，并覆盖配置信息
+    if (this.jobType == JobType.FLINK_STREAMING && FireFrameworkConf.configCenterEnable) PropUtils.invokeConfigCenter(this.className, restAddress)
     PropUtils.print()
     SchedulerManager.registerTasks(this)
     // 创建HiveCatalog

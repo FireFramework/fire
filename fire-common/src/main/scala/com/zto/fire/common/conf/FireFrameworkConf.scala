@@ -38,10 +38,10 @@ private[fire] object FireFrameworkConf {
   lazy val SPARK_FIRE_LOG_SQL_LENGTH = "spark.fire.log.sql.length"
   // fire框架rest接口服务最大线程数
   lazy val SPARK_FIRE_RESTFUL_MAX_THREAD = "spark.fire.restful.max.thread"
-  // 用于配置是否抛弃zrc独立运行，配置为false表示不向zrc注册，不获取zrc配置
-  lazy val SPARK_FIRE_ZRC_ENABLE = "spark.fire.zrc.enable"
-  // zrc接口调用秘钥
-  lazy val SPARK_FIRE_ZRC_SECRET = "spark.fire.zrc.register.conf.secret"
+  // 用于配置是否抛弃配置中心独立运行
+  lazy val SPARK_FIRE_CONFIG_CENTER_ENABLE = "spark.fire.config_center.enable"
+  // 配置中心接口调用秘钥
+  lazy val SPARK_FIRE_CONFIG_CENTER_SECRET = "spark.fire.config_center.register.conf.secret"
   // fire框架restful端口冲突重试次数
   lazy val SPARK_FIRE_RESTFUL_PORT_RETRY_NUM = "spark.fire.restful.port.retry_num"
   // fire框架restful端口冲突重试时间（ms）
@@ -67,10 +67,10 @@ private[fire] object FireFrameworkConf {
   lazy val SPARK_FIRE_QUARTZ_MAX_THREAD = "spark.fire.quartz.max.thread"
   // fire框架restful地址
   def fireRestUrl(engine: String = "spark"): String = s"$engine.fire.rest.url"
-  // zrc生产环境注册地址
-  lazy val SPARK_ZRC_REGISTER_CONF_PROD_ADDRESS = "spark.fire.zrc.register.conf.prod.address"
-  // zrc测试环境注册地址
-  lazy val SPARK_ZRC_REGISTER_CONF_TEST_ADDRESS = "spark.fire.zrc.register.conf.test.address"
+  // 配置中心生产环境注册地址
+  lazy val SPARK_CONFIG_CENTER_REGISTER_CONF_PROD_ADDRESS = "spark.fire.config_center.register.conf.prod.address"
+  // 配置中心测试环境注册地址
+  lazy val SPARK_CONFIG_CENTER_REGISTER_CONF_TEST_ADDRESS = "spark.fire.config_center.register.conf.test.address"
   // spark streaming的remember时间，-1表示不生效(ms)
   lazy val SPARK_FIRE_STREAMING_REMEMBER = "spark.fire.streaming.remember"
   // 配置打印黑名单，配置项以逗号分隔
@@ -166,18 +166,18 @@ private[fire] object FireFrameworkConf {
   lazy val logEnable = PropUtils.getBoolean(this.SPARK_FIRE_LOG_ENABLE, true)
   // 用于限定fire框架中sql日志的字符串长度
   lazy val logSqlLength = PropUtils.getInt(this.SPARK_FIRE_LOG_SQL_LENGTH, 50)
-  // zrc生产环境注册地址
-  lazy val zrcProdAddress = PropUtils.getString(this.SPARK_ZRC_REGISTER_CONF_PROD_ADDRESS, "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack")
-  // zrc测试环境注册地址
-  lazy val zrcTestAddress = PropUtils.getString(this.SPARK_ZRC_REGISTER_CONF_TEST_ADDRESS)
+  // 配置中心生产环境注册地址
+  lazy val configCenterProdAddress = PropUtils.getString(this.SPARK_CONFIG_CENTER_REGISTER_CONF_PROD_ADDRESS, "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack")
+  // 配置中心测试环境注册地址
+  lazy val configCenterTestAddress = PropUtils.getString(this.SPARK_CONFIG_CENTER_REGISTER_CONF_TEST_ADDRESS)
 
 
   // fire框架rest接口服务最大线程数
   lazy val restfulMaxThread = PropUtils.getInt(this.SPARK_FIRE_RESTFUL_MAX_THREAD, 8)
-  // 用于配置是否抛弃zrc独立运行，配置为false表示不向zrc注册，不获取zrc配置
-  lazy val zrcEnable = PropUtils.getBoolean(this.SPARK_FIRE_ZRC_ENABLE, true)
-  // zrc接口调用秘钥
-  lazy val zrcSecret = PropUtils.getString(this.SPARK_FIRE_ZRC_SECRET, "21fa30b7f2082b1b12dfbc7c8c6d70b9")
+  // 用于配置是否抛弃配置中心独立运行
+  lazy val configCenterEnable = PropUtils.getBoolean(this.SPARK_FIRE_CONFIG_CENTER_ENABLE, true)
+  // 配置中心接口调用秘钥
+  lazy val configCenterSecret = PropUtils.getString(this.SPARK_FIRE_CONFIG_CENTER_SECRET, "21fa30b7f2082b1b12dfbc7c8c6d70b9")
   // fire框架restful端口冲突重试次数
   lazy val restfulPortRetryNum = PropUtils.getInt(this.SPARK_FIRE_RESTFUL_PORT_RETRY_NUM, 3)
   // fire框架restful端口冲突重试时间（ms）

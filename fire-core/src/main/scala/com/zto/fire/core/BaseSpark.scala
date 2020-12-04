@@ -117,8 +117,8 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     val restAddress = s"${SystemInfoUtils.getIp}:${this.restPort}"
     PropUtils.setProperty(FireFrameworkConf.fireRestUrl(PropUtils.engine), s"http://$restAddress")
 
-    // 注册到zrc平台，并覆盖配置信息
-    if (this.jobType != JobType.SPARK_CORE && FireFrameworkConf.zrcEnable) PropUtils.invokeZrcConf(this.className, restAddress)
+    // 注册到实时平台，并覆盖配置信息
+    if (this.jobType != JobType.SPARK_CORE && FireFrameworkConf.configCenterEnable) PropUtils.invokeConfigCenter(this.className, restAddress)
     PropUtils.print()
 
     // 构建SparkConf信息
