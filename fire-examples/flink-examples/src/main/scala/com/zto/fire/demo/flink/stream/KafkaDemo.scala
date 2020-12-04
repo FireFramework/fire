@@ -21,8 +21,8 @@ object KafkaDemo extends BaseFlinkStreaming {
 
     kafkaStream.map(new RichMapFunction[String, Int] {
       override def open(parameters: Configuration): Unit = {
-        // val map = this.getRuntimeContext.getExecutionConfig.getGlobalJobParameters.toMap
-        val map = PropUtils.toFlinkConfMap
+        val map = this.getRuntimeContext.getExecutionConfig.getGlobalJobParameters.toMap
+        // val map = PropUtils.toFlinkConfMap
         logger.error("execute open method. size=" + map.size)
         map.foreach(kv => {
           logger.error(s"open config: key=${kv._1} value=${kv._2}")

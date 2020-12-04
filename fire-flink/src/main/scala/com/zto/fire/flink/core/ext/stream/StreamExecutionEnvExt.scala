@@ -39,11 +39,11 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
                           keyNum: Int = 1): FlinkKafkaConsumer011[String] = {
     val confTopics = FireKafkaConf.kafkaTopics(keyNum)
     val topicList = if (StringUtils.isNotBlank(confTopics)) confTopics.split(",") else topics.toArray
-    assert(topicList != null && topicList.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：flink.kafka.topics$keyNum")
+    require(topicList != null && topicList.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：flink.kafka.topics$keyNum")
 
     val confKafkaParams = KafkaUtils.kafkaParams(kafkaParams, FlinkSingletonFactory.getAppName, keyNum = keyNum)
     // 配置文件中相同的key优先级高于代码中的
-    assert(confKafkaParams.nonEmpty, "kafka相关配置不能为空！")
+    require(confKafkaParams.nonEmpty, "kafka相关配置不能为空！")
     val properties = new Properties()
     confKafkaParams.foreach(t => properties.setProperty(t._1, t._2.toString))
 

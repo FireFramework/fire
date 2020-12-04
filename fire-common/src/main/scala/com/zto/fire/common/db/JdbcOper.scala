@@ -43,11 +43,11 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
       // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
       this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
       this.url = if (StringUtils.isBlank(FireJdbcConf.url(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.url)) this.conf.url else FireJdbcConf.url(keyNum)
-      assert(StringUtils.isNotBlank(this.url), "数据库url不能为空")
+      require(StringUtils.isNotBlank(this.url), "数据库url不能为空")
       val driverClass = if (StringUtils.isBlank(FireJdbcConf.driverClass(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
-      assert(StringUtils.isNotBlank(driverClass), "数据库driverClass不能为空")
+      require(StringUtils.isNotBlank(driverClass), "数据库driverClass不能为空")
       this.username = if (StringUtils.isBlank(FireJdbcConf.user(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.username)) this.conf.username else FireJdbcConf.user(keyNum)
-      assert(StringUtils.isNotBlank(this.username), "数据库username不能为空")
+      require(StringUtils.isNotBlank(this.username), "数据库username不能为空")
       val password = if (StringUtils.isBlank(FireJdbcConf.password(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.password)) this.conf.password else FireJdbcConf.password(keyNum)
       // 识别数据源类型是oracle、mysql等
       this.dbType = DBUtils.dbTypeParser(driverClass, this.url)

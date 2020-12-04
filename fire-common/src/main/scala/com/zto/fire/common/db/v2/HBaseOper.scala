@@ -67,7 +67,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @param beans     HBaseBaseBean子类集合
    */
   def insert[T <: HBaseBaseBean[T] : ClassTag](tableName: String, beans: T*): Unit = {
-    assert(beans != null && beans.nonEmpty, "参数不合法，批量HBase insert失败")
+    require(beans != null && beans.nonEmpty, "参数不合法，批量HBase insert失败")
     var table: Table = null
     tryWithFinally {
       table = this.getTable(tableName)
@@ -86,7 +86,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @param puts      Put集合
    */
   def insert(tableName: String, puts: Put*): Unit = {
-    assert(this.isExists(tableName) && puts != null && puts.nonEmpty, "参数不合法，批量HBase insert失败")
+    require(this.isExists(tableName) && puts != null && puts.nonEmpty, "参数不合法，批量HBase insert失败")
 
     var table: Table = null
     tryWithFinally {
@@ -109,7 +109,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @return 目标对象实例
    */
   def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeys: String*): ListBuffer[T] = {
-    assert(rowKeys != null && rowKeys.nonEmpty, "参数不合法，rowKey不能为空")
+    require(rowKeys != null && rowKeys.nonEmpty, "参数不合法，rowKey不能为空")
     val getList = for (rowKey <- rowKeys) yield HBaseOper.buildGet(rowKey)
     this.get[T](tableName, clazz, getList: _*)
   }
@@ -138,7 +138,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * HBase Result
    */
   def getResult(tableName: String, getList: Get*): ListBuffer[Result] = {
-    assert(this.isExists(tableName) && getList != null && getList.nonEmpty, "参数不合法，执行HBase 批量get失败")
+    require(this.isExists(tableName) && getList != null && getList.nonEmpty, "参数不合法，执行HBase 批量get失败")
 
     var table: Table = null
     val list = ListBuffer[Result]()
@@ -162,7 +162,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * HBase Result
    */
   def getResult[T: ClassTag](tableName: String, rowKeyList: String*): ListBuffer[Result] = {
-    assert(rowKeyList != null && rowKeyList.nonEmpty, "参数不合法，rowKey集合不能为空.")
+    require(rowKeyList != null && rowKeyList.nonEmpty, "参数不合法，rowKey集合不能为空.")
     val getList = for (rowKey <- rowKeyList) yield HBaseOper.buildGet(rowKey)
     val starTime = currentTime
     val resultList = this.getResult(tableName, getList: _*)
@@ -179,7 +179,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @return 指定类型的List
    */
   def scanResultScanner(tableName: String, scan: Scan): ResultScanner = {
-    assert(this.isExists(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
+    require(this.isExists(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
 
     var table: Table = null
     var rsScanner: ResultScanner = null
@@ -242,7 +242,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @return 指定类型的List
    */
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): ListBuffer[T] = {
-    assert(this.isExists(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
+    require(this.isExists(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
 
     val list = ListBuffer[T]()
     var rsScanner: ResultScanner = null
@@ -282,7 +282,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       finalConf.set(kv._1, kv._2)
     })
 
-    assert(StringUtils.isNotBlank(finalConf.get("hbase.zookeeper.quorum")), s"未配置HBase集群信息，请通过以下参数指定：spark.hbase.cluster[$keyNum]=xxx")
+    require(StringUtils.isNotBlank(finalConf.get("hbase.zookeeper.quorum")), s"未配置HBase集群信息，请通过以下参数指定：spark.hbase.cluster[$keyNum]=xxx")
 
     finalConf
   }
@@ -391,7 +391,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         val field = fieldMap.get(family + ":" + qualifier)
         this.setFieldBytesValue(obj, field, value)
         val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
-        assert(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
+        require(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
         idField.set(obj, rowKey)
         if (StringUtils.isNotBlank(obj.getMultiFields)) objList.add(JSON.parseObject(obj.getMultiFields, clazz))
       })
@@ -415,7 +415,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       val cells = rs.rawCells
       val rowKey = convertCells2Fields(fieldMap, obj, cells)
       val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
-      assert(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
+      require(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
       idField.setAccessible(true)
       idField.set(obj, rowKey)
     }(this.logger, "将HBase cell中的值转换并赋值给field过程中报错.")
@@ -432,7 +432,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[this] def convertCells2Fields[T <: HBaseBaseBean[T]](fieldMap: Map[String, Field], obj: T, cells: Array[Cell]): String = {
-    assert(cells != null && obj != null)
+    require(cells != null && obj != null)
 
     var rowKey = ""
     cells.foreach(cell => {
@@ -455,9 +455,9 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[this] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): T = {
-    assert(rs != null && !rs.isEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    require(rs != null && !rs.isEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
     val fieldMap = this.getFieldNameMap(clazz)
-    assert(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
     this.cell2Field(clazz, fieldMap, rs)
   }
 
@@ -470,9 +470,9 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[this] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
-    assert(rsArr != null && rsArr.nonEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    require(rsArr != null && rsArr.nonEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
     val fieldMap = this.getFieldNameMap(clazz)
-    assert(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
     rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList += this.cell2Field(clazz, fieldMap, rs))
     objList
@@ -487,9 +487,9 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[this] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): ListBuffer[T] = {
-    assert(rs != null && !rs.isEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    require(rs != null && !rs.isEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
     val fieldMap = this.getFieldNameMap(classOf[MultiVersionsBean])
-    assert(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
     this.multiCell2Field(rs, clazz, fieldMap)
   }
 
@@ -502,9 +502,9 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[this] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
-    assert(rsArr != null && rsArr.nonEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    require(rsArr != null && rsArr.nonEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
     val fieldMap = getFieldNameMap(classOf[MultiVersionsBean])
-    assert(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
     rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList ++= this.multiCell2Field(rs, clazz, fieldMap))
     objList
@@ -519,9 +519,9 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[fire] def hbaseRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
-    assert(it != null && clazz != null, "参数不合法，无法将HBase Row转为JavaBean")
+    require(it != null && clazz != null, "参数不合法，无法将HBase Row转为JavaBean")
     val fieldMap = this.getFieldNameMap(clazz)
-    assert(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val beanList = ListBuffer[T]()
     tryWithLog {
       it.foreach(t => {
@@ -529,7 +529,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         val cells = t._2.rawCells()
         val rowKey = this.convertCells2Fields(fieldMap, obj, cells)
         val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
-        assert(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
+        require(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
         idField.set(obj, rowKey)
         beanList += obj
       })
@@ -546,7 +546,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[fire] def hbaseMultiVersionRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
-    assert(it != null && clazz != null, "参数不合法，无法将HBase Row转为JavaBean")
+    require(it != null && clazz != null, "参数不合法，无法将HBase Row转为JavaBean")
     val beanList = ListBuffer[T]()
     tryWithLog {
       it.foreach(t => {
@@ -566,7 +566,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[fire] def convert2Put[T <: HBaseBaseBean[T]](obj: T, insertEmpty: Boolean): Put = {
-    assert(obj != null, "参数不能为空，无法将对象转为HBase Put对象")
+    require(obj != null, "参数不能为空，无法将对象转为HBase Put对象")
     tryWithReturn {
       var tmpObj = obj
       val clazz = tmpObj.getClass
@@ -576,11 +576,11 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
         val method = ReflectionUtils.getMethodByName(clazz, "buildRowKey")
         tmpObj = method.invoke(tmpObj).asInstanceOf[T]
         rowKeyObj = rowKeyField.get(tmpObj)
-        assert(rowKeyObj != null, s"rowKey不能为空，请检查${clazz.getName}中是否实现buildRowKey()方法！")
+        require(rowKeyObj != null, s"rowKey不能为空，请检查${clazz.getName}中是否实现buildRowKey()方法！")
       }
 
       val allFields = ReflectionUtils.getAllFields(clazz)
-      assert(allFields != null && allFields.nonEmpty, s"在${clazz.getName}中未找到任何成员变量，请检查！")
+      require(allFields != null && allFields.nonEmpty, s"在${clazz.getName}中未找到任何成员变量，请检查！")
       val rowKey = rowKeyObj.toString.getBytes
       val put = new Put(rowKey)
       put.setDurability(this.durability)
@@ -845,7 +845,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   def getTable(tableName: String): Table = {
     tryWithReturn {
-      assert(this.isExists(tableName), s"表${tableName}不存在，请检查")
+      require(this.isExists(tableName), s"表${tableName}不存在，请检查")
       this.getConnection.getTable(TableName.valueOf(tableName))
     }(logger, s"HBase getTable操作失败. ${hbaseCluster(keyNum)}.${tableName}")
   }
@@ -1035,7 +1035,7 @@ object HBaseOper extends DBBaseOperFactory {
                qualifier: String = "",
                maxVersions: Int = 1,
                filter: Filter = null): Get = {
-    assert(StringUtils.isNotBlank(rowKey), "buildGet执行失败，rowKey不能为空！")
+    require(StringUtils.isNotBlank(rowKey), "buildGet执行失败，rowKey不能为空！")
     val get = new Get(rowKey.getBytes())
     if (StringUtils.isNotBlank(family) && StringUtils.isNotBlank(qualifier)) {
       get.addColumn(family.getBytes, qualifier.getBytes)

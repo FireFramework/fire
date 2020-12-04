@@ -1119,11 +1119,11 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
 
     val finalBrokers = FireKafkaConf.kafkaBrokers(keyNum)
     if (StringUtils.isNotBlank(finalBrokers)) extraOptionsMap += ("kafka.bootstrap.servers" -> finalBrokers)
-    assert(extraOptionsMap.contains("kafka.bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：spark.kafka.brokers.name$keyNum")
+    require(extraOptionsMap.contains("kafka.bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：spark.kafka.brokers.name$keyNum")
 
     val topics = FireKafkaConf.kafkaTopics()
     if (StringUtils.isNotBlank(topics)) extraOptionsMap += ("subscribe" -> topics)
-    assert(extraOptionsMap.contains("subscribe"), s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
+    require(extraOptionsMap.contains("subscribe"), s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
 
     // 以spark.kafka.conf.开头的配置优先级最高
     val configMap = FireKafkaConf.kafkaConfMap(keyNum)

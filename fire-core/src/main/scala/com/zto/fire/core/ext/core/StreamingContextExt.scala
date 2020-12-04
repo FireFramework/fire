@@ -43,13 +43,13 @@ class StreamingContextExt(ssc: StreamingContext) {
     // kafka topic优先级：配置文件 > topics参数
     val confTopic = FireKafkaConf.kafkaTopics(keyNum)
     val finalKafkaTopic = if (StringUtils.isNotBlank(confTopic)) SparkUtils.topicSplit(confTopic) else topics
-    assert(finalKafkaTopic != null && finalKafkaTopic.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
+    require(finalKafkaTopic != null && finalKafkaTopic.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
     this.logger.info(s"kafka topic is $finalKafkaTopic")
 
     val confKafkaParams = com.zto.fire.common.util.KafkaUtils.kafkaParams(kafkaParams, groupId, keyNum = keyNum)
-    assert(confKafkaParams.nonEmpty, "kafka相关配置不能为空！")
-    assert(confKafkaParams.contains("bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：spark.kafka.brokers.name$keyNum")
-    assert(confKafkaParams.contains("group.id"), s"kafka group.id不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum")
+    require(confKafkaParams.nonEmpty, "kafka相关配置不能为空！")
+    require(confKafkaParams.contains("bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：spark.kafka.brokers.name$keyNum")
+    require(confKafkaParams.contains("group.id"), s"kafka group.id不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum")
 
     KafkaUtils.createDirectStream[String, String](
       ssc, PreferConsistent, Subscribe[String, String](finalKafkaTopic, confKafkaParams))
@@ -80,7 +80,7 @@ class StreamingContextExt(ssc: StreamingContext) {
     // 获取topic信息，配置文件优先级高于代码中指定的
     val confTopics = FireRocketMQConf.rocketTopics(keyNum)
     val finalTopics = if (StringUtils.isNotBlank(confTopics)) confTopics else topics
-    assert(StringUtils.isNotBlank(finalTopics), s"RocketMQ的Topics不能为空，请在配置文件中指定：spark.rocket.topics$keyNum")
+    require(StringUtils.isNotBlank(finalTopics), s"RocketMQ的Topics不能为空，请在配置文件中指定：spark.rocket.topics$keyNum")
 
     // 起始消费位点
     val confOffset = FireRocketMQConf.rocketStartingOffset(keyNum)
@@ -92,13 +92,13 @@ class StreamingContextExt(ssc: StreamingContext) {
     // groupId信息
     val confGroupId = FireRocketMQConf.rocketGroupId(keyNum)
     val finalGroupId = if (StringUtils.isNotBlank(confGroupId)) confGroupId else groupId
-    assert(StringUtils.isNotBlank(finalGroupId), s"RocketMQ的groupId不能为空，请在配置文件中指定：spark.rocket.group.id$keyNum")
+    require(StringUtils.isNotBlank(finalGroupId), s"RocketMQ的groupId不能为空，请在配置文件中指定：spark.rocket.group.id$keyNum")
 
     // 详细的RocketMQ配置信息
     val finalRocketParam = RocketMQUtils.rocketParams(rocketParam, finalGroupId, rocketNameServer = null, tag = tag, keyNum)
-    assert(!finalRocketParam.isEmpty, "RocketMQ相关配置不能为空！")
-    assert(finalRocketParam.containsKey(RocketMQConfig.NAME_SERVER_ADDR), s"RocketMQ nameserver.addr不能为空，请在配置文件中指定：spark.rocket.brokers.name$keyNum")
-    assert(finalRocketParam.containsKey(RocketMQConfig.CONSUMER_TAG), s"RocketMQ tag不能为空，请在配置文件中指定：spark.rocket.consumer.tag$keyNum")
+    require(!finalRocketParam.isEmpty, "RocketMQ相关配置不能为空！")
+    require(finalRocketParam.containsKey(RocketMQConfig.NAME_SERVER_ADDR), s"RocketMQ nameserver.addr不能为空，请在配置文件中指定：spark.rocket.brokers.name$keyNum")
+    require(finalRocketParam.containsKey(RocketMQConfig.CONSUMER_TAG), s"RocketMQ tag不能为空，请在配置文件中指定：spark.rocket.consumer.tag$keyNum")
 
     RocketMqUtils.createMQPullStream(this.ssc,
       finalGroupId,

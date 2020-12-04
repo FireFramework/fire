@@ -19,7 +19,7 @@ object SQLUtils {
    * 利用正则表达式解析SQL中用到的表名
    */
   def tableParse(sql: String): ListBuffer[String] = {
-    assert(StringUtils.isNotBlank(sql), "sql语句不能为空")
+    require(StringUtils.isNotBlank(sql), "sql语句不能为空")
 
     val tables = ListBuffer[String]()
     // 找出所有beforeWorld中定义的关键字匹配到的后面的表名
