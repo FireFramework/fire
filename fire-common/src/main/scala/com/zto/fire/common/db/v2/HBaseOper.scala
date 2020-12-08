@@ -1,7 +1,8 @@
 package com.zto.fire.common.db.v2
 
 import java.lang.reflect.Field
-import java.math.BigDecimal
+import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInt, Long => JLong, Short => JShort, String => JString}
+import java.math.{BigDecimal => JBigDecimal}
 import java.util._
 import java.util.concurrent.{ConcurrentHashMap, ScheduledExecutorService, TimeUnit}
 
@@ -23,9 +24,8 @@ import org.apache.hadoop.hbase.filter.{Filter, FilterList}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.io.compress.Compression
 import org.apache.hadoop.hbase.util.Bytes
-import org.slf4j.LoggerFactory
 
-import scala.collection.{Iterator, mutable}
+import scala.collection.Iterator
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
@@ -353,20 +353,19 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
   @Internal
   private def setFieldBytesValue[T <: HBaseBaseBean[T]](obj: T, field: Field, value: Array[Byte]): Unit = {
     tryWithLog {
-      if (field != null && value != null && value.length > 0) {
+      if (field != null && value != null && value.nonEmpty) {
         field.setAccessible(true)
-        val fieldType = field.getType
-        if (fieldType eq classOf[java.lang.String]) field.set(obj, Bytes.toString(value))
-        else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, Bytes.toInt(value))
-        else if (fieldType eq classOf[java.lang.Double]) field.set(obj, Bytes.toDouble(value))
-        else if (fieldType eq classOf[java.lang.Long]) field.set(obj, Bytes.toLong(value))
-        else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, Bytes.toBigDecimal(value))
-        else if (fieldType eq classOf[java.lang.Float]) field.set(obj, Bytes.toFloat(value))
-        else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, Bytes.toBoolean(value))
-        else if (fieldType eq classOf[java.lang.Short]) field.set(obj, Bytes.toShort(value))
-        else {
-          this.logger.warn(s"Fire-HBase不支持将Bytes转为类型${fieldType.getName}")
+        val toValue = field.getType match {
+          case fieldType if fieldType eq classOf[JString] => Bytes.toString(value)
+          case fieldType if fieldType eq classOf[JInt] => Bytes.toInt(value)
+          case fieldType if fieldType eq classOf[JDouble] => Bytes.toDouble(value)
+          case fieldType if fieldType eq classOf[JLong] => Bytes.toLong(value)
+          case fieldType if fieldType eq classOf[JBigDecimal] => Bytes.toBigDecimal(value)
+          case fieldType if fieldType eq classOf[JFloat] => Bytes.toFloat(value)
+          case fieldType if fieldType eq classOf[JBoolean] => Bytes.toBoolean(value)
+          case fieldType if fieldType eq classOf[JShort] => Bytes.toShort(value)
         }
+        field.set(obj, toValue)
       } else if (field != null) field.set(obj, null)
     }(this.logger, s"为filed ${field.getName}设置赋值过程中出现异常")
   }
@@ -602,18 +601,23 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
             if (StringUtils.isBlank(familyName)) familyName = FireHBaseConf.familyName(keyNum)
             if (StringUtils.isBlank(name)) name = field.getName
             val famliyByte = familyName.getBytes
-            val fieldType = field.getType
+            val qualifierByte = name.getBytes
             if (objValue != null) {
               val objValueStr = objValue.toString
-              if (fieldType eq classOf[java.lang.String]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(objValueStr))
-              else if (fieldType eq classOf[java.lang.Integer]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(objValueStr.toInt))
-              else if (fieldType eq classOf[java.lang.Double]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(objValueStr.toDouble))
-              else if (fieldType eq classOf[java.lang.Long]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(java.lang.Long.parseLong(objValueStr)))
-              else if (fieldType eq classOf[java.math.BigDecimal]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(new BigDecimal(objValueStr)))
-              else if (fieldType eq classOf[java.lang.Float]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(java.lang.Float.parseFloat(objValueStr)))
-              else if (fieldType eq classOf[java.lang.Boolean]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(java.lang.Boolean.parseBoolean(objValueStr)))
-              else if (fieldType eq classOf[java.lang.Short]) put.addColumn(famliyByte, name.getBytes, Bytes.toBytes(java.lang.Short.parseShort(objValueStr)))
-            } else put.addColumn(famliyByte, name.getBytes, null)
+              val toBytes = field.getType match {
+                case fieldType if fieldType eq classOf[JString] => Bytes.toBytes(objValueStr)
+                case fieldType if fieldType eq classOf[JInt] => Bytes.toBytes(JInt.parseInt(objValueStr))
+                case fieldType if fieldType eq classOf[JDouble] => Bytes.toBytes(JDouble.parseDouble(objValueStr))
+                case fieldType if fieldType eq classOf[JLong] => Bytes.toBytes(JLong.parseLong(objValueStr))
+                case fieldType if fieldType eq classOf[JBigDecimal] => Bytes.toBytes(new JBigDecimal(objValueStr))
+                case fieldType if fieldType eq classOf[JFloat] => Bytes.toBytes(JFloat.parseFloat(objValueStr))
+                case fieldType if fieldType eq classOf[JBoolean] => Bytes.toBytes(JBoolean.parseBoolean(objValueStr))
+                case fieldType if fieldType eq classOf[JShort] => Bytes.toBytes(JShort.parseShort(objValueStr))
+              }
+              put.addColumn(famliyByte, qualifierByte, toBytes)
+            } else {
+              put.addColumn(famliyByte, qualifierByte, null)
+            }
           }
         }
       })
@@ -1296,4 +1300,5 @@ object HBaseOper extends DBBaseOperFactory {
   private[fire] def deleteQualifiers(tableName: String, rowKey: String, family: String, qualifiers: Seq[String], keyNum: Int = 1): Unit = {
     HBaseOper(keyNum = keyNum).deleteQualifiers(tableName, rowKey, family, qualifiers: _*)
   }
+
 }

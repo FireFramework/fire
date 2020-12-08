@@ -213,5 +213,4 @@ class HBaseOperTest extends UnitTest {
 
     Thread.sleep(100000)
   }
-
 }

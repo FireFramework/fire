@@ -29,9 +29,9 @@ object ExceptionBus {
   private[this] lazy val ip = SystemInfoUtils.getIp
 
   /**
-   * 向异常总线中添加异常对象
+   * 向异常总线中投递异常对象
    */
-  def offer(timestamp: Long, t: Throwable): Boolean = this.synchronized {
+  def post(timestamp: Long, t: Throwable): Boolean = this.synchronized {
     exceptionCount.incrementAndGet()
     this.queue.offer((timestamp, t))
   }
@@ -55,7 +55,7 @@ object ExceptionBus {
    */
   @Internal
   private[this] def offAndLogError(logger: Logger, msg: String, t: Throwable): Unit = {
-    this.offer(FireUtils.currentTime, t)
+    this.post(FireUtils.currentTime, t)
     if (logger != null) logger.error(msg, t) else t.printStackTrace()
   }
 
