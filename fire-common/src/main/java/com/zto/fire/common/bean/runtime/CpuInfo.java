@@ -1,6 +1,5 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.alibaba.fastjson.JSON;
 import com.sun.management.OperatingSystemMXBean;
 import com.zto.fire.common.util.MathUtils;
 import oshi.SystemInfo;
@@ -10,6 +9,7 @@ import oshi.hardware.HardwareAbstractionLayer;
 import oshi.hardware.Sensors;
 import oshi.util.FormatUtil;
 
+import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 
 /**
@@ -17,7 +17,8 @@ import java.lang.management.ManagementFactory;
  *
  * @author ChengLong 2019-9-28 19:52:56
  */
-public class CpuInfo {
+public class CpuInfo implements Serializable {
+    private static final long serialVersionUID = 7712733535989008368L;
     // 系统cpu的负载
     private double cpuLoad;
     // 当前jvm可用的处理器数量
@@ -148,7 +149,7 @@ public class CpuInfo {
     public static CpuInfo getCpuInfo() {
         CpuInfo cpuInfo = new CpuInfo();
         OperatingSystemMXBean osmxb = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        cpuInfo.lastLoadAverage = osmxb.getSystemLoadAverage();;
+        cpuInfo.lastLoadAverage = osmxb.getSystemLoadAverage();
         cpuInfo.cpuLoad = osmxb.getSystemCpuLoad();
         cpuInfo.availableProcessors = osmxb.getAvailableProcessors();
         cpuInfo.processCpuTime = osmxb.getProcessCpuTime();

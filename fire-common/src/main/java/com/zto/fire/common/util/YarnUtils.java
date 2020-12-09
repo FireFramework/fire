@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
  * @author ChengLong 2018年8月10日 16:03:29
  */
 public class YarnUtils {
+
+    private YarnUtils() {}
     /**
      * 使用正则提取日志中的applicationId
      * @param log
@@ -19,7 +21,6 @@ public class YarnUtils {
         // 编译正则表达式
         Pattern pattern = Pattern.compile(regEx);
         // 忽略大小写的写法
-        // Pattern pat = Pattern.compile(regEx, Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(log);
         // 查找字符串中是否有匹配正则表达式的字符/字符串
         if(matcher.find()) {

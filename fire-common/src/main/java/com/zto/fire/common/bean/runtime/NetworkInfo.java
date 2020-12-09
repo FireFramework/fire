@@ -25,9 +25,9 @@ public class NetworkInfo {
     // 网卡带宽
     private long speed;
     // ip v4 地址
-    private String ipv4[];
+    private String[] ipv4;
     // ip v6 地址
-    private String ipv6[];
+    private String[] ipv6;
     // ip 地址
     private String ip;
     // 接收到的数据报个数
@@ -43,7 +43,7 @@ public class NetworkInfo {
     // 域名称
     private String domainName;
     // dns
-    private String dns[];
+    private String[] dns;
     // ip v4 网关
     private String ipv4Gateway;
     // ip v6 网关

@@ -20,7 +20,7 @@ public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
     private String multiFields;
 
     @FieldName(value = "HBaseBaseBean", disuse = true)
-    private HBaseBaseBean target;
+    private HBaseBaseBean<?> target;
 
     @FieldName(value = "BIGDECIMAL_ZERO", disuse = true)
     private static final BigDecimal BIGDECIMAL_ZERO = new BigDecimal("0");
@@ -43,11 +43,11 @@ public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
         return target;
     }
 
-    public void setTarget(HBaseBaseBean target) {
+    public void setTarget(HBaseBaseBean<?> target) {
         this.target = target;
     }
 
-    public MultiVersionsBean(HBaseBaseBean target) {
+    public MultiVersionsBean(HBaseBaseBean<?> target) {
         this.target = (HBaseBaseBean) target.buildRowKey();
         this.multiFields = JSON.toJSONString(this.target, SerializerFeature.WriteMapNullValue);
     }
@@ -61,16 +61,19 @@ public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
         try {
             if(this.target == null && StringUtils.isNotBlank(this.multiFields)) {
                 Map<String, String> map = JSON.parseObject(this.multiFields, Map.class);
-                Class clazz = Class.forName(map.get("className"));
-                HBaseBaseBean bean = (HBaseBaseBean) clazz.newInstance();
+                Class<?> clazz = Class.forName(map.get("className"));
+                HBaseBaseBean<?> bean = (HBaseBaseBean) clazz.newInstance();
                 BeanUtils.populate(bean, map);
                 this.target = (HBaseBaseBean) bean.buildRowKey();
+            }
+
+            if (this.target != null) {
+                this.target = (HBaseBaseBean) this.target.buildRowKey();
+                this.rowKey = this.target.rowKey;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        this.target = (HBaseBaseBean) this.target.buildRowKey();
-        this.rowKey = this.target.rowKey;
 
         return this;
     }

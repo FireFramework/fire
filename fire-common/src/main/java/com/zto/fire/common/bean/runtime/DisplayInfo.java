@@ -12,7 +12,7 @@ public class DisplayInfo {
     private String display;
 
     public String getDisplay() {
-        return display.toString();
+        return display;
     }
 
     private DisplayInfo() {
@@ -28,7 +28,7 @@ public class DisplayInfo {
         StringBuilder sb = new StringBuilder();
         if (displays != null && displays.length > 0) {
             for (Display display : displays) {
-                sb.append(display.toString());
+                sb.append(display);
             }
         }
         DisplayInfo displayInfo = new DisplayInfo();

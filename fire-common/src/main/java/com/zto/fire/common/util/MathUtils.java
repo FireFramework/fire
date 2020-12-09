@@ -9,6 +9,8 @@ import java.math.BigDecimal;
  */
 public class MathUtils {
 
+    private MathUtils() {}
+
     /**
      * 计算百分比，并保留指定的小数位
      *
@@ -21,7 +23,7 @@ public class MathUtils {
         if (molecule == 0 || denominator == 0) {
             return 0.00;
         }
-        return new BigDecimal(100.00 * molecule / denominator).setScale(scale, BigDecimal.ROUND_HALF_UP).doubleValue();
+        return BigDecimal.valueOf(100.00 * molecule / denominator).setScale(scale, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 
     /**
@@ -32,6 +34,6 @@ public class MathUtils {
      * @return 四舍五入后的数据
      */
     public static double doubleScale(double data, int scale) {
-        return new BigDecimal(data).setScale(scale, BigDecimal.ROUND_HALF_UP).doubleValue();
+        return BigDecimal.valueOf(data).setScale(scale, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 }

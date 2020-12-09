@@ -1,0 +1,31 @@
+package com.zto.fire
+
+/**
+ * 预定义通用常用的api
+ * @author ChengLong 2020-12-8 15:15:00
+ */
+package object predef {
+  // Java API库映射
+  type JInt = java.lang.Integer
+  type JLong = java.lang.Long
+  type JBoolean = java.lang.Boolean
+  type JChar = java.lang.Character
+  type JFloat = java.lang.Float
+  type JDouble = java.lang.Double
+  type JBigDecimal = java.math.BigDecimal
+  type JString = java.lang.String
+  type JStringBuilder = java.lang.StringBuilder
+  type JStringBuffer = java.lang.StringBuffer
+  type JMap[K, V] = java.util.Map[K, V]
+  type JHashMap[K, V] = java.util.HashMap[K, V]
+  type JLinkedHashMap[K, V] = java.util.LinkedHashMap[K, V]
+  type JConcurrentHashMap[K, V] = java.util.concurrent.ConcurrentHashMap[K, V]
+  type JSet[E] = java.util.Set[E]
+  type JHashSet[E] = java.util.HashSet[E]
+  type JLinkedHashSet[E] = java.util.LinkedHashSet[E]
+  type JList[E] = java.util.List[E]
+  type JArrayList[E] = java.util.ArrayList[E]
+  type JLinkedList[E] = java.util.LinkedList[E]
+  type JQueue[E] = java.util.Queue[E]
+  type JPriorityQueue[E] = java.util.PriorityQueue[E]
+}

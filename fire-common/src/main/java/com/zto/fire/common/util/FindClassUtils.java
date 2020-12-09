@@ -1,9 +1,10 @@
 package com.zto.fire.common.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.JarURLConnection;
@@ -26,12 +27,17 @@ public class FindClassUtils {
     private static Class<?> superStrategy = Serializable.class;
     // 默认使用的类加载器
     private static ClassLoader classLoader = FindClassUtils.class.getClassLoader();
+    private static final Logger logger = LoggerFactory.getLogger(FindClassUtils.class);
+    private static final String CLASS_FILE = ".class";
+
+    private FindClassUtils() {
+    }
 
     /**
      * 获取包下所有实现了superStrategy的类并加入list
      */
     public static List<Class<? extends Serializable>> listPackageClasses(String... packageNames) {
-        List<Class<? extends Serializable>> classList = new ArrayList<Class<? extends Serializable>>();
+        List<Class<? extends Serializable>> classList = new ArrayList<>();
         if (packageNames != null && packageNames.length > 0) {
             for (String packageName : packageNames) {
                 if (StringUtils.isNotBlank(packageName) && packageName.contains(".")) {
@@ -53,26 +59,21 @@ public class FindClassUtils {
     /**
      * 本地查找
      *
-     * @param packName
+     * @param packName 包名
      */
     private static void findClassLocal(final String packName, final List<Class<? extends Serializable>> list) {
         URI url = null;
         try {
             url = FindClassUtils.classLoader.getResource(packName.replace(".", "/")).toURI();
-        } catch (URISyntaxException e1) {
-            throw new RuntimeException("未找到相关资源");
-        }
-
-        File file = new File(url);
-        file.listFiles(new FileFilter() {
-            public boolean accept(File chiFile) {
+            File file = new File(url);
+            file.listFiles(chiFile -> {
                 if (chiFile.isDirectory()) {
                     FindClassUtils.findClassLocal(packName + "." + chiFile.getName(), list);
                 }
-                if (chiFile.getName().endsWith(".class")) {
+                if (chiFile.getName().endsWith(CLASS_FILE)) {
                     Class<?> clazz = null;
                     try {
-                        clazz = FindClassUtils.classLoader.loadClass(packName + "." + chiFile.getName().replace(".class", ""));
+                        clazz = FindClassUtils.classLoader.loadClass(packName + "." + chiFile.getName().replace(CLASS_FILE, ""));
                     } catch (ClassNotFoundException e) {
                         e.printStackTrace();
                     }
@@ -82,16 +83,17 @@ public class FindClassUtils {
                     return true;
                 }
                 return false;
-            }
-        });
-
+            });
+        } catch (URISyntaxException e1) {
+            logger.error("未找到相关资源", e1);
+        }
     }
 
 
     /**
      * 从jar包中查找指定包下的文件
      *
-     * @param packName
+     * @param packName 包名
      */
     private static void findClassJar(final String packName, final List<Class<? extends Serializable>> list) {
         String pathName = packName.replace(".", "/");
@@ -100,37 +102,37 @@ public class FindClassUtils {
             URL url = FindClassUtils.classLoader.getResource(pathName);
             JarURLConnection jarURLConnection = (JarURLConnection) url.openConnection();
             jarFile = jarURLConnection.getJarFile();
-        } catch (IOException e) {
-            throw new RuntimeException("未找到相关资源");
-        }
+            Enumeration<JarEntry> jarEntries = jarFile.entries();
+            while (jarEntries.hasMoreElements()) {
+                JarEntry jarEntry = jarEntries.nextElement();
+                String jarEntryName = jarEntry.getName();
 
-        Enumeration<JarEntry> jarEntries = jarFile.entries();
-        while (jarEntries.hasMoreElements()) {
-            JarEntry jarEntry = jarEntries.nextElement();
-            String jarEntryName = jarEntry.getName();
-
-            if (jarEntryName.contains(pathName) && !jarEntryName.equals(pathName + "/")) {
-                // 递归遍历子目录
-                if (jarEntry.isDirectory()) {
-                    String clazzName = jarEntry.getName().replace("/", ".");
-                    int endIndex = clazzName.lastIndexOf(".");
-                    String prefix = null;
-                    if (endIndex > 0) {
-                        prefix = clazzName.substring(0, endIndex);
+                if (jarEntryName.contains(pathName) && !jarEntryName.equals(pathName + "/")) {
+                    // 递归遍历子目录
+                    if (jarEntry.isDirectory()) {
+                        String clazzName = jarEntry.getName().replace("/", ".");
+                        int endIndex = clazzName.lastIndexOf(".");
+                        String prefix = null;
+                        if (endIndex > 0) {
+                            prefix = clazzName.substring(0, endIndex);
+                        }
+                        findClassJar(prefix, list);
                     }
-                    findClassJar(prefix, list);
-                }
-                if (jarEntry.getName().endsWith(".class")) {
-                    Class<?> clazz = null;
-                    try {
-                        clazz = FindClassUtils.classLoader.loadClass(jarEntry.getName().replace("/", ".").replace(".class", ""));
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                    if (FindClassUtils.superStrategy.isAssignableFrom(clazz)) {
-                        list.add((Class<? extends Serializable>) clazz);
+                    if (jarEntry.getName().endsWith(CLASS_FILE)) {
+                        Class<?> clazz = FindClassUtils.classLoader.loadClass(jarEntry.getName().replace("/", ".").replace(CLASS_FILE, ""));
+                        if (FindClassUtils.superStrategy.isAssignableFrom(clazz)) {
+                            list.add((Class<? extends Serializable>) clazz);
+                        }
                     }
                 }
+            }
+        } catch (Exception e) {
+            logger.error("未在jar包中找到相关文件", e);
+        } finally {
+            try {
+                if (jarFile != null) jarFile.close();
+            } catch (Exception e) {
+                logger.error("关闭jarFile对象失败");
             }
         }
     }
@@ -142,11 +144,7 @@ public class FindClassUtils {
      */
     public static boolean isJar() {
         URL url = FindClassUtils.class.getProtectionDomain().getCodeSource().getLocation();
-        if (url.getPath().endsWith(".jar")) {
-            return true;
-        } else {
-            return false;
-        }
+        return url.getPath().endsWith(".jar");
     }
 
     /**
@@ -162,9 +160,7 @@ public class FindClassUtils {
         String fullName = "";
         URL url = FindClassUtils.class.getProtectionDomain().getCodeSource().getLocation();
         if (url.getPath().endsWith(".jar")) {
-            JarFile jarFile = null;
-            try {
-                jarFile = new JarFile(url.getFile());
+            try (JarFile jarFile = new JarFile(url.getFile())) {
                 Enumeration<JarEntry> entrys = jarFile.entries();
                 while (entrys.hasMoreElements()) {
                     JarEntry jar = entrys.nextElement();
@@ -175,20 +171,14 @@ public class FindClassUtils {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (jarFile != null) jarFile.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                logger.error("从jar包中查找文件过程中报错", e);
             }
         } else {
             // 在IDEA中执行
             try {
                 List<File> searchList = new LinkedList<>();
                 FileUtils.findFile(FindClassUtils.class.getResource("/").getPath(), fileName, searchList);
-                if (searchList != null && searchList.size() > 0) {
+                if (!searchList.isEmpty()) {
                     fullName = searchList.get(0).getPath();
                 }
             } catch (Exception ex) {

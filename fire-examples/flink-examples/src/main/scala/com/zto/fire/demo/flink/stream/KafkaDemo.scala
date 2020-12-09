@@ -1,9 +1,7 @@
 package com.zto.fire.demo.flink.stream
 
-import com.zto.fire.common.util.PropUtils
 import com.zto.fire.flink.core.BaseFlinkStreaming
 import com.zto.fire.flink.core.ext.FlinkExt._
-import com.zto.fire.flink.core.util.FlinkUtils
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration

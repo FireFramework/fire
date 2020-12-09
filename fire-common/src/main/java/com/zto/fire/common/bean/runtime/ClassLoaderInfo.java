@@ -1,7 +1,6 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.alibaba.fastjson.JSON;
-
+import java.io.Serializable;
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
 
@@ -9,7 +8,8 @@ import java.lang.management.ManagementFactory;
  * 获取运行时class loader信息
  * @author ChengLong 2019年9月28日 19:56:18
  */
-public class ClassLoaderInfo {
+public class ClassLoaderInfo implements Serializable {
+    private static final long serialVersionUID = 4958598582046079565L;
     // 获取已加载的类数量
     private long loadedClassCount;
     // 获取总的类加载数

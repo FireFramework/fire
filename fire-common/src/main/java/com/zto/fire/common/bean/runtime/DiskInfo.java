@@ -159,7 +159,7 @@ public class DiskInfo {
     /**
      * 获取磁盘与分区信息
      */
-    public static Map<String, List> getDiskInfo() {
+    public static Map<String, Object> getDiskInfo() {
         SystemInfo systemInfo = new SystemInfo();
         // 获取文件系统信息
         FileSystem fileSystem = systemInfo.getOperatingSystem().getFileSystem();
@@ -179,7 +179,6 @@ public class DiskInfo {
             DiskInfo diskInfo = new DiskInfo(disk.getName(), disk.getModel(), disk.getSize(), disk.getReadBytes(), disk.getWriteBytes(), disk.getTransferTime());
             diskInfoList.add(diskInfo);
         }
-        Map<String, List> diskInfoMap = ImmutableMap.<String, List>builder().put("disks", diskInfoList).put("partitions", partitionInfoList).build();
-        return diskInfoMap;
+        return ImmutableMap.<String, Object>builder().put("disks", diskInfoList).put("partitions", partitionInfoList).build();
     }
 }

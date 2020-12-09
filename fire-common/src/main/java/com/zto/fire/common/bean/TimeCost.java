@@ -23,7 +23,7 @@ public class TimeCost implements Serializable {
     // 多核cpu使用率
     private String cpuUsage;
     // 用于区分埋点日志和用户日志
-    private Boolean isFire = false;
+    private boolean isFire = false;
     private String id = UUID.randomUUID().toString();
     // 任务的applicationId
     private static String applicationId;
@@ -131,11 +131,7 @@ public class TimeCost implements Serializable {
         this.timeCost = timeCost;
     }
 
-    public Boolean getFire() {
-        return isFire;
-    }
-
-    public void setFire(Boolean fire) {
+    public void setFire(boolean fire) {
         isFire = fire;
     }
 
@@ -200,7 +196,7 @@ public class TimeCost implements Serializable {
     }
 
     private String lable() {
-        if (this.isFire) {
+        if (isFire) {
             return "fire";
         } else {
             return "user";
@@ -209,11 +205,11 @@ public class TimeCost implements Serializable {
 
     @Override
     public String toString() {
-        String baseInfo = "【" + this.lable() + "Log】 〖" + this.msg + "〗    start：" + this.startTime + " end：" + this.endTime + " cost：" + this.getTimeCost() + " ip：" + this.ip + " load：" + this.load + " cpuUsage：" + this.cpuUsage + " executor：" + this.executorId;
-        if (!"driver".equalsIgnoreCase(this.executorId)) {
+        String baseInfo = "【" + this.lable() + "Log】 〖" + this.msg + "〗    start：" + this.startTime + " end：" + this.endTime + " cost：" + this.getTimeCost() + " ip：" + this.ip + " load：" + this.load + " cpuUsage：" + this.cpuUsage + " executor：" + executorId;
+        if (!"driver".equalsIgnoreCase(executorId)) {
             baseInfo += " stage：" + this.stageId + " task：" + this.taskId;
         }
-        if (this.isFire) {
+        if (isFire) {
             baseInfo += " module：" + this.module + " io：" + this.io;
         }
         return baseInfo;
@@ -223,8 +219,8 @@ public class TimeCost implements Serializable {
         this.start = System.currentTimeMillis();
         this.startTime = DateFormatUtils.formatCurrentDateTime();
         this.ip = SystemInfoUtils.getIp();
-        this.load = SystemInfoUtils.getLoadAverageCache();
-        this.cpuUsage = SystemInfoUtils.getCpuUsageCache();
+        this.load = "";
+        this.cpuUsage = "";
         if (FireUtils.isSparkEngine()) {
             // 如果是spark引擎，则获取spark相关运行时信息
             TimeCostUtils.getEngineInfo();
@@ -253,7 +249,7 @@ public class TimeCost implements Serializable {
         this.module = module;
         this.io = io;
         if (isFire != null) this.isFire = isFire;
-        if (StringUtils.isNotBlank(this.executorId) && !"driver".equalsIgnoreCase(this.executorId)) {
+        if (StringUtils.isNotBlank(executorId) && !"driver".equalsIgnoreCase(executorId)) {
             TaskContext taskInfo = TaskContext.get();
             if (taskInfo != null) {
                 this.taskId = taskInfo.taskAttemptId();

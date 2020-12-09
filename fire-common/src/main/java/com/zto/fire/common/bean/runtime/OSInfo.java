@@ -11,11 +11,9 @@ import oshi.util.FormatUtil;
  * @author ChengLong 2019-9-28 19:56:59
  */
 public class OSInfo {
-    private static OSInfo osInfo;
+    private static OSInfo osInfo = new OSInfo();
     // 制造商
     private String manufacturer;
-    // 设备型号
-    private String model;
     // 操作系统名称
     private String name;
     // 操作系统架构
@@ -76,10 +74,6 @@ public class OSInfo {
         return manufacturer;
     }
 
-    public String getModel() {
-        return model;
-    }
-
     public String getUptime() {
         return uptime;
     }
@@ -93,20 +87,17 @@ public class OSInfo {
      */
     public static OSInfo getOSInfo() {
         SystemInfo systemInfo = new SystemInfo();
-        if (osInfo == null) {
-            osInfo = new OSInfo();
-            osInfo.name = System.getProperty("os.name");
-            osInfo.arch = System.getProperty("os.arch");
-            osInfo.version = System.getProperty("os.version");
-            osInfo.userName = System.getProperty("user.name");
-            osInfo.userHome = System.getProperty("user.home");
-            osInfo.userDir = System.getProperty("user.dir");
-            osInfo.ip = SystemInfoUtils.getIp();
-            osInfo.hostname = SystemInfoUtils.getHostName();
-            OperatingSystem os = systemInfo.getOperatingSystem();
-            osInfo.manufacturer = os.getManufacturer();
-            osInfo.family = os.getFamily();
-        }
+        osInfo.name = System.getProperty("os.name");
+        osInfo.arch = System.getProperty("os.arch");
+        osInfo.version = System.getProperty("os.version");
+        osInfo.userName = System.getProperty("user.name");
+        osInfo.userHome = System.getProperty("user.home");
+        osInfo.userDir = System.getProperty("user.dir");
+        osInfo.ip = SystemInfoUtils.getIp();
+        osInfo.hostname = SystemInfoUtils.getHostName();
+        OperatingSystem os = systemInfo.getOperatingSystem();
+        osInfo.manufacturer = os.getManufacturer();
+        osInfo.family = os.getFamily();
         osInfo.uptime = FormatUtil.formatElapsedSecs(systemInfo.getHardware().getProcessor().getSystemUptime());
         return osInfo;
     }

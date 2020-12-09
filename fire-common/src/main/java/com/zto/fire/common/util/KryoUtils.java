@@ -21,6 +21,8 @@ import java.util.Map;
  */
 public class KryoUtils {
 
+    private KryoUtils() {}
+
     private static Kryo get() {
         Kryo kryo = new Kryo();
         MapSerializer mapSerializer = new MapSerializer();
@@ -52,13 +54,13 @@ public class KryoUtils {
 
     public static Map<String, String> unserializeMap(byte[] bytes) {
         Input input = new Input(new ByteArrayInputStream(bytes));
-        Map<String, String> object = (Map<String, String>) get().readObject(input, HashMap.class);
+        Map<String, String> object = get().readObject(input, HashMap.class);
         input.close();
         return object;
     }
 
     public static Map<String, String> deserializationMap(byte[] bytes) {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         try {
             Kryo kryo = new Kryo();
             kryo.setRegistrationRequired(true);

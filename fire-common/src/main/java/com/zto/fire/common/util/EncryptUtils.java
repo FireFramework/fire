@@ -5,31 +5,29 @@ import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 /**
  * 各种常用算法加密工具类
  *
  * @author ChengLong 2018年7月16日 09:53:59
- * https://www.cnblogs.com/zhuyingming/p/5076401.html
  */
 public class EncryptUtils {
-    private static final String secret = "($zto%-%fire$)";
+    private static final String SECRET = "($zto%-%fire$)";
+    private static final String ERROR_MESSAGE = "参数不合法";
+
+    private EncryptUtils() {}
 
     /**
      * BASE64解密
-     *
-     * @param message
-     * @return
-     * @throws Exception
      */
     public static String base64Decrypt(String message) {
-        if (StringUtils.isBlank(message)) {
-            throw new IllegalArgumentException("参数不合法");
-        }
+        Objects.requireNonNull(message, ERROR_MESSAGE);
         try {
-            return new String((new BASE64Decoder()).decodeBuffer(message));
+            return new String((new BASE64Decoder()).decodeBuffer(message), StandardCharsets.UTF_8);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -38,17 +36,11 @@ public class EncryptUtils {
 
     /**
      * BASE64加密
-     *
-     * @param message
-     * @return
-     * @throws Exception
      */
     public static String base64Encrypt(String message) {
-        if (StringUtils.isBlank(message)) {
-            throw new IllegalArgumentException("参数不合法");
-        }
+        Objects.requireNonNull(message, ERROR_MESSAGE);
         try {
-            return new String((new BASE64Encoder()).encodeBuffer(message.getBytes()));
+            return new BASE64Encoder().encodeBuffer(message.getBytes());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -57,22 +49,15 @@ public class EncryptUtils {
 
     /**
      * 生成32位md5码
-     *
-     * @param message
-     * @return
      */
     public static String md5Encrypt(String message) {
-        if (StringUtils.isBlank(message)) {
-            throw new IllegalArgumentException("参数不合法");
-        }
+        Objects.requireNonNull(message, ERROR_MESSAGE);
         try {
             // 得到一个信息摘要器
             MessageDigest digest = MessageDigest.getInstance("md5");
             byte[] result = digest.digest(message.getBytes());
-            StringBuffer buffer = new StringBuffer();
-            // 把每一个byte 做一个与运算 0xff;
+            StringBuilder buffer = new StringBuilder();
             for (byte b : result) {
-                // 与运算
                 int number = b & 0xff;// 加盐
                 String str = Integer.toHexString(number);
                 if (str.length() == 1) {
@@ -90,15 +75,9 @@ public class EncryptUtils {
 
     /**
      * SHA加密
-     *
-     * @param message
-     * @return
-     * @throws Exception
      */
     public static String shaEncrypt(String message, String key) {
-        if (StringUtils.isBlank(message)) {
-            throw new IllegalArgumentException("参数不合法");
-        }
+        Objects.requireNonNull(message, ERROR_MESSAGE);
         if(StringUtils.isBlank(key)) {
             key = "SHA";
         }
@@ -123,10 +102,7 @@ public class EncryptUtils {
         if (StringUtils.isBlank(auth)) {
             return false;
         }
-        String fireAuth = EncryptUtils.md5Encrypt(secret + privateKey + DateFormatUtils.formatCurrentDate());
-        if (!fireAuth.equals(auth)) {
-            return false;
-        }
-        return true;
+        String fireAuth = EncryptUtils.md5Encrypt(SECRET + privateKey + DateFormatUtils.formatCurrentDate());
+        return fireAuth.equals(auth);
     }
 }

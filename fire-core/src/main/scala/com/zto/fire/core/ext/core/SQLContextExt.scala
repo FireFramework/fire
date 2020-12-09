@@ -2,10 +2,8 @@ package com.zto.fire.core.ext.core
 
 import java.util.Properties
 
-import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.conf.{FireJdbcConf, FireKuduConf, FireSparkConf}
 import com.zto.fire.common.util.{DBUtils, KuduUtils, ValueUtils}
-import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.KuduContextExt
 import com.zto.fire.core.util.SingletonFactory
 import org.apache.commons.lang3.StringUtils
@@ -348,21 +346,6 @@ class SQLContextExt(sqlContext: SQLContext) {
          |INSERT INTO TABLE $destTableName partition($partitionName)
          |  $querySQL
         """.stripMargin)
-  }
-
-  /**
-    * 构建Hive和HBase的映射表
-    *
-    * @param clazz
-    * 类类型
-    */
-  def createHiveHBaseMappingTable[T <: HBaseBaseBean[T]](clazz: Class[T], tableName: String): Unit = {
-    if (clazz != null) {
-      val obj: T = clazz.newInstance()
-      val hql = obj.hive2HBaseMapping(tableName)
-      sqlContext.sql(hql)
-      sqlContext.createTableAsSelect(s"${tableName}_mapping", tableName)
-    }
   }
 
   /**

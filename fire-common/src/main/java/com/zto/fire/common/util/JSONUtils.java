@@ -11,6 +11,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class JSONUtils {
 
+    private JSONUtils() {}
+
     /**
      * 解析JSON，并获取指定key对应的值
      *
@@ -41,8 +43,7 @@ public class JSONUtils {
     public static boolean isJson(String json) {
         String jsonStr = StringUtils.trim(json);
         if (StringUtils.isBlank(jsonStr)) return false;
-        if (jsonStr.startsWith("{") && jsonStr.endsWith("}")) return true;
-        return false;
+        return (jsonStr.startsWith("{") && jsonStr.endsWith("}"));
     }
 
     /**
@@ -56,8 +57,7 @@ public class JSONUtils {
     public static boolean isJsonArray(String jsonArray) {
         String jsonArrayStr = StringUtils.trim(jsonArray);
         if (StringUtils.isBlank(jsonArrayStr)) return false;
-        if (jsonArrayStr.startsWith("[") && jsonArrayStr.endsWith("]")) return true;
-        return false;
+        return jsonArrayStr.startsWith("[") && jsonArrayStr.endsWith("]");
     }
 
     /**

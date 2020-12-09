@@ -3,9 +3,7 @@ package com.zto.fire.flink.core.ext.stream
 import java.lang.reflect.Field
 
 import com.zto.fire.common.bean.HBaseBaseBean
-import com.zto.fire.common.bean.ogg.OGGBean
-import com.zto.fire.common.util.{DateFormatUtils, FireUtils, ReflectionUtils, ValueUtils}
-import com.zto.fire.flink.core.ext.functions.FireMapFunction
+import com.zto.fire.common.util.{ReflectionUtils, ValueUtils}
 import com.zto.fire.flink.core.sink.{FlinkHBaseSink, FlinkJdbcSink}
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
@@ -93,45 +91,6 @@ class DataStreamExt[T](stream: DataStream[T]) {
    */
   def toTable: Table = {
     this.tableEnv.fromDataStream(this.stream)
-  }
-
-  /**
-   * 解析ogg中的json数据为指定的JavaBean类型
-   * 支持消息格式为json和jsonarray
-   *
-   * @param clazz
-   * 目标类型
-   * @param paseAfter
-   * 是否解析after数据
-   * @param paseBefore
-   * 是否解析before数据
-   * @return
-   * 对应类型的DStream
-   */
-  def mapOgg[E: ClassTag](clazz: Class[E], paseAfter: Boolean = true, paseBefore: Boolean = true): DataStream[OGGBean[E]] = {
-    if (!this.stream.isInstanceOf[DataStream[String]]) throw new IllegalArgumentException("ogg消息解析失败：DStream必须为String类型")
-
-    this.stream.flatMap(new FireMapFunction[T, OGGBean[E]]() {
-      /**
-       * flatMap操作需复写该方法
-       */
-      override def flatMap(value: T, out: Collector[OGGBean[E]]): Unit = {
-        val json = StringUtils.trim(value.asInstanceOf[String])
-        if (StringUtils.isNotBlank(json)) {
-          if (json.startsWith("[") && json.endsWith("]")) {
-            // json array
-            val oggList = FireUtils.oggJsonArrayParse(json, clazz, paseAfter, paseBefore)
-            if (oggList != null && oggList.size > 0) oggList.filter(ogg => ogg != null).foreach(ogg => out.collect(ogg))
-          } else if (json.startsWith("{") && json.endsWith("}")) {
-            // json
-            val ogg = FireUtils.oggJsonParse(json, clazz, paseAfter, paseBefore)
-            if (ogg != null) out.collect(ogg)
-          } else {
-            throw new IllegalArgumentException("ogg消息解析失败：json格式不合法")
-          }
-        }
-      }
-    })
   }
 
   /**

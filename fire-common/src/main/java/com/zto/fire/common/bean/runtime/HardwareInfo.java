@@ -12,7 +12,7 @@ import oshi.hardware.PowerSource;
  * @author ChengLong 2019年9月29日 15:52:50
  */
 public class HardwareInfo {
-    private static HardwareInfo hardwareInfo;
+    private static HardwareInfo hardwareInfo = new HardwareInfo();
     // 制造商
     private String manufacturer;
     // 型号
@@ -53,11 +53,17 @@ public class HardwareInfo {
     public static HardwareInfo getHardwareInfo() {
         SystemInfo systemInfo = new SystemInfo();
         HardwareAbstractionLayer hardware = systemInfo.getHardware();
-        if (hardwareInfo == null) {
-            hardwareInfo = new HardwareInfo();
-            ComputerSystem computerSystem = hardware.getComputerSystem();
+        ComputerSystem computerSystem = hardware.getComputerSystem();
+
+        if (hardwareInfo.manufacturer == null) {
             hardwareInfo.manufacturer = computerSystem.getManufacturer();
+        }
+
+        if (hardwareInfo.model == null) {
             hardwareInfo.model = computerSystem.getModel();
+        }
+
+        if (hardwareInfo.serialNumber == null) {
             hardwareInfo.serialNumber = computerSystem.getSerialNumber().trim();
         }
 

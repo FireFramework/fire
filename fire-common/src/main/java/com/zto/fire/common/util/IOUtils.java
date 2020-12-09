@@ -9,6 +9,8 @@ import java.io.Closeable;
  */
 public class IOUtils {
 
+    private IOUtils() {}
+
     /**
      * 关闭多个流
      */
@@ -18,11 +20,9 @@ public class IOUtils {
                 try {
                     if (io != null) {
                         io.close();
-                        io = null;
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    continue;
                 }
             }
         }
@@ -39,11 +39,9 @@ public class IOUtils {
                 try {
                     if (pro != null) {
                         pro.destroy();
-                        pro = null;
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    continue;
                 }
             }
         }

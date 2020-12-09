@@ -93,7 +93,7 @@ trait BaseFire {
   def init(conf: Any = null, args: Array[String] = null): Unit = {
     this.before(args)
     SingletonFactory.jobType = this.jobType
-    this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成用户资源初始化，任务类型：${this.jobType.getJobType} <--- ${FirePS1Conf.DEFAULT}")
+    this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成用户资源初始化，任务类型：${this.jobType.getJobTypeDesc} <--- ${FirePS1Conf.DEFAULT}")
     this.args = args
     this.createContext(conf)
   }

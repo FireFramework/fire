@@ -11,6 +11,8 @@ import java.util.Map;
  */
 public class StringsUtils {
 
+    private StringsUtils() {}
+
     /**
      * 处理成超链接
      *
@@ -164,14 +166,7 @@ public class StringsUtils {
      */
     public static boolean isBoolean(String str) {
         if (StringUtils.isBlank(str)) return false;
-        try {
-            if ("true".equalsIgnoreCase(str) || "false".equalsIgnoreCase(str)) {
-                return true;
-            }
-            return false;
-        } catch (Exception e) {
-            return false;
-        }
+        return "true".equalsIgnoreCase(str) || "false".equalsIgnoreCase(str);
     }
 
     /**

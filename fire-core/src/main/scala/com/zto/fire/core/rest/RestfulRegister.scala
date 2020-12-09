@@ -124,28 +124,4 @@ class RestfulRegister(val threadPool: ExecutorService) {
     msg
   }
 
-
-  /**
-    * 扫描@Rest，并注册
-    */
-  def registerRestful(): Unit = {
-    val restClassList = ReflectionUtils.scanAnnotation("com.zto", classOf[Rest])
-    if (restClassList != null && restClassList.size() > 0) {
-      JavaConversions.asScalaSet(restClassList).foreach(clazz => {
-        if (clazz != null) {
-          val methods = clazz.getDeclaredMethods
-          if (methods != null && methods.size > 0) {
-            methods.foreach(method => {
-              method.setAccessible(true)
-              val restAnno = method.getAnnotation(classOf[Rest])
-              if (restAnno != null) {
-                // this.addRest(RestCase(restAnno.method(), restAnno.value(), ))
-                println(method.getName)
-              }
-            })
-          }
-        }
-      })
-    }
-  }
 }

@@ -42,6 +42,9 @@ public class SchedulerManager extends BaseLogging implements Serializable {
     private static AtomicBoolean isInit = new AtomicBoolean(false);
     // 定时任务黑名单，存放带有@Scheduler标识的方法名
     private static Map<String, String> blacklistMap = Maps.newHashMap();
+    private static final String DRIVER = "driver";
+    private static final String EXECUTOR = "executor";
+    private static final String DEFAULT_COLOR = "\u001B[0m ] ";
     private static final Logger logger = LoggerFactory.getLogger(SchedulerManager.class);
 
     static {
@@ -96,12 +99,12 @@ public class SchedulerManager extends BaseLogging implements Serializable {
      * 判断当前是否为driver
      */
     private static String label() {
-        if (FireUtils.isFlinkEngine()) return "driver";
+        if (FireUtils.isFlinkEngine()) return DRIVER;
         SparkEnv sparkEnv = SparkEnv.get();
-        if (sparkEnv == null || "driver".equalsIgnoreCase(sparkEnv.executorId())) {
-            return "driver";
+        if (sparkEnv == null || DRIVER.equalsIgnoreCase(sparkEnv.executorId())) {
+            return DRIVER;
         } else {
-            return "executor";
+            return EXECUTOR;
         }
     }
 
@@ -112,17 +115,17 @@ public class SchedulerManager extends BaseLogging implements Serializable {
      *
      * @param taskInstances 具有@Scheduled注解类的实例
      */
-    public synchronized static void registerTasks(Object... taskInstances) {
+    public static synchronized void registerTasks(Object... taskInstances) {
         try {
             if (!FireFrameworkConf.scheduleEnable()) return;
             SchedulerManager.init();
             addScanTask(taskInstances);
-            if (taskMap != null && taskMap.size() > 0) {
+            if (!taskMap.isEmpty()) {
                 for (Map.Entry<String, Object> entry : taskMap.entrySet()) {
                     // 已经注册过的任务不再重复注册
                     if (alreadyRegisteredTaskMap.containsKey(entry.getKey())) continue;
 
-                    Class clazz = entry.getValue().getClass();
+                    Class<?> clazz = entry.getValue().getClass();
                     if (clazz != null) {
                         Method[] methods = clazz.getDeclaredMethods();
                         for (Method method : methods) {
@@ -134,7 +137,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
                                 if (anno != null && StringUtils.isNotBlank(anno.scope()) && ("all".equalsIgnoreCase(anno.scope()) || anno.scope().equalsIgnoreCase(label))) {
                                     // 通过anno.concurrent判断是否使用并发任务实例
                                     JobDetail job = (anno.concurrent() ? JobBuilder.newJob(TaskRunner.class) : JobBuilder.newJob(TaskRunnerQueue.class)).usingJobData(clazz.getName() + "#" + method.getName(), anno.cron()).build();
-                                    TriggerBuilder triggerBuilder = TriggerBuilder.newTrigger();
+                                    TriggerBuilder<Trigger> triggerBuilder = TriggerBuilder.newTrigger();
 
                                     if (StringUtils.isNotBlank(anno.cron())) {
                                         // 优先执行cron表达式
@@ -148,7 +151,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
                                         if (repeatCount == -1) {
                                             simpleScheduleBuilder.repeatForever();
                                         } else {
-                                            simpleScheduleBuilder.withRepeatCount(new Long(repeatCount).intValue() - 1);
+                                            simpleScheduleBuilder.withRepeatCount((int) repeatCount - 1);
                                         }
                                         triggerBuilder.withSchedule(simpleScheduleBuilder);
                                     }
@@ -160,14 +163,15 @@ public class SchedulerManager extends BaseLogging implements Serializable {
                                         // 首次延迟多久（毫秒）开始执行
                                         if (anno.initialDelay() == 0) triggerBuilder.startNow();
                                         if (anno.initialDelay() != 0 && anno.initialDelay() != -1)
-                                            triggerBuilder.startAt(DateUtils.addMilliseconds(new Date(), new Long(anno.initialDelay()).intValue()));
+                                            triggerBuilder.startAt(DateUtils.addMilliseconds(new Date(), (int) anno.initialDelay()));
                                     }
                                     // 添加到调度任务中
                                     if (scheduler == null) scheduler = StdSchedulerFactory.getDefaultScheduler();
                                     scheduler.scheduleJob(job, triggerBuilder.build());
                                     // 将已注册的task放到已注册标记列表中，防止重复注册同一个类的同一个定时方法
                                     alreadyRegisteredTaskMap.put(entry.getKey(), entry.getValue());
-                                    logger.info("\u001B[33m---> 已注册定时任务[ {}.{} ]，{}. \u001B[33m<---\u001B[0m", entry.getKey(), method.getName(), buildSchedulerInfo(anno));
+                                    String schedulerInfo = buildSchedulerInfo(anno);
+                                    logger.info("\u001B[33m---> 已注册定时任务[ {}.{} ]，{}. \u001B[33m<---\u001B[0m", entry.getKey(), method.getName(), schedulerInfo);
                                 }
                             }
                         }
@@ -191,21 +195,21 @@ public class SchedulerManager extends BaseLogging implements Serializable {
         if (anno == null) return "Scheduled为空";
         StringBuilder schedulerInfo = new StringBuilder("\u001B[31m调度信息\u001B[0m");
         if (StringUtils.isNotBlank(anno.scope())) {
-            schedulerInfo.append("[ 范围=\u001B[32m" + anno.scope() + "\u001B[0m ] ");
+            schedulerInfo.append("[ 范围=\u001B[32m").append(anno.scope()).append(DEFAULT_COLOR);
         }
         if (StringUtils.isNotBlank(anno.cron())) {
-            schedulerInfo.append("[ 频率=\u001B[33m" + anno.cron() + "\u001B[0m ] ");
+            schedulerInfo.append("[ 频率=\u001B[33m").append(anno.cron()).append(DEFAULT_COLOR);
         } else if (anno.fixedInterval() != -1) {
-            schedulerInfo.append("[ 频率=\u001B[34m" + anno.fixedInterval() + "\u001B[0m ] ");
+            schedulerInfo.append("[ 频率=\u001B[34m").append(anno.fixedInterval()).append(DEFAULT_COLOR);
         }
         if (anno.initialDelay() != -1) {
-            schedulerInfo.append("[ 延迟=\u001B[35m" + anno.initialDelay() + "\u001B[0m ] ");
+            schedulerInfo.append("[ 延迟=\u001B[35m").append(anno.initialDelay()).append(DEFAULT_COLOR);
         }
         if (StringUtils.isNotBlank(anno.startAt())) {
-            schedulerInfo.append("[ 启动时间=\u001B[36m" + anno.startAt() + "\u001B[0m ] ");
+            schedulerInfo.append("[ 启动时间=\u001B[36m").append(anno.startAt()).append(DEFAULT_COLOR);
         }
         if (anno.repeatCount() != -1) {
-            schedulerInfo.append("[ 重复=\u001B[32m" + anno.repeatCount() + "\u001B[0m次 ] ");
+            schedulerInfo.append("[ 重复=\u001B[32m").append(anno.repeatCount()).append("\u001B[0m次 ] ");
         }
         return schedulerInfo.toString();
     }
@@ -213,15 +217,15 @@ public class SchedulerManager extends BaseLogging implements Serializable {
     /**
      * 通过execute方法调用传入的指定类的指定方法
      */
-    public static void execute(JobExecutionContext context) throws JobExecutionException {
+    public static void execute(JobExecutionContext context) {
         try {
             JobDataMap dataMap = context.getJobDetail().getJobDataMap();
-            for (Map.Entry entry : dataMap.entrySet()) {
-                String key = entry.getKey().toString();
+            for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
+                String key = entry.getKey();
                 // 定时调用指定类的指定方法
                 if (StringUtils.isNotBlank(key) && key.contains("#")) {
                     String[] classMethod = key.split("#");
-                    Class clazz = Class.forName(classMethod[0]);
+                    Class<?> clazz = Class.forName(classMethod[0]);
                     Method method = clazz.getMethod(classMethod[1]);
                     Object instance = taskMap.get(classMethod[0]);
                     if (instance != null) method.invoke(instance);
@@ -235,7 +239,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
     /**
      * 用于判断当前的定时调度器是否已启动
      */
-    public synchronized static boolean schedulerIsStarted() {
+    public static synchronized boolean schedulerIsStarted() {
         if (scheduler == null) {
             return false;
         }
@@ -252,11 +256,13 @@ public class SchedulerManager extends BaseLogging implements Serializable {
      *
      * @param waitForJobsToComplete 是否等待所有job全部执行完成再关闭
      */
-    public synchronized static void shutdown(boolean waitForJobsToComplete) {
+    public static synchronized void shutdown(boolean waitForJobsToComplete) {
         try {
             if (scheduler != null && !scheduler.isShutdown()) {
                 scheduler.shutdown(waitForJobsToComplete);
                 scheduler = null;
+                taskMap.clear();
+                alreadyRegisteredTaskMap.clear();
                 logger.info("\u001B[33m---> 完成定时任务的资源回收. <---\u001B[0m");
             }
         } catch (Exception e) {

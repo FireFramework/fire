@@ -4,7 +4,7 @@ import java.sql.Connection
 import java.util.Properties
 
 import com.zto.fire.common.bean.{BaseLogging, HBaseBaseBean}
-import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf, FireKafkaConf, FireSparkConf}
+import com.zto.fire.common.conf.{FireJdbcConf, FireKafkaConf, FireSparkConf}
 import com.zto.fire.common.db.{HBaseOper, JdbcOper}
 import com.zto.fire.common.util.{FireUtils, KafkaUtils, LogUtils, ValueUtils}
 import com.zto.fire.core.bridge.{HBaseSparkBridge, JdbcOperBridge}
@@ -296,16 +296,6 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    */
   def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = FireSparkConf.partitionName): Unit = {
     spark.sqlContext.insertIntoDymPartitionAsSelect(destTableName, querySQL, partitionName)
-  }
-
-  /**
-   * 构建Hive和HBase的映射表
-   *
-   * @param clazz
-   * JavaBean的类型
-   */
-  def createHiveHBaseMappingTable[T <: HBaseBaseBean[T]](clazz: Class[T], tableName: String): Unit = {
-    spark.sqlContext.createHiveHBaseMappingTable(clazz, tableName)
   }
 
   /**

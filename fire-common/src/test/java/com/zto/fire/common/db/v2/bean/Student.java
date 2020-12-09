@@ -15,7 +15,7 @@ import java.util.List;
  * @create 2020-11-13 17:46
  * @since 1.0.0
  */
-@HConfig(nullable = true, multiVersion = false)
+@HConfig(nullable = true, multiVersion = true)
 public class Student extends HBaseBaseBean<Student> {
     private Long id;
     private String name;

@@ -10,12 +10,14 @@ import com.zto.fire.common.util.ReflectionUtils;
 import com.zto.fire.common.util.StackTraceUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,7 @@ import java.util.stream.Collectors;
  * 指定查询条件，将查询结果以List<T>形式返回
  * 注：自定义bean中的field需与hbase中的qualifier对应
  * <p>
+ * @deprecated use v2.HBaseOper
  * Created by ChengLong on 2017-02-20.
  */
 @Deprecated
@@ -47,9 +50,11 @@ public class HBaseOper {
     private static Configuration conf;
     private static Connection connection;
     private static Gson gson = new Gson();
-    private static final Map<Class, Map<String, Field>> cacheFieldMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Map<String, Field>> cacheFieldMap = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(HBaseOper.class);
     private static Durability durability = null;
+    private static final String ROWKEY = "rowKey";
+    private static final String CLUSTER = FireHBaseConf.hbaseCluster(1);
 
     /**
      * 根据conf信息获取一个单例的连接
@@ -77,11 +82,10 @@ public class HBaseOper {
     public static Configuration getConfiguration() {
         if (conf == null) {
             conf = HBaseConfiguration.create();
-            String clusterName = FireHBaseConf.hbaseCluster(1);
-            if (FireHBaseConf.hbaseClusterMap().containsKey(clusterName)) {
-                conf.set("hbase.zookeeper.quorum", FireHBaseConf.hbaseClusterMap().get(clusterName));
-            } else if (StringUtils.isNotBlank(clusterName)) {
-                conf.set("hbase.zookeeper.quorum", clusterName);
+            if (FireHBaseConf.hbaseClusterMap().containsKey(CLUSTER)) {
+                conf.set("hbase.zookeeper.quorum", FireHBaseConf.hbaseClusterMap().get(CLUSTER));
+            } else if (StringUtils.isNotBlank(CLUSTER)) {
+                conf.set("hbase.zookeeper.quorum", CLUSTER);
             } else {
                 throw new IllegalArgumentException("未配置HBase集群信息，请通过以下参数指定：spark.hbase.cluster=xxx");
             }
@@ -112,9 +116,9 @@ public class HBaseOper {
                 Table table = getConnection().getTable(tbName);
                 table.put(put);
                 table.close();
-                logger.info("数据成功写入到hbase中, cluster={} tableName={} rowKey={} family={} qualifier={} value={}", FireHBaseConf.hbaseCluster(1), tableName, rowKey, family, qualifier, value);
+                logger.info("数据成功写入到hbase中, cluster={} tableName={} rowKey={} family={} qualifier={} value={}", CLUSTER, tableName, rowKey, family, qualifier, value);
             } catch (Exception e) {
-                logger.error("数据写入hbase失败, cluster={} tableName={} rowKey={} family={} qualifier={} value={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, rowKey, family, qualifier, value, StackTraceUtils.stackTraceInfo(e));
+                logger.error("数据写入hbase失败, cluster={} tableName={} rowKey={} family={} qualifier={} value={} exception={}", CLUSTER, tableName, rowKey, family, qualifier, value, StackTraceUtils.stackTraceInfo(e));
             }
         }
     }
@@ -132,9 +136,9 @@ public class HBaseOper {
                 Table table = getConnection().getTable(tbName);
                 table.put(put);
                 table.close();
-                logger.info("数据成功写入到hbase中, cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
+                logger.info("数据成功写入到hbase中, cluster={} tableName={}", CLUSTER, tableName);
             } catch (Exception e) {
-                logger.error("数据写入hbase失败, cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("数据写入hbase失败, cluster={} tableName={} exception={}", CLUSTER, tableName, StackTraceUtils.stackTraceInfo(e));
             }
         }
     }
@@ -146,15 +150,15 @@ public class HBaseOper {
      * @param putList   Put集合
      */
     public static void insertPut(String tableName, List<Put> putList) {
-        if (isExists(tableName) && putList != null && putList.size() > 0) {
+        if (isExists(tableName) && putList != null && !putList.isEmpty()) {
             Table table = null;
             try {
                 TableName tbName = TableName.valueOf(tableName);
                 table = getConnection().getTable(tbName);
                 table.put(putList);
-                logger.info("数据成功写入到hbase中, cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(1), tableName, putList.size());
+                logger.info("数据成功写入到hbase中, cluster={} tableName={} size={}", CLUSTER, tableName, putList.size());
             } catch (Exception e) {
-                logger.error("数据写入hbase失败, cluster={} tableName={} size={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, putList.size(), StackTraceUtils.stackTraceInfo(e));
+                logger.error("数据写入hbase失败, cluster={} tableName={} size={} exception={}", CLUSTER, tableName, putList.size(), StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeTable(table);
             }
@@ -221,10 +225,10 @@ public class HBaseOper {
      * @param list      list中的数据必须是HBaseBaseBean的子类实例集合
      */
     public static <T extends HBaseBaseBean> void insert(String tableName, List<T> list) {
-        if (list != null && list.size() > 0) {
+        if (list != null && !list.isEmpty()) {
             List<Put> putList = new LinkedList<>();
-            for (Object obj : list) {
-                Put put = convert2Put((T) obj, true);
+            for (T obj : list) {
+                Put put = convert2Put(obj, true);
                 if (put != null) {
                     putList.add(put);
                 }
@@ -241,8 +245,8 @@ public class HBaseOper {
      * @param list      list中的数据必须是HBaseBaseBean的子类实例集合
      */
     public static <T extends HBaseBaseBean> void insertMultiVersions(String tableName, List<T> list) {
-        if (StringUtils.isNotBlank(tableName) && list != null && list.size() > 0) {
-            List multiBean = list.stream().map(bean -> new MultiVersionsBean(bean)).collect(Collectors.toList());
+        if (StringUtils.isNotBlank(tableName) && list != null && !list.isEmpty()) {
+            List multiBean = list.stream().map(MultiVersionsBean::new).collect(Collectors.toList());
             insert(tableName, multiBean);
         }
     }
@@ -259,9 +263,8 @@ public class HBaseOper {
             List<Put> putList = new LinkedList<>();
             scala.collection.Iterator<T> it = list.iterator();
             while (it.hasNext()) {
-                Put put = convert2Put((T) it.next(), true);
+                Put put = convert2Put(it.next(), true);
                 if (put != null) {
-                    // put.setWriteToWAL(false);
                     put.setDurability(getHBaseDurability());
                     putList.add(put);
                 }
@@ -289,11 +292,11 @@ public class HBaseOper {
      * @param list      list中的数据必须是HBaseBaseBean的子类实例集合
      */
     public static <T extends HBaseBaseBean> void insertIgnoreNull(String tableName, List<T> list) {
-        if (list != null && list.size() > 0) {
+        if (list != null && !list.isEmpty()) {
             List<Put> putList = new LinkedList<>();
             Iterator<T> it = list.iterator();
             while (it.hasNext()) {
-                Put put = convert2Put((T) it.next(), false);
+                Put put = convert2Put(it.next(), false);
                 if (put != null) {
                     put.setDurability(getHBaseDurability());
                     putList.add(put);
@@ -315,7 +318,7 @@ public class HBaseOper {
             List<Put> putList = new LinkedList<>();
             scala.collection.Iterator<T> it = list.iterator();
             while (it.hasNext()) {
-                Put put = convert2Put((T) it.next(), false);
+                Put put = convert2Put(it.next(), false);
                 if (put != null) {
                     put.setDurability(getHBaseDurability());
                     putList.add(put);
@@ -340,10 +343,10 @@ public class HBaseOper {
                 table = getConnection().getTable(TableName.valueOf(tableName));
                 Get get = new Get(rowKey.getBytes());
                 get.setMaxVersions(versionCount);
-                logger.info("hbase get成功. cluster={} tableName={} rowKey={}", FireHBaseConf.hbaseCluster(1), tableName, rowKey);
+                logger.info("hbase get成功. cluster={} tableName={} rowKey={}", CLUSTER, tableName, rowKey);
                 return table.get(get);
             } catch (Exception e) {
-                logger.error("hbase get失败. cluster={} tableName={} rowKey={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase get失败. cluster={} tableName={} rowKey={} exception={}", CLUSTER, tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeTable(table);
             }
@@ -361,9 +364,9 @@ public class HBaseOper {
      * @param <T>          目标类型泛型，必须是HBaseBaseBean的子类
      * @return 目标对象实例
      */
-    public static <T extends HBaseBaseBean> T get(String tableName, Integer versionCount, String rowKey, Class clazz) {
+    public static <T extends HBaseBaseBean> T get(String tableName, Integer versionCount, String rowKey, Class<T> clazz) {
         Result rs = get(tableName, versionCount, rowKey);
-        return (T) hbaseRow2Bean(rs, clazz);
+        return hbaseRow2Bean(rs, clazz);
     }
 
     /**
@@ -378,15 +381,15 @@ public class HBaseOper {
             Table table = null;
             try {
                 table = getConnection().getTable(TableName.valueOf(tableName));
-                logger.info("hbase get成功. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
+                logger.info("hbase get成功. cluster={} tableName={}", CLUSTER, tableName);
                 return table.get(get);
             } catch (Exception e) {
-                logger.error("hbase get失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase get失败. cluster={} tableName={} exception={}", CLUSTER, tableName, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeTable(table);
             }
         }
-        logger.warn("hbase get失败，未找到表. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
+        logger.warn("hbase get失败，未找到表. cluster={} tableName={}", CLUSTER, tableName);
         return null;
     }
 
@@ -398,20 +401,20 @@ public class HBaseOper {
      * @return
      */
     public static Result[] get(String tableName, List<Get> getList) {
-        if (isExists(tableName) && getList != null && getList.size() > 0) {
+        if (isExists(tableName) && getList != null && !getList.isEmpty()) {
             Table table = null;
             try {
                 table = getConnection().getTable(TableName.valueOf(tableName));
-                logger.info("hbase get成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(1), tableName, getList.size());
+                logger.info("hbase get成功. cluster={} tableName={} size={}", CLUSTER, tableName, getList.size());
                 return table.get(getList);
             } catch (Exception e) {
-                logger.error("hbase get失败. cluster={} tableName={} size={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, getList.size(), StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase get失败. cluster={} tableName={} size={} exception={}", CLUSTER, tableName, getList.size(), StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeTable(table);
             }
         }
-        logger.warn("hbase get失败，请检查表是否存在，或getList可能为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
-        return null;
+        logger.warn("hbase get失败，请检查表是否存在，或getList可能为空. cluster={} tableName={}", CLUSTER, tableName);
+        return new Result[0];
     }
 
     /**
@@ -426,7 +429,7 @@ public class HBaseOper {
     public static <T extends HBaseBaseBean> T get(String tableName, Get get, Class<T> clazz) {
         Result rs = get(tableName, get);
         if (rs == null || rs.isEmpty()) {
-            logger.warn("hbase get失败，未get到结果. cluster={} tableName={} rowKey={}", FireHBaseConf.hbaseCluster(1), tableName, new String(get.getRow()));
+            logger.warn("hbase get失败，未get到结果. cluster={} tableName={}", CLUSTER, tableName);
             return null;
         }
         return hbaseRow2Bean(rs, clazz);
@@ -444,8 +447,7 @@ public class HBaseOper {
     public static <T extends HBaseBaseBean> List<T> getMultiVersions(String tableName, Get get, Class<T> clazz) {
         Result rs = get(tableName, get);
         if (rs == null || rs.isEmpty()) {
-            logger.warn("hbase get多版本失败，未get到结果. cluster={} tableName={} rowKey={}", FireHBaseConf.hbaseCluster(1), tableName, new String(get.getRow()));
-            return null;
+            return Collections.emptyList();
         }
         return hbaseMultiRow2Bean(rs, clazz);
     }
@@ -479,12 +481,12 @@ public class HBaseOper {
             get.setMaxVersions(versionCount);
             Result rs = get(tableName, get);
             if (rs == null || rs.isEmpty()) {
-                logger.warn("hbase get失败，未get到结果. cluster={} tableName={} rowKey={}", FireHBaseConf.hbaseCluster(1), tableName, rowKey);
-                return null;
+                logger.warn("hbase get失败，未get到结果. cluster={} tableName={} rowKey={}", CLUSTER, tableName, rowKey);
+                return Collections.emptyList();
             }
             return hbaseMultiRow2Bean(rs, clazz);
         } catch (Exception e) {
-            logger.error("hbase get失败. cluster={} tableName={} rowKey={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
+            logger.error("hbase get失败. ", e);
         }
         return Collections.emptyList();
     }
@@ -501,8 +503,8 @@ public class HBaseOper {
     public static <T extends HBaseBaseBean> List<T> get(String tableName, List<Get> getList, Class<T> clazz) {
         Result[] rsArr = get(tableName, getList);
         if (rsArr == null || rsArr.length == 0) {
-            logger.warn("hbase get多版本失败，未get到结果. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
-            return null;
+            logger.warn("hbase get多版本失败，未get到结果. cluster={} tableName={}", CLUSTER, tableName);
+            return Collections.emptyList();
         }
         return hbaseRow2Bean(rsArr, clazz);
     }
@@ -546,8 +548,8 @@ public class HBaseOper {
     public static <T extends HBaseBaseBean> List<T> getMultiVersions(String tableName, List<Get> getList, Class<T> clazz) {
         Result[] rsArr = get(tableName, getList);
         if (rsArr == null || rsArr.length == 0) {
-            logger.warn("hbase get多版本失败，未get到结果. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
-            return null;
+            logger.warn("hbase get多版本失败，未get到结果. cluster={} tableName={}", CLUSTER, tableName);
+            return Collections.emptyList();
         }
         return hbaseMultiRow2Bean(rsArr, clazz);
     }
@@ -595,16 +597,16 @@ public class HBaseOper {
                     get.setMaxVersions(versionCount);
                     gets.add(get);
                 }
-                logger.info("hbase gets成功. cluster={} tableName={} getSize={}", FireHBaseConf.hbaseCluster(1), tableName, gets.size());
+                logger.info("hbase gets成功. cluster={} tableName={} getSize={}", CLUSTER, tableName, gets.size());
                 return table.get(gets);
             } catch (Exception e) {
-                logger.error("hbase gets失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase gets失败. cluster={} tableName={} exception={}", CLUSTER, tableName, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeTable(table);
             }
         }
-        logger.warn("hbase gets失败，请检查表是否存在，或rowKey可能为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
-        return null;
+        logger.warn("hbase gets失败，请检查表是否存在，或rowKey可能为空. cluster={} tableName={}", CLUSTER, tableName);
+        return new Result[0];
     }
 
     /**
@@ -639,10 +641,10 @@ public class HBaseOper {
                 }
                 return table.getScanner(scan);
             } catch (Exception e) {
-                logger.error("hbase scan失败. cluster={} tableName={} startRow={} endRow={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, startRow, stopRow, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scan失败. cluster={} tableName={} startRow={} endRow={} exception={}", CLUSTER, tableName, startRow, stopRow, StackTraceUtils.stackTraceInfo(e));
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或rowKey的起止是否为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
+        logger.warn("hbase scan失败，请检查表是否存在，或rowKey的起止是否为空. cluster={} tableName={}", CLUSTER, tableName);
         return null;
     }
 
@@ -671,12 +673,11 @@ public class HBaseOper {
             try {
                 return table.getScanner(scan);
             } catch (Exception e) {
-                logger.error("hbase scan失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scan失败", e);
             } finally {
                 closeTable(table);
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
         return null;
     }
 
@@ -702,15 +703,14 @@ public class HBaseOper {
                         list.add(obj);
                     }
                 }
-                logger.info("hbase scan成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(1), tableName, list.size());
+                logger.info("hbase scan成功. cluster={} tableName={} size={}", CLUSTER, tableName, list.size());
                 return list;
             } catch (Exception e) {
-                logger.error("hbase scan失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scan失败. cluster={} tableName={} exception={}", CLUSTER, tableName, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeResultAndTable(rsScanner, table);
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
         return Collections.emptyList();
     }
 
@@ -737,15 +737,15 @@ public class HBaseOper {
                         list.add(obj);
                     }
                 }
-                logger.info("hbase scanMaxVersions成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(1), tableName, list.size());
+                logger.info("hbase scanMaxVersions成功. cluster={} tableName={} size={}", CLUSTER, tableName, list.size());
                 return list;
             } catch (Exception e) {
-                logger.error("hbase scanMaxVersions失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scanMaxVersions失败. cluster={} tableName={} exception={}", CLUSTER, tableName, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeResultAndTable(rsScanner, table);
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
+        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", CLUSTER, tableName);
         return Collections.emptyList();
     }
 
@@ -771,15 +771,15 @@ public class HBaseOper {
                         list.add(obj);
                     }
                 }
-                logger.info("hbase scanAll成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(1), tableName, list.size());
+                logger.info("hbase scanAll成功. cluster={} tableName={} size={}", CLUSTER, tableName, list.size());
                 return list;
             } catch (Exception e) {
-                logger.error("hbase scanAll失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scanAll失败. cluster={} tableName={} exception={}", CLUSTER, tableName, StackTraceUtils.stackTraceInfo(e));
             } finally {
                 closeResultAndTable(rsScanner, table);
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
+        logger.warn("hbase scan失败，请检查表是否存在，或scan对象是否为空. cluster={} tableName={}", CLUSTER, tableName);
         return Collections.emptyList();
     }
 
@@ -815,16 +815,15 @@ public class HBaseOper {
                         }
                     }
                 }
-                logger.info("hbase scan成功. cluster={} tableName={} startRow={} stopRow={} size={}", FireHBaseConf.hbaseCluster(1), tableName, startRow, stopRow, list.size());
+                logger.info("hbase scan成功. cluster={} tableName={} startRow={} stopRow={} size={}", CLUSTER, tableName, startRow, stopRow, list.size());
                 return list;
             } catch (Exception e) {
-                logger.error("hbase scan失败. cluster={} tableName={} startRow={} stopRow={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, startRow, stopRow, StackTraceUtils.stackTraceInfo(e));
+                logger.error("hbase scan失败. ", e);
             } finally {
                 closeResultAndTable(rsScanner, table);
             }
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或startRow、stopRow对象为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
-        return null;
+        return Collections.emptyList();
     }
 
     /**
@@ -838,30 +837,31 @@ public class HBaseOper {
      */
     public static <T extends HBaseBaseBean> List<T> scanMultiVersions(String tableName, Scan scan, Class<T> clazz) {
         if (StringUtils.isBlank(tableName) || scan == null || clazz == null) {
-            return null;
+            return Collections.emptyList();
         }
         Table table = getTable(tableName);
-        ResultScanner rsScanner = null;
-        try {
-            rsScanner = table.getScanner(scan);
-            List<T> list = new LinkedList<>();
-            if (rsScanner != null) {
-                for (Result rs : rsScanner) {
-                    List<T> objList = hbaseMultiRow2Bean(rs, clazz);
-                    if (objList != null && objList.size() > 0) {
-                        list.addAll(objList);
+        if (table != null) {
+            ResultScanner rsScanner = null;
+            try {
+                rsScanner = table.getScanner(scan);
+                List<T> list = new LinkedList<>();
+                if (rsScanner != null) {
+                    for (Result rs : rsScanner) {
+                        List<T> objList = hbaseMultiRow2Bean(rs, clazz);
+                        if (objList != null && !objList.isEmpty()) {
+                            list.addAll(objList);
+                        }
                     }
                 }
+                logger.info("hbase scan成功. cluster={} tableName={} size={}", CLUSTER, tableName, list.size());
+                return list;
+            } catch (Exception e) {
+                logger.error("hbase scanMultiVersions失败.", e);
+            } finally {
+                closeResultAndTable(rsScanner, table);
             }
-            logger.info("hbase scan成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(1), tableName, list.size());
-            return list;
-        } catch (Exception e) {
-            logger.error("hbase scan失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
-        } finally {
-            closeResultAndTable(rsScanner, table);
         }
-        logger.warn("hbase scan失败，请检查表是否存在，或scan对象为空. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
-        return null;
+        return Collections.emptyList();
     }
 
     /**
@@ -878,7 +878,7 @@ public class HBaseOper {
      */
     public static <T extends HBaseBaseBean> List<T> scanMultiVersions(String tableName, String startRow, String stopRow, Class<T> clazz, Integer versionCount, FilterList.Operator operator, Filter... filters) {
         if (StringUtils.isBlank(tableName) || StringUtils.isBlank(startRow) || StringUtils.isBlank(stopRow) || clazz == null) {
-            return null;
+            return Collections.emptyList();
         }
         if (versionCount == null) {
             versionCount = Integer.MAX_VALUE;
@@ -929,7 +929,7 @@ public class HBaseOper {
      */
     public static void deleteRow(String tableName, List<String> rowKeyList) {
         try {
-            if (StringUtils.isNotBlank(tableName) && rowKeyList != null && rowKeyList.size() > 0) {
+            if (StringUtils.isNotBlank(tableName) && rowKeyList != null && !rowKeyList.isEmpty()) {
                 TableName tbName = TableName.valueOf(tableName);
                 Table table = getConnection().getTable(tbName);
                 List<Delete> deletes = new LinkedList<>();
@@ -939,7 +939,7 @@ public class HBaseOper {
                 }
                 table.delete(deletes);
                 table.close();
-                logger.info("delete row成功. cluster={} tableName={} size={}", FireHBaseConf.hbaseCluster(1), tableName, deletes.size());
+                logger.info("delete row成功. cluster={} tableName={} size={}", CLUSTER, tableName, deletes.size());
             }
         } catch (Exception e) {
             logger.error("delete row失败.", e);
@@ -961,209 +961,11 @@ public class HBaseOper {
             admin = getConnection().getAdmin();
             isExist = admin.tableExists(TableName.valueOf(tableName));
         } catch (Exception e) {
-            logger.error("判断HBase表存在失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
+            logger.error("判断HBase表存在失败. cluster={} tableName={} exception={}", CLUSTER, tableName, StackTraceUtils.stackTraceInfo(e));
         } finally {
             closeAdmin(admin);
         }
         return isExist;
-    }
-
-    /**
-     * 创建多列族的HBase表
-     *
-     * @param tableName     表名
-     * @param columnFamilys 多个列族
-     */
-    private static void createTable(String tableName, String... columnFamilys) {
-        Admin admin = null;
-        try {
-            admin = getConnection().getAdmin();
-            TableName tbName = TableName.valueOf(tableName);
-            if (!admin.tableExists(tbName)) {
-                // 新建一个students表的描述
-                HTableDescriptor tableDesc = new HTableDescriptor(tbName);
-                // 在描述里添加列族
-                for (String columnFamily : columnFamilys) {
-                    HColumnDescriptor desc = new HColumnDescriptor(columnFamily);
-                    // 启用压缩
-                    desc.setCompressionType(Compression.Algorithm.SNAPPY);
-                    tableDesc.addFamily(desc);
-                }
-                admin.createTable(tableDesc);
-            }
-        } catch (Exception e) {
-            logger.error("创建HBase表失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
-        } finally {
-            closeAdmin(admin);
-        }
-    }
-
-    /**
-     * 删除表
-     *
-     * @param tableName 表名
-     */
-    private static void dropTable(String tableName) {
-        Admin admin = null;
-        try {
-            admin = getConnection().getAdmin();
-            TableName tbName = TableName.valueOf(tableName);
-            if (admin.tableExists(tbName)) {
-                admin.disableTable(tbName);
-                admin.deleteTable(tbName);
-            }
-        } catch (Exception e) {
-            logger.error("drop HBase表存在失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
-        } finally {
-            closeAdmin(admin);
-        }
-    }
-
-    /**
-     * 启用表
-     *
-     * @param tableName 表名
-     */
-    private static void enableTable(String tableName) {
-        Admin admin = null;
-        try {
-            admin = getConnection().getAdmin();
-            TableName tbName = TableName.valueOf(tableName);
-            if (admin.tableExists(tbName) && !admin.isTableEnabled(tbName)) {
-                admin.enableTable(tbName);
-            }
-        } catch (Exception e) {
-            logger.error("Enable HBase表存在失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
-        } finally {
-            closeAdmin(admin);
-        }
-    }
-
-    /**
-     * 关闭表
-     *
-     * @param tableName 表名
-     */
-    private static void disable(String tableName) {
-        Admin admin = null;
-        try {
-            admin = getConnection().getAdmin();
-            TableName tbName = TableName.valueOf(tableName);
-            if (admin.tableExists(tbName) && admin.isTableEnabled(tbName)) {
-                admin.disableTable(tbName);
-            }
-        } catch (Exception e) {
-            logger.error("Disable HBase表存在失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
-        } finally {
-            closeAdmin(admin);
-        }
-    }
-
-    /**
-     * 清空指定表
-     *
-     * @param tableName 表名
-     */
-    private static void truncate(String tableName) {
-        Admin admin = null;
-        try {
-            admin = getConnection().getAdmin();
-            TableName tbName = TableName.valueOf(tableName);
-            if (admin.tableExists(tbName)) {
-                if (admin.isTableEnabled(tbName)) {
-                    admin.disableTable(tbName);
-                }
-                admin.truncateTable(tbName, true);
-            }
-        } catch (Exception e) {
-            logger.error("Truncate HBase表存在失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
-        } finally {
-            closeAdmin(admin);
-        }
-    }
-
-    /**
-     * 批量删除列族
-     *
-     * @param tableName 表名
-     * @param rowKey    rowKey
-     * @param family    多个列族
-     */
-    public static void deleteFamily(String tableName, String rowKey, String... family) {
-        if (StringUtils.isNotBlank(tableName) && StringUtils.isNotBlank(rowKey) && isExists(tableName)) {
-            Delete delete = new Delete(rowKey.getBytes());
-            if (family != null && family.length > 0) {
-                for (String cf : family) {
-                    delete.addFamily(cf.getBytes());
-                }
-                try {
-                    TableName tbName = TableName.valueOf(tableName);
-                    Table table = getConnection().getTable(tbName);
-                    table.delete(delete);
-                    table.close();
-                } catch (Exception e) {
-                    logger.error("Delete HBase表Family失败. cluster={} tableName={} rowKey={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
-                }
-            }
-        }
-    }
-
-    /**
-     * 批量单个列族下的多个字段的所有版本数据
-     *
-     * @param tableName 表名
-     * @param rowKey    rowKey字段
-     * @param family    列族
-     * @param qualifier 字段名
-     */
-    public static void deleteColumnsMult(String tableName, String rowKey, String family, String... qualifier) {
-        deleteColumns(tableName, rowKey, family, true, qualifier);
-    }
-
-    /**
-     * 批量单个列族下的多个字段的最新版数据
-     *
-     * @param tableName 表名
-     * @param rowKey    rowKey
-     * @param family    列族
-     * @param qualifier 字段名
-     */
-    public static void deleteColumnsSingle(String tableName, String rowKey, String family, String... qualifier) {
-        deleteColumns(tableName, rowKey, family, false, qualifier);
-    }
-
-    /**
-     * 批量单个列族下的多个字段
-     *
-     * @param tableName    表名
-     * @param rowKey       rowKey字段
-     * @param family       列族
-     * @param multVersions 是否删除所有版本
-     * @param qualifier    列名
-     */
-    private static void deleteColumns(String tableName, String rowKey, String family, boolean multVersions, String... qualifier) {
-        try {
-            if (StringUtils.isNotBlank(tableName) && StringUtils.isNotBlank(rowKey) && StringUtils.isNotBlank(family) && qualifier != null && qualifier.length > 0) {
-                Delete delete = new Delete(rowKey.getBytes());
-                if (multVersions) {
-                    // 删除所有版本
-                    for (String qua : qualifier) {
-                        delete.addColumns(family.getBytes(), qua.getBytes());
-                    }
-                } else {
-                    // 删除最新版本
-                    for (String qua : qualifier) {
-                        delete.addColumn(family.getBytes(), qua.getBytes());
-                    }
-                }
-                TableName tbName = TableName.valueOf(tableName);
-                Table table = getConnection().getTable(tbName);
-                table.delete(delete);
-                table.close();
-            }
-        } catch (Exception e) {
-            logger.error("删除HBase列失败. cluster={} tableName={} rowKey={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, rowKey, StackTraceUtils.stackTraceInfo(e));
-        }
     }
 
     /**
@@ -1217,11 +1019,11 @@ public class HBaseOper {
     private static Table getTable(String tableName) {
         try {
             if (isExists(tableName)) {
-                logger.info("HBase getTable成功. cluster={} tableName={}", FireHBaseConf.hbaseCluster(1), tableName);
+                logger.info("HBase getTable成功. cluster={} tableName={}", CLUSTER, tableName);
                 return getConnection().getTable(TableName.valueOf(tableName));
             }
         } catch (Exception e) {
-            logger.error("HBase getTable失败. cluster={} tableName={} exception={}", FireHBaseConf.hbaseCluster(1), tableName, StackTraceUtils.stackTraceInfo(e));
+            logger.error("HBase getTable失败. cluster={} tableName={} exception={}", CLUSTER, tableName, StackTraceUtils.stackTraceInfo(e));
         }
         return null;
     }
@@ -1362,10 +1164,8 @@ public class HBaseOper {
                 byte[] value = CellUtil.cloneValue(cell);
                 Field field = fieldMap.get(family + ":" + qualifier);
                 HBaseOper.setFieldBytesValue(obj, field, value);
-                Field idField = ReflectionUtils.getFieldByName(clazz, "rowKey");
-                if (idField == null) {
-                    throw new IllegalArgumentException(clazz.getName() + " 必须有名为rowKey的成员");
-                }
+                Field idField = ReflectionUtils.getFieldByName(clazz, ROWKEY);
+                checkRowkeyField(idField, clazz);
                 idField.setAccessible(true);
                 idField.set(obj, rowKey);
                 if (StringUtils.isNotBlank(obj.getMultiFields())) {
@@ -1373,9 +1173,18 @@ public class HBaseOper {
                 }
             }
         } catch (Exception e) {
-            logger.error("HBase multiCell2Field失败. cluster={} exception={}", FireHBaseConf.hbaseCluster(1), StackTraceUtils.stackTraceInfo(e));
+            logger.error("HBase multiCell2Field失败. cluster={} exception={}", CLUSTER, StackTraceUtils.stackTraceInfo(e));
         }
         return objList;
+    }
+
+    /**
+     * 用于校验是否有rowKey字段
+     */
+    private static void checkRowkeyField(Field field, Class<?> clazz) {
+        if (field == null) {
+            throw new IllegalArgumentException(clazz.getName() + " 必须有名为rowKey的成员");
+        }
     }
 
     /**
@@ -1392,14 +1201,12 @@ public class HBaseOper {
             obj = clazz.newInstance();
             Cell[] cells = rs.rawCells();
             String rowKey = convertCells2Fields(fieldMap, obj, cells);
-            Field idField = ReflectionUtils.getFieldByName(clazz, "rowKey");
-            if (idField == null) {
-                throw new IllegalArgumentException(clazz.getName() + " 必须有名为rowKey的成员");
-            }
+            Field idField = ReflectionUtils.getFieldByName(clazz, ROWKEY);
+            checkRowkeyField(idField, clazz);
             idField.setAccessible(true);
             idField.set(obj, rowKey);
         } catch (Exception e) {
-            logger.error("HBase cell2Field失败. cluster={} exception={}", FireHBaseConf.hbaseCluster(1), StackTraceUtils.stackTraceInfo(e));
+            logger.error("HBase cell2Field失败. cluster={} exception={}", CLUSTER, StackTraceUtils.stackTraceInfo(e));
         }
         return obj;
     }
@@ -1436,10 +1243,6 @@ public class HBaseOper {
             return null;
         }
         Map<String, Field> fieldMap = getFieldNameMap(clazz);
-        if (fieldMap == null || fieldMap.size() == 0) {
-            throw new RuntimeException(clazz.getName() + " 中的field为空或没有使用@FieldName");
-        }
-
         return cell2Field(clazz, fieldMap, rs);
     }
 
@@ -1452,12 +1255,9 @@ public class HBaseOper {
      */
     public static <T extends HBaseBaseBean> List<T> hbaseMultiRow2Bean(Result rs, Class<T> clazz) {
         if (rs == null || clazz == null || rs.isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
         Map<String, Field> fieldMap = getFieldNameMap(MultiVersionsBean.class);
-        if (fieldMap == null || fieldMap.size() == 0) {
-            throw new RuntimeException(clazz.getName() + " 中的field为空或没有使用@FieldName");
-        }
         return multiCell2Field(rs, clazz, fieldMap);
     }
 
@@ -1470,12 +1270,9 @@ public class HBaseOper {
      */
     public static <T extends HBaseBaseBean> List<T> hbaseRow2Bean(Result[] rsArr, Class<T> clazz) {
         if (rsArr == null || rsArr.length == 0 || clazz == null) {
-            return null;
+            return Collections.emptyList();
         }
         Map<String, Field> fieldMap = getFieldNameMap(clazz);
-        if (fieldMap == null || fieldMap.size() == 0) {
-            throw new RuntimeException(clazz.getName() + " 中的field为空或没有使用@FieldName");
-        }
 
         List<T> objList = new LinkedList<>();
         for (Result rs : rsArr) {
@@ -1499,12 +1296,9 @@ public class HBaseOper {
      */
     public static <T extends HBaseBaseBean> List<T> hbaseMultiRow2Bean(Result[] rsArr, Class<T> clazz) {
         if (rsArr == null || rsArr.length == 0 || clazz == null) {
-            return null;
+            return Collections.emptyList();
         }
         Map<String, Field> fieldMap = getFieldNameMap(MultiVersionsBean.class);
-        if (fieldMap == null || fieldMap.size() == 0) {
-            throw new RuntimeException(MultiVersionsBean.class.getName() + " 中的field为空或没有使用@FieldName");
-        }
 
         List<T> objList = new LinkedList<>();
         for (Result rs : rsArr) {
@@ -1528,25 +1322,20 @@ public class HBaseOper {
             return null;
         }
         Map<String, Field> fieldMap = getFieldNameMap(clazz);
-        if (fieldMap == null || fieldMap.size() == 0) {
-            throw new RuntimeException(clazz.getName() + " 中的field为空或没有使用@FieldName");
-        }
-        ListBuffer<T> beanList = new ListBuffer<T>();
+        ListBuffer<T> beanList = new ListBuffer<>();
         try {
             while (it.hasNext()) {
                 T obj = clazz.newInstance();
                 Cell[] cells = it.next()._2.rawCells();
-                String rowKey = convertCells2Fields(fieldMap, (T) obj, cells);
-                Field idField = ReflectionUtils.getFieldByName(clazz, "rowKey");
-                if (idField == null) {
-                    throw new IllegalArgumentException(clazz.getName() + " 必须有名为rowKey的成员");
-                }
+                String rowKey = convertCells2Fields(fieldMap, obj, cells);
+                Field idField = ReflectionUtils.getFieldByName(clazz, ROWKEY);
+                checkRowkeyField(idField, clazz);
                 idField.setAccessible(true);
                 idField.set(obj, rowKey);
                 beanList.$plus$eq(obj);
             }
         } catch (Exception e) {
-            logger.error("HBase hbaseRow2BeanList失败. cluster={} exception={}", FireHBaseConf.hbaseCluster(1), StackTraceUtils.stackTraceInfo(e));
+            logger.error("HBase hbaseRow2BeanList失败. cluster={} exception={}", CLUSTER, StackTraceUtils.stackTraceInfo(e));
         }
         return beanList.iterator();
     }
@@ -1565,7 +1354,7 @@ public class HBaseOper {
                 beanList.addAll(hbaseMultiRow2Bean(it.next()._2, clazz));
             }
         } catch (Exception e) {
-            logger.error("HBase hbaseMultiVersionRow2BeanList失败. cluster={} exception={}", FireHBaseConf.hbaseCluster(1), StackTraceUtils.stackTraceInfo(e));
+            logger.error("HBase hbaseMultiVersionRow2BeanList失败. cluster={} exception={}", CLUSTER, StackTraceUtils.stackTraceInfo(e));
         }
         return beanList;
     }
@@ -1581,9 +1370,9 @@ public class HBaseOper {
     public static <T extends HBaseBaseBean> Put convert2Put(T obj, boolean insertEmpty) {
         if (obj != null) {
             try {
-                Class clazz = obj.getClass();
+                Class<?> clazz = obj.getClass();
                 // 获取RowKey字段中的值
-                Field rowKeyField = ReflectionUtils.getFieldByName(clazz, "rowKey");
+                Field rowKeyField = ReflectionUtils.getFieldByName(clazz, ROWKEY);
                 rowKeyField.setAccessible(true);
                 Object rowKeyObj = rowKeyField.get(obj);
                 if (rowKeyObj == null) {
@@ -1598,7 +1387,6 @@ public class HBaseOper {
                 Map<String, Field> allFields = ReflectionUtils.getAllFields(obj.getClass());
                 Put put = new Put(rowKey);
                 put.setDurability(getHBaseDurability());
-                // put.setWriteToWAL(false);
                 if (allFields != null && allFields.size() > 0) {
                     for (Field field : allFields.values()) {
                         field.setAccessible(true);
@@ -1648,21 +1436,10 @@ public class HBaseOper {
                 }
                 return put;
             } catch (Exception e) {
-                logger.error("HBase convert2Put失败. cluster={} exception={}", FireHBaseConf.hbaseCluster(1), StackTraceUtils.stackTraceInfo(e));
+                logger.error("HBase convert2Put失败. cluster={} exception={}", CLUSTER, StackTraceUtils.stackTraceInfo(e));
             }
         }
         return null;
-    }
-
-    /**
-     * 提供给Spark
-     *
-     * @param obj 继承自HBaseBaseBean的子类实例
-     * @param <T> HBaseBaseBean的子类
-     * @return HBaseBaseBean的子类实例
-     */
-    public static <T extends HBaseBaseBean> Tuple2<ImmutableBytesWritable, Put> convert2PutTuple(T obj) {
-        return new Tuple2(new ImmutableBytesWritable(), convert2Put(obj, true));
     }
 
     /**

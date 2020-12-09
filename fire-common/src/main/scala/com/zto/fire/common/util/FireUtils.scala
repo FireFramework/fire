@@ -1,16 +1,9 @@
 package com.zto.fire.common.util
 
-import com.alibaba.fastjson.{JSON, JSONObject}
-import com.zto.fire.common.bean.HBaseBaseBean
-import com.zto.fire.common.bean.ogg.OGGBean
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
-import org.apache.commons.lang3.StringUtils
-import org.slf4j.{Logger, LoggerFactory}
 import com.zto.fire.common.util.UnitFormatUtils._
+import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.JavaConversions
-import scala.collection.mutable.ListBuffer
-import scala.reflect.ClassTag
 import scala.util.Try
 
 /**
@@ -62,100 +55,6 @@ private[fire] object FireUtils extends Serializable {
     redo(retryNum, duration)(fun)
   }
 
-  /**
-   * 解析ogg中的json数据为指定的JavaBean类型
-   *
-   * @param json
-   * json字符串
-   * @param clazz
-   * 目标类型
-   * @param paseAfter
-   * 是否解析after数据
-   * @param paseBefore
-   * 是否解析before数据
-   * @return
-   * json解析后的数据
-   */
-  def oggJsonParse[T: ClassTag](json: String, clazz: Class[T], paseAfter: Boolean = true, paseBefore: Boolean = true): OGGBean[T] = {
-    ValueUtils.requireNonNull(json, "ogg消息解析参数不合法：json不能为空")
-    ValueUtils.requireNonNull(clazz, "ogg消息解析参数不合法：目标类型不能为空")
-
-    val isJsonArray = StringUtils.trim(json).startsWith("[")
-    if (isJsonArray) throw new IllegalArgumentException("ogg消息解析参数不合法：json数据实际为jsonarray")
-    val ogg = JSON.parseObject(json, classOf[OGGBean[T]])
-
-    this.buildOggBean(clazz, paseAfter, paseBefore, ogg)
-  }
-
-  /**
-   * 解析ogg中的json数据为指定的JavaBean类型
-   *
-   * @param json
-   * json字符串
-   * @param clazz
-   * 目标类型
-   * @param paseAfter
-   * 是否解析after数据
-   * @param paseBefore
-   * 是否解析before数据
-   * @return
-   * json解析后的数据
-   */
-  def oggJsonArrayParse[T: ClassTag](json: String, clazz: Class[T], paseAfter: Boolean = true, paseBefore: Boolean = true): ListBuffer[OGGBean[T]] = {
-    ValueUtils.requireNonNull(json, "ogg消息解析参数不合法：json array不能为空")
-    ValueUtils.requireNonNull(clazz, "ogg消息解析参数不合法：目标类型不能为空")
-
-    val isJsonArray = StringUtils.trim(json).startsWith("[")
-    if (!isJsonArray) throw new IllegalArgumentException("ogg消息解析参数不合法：json数据实际为json array")
-    val oggList = JSON.parseArray(json, classOf[OGGBean[T]])
-    val resultList = ListBuffer[OGGBean[T]]()
-
-    if (oggList != null && oggList.size() > 0) {
-      JavaConversions.asScalaBuffer(oggList).foreach(ogg => {
-        if (ogg != null) {
-          resultList += this.buildOggBean(clazz, paseAfter, paseBefore, ogg)
-        }
-      })
-    }
-
-    resultList
-  }
-
-  /**
-   * 工具方法构建ogg的after与before字段
-   */
-  private def buildOggBean[T: ClassTag](clazz: Class[T], paseAfter: Boolean, paseBefore: Boolean, ogg: OGGBean[T]): OGGBean[T] = {
-    // 如果是HBaseBaseBean子类，则调用buildRowKey方法
-    def buildRowKey(afterObj: T): Unit = {
-      if (afterObj.isInstanceOf[HBaseBaseBean[T]]) {
-        val method = clazz.getDeclaredMethod("buildRowKey")
-        if (method != null) {
-          method.setAccessible(true)
-          method.invoke(afterObj)
-        }
-      }
-    }
-
-    if (ogg != null) {
-      if (paseAfter && ogg.getAfter != null) {
-        val afterObj = ogg.getAfter.asInstanceOf[JSONObject].toJavaObject(clazz)
-        if (afterObj != null) {
-          buildRowKey(afterObj)
-          ogg.setAfter(afterObj)
-        }
-      }
-
-      if (paseBefore && ogg.getBefore != null) {
-        val beforeObj = ogg.getBefore.asInstanceOf[JSONObject].toJavaObject(clazz)
-        if (beforeObj != null) {
-          buildRowKey(beforeObj)
-          ogg.setBefore(beforeObj)
-        }
-      }
-    }
-
-    ogg
-  }
 
   /**
    * 判断是否为spark引擎

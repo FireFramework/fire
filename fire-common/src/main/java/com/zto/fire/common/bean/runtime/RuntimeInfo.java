@@ -1,12 +1,9 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.alibaba.fastjson.JSON;
 import com.zto.fire.common.util.SystemInfoUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 用于获取jvm、os、memory等运行时信息
@@ -14,11 +11,10 @@ import java.util.Map;
  * @author ChengLong 2019年9月28日 16:57:03
  */
 public class RuntimeInfo implements Serializable {
+    private static final long serialVersionUID = 1960438466835847330L;
     private static RuntimeInfo runtimeInfo = new RuntimeInfo();
     // jvm运行时信息
     private JvmInfo jvmInfo;
-    // 操作系统信息
-    private OSInfo osInfo;
     // 线程运行时信息
     private ThreadInfo threadInfo;
     // cpu运行时信息
@@ -27,10 +23,6 @@ public class RuntimeInfo implements Serializable {
     private MemoryInfo memoryInfo;
     // 类加载器运行时信息
     private ClassLoaderInfo classLoaderInfo;
-    // 磁盘及分区信息
-    private Map<String, List> diskInfo;
-    // 设备信息
-    private HardwareInfo hardwareInfo;
     // executor所在ip
     private static String ip;
     // executor所在主机名
@@ -39,18 +31,12 @@ public class RuntimeInfo implements Serializable {
     private static String pid;
     // executor启动时间（UNIX时间戳）
     private long startTime = System.currentTimeMillis();
-    // executor运行时间（毫秒）
-    private long uptime;
 
     private RuntimeInfo() {
     }
 
     public JvmInfo getJvmInfo() {
         return jvmInfo;
-    }
-
-    public OSInfo getOsInfo() {
-        return osInfo;
     }
 
     public ThreadInfo getThreadInfo() {
@@ -67,14 +53,6 @@ public class RuntimeInfo implements Serializable {
 
     public ClassLoaderInfo getClassLoaderInfo() {
         return classLoaderInfo;
-    }
-
-    public Map<String, List> getDiskInfo() {
-        return diskInfo;
-    }
-
-    public HardwareInfo getHardwareInfo() {
-        return hardwareInfo;
     }
 
     public String getIp() {
@@ -94,8 +72,8 @@ public class RuntimeInfo implements Serializable {
     }
 
     public long getUptime() {
-        this.uptime = System.currentTimeMillis() - this.startTime;
-        return uptime;
+        // executor运行时间（毫秒）
+        return System.currentTimeMillis() - this.startTime;
     }
 
     /**
@@ -118,9 +96,6 @@ public class RuntimeInfo implements Serializable {
         runtimeInfo.threadInfo = ThreadInfo.getThreadInfo();
         runtimeInfo.cpuInfo = CpuInfo.getCpuInfo();
         runtimeInfo.memoryInfo = MemoryInfo.getMemoryInfo();
-        // runtimeInfo.osInfo = OSInfo.getOSInfo();
-        // runtimeInfo.diskInfo = DiskInfo.getDiskInfo();
-        // runtimeInfo.hardwareInfo = HardwareInfo.getHardwareInfo();
 
         return runtimeInfo;
     }

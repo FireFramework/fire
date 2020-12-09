@@ -1,15 +1,16 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.alibaba.fastjson.JSON;
 import com.sun.management.ThreadMXBean;
 
+import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 
 /**
  * 用于包装运行时线程信息
  * @author ChengLong 2019-9-28 19:36:52
  */
-public class ThreadInfo {
+public class ThreadInfo implements Serializable {
+    private static final long serialVersionUID = 7950498675819426939L;
     // 当前线程的总 CPU 时间（以毫微秒为单位）
     private long cpuTime;
     // 当前线程的总用户cpu时间（以毫微秒为单位）

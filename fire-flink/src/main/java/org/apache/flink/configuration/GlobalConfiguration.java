@@ -20,8 +20,6 @@ package org.apache.flink.configuration;
 
 import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.PropUtils;
-import com.zto.fire.core.rest.RestfulRegister;
-import com.zto.fire.flink.core.rest.FlinkSystemRestful;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
@@ -30,7 +28,6 @@ import scala.collection.JavaConversions;
 
 import javax.annotation.Nullable;
 import java.io.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -41,11 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class GlobalConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(GlobalConfiguration.class);
-    private static ExecutorService threadPool = null;
     public static String restAddress = "";
-    private static Integer restPort = 0;
-    private static RestfulRegister restfulRegister = null;
-    private static FlinkSystemRestful flinkSystemRestful = null;
     private static AtomicBoolean isStart = new AtomicBoolean(false);
 
     public static final String FLINK_CONF_FILENAME = "flink-conf.yaml";
@@ -56,7 +49,7 @@ public final class GlobalConfiguration {
     // the hidden content to be displayed
     public static final String HIDDEN_CONTENT = "******";
 
-    public static boolean isJobManager = false;
+    private static boolean isJobManager = false;
 
     // --------------------------------------------------------------------------------------------
 

@@ -13,12 +13,7 @@ import org.apache.spark.SparkEnv;
  * @since 1.0.0
  */
 public class TimeCostUtils {
-    // 任务的applicationId
-    private static String applicationId;
-    // 任务的main方法
-    private static String mainClass;
-    // executorId
-    private static String executorId;
+    private TimeCostUtils() {}
 
     /**
      * 获取计算引擎运行时信息，并设置到timeCost中

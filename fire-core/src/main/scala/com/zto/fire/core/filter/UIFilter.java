@@ -7,7 +7,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.StringTokenizer;
 
 /**
@@ -43,22 +43,18 @@ public class UIFilter implements Filter {
             if (st.hasMoreTokens()) {
                 String basic = st.nextToken();
                 if (basic.equalsIgnoreCase("Basic")) {
-                    try {
-                        String credentials = new String(Base64.decodeBase64(st.nextToken()), "UTF-8");
-                        int p = credentials.indexOf(":");
-                        if (p != -1) {
-                            String _username = credentials.substring(0, p).trim();
-                            String _password = credentials.substring(p + 1).trim();
+                    String credentials = new String(Base64.decodeBase64(st.nextToken()), StandardCharsets.UTF_8);
+                    int p = credentials.indexOf(":");
+                    if (p != -1) {
+                        String tmpName = credentials.substring(0, p).trim();
+                        String tmpPasswd = credentials.substring(p + 1).trim();
 
-                            if (!username.equals(_username) || !password.equals(_password)) {
-                                unauthorized(response, "Bad credentials");
-                            }
-                            chain.doFilter(req, resp);
-                        } else {
-                            unauthorized(response, "Invalid authentication token");
+                        if (!username.equals(tmpName) || !password.equals(tmpPasswd)) {
+                            unauthorized(response, "Bad credentials");
                         }
-                    } catch (UnsupportedEncodingException e) {
-                        throw new Error("Couldn't retrieve authentication", e);
+                        chain.doFilter(req, resp);
+                    } else {
+                        unauthorized(response, "Invalid authentication token");
                     }
                 }
             }
@@ -78,6 +74,6 @@ public class UIFilter implements Filter {
 
     @Override
     public void destroy() {
-
+        // 销毁
     }
 }

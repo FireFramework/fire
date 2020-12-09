@@ -1,15 +1,14 @@
 package com.zto.fire.common.bean;
 
 import com.zto.fire.common.acc.AccumulatorManager;
-import com.zto.fire.common.conf.FireConf;
 import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.FireUtils;
-import com.zto.fire.common.util.PropUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 通用父类
@@ -18,7 +17,7 @@ import java.io.Serializable;
  */
 public class BaseLogging implements Serializable {
     private static ThreadLocal<TimeCost> timeCostLocal = new ThreadLocal<>();
-    protected static Logger logger;
+    protected static AtomicReference<Logger> logger = new AtomicReference<>();
 
     /**
      * 初始化日志记录器
@@ -29,7 +28,7 @@ public class BaseLogging implements Serializable {
         if (StringUtils.isBlank(className)) {
             className = this.getClass().getName().replace("$", "");
         }
-        logger = LoggerFactory.getLogger(className);
+        logger.compareAndSet(null, LoggerFactory.getLogger(className));
     }
 
     /**
@@ -37,7 +36,7 @@ public class BaseLogging implements Serializable {
      */
     public void mark() {
         TimeCost timeCost = TimeCost.build();
-        if (logger == null) this.initLogging(timeCost.getMainClass());
+        if (logger.get() == null) this.initLogging(TimeCost.getMainClass());
         timeCostLocal.set(timeCost);
     }
 
@@ -92,20 +91,21 @@ public class BaseLogging implements Serializable {
      * @param throwable  异常对象
      * @param isFire     用于标记是否为fire框架内部埋点日志
      */
-    protected void log(String msg, String module, Integer io, Throwable throwable, Boolean isFire) {
+    protected void log(String msg, String module, Integer io, Throwable throwable, boolean isFire) {
         if (timeCostLocal.get() == null) this.mark();
         TimeCost timeCost = timeCostLocal.get();
         timeCost.info(msg, module, io, isFire, throwable);
         if (FireUtils.isSparkEngine()) AccumulatorManager.addLog(timeCost);
-        // TODO: Flink日志存入到flink累加器中
+
         String log = timeCost.toString();
+        boolean judge = !isFire || (isFire && FireFrameworkConf.logEnable());
         if (throwable == null) {
-            if (!isFire || (isFire && FireFrameworkConf.logEnable())) {
-                logger.warn(log);
+            if (judge) {
+                logger.get().warn(log);
             }
         } else {
-            if (!isFire || (isFire && FireFrameworkConf.logEnable())) {
-                logger.error(log, throwable);
+            if (judge) {
+                logger.get().error(log, throwable);
             }
         }
         timeCostLocal.remove();

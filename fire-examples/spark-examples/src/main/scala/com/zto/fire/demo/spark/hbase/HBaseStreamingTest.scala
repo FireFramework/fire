@@ -3,7 +3,7 @@ package com.zto.fire.demo.spark.hbase
 import com.zto.fire.common.db.HBaseOper
 import com.zto.fire.core.BaseSparkStreaming
 import com.zto.fire.core.ext.SparkExt._
-import com.zto.fire.demo.bean.Student2
+import com.zto.fire.demo.bean.Student
 
 /**
   * 通过hbase相关api，将数据实时写入到hbase中
@@ -18,8 +18,8 @@ object HBaseStreamingTest extends BaseSparkStreaming {
     dstream.repartition(5).foreachRDD(rdd => {
       rdd.foreachPartition(it => {
         this.mark
-        HBaseOper.insert(this.tableName, Student2.buildStudentList())
-        val student = HBaseOper.get(this.tableName, "1", classOf[Student2])
+        HBaseOper.insert(this.tableName, Student.buildStudentList())
+        val student = HBaseOper.get(this.tableName, "1", classOf[Student])
         this.log(student.toString)
       })
     })

@@ -18,7 +18,7 @@ public abstract class FirePeriodicWatermarks<T> implements AssignerWithPeriodicW
     // 当前水位线的引用
     protected transient Watermark watermark = new Watermark(System.currentTimeMillis());
 
-    public FirePeriodicWatermarks() {
+    protected FirePeriodicWatermarks() {
     }
 
     /**
@@ -26,7 +26,7 @@ public abstract class FirePeriodicWatermarks<T> implements AssignerWithPeriodicW
      *
      * @param maxOutOfOrder 用户定义的最大乱序时间
      */
-    public FirePeriodicWatermarks(long maxOutOfOrder) {
+    protected FirePeriodicWatermarks(long maxOutOfOrder) {
         if (maxOutOfOrder > 0) {
             this.maxOutOfOrder = maxOutOfOrder;
         }

@@ -15,6 +15,8 @@ import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDepende
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.types.Row
 import org.apache.log4j.{Level, Logger}
+import com.zto.fire.common.util.ExceptionBus._
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions
 
@@ -29,6 +31,7 @@ object FlinkUtils extends Serializable {
   private[this] val schemaTable = HashBasedTable.create[FlinkTableSchema, String, Int]
   // 用于判断是否已同步配置信息到task-manager端
   private lazy val isSyncConf = new AtomicBoolean(false)
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 将schema、fieldName与fieldIndex信息维护到table中
@@ -50,7 +53,7 @@ object FlinkUtils extends Serializable {
   def rowToBean[T](schema: FlinkTableSchema, row: Row, clazz: Class[T]): T = {
     val obj = clazz.newInstance()
     if (row != null && clazz != null) {
-      try {
+      tryWithLog {
         this.extendSchemaTable(schema)
         clazz.getDeclaredFields.foreach(field => {
           field.setAccessible(true)
@@ -68,9 +71,7 @@ object FlinkUtils extends Serializable {
           val method = ReflectionUtils.getMethodByName(clazz, "buildRowKey")
           if (method != null) method.invoke(obj)
         }
-      } catch {
-        case e: Exception => e.printStackTrace()
-      }
+      } (this.logger, "flink row转为JavaBean过程中发生异常.")
     }
     obj
   }

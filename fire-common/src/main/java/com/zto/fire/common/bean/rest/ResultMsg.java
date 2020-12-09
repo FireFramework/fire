@@ -23,11 +23,7 @@ public class ResultMsg {
      * @return true: 成功 false 失败
      */
     public static boolean isSuccess(ResultMsg resultMsg) {
-        if (resultMsg != null && resultMsg.getCode() == ErrorCode.SUCCESS) {
-            return true;
-        } else {
-            return false;
-        }
+        return resultMsg != null && resultMsg.getCode() == ErrorCode.SUCCESS;
     }
 
     /**

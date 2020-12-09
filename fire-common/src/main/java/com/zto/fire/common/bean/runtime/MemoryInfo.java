@@ -2,13 +2,15 @@ package com.zto.fire.common.bean.runtime;
 
 import com.sun.management.OperatingSystemMXBean;
 
+import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 
 /**
  * 用于封装当前系统内存信息
  * @author ChengLong 2019-9-28 19:50:22
  */
-public class MemoryInfo {
+public class MemoryInfo implements Serializable {
+    private static final long serialVersionUID = 7803435486311085016L;
     // 操作系统总内存空间
     private long total;
     // 操作系统内存剩余空间

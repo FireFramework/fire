@@ -9,10 +9,10 @@ public enum JobType {
     SPARK_CORE("spark_core"), SPARK_STREAMING("spark_streaming"), SPARK_STRUCTURED_STREAMING("spark_structured_streaming"), SPARK_SQL("spark_sql"), FLINK_STREAMING("flink_streaming"), FLINK_BATCH("flink_batch"), UNDEFINED("undefined");
 
     // 任务类型
-    private final String jobType;
+    private String jobTypeDesc;
 
     JobType(String jobType) {
-        this.jobType = jobType;
+        this.jobTypeDesc = jobType;
     }
 
     /**
@@ -20,8 +20,8 @@ public enum JobType {
      *
      * @return
      */
-    public String getJobType() {
-        return this.jobType;
+    public String getJobTypeDesc() {
+        return this.jobTypeDesc;
     }
 
     /**
@@ -30,10 +30,7 @@ public enum JobType {
      * @return true: spark任务  false：非spark任务
      */
     public boolean isSpark() {
-        if (this.jobType.contains("spark")) {
-            return true;
-        }
-        return false;
+        return this.jobTypeDesc.contains("spark");
     }
 
     /**
@@ -42,9 +39,6 @@ public enum JobType {
      * @return true: flink任务  false：非flink任务
      */
     public boolean isFlink() {
-        if (this.jobType.contains("flink")) {
-            return true;
-        }
-        return false;
+        return this.jobTypeDesc.contains("flink");
     }
 }

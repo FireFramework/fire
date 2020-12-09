@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.zto.fire.common.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
-import com.zto.fire.common.util.EncryptUtils;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -130,16 +129,16 @@ public class Student extends HBaseBaseBean<Student> {
     public static List<Student> newStudentList() {
         String dateTime = DateFormatUtils.formatCurrentDateTime();
         return Arrays.asList(
-                new Student(1L, "admin", 12, new BigDecimal(12.1), true, dateTime),
-                new Student(2L, "root", 22, new BigDecimal(22), true, dateTime),
-                new Student(3L, "scala", 11, new BigDecimal(11), true, dateTime),
-                new Student(4L, "spark", 15, new BigDecimal(15), true, dateTime),
-                new Student(5L, "java", 16, new BigDecimal(16.1), true, dateTime),
-                new Student(6L, "hive", 17, new BigDecimal(17.1), true, dateTime),
-                new Student(7L, "presto", 18, new BigDecimal(18.1), true, dateTime),
-                new Student(8L, "flink", 19, new BigDecimal(19.1), true, dateTime),
-                new Student(9L, "streaming", 10, new BigDecimal(10.1), true, dateTime),
-                new Student(10L, "sql", 12, new BigDecimal(12.1), true, dateTime)
+                new Student(1L, "admin", 12, BigDecimal.valueOf(12.1), true, dateTime),
+                new Student(2L, "root", 22, BigDecimal.valueOf(22), true, dateTime),
+                new Student(3L, "scala", 11, BigDecimal.valueOf(11), true, dateTime),
+                new Student(4L, "spark", 15, BigDecimal.valueOf(15), true, dateTime),
+                new Student(5L, "java", 16, BigDecimal.valueOf(16.1), true, dateTime),
+                new Student(6L, "hive", 17, BigDecimal.valueOf(17.1), true, dateTime),
+                new Student(7L, "presto", 18, BigDecimal.valueOf(18.1), true, dateTime),
+                new Student(8L, "flink", 19, BigDecimal.valueOf(19.1), true, dateTime),
+                new Student(9L, "streaming", 10, BigDecimal.valueOf(10.1), true, dateTime),
+                new Student(10L, "sql", 12, BigDecimal.valueOf(12.1), true, dateTime)
         );
     }
 
@@ -153,36 +152,36 @@ public class Student extends HBaseBaseBean<Student> {
         try {
             for (int i = 1; i <= 1; i++) {
                 Thread.sleep(500);
-                Student stu = new Student(1L, "root", i + 1, new BigDecimal(1 + i), true, DateFormatUtils.formatCurrentDateTime());
+                Student stu = new Student(1L, "root", i + 1, BigDecimal.valueOf((long) 1 + i), true, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
 
             for (int i = 1; i <= 2; i++) {
                 Thread.sleep(500);
-                Student stu = new Student(2L, "admin", i + 2, new BigDecimal(2019.05180919 + i), false, DateFormatUtils.formatCurrentDateTime());
+                Student stu = new Student(2L, "admin", i + 2, BigDecimal.valueOf(2019.05180919 + i), false, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
 
             for (int i = 1; i <= 3; i++) {
                 Thread.sleep(500);
-                Student stu = new Student(3L, "spark", i + 3, new BigDecimal(33.1415926 + i));
+                Student stu = new Student(3L, "spark", i + 3, BigDecimal.valueOf(33.1415926 + i));
                 studentList.add(stu);
             }
 
             for (int i = 1; i <= 3; i++) {
                 Thread.sleep(500);
-                Student stu = new Student(4L, "flink", i + 4, new BigDecimal(4.2 + i), true, DateFormatUtils.formatCurrentDateTime());
+                Student stu = new Student(4L, "flink", i + 4, BigDecimal.valueOf(4.2 + i), true, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
 
             for (int i = 1; i <= 3; i++) {
                 Thread.sleep(500);
-                Student stu = new Student(5L, "hadoop", i + 5, new BigDecimal(5.5 + i), false, DateFormatUtils.formatCurrentDateTime());
+                Student stu = new Student(5L, "hadoop", i + 5, BigDecimal.valueOf(5.5 + i), false, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
             for (int i = 1; i <= 3; i++) {
                 Thread.sleep(500);
-                Student stu = new Student(6L, "hbase", i + 6, new BigDecimal(66.66 + i), true, DateFormatUtils.formatCurrentDateTime());
+                Student stu = new Student(6L, "hbase", i + 6, BigDecimal.valueOf(66.66 + i), true, DateFormatUtils.formatCurrentDateTime());
                 studentList.add(stu);
             }
         } catch (Exception e) {
@@ -208,9 +207,5 @@ public class Student extends HBaseBaseBean<Student> {
     @Override
     public int hashCode() {
         return Objects.hash(id, name, age, createTime, length, sex);
-    }
-
-    public static void main(String[] args) throws Exception {
-        System.out.println(EncryptUtils.md5Encrypt("($zto%-%fire$)" + "com.zto.fire.demo.Test" + DateFormatUtils.formatCurrentDate()));
     }
 }

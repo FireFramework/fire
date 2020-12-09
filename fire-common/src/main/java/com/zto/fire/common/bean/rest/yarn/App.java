@@ -4,7 +4,7 @@ package com.zto.fire.common.bean.rest.yarn;
  * 用于解析调用yarn接口返回的json
  * @author ChengLong 2019-5-15 17:50:06
  */
-public class App implements Comparable<App> {
+public class App {
     // yarn applicationId
     private String id;
     // yarn程序的启动用户
@@ -282,10 +282,5 @@ public class App implements Comparable<App> {
 
     public void setLogAggregationStatus(String logAggregationStatus) {
         this.logAggregationStatus = logAggregationStatus;
-    }
-
-    @Override
-    public int compareTo(App other) {
-        return -(int)(this.startedTime - other.startedTime);
     }
 }

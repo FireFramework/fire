@@ -1,5 +1,6 @@
 package com.zto.fire.common.bean.runtime;
 
+import java.io.Serializable;
 import java.lang.management.*;
 import java.util.List;
 
@@ -7,7 +8,8 @@ import java.util.List;
  * Jvm信息包装类，可获取jvm相关信息
  * @author ChengLong 2019-9-28 19:38:36
  */
-public class JvmInfo {
+public class JvmInfo implements Serializable {
+    private static final long serialVersionUID = 3857878519712626828L;
     // Java版本
     private String javaVersion;
     // JavaHome

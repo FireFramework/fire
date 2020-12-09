@@ -15,9 +15,6 @@ public class VoiceInfo {
     private String method;
     private String appID;
 
-    public VoiceInfo() {
-    }
-
     public void setData(List<TData> value) {
         this.data = value;
     }
@@ -81,9 +78,6 @@ public class VoiceInfo {
         private String accountCode;
         private TTplContent tplContent;
 
-        public TData() {
-        }
-
         public void setVoiceCode(String value) {
             this.voiceCode = value;
         }
@@ -126,9 +120,6 @@ public class VoiceInfo {
 
         public static class TTplContent {
             private String content;
-
-            public TTplContent() {
-            }
 
             public void setContent(String value) {
                 this.content = value;

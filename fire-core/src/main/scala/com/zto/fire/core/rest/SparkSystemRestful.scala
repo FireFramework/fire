@@ -34,7 +34,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       .addRest(RestCase(RequestMethod.DELETE.toString, s"/system/cancelJob", cancelJob))
       .addRest(RestCase(RequestMethod.DELETE.toString, s"/system/cancelStage", cancelStage))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/sql", sql))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/loadInfo", loadInfo))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/sparkInfo", sparkInfo))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/counter", counter))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/multiCounter", multiCounter))
@@ -433,24 +432,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
     }
   }
 
-  /**
-   * 获取driver所在服务器的负载信息
-   */
-  @Rest("/system/loadInfo")
-  def loadInfo(request: Request, response: Response): AnyRef = {
-    val msg = new ResultMsg
-    val json = request.body
-    try {
-      msg.buildSuccess(SystemInfoUtils.getSystemLoadInfo, ErrorCode.SUCCESS.toString)
-    } catch {
-      case e: Exception => {
-        this.logger.error(s"[loadInfo] 获取driver所在主机负载信息失败：json=$json", e)
-        msg.buildError("获取driver所在主机负载信息失败", ErrorCode.ERROR)
-      }
-    } finally {
-      msg.toString
-    }
-  }
 
   /**
    * 用于执行sql语句

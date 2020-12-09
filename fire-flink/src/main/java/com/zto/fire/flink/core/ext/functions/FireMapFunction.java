@@ -20,11 +20,11 @@ import java.io.Serializable;
 /**
  * 增强的MapFunction
  *
- * @param <IN>  输入数据类型
- * @param <OUT> 输出数据类型（map后）
+ * @param <I>  输入数据类型
+ * @param <O> 输出数据类型（map后）
  * @author ChengLong 2020-4-9 09:39:55
  */
-public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction implements MapFunction<IN, OUT>, MapPartitionFunction<IN, OUT>, FlatMapFunction<IN, OUT> {
+public abstract class FireMapFunction<I, O> extends AbstractRichFunction implements MapFunction<I, O>, MapPartitionFunction<I, O>, FlatMapFunction<I, O> {
     private static final Logger logger = LoggerFactory.getLogger(FireMapFunction.class);
 
     @Override
@@ -36,7 +36,7 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
      * map操作需复写该方法
      */
     @Override
-    public OUT map(IN value) throws Exception {
+    public O map(I value) throws Exception {
         return null;
     }
 
@@ -44,7 +44,7 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
      * mapPartition操作需复写该方法
      */
     @Override
-    public void mapPartition(Iterable<IN> values, Collector<OUT> out) throws Exception {
+    public void mapPartition(Iterable<I> values, Collector<O> out) throws Exception {
 
     }
 
@@ -52,7 +52,7 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
      * flatMap操作需复写该方法
      */
     @Override
-    public void flatMap(IN value, Collector<OUT> out) throws Exception {
+    public void flatMap(I value, Collector<O> out) throws Exception {
     }
 
     protected String getTaskNameWithSubtasks() {
@@ -71,7 +71,7 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
         return this.getRuntimeContext().getMaxNumberOfParallelSubtasks();
     }
 
-    protected <UK, UV> MapState<UK, UV> getMapState(MapStateDescriptor<UK, UV> stateProperties) {
+    protected <K, V> MapState<K, V> getMapState(MapStateDescriptor<K, V> stateProperties) {
         return this.getRuntimeContext().getMapState(stateProperties);
     }
 
@@ -118,7 +118,7 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
         return this.getRuntimeContext().getAttemptNumber();
     }
 
-    protected <IN, ACC, OUT> AggregatingState<IN, OUT> getAggregatingState(AggregatingStateDescriptor<IN, ACC, OUT> stateProperties) {
+    protected <I, A, O> AggregatingState<I, O> getAggregatingState(AggregatingStateDescriptor<I, A, O> stateProperties) {
         return this.getRuntimeContext().getAggregatingState(stateProperties);
     }
 
@@ -220,10 +220,10 @@ public abstract class FireMapFunction<IN, OUT> extends AbstractRichFunction impl
         IntCounter intCounter = null;
         try {
             intCounter = this.getIntCounter(name);
+            intCounter.add(value);
         } catch (Exception e) {
             logger.error("获取Int计数器失败，尝试注册新的Int计数器", e);
         }
-        intCounter.add(value);
         return intCounter;
     }
 
