@@ -18,8 +18,6 @@ object WindowTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     val dstream = this.ssc.createDirectStream().map(t => JSON.parseObject(t, classOf[Student])).map(s => (s.getName, s.getAge))
-    // this.testCountWindow(dstream)
-    // this.testCountWindowAll(dstream)
     this.testTimeWindow(dstream)
 
     this.ssc.startAwaitTermination()

@@ -2,6 +2,7 @@ package com.zto.fire.common.util;
 
 /**
  * 异常处理工具类
+ * @deprecated use ExceptionBus
  * @author ChengLong 2019-7-19 14:33:36
  */
 @Deprecated

@@ -68,12 +68,16 @@ trait BaseFire {
   /**
    * 在加载任务配置文件前将被加载
    */
-  private[fire] def loadConf: Unit = {}
+  private[fire] def loadConf: Unit = {
+    // 加载配置文件
+  }
 
   /**
    * 用于将不同引擎的配置信息、累计器信息等传递到executor端或taskmanager端
    */
-  protected def deployConf: Unit = {}
+  protected def deployConf: Unit = {
+    // 用于在分布式环境下分发配置信息
+  }
 
   /**
    * 生命周期方法：用于在SparkSession初始化之前完成用户需要的动作
@@ -82,7 +86,9 @@ trait BaseFire {
    * @param args
    * main方法参数
    */
-  def before(args: Array[String]): Unit = {}
+  def before(args: Array[String]): Unit = {
+    // 生命周期方法，在init之前被调用
+  }
 
   /**
    * 生命周期方法：初始化运行信息
@@ -116,7 +122,9 @@ trait BaseFire {
    * 生命周期方法：用于资源回收与清理，子类复写实现具体逻辑
    * 注：该方法会在进行destroy之前自动被系统调用
    */
-  def after(args: Array[String] = null): Unit = {}
+  def after(args: Array[String] = null): Unit = {
+    // 子类复写该方法，在destroy之前被调用
+  }
 
   /**
    * 生命周期方法：用于回收资源
@@ -133,8 +141,7 @@ trait BaseFire {
       Spark.stop()
       SchedulerManager.shutdown(stopGracefully)
       this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成fire资源回收 <---${FirePS1Conf.DEFAULT}")
-      FirePrintModuleConf.END_TIME_COST(this.startTime)
-      // TODO: yarn kill; system.exit(0)
+      FirePrintModuleConf.endTimeCost(this.startTime)
     }
   }
 

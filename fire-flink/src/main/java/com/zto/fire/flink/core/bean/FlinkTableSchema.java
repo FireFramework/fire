@@ -65,13 +65,12 @@ public class FlinkTableSchema implements Serializable {
 	}
 
 	/**
-	 * @deprecated This method will be removed in future versions as it uses the old type system. It
+	 * This method will be removed in future versions as it uses the old type system. It
 	 *             is recommended to use {@link #getFieldDataTypes()} instead which uses the new type
 	 *             system based on {@link DataTypes}. Please make sure to use either the old or the new
 	 *             type system consistently to avoid unintended behavior. See the website documentation
 	 *             for more information.
 	 */
-	@Deprecated
 	public TypeInformation<?>[] getFieldTypes() {
 		return fromDataTypeToLegacyInfo(fieldDataTypes);
 	}
@@ -89,13 +88,12 @@ public class FlinkTableSchema implements Serializable {
 	}
 
 	/**
-	 * @deprecated This method will be removed in future versions as it uses the old type system. It
+	 * This method will be removed in future versions as it uses the old type system. It
 	 *             is recommended to use {@link #getFieldDataType(int)} instead which uses the new type
 	 *             system based on {@link DataTypes}. Please make sure to use either the old or the new
 	 *             type system consistently to avoid unintended behavior. See the website documentation
 	 *             for more information.
 	 */
-	@Deprecated
 	public Optional<TypeInformation<?>> getFieldType(int fieldIndex) {
 		return getFieldDataType(fieldIndex)
 			.map(TypeConversions::fromDataTypeToLegacyInfo);
@@ -114,13 +112,12 @@ public class FlinkTableSchema implements Serializable {
 	}
 
 	/**
-	 * @deprecated This method will be removed in future versions as it uses the old type system. It
+	 * This method will be removed in future versions as it uses the old type system. It
 	 *             is recommended to use {@link #getFieldDataType(String)} instead which uses the new type
 	 *             system based on {@link DataTypes}. Please make sure to use either the old or the new
 	 *             type system consistently to avoid unintended behavior. See the website documentation
 	 *             for more information.
 	 */
-	@Deprecated
 	public Optional<TypeInformation<?>> getFieldType(String fieldName) {
 		return getFieldDataType(fieldName)
 			.map(TypeConversions::fromDataTypeToLegacyInfo);

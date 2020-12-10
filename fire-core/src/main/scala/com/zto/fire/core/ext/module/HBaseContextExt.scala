@@ -40,6 +40,8 @@ import scala.reflect.ClassTag
 class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config: Configuration = HBaseOper.getConfiguration) extends HBaseContext(sc, config) with Logging {
   lazy val batchSize = FireHBaseConf.hbaseBatchSize()
   private[this] lazy val sparkSession = SingletonFactory.getSparkSession
+  private[this] lazy val tableNameBlankMsg = "参数不合法：表名不能为空"
+  private[this] lazy val dataFrameMsg = "参数不合法：dataFrame不能为空"
 
   /**
     * 根据RDD[String]批量删除，rdd是rowkey的集合
@@ -111,7 +113,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 自定义JavaBean的对象结果集
     */
   def bulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], batchSize: Integer = this.batchSize): RDD[E] = {
-    ValueUtils.requireNonNullForce(tableName, "参数不合法：表名不能为空")
+    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
     ValueUtils.requireNonNull(rdd, "参数不合法：rdd不能为空")
     ValueUtils.requireNonNull(clazz, "参数不合法：clazz不能为空")
     ValueUtils.requireNonNull(batchSize, "参数不合法：批次大小不能为空")
@@ -207,7 +209,6 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 数据类型为HBaseBaseBean的子类
     */
   def bulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    ValueUtils.requireNonNull(insertEmpty, "参数不合法：insertEmpty不能为空")
     ValueUtils.requireNonNull(multiVersion, "参数不合法：multiVersion不能为空")
 
     this.mark
@@ -258,7 +259,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * scan获取到的结果集，类型为RDD[T]
     */
   def bulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): RDD[T] = {
-    ValueUtils.requireNonNullForce(tableName, "参数不合法：表名不能为空")
+    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
     ValueUtils.requireNonNull(scan, "参数不合法：scan不能为空")
     ValueUtils.requireNonNull(clazz, "参数不合法：clazz不能为空")
 
@@ -312,7 +313,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 数据类型为HBaseBaseBean的子类
     */
   def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    ValueUtils.requireNonNull(dataFrame, "参数不合法：dataFrame不能为空")
+    ValueUtils.requireNonNull(dataFrame, dataFrameMsg)
 
     val rdd = dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
     this.bulkPutRDD[T](tableName, rdd, insertEmpty, multiVersion)
@@ -354,7 +355,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 对象类型必须是HBaseBaseBean的子类
     */
   def bulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    ValueUtils.requireNonNullForce(tableName, "参数不合法：表名不能为空")
+    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
     ValueUtils.requireNonNull(dstream, "参数不合法：dstream不能为空")
 
     this.mark
@@ -377,7 +378,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 数据类型
     */
   def hadoopPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true): Unit = {
-    ValueUtils.requireNonNullForce(tableName, "参数不合法：表名不能为空")
+    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
     ValueUtils.requireNonNull(rdd, "参数不合法：rdd不能为空")
     ValueUtils.requireNonNull(insertEmpty, "参数不合法：insertEmpty不能为空")
 
@@ -401,7 +402,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * JavaBean类型，为HBaseBaseBean的子类
     */
   def hadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[E], insertEmpty: Boolean = true): Unit = {
-    ValueUtils.requireNonNull(dataFrame, "参数不合法：dataFrame不能为空")
+    ValueUtils.requireNonNull(dataFrame, dataFrameMsg)
 
     val rdd = dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
     this.hadoopPut[E](tableName, rdd, insertEmpty)
@@ -436,9 +437,8 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * JavaBean类型
     */
   def hadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String, insertEmpty: Boolean = true): Unit = {
-    ValueUtils.requireNonNullForce(tableName, "参数不合法：表名不能为空")
-    ValueUtils.requireNonNull(df, "参数不合法：dataFrame不能为空")
-    ValueUtils.requireNonNull(insertEmpty, "参数不合法：insertEmpty不能为空")
+    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
+    ValueUtils.requireNonNull(df, dataFrameMsg)
 
     this.mark
     val fields = df.schema.fields
@@ -496,7 +496,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * hadoop configuration
     */
   private def getConfiguration(tableName: String): Configuration = {
-    ValueUtils.requireNonNullForce(tableName, "参数不合法：表名不能为空")
+    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
 
     val hadoopConfiguration = HBaseOper.getConfiguration
     hadoopConfiguration.set(TableOutputFormat.OUTPUT_TABLE, tableName)
@@ -506,157 +506,4 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     job.setOutputFormatClass(classOf[TableOutputFormat[ImmutableBytesWritable]])
     job.getConfiguration()
   }
-
-  /*
-    /**
-      * 将大批量的数据直接生成HFile并上传至相应的
-      * RegionServer中，适用于海量数据写入到HBase的场景
-      * 此种方式的优点是降低了RegionServer的cpu和内存开销
-      * 原理是Spark遵循HBase的HFile规范直接生成HFile，并
-      * 上传到RegionServer中
-      *
-      * @param tableName
-      * HBase表名
-      * @param rdd
-      * rdd数据集，类型为继承自HBaseBaseBean的自定义JavaBean
-      * @param stagingDir
-      * 用于存放Spark生成的HFile的临时本地路径，非HDFS路径
-      * 上传至RegionServer后会自动删除该HFile文件
-      * @param insertEmpty
-      * 对象中值为空的字段是否覆盖HBase中已有的field值
-      * 默认为覆盖
-      * @tparam T
-      * 对象类型必须是HBaseBaseBean的子类
-      */
-    def bulkLoadThinRows[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
-                                                           rdd: RDD[T],
-                                                           stagingDir: String, insertEmpty: Boolean = true): Unit = {
-
-      val hbaseTable = TableName.valueOf(tableName)
-      var map: collection.mutable.Map[String, Field] = null
-
-      /**
-        * 将自定义JavaBean转为HFile所需的格式
-        *
-        * @param bean
-        * RDD中的每条记录
-        * @return
-        */
-      def bean2QualifiersValues(bean: HBaseBaseBean[T]): (ByteArrayWrapper, FamiliesQualifiersValues) = {
-        val rowKey = if (StringUtils.isNotBlank(bean.getRowKey)) bean.getRowKey
-        else {
-          val tmpBean = bean.buildRowKey()
-          tmpBean.getRowKey
-        }
-
-        val familyQualifiersValues = new FamiliesQualifiersValues
-        if (map == null) {
-          map = ReflectionUtils.getAllFields(bean.getClass).toScalaMap
-        }
-
-        map.foreach(t => {
-          var fName: String = t._1
-          val field = t._2
-          val anno: FieldName = field.getAnnotation(classOf[FieldName])
-          var familyName: String = GlobalConstants.familyName
-          if (anno != null) {
-            if (!anno.disuse()) {
-              if (StringUtils.isNotBlank(anno.value)) fName = anno.value
-              if (StringUtils.isNotBlank(anno.family)) familyName = anno.family
-            }
-          }
-          field.setAccessible(true)
-          val fieldType: Type = field.getType
-          val objValue = field.get(bean)
-          if (objValue != null) {
-            val objValueStr: String = objValue.toString
-            val valueArray: Array[Byte] = if (fieldType eq classOf[String]) Bytes.toBytes(objValueStr)
-            else if (fieldType eq classOf[Integer]) Bytes.toBytes(Integer.parseInt(objValueStr))
-            else if (fieldType eq classOf[Double]) Bytes.toBytes(java.lang.Double.parseDouble(objValueStr))
-            else if (fieldType eq classOf[Long]) Bytes.toBytes(java.lang.Long.parseLong(objValueStr))
-            else if (fieldType eq classOf[BigDecimal]) Bytes.toBytes(new BigDecimal(objValueStr))
-            else if (fieldType eq classOf[Float]) Bytes.toBytes(java.lang.Float.parseFloat(objValueStr))
-            else if (fieldType eq classOf[Boolean]) Bytes.toBytes(java.lang.Boolean.parseBoolean(objValueStr))
-            else if (fieldType eq classOf[Short]) Bytes.toBytes(java.lang.Short.parseShort(objValueStr))
-            else null
-            familyQualifiersValues += (Bytes.toBytes(familyName), Bytes.toBytes(fName), valueArray)
-          } else {
-            if (insertEmpty) {
-              familyQualifiersValues += (Bytes.toBytes(familyName), Bytes.toBytes(fName), null)
-            }
-          }
-        })
-        (new ByteArrayWrapper(Bytes.toBytes(rowKey)), familyQualifiersValues)
-      }
-
-      this.bulkLoadThinRows[T](rdd,
-        hbaseTable,
-        record => bean2QualifiersValues(record),
-        stagingDir,
-        new util.HashMap[Array[Byte], FamilyHFileWriteOptions],
-        false,
-        HConstants.DEFAULT_MAX_FILE_SIZE)
-
-      val load = new LoadIncrementalHFiles(this.config)
-      val conn = ConnectionFactory.createConnection(this.config)
-      load.doBulkLoad(new Path(stagingDir), conn.getAdmin, conn.getTable(hbaseTable),
-        conn.getRegionLocator(hbaseTable))
-    }*/
-
-  /*
-    /**
-      * 将HBase表映射为DataFrame
-      * @param clazz
-      *              表对应的JavaBean
-      * @tparam T
-      * @return
-      */
-    def hbase2DataFrame[T <: HBaseBaseBean[T] : ClassTag](clazz: Class[T]): DataFrame = {
-      val sqlContext = SingletonFactory.getSQLContextInstance(sc)
-      sqlContext.read.options(Map(HBaseTableCatalog.tableCatalog -> HBaseBaseBean.catalog(clazz.newInstance()))).format("org.apache.hadoop.hbase.spark").load()
-    }
-
-    /**
-      * 将HBase表映射为DataFrame
-      * @param tableName
-      *            HBase表名
-      * @tparam T
-      * @return
-      */
-    def hbase2DataFrame[T <: HBaseBaseBean[T] : ClassTag](tableName: String): DataFrame = {
-      if(StringUtils.isBlank(tableName)) throw new IllegalArgumentException("HBase表名不能为空")
-      val sqlContext = SingletonFactory.getSQLContextInstance(sc)
-      sqlContext.read.options(Map(HBaseTableCatalog.tableCatalog -> tableName)).format("org.apache.hadoop.hbase.spark").load()
-    }
-
-    /**
-      * 对HBase表执行sql运算
-      * @param sql
-      *            待执行的sql语句，sql中引用的表名需与tableName参数所指定的一致
-      * @param clazz
-      *              HBase表对应的JavaBean类型
-      * @param tableName
-      *                  Spark SQL临时表名，如果为空，则取JavaBean中的tableName注解
-      * @tparam T
-      * @return
-      *         结果集
-      */
-    def sql[T <: HBaseBaseBean[T] : ClassTag](sql: String, clazz: Class[T], tableName: String = ""): DataFrame = {
-      val hbaseDF = this.hbase2DataFrame(clazz)
-      val tmpTablename = if(StringUtils.isNotBlank(tableName)) {
-        tableName
-      } else {
-        val fieldName = ReflectionUtils.getClassAnnotation(clazz, classOf[FieldName])
-        if (fieldName == null || StringUtils.isBlank(fieldName.asInstanceOf[FieldName].tableName())) {
-          throw new IllegalArgumentException("@FieldName必须指定，且tableName不能为空")
-        }
-        fieldName.asInstanceOf[FieldName].tableName
-      }
-
-      hbaseDF.registerTempTable(tmpTablename)
-      val sqlContext = SingletonFactory.getSQLContextInstance(sc)
-      sqlContext.sql(sql)
-    }
-
-*/
 }

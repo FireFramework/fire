@@ -1237,7 +1237,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    * RDD、DataFrame、Dataset、DStream、TableName
    */
   def uncache(any: Any*): Unit = {
-    if (any != null && any.size > 0) {
+    if (any != null && any.nonEmpty) {
       any.foreach(elem => {
         if (elem != null) {
           if (elem.isInstanceOf[String]) {

@@ -30,6 +30,7 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
   private[this] var username: String = _
   private[this] var url: String = _
   private[this] var dbType: String = "unknown"
+  private[this] lazy val finallyCatchLog = "释放jdbc资源失败"
 
   /**
    * 初始化指定的连接池，未被使用
@@ -124,7 +125,7 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
-    }(this.logger, s"executeUpdate failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", "释放jdbc资源失败")
+    }(this.logger, s"executeUpdate failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
   }
 
   /**
@@ -174,7 +175,7 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
-    }(this.logger, s"executeBatch failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", "释放jdbc资源失败")
+    }(this.logger, s"executeBatch failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
   }
 
   /**
@@ -237,7 +238,7 @@ private[fire] class JdbcOper(conf: JdbcConf = null, keyNum: Int = 1) extends DBB
       this.logger.info(s"executeQueryCall success. keyNum: ${keyNum} count: $count cost: ${timecost(startTime)}\n${this.sqlBuriedPoint(sql, false)}")
     } {
       this.release(sql, conn, stat, rs)
-    }(this.logger, s"executeQueryCall failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, false)}", "释放jdbc资源失败")
+    }(this.logger, s"executeQueryCall failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, false)}", finallyCatchLog)
   }
 
   /**

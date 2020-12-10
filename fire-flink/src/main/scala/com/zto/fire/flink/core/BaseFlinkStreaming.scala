@@ -90,7 +90,6 @@ trait BaseFlinkStreaming extends BaseFlink {
    */
   override protected def deployConf: Unit = {
     if (!FireFrameworkConf.deployConf) return
-    // TODO: 分发配置后会导致checkpoint不生效
     // fire框架初始化操作，将配置信息分发到每个slot中
     this.ssc.fromCollection(1 to this.env.getMaxParallelism).map(FlinkUtils.initMapFunction).setParallelism(this.env.getMaxParallelism).name("fire init")
   }
@@ -109,6 +108,6 @@ trait BaseFlinkStreaming extends BaseFlink {
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
   override def process: Unit = {
-
+    // 子类复写该方法实现业务处理逻辑
   }
 }

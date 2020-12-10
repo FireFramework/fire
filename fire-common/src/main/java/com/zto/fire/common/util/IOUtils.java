@@ -1,5 +1,8 @@
 package com.zto.fire.common.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Closeable;
 
 /**
@@ -8,6 +11,7 @@ import java.io.Closeable;
  * @author ChengLong 2019-3-27 11:17:56
  */
 public class IOUtils {
+    private static final Logger logger = LoggerFactory.getLogger(IOUtils.class);
 
     private IOUtils() {}
 
@@ -22,7 +26,7 @@ public class IOUtils {
                         io.close();
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("close 对象失败", e);
                 }
             }
         }
@@ -30,8 +34,6 @@ public class IOUtils {
 
     /**
      * 关闭多个process对象
-     *
-     * @param process
      */
     public static void close(Process... process) {
         if (process != null && process.length > 0) {
@@ -41,7 +43,7 @@ public class IOUtils {
                         pro.destroy();
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("close process 对象失败", e);
                 }
             }
         }

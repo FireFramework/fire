@@ -19,6 +19,7 @@ object ThreadUtils {
   // 用于维护使用ThreadUtils创建的线程池对象，并进行统一的关闭
   private val threadPoolMap = new ConcurrentHashMap[String, ExecutorService]()
   private val logger = LoggerFactory.getLogger(this.getClass)
+  private[this] lazy val paramErrorMsg = "线程池不能为空"
 
   /**
    * 以子线程方式执行函数调用
@@ -31,7 +32,7 @@ object ThreadUtils {
    * 表示开启多少个线程执行该fun任务
    */
   def runAsThread(threadPool: ExecutorService, fun: => Unit, threadCount: Int = 1): Unit = {
-    Objects.requireNonNull(threadPool, "线程池不能为空")
+    require(threadPool != null, paramErrorMsg)
 
     (1 to threadCount).foreach(_ => {
       threadPool.execute(new Runnable {
@@ -52,7 +53,7 @@ object ThreadUtils {
    * 循环调用间隔时间（单位s）
    */
   def runAsThreadLoop(threadPool: ExecutorService, fun: => Unit, delay: Long = 10, threadCount: Int = 1): Unit = {
-    Objects.requireNonNull(threadPool, "线程池不能为空")
+    require(threadPool != null, paramErrorMsg)
 
     (1 to threadCount).foreach(_ => {
       threadPool.execute(new Runnable {
@@ -87,7 +88,7 @@ object ThreadUtils {
    * 表示开启多少个线程执行该fun任务
    */
   def runAsSchedule(threadPoolSchedule: ScheduledExecutorService, fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1): Unit = {
-    Objects.requireNonNull(threadPoolSchedule, "线程池不能为空")
+    require(threadPoolSchedule != null, paramErrorMsg)
 
     (1 to threadCount).foreach(_ => {
       if (rate) {
@@ -168,7 +169,7 @@ object ThreadUtils {
    * 线程池大小
    */
   def createThreadPool(poolName: String, poolType: ThreadPoolType = ThreadPoolType.FIXED, poolSize: Int = 1): ExecutorService = {
-    ValueUtils.requireNonNullForce(poolName, "线程池名称不能为空")
+    require(StringUtils.isNotBlank(poolName), "线程池名称不能为空")
     if (this.threadPoolMap.containsKey(poolName)) {
       this.threadPoolMap.get(poolName)
     } else {

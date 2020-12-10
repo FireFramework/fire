@@ -17,7 +17,7 @@ public class TimeCost implements Serializable {
     // 异常信息
     private String msg;
     // 耗时
-    private Long timeCost;
+    private Long cost;
     private String ip;
     private String load;
     // 多核cpu使用率
@@ -56,11 +56,11 @@ public class TimeCost implements Serializable {
         return msg;
     }
 
-    public Long getTimeCost() {
-        if (this.timeCost == null) {
+    public Long getCost() {
+        if (this.cost == null) {
             return System.currentTimeMillis() - this.start;
         }
-        return timeCost;
+        return cost;
     }
 
     public String getStartTime() {
@@ -127,8 +127,8 @@ public class TimeCost implements Serializable {
         this.msg = msg;
     }
 
-    public void setTimeCost(Long timeCost) {
-        this.timeCost = timeCost;
+    public void setCost(Long cost) {
+        this.cost = cost;
     }
 
     public void setFire(boolean fire) {
@@ -205,7 +205,7 @@ public class TimeCost implements Serializable {
 
     @Override
     public String toString() {
-        String baseInfo = "【" + this.lable() + "Log】 〖" + this.msg + "〗    start：" + this.startTime + " end：" + this.endTime + " cost：" + this.getTimeCost() + " ip：" + this.ip + " load：" + this.load + " cpuUsage：" + this.cpuUsage + " executor：" + executorId;
+        String baseInfo = "【" + this.lable() + "Log】 〖" + this.msg + "〗    start：" + this.startTime + " end：" + this.endTime + " cost：" + this.getCost() + " ip：" + this.ip + " load：" + this.load + " cpuUsage：" + this.cpuUsage + " executor：" + executorId;
         if (!"driver".equalsIgnoreCase(executorId)) {
             baseInfo += " stage：" + this.stageId + " task：" + this.taskId;
         }
@@ -242,7 +242,7 @@ public class TimeCost implements Serializable {
      * @return 当前对象
      */
     public TimeCost info(String msg, String module, Integer io, Boolean isFire, Throwable exception) {
-        this.timeCost = System.currentTimeMillis() - this.start;
+        this.cost = System.currentTimeMillis() - this.start;
         this.endTime = DateFormatUtils.formatCurrentDateTime();
         this.exception = exception;
         this.msg = msg;
@@ -258,7 +258,7 @@ public class TimeCost implements Serializable {
             }
         }
         if (exception != null) {
-            this.stackTraceInfo = StackTraceUtils.stackTraceInfo(exception);
+            this.stackTraceInfo = ExceptionBus.stackTrace(exception);
             this.level = "ERROR";
         }
         return this;

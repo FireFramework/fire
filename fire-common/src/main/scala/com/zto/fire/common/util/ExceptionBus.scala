@@ -27,6 +27,8 @@ object ExceptionBus {
   private[fire] lazy val exceptionCount = new AtomicLong(0)
   // 异常发生的主机ip
   private[this] lazy val ip = SystemInfoUtils.getIp
+  private[this] lazy val catchMsg = "执行try的过程中发生异常"
+  private[this] lazy val finallyCatchMsg = "执行finally过程中发生异常"
 
   /**
    * 向异常总线中投递异常对象
@@ -80,7 +82,7 @@ object ExceptionBus {
    * @param catchLog
    * 日志内容
    */
-  def tryWithLog(block: => Unit)(logger: Logger = this.logger, catchLog: String = "执行try的过程中发生异常", isThrow: Boolean = true): Unit = {
+  def tryWithLog(block: => Unit)(logger: Logger = this.logger, catchLog: String = catchMsg, isThrow: Boolean = true): Unit = {
     try {
       block
     } catch {
@@ -101,7 +103,7 @@ object ExceptionBus {
    * @param catchLog
    * 日志内容
    */
-  def tryWithReturn[T](block: => T)(logger: Logger = this.logger, catchLog: String = "执行try的过程中发生异常"): T = {
+  def tryWithReturn[T](block: => T)(logger: Logger = this.logger, catchLog: String = catchMsg): T = {
     try {
       block
     } catch {
@@ -126,7 +128,7 @@ object ExceptionBus {
    * @param finallyCatchLog
    * 当执行finally代码块过程中发生异常时打印的日志内容
    */
-  def tryWithFinally[T](block: => T)(finallyBlock: => Unit)(logger: Logger = this.logger, catchLog: String = "执行try的过程中发生异常", finallyCatchLog: String = "执行finally过程中发生异常"): T = {
+  def tryWithFinally[T](block: => T)(finallyBlock: => Unit)(logger: Logger = this.logger, catchLog: String = catchMsg, finallyCatchLog: String = finallyCatchMsg): T = {
     try {
       block
     } catch {

@@ -18,9 +18,6 @@ object FlinkTest extends BaseFlinkStreaming {
   override def process: Unit = {
     HBaseOper.scan("test", HBaseOper.buildScan("0", "1"))
     val dstream = this.ssc.createDirectStream().map(json => {
-      logger.error("FlinkTest {}", "task")
-      logger.warn("FlinkTest {}", "task")
-      logger.info("FlinkTest {}", "task")
       logger.debug("FlinkTest {}", "task")
       HBaseOper.scan("test", HBaseOper.buildScan("0", "1"))
       JSON.parseObject(json, classOf[Student])

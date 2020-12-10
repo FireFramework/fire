@@ -44,7 +44,7 @@ public class UIFilter implements Filter {
                 String basic = st.nextToken();
                 if (basic.equalsIgnoreCase("Basic")) {
                     String credentials = new String(Base64.decodeBase64(st.nextToken()), StandardCharsets.UTF_8);
-                    int p = credentials.indexOf(":");
+                    int p = credentials.indexOf(':');
                     if (p != -1) {
                         String tmpName = credentials.substring(0, p).trim();
                         String tmpPasswd = credentials.substring(p + 1).trim();

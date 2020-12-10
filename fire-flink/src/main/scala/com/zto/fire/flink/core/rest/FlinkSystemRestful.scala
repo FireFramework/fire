@@ -40,7 +40,6 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
     try {
       // 参数校验与参数获取
       this.baseFlink.shutdown()
-      // ProcessUtil.executeCmds(s"yarn application -kill ${this.baseFlink.applicationId}", s"kill -9 ${SystemInfoUtils.getPid}")
       this.logger.info(s"[kill] kill任务成功：json=$json")
       msg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)
     } catch {
@@ -71,19 +70,16 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
         return msg.buildError(s"sql不合法，在线调试功能只支持查询操作", ErrorCode.ERROR)
       }
 
-      if (this.baseFlink == null || this.baseFlink == null) {
+      if (this.baseFlink == null) {
         this.logger.warn(s"[sql] 系统正在初始化，请稍后再试：json=$json")
         return "系统正在初始化，请稍后再试"
       }
 
-      /*val sqlResult = this.baseFlink.flink.sql(sql.replace("memory.", "")).limit(1000).showString()
-      this.logFire(s"成功执行以下查询：${sql}\n执行结果如下：\n" + sqlResult, this.module)
-      msg.buildSuccess(sqlResult, ErrorCode.SUCCESS.toString)*/
       ""
     } catch {
       case e: Exception => {
         this.logger.error(s"[sql] 执行用户sql失败：json=$json", e)
-        msg.buildError("执行用户sql失败，异常堆栈：" + StackTraceUtils.stackTraceInfo(e), ErrorCode.ERROR)
+        msg.buildError("执行用户sql失败，异常堆栈：" + ExceptionBus.stackTrace(e), ErrorCode.ERROR)
       }
     } finally {
       msg.toString

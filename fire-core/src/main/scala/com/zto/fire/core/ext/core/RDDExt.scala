@@ -275,7 +275,6 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     */
   def kafkaJson2DF(schema: Class[_], parseAll: Boolean = false, isMySQL: Boolean = true, fieldNameUpper: Boolean = false): DataFrame = {
     val ds = this.spark.createDataset(rdd.asInstanceOf[RDD[ConsumerRecord[String, String]]].map(t => t.value()))(Encoders.STRING)
-    // val ds = this.sqlContext.createDataset(rdd.asInstanceOf[RDD[String]])(Encoders.STRING)
     val structType = SparkUtils.buildSchema2Kafka(schema, parseAll, isMySQL, fieldNameUpper)
     val df = ds.select(from_json(new ColumnName("value"), structType).as("data"))
     val tmpDF = if (parseAll)

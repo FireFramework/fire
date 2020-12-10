@@ -197,24 +197,6 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
     this.hbaseContext.hadoopPutDF[E](tableName, dataFrame, clazz, insertEmpty)
   }
 
-
-  /*
-    /**
-      * 批量load数据到hbase
-      *
-      * @param tableName
-      * HBase表名
-      * @param stagingDir
-      * 临时路径
-      * @param insertEmpty
-      * 是否将为空的字段写入到HBase
-      * @tparam T
-      */
-    def hbaseBulkLoadThinRows[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
-                                                                stagingDir: String, insertEmpty: Boolean = true): Unit = {
-      this.hbaseContext.bulkLoadThinRows(tableName, rdd, stagingDir, insertEmpty)
-    }*/
-
   /**
    * 使用Java API的方式将DataFrame中的数据分多个批次插入到HBase中
    *

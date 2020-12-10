@@ -15,9 +15,6 @@ object FlinkBatchTest extends BaseFlinkBatch {
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
   override def process: Unit = {
-    /*this.sc.parallelize(Seq("hello world hello")).flatMap(_.split(" ")).map(t => {
-      (t, 1)
-    }).groupBy(0).sum(1).print()*/
     this.testAccumulator
   }
 

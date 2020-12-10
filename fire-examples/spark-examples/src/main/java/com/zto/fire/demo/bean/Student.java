@@ -2,8 +2,11 @@ package com.zto.fire.demo.bean;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.zto.fire.common.anno.FieldName;
 import com.zto.fire.common.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -17,6 +20,8 @@ import java.util.Objects;
  * @author ChengLong 2019-6-20 16:06:16
  */
 public class Student extends HBaseBaseBean<Student> {
+    @FieldName(value = "Student", disuse = true)
+    protected static final transient Logger logger = LoggerFactory.getLogger(Student.class);
     private Long id;
     private String name;
     private Integer age;
@@ -185,7 +190,7 @@ public class Student extends HBaseBaseBean<Student> {
                 studentList.add(stu);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Sleep线程异常", e);
         }
 
         return studentList;

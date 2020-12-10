@@ -1,6 +1,8 @@
 package com.zto.fire.common.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.InputStream;
@@ -12,6 +14,7 @@ import java.util.List;
  * @author ChengLong 2018年8月22日 13:10:03
  */
 public class FileUtils {
+    private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
     private FileUtils() {}
 
@@ -37,7 +40,7 @@ public class FileUtils {
                 path.mkdirs();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("创建文件夹失败", e);
         }
     }
 

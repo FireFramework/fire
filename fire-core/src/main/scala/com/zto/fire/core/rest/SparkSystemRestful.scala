@@ -133,7 +133,15 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       // 将字段元数据信息封装
       val columnList = new util.LinkedList[ColumnMeta]
       columns.collect().foreach(column => {
-        columnList.add(new ColumnMeta(column.description, dbName, tableName, column.name, column.dataType, column.nullable, column.isPartition, column.isBucket))
+        val meta = new ColumnMeta.Builder().setColumnName(column.name)
+          .setBucket(column.isBucket)
+          .setDatabase(dbName)
+          .setDataType(column.dataType)
+          .setTableName(tableName)
+          .setDescription(column.description)
+          .setNullable(column.nullable)
+          .setPartition(column.isPartition).build()
+        columnList.add(meta)
       })
 
       this.logger.info(s"[listColumns] 获取[$dbName.$tableName]字段信息成功：json=$json")
@@ -461,7 +469,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
     } catch {
       case e: Exception => {
         this.logger.error(s"[sql] 执行用户sql失败：json=$json", e)
-        msg.buildError("执行用户sql失败，异常堆栈：" + StackTraceUtils.stackTraceInfo(e), ErrorCode.ERROR)
+        msg.buildError("执行用户sql失败，异常堆栈：" + ExceptionBus.stackTrace(e), ErrorCode.ERROR)
       }
     } finally {
       msg.toString

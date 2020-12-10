@@ -40,7 +40,6 @@ class SparkConfExt(sparkConf: SparkConf) {
       .set("spark.speculation.quantile", "0.1")
       .set("spark.streaming.stopGracefullyOnShutdown", "true")
       .set("spark.port.maxRetries", "1000")
-    // .setAppName(this.getClass.getSimpleName.replace("$", ""))
     sparkConf
   }
 

@@ -14,8 +14,6 @@ object UDFs extends Serializable {
 
   /**
    * 批量注册系统内置的udf函数
-   *
-   * @param spark
    */
   def registerSysUDF(spark: SparkSession): Unit = {
     // ==================== 日期相关 ====================
@@ -47,11 +45,11 @@ object UDFs extends Serializable {
 
     // ==================== 数字相关 ====================
     spark.udf.register("floor", Num.floor _)
-    spark.udf.register("long2Int", Num.Long2Int _)
+    spark.udf.register("long2Int", Num.long2Int _)
     spark.udf.register("bigDecimal2Long", Num.bigDecimal2Long _)
     spark.udf.register("ifnull", Num.ifnull _)
     spark.udf.register("truncate", Num.truncate _)
-    spark.udf.register("truncate_decimal", Num.truncate_decimal _)
+    spark.udf.register("truncate_decimal", Num.truncateDecimal _)
   }
 
   /**
@@ -78,10 +76,6 @@ object UDFs extends Serializable {
 
     /**
      * 对指定的时间字段进行年度加减
-     *
-     * @param dateTimeStr
-     * @param years
-     * @return
      */
     def addYears(dateTimeStr: String, years: Int): String = {
       DateFormatUtils.addYears(dateTimeStr, years)
@@ -89,10 +83,6 @@ object UDFs extends Serializable {
 
     /**
      * 对指定的时间字段进行月份加减
-     *
-     * @param dateTimeStr
-     * @param mons
-     * @return
      */
     def addMons(dateTimeStr: String, mons: Int): String = {
       DateFormatUtils.addMons(dateTimeStr, mons)
@@ -100,10 +90,6 @@ object UDFs extends Serializable {
 
     /**
      * 对指定的时间字段进行天加减
-     *
-     * @param dateTimeStr
-     * @param days
-     * @return
      */
     def addDays(dateTimeStr: String, days: Int): String = {
       DateFormatUtils.addDays(dateTimeStr, days)
@@ -111,10 +97,6 @@ object UDFs extends Serializable {
 
     /**
      * 对指定的时间字段进行天加减
-     *
-     * @param dateTimeStr
-     * @param weeks
-     * @return
      */
     def addWeeks(dateTimeStr: String, weeks: Int): String = {
       DateFormatUtils.addWeeks(dateTimeStr, weeks)
@@ -122,10 +104,6 @@ object UDFs extends Serializable {
 
     /**
      * 对指定的时间字段进行小时加减
-     *
-     * @param dateTimeStr
-     * @param hours
-     * @return
      */
     def addHours(dateTimeStr: String, hours: Int): String = {
       DateFormatUtils.addHours(dateTimeStr, hours)
@@ -133,10 +111,6 @@ object UDFs extends Serializable {
 
     /**
      * 对指定的时间字段进行分钟加减
-     *
-     * @param dateTimeStr
-     * @param minutes
-     * @return
      */
     def addMins(dateTimeStr: String, minutes: Int): String = {
       DateFormatUtils.addMins(dateTimeStr, minutes)
@@ -144,10 +118,6 @@ object UDFs extends Serializable {
 
     /**
      * 对指定的时间字段进行秒钟加减
-     *
-     * @param dateTimeStr
-     * @param seconds
-     * @return
      */
     def addSecs(dateTimeStr: String, seconds: Int): String = {
       DateFormatUtils.addSecs(dateTimeStr, seconds)
@@ -155,11 +125,6 @@ object UDFs extends Serializable {
 
     /**
      * 对字段进行格式转换
-     *
-     * @param dateTimeStr
-     * @param srcSchema
-     * @param destSchema
-     * @return
      */
     def dateStrSchemaFormat(dateTimeStr: String, srcSchema: String, destSchema: String): String = {
       if (StringUtils.isBlank(dateTimeStr)) "" else DateFormatUtils.dateSchemaFormat(dateTimeStr, srcSchema, destSchema)
@@ -190,10 +155,6 @@ object UDFs extends Serializable {
 
     /**
      * 判断两个字段是否为同一天
-     *
-     * @param day1
-     * @param day2
-     * @return
      */
     def isSameDay(day1: String, day2: String): Boolean = {
       DateFormatUtils.isSameDay(day1, day2)
@@ -201,10 +162,6 @@ object UDFs extends Serializable {
 
     /**
      * day1是否大于day2
-     *
-     * @param day1
-     * @param day2
-     * @return
      */
     def isBig(day1: String, day2: String): Boolean = {
       DateFormatUtils.isBig(day1, day2)
@@ -212,10 +169,6 @@ object UDFs extends Serializable {
 
     /**
      * day1是否小于day2
-     *
-     * @param day1
-     * @param day2
-     * @return
      */
     def isSmall(day1: String, day2: String): Boolean = {
       DateFormatUtils.isSmall(day1, day2)
@@ -223,11 +176,6 @@ object UDFs extends Serializable {
 
     /**
      * 指定字段日期是否介于day1与day2之间
-     *
-     * @param day
-     * @param day1
-     * @param day2
-     * @return
      */
     def isBetween(day: String, day1: String, day2: String) = {
       DateFormatUtils.isBetween(day, day1, day2)
@@ -235,20 +183,13 @@ object UDFs extends Serializable {
 
     /**
      * 截取到年月日
-     *
-     * @param dateTime
      */
-    def date(dateTime: String) = {
+    def date(dateTime: String): String = {
       if (StringUtils.isNotBlank(dateTime) && dateTime.length > 10) dateTime.substring(0, 10) else dateTime
     }
 
     /**
      * 对字段进行格式转换
-     *
-     * @param dateTime
-     * @param srcSchema
-     * @param destSchema
-     * @return
      */
     def dateSchemaFormat(dateTime: Date, srcSchema: String, destSchema: String): String = {
       this.dateStrSchemaFormat(DateFormatUtils.formatDateTime(dateTime), srcSchema, destSchema)
@@ -263,9 +204,6 @@ object UDFs extends Serializable {
 
     /**
      * 获取整点小时
-     *
-     * @param dateStr
-     * @return
      */
     def truncateHour(dateStr: String): String = {
       DateFormatUtils.truncateHour(dateStr)
@@ -279,8 +217,6 @@ object UDFs extends Serializable {
 
     /**
      * 如果字段为空，则返回true，否则返回false
-     *
-     * @param field
      */
     def isNull(field: String): Boolean = {
       if (StringUtils.isBlank(field) || field.trim.length() == 0 || "null".equalsIgnoreCase(field.trim) || """\N""".equalsIgnoreCase(field.trim)) {
@@ -292,9 +228,6 @@ object UDFs extends Serializable {
 
     /**
      * 如果字段为空，则返回false，否则返回true
-     *
-     * @param field
-     * @return
      */
     def isNotNull(field: String): Boolean = {
       !isNull(field)
@@ -302,9 +235,6 @@ object UDFs extends Serializable {
 
     /**
      * 计算长度
-     *
-     * @param field
-     * @return
      */
     def len(field: String): Int = {
       if (this.isNull(field)) 0 else field.length
@@ -312,9 +242,6 @@ object UDFs extends Serializable {
 
     /**
      * 字符串反转
-     *
-     * @param str
-     * @return
      */
     def reverse(str: String): String = {
       StringUtils.reverse(str)
@@ -333,7 +260,7 @@ object UDFs extends Serializable {
       if (StringUtils.isBlank(field) || StringUtils.isBlank(str)) {
         false
       } else {
-        return field.contains(str)
+        field.contains(str)
       }
     }
   }
@@ -345,9 +272,6 @@ object UDFs extends Serializable {
 
     /**
      * floor操作
-     *
-     * @param field
-     * @return
      */
     def floor(field: Double): Int = {
       NumberFormatUtils.floor(field)
@@ -355,19 +279,13 @@ object UDFs extends Serializable {
 
     /**
      * 将Long转为Integer
-     *
-     * @param field
-     * @return
      */
-    def Long2Int(field: java.lang.Long): java.lang.Integer = {
-      NumberFormatUtils.Long2Int(field)
+    def long2Int(field: java.lang.Long): java.lang.Integer = {
+      NumberFormatUtils.long2Int(field)
     }
 
     /**
      * 将BigDecimal转为Long类型
-     *
-     * @param field
-     * @return
      */
     def bigDecimal2Long(field: java.math.BigDecimal): java.lang.Long = {
       NumberFormatUtils.bigDecimal2Long(field)
@@ -375,9 +293,6 @@ object UDFs extends Serializable {
 
     /**
      * 判断是否为空
-     *
-     * @param decimal
-     * @return
      */
     def ifnull(decimal: java.math.BigDecimal, defaultVal: java.math.BigDecimal): java.math.BigDecimal = {
       NumberFormatUtils.ifnull(decimal, defaultVal)
@@ -399,13 +314,12 @@ object UDFs extends Serializable {
     /**
      * 截取精度
      *
-     * @param bigDecimal
      * @param scale
      * 精度
      * @return
      */
-    def truncate_decimal(bigDecimal: java.math.BigDecimal, scale: Int): java.math.BigDecimal = {
-      NumberFormatUtils.truncate_decimal(bigDecimal, scale)
+    def truncateDecimal(bigDecimal: java.math.BigDecimal, scale: Int): java.math.BigDecimal = {
+      NumberFormatUtils.truncateDecimal(bigDecimal, scale)
     }
   }
 

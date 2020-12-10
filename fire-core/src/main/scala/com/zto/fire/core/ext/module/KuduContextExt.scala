@@ -27,6 +27,7 @@ import scala.reflect._
  * Created by ChengLong on 2017-09-21.
  */
 class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) extends Serializable {
+  private[this] lazy val paramErrorMsg = "参数不能为空"
 
   /**
    * 用于维护kudu表与临时表之间的关系
@@ -42,7 +43,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * 包装后的表名
    */
   def packageKuduTableName(tableName: String): String = {
-    if (StringUtils.isBlank(tableName)) throw new IllegalArgumentException("表名不能为空")
+    require(StringUtils.isNotBlank(tableName), "表名不能为空")
     if (tableName.startsWith("impala::")) {
       tableName
     } else {
@@ -90,7 +91,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * 具体类型
    */
   def insertIgnoreRDD[T: ClassTag](tableName: String, rdd: RDD[T]): Unit = {
-    if (rdd == null) throw new IllegalArgumentException("参数不能为空")
+    require(rdd != null, paramErrorMsg)
     val df = sqlContext.createDataFrame(rdd, classTag[T].runtimeClass)
     this.insertIgnoreRows(tableName, df)
   }
@@ -159,7 +160,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * 具体类型
    */
   def insertRDD[T: ClassTag](tableName: String, rdd: RDD[T]): Unit = {
-    if (rdd == null) throw new IllegalArgumentException("参数不能为空")
+    require(rdd != null, paramErrorMsg)
     val df = sqlContext.createDataFrame(rdd, classTag[T].runtimeClass)
     this.insertRows(tableName, df)
   }
@@ -233,7 +234,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * 与表结构对应的RDD
    */
   def upsertRDD[T: ClassTag](tableName: String, rdd: RDD[T]): Unit = {
-    if (rdd == null) throw new IllegalArgumentException("参数不能为空")
+    require(rdd != null, paramErrorMsg)
     val df = sqlContext.createDataFrame(rdd, classTag[T].runtimeClass)
     this.upsertRows(tableName, df)
   }
@@ -286,7 +287,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * 与表结构对应的RDD
    */
   def updateRDD[T: ClassTag](tableName: String, rdd: RDD[T]): Unit = {
-    if (rdd == null) throw new IllegalArgumentException("参数不能为空")
+    require(rdd != null, paramErrorMsg)
     val df = sqlContext.createDataFrame(rdd, classTag[T].runtimeClass)
     this.updateRows(tableName, df)
   }
@@ -327,7 +328,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * 与表结构对应的DataFrame
    */
   def deleteRows(tableName: String, dataFrame: DataFrame): Unit = {
-    if (dataFrame == null) throw new IllegalArgumentException("参数不能为空")
+    require(dataFrame != null && StringUtils.isNotBlank(tableName), paramErrorMsg)
     this.kuduContext.deleteRows(dataFrame, this.packageKuduTableName(tableName))
   }
 
@@ -514,7 +515,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
    * 查询结果，以DataFrame形式返回
    */
   def selectKVList[T: ClassTag](tableName: String, kv: (String, Seq[T])*): DataFrame = {
-    if (StringUtils.isBlank(tableName) || kv == null || kv.isEmpty) throw new IllegalArgumentException("参数不能为空")
+    require(StringUtils.isNotBlank(tableName) && kv != null && kv.nonEmpty, paramErrorMsg)
     val len = kv.head._2.length
     if (len < 1 || kv.filter(t => t._2.length != len).length != 0) throw new IllegalArgumentException("联合主键值的个数必须一致")
 
@@ -859,26 +860,9 @@ object KuduContextExt {
   def addPartition(tables: Seq[String], start: String, end: String): Unit = {
     if (ValueUtils.isEmpty(tables) || ValueUtils.isEmpty(start) || ValueUtils.isEmpty(end)) return
 
-    val sqls = tables.filter(ValueUtils.isNotEmpty(_)).map(table => s"""ALTER TABLE $table ADD IF NOT EXISTS RANGE PARTITION '$start' <= VALUES < '$end'""")
+    val sqls = tables.filter(ValueUtils.isNotEmpty).map(table => s"""ALTER TABLE $table ADD IF NOT EXISTS RANGE PARTITION '$start' <= VALUES < '$end'""")
     if (ValueUtils.isNotEmpty(sqls)) this.execute(sqls: _*)
   }
-
-  /**
-   * 根据Bean中所有有值的字段查询
-   */
-  /*def selectBeans[T: ClassTag](tableName: String, beans: KuduBaseBean*): ListBuffer[T] = {
-    val clazz = classTag[T].runtimeClass
-    val listBuffer = ListBuffer[T]()
-    var sql = new StringBuilder(s"select * from $tableName where ")
-    val params = Array[Any]()
-    this.executeQuery(sql.toString, params, new QueryCallback {
-      // 回调方法，对返回结果进行处理
-      override def process(rs: ResultSet): Unit = {
-        listBuffer ++= SparkUtils.dbResultSet2Bean(rs, clazz)
-      }
-    })
-    listBuffer
-  }*/
 
   /**
    * 根据主键批量删除

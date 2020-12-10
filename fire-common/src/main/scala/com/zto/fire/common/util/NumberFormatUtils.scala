@@ -24,7 +24,7 @@ object NumberFormatUtils {
     * @param field
     * @return
     */
-  def Long2Int(field: java.lang.Long): java.lang.Integer = {
+  def long2Int(field: java.lang.Long): java.lang.Integer = {
     if (field != null) {
       field.toInt
     } else {
@@ -92,7 +92,7 @@ object NumberFormatUtils {
     * 精度
     * @return
     */
-  def truncate_decimal(bigDecimal: java.math.BigDecimal, scale: Int): java.math.BigDecimal = {
+  def truncateDecimal(bigDecimal: java.math.BigDecimal, scale: Int): java.math.BigDecimal = {
     if (bigDecimal == null) {
       new java.math.BigDecimal("0").setScale(scale, BigDecimal.ROUND_HALF_UP)
     } else {

@@ -75,7 +75,7 @@ public class FindClassUtils {
                     try {
                         clazz = FindClassUtils.classLoader.loadClass(packName + "." + chiFile.getName().replace(CLASS_FILE, ""));
                     } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
+                        logger.error("未找到类异常", e);
                     }
                     if (FindClassUtils.superStrategy.isAssignableFrom(clazz)) {
                         list.add((Class<? extends Serializable>) clazz);
@@ -111,7 +111,7 @@ public class FindClassUtils {
                     // 递归遍历子目录
                     if (jarEntry.isDirectory()) {
                         String clazzName = jarEntry.getName().replace("/", ".");
-                        int endIndex = clazzName.lastIndexOf(".");
+                        int endIndex = clazzName.lastIndexOf('.');
                         String prefix = null;
                         if (endIndex > 0) {
                             prefix = clazzName.substring(0, endIndex);
@@ -182,7 +182,7 @@ public class FindClassUtils {
                     fullName = searchList.get(0).getPath();
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                logger.error("从project中查找文件过程中报错", ex);
             }
         }
 

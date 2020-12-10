@@ -84,8 +84,6 @@ trait BaseFlink extends BaseFire {
   override def stop: Unit = {
     try {
       this.after()
-      // TODO: stop flink相关的上下文
-
     } finally {
       this.shutdown()
     }
@@ -122,8 +120,6 @@ trait BaseFlink extends BaseFire {
       if (FireFlinkConf.streamNumberExecutionRetries != -1) streamEnv.setNumberOfExecutionRetries(FireFlinkConf.streamNumberExecutionRetries)
       // flink.stream.time.characteristic
       if (StringUtils.isNotBlank(FireFlinkConf.streamTimeCharacteristic)) streamEnv.setStreamTimeCharacteristic(TimeCharacteristic.valueOf(FireFlinkConf.streamTimeCharacteristic))
-      // TODO: 支持状态保存
-      // streamEnv.setStateBackend()
 
       // checkPoint相关参数
       val ckConfig = streamEnv.getCheckpointConfig

@@ -1,5 +1,8 @@
 package com.zto.fire.common.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Field;
@@ -16,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ReflectionUtils {
     private static final Map<Class<?>, Map<String, Field>> cacheFieldMap = new ConcurrentHashMap<>();
     private static final Map<Class<?>, Map<String, Method>> cacheMethodMap = new ConcurrentHashMap<>();
+    private static final Logger logger = LoggerFactory.getLogger(ReflectionUtils.class);
 
     private ReflectionUtils() {
     }
@@ -185,7 +189,7 @@ public class ReflectionUtils {
                 return clazz.getAnnotation(annoClass);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("获取annotation出现异常", e);
         }
         return null;
     }
@@ -213,7 +217,7 @@ public class ReflectionUtils {
                 return clazz.getDeclaredAnnotations();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("获取annotation出现异常", e);
         }
         return new Annotation[0];
     }
@@ -272,7 +276,7 @@ public class ReflectionUtils {
             method.setAccessible(true);
             return method.getParameterAnnotations();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("获取param annotation出现异常", e);
         }
         return new Annotation[0][0];
     }

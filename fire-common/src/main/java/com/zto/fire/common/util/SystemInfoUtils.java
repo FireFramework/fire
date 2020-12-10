@@ -1,6 +1,8 @@
 package com.zto.fire.common.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
@@ -20,8 +22,10 @@ public class SystemInfoUtils {
     private static String hostname;
     private static String pid;
     private static final String OSNAME = "os.name";
+    private static final Logger logger = LoggerFactory.getLogger(SystemInfoUtils.class);
 
-    private SystemInfoUtils() {}
+    private SystemInfoUtils() {
+    }
 
     /**
      * 获取主机地址信息
@@ -31,7 +35,7 @@ public class SystemInfoUtils {
             InetAddress candidateAddress = null;
             // 遍历所有的网络接口
             for (Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces(); ifaces.hasMoreElements(); ) {
-                NetworkInterface iface =  ifaces.nextElement();
+                NetworkInterface iface = ifaces.nextElement();
                 // 在所有的接口下再遍历IP
                 for (Enumeration<InetAddress> inetAddrs = iface.getInetAddresses(); inetAddrs.hasMoreElements(); ) {
                     InetAddress inetAddr = inetAddrs.nextElement();
@@ -53,7 +57,7 @@ public class SystemInfoUtils {
             // 如果没有发现 non-loopback地址.只能用最次选的方案
             return InetAddress.getLocalHost();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("获取主机地址信息失败", e);
         }
         return null;
     }
@@ -118,8 +122,6 @@ public class SystemInfoUtils {
 
     /**
      * 判断当前运行环境是否为linux
-     *
-     * @return
      */
     public static boolean isLinux() {
         String os = System.getProperty(OSNAME);

@@ -29,9 +29,6 @@ object SparkUtils {
   /**
    * 将Row转为自定义bean，以JavaBean中的Field为基准
    * bean中的field名称要与DataFrame中的field名称保持一致
-   *
-   * @param row
-   * @return
    */
   def sparkRowToBean[T](row: Row, clazz: Class[T]): T = {
     val obj = clazz.newInstance()
@@ -40,8 +37,8 @@ object SparkUtils {
         clazz.getDeclaredFields.foreach(field => {
           field.setAccessible(true)
           val anno = field.getAnnotation(classOf[FieldName])
-          val begin = if (anno == null) true else !anno.disuse()
-          if (begin) {
+          // 如果没有加注解，或者加了注解但没有打disuse=true
+          if (anno == null || (anno != null && !anno.disuse())) {
             val fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
             if (this.containsColumn(row, fieldName.trim)) {
               val index = row.fieldIndex(fieldName.trim)
@@ -86,8 +83,8 @@ object SparkUtils {
         fields.foreach(field => {
           field.setAccessible(true)
           val anno = field.getAnnotation(classOf[FieldName])
-          val begin = if (anno == null) true else !anno.disuse()
-          if (begin) {
+          // 如果没有加注解，或者加了注解但没有打disuse=true
+          if (anno == null || (anno != null && !anno.disuse())) {
             var fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
             fieldName = if (toUppercase) fieldName.toUpperCase else fieldName
             if (this.containsColumn(row, fieldName)) {

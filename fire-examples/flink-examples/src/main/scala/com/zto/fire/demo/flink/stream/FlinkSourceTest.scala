@@ -51,8 +51,6 @@ class MySource extends RichParallelSourceFunction[Long] {
     while (this.isRunning) {
       this.index += 1
       ctx.collect(this.index)
-      // 携带EventTime时间信息
-      // ctx.collectWithTimestamp((Math.random() * 10).toInt, System.currentTimeMillis())
       Thread.sleep(1000)
     }
   }

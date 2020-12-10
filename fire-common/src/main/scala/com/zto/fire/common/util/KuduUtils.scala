@@ -61,9 +61,6 @@ object KuduUtils {
   /**
     * 将Row转为自定义bean，以Row中的Field为基准
     * bean中的field名称要与DataFrame中的field名称保持一致
-    *
-    * @param row
-    * @return
     */
   def kuduRowToBean[T](row: Row, clazz: Class[T]): T = {
     val obj = clazz.newInstance()

@@ -103,7 +103,7 @@ private[fire] object FireUtils extends Serializable {
    * @param beginTime
    * @return
    */
-  def timecost(beginTime: Long): String = readable(currentTime - beginTime, TimeUnitEnum.ms)
+  def timecost(beginTime: Long): String = readable(currentTime - beginTime, TimeUnitEnum.MS)
 
   /**
    * 用于统计指定代码块执行的耗时时间

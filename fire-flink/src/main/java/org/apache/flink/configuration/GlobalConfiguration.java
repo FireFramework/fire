@@ -38,13 +38,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class GlobalConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(GlobalConfiguration.class);
-    public static String restAddress = "";
     private static AtomicBoolean isStart = new AtomicBoolean(false);
 
     public static final String FLINK_CONF_FILENAME = "flink-conf.yaml";
-
-    // the keys whose values should be hidden
-    private static final String[] SENSITIVE_KEYS = new String[]{"password", "secret", "fs.azure.account.key"};
 
     // the hidden content to be displayed
     public static final String HIDDEN_CONTENT = "******";
@@ -176,7 +172,7 @@ public final class GlobalConfiguration {
 
                     // skip line with no valid key-value pair
                     if (kv.length == 1) {
-                        LOG.warn("Error while trying to split key and value in configuration file " + file + ":" + lineNo + ": \"" + line + "\"");
+                        LOG.warn("Error while trying to split key and value in configuration file {}:{}: {}", file, lineNo, line);
                         continue;
                     }
 
@@ -185,7 +181,7 @@ public final class GlobalConfiguration {
 
                     // sanity check
                     if (key.length() == 0 || value.length() == 0) {
-                        LOG.warn("Error after splitting key and value in configuration file " + file + ":" + lineNo + ": \"" + line + "\"");
+                        LOG.warn("Error after splitting key and value in configuration file {}:{}:{}", file, lineNo, line);
                         continue;
                     }
 
@@ -219,16 +215,16 @@ public final class GlobalConfiguration {
         PropUtils.compatible("flink");
 
         // 二次开发代码，用于加载任务同名配置文件中的flink参数
-        String className = config.getString("flink.fire.className", "");
+        String className = config.getString("", "");
         if (className != null && className.contains(".")) {
-            String simpleClassName = className.substring(className.lastIndexOf(".") + 1, className.length());
+            String simpleClassName = className.substring(className.lastIndexOf('.') + 1, className.length());
             if (simpleClassName.length() > 0) {
                 PropUtils.loadFile(FireFrameworkConf.FLINK_CONF_FILE());
                 PropUtils.loadFile(FireFrameworkConf.FLINK_STREAMING_CONF_FILE());
                 // 加载任务同名的配置文件
                 PropUtils.loadFile(simpleClassName);
                 // 加载外部系统配置信息，覆盖同名配置文件中的配置，实现动态替换
-                if (FireFrameworkConf.configCenterEnable() && isJobManager) PropUtils.invokeConfigCenter(className, restAddress);
+                if (FireFrameworkConf.configCenterEnable() && isJobManager) PropUtils.invokeConfigCenter(className, "");
 
                 JavaConversions.mapAsJavaMap(PropUtils.toMap()).forEach((k, v) -> {
                     if (!k.startsWith("spark.")) {

@@ -18,11 +18,6 @@ object TIWriter extends BaseSparkCore {
     val df = this.spark.createDataFrame(studentRDD, classOf[Student])
     // Student类型的DataFrame数据写入hbase
     df.hbaseOperPutDF(this.tableName, classOf[Student])
-
-    val rowKeyRDD = this.sc.parallelize(Seq("1001", "2010", "20012"))
-    // 读取hbase数据，并转为Student类型的DataFrame
-    val studentDF = rowKeyRDD.hbaseBulkGetRDD(this.tableName, classOf[Student])
-
     this.spark.stop()
   }
 }

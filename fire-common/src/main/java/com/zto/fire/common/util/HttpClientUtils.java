@@ -92,7 +92,6 @@ public class HttpClientUtils {
         String responses = "";
         PostMethod postMethod = new PostMethod();
         HttpClient httpClient = new HttpClient();
-        httpClient.setConnectionTimeout(10000);
         postMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 10000);
         postMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler());
         // 设置请求头

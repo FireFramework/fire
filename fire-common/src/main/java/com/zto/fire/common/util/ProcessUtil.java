@@ -1,6 +1,8 @@
 package com.zto.fire.common.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -11,6 +13,8 @@ import java.io.InputStreamReader;
  * @author ChengLong 2019-4-10 15:50:23
  */
 public class ProcessUtil {
+    private static final Logger logger = LoggerFactory.getLogger(ProcessUtil.class);
+
     private ProcessUtil() {}
 
     /**
@@ -50,7 +54,7 @@ public class ProcessUtil {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("执行命令报错", e);
         } finally {
             IOUtils.close(process);
             IOUtils.close(reader);

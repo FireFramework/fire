@@ -77,7 +77,6 @@ object ApolloConfigUtil {
    * 配置的value
    */
   def getProperty(key: String, default: String = null): String = {
-    //val config = ConfigService.getAppConfig
     props.getProperty(key, default)
   }
 
@@ -238,20 +237,13 @@ object ApolloConfigUtil {
 
   /**
    * 获取布尔值数据
-   *
-   * @param key
-   * @return
    */
   def getBoolean(key: String): Boolean = {
-    val value = this.getProperty(key)
-    if (StringUtils.isNotBlank(value)) value.toBoolean else false
+    this.getProperty(key, "false").toBoolean
   }
 
   /**
    * 获取布尔值数据
-   *
-   * @param key
-   * @return
    */
   def getBoolean(key: String, default: Boolean): Boolean = {
     val value = this.getBoolean(key)
@@ -272,7 +264,7 @@ object ApolloConfigUtil {
   }
 
   def getEvn(env:String) {
-    val environment = EnvUtils.transformEnv(env);
+    EnvUtils.transformEnv(env);
   }
 
 }

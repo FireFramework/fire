@@ -75,7 +75,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
                 factory.initialize(quartzProp);
                 scheduler = factory.getScheduler();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("初始化quartz发生异常", e);
             }
         }
     }
@@ -232,7 +232,7 @@ public class SchedulerManager extends BaseLogging implements Serializable {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("执行execute发生异常", e);
         }
     }
 

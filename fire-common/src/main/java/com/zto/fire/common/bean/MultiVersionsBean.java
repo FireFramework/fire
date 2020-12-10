@@ -7,6 +7,8 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.converters.BigDecimalConverter;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -16,6 +18,8 @@ import java.util.Map;
  * Created by ChengLong on 2017-08-17.
  */
 public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
+    @FieldName(value = "logger", disuse = true)
+    protected static final transient Logger logger = LoggerFactory.getLogger(MultiVersionsBean.class);
     @FieldName("multiFields")
     private String multiFields;
 
@@ -59,7 +63,7 @@ public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
     @Override
     public MultiVersionsBean buildRowKey() {
         try {
-            if(this.target == null && StringUtils.isNotBlank(this.multiFields)) {
+            if (this.target == null && StringUtils.isNotBlank(this.multiFields)) {
                 Map<String, String> map = JSON.parseObject(this.multiFields, Map.class);
                 Class<?> clazz = Class.forName(map.get("className"));
                 HBaseBaseBean<?> bean = (HBaseBaseBean) clazz.newInstance();
@@ -72,7 +76,7 @@ public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
                 this.rowKey = this.target.rowKey;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("执行buildRowKey()方法失败", e);
         }
 
         return this;

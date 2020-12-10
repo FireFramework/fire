@@ -184,11 +184,10 @@ object HBaseOperTest extends BaseSparkCore {
     // this.testHbaseOperDeleteRDD
     // this.testHbaseOperDeleteDS
     this.testHbaseOperPutRDD(multiVersion)
-    /*this.testHbaseOperPutList(multiVersion)
-    this.testHbaseOperPutRDD(multiVersion)
-    this.testHbaseOperPutDF(multiVersion)
-    this.testHbaseOperPutDS(multiVersion)
-    */
+    // this.testHbaseOperPutList(multiVersion)
+    // this.testHbaseOperPutRDD(multiVersion)
+    // this.testHbaseOperPutDF(multiVersion)
+    // this.testHbaseOperPutDS(multiVersion)
 
     println("=========get========")
     this.testHbaseOperGetList(multiVersion)

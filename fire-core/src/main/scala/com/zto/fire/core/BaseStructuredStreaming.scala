@@ -30,7 +30,9 @@ class BaseStructuredStreaming extends BaseSpark {
     * Spark处理逻辑
     * 注：此方法会被自动调用，不需要在main中手动调用
     */
-  override def process: Unit = {}
+  override def process: Unit = {
+    // 子类复写该方法实现业务处理逻辑
+  }
 
 
   /**

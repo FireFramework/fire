@@ -134,11 +134,9 @@ class DataStreamExt[T](stream: DataStream[T]) {
         } else {
           ValueUtils.requireNonNullForce(fields, "字段列表不能为空！需按照sql中的占位符顺序依次指定当前DataStream中数据字段的名称")
 
-          if (clazz == null) {
-            if (value != null) {
-              clazz = value.getClass
-              fieldMap = ReflectionUtils.getAllFields(clazz)
-            }
+          if (clazz == null && value != null) {
+            clazz = value.getClass
+            fieldMap = ReflectionUtils.getAllFields(clazz)
           }
 
           fields.foreach(fieldName => {

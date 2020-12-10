@@ -57,6 +57,8 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
   private[this] lazy val threadPool = ThreadUtils.createThreadPool("HBaseOperPool", ThreadPoolType.SCHEDULED)
   // ------------------------------------ 表存在判断缓存 ------------------------------------ //
   private[this] lazy val tableExistsCacheEnable = tableExistsCache(this.keyNum)
+  private[this] lazy val row2BeanParamError = "参数不合法，HBase Row转为JavaBean失败."
+  private[this] lazy val closeAdminError = "close admin执行失败"
   this.registerReoload
   this.registerClose
 
@@ -454,7 +456,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[this] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): T = {
-    require(rs != null && !rs.isEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    require(rs != null && !rs.isEmpty && clazz != null, row2BeanParamError)
     val fieldMap = this.getFieldNameMap(clazz)
     require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
     this.cell2Field(clazz, fieldMap, rs)
@@ -469,7 +471,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[this] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
-    require(rsArr != null && rsArr.nonEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    require(rsArr != null && rsArr.nonEmpty && clazz != null, row2BeanParamError)
     val fieldMap = this.getFieldNameMap(clazz)
     require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
@@ -486,7 +488,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[this] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): ListBuffer[T] = {
-    require(rs != null && !rs.isEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    require(rs != null && !rs.isEmpty && clazz != null, row2BeanParamError)
     val fieldMap = this.getFieldNameMap(classOf[MultiVersionsBean])
     require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
     this.multiCell2Field(rs, clazz, fieldMap)
@@ -501,7 +503,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[this] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
-    require(rsArr != null && rsArr.nonEmpty && clazz != null, "参数不合法，HBase Row转为JavaBean失败.")
+    require(rsArr != null && rsArr.nonEmpty && clazz != null, row2BeanParamError)
     val fieldMap = getFieldNameMap(classOf[MultiVersionsBean])
     require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
@@ -518,7 +520,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[fire] def hbaseRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
-    require(it != null && clazz != null, "参数不合法，无法将HBase Row转为JavaBean")
+    require(it != null && clazz != null, row2BeanParamError)
     val fieldMap = this.getFieldNameMap(clazz)
     require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val beanList = ListBuffer[T]()
@@ -545,7 +547,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    */
   @Internal
   private[fire] def hbaseMultiVersionRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
-    require(it != null && clazz != null, "参数不合法，无法将HBase Row转为JavaBean")
+    require(it != null && clazz != null, row2BeanParamError)
     val beanList = ListBuffer[T]()
     tryWithLog {
       it.foreach(t => {
@@ -719,7 +721,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       }
     } {
       this.closeAdmin(admin)
-    }(logger, s"创建HBase表${hbaseCluster(keyNum)}.${tableName}失败.", "close admin执行失败")
+    }(logger, s"创建HBase表${hbaseCluster(keyNum)}.${tableName}失败.", closeAdminError)
   }
 
   /**
@@ -743,7 +745,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       }
     } {
       this.closeAdmin(admin)
-    }(this.logger, s"drop ${hbaseCluster(keyNum)}.${tableName}表操作失败", "close admin执行失败")
+    }(this.logger, s"drop ${hbaseCluster(keyNum)}.${tableName}表操作失败", closeAdminError)
   }
 
   /**
@@ -764,7 +766,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       }
     } {
       this.closeAdmin(admin)
-    }(this.logger, s"enable ${hbaseCluster(keyNum)}.${tableName}表失败", "close admin执行失败")
+    }(this.logger, s"enable ${hbaseCluster(keyNum)}.${tableName}表失败", closeAdminError)
   }
 
   /**
@@ -785,7 +787,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       }
     } {
       this.closeAdmin(admin)
-    }(this.logger, s"disable ${hbaseCluster(keyNum)}.${tableName}表失败", "close admin执行失败")
+    }(this.logger, s"disable ${hbaseCluster(keyNum)}.${tableName}表失败", closeAdminError)
   }
 
   /**
@@ -808,7 +810,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       }
     } {
       this.closeAdmin(admin)
-    }(this.logger, s"truncate ${hbaseCluster(keyNum)}.${tableName}表失败", "close admin执行失败")
+    }(this.logger, s"truncate ${hbaseCluster(keyNum)}.${tableName}表失败", closeAdminError)
   }
 
   /**
@@ -1064,11 +1066,7 @@ object HBaseOper extends DBBaseOperFactory {
                 qualifier: String = "",
                 maxVersions: Int = 1,
                 filterList: FilterList = null,
-                caching: Int = -1,
-                maxResultSize: Long = -1,
-                batch: Int = -1,
-                cacheBlocks: Boolean = true,
-                reversed: Boolean = false): Scan = {
+                batch: Int = -1): Scan = {
     val scan = new Scan
     if (StringUtils.isNotBlank(startRow)) scan.setStartRow(startRow.getBytes)
     if (StringUtils.isNotBlank(endRow)) scan.setStopRow(endRow.getBytes)
@@ -1078,12 +1076,8 @@ object HBaseOper extends DBBaseOperFactory {
       scan.addFamily(family.getBytes)
     }
     if (filterList != null) scan.setFilter(filterList)
-    if (caching > 0) scan.setCaching(caching)
-    if (maxResultSize > 0) scan.setMaxResultSize(maxResultSize)
     if (maxVersions > 0) scan.setMaxVersions(maxVersions)
     if (batch > 0) scan.setBatch(batch)
-    scan.setCacheBlocks(cacheBlocks)
-    scan.setReversed(reversed)
     scan
   }
 

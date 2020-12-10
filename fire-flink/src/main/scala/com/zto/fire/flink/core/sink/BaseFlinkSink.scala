@@ -55,7 +55,9 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
    * 将数据sink到目标组件
    * 不同的组件需定义该flush逻辑实现不同组件的flush操作
    */
-  def sink: Unit = {}
+  def sink: Unit = {
+    // sink逻辑
+  }
 
   /**
    * 将数据构建成sink的格式
@@ -134,7 +136,7 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
   }
 
   override def initializeState(context: FunctionInitializationContext): Unit = {
-
+    // initializeState
   }
 
   /**

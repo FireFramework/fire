@@ -1,6 +1,8 @@
 package com.zto.fire.common.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
@@ -18,6 +20,7 @@ import java.util.Objects;
 public class EncryptUtils {
     private static final String SECRET = "($zto%-%fire$)";
     private static final String ERROR_MESSAGE = "参数不合法";
+    private static final Logger logger = LoggerFactory.getLogger(EncryptUtils.class);
 
     private EncryptUtils() {}
 
@@ -29,7 +32,7 @@ public class EncryptUtils {
         try {
             return new String((new BASE64Decoder()).decodeBuffer(message), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("BASE64解密出错", e);
         }
         return "";
     }
@@ -42,7 +45,7 @@ public class EncryptUtils {
         try {
             return new BASE64Encoder().encodeBuffer(message.getBytes());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("BASE64加密出错", e);
         }
         return "";
     }
@@ -68,9 +71,9 @@ public class EncryptUtils {
             // 标准的md5加密后的结果
             return buffer.toString();
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return "";
+            logger.error("生成32位md5码出错", e);
         }
+        return "";
     }
 
     /**
@@ -86,7 +89,7 @@ public class EncryptUtils {
             sha.update(message.getBytes());
             return new BigInteger(sha.digest()).toString(32);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("生成SHA加密出错", e);
         }
         return "";
     }

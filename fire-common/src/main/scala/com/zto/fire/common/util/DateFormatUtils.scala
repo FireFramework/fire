@@ -14,6 +14,7 @@ import scala.collection.mutable.ArrayBuffer
   * Created by ChengLong on 2016-11-24.
   */
 object DateFormatUtils {
+  private val timeZoneShangHai = "Asia/Shanghai"
 
   /**
     * 将日期格式化为 yyyy-MM-dd HH:mm:ss
@@ -22,7 +23,7 @@ object DateFormatUtils {
     */
   def getTimeFormat(): SimpleDateFormat = {
     val timeFormat: SimpleDateFormat = new SimpleDateFormat(FireDateSchemaConf.yyyy_MM_ddHHmmss)
-    timeFormat.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
+    timeFormat.setTimeZone(TimeZone.getTimeZone(timeZoneShangHai))
     timeFormat
   }
 
@@ -65,7 +66,7 @@ object DateFormatUtils {
     */
   def getSchemaFormat(schema: String = FireDateSchemaConf.yyyy_MM_dd): SimpleDateFormat = {
     val dateFormat: SimpleDateFormat = new SimpleDateFormat(schema)
-    dateFormat.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
+    dateFormat.setTimeZone(TimeZone.getTimeZone(timeZoneShangHai))
     dateFormat
   }
 
@@ -183,7 +184,7 @@ object DateFormatUtils {
       return dateTimeStr
     }
     val timeFormat: SimpleDateFormat = new SimpleDateFormat(srcSchema)
-    timeFormat.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
+    timeFormat.setTimeZone(TimeZone.getTimeZone(timeZoneShangHai))
     val datetime = timeFormat.parse(dateTimeStr)
     timeFormat.applyPattern(destSchema)
     timeFormat.format(datetime)
@@ -199,7 +200,7 @@ object DateFormatUtils {
     */
   def dateSchemaFormat(dateTime: Date, srcSchema: String, destSchema: String): Date = {
     val timeFormat: SimpleDateFormat = new SimpleDateFormat(srcSchema)
-    timeFormat.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
+    timeFormat.setTimeZone(TimeZone.getTimeZone(timeZoneShangHai))
     val dateTimeStr = timeFormat.format(dateTime)
     timeFormat.applyPattern(destSchema)
     timeFormat.parse(dateTimeStr)
@@ -291,7 +292,7 @@ object DateFormatUtils {
   def isSameWeek(day1: Date, day2: Date): Boolean = {
     if (this.isSameYear(day1, day2) && this.isSameMonth(day1, day2)) {
       val cal = Calendar.getInstance()
-      cal.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
+      cal.setTimeZone(TimeZone.getTimeZone(timeZoneShangHai))
       cal.setTime(day1)
       val week1 = cal.get(Calendar.DAY_OF_WEEK_IN_MONTH)
       cal.setTime(day2)
@@ -986,7 +987,7 @@ object DateFormatUtils {
     */
   def isSecondDivisibleZero(date: Date = new Date): Boolean = {
     val cal = Calendar.getInstance()
-    cal.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
+    cal.setTimeZone(TimeZone.getTimeZone(timeZoneShangHai))
     cal.setTime(date)
     cal.get(Calendar.SECOND) % 10 == 0
   }
@@ -1009,7 +1010,7 @@ object DateFormatUtils {
     */
   def isZeroSecond(date: Date = new Date): Boolean = {
     val cal = Calendar.getInstance()
-    cal.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
+    cal.setTimeZone(TimeZone.getTimeZone(timeZoneShangHai))
     cal.setTime(date)
     cal.get(Calendar.SECOND) == 0
   }
@@ -1034,7 +1035,7 @@ object DateFormatUtils {
   def isZeroMinute(date: Date = new Date): Boolean = {
     if (this.isZeroSecond(date)) {
       val cal = Calendar.getInstance()
-      cal.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
+      cal.setTimeZone(TimeZone.getTimeZone(timeZoneShangHai))
       cal.setTime(date)
       cal.get(Calendar.MINUTE) == 0
     } else {
@@ -1062,7 +1063,7 @@ object DateFormatUtils {
   def isZeroHour(date: Date = new Date): Boolean = {
     if (this.isZeroMinute(date)) {
       val cal = Calendar.getInstance()
-      cal.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
+      cal.setTimeZone(TimeZone.getTimeZone(timeZoneShangHai))
       cal.setTime(date)
       cal.get(Calendar.HOUR_OF_DAY) == 0
     } else {
