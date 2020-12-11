@@ -2,7 +2,6 @@ package com.zto.fire.common.task;
 
 import com.google.common.collect.Maps;
 import com.zto.fire.common.anno.Scheduled;
-import com.zto.fire.common.bean.BaseLogging;
 import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.FireUtils;
@@ -31,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author ChengLong 2019年11月4日 18:06:21
  * @since 0.3.5
  */
-public class SchedulerManager extends BaseLogging implements Serializable {
+public class SchedulerManager implements Serializable {
     // 用于指定当前spark任务的main方法所在的对象实例
     private static Map<String, Object> taskMap;
     // 已注册的task列表

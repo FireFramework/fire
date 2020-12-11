@@ -2,7 +2,7 @@ package com.zto.fire.core.ext.core
 
 import java.util.Properties
 
-import com.zto.fire.common.bean.{BaseLogging, HBaseBaseBean}
+import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.conf.{FireJdbcConf, FireSparkConf}
 import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.util.{DBUtils, ValueUtils}
@@ -12,6 +12,7 @@ import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect._
@@ -22,11 +23,12 @@ import scala.reflect._
  * @param dataFrame
  * dataFrame实例
  */
-class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
+class DataFrameExt(dataFrame: DataFrame) {
 
   // 获取单例的HBaseContext对象
   private lazy val hbaseContext: HBaseContextExt = SingletonFactory.getHBaseContextInstance(dataFrame.sparkSession.sparkContext)
   private lazy val spark: SparkSession = SingletonFactory.getSparkSession
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 注册为临时表的同时缓存表
@@ -97,7 +99,7 @@ class DataFrameExt(dataFrame: DataFrame) extends BaseLogging {
    */
   def jdbcBatchUpdate(sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = 1): Unit = {
     if (ValueUtils.isEmpty(sql)) {
-      this.log("执行jdbcBatchUpdate失败，sql语句不能为空")
+      logger.error("执行jdbcBatchUpdate失败，sql语句不能为空")
       return
     }
 

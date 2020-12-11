@@ -1,6 +1,5 @@
 package com.zto.fire.core.ext
 
-import com.zto.fire.common.db.HBaseOper
 import com.zto.fire.core.ext.core._
 import com.zto.fire.core.ext.module.LoggerExt
 import org.apache.spark.rdd.RDD

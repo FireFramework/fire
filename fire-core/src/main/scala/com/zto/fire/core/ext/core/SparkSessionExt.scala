@@ -3,7 +3,7 @@ package com.zto.fire.core.ext.core
 import java.sql.Connection
 import java.util.Properties
 
-import com.zto.fire.common.bean.{BaseLogging, HBaseBaseBean}
+import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.conf.{FireJdbcConf, FireKafkaConf, FireSparkConf}
 import com.zto.fire.common.db.{HBaseOper, JdbcOper}
 import com.zto.fire.common.util.{FireUtils, KafkaUtils, LogUtils, ValueUtils}
@@ -34,8 +34,7 @@ import scala.reflect.ClassTag
  * sparkSession对象
  * @author ChengLong 2019-5-18 10:51:19
  */
-class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBridge {
-
+class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
   import spark.implicits._
 
   // 获取单例的HBaseContext对象
@@ -1409,7 +1408,7 @@ class SparkSessionExt(spark: SparkSession) extends BaseLogging with JdbcOperBrid
    */
   def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = 1): Unit = {
     if (ValueUtils.isEmpty(dataFrame)) {
-      this.log("执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
+      logger.error("执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
       return
     }
     dataFrame.jdbcBatchUpdate(sql, fields, batch, keyNum)
