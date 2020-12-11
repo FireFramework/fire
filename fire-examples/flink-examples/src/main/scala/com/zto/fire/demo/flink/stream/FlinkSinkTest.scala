@@ -42,7 +42,7 @@ class MySink extends RichSinkFunction[String] {
     println("=========执行close方法========")
   }
 
-  override def invoke(value: String, context: SinkFunction.Context[_]): Unit = {
+  override def invoke(value: String, context: SinkFunction.Context): Unit = {
     println("---> " + value)
   }
 }

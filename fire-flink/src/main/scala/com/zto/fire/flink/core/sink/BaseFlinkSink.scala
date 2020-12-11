@@ -88,7 +88,7 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
   /**
    * 将数据sink到缓冲区中
    */
-  override def invoke(value: IN, context: SinkFunction.Context[_]): Unit = {
+  override def invoke(value: IN, context: SinkFunction.Context): Unit = {
     this.checkFlushException
 
     val out = this.map(value)
