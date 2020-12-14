@@ -35,7 +35,7 @@ object SparkUtils {
     if (row != null && clazz != null) {
       try {
         clazz.getDeclaredFields.foreach(field => {
-          field.setAccessible(true)
+          ReflectionUtils.setAccessible(field)
           val anno = field.getAnnotation(classOf[FieldName])
           // 如果没有加注解，或者加了注解但没有打disuse=true
           if (anno == null || (anno != null && !anno.disuse())) {
@@ -81,7 +81,7 @@ object SparkUtils {
       it.foreach(row => {
         val obj = clazz.newInstance()
         fields.foreach(field => {
-          field.setAccessible(true)
+          ReflectionUtils.setAccessible(field)
           val anno = field.getAnnotation(classOf[FieldName])
           // 如果没有加注解，或者加了注解但没有打disuse=true
           if (anno == null || (anno != null && !anno.disuse())) {

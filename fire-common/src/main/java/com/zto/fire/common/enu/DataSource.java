@@ -14,10 +14,7 @@ public enum DataSource {
     ES(6), MYSQL(7), TIDB(8), ORACLE(9), SQLSERVER(10),
     DB2(11), CLICKHOUSE(12), PRESTO(13), KYLIN(14), UNKNOWN(20);
 
-    private int type;
-
     DataSource(int type) {
-        this.type = type;
     }
 
     /**

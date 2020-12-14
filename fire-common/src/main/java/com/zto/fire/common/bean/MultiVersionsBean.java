@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
     @FieldName(value = "logger", disuse = true)
-    protected static final transient Logger logger = LoggerFactory.getLogger(MultiVersionsBean.class);
+    private static final transient Logger logger = LoggerFactory.getLogger(MultiVersionsBean.class);
     @FieldName("multiFields")
     private String multiFields;
 

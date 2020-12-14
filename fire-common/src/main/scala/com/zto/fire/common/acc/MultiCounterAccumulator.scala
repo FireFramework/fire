@@ -6,7 +6,7 @@ import com.zto.fire.common.conf.FireFrameworkConf
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.AccumulatorV2
 
-import scala.collection.JavaConversions
+import scala.collection.JavaConversions._
 
 /**
   * 多值累加器
@@ -72,8 +72,8 @@ class MultiCounterAccumulator extends AccumulatorV2[(String, Long), ConcurrentHa
     */
   override def merge(other: AccumulatorV2[(String, Long), ConcurrentHashMap[String, Long]]): Unit = {
     val otherMap = other.value
-    if (otherMap != null && otherMap.size() > 0) {
-      JavaConversions.mapAsScalaConcurrentMap(otherMap).foreach(kv => {
+    if (otherMap != null && otherMap.nonEmpty) {
+      otherMap.foreach(kv => {
         this.mergeMap(kv)
       })
     }

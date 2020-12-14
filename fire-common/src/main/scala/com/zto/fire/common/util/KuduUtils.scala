@@ -28,7 +28,7 @@ object KuduUtils {
     val beanClazz = classTag[T].runtimeClass
     val values = ListBuffer[AnyRef]()
     beanClazz.getDeclaredFields.foreach(field => {
-      field.setAccessible(true)
+      ReflectionUtils.setAccessible(field)
       val anno = field.getAnnotation(classOf[FieldName])
       if (anno != null && anno.id()) {
         values += field.get(bean)
@@ -48,7 +48,7 @@ object KuduUtils {
   def bean2Row(beanClazz: Class[_]): Row = {
     val fieldList = ListBuffer[Field]()
     beanClazz.getDeclaredFields.foreach(field => {
-      field.setAccessible(true)
+      ReflectionUtils.setAccessible(field)
       val anno = field.getAnnotation(classOf[FieldName])
       val begin = if (anno == null) true else !anno.disuse()
       if (begin) {
@@ -68,7 +68,7 @@ object KuduUtils {
       try {
         row.schema.fieldNames.foreach(fieldName => {
           clazz.getDeclaredFields.foreach(field => {
-            field.setAccessible(true)
+            ReflectionUtils.setAccessible(field)
             if (field.getName.equalsIgnoreCase(fieldName)) {
               val index = row.fieldIndex(fieldName)
               val fieldType = field.getType

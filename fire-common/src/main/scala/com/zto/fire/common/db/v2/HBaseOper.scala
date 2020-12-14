@@ -356,7 +356,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
   private def setFieldBytesValue[T <: HBaseBaseBean[T]](obj: T, field: Field, value: Array[Byte]): Unit = {
     tryWithLog {
       if (field != null && value != null && value.nonEmpty) {
-        field.setAccessible(true)
+        ReflectionUtils.setAccessible(field)
         val toValue = field.getType match {
           case fieldType if fieldType eq classOf[JString] => Bytes.toString(value)
           case fieldType if fieldType eq classOf[JInt] => Bytes.toInt(value)
@@ -417,7 +417,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
       val rowKey = convertCells2Fields(fieldMap, obj, cells)
       val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
       require(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
-      idField.setAccessible(true)
+      ReflectionUtils.setAccessible(idField)
       idField.set(obj, rowKey)
     }(this.logger, "将HBase cell中的值转换并赋值给field过程中报错.")
 

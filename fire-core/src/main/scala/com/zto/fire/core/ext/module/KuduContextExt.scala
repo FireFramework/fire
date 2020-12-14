@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.bean.KuduBaseBean
 import com.zto.fire.common.conf.{FireKuduConf, FireSparkConf}
-import com.zto.fire.common.util.{DBUtils, KuduUtils, ValueUtils}
+import com.zto.fire.common.util.{DBUtils, KuduUtils, ReflectionUtils, ValueUtils}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
@@ -637,7 +637,7 @@ class KuduContextExt(val sqlContext: SQLContext, val kuduContext: KuduContext) e
     val map = mutable.Map[String, ListBuffer[T]]()
     beans.foreach(bean => {
       idField.foreach(field => {
-        field.setAccessible(true)
+        ReflectionUtils.setAccessible(field)
         val fieldName = field.getName
         val seq = map.getOrElse(fieldName, null)
         if (seq == null) {

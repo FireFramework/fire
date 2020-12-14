@@ -41,7 +41,7 @@ public class FindClassUtils {
         if (packageNames != null && packageNames.length > 0) {
             for (String packageName : packageNames) {
                 if (StringUtils.isNotBlank(packageName) && packageName.contains(".")) {
-                    URL url = FindClassUtils.classLoader.getResource(packageName.replace(".", "/"));
+                    URL url = FindClassUtils.classLoader.getResource(packageName.replace('.', '/'));
                     String protocol = url.getProtocol();
                     if ("file".equals(protocol)) {
                         // 本地自己可见的代码
@@ -64,7 +64,7 @@ public class FindClassUtils {
     private static void findClassLocal(final String packName, final List<Class<? extends Serializable>> list) {
         URI url = null;
         try {
-            url = FindClassUtils.classLoader.getResource(packName.replace(".", "/")).toURI();
+            url = FindClassUtils.classLoader.getResource(packName.replace('.', '/')).toURI();
             File file = new File(url);
             file.listFiles(chiFile -> {
                 if (chiFile.isDirectory()) {
@@ -96,7 +96,7 @@ public class FindClassUtils {
      * @param packName 包名
      */
     private static void findClassJar(final String packName, final List<Class<? extends Serializable>> list) {
-        String pathName = packName.replace(".", "/");
+        String pathName = packName.replace('.', '/');
         JarFile jarFile = null;
         try {
             URL url = FindClassUtils.classLoader.getResource(pathName);
@@ -110,7 +110,7 @@ public class FindClassUtils {
                 if (jarEntryName.contains(pathName) && !jarEntryName.equals(pathName + "/")) {
                     // 递归遍历子目录
                     if (jarEntry.isDirectory()) {
-                        String clazzName = jarEntry.getName().replace("/", ".");
+                        String clazzName = jarEntry.getName().replace('/', '.');
                         int endIndex = clazzName.lastIndexOf('.');
                         String prefix = null;
                         if (endIndex > 0) {
@@ -119,7 +119,7 @@ public class FindClassUtils {
                         findClassJar(prefix, list);
                     }
                     if (jarEntry.getName().endsWith(CLASS_FILE)) {
-                        Class<?> clazz = FindClassUtils.classLoader.loadClass(jarEntry.getName().replace("/", ".").replace(CLASS_FILE, ""));
+                        Class<?> clazz = FindClassUtils.classLoader.loadClass(jarEntry.getName().replace('/', '.').replace(CLASS_FILE, ""));
                         if (FindClassUtils.superStrategy.isAssignableFrom(clazz)) {
                             list.add((Class<? extends Serializable>) clazz);
                         }

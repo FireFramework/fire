@@ -5,6 +5,7 @@ import com.zto.fire.common.anno.Scheduled;
 import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.FireUtils;
+import com.zto.fire.common.util.ReflectionUtils;
 import com.zto.fire.common.util.ValueUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -129,7 +130,7 @@ public class SchedulerManager implements Serializable {
                         Method[] methods = clazz.getDeclaredMethods();
                         for (Method method : methods) {
                             if (method != null) {
-                                method.setAccessible(true);
+                                ReflectionUtils.setAccessible(method);
                                 if (blacklistMap.containsKey(method.getName())) continue;
                                 Scheduled anno = method.getAnnotation(Scheduled.class);
                                 String label = label();

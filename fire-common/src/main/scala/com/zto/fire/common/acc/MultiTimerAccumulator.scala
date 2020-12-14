@@ -8,7 +8,8 @@ import com.zto.fire.common.util.DateFormatUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.AccumulatorV2
 
-import scala.collection.{JavaConversions, mutable}
+import scala.collection.JavaConversions._
+import scala.collection.mutable
 
 /**
  * timer累加器，对相同的key进行分钟级维度累加
@@ -86,8 +87,8 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBa
    */
   override def merge(other: AccumulatorV2[(String, Long, String), HashBasedTable[String, String, Long]]): Unit = {
     val otherTable = other.value
-    if (otherTable != null && otherTable.size() > 0) {
-      JavaConversions.asScalaSet(otherTable.cellSet()).foreach(timer => {
+    if (otherTable != null && !otherTable.isEmpty) {
+      otherTable.cellSet().foreach(timer => {
         this.mergeTable(timer.getRowKey, timer.getColumnKey, timer.getValue)
       })
     }
@@ -110,15 +111,15 @@ class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBa
       val criticalTime = DateFormatUtils.addHours(currentDate, -Math.abs(FireFrameworkConf.maxTimerHour))
 
       val timeOutSet = new mutable.HashSet[String]()
-      JavaConversions.mapAsScalaMap(this.timerCountTable.rowMap()).foreach(kmap => {
-        JavaConversions.mapAsScalaMap(kmap._2).foreach(kv => {
+      this.timerCountTable.rowMap().foreach(kmap => {
+        kmap._2.foreach(kv => {
           if (kv._1.compareTo(criticalTime) <= 0 && StringUtils.isNotBlank(kmap._1) && StringUtils.isNotBlank(kv._1)) {
             timeOutSet += kmap._1 + "#" + kv._1
           }
         })
       })
 
-      if (timeOutSet.size > 0) {
+      if (timeOutSet != null && timeOutSet.nonEmpty) {
         timeOutSet.map(t => (t.split("#"))).foreach(kv => {
           this.timerCountTable.remove(kv(0), kv(1))
         })

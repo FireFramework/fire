@@ -56,7 +56,7 @@ object FlinkUtils extends Serializable {
       tryWithLog {
         this.extendSchemaTable(schema)
         clazz.getDeclaredFields.foreach(field => {
-          field.setAccessible(true)
+          ReflectionUtils.setAccessible(field)
           val anno = field.getAnnotation(classOf[FieldName])
           val begin = if (anno == null) true else !anno.disuse()
           if (begin) {

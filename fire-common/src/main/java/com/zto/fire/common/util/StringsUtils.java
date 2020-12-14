@@ -40,7 +40,7 @@ public class StringsUtils {
      * @return 拼接结果
      */
     public static String append(String... strs) {
-        StringBuilder sb = new StringBuilder("");
+        StringBuilder sb = new StringBuilder();
         if (null != strs && strs.length > 0) {
             for (String str : strs) {
                 sb.append(str);
@@ -210,15 +210,18 @@ public class StringsUtils {
      */
     public static Object parseString(String str) {
         if (StringsUtils.isLong(str)) {
-            return Long.parseLong(str.toUpperCase().replace("L", ""));
+            String longStr = str.toUpperCase().replace("L", "");
+            return Long.parseLong(longStr);
         } else if (StringsUtils.isInt(str)) {
             return Integer.parseInt(str);
         } else if (StringsUtils.isBoolean(str)) {
             return Boolean.parseBoolean(str);
         } else if (StringsUtils.isFloat(str)) {
-            return Float.parseFloat(str.toUpperCase().replace("F", ""));
+            String floatStr = str.toUpperCase().replace("F", "");
+            return Float.parseFloat(floatStr);
         } else if (StringsUtils.isDouble(str)) {
-            return Double.parseDouble(str.toUpperCase().replace("D", ""));
+            String doubleStr = str.toUpperCase().replace("D", "");
+            return Double.parseDouble(doubleStr);
         } else {
             return str;
         }

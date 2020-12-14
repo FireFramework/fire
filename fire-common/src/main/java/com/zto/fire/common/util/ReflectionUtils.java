@@ -7,9 +7,7 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -22,6 +20,14 @@ public class ReflectionUtils {
     private static final Logger logger = LoggerFactory.getLogger(ReflectionUtils.class);
 
     private ReflectionUtils() {
+    }
+
+    public static void setAccessible(Field field) {
+        if (field != null) field.setAccessible(true);
+    }
+
+    public static void setAccessible(Method method) {
+        if (method != null) method.setAccessible(true);
     }
 
     /**
@@ -55,7 +61,7 @@ public class ReflectionUtils {
         }
         Map<String, Field> fieldMap = new HashMap<>(fields.length);
         for (Field field : fields) {
-            field.setAccessible(true);
+            setAccessible(field);
             fieldMap.put(field.getName(), field);
         }
         return fieldMap;
@@ -138,7 +144,7 @@ public class ReflectionUtils {
         }
         Map<String, Method> methodMap = new HashMap<>(methods.length);
         for (Method method : methods) {
-            method.setAccessible(true);
+            setAccessible(method);
             methodMap.put(method.getName(), method);
         }
         return methodMap;
@@ -161,7 +167,7 @@ public class ReflectionUtils {
                 return field.getType();
             }
         } catch (Exception e) {
-            throw new IllegalArgumentException("指定的Field:" + fieldName + "不存在，请检查");
+            logger.error("指定的Field:" + fieldName + "不存在，请检查", e);
         }
         return null;
     }
@@ -179,11 +185,11 @@ public class ReflectionUtils {
         try {
             if (ElementType.FIELD == scope) {
                 Field field = clazz.getDeclaredField(memberName);
-                field.setAccessible(true);
+                setAccessible(field);
                 return field.getAnnotation(annoClass);
             } else if (ElementType.METHOD == scope) {
                 Method method = clazz.getDeclaredMethod(memberName);
-                method.setAccessible(true);
+                setAccessible(method);
                 return method.getAnnotation(annoClass);
             } else if (ElementType.TYPE == scope) {
                 return clazz.getAnnotation(annoClass);
@@ -200,26 +206,26 @@ public class ReflectionUtils {
      * @param scope      annotation所在的位置
      * @param memberName 成员名称，指定获取指定成员的Annotation实例
      */
-    private static Annotation[] getAnnotations(Class<?> clazz, ElementType scope, String memberName) {
+    private static List<Annotation> getAnnotations(Class<?> clazz, ElementType scope, String memberName) {
         if (ValueUtils.isExistsEmpty(new Object[]{clazz, scope, memberName})) {
-            return new Annotation[0];
+            return Collections.emptyList();
         }
         try {
             if (ElementType.FIELD == scope) {
                 Field field = clazz.getDeclaredField(memberName);
-                field.setAccessible(true);
-                return field.getDeclaredAnnotations();
+                setAccessible(field);
+                return Arrays.asList(field.getDeclaredAnnotations());
             } else if (ElementType.METHOD == scope) {
                 Method method = clazz.getDeclaredMethod(memberName);
-                method.setAccessible(true);
-                return method.getDeclaredAnnotations();
+                setAccessible(method);
+                return Arrays.asList(method.getDeclaredAnnotations());
             } else if (ElementType.TYPE == scope) {
-                return clazz.getDeclaredAnnotations();
+                return Arrays.asList(clazz.getDeclaredAnnotations());
             }
         } catch (Exception e) {
             logger.error("获取annotation出现异常", e);
         }
-        return new Annotation[0];
+        return Collections.emptyList();
     }
 
     /**
@@ -232,7 +238,7 @@ public class ReflectionUtils {
     /**
      * 获取Field所有annotation
      */
-    public static Annotation[] getFieldAnnotations(Class<?> clazz, String fieldName) {
+    public static List<Annotation> getFieldAnnotations(Class<?> clazz, String fieldName) {
         return getAnnotations(clazz, ElementType.FIELD, fieldName);
     }
 
@@ -246,7 +252,7 @@ public class ReflectionUtils {
     /**
      * 获取Method所有annotation
      */
-    public static Annotation[] getMethodAnnotations(Class<?> clazz, String methodName) {
+    public static List<Annotation> getMethodAnnotations(Class<?> clazz, String methodName) {
         return getAnnotations(clazz, ElementType.METHOD, methodName);
     }
 
@@ -260,24 +266,7 @@ public class ReflectionUtils {
     /**
      * 获取类所有annotation
      */
-    public static Annotation[] getClassAnnotations(Class<?> clazz) {
+    public static List<Annotation> getClassAnnotations(Class<?> clazz) {
         return getAnnotations(clazz, ElementType.TYPE, clazz.getName());
-    }
-
-    /**
-     * 获取方法所有参数的所有annotation
-     */
-    public static Annotation[][] getParamAnnotations(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
-        if (ValueUtils.isExistsEmpty(new Object[]{clazz, methodName})) {
-            return new Annotation[0][0];
-        }
-        try {
-            Method method = clazz.getDeclaredMethod(methodName, parameterTypes);
-            method.setAccessible(true);
-            return method.getParameterAnnotations();
-        } catch (Exception e) {
-            logger.error("获取param annotation出现异常", e);
-        }
-        return new Annotation[0][0];
     }
 }

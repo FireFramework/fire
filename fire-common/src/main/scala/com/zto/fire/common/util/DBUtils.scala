@@ -29,7 +29,7 @@ object DBUtils {
   def dbRow2Bean[T](row: ResultSet, clazz: Class[T]): T = {
     val obj = clazz.newInstance()
     clazz.getDeclaredFields.foreach(field => {
-      field.setAccessible(true)
+      ReflectionUtils.setAccessible(field)
       val fieldType = field.getType
       val anno = field.getAnnotation(classOf[FieldName])
       val fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
@@ -63,7 +63,7 @@ object DBUtils {
       while (rs.next()) {
         var obj = clazz.newInstance()
         fields.foreach(field => {
-          field.setAccessible(true)
+          ReflectionUtils.setAccessible(field)
           val fieldType = field.getType
           val anno = field.getAnnotation(classOf[FieldName])
           if (!(anno != null && anno.disuse())) {

@@ -1088,7 +1088,7 @@ public class HBaseOper {
             Map<String, Field> fieldMap = new HashMap<>(allFields.size());
             for (Field field : allFields.values()) {
                 if (field != null) {
-                    field.setAccessible(true);
+                    ReflectionUtils.setAccessible(field);
                     FieldName fieldName = field.getAnnotation(FieldName.class);
                     String family = "";
                     String qualifier = "";
@@ -1119,7 +1119,7 @@ public class HBaseOper {
      */
     private static <T extends HBaseBaseBean> void setFieldBytesValue(T obj, Field field, byte[] value) throws IllegalAccessException {
         if (field != null && value != null && value.length > 0) {
-            field.setAccessible(true);
+            ReflectionUtils.setAccessible(field);
             Type fieldType = field.getType();
             if (fieldType == String.class) {
                 field.set(obj, Bytes.toString(value));
@@ -1166,7 +1166,7 @@ public class HBaseOper {
                 HBaseOper.setFieldBytesValue(obj, field, value);
                 Field idField = ReflectionUtils.getFieldByName(clazz, ROWKEY);
                 checkRowkeyField(idField, clazz);
-                idField.setAccessible(true);
+                ReflectionUtils.setAccessible(idField);
                 idField.set(obj, rowKey);
                 if (StringUtils.isNotBlank(obj.getMultiFields())) {
                     objList.add(gson.fromJson(obj.getMultiFields(), clazz));
@@ -1203,7 +1203,7 @@ public class HBaseOper {
             String rowKey = convertCells2Fields(fieldMap, obj, cells);
             Field idField = ReflectionUtils.getFieldByName(clazz, ROWKEY);
             checkRowkeyField(idField, clazz);
-            idField.setAccessible(true);
+            ReflectionUtils.setAccessible(idField);
             idField.set(obj, rowKey);
         } catch (Exception e) {
             logger.error("HBase cell2Field失败. cluster={} exception={}", CLUSTER, ExceptionBus.stackTrace(e));
@@ -1330,7 +1330,7 @@ public class HBaseOper {
                 String rowKey = convertCells2Fields(fieldMap, obj, cells);
                 Field idField = ReflectionUtils.getFieldByName(clazz, ROWKEY);
                 checkRowkeyField(idField, clazz);
-                idField.setAccessible(true);
+                ReflectionUtils.setAccessible(idField);
                 idField.set(obj, rowKey);
                 beanList.$plus$eq(obj);
             }
@@ -1373,7 +1373,7 @@ public class HBaseOper {
                 Class<?> clazz = obj.getClass();
                 // 获取RowKey字段中的值
                 Field rowKeyField = ReflectionUtils.getFieldByName(clazz, ROWKEY);
-                rowKeyField.setAccessible(true);
+                ReflectionUtils.setAccessible(rowKeyField);
                 Object rowKeyObj = rowKeyField.get(obj);
                 if (rowKeyObj == null) {
                     Method method = ReflectionUtils.getMethodByName(clazz, "buildRowKey");
@@ -1389,7 +1389,7 @@ public class HBaseOper {
                 put.setDurability(getHBaseDurability());
                 if (allFields != null && allFields.size() > 0) {
                     for (Field field : allFields.values()) {
-                        field.setAccessible(true);
+                        ReflectionUtils.setAccessible(field);
                         Object objValue = field.get(obj);
                         if (!insertEmpty && objValue == null) {
                             continue;
