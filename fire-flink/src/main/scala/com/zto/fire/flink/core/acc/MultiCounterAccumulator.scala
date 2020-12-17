@@ -29,7 +29,7 @@ class MultiCounterAccumulator extends SimpleAccumulator[ConcurrentHashMap[String
    * 添加一个值到累加器中
    */
   def add(kv: (String, Long)): Unit = {
-    if (ValueUtils.isAllNotEmpty(kv, kv._1, kv._2)) {
+    if (kv != null) {
       this.multiCounter.put(kv._1, this.multiCounter.getOrDefault(kv._1, 0) + kv._2)
     }
   }

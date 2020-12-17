@@ -1,9 +1,10 @@
 package com.zto.fire.core.ext.module
 
+import java.util.Objects
+
 import com.zto.fire.common.bean.{HBaseBaseBean, MultiVersionsBean}
-import com.zto.fire.common.conf.{FireFrameworkConf, FireHBaseConf, FireSparkConf}
+import com.zto.fire.common.conf.{FireHBaseConf, FireSparkConf}
 import com.zto.fire.common.db.HBaseOper
-import com.zto.fire.common.util.ValueUtils
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
@@ -55,9 +56,9 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 批量删除的大小，默认为10000条
     */
   def bulkDeleteRDD(tableName: String, rdd: RDD[String], batchSize: Integer = this.batchSize): Unit = {
-    ValueUtils.requireNonNullForce(tableName, "表名不能为空")
-    ValueUtils.requireNonNull(rdd, "rdd不能为空")
-    ValueUtils.requireNonNull(batchSize, "批次大小不能为空")
+    Objects.requireNonNull(tableName, "表名不能为空")
+    Objects.requireNonNull(rdd, "rdd不能为空")
+    Objects.requireNonNull(batchSize, "批次大小不能为空")
 
     this.mark
     val rowKeyRDD = rdd.filter(rowkey => StringUtils.isNotBlank(rowkey)).map(rowKey => Bytes.toBytes(rowKey))
@@ -77,7 +78,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 批量删除的大小，默认为10000条
     */
   def bulkDeleteDS(tableName: String, dataset: Dataset[String], batchSize: Integer = this.batchSize): Unit = {
-    ValueUtils.requireNonNull(dataset, "dataset不能为空")
+    Objects.requireNonNull(dataset, "dataset不能为空")
     this.bulkDeleteRDD(tableName, dataset.rdd, batchSize)
   }
 
@@ -91,7 +92,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 待删除的rowKey集合
     */
   def bulkDeleteList(tableName: String, seq: Seq[String]): Unit = {
-    ValueUtils.requireNonNull(seq, "seq不能为空")
+    Objects.requireNonNull(seq, "seq不能为空")
     val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
     this.bulkDeleteRDD(tableName, rdd)
   }
@@ -113,10 +114,10 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 自定义JavaBean的对象结果集
     */
   def bulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], batchSize: Integer = this.batchSize): RDD[E] = {
-    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
-    ValueUtils.requireNonNull(rdd, "参数不合法：rdd不能为空")
-    ValueUtils.requireNonNull(clazz, "参数不合法：clazz不能为空")
-    ValueUtils.requireNonNull(batchSize, "参数不合法：批次大小不能为空")
+    Objects.requireNonNull(tableName, tableNameBlankMsg)
+    Objects.requireNonNull(rdd, "参数不合法：rdd不能为空")
+    Objects.requireNonNull(clazz, "参数不合法：clazz不能为空")
+    Objects.requireNonNull(batchSize, "参数不合法：批次大小不能为空")
 
     this.mark
     val rowKeyRDD = rdd.filter(StringUtils.isNotBlank(_)).map(rowKey => Bytes.toBytes(rowKey))
@@ -187,7 +188,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 自定义JavaBean的对象结果集
     */
   def bulkGetSeq[E <: HBaseBaseBean[E] : ClassTag](tableName: String, seq: Seq[String], clazz: Class[E]): RDD[E] = {
-    ValueUtils.requireNonNull(seq, "参数不合法：seq不能为空")
+    Objects.requireNonNull(seq, "参数不合法：seq不能为空")
 
     val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
     this.bulkGetRDD(tableName, rdd, clazz)
@@ -209,7 +210,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 数据类型为HBaseBaseBean的子类
     */
   def bulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    ValueUtils.requireNonNull(multiVersion, "参数不合法：multiVersion不能为空")
+    Objects.requireNonNull(multiVersion, "参数不合法：multiVersion不能为空")
 
     this.mark
     this.bulkPut[T](rdd,
@@ -237,7 +238,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 对象类型必须是HBaseBaseBean的子类
     */
   def bulkPutSeq[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], insertEmpty: Boolean, multiVersion: Boolean = false): Unit = {
-    ValueUtils.requireNonNull(seq, "参数不合法：seq不能为空")
+    Objects.requireNonNull(seq, "参数不合法：seq不能为空")
 
     val rdd = this.sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
     this.bulkPutRDD(tableName, rdd, insertEmpty, multiVersion)
@@ -259,9 +260,9 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * scan获取到的结果集，类型为RDD[T]
     */
   def bulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T]): RDD[T] = {
-    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
-    ValueUtils.requireNonNull(scan, "参数不合法：scan不能为空")
-    ValueUtils.requireNonNull(clazz, "参数不合法：clazz不能为空")
+    Objects.requireNonNull(tableName, tableNameBlankMsg)
+    Objects.requireNonNull(scan, "参数不合法：scan不能为空")
+    Objects.requireNonNull(clazz, "参数不合法：clazz不能为空")
 
     this.mark
     if (scan.getCaching == -1) {
@@ -291,8 +292,8 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * scan获取到的结果集，类型为RDD[T]
     */
   def bulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, clazz: Class[T]): RDD[T] = {
-    ValueUtils.requireNonNullForce(startRow, "参数不合法：startRow不能为空")
-    ValueUtils.requireNonNullForce(stopRow, "参数不合法：stopRow不能为空")
+    Objects.requireNonNull(startRow, "参数不合法：startRow不能为空")
+    Objects.requireNonNull(stopRow, "参数不合法：stopRow不能为空")
 
     this.bulkScanRDD(tableName, HBaseOper.buildScan(startRow, stopRow), clazz)
   }
@@ -313,7 +314,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 数据类型为HBaseBaseBean的子类
     */
   def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    ValueUtils.requireNonNull(dataFrame, dataFrameMsg)
+    Objects.requireNonNull(dataFrame, dataFrameMsg)
 
     val rdd = dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
     this.bulkPutRDD[T](tableName, rdd, insertEmpty, multiVersion)
@@ -335,7 +336,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 数据类型为HBaseBaseBean的子类
     */
   def bulkPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    ValueUtils.requireNonNull(dataset, "参数不合法：dataset不能为空")
+    Objects.requireNonNull(dataset, "参数不合法：dataset不能为空")
 
     this.bulkPutRDD[T](tableName, dataset.rdd, insertEmpty, multiVersion)
   }
@@ -355,8 +356,8 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 对象类型必须是HBaseBaseBean的子类
     */
   def bulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], insertEmpty: Boolean = true, multiVersion: Boolean = false): Unit = {
-    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
-    ValueUtils.requireNonNull(dstream, "参数不合法：dstream不能为空")
+    Objects.requireNonNull(tableName, tableNameBlankMsg)
+    Objects.requireNonNull(dstream, "参数不合法：dstream不能为空")
 
     this.mark
     this.streamBulkPut[T](dstream, TableName.valueOf(tableName), (putRecord: T) => {
@@ -378,9 +379,9 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * 数据类型
     */
   def hadoopPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], insertEmpty: Boolean = true): Unit = {
-    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
-    ValueUtils.requireNonNull(rdd, "参数不合法：rdd不能为空")
-    ValueUtils.requireNonNull(insertEmpty, "参数不合法：insertEmpty不能为空")
+    Objects.requireNonNull(tableName, tableNameBlankMsg)
+    Objects.requireNonNull(rdd, "参数不合法：rdd不能为空")
+    Objects.requireNonNull(insertEmpty, "参数不合法：insertEmpty不能为空")
 
     this.mark
     rdd.mapPartitions(it => {
@@ -402,7 +403,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * JavaBean类型，为HBaseBaseBean的子类
     */
   def hadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[E], insertEmpty: Boolean = true): Unit = {
-    ValueUtils.requireNonNull(dataFrame, dataFrameMsg)
+    Objects.requireNonNull(dataFrame, dataFrameMsg)
 
     val rdd = dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
     this.hadoopPut[E](tableName, rdd, insertEmpty)
@@ -417,7 +418,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * JavaBean类型，待插入到hbase的数据集
     */
   def hadoopPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], insertEmpty: Boolean = true): Unit = {
-    ValueUtils.requireNonNull(dataset, "参数不合法：dataset不能为空")
+    Objects.requireNonNull(dataset, "参数不合法：dataset不能为空")
 
     this.hadoopPut[E](tableName, dataset.rdd, insertEmpty)
   }
@@ -437,8 +438,8 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * JavaBean类型
     */
   def hadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String, insertEmpty: Boolean = true): Unit = {
-    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
-    ValueUtils.requireNonNull(df, dataFrameMsg)
+    Objects.requireNonNull(tableName, tableNameBlankMsg)
+    Objects.requireNonNull(df, dataFrameMsg)
 
     this.mark
     val fields = df.schema.fields
@@ -496,7 +497,7 @@ class HBaseContextExt(@scala.transient sc: SparkContext, @scala.transient config
     * hadoop configuration
     */
   private def getConfiguration(tableName: String): Configuration = {
-    ValueUtils.requireNonNullForce(tableName, tableNameBlankMsg)
+    Objects.requireNonNull(tableName, tableNameBlankMsg)
 
     val hadoopConfiguration = HBaseOper.getConfiguration
     hadoopConfiguration.set(TableOutputFormat.OUTPUT_TABLE, tableName)

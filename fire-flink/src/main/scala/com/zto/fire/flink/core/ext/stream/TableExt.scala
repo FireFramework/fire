@@ -60,7 +60,7 @@ class TableExt(table: Table) {
    * 将Table转为DataSet
    */
   def toDataSet[T]: DataSet[Row] = {
-    ValueUtils.requireNonNull(this.batchTableEnv, "BatchTableEnvironment")
+    require(this.batchTableEnv != null)
     this.batchTableEnv.toDataSet[Row](this.table)
   }
 

@@ -1,7 +1,8 @@
 package com.zto.fire.core.sink
 
+import java.util.Objects
+
 import com.zto.fire.common.conf.FireJdbcConf
-import com.zto.fire.common.util.ValueUtils
 import com.zto.fire.core.ext.SparkExt._
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.DataFrame
@@ -22,7 +23,7 @@ class JdbcStreamSink(options: Map[String, String]) extends FireSink {
       logInfo(s"Skipping already committed batch $batchId")
     } else {
       val sql = options.getOrElse("sql", "")
-      ValueUtils.requireNonNull(sql, "sql语句不能为空.")
+      Objects.requireNonNull(sql, "sql语句不能为空.")
       val fields = options.getOrElse("fields", "")
       val batch = options.getOrElse("batch", FireJdbcConf.batchSize() + "").toInt
       val keyNum = options.getOrElse("keyNum", "1").toInt

@@ -3,11 +3,12 @@ package com.zto.fire.flink.core
 import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf, FireSparkConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.task.SchedulerManager
-import com.zto.fire.common.util.{PropUtils, SystemInfoUtils, ValueUtils}
+import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestfulRegister
 import com.zto.fire.flink.core.rest.FlinkSystemRestful
 import com.zto.fire.flink.core.util.{FlinkSingletonFactory, FlinkUtils}
+import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig
 import org.apache.flink.api.scala.ExecutionEnvironment
@@ -46,7 +47,7 @@ trait BaseFlink extends BaseFire {
    * 初始化flink运行时环境
    */
   override private[fire] def createContext(conf: Any): Unit = {
-    this.retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
+    retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
       this.restPort = SystemInfoUtils.getRundomPort(FireFrameworkConf.restPortRandomBound)
       this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
     }
@@ -102,7 +103,7 @@ trait BaseFlink extends BaseFire {
    * 用于解析configuration中的配置，识别flink参数（非用户自定义参数），并设置到env中
    */
   private[fire] def configParse(env: Any): ExecutionConfig = {
-    ValueUtils.requireNonNullForce(env, "Environment对象不能为空")
+    requireNonEmpty(env)("Environment对象不能为空")
     val config = if (env.isInstanceOf[ExecutionEnvironment]) {
       val batchEnv = env.asInstanceOf[ExecutionEnvironment]
       // flink.default.parallelism

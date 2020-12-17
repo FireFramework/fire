@@ -8,7 +8,8 @@ import com.codahale.metrics.{ConsoleReporter, MetricRegistry, Slf4jReporter}
 import com.zto.fire.common.UnitTest
 import com.zto.fire.common.anno.{Internal, TestStep}
 import com.zto.fire.common.db.v2.bean.Student
-import com.zto.fire.common.util.{DataSourceManager, FireUtils, PropUtils}
+import com.zto.fire.common.util.{DataSourceManager, PropUtils}
+import com.zto.fire.predef._
 import org.junit.Assert._
 import org.junit.{Before, Test}
 
@@ -26,7 +27,6 @@ class HBaseOperTest extends UnitTest {
   val tableName2 = "fire_test_2"
   var hbase: HBaseOper = null
   var hbase2: HBaseOper = null
-  val metrics = new MetricRegistry()
 
   @Before
   def init: Unit = {
@@ -51,17 +51,17 @@ class HBaseOperTest extends UnitTest {
   @Test
   @TestStep(step = 2, desc = "增删改查API测试")
   def testTableExists: Unit = {
-    val starTime = FireUtils.currentTime
+    val starTime = currentTime
     (1 to 10).foreach(i => {
       this.hbase.tableExists(this.tableName)
     })
-    println("未开启缓存总耗时：" + (FireUtils.timecost(starTime)))
+    println("未开启缓存总耗时：" + (timecost(starTime)))
 
-    val starTime2 = FireUtils.currentTime
+    val starTime2 = currentTime
     (1 to 10).foreach(i => {
       this.hbase.isExists(this.tableName)
     })
-    println("开启缓存总耗时：" + (FireUtils.timecost(starTime2)))
+    println("开启缓存总耗时：" + (timecost(starTime2)))
   }
 
   /**
@@ -164,53 +164,5 @@ class HBaseOperTest extends UnitTest {
     assertEquals(this.hbase2.isExists(this.tableName2), false)
     this.hbase2.createTable(this.tableName2, "info", "data")
     assertEquals(this.hbase2.isExists(this.tableName2), true)
-  }
-
-  // @Test
-  def testMeter: Unit = {
-    val reporter = ConsoleReporter.forRegistry(metrics).convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build
-    reporter.start(1, TimeUnit.SECONDS)
-
-    val requests = metrics.meter("requests")
-    (1 to 100).foreach(i => {
-      requests.mark()
-      Thread.sleep(10)
-    })
-    Thread.sleep(1000)
-  }
-
-  // @Test
-  def testHistogram: Unit = {
-    val reporter = ConsoleReporter.forRegistry(metrics).convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build
-    reporter.start(1, TimeUnit.SECONDS)
-
-    val reporter2 = Slf4jReporter.forRegistry(metrics).convertDurationsTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).withLoggingLevel(Slf4jReporter.LoggingLevel.ERROR).build
-    reporter2.start(1, TimeUnit.SECONDS)
-
-    val resultCounts = metrics.histogram(MetricRegistry.name(classOf[HBaseOperTest], "result-counts"))
-    val random = new Random()
-    (1 to 1000).foreach(i => {
-      resultCounts.update(random.nextInt(100))
-      Thread.sleep(10)
-    })
-    Thread.sleep(1000)
-  }
-
-  // @Test
-  def testJvm: Unit = {
-    val reporter2 = ConsoleReporter.forRegistry(metrics)
-      .convertRatesTo(TimeUnit.SECONDS)
-      .convertDurationsTo(TimeUnit.MILLISECONDS)
-      .build
-    reporter2.start(3, TimeUnit.SECONDS)
-    val reporter = Slf4jReporter.forRegistry(metrics).convertDurationsTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).withLoggingLevel(Slf4jReporter.LoggingLevel.ERROR).build
-    reporter.start(5, TimeUnit.SECONDS)
-
-    metrics.register("jvm.gc", new GarbageCollectorMetricSet())
-    metrics.register("jvm.memroy", new MemoryUsageGaugeSet())
-    metrics.register("jvm.thread-states", new ThreadStatesGaugeSet())
-    metrics.register("jvm.fd.usage", new FileDescriptorRatioGauge())
-
-    Thread.sleep(100000)
   }
 }

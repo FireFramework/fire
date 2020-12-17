@@ -1,5 +1,6 @@
 package com.zto.fire.flink.core.ext
 
+import com.zto.fire.common.module.BaseFireExt
 import com.zto.fire.flink.core.ext.batch.{BatchExecutionEnvExt, BatchTableEnvExt, DataSetExt}
 import com.zto.fire.flink.core.ext.stream._
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
@@ -13,7 +14,7 @@ import org.apache.flink.types.Row
  * Flink扩展工具类，利用隐式转换对已有的类追加自定义函数
  * Created by ChengLong on 2020年1月6日 16:31:56.
  */
-object FlinkExt {
+object FlinkExt extends BaseFireExt {
 
   /**
    * StreamExecutionEnvironment扩展

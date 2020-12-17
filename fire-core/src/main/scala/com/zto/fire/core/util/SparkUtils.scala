@@ -6,6 +6,7 @@ import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf, FireSparkConf, FireStringConf}
 import com.zto.fire.common.util._
 import com.zto.fire.core.ext.module.KuduContextExt
+import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkEnv
 import org.apache.spark.rdd.RDD
@@ -244,7 +245,7 @@ object SparkUtils {
    * @return
    */
   def topicSplit(topics: String, splitStr: String = ","): Set[String] = {
-    ValueUtils.requireNonNullForce(topics, "topic不能为空，请在配置文件中[ spark.kafka.topics ]配置")
+    requireNonEmpty(topics)("topic不能为空，请在配置文件中[ spark.kafka.topics ]配置")
     topics.split(splitStr).filter(topic => StringUtils.isNotBlank(topic)).map(topic => topic.trim).toSet
   }
 

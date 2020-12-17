@@ -20,7 +20,7 @@ import spark.Spark
  * @author ChengLong 2020年1月7日 09:20:02
  * @since 0.4.1
  */
-trait BaseFire {
+trait BaseFire extends Tools {
   // 任务启动时间戳
   val startTime = DateFormatUtils.currentTime
   // jdbc包装类
@@ -153,6 +153,7 @@ trait BaseFire {
    * @param threadCount
    * 表示开启多少个线程执行该fun任务
    */
+  @deprecated
   def runAsThread(fun: => Unit, threadCount: Int = 1, threadPool: ExecutorService = this.threadPool): Unit = {
     ThreadUtils.runAsThread(threadPool, fun, threadCount)
   }
@@ -165,6 +166,7 @@ trait BaseFire {
    * @param delay
    * 循环调用间隔时间（单位s）
    */
+  @deprecated
   def runAsThreadLoop(fun: => Unit, delay: Long = 10, threadCount: Int = 1, threadPool: ExecutorService = this.threadPool): Unit = {
     ThreadUtils.runAsThreadLoop(threadPool, fun, delay, threadCount)
   }
@@ -186,35 +188,9 @@ trait BaseFire {
    * @param threadCount
    * 表示开启多少个线程执行该fun任务
    */
+  @deprecated
   def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, threadPoolSchedule: ScheduledExecutorService = this.threadPoolSchedule): Unit = {
     ThreadUtils.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount)
   }
 
-  /**
-   * 重试指定的函数fn retryNum次
-   * 当fn执行失败时，会根据设置的重试次数自动重试retryNum次
-   * 每次重试间隔等待duration(毫秒)
-   *
-   * @param retryNum
-   * 指定重试的次数
-   * @param duration
-   * 重试的间隔时间（ms）
-   * @param fun
-   * 重试的函数或方法
-   * @tparam T
-   * fn执行后返回的数据类型
-   * @return
-   * 返回fn执行结果
-   */
-  def retry[T](retryNum: Int = 3, duration: Long = 3000)(fun: => T): T = FireUtils.retry(retryNum, duration)(fun)
-
-  /**
-   * 用于统计指定代码块执行的耗时时间
-   *
-   * @param msg
-   * 用于描述当前代码块的用户
-   * @param block
-   * try的具体逻辑
-   */
-  def timecost[T](msg: String)(block: => T): T = FireUtils.timecost(msg, this.logger)(block)
 }

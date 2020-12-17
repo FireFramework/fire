@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Objects;
 
 /**
  * 执行命令的工具
@@ -24,7 +25,7 @@ public class ProcessUtil {
      * @return 命令执行结果的一行数据
      */
     public static void executeCmds(String... commands) {
-        ValueUtils.requireNonNull(commands, "命令不能为空");
+        Objects.requireNonNull(commands, "命令不能为空");
         for (String command : commands) {
             executeCmdForLine(command);
         }

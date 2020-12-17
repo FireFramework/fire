@@ -1,6 +1,5 @@
 package com.zto.fire.flink.core.ext.functions;
 
-import com.zto.fire.common.util.ValueUtils;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.accumulators.*;
 import org.apache.flink.api.common.cache.DistributedCache;
@@ -16,6 +15,7 @@ import scala.collection.mutable.Buffer;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * 增强的MapFunction
@@ -93,7 +93,7 @@ public abstract class FireMapFunction<I, O> extends AbstractRichFunction impleme
      * @param name Histogram名称
      */
     protected Histogram getHistogram(String name) {
-        ValueUtils.requireNonNull(name, "Histogram名称不能为空");
+        Objects.requireNonNull(name, "Histogram名称不能为空");
         return this.getRuntimeContext().getHistogram(name);
     }
 
@@ -105,7 +105,7 @@ public abstract class FireMapFunction<I, O> extends AbstractRichFunction impleme
      * @return 广播变量集合
      */
     protected <T> scala.collection.immutable.List<T> getBroadcastVariable(String name) {
-        ValueUtils.requireNonNull(name, "广播变量名称不能为空！");
+        Objects.requireNonNull(name, "广播变量名称不能为空！");
         Buffer<T> broadcastList = JavaConversions.asScalaBuffer(this.getRuntimeContext().getBroadcastVariable(name));
         return broadcastList.toList();
     }
@@ -147,8 +147,8 @@ public abstract class FireMapFunction<I, O> extends AbstractRichFunction impleme
      * @param value 累加的值，仅支持：Long、Double、Integer类型
      */
     protected void addMultiCounter(String name, Number value) {
-        ValueUtils.requireNonNull(name, "计数器名称不能为空！");
-        ValueUtils.requireNonNull(value, "累加值不能为空");
+        Objects.requireNonNull(name, "计数器名称不能为空！");
+        Objects.requireNonNull(value, "累加值不能为空");
 
         if (value instanceof Long) {
             this.addToLongCounter(name, value.longValue());
@@ -181,7 +181,7 @@ public abstract class FireMapFunction<I, O> extends AbstractRichFunction impleme
      * @return Long计数器
      */
     protected LongCounter getLongCounter(String name) {
-        ValueUtils.requireNonNull(name, "LongCounter计数器名称不能为空！");
+        Objects.requireNonNull(name, "LongCounter计数器名称不能为空！");
         return this.getRuntimeContext().getLongCounter(name);
     }
 
@@ -205,7 +205,7 @@ public abstract class FireMapFunction<I, O> extends AbstractRichFunction impleme
      * @return Double计数器
      */
     protected DoubleCounter getDoubleCounter(String name) {
-        ValueUtils.requireNonNull(name, "DoubleCounter计数器名称不能为空！");
+        Objects.requireNonNull(name, "DoubleCounter计数器名称不能为空！");
         return this.getRuntimeContext().getDoubleCounter(name);
     }
 
@@ -234,7 +234,7 @@ public abstract class FireMapFunction<I, O> extends AbstractRichFunction impleme
      * @return int计数器
      */
     protected IntCounter getIntCounter(String name) {
-        ValueUtils.requireNonNull(name, "IntCounter计数器名称不能为空！");
+        Objects.requireNonNull(name, "IntCounter计数器名称不能为空！");
         return this.getRuntimeContext().getIntCounter(name);
     }
 
@@ -245,8 +245,8 @@ public abstract class FireMapFunction<I, O> extends AbstractRichFunction impleme
      * @param accumulator 累加器实例
      */
     protected <V, A extends Serializable> void addAccumulator(String name, Accumulator<V, A> accumulator) {
-        ValueUtils.requireNonNull(name, "累加器名称不能为空！");
-        ValueUtils.requireNonNull(accumulator, "累加器实例不能为空！");
+        Objects.requireNonNull(name, "累加器名称不能为空！");
+        Objects.requireNonNull(accumulator, "累加器实例不能为空！");
         this.getRuntimeContext().addAccumulator(name, accumulator);
     }
 
@@ -257,7 +257,7 @@ public abstract class FireMapFunction<I, O> extends AbstractRichFunction impleme
      * @return 累加器实例
      */
     protected <V, A extends Serializable> Accumulator<V, A> getAccumulator(String name) {
-        ValueUtils.requireNonNull(name, "累加器名称不能为空！");
+        Objects.requireNonNull(name, "累加器名称不能为空！");
         return this.getRuntimeContext().getAccumulator(name);
     }
 
@@ -268,7 +268,7 @@ public abstract class FireMapFunction<I, O> extends AbstractRichFunction impleme
      * @return 被缓存的文件
      */
     protected File getCacheFile(String fileName) {
-        ValueUtils.requireNonNull(fileName, "分布式缓存文件名称不能为空！");
+        Objects.requireNonNull(fileName, "分布式缓存文件名称不能为空！");
         return this.getDistributedCache().getFile(fileName);
     }
 }

@@ -6,12 +6,13 @@ import java.util.Properties
 import com.zto.fire.common.bean.HBaseBaseBean
 import com.zto.fire.common.conf.{FireJdbcConf, FireKafkaConf, FireSparkConf}
 import com.zto.fire.common.db.{HBaseOper, JdbcOper}
-import com.zto.fire.common.util.{FireUtils, KafkaUtils, LogUtils, ValueUtils}
+import com.zto.fire.common.util.{KafkaUtils, LogUtils}
 import com.zto.fire.core.bridge.{HBaseSparkBridge, JdbcOperBridge}
 import com.zto.fire.core.ext.SparkExt._
 import com.zto.fire.core.ext.module.HBaseContextExt
 import com.zto.fire.core.udf.UDFs
 import com.zto.fire.core.util.{SingletonFactory, SparkUtils}
+import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
 import org.apache.hadoop.hbase.filter.{Filter, FilterList}
@@ -1170,10 +1171,10 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
   def loadKafkaParseJson(tableName: String = "kafka",
                          extraOptions: Map[String, String] = null,
                          keyNum: Int = 1): DataFrame = {
-    val msg = FireUtils.retry(5, 1000) {
+    val msg = retry(5, 1000) {
       KafkaUtils.getMsg(FireKafkaConf.kafkaBrokers(keyNum), FireKafkaConf.kafkaTopics(keyNum), null)
     }
-    ValueUtils.requireNonNullForce(msg, s"获取样例消息失败！请重启任务尝试重新获取，并保证topic[${FireKafkaConf.kafkaTopics(keyNum)}]持续的有新消息。")
+    requireNonEmpty(msg, s"获取样例消息失败！请重启任务尝试重新获取，并保证topic[${FireKafkaConf.kafkaTopics(keyNum)}]持续的有新消息。")
     val jsonDS = this.spark.createDataset(Seq(msg))(Encoders.STRING)
     val jsonDF = this.spark.read.json(jsonDS)
 
@@ -1407,10 +1408,7 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * 对应配置文件中指定的数据源编号
    */
   def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = 1): Unit = {
-    if (ValueUtils.isEmpty(dataFrame)) {
-      logger.error("执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
-      return
-    }
+    require(dataFrame != null && StringUtils.isNotBlank(sql), "执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
     dataFrame.jdbcBatchUpdate(sql, fields, batch, keyNum)
   }
 }

@@ -1,5 +1,6 @@
 package com.zto.fire.common.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,9 +39,6 @@ public class ReflectionUtils {
             return Collections.emptyMap();
         }
         Field[] fields = clazz.getFields();
-        if (ValueUtils.isEmpty(fields)) {
-            return Collections.emptyMap();
-        }
         Map<String, Field> fieldMap = new HashMap<>(fields.length);
         for (Field field : fields) {
             fieldMap.put(field.getName(), field);
@@ -56,9 +54,6 @@ public class ReflectionUtils {
             return Collections.emptyMap();
         }
         Field[] fields = clazz.getDeclaredFields();
-        if (ValueUtils.isEmpty(fields)) {
-            return Collections.emptyMap();
-        }
         Map<String, Field> fieldMap = new HashMap<>(fields.length);
         for (Field field : fields) {
             setAccessible(field);
@@ -121,9 +116,6 @@ public class ReflectionUtils {
             return Collections.emptyMap();
         }
         Method[] methods = clazz.getMethods();
-        if (ValueUtils.isEmpty(methods)) {
-            return Collections.emptyMap();
-        }
         Map<String, Method> methodMap = new HashMap<>(methods.length);
         for (Method method : methods) {
             methodMap.put(method.getName(), method);
@@ -139,9 +131,6 @@ public class ReflectionUtils {
             return Collections.emptyMap();
         }
         Method[] methods = clazz.getDeclaredMethods();
-        if (ValueUtils.isEmpty(methods)) {
-            return Collections.emptyMap();
-        }
         Map<String, Method> methodMap = new HashMap<>(methods.length);
         for (Method method : methods) {
             setAccessible(method);
@@ -154,9 +143,8 @@ public class ReflectionUtils {
      * 获取指定field的类型
      */
     public static Class<?> getFieldType(Class<?> clazz, String fieldName) {
-        if (ValueUtils.isExistsEmpty(new Object[]{clazz, fieldName})) {
-            return null;
-        }
+        if (clazz == null || StringUtils.isBlank(fieldName)) return null;
+
         try {
             Map<String, Field> fieldMap = getAllFields(clazz);
             if (fieldMap == null) {
@@ -179,9 +167,6 @@ public class ReflectionUtils {
      * @param memberName 成员名称，指定获取指定成员的Annotation实例
      */
     private static <T extends Annotation> Annotation getAnnotation(Class<?> clazz, ElementType scope, String memberName, Class<T> annoClass) {
-        if (ValueUtils.isExistsEmpty(new Object[]{clazz, scope, memberName, annoClass})) {
-            return null;
-        }
         try {
             if (ElementType.FIELD == scope) {
                 Field field = clazz.getDeclaredField(memberName);
@@ -207,9 +192,6 @@ public class ReflectionUtils {
      * @param memberName 成员名称，指定获取指定成员的Annotation实例
      */
     private static List<Annotation> getAnnotations(Class<?> clazz, ElementType scope, String memberName) {
-        if (ValueUtils.isExistsEmpty(new Object[]{clazz, scope, memberName})) {
-            return Collections.emptyList();
-        }
         try {
             if (ElementType.FIELD == scope) {
                 Field field = clazz.getDeclaredField(memberName);

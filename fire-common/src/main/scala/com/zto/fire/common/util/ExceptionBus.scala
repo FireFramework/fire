@@ -1,11 +1,11 @@
 package com.zto.fire.common.util
 
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
 import com.google.common.collect.EvictingQueue
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.predef._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConversions
@@ -27,15 +27,13 @@ object ExceptionBus {
   private[fire] lazy val exceptionCount = new AtomicLong(0)
   // 异常发生的主机ip
   private[this] lazy val ip = SystemInfoUtils.getIp
-  private[this] lazy val catchMsg = "执行try的过程中发生异常"
-  private[this] lazy val finallyCatchMsg = "执行finally过程中发生异常"
 
   /**
    * 向异常总线中投递异常对象
    */
-  def post(timestamp: Long, t: Throwable): Boolean = this.synchronized {
+  def post(t: Throwable): Boolean = this.synchronized {
     exceptionCount.incrementAndGet()
-    this.queue.offer((timestamp, t))
+    this.queue.offer((currentTime, t))
   }
 
   /**
@@ -56,8 +54,8 @@ object ExceptionBus {
    * 工具方法，用于打印异常信息
    */
   @Internal
-  private[this] def offAndLogError(logger: Logger, msg: String, t: Throwable): Unit = {
-    this.post(FireUtils.currentTime, t)
+  private[fire] def offAndLogError(logger: Logger, msg: String, t: Throwable): Unit = {
+    this.post(t)
     if (logger != null) logger.error(msg, t) else t.printStackTrace()
   }
 
@@ -72,78 +70,4 @@ object ExceptionBus {
     stackTraceInfo.toString
   }
 
-  /**
-   * 尝试执行block中的逻辑，如果出现异常，则记录日志
-   *
-   * @param block
-   * try的具体逻辑
-   * @param logger
-   * 日志记录器
-   * @param catchLog
-   * 日志内容
-   */
-  def tryWithLog(block: => Unit)(logger: Logger = this.logger, catchLog: String = catchMsg, isThrow: Boolean = true): Unit = {
-    try {
-      block
-    } catch {
-      case t: Throwable => {
-        this.offAndLogError(logger, catchLog, t)
-        if (isThrow) throw t
-      }
-    }
-  }
-
-  /**
-   * 尝试执行block中的逻辑，如果出现异常，则记录日志，并将执行结果返回
-   *
-   * @param block
-   * try的具体逻辑
-   * @param logger
-   * 日志记录器
-   * @param catchLog
-   * 日志内容
-   */
-  def tryWithReturn[T](block: => T)(logger: Logger = this.logger, catchLog: String = catchMsg): T = {
-    try {
-      block
-    } catch {
-      case t: Throwable => {
-        this.offAndLogError(logger, catchLog, t)
-        throw t
-      }
-    }
-  }
-
-  /**
-   * 执行用户指定的try/catch/finally逻辑
-   *
-   * @param block
-   * try 代码块
-   * @param finallyBlock
-   * finally 代码块
-   * @param logger
-   * 日志记录器
-   * @param catchLog
-   * 当执行try过程中发生异常时打印的日志内容
-   * @param finallyCatchLog
-   * 当执行finally代码块过程中发生异常时打印的日志内容
-   */
-  def tryWithFinally[T](block: => T)(finallyBlock: => Unit)(logger: Logger = this.logger, catchLog: String = catchMsg, finallyCatchLog: String = finallyCatchMsg): T = {
-    try {
-      block
-    } catch {
-      case t: Throwable =>
-        this.offAndLogError(logger, catchLog, t)
-        throw t
-    } finally {
-      try {
-        finallyBlock
-      } catch {
-        case t: Throwable => {
-          this.offAndLogError(logger, catchLog, t)
-          throw t
-        }
-      }
-    }
-  }
 }

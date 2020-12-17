@@ -1,6 +1,5 @@
 package com.zto.fire.common.util
 
-import java.util.Objects
 import java.util.concurrent._
 
 import com.zto.fire.common.conf.FirePS1Conf

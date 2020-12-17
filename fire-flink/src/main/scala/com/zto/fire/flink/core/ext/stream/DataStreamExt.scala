@@ -3,9 +3,10 @@ package com.zto.fire.flink.core.ext.stream
 import java.lang.reflect.Field
 
 import com.zto.fire.common.bean.HBaseBaseBean
-import com.zto.fire.common.util.{ReflectionUtils, ValueUtils}
+import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.flink.core.sink.{FlinkHBaseSink, FlinkJdbcSink}
 import com.zto.fire.flink.core.util.FlinkSingletonFactory
+import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.accumulators.SimpleAccumulator
 import org.apache.flink.api.common.functions.RichMapFunction
@@ -122,7 +123,7 @@ class DataStreamExt[T](stream: DataStream[T]) {
       var clazz: Class[_] = _
 
       override def map(value: T): Seq[Any] = {
-        ValueUtils.requireNonNullForce(sql, "sql语句不能为空")
+        requireNonEmpty(sql)("sql语句不能为空")
 
         val params = ListBuffer[Any]()
         if (value.isInstanceOf[Row] || value.isInstanceOf[Tuple2[Boolean, Row]]) {
@@ -132,7 +133,7 @@ class DataStreamExt[T](stream: DataStream[T]) {
             params += row.getField(i)
           }
         } else {
-          ValueUtils.requireNonNullForce(fields, "字段列表不能为空！需按照sql中的占位符顺序依次指定当前DataStream中数据字段的名称")
+          requireNonEmpty(fields)("字段列表不能为空！需按照sql中的占位符顺序依次指定当前DataStream中数据字段的名称")
 
           if (clazz == null && value != null) {
             clazz = value.getClass
@@ -141,7 +142,7 @@ class DataStreamExt[T](stream: DataStream[T]) {
 
           fields.foreach(fieldName => {
             val field = this.fieldMap.get(StringUtils.trim(fieldName))
-            ValueUtils.requireNonNullForce(field, s"当前DataStream中不存在该列名$fieldName，请检查！")
+            requireNonEmpty(field)(s"当前DataStream中不存在该列名$fieldName，请检查！")
             params += field.get(value)
           })
         }

@@ -2,6 +2,7 @@ package com.zto.fire.common.util
 
 import java.util.PriorityQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import com.zto.fire.predef._
 
 import org.slf4j.LoggerFactory
 
@@ -31,7 +32,7 @@ private[fire] class ShutdownHookManager {
         nextHook != null
       }) {
         // 调用每一个hook的run方法
-        ExceptionBus.tryWithLog(nextHook.run())(this.logger, "执行hook过程中发生例外.")
+        tryWithLog(nextHook.run())(this.logger, "执行hook过程中发生例外.")
       }
     }
   }

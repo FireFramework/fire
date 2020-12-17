@@ -6,7 +6,6 @@ import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.FireUtils;
 import com.zto.fire.common.util.ReflectionUtils;
-import com.zto.fire.common.util.ValueUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.spark.SparkEnv;
@@ -49,11 +48,11 @@ public class SchedulerManager implements Serializable {
 
     static {
         String blacklistMethod = FireFrameworkConf.schedulerBlackList();
-        if (ValueUtils.isNotEmpty(blacklistMethod)) {
+        if (StringUtils.isNotBlank(blacklistMethod)) {
             String[] methods = blacklistMethod.split(",");
-            if (ValueUtils.isNotEmpty(methods)) {
+            if (methods != null) {
                 for (String method : methods) {
-                    if (ValueUtils.isNotEmpty(method)) {
+                    if (StringUtils.isNotBlank(method)) {
                         blacklistMap.put(method.trim(), method);
                     }
                 }

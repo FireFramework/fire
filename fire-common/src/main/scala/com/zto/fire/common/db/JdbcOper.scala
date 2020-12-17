@@ -5,9 +5,8 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Stateme
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf}
-import com.zto.fire.common.util.ExceptionBus._
-import com.zto.fire.common.util.FireUtils._
 import com.zto.fire.common.util.{DBUtils, DataSourceManager, StringsUtils}
+import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable.ListBuffer

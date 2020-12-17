@@ -9,13 +9,13 @@ import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf}
 import com.zto.fire.common.util.{FireUtils, PropUtils, ReflectionUtils, ValueUtils}
 import com.zto.fire.flink.core.bean.FlinkTableSchema
 import com.zto.fire.flink.core.ext.functions.FireMapFunction
+import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.types.Row
 import org.apache.log4j.{Level, Logger}
-import com.zto.fire.common.util.ExceptionBus._
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions
@@ -37,7 +37,7 @@ object FlinkUtils extends Serializable {
    * 将schema、fieldName与fieldIndex信息维护到table中
    */
   private[this] def extendSchemaTable(schema: FlinkTableSchema): Unit = {
-    if (ValueUtils.isNotEmpty(schema) && !schemaTable.containsRow(schema)) {
+    if (schema != null && !schemaTable.containsRow(schema)) {
       for (i <- 0 until schema.getFieldCount) {
         schemaTable.put(schema, schema.getFieldName(i).get(), i)
       }
@@ -80,7 +80,7 @@ object FlinkUtils extends Serializable {
    * 解析并设置配置文件中的配置信息
    */
   def parseConf(config: ExecutionConfig): ExecutionConfig = {
-    ValueUtils.requireNonNullForce(config, "Flink配置实例不能为空")
+    requireNonEmpty(config)("Flink配置实例不能为空")
 
     // flink.auto.generate.uid.enable=true 默认为：true
     if (FireFlinkConf.autoGenerateUidEnable) {

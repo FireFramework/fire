@@ -6,7 +6,7 @@ import java.util.concurrent.{ConcurrentHashMap, ScheduledExecutorService, TimeUn
 import com.google.common.collect.EvictingQueue
 import com.zto.fire.common.conf.FireFrameworkConf._
 import com.zto.fire.common.enu.{DataSource, ThreadPoolType}
-import com.zto.fire.common.util.FireUtils._
+import com.zto.fire.predef._
 import org.slf4j.LoggerFactory
 
 /**

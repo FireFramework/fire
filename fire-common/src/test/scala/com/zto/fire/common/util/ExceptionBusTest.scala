@@ -1,8 +1,9 @@
 package com.zto.fire.common.util
 
-import com.zto.fire.common.util.ExceptionBus.{stackTrace, tryWithLog}
-import org.junit.Test
+import com.zto.fire.common.util.ExceptionBus.stackTrace
+import com.zto.fire.predef._
 import org.junit.Assert._
+import org.junit.Test
 
 /**
  * 用于ExceptionBus的单元测试

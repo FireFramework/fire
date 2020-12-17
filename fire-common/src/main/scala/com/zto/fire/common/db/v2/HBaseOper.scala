@@ -3,8 +3,8 @@ package com.zto.fire.common.db.v2
 import java.lang.reflect.Field
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInt, Long => JLong, Short => JShort, String => JString}
 import java.math.{BigDecimal => JBigDecimal}
-import java.util._
-import java.util.concurrent.{ConcurrentHashMap, ScheduledExecutorService, TimeUnit}
+import java.util.concurrent.{ScheduledExecutorService, TimeUnit, ConcurrentHashMap => JConcurrentHashMap}
+import java.util.{HashMap => JHashMap, Map => JMap}
 
 import com.alibaba.fastjson.JSON
 import com.zto.fire.common.anno.{FieldName, HConfig, Internal}
@@ -13,9 +13,8 @@ import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.common.conf.FireHBaseConf.{familyName, _}
 import com.zto.fire.common.db.{DBBaseOper, DBBaseOperFactory}
 import com.zto.fire.common.enu.ThreadPoolType
-import com.zto.fire.common.util.ExceptionBus._
-import com.zto.fire.common.util.FireUtils._
 import com.zto.fire.common.util._
+import com.zto.fire.predef._
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase._
@@ -48,9 +47,9 @@ import scala.reflect.{ClassTag, classTag}
  */
 private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 1) extends DBBaseOper(conf, keyNum) {
   // --------------------------------------- 反射缓存 --------------------------------------- //
-  private[this] lazy val cacheFieldMap = new ConcurrentHashMap[Class[_], Map[String, Field]]()
-  private[this] lazy val cacheHConfigMap = new ConcurrentHashMap[Class[_], HConfig]()
-  private[this] lazy val cacheTableExistsMap = new ConcurrentHashMap[String, Boolean]()
+  private[this] lazy val cacheFieldMap = new JConcurrentHashMap[Class[_], JMap[String, Field]]()
+  private[this] lazy val cacheHConfigMap = new JConcurrentHashMap[Class[_], HConfig]()
+  private[this] lazy val cacheTableExistsMap = new JConcurrentHashMap[String, Boolean]()
   private[this] lazy val configuration: Configuration = this.initConfiguration
   private[this] lazy val connection: Connection = this.initConnection
   private[this] lazy val durability = this.initDurability
@@ -59,7 +58,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
   private[this] lazy val tableExistsCacheEnable = tableExistsCache(this.keyNum)
   private[this] lazy val row2BeanParamError = "参数不合法，HBase Row转为JavaBean失败."
   private[this] lazy val closeAdminError = "close admin执行失败"
-  this.registerReoload
+  this.registerReload
   this.registerClose
 
   /**
@@ -321,10 +320,10 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @return 名称与字段的映射map
    */
   @Internal
-  private[this] def getFieldNameMap[T <: HBaseBaseBean[T]](clazz: Class[T]): Map[String, Field] = {
+  private[this] def getFieldNameMap[T <: HBaseBaseBean[T]](clazz: Class[T]): JMap[String, Field] = {
     if (!this.cacheFieldMap.containsKey(clazz)) {
       val allFields = ReflectionUtils.getAllFields(clazz)
-      val fieldMap = new HashMap[String, Field](allFields.size)
+      val fieldMap = new JHashMap[String, Field](allFields.size)
 
       allFields.values.filter(field => field != null).foreach(field => {
         val fieldName = field.getAnnotation(classOf[FieldName])
@@ -380,7 +379,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @param fieldMap 字段映射信息
    */
   @Internal
-  private[this] def multiCell2Field[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T], fieldMap: Map[String, Field]): ListBuffer[T] = {
+  private[this] def multiCell2Field[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T], fieldMap: JMap[String, Field]): ListBuffer[T] = {
     val objList = ListBuffer[T]()
     tryWithLog {
       rs.rawCells.foreach(cell => {
@@ -409,7 +408,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @return clazz对应的结果实例
    */
   @Internal
-  private[this] def cell2Field[T <: HBaseBaseBean[T]](clazz: Class[T], fieldMap: Map[String, Field], rs: Result): T = {
+  private[this] def cell2Field[T <: HBaseBaseBean[T]](clazz: Class[T], fieldMap: JMap[String, Field], rs: Result): T = {
     val obj = clazz.newInstance
 
     tryWithLog {
@@ -432,7 +431,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * @return rowkey
    */
   @Internal
-  private[this] def convertCells2Fields[T <: HBaseBaseBean[T]](fieldMap: Map[String, Field], obj: T, cells: Array[Cell]): String = {
+  private[this] def convertCells2Fields[T <: HBaseBaseBean[T]](fieldMap: JMap[String, Field], obj: T, cells: Array[Cell]): String = {
     require(cells != null && obj != null)
 
     var rowKey = ""
@@ -793,7 +792,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
   /**
    * 清空指定的HBase表
    *
-   * @param tableName
+   * @param tableName      HBase表名
    * @param preserveSplits 是否保留所有的split信息
    */
   private[fire] def truncateTable(tableName: String, preserveSplits: Boolean = true): Unit = {
@@ -831,8 +830,8 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
   @Internal
   private[this] def closeResultScanner(rs: ResultScanner): Unit = {
     tryWithLog {
-      if (rs != null) rs.close
-    }(this.logger, "关闭ResultScanner对象失败", false)
+      if (rs != null) rs.close()
+    }(this.logger, "关闭ResultScanner对象失败", isThrow = false)
   }
 
   /**
@@ -841,7 +840,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
   def closeTable(table: Table): Unit = {
     tryWithLog {
       if (table != null) table.close()
-    }(logger, "关闭HBase table对象失败", false)
+    }(logger, "关闭HBase table对象失败", isThrow = false)
   }
 
   /**
@@ -985,7 +984,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * 用于注册jvm退出前关闭连接
    */
   @Internal
-  private[this] def registerClose: Unit = ShutdownHookManager.addShutdownHook() { () => {
+  private[this] def registerClose(): Unit = ShutdownHookManager.addShutdownHook() { () => {
     if (connection != null) connection.close()
     logger.info("HBase connection closed successfully.")
   }
@@ -995,7 +994,7 @@ private[fire] class HBaseOper(val conf: Configuration = null, val keyNum: Int = 
    * 用于定时reload表是否存在的数据
    */
   @Internal
-  private[this] def registerReoload: Unit = {
+  private[this] def registerReload(): Unit = {
     if (tableExistsCacheReload(this.keyNum)) {
       threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(new Runnable {
         override def run(): Unit = {
@@ -1295,4 +1294,10 @@ object HBaseOper extends DBBaseOperFactory {
     HBaseOper(keyNum = keyNum).deleteQualifiers(tableName, rowKey, family, qualifiers: _*)
   }
 
+  /**
+   * 获取Configuration实例
+   *
+   * @return HBase Configuration对象
+   */
+  def getConfiguration(keyNum: Int = 1): Configuration = HBaseOper(keyNum = keyNum).getConfiguration
 }

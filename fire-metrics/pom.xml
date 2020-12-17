@@ -7,7 +7,37 @@
     <name>${project.artifactId}</name>
     <description>fire metrics module</description>
     <inceptionYear>2010</inceptionYear>
+
+    <properties>
+        <codahale.metrics.version>3.1.5</codahale.metrics.version>
+    </properties>
+
     <dependencies>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>${codahale.metrics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-jvm</artifactId>
+            <version>${codahale.metrics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-json</artifactId>
+            <version>${codahale.metrics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-ganglia</artifactId>
+            <version>${codahale.metrics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-graphite</artifactId>
+            <version>${codahale.metrics.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

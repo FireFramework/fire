@@ -1,5 +1,6 @@
 package com.zto.fire.core.ext
 
+import com.zto.fire.common.module.BaseFireExt
 import com.zto.fire.core.ext.core._
 import com.zto.fire.core.ext.module.LoggerExt
 import org.apache.spark.rdd.RDD
@@ -14,7 +15,7 @@ import scala.reflect._
   * Spark扩展工具类，利用隐式转换对已有的类追加自定义函数
   * Created by ChengLong on 2017-02-07.
   */
-object SparkExt {
+object SparkExt extends BaseFireExt {
 
   /**
     * SparkContext扩展
