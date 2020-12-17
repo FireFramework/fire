@@ -13,7 +13,7 @@ import scala.collection.JavaConversions._
  * @since 0.4.1
  * @author ChengLong 2019-9-4 13:39:16
  */
-trait ValueCheck {
+private[fire] trait ValueCheck {
 
   /**
    * 值为空判断，支持任意类型
@@ -91,6 +91,7 @@ trait ValueCheck {
   }
 }
 
-private[fire] class ValueUtils extends ValueCheck
-
-object ValueUtils extends ValueUtils
+/**
+ * 用于单独调用的值校验工具类
+ */
+object ValueUtils extends ValueCheck
