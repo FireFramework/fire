@@ -4,12 +4,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
 
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf, FirePrintModuleConf}
-import com.zto.fire.common.db.JdbcOper
 import com.zto.fire.common.enu.{JobType, ThreadPoolType}
-import com.zto.fire.common.task.SchedulerManager
 import com.zto.fire.common.util.{FireUtils, _}
 import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
-import com.zto.fire.core.util.SingletonFactory
+import com.zto.fire.core.task.SchedulerManager
 import org.apache.log4j.{Level, Logger}
 import org.slf4j.LoggerFactory
 import spark.Spark
@@ -23,11 +21,8 @@ import spark.Spark
 trait BaseFire extends Tools {
   // 任务启动时间戳
   val startTime = DateFormatUtils.currentTime
-  // jdbc包装类
-  val jdbc = JdbcOper
   // web ui地址
   var webUI: String = _
-  val value = ValueUtils
   // main方法参数
   var args: Array[String] = _
   // yarn任务的applicationId
@@ -98,7 +93,6 @@ trait BaseFire extends Tools {
    */
   def init(conf: Any = null, args: Array[String] = null): Unit = {
     this.before(args)
-    SingletonFactory.jobType = this.jobType
     this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成用户资源初始化，任务类型：${this.jobType.getJobTypeDesc} <--- ${FirePS1Conf.DEFAULT}")
     this.args = args
     this.createContext(conf)

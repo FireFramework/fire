@@ -14,31 +14,21 @@ import java.lang.annotation.Target;
 public @interface FieldName {
     /**
      * fieldName，映射到hbase中作为qualifier名称
-     * @return
      */
     String value() default "";
 
     /**
      * 列族名称
-     * @return
      */
     String family() default "info";
 
     /**
-     * 是否映射Hive与HBase，默认映射
-     * @return
-     */
-    boolean mapping() default true;
-
-    /**
      * 不使用该字段，默认为使用
-     * @return
      */
     boolean disuse() default false;
 
     /**
      * 是否可以为空
-     * @return
      */
     boolean nullable() default true;
 
@@ -50,19 +40,11 @@ public @interface FieldName {
 
     /**
      * HBase表的命名空间
-     * @return
      */
     String namespace() default "default";
 
     /**
-     * 表名
-     * @return
-     */
-    String tableName() default "test";
-
-    /**
      * 字段注释
-     * @return
      */
     String comment() default "";
 }

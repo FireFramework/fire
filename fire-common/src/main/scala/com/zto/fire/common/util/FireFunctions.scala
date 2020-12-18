@@ -2,6 +2,7 @@ package com.zto.fire.common.util
 
 import com.zto.fire.common.conf.FirePS1Conf
 import com.zto.fire.common.util.UnitFormatUtils.{TimeUnitEnum, readable}
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.Try
@@ -15,8 +16,9 @@ import scala.util.Try
  */
 trait FireFunctions {
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
-  private[this] lazy val catchMsg = "执行try的过程中发生异常"
-  private[this] lazy val finallyCatchMsg = "执行finally过程中发生异常"
+  private[this] lazy val tryLog = ""
+  private[this] lazy val catchLog = "执行try的过程中发生异常"
+  private[this] lazy val finallyCatchLog = "执行finally过程中发生异常"
 
   /**
    * 重试指定的函数fn retryNum次
@@ -45,7 +47,7 @@ trait FireFunctions {
         case _ if retryNum > 1 => {
           Thread.sleep(duration)
           count += 1
-          println(s"${FirePS1Conf.RED}第${count}次执行. 时间:${DateFormatUtils.formatCurrentDateTime()}. 间隔:${duration}.${FirePS1Conf.DEFAULT}")
+          logger.info(s"${FirePS1Conf.RED}第${count}次执行. 时间:${DateFormatUtils.formatCurrentDateTime()}. 间隔:${duration}.${FirePS1Conf.DEFAULT}")
           redo(retryNum - 1, duration)(fun)
         }
         case util.Failure(e) => throw e
@@ -65,9 +67,9 @@ trait FireFunctions {
    * @param catchLog
    * 日志内容
    */
-  def tryWithLog(block: => Unit)(logger: Logger = this.logger, catchLog: String = catchMsg, isThrow: Boolean = true): Unit = {
+  def tryWithLog(block: => Unit)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog, isThrow: Boolean = true): Unit = {
     try {
-      block
+      timecost(tryLog, logger)(block)
     } catch {
       case t: Throwable => {
         ExceptionBus.offAndLogError(logger, catchLog, t)
@@ -86,9 +88,9 @@ trait FireFunctions {
    * @param catchLog
    * 日志内容
    */
-  def tryWithReturn[T](block: => T)(logger: Logger = this.logger, catchLog: String = catchMsg): T = {
+  def tryWithReturn[T](block: => T)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog): T = {
     try {
-      block
+      timecost[T](tryLog, logger)(block)
     } catch {
       case t: Throwable => {
         ExceptionBus.offAndLogError(logger, catchLog, t)
@@ -111,9 +113,9 @@ trait FireFunctions {
    * @param finallyCatchLog
    * 当执行finally代码块过程中发生异常时打印的日志内容
    */
-  def tryWithFinally[T](block: => T)(finallyBlock: => Unit)(logger: Logger = this.logger, catchLog: String = catchMsg, finallyCatchLog: String = finallyCatchMsg): T = {
+  def tryWithFinally[T](block: => T)(finallyBlock: => Unit)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog, finallyCatchLog: String = finallyCatchLog): T = {
     try {
-      block
+      timecost[T](tryLog, logger)(block)
     } catch {
       case t: Throwable =>
         ExceptionBus.offAndLogError(logger, catchLog, t)
@@ -158,7 +160,7 @@ trait FireFunctions {
   def timecost[T](msg: String, logger: Logger = this.logger)(block: => T): T = {
     val startTime = this.currentTime
     val retVal = block
-    logger.info(s"执行${msg}耗时：${timecost(startTime)}")
+    if (StringUtils.isNotBlank(msg)) logger.info(s"${msg}, 耗时：${timecost(startTime)}")
     retVal
   }
 }

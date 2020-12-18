@@ -1,7 +1,7 @@
 package com.zto.fire.common.bean.runtime;
 
 import com.zto.fire.common.util.SystemInfoUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 

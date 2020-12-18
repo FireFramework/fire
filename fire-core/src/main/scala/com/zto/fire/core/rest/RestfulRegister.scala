@@ -2,15 +2,13 @@ package com.zto.fire.core.rest
 
 import java.util.concurrent.ExecutorService
 
-import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.enu.ErrorCode
-import com.zto.fire.common.util.{EncryptUtils, PropUtils, ReflectionUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{EncryptUtils, SystemInfoUtils}
 import org.slf4j.LoggerFactory
 import spark._
 
-import scala.collection.JavaConversions
 import scala.collection.mutable._
 
 /**

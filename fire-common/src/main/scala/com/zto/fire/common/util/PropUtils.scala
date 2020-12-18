@@ -6,14 +6,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import com.alibaba.fastjson.JSON
 import com.zto.fire.common.conf._
-import com.zto.fire.common.data.DataPool
 import com.zto.fire.common.enu.DataSource
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable.Map
 import scala.collection.JavaConversions._
 import scala.collection.mutable
+import scala.collection.mutable.Map
 
 /**
  * 读取配置文件工具类
@@ -89,7 +88,7 @@ object PropUtils {
    * 配置文件名称
    */
   def load(fileNames: String*): this.type = {
-    if (fileNames != null && fileNames.size > 0) {
+    if (fileNames != null && fileNames.nonEmpty) {
       fileNames.foreach(fileName => {
         this.loadFile(fileName)
       })
@@ -435,7 +434,7 @@ object PropUtils {
    */
   def mergeSparkConf: Unit = {
     if (!this.compatible && "spark".equals(this.engine)) {
-      DataPool.mergeConf
+      // DataPool.mergeConf
     }
   }
 

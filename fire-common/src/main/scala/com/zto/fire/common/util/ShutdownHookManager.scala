@@ -32,7 +32,7 @@ private[fire] class ShutdownHookManager {
         nextHook != null
       }) {
         // 调用每一个hook的run方法
-        tryWithLog(nextHook.run())(this.logger, "执行hook过程中发生例外.")
+        tryWithLog(nextHook.run())(this.logger, catchLog = "执行hook过程中发生例外.")
       }
     }
   }

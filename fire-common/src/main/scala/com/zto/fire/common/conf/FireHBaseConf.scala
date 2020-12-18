@@ -3,7 +3,6 @@ package com.zto.fire.common.conf
 import java.util
 
 import com.zto.fire.common.util.PropUtils
-import org.apache.commons.lang.StringUtils
 
 import scala.collection.JavaConversions
 

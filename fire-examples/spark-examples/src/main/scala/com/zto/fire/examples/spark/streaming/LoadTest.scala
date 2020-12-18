@@ -1,0 +1,56 @@
+package com.zto.fire.examples.spark.streaming
+
+import com.zto.fire.common.anno.Scheduled
+import com.zto.fire.examples.spark.sql.LoadTestSQL
+import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.ext.SparkExt._
+
+/**
+  * kafka json解析
+  * @author ChengLong 2019-6-26 16:52:58
+  */
+object LoadTest extends BaseSparkStreaming {
+
+  /**
+   * 缓存维表
+   */
+  def loadNewConfigTable: Unit ={
+    spark.sql(LoadTestSQL.cacheDim).cache().createOrReplaceTempView("dim_c2c_cost")
+  }
+
+  /**
+   * 重复压测
+   */
+  @Scheduled(fixedInterval = 1000 * 60 * 1, concurrent = false, initialDelay = 1000 * 30)
+  def reload(): Unit = {
+    this.spark.sql(LoadTestSQL.loadSQL).show(10, false)
+  }
+
+  /**
+    * Streaming的处理过程强烈建议放到process中，保持风格统一
+    * 注：此方法会被自动调用，在以下两种情况下，必须将逻辑写在process中
+    * 1. 开启checkpoint
+    * 2. 支持streaming热重启（可在不关闭streaming任务的前提下修改batch时间）
+    */
+  override def process: Unit = {
+    this.loadNewConfigTable
+
+    val dstream = this.ssc.createDirectStream()
+    dstream.foreachRDD(rdd => {
+      if (rdd.isNotEmpty) {
+        // 一、将json解析并注册为临时表，默认不cache临时表
+        rdd.kafkaJson2Table("test", cacheTable = true)
+        // toLowerDF表示将大写的字段转为小写
+        this.spark.sql("select after.* from test").toLowerDF.show(1, false)
+        this.spark.sql(LoadTestSQL.jsonParseSQL)
+      }
+    })
+
+    this.ssc.startAwaitTermination()
+  }
+
+  def main(args: Array[String]): Unit = {
+    this.init(10, false)
+    this.stop
+  }
+}

@@ -1,0 +1,33 @@
+package com.zto.fire.examples.spark.hbase
+
+import com.zto.fire.examples.bean.Student
+import com.zto.fire.hbase.HBaseConnector
+import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.ext.SparkExt._
+
+import scala.collection.JavaConversions._
+
+/**
+  * 通过hbase相关api，将数据实时写入到hbase中
+  * @author ChengLong 2019-5-26 13:21:59
+  */
+object HBaseStreamingTest extends BaseSparkStreaming {
+  private val tableName = "fire_test_5"
+
+  override def process: Unit = {
+    val dstream = this.ssc.createDirectStream()
+
+    dstream.repartition(5).foreachRDD(rdd => {
+      rdd.foreachPartition(it => {
+        HBaseConnector.insert(this.tableName, Student.buildStudentList())
+        val student = HBaseConnector.get(this.tableName, classOf[Student], Seq("1"))
+      })
+    })
+
+    this.ssc.startAwaitTermination()
+  }
+
+  def main(args: Array[String]): Unit = {
+    this.init(30, false)
+  }
+}

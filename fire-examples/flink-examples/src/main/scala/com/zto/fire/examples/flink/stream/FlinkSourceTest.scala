@@ -1,0 +1,72 @@
+package com.zto.fire.examples.flink.stream
+
+import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.ext.FlinkExt._
+import org.apache.flink.api.scala._
+import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, SourceFunction}
+import org.apache.flink.streaming.api.windowing.time.Time
+
+/**
+ * 自定义source
+ * @author ChengLong 2020-4-7 14:30:08
+ */
+object FlinkSourceTest extends BaseFlinkStreaming {
+
+  override def process: Unit = {
+    val dstream = this.env.addSource(new MySource).setParallelism(2)
+    // 注意Time的包不要导错，来自org.apache.flink.streaming.api.windowing.time.Time
+    dstream.timeWindowAll(Time.seconds(2)).sum(0).setParallelism(1).print
+
+    this.ssc.startAwaitTermination()
+  }
+
+  def main(args: Array[String]): Unit = {
+    this.init()
+  }
+}
+
+/**
+ * 自定义source组件
+ * 支持多并行度
+ */
+class MySource extends RichParallelSourceFunction[Long] {
+  private var isRunning = false
+  private var index = 1
+
+  /**
+   * open方法中可以创建数据库连接等初始化操作
+   * 注：若setParallelism(10)则会执行10次open方法
+   */
+  override def open(parameters: Configuration): Unit = {
+    this.isRunning = true
+    println("=========执行open方法========")
+  }
+
+  /**
+   * 持续不断的将消息发送给flink
+   * @param ctx
+   */
+  override def run(ctx: SourceFunction.SourceContext[Long]): Unit = {
+    while (this.isRunning) {
+      this.index += 1
+      ctx.collect(this.index)
+      Thread.sleep(1000)
+    }
+  }
+
+  /**
+   * 当任务被cancel时调用
+   */
+  override def cancel(): Unit = {
+    this.isRunning = false
+    println("=========执行cancel方法==========")
+  }
+
+  /**
+   * close方法用于释放资源，如数据库连接等
+   */
+  override def close(): Unit = {
+    println("=========执行close方法==========")
+  }
+}
