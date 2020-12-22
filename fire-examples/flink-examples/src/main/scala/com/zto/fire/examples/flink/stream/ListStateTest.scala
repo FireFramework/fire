@@ -1,12 +1,12 @@
 package com.zto.fire.examples.flink.stream
 
+import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.ext.functions.FireMapFunction
 import org.apache.flink.api.common.state.StateTtlConfig.UpdateType
 import org.apache.flink.api.common.state.{StateTtlConfig, ValueState, ValueStateDescriptor}
 import org.apache.flink.api.common.time.Time
 import org.apache.flink.api.common.typeinfo.{TypeHint, TypeInformation}
-import com.zto.fire.flink.ext.FlinkExt._
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.util.Collector

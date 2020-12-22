@@ -1,9 +1,9 @@
 package com.zto.fire.examples.spark.structured
 
+import com.zto.fire._
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseStructuredStreaming
 import org.apache.spark.sql.Encoders
-import com.zto.fire.spark.ext.SparkExt._
 import com.zto.fire.spark.util.SparkUtils
 
 /**

@@ -6,7 +6,7 @@ import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.flink.sink.{FlinkHBaseSink, FlinkJdbcSink}
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import com.zto.fire.hbase.bean.HBaseBaseBean
-import com.zto.fire.predef._
+import com.zto.fire._
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.accumulators.SimpleAccumulator
 import org.apache.flink.api.common.functions.RichMapFunction

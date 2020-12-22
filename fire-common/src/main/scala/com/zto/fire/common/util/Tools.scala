@@ -1,5 +1,7 @@
 package com.zto.fire.common.util
 
+import scala.collection.convert.{WrapAsJava, WrapAsScala}
+
 /**
  * 各种工具API的集合类
  *
@@ -7,6 +9,6 @@ package com.zto.fire.common.util
  * @since 1.0.0
  * @create 2020-12-16 16:23
  */
-trait Tools extends TypeMap with ValueCheck with FireFunctions {
+trait Tools extends TypeMap with ValueCheck with FireFunctions with WrapAsScala with WrapAsJava {
 
 }

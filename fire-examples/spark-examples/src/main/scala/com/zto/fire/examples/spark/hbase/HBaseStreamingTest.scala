@@ -1,11 +1,9 @@
 package com.zto.fire.examples.spark.hbase
 
+import com.zto.fire._
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.BaseSparkStreaming
-import com.zto.fire.spark.ext.SparkExt._
-
-import scala.collection.JavaConversions._
 
 /**
   * 通过hbase相关api，将数据实时写入到hbase中

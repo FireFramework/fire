@@ -7,8 +7,6 @@ import com.zto.fire.predef._
 import org.junit.Assert._
 import org.junit.{Before, Test}
 
-import scala.collection.JavaConversions._
-
 /**
  * 用于单元测试HBaseOper中的API
  *
@@ -24,7 +22,7 @@ class HBaseConnectorTest {
 
   @Before
   def init: Unit = {
-    PropUtils.load("HBaseOperTest")
+    PropUtils.load("HBaseConnectorTest")
     this.hbase = HBaseConnector()
     this.hbase2 = HBaseConnector(keyNum = 2)
   }

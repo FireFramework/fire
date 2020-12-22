@@ -1,9 +1,9 @@
 package com.zto.fire.examples.flink.stream
 
+import com.zto.fire._
 import com.alibaba.fastjson.JSON
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
-import com.zto.fire.flink.ext.FlinkExt._
 import org.apache.flink.api.scala._
 
 object FlinkRetractStreamTest extends BaseFlinkStreaming {

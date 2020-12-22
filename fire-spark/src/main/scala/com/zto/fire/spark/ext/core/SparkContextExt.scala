@@ -1,7 +1,7 @@
 package com.zto.fire.spark.ext.core
 
+import com.zto.fire._
 import com.zto.fire.common.conf.FireSparkConf
-import com.zto.fire.spark.ext.SparkExt._
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql._

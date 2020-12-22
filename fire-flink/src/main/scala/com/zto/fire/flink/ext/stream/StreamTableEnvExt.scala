@@ -1,6 +1,6 @@
 package com.zto.fire.flink.ext.stream
 
-import com.zto.fire.flink.ext.FlinkExt._
+import com.zto.fire._
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.jdbc.JdbcOperBridge
 import org.apache.flink.streaming.api.datastream.DataStreamSink

@@ -1,12 +1,12 @@
 package com.zto.fire.spark
 
+import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf, FireSparkConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestfulRegister
 import com.zto.fire.spark.acc.AccumulatorManager
-import com.zto.fire.spark.ext.SparkExt._
 import com.zto.fire.spark.ext.module.KuduContextExt
 import com.zto.fire.spark.rest.SparkSystemRestful
 import com.zto.fire.spark.task.{SparkInternalTask, SparkSchedulerManager}

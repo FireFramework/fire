@@ -1,7 +1,7 @@
 package com.zto.fire.examples.flink.batch
 
+import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkBatch
-import com.zto.fire.flink.ext.FlinkExt._
 import com.zto.fire.flink.ext.functions.FireMapFunction
 import org.apache.flink.api.scala._
 

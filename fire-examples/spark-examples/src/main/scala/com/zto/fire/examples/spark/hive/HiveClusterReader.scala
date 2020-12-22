@@ -1,5 +1,6 @@
 package com.zto.fire.examples.spark.hive
 
+import com.zto.fire._
 import com.zto.fire.spark.BaseSparkCore
 
 /**

@@ -2,10 +2,10 @@ package com.zto.fire.examples.spark.acc
 
 import java.util.concurrent.TimeUnit
 
+import com.zto.fire._
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.util.{DateFormatUtils, PropUtils}
 import com.zto.fire.spark.BaseSparkStreaming
-import com.zto.fire.spark.ext.SparkExt._
 
 import scala.collection.JavaConversions
 

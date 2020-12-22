@@ -18,7 +18,7 @@ import spark.Spark
  * @author ChengLong 2020年1月7日 09:20:02
  * @since 0.4.1
  */
-trait BaseFire extends Tools {
+trait BaseFire {
   // 任务启动时间戳
   val startTime = DateFormatUtils.currentTime
   // web ui地址

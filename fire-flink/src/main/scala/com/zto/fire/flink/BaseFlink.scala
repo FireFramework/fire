@@ -1,5 +1,6 @@
 package com.zto.fire.flink
 
+import com.zto.fire._
 import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf, FireSparkConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}

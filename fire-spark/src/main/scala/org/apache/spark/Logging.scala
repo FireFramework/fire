@@ -18,11 +18,10 @@
 package org.apache.spark
 
 import org.apache.log4j.{LogManager, PropertyConfigurator}
-import org.slf4j.{Logger, LoggerFactory}
-import org.slf4j.impl.StaticLoggerBinder
-
 import org.apache.spark.annotation.Private
 import org.apache.spark.util.Utils
+import org.slf4j.impl.StaticLoggerBinder
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
  * Utility trait for classes that want to log data. Creates a SLF4J logger for the class and allows

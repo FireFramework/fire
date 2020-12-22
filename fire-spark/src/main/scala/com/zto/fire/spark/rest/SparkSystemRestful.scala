@@ -12,9 +12,9 @@ import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
 import com.zto.fire.core.rest.{RestCase, SystemRestful}
 import com.zto.fire.spark.BaseSpark
-import com.zto.fire.spark.ext.SparkExt._
 import org.apache.commons.lang3.StringUtils
 import spark._
+import com.zto.fire._
 
 import scala.collection.JavaConversions
 

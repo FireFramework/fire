@@ -1,12 +1,10 @@
 package com.zto.fire.examples.flink.stream
 
+import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkStreaming
-import com.zto.fire.flink.ext.FlinkExt._
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
-
-import scala.collection.JavaConversions._
 
 object KafkaDemo extends BaseFlinkStreaming {
 

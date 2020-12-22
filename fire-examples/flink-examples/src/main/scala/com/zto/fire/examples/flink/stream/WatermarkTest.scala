@@ -2,12 +2,12 @@ package com.zto.fire.examples.flink.stream
 
 import java.text.SimpleDateFormat
 
+import com.zto.fire._
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
-import com.zto.fire.flink.ext.FlinkExt._
 import com.zto.fire.flink.ext.watermark.FirePeriodicWatermarks
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.scala._

@@ -5,12 +5,12 @@ import java.sql._
 import java.util
 import java.util.concurrent.atomic.AtomicBoolean
 
+import com.zto.fire._
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.conf.{FireKuduConf, FireSparkConf}
 import com.zto.fire.common.util.{ReflectionUtils, ValueUtils}
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.spark.bean.KuduBaseBean
-import com.zto.fire.spark.ext.SparkExt._
 import com.zto.fire.spark.util.{KuduUtils, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kudu.client.{CreateTableOptions, KuduTable}

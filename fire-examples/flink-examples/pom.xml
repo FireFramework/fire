@@ -3,8 +3,6 @@
   <groupId>com.zto.fire</groupId>
   <artifactId>flink-examples</artifactId>
   <name>${project.artifactId}</name>
-  <description>flink-examples</description>
-  <inceptionYear>2010</inceptionYear>
   <packaging>jar</packaging>
 
   <properties>
@@ -22,7 +20,7 @@
     <dependency>
       <groupId>com.zto.fire</groupId>
       <artifactId>fire-flink</artifactId>
-      <version>${fire.version}</version>
+      <version>${project.version}</version>
     </dependency>
 
     <!-- flink计算引擎相关依赖 -->

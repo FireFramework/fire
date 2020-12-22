@@ -1,8 +1,8 @@
 package com.zto.fire.examples.spark.jdbc
 
+import com.zto.fire._
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.spark.BaseSparkStreaming
-import com.zto.fire.spark.ext.SparkExt._
 
 object JdbcStreamingTest extends BaseSparkStreaming {
   val tableName = "t_hosts"

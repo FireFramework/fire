@@ -1,11 +1,11 @@
 package com.zto.fire.examples.flink.stream
 
+import com.zto.fire._
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
-import com.zto.fire.flink.ext.FlinkExt._
 import com.zto.fire.hbase.HBaseConnector
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.DataStream

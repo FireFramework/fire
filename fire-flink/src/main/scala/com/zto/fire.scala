@@ -1,4 +1,4 @@
-package com.zto.fire.flink.ext
+package com.zto
 
 import com.zto.fire.core.ext.BaseFireExt
 import com.zto.fire.flink.ext.batch.{BatchExecutionEnvExt, BatchTableEnvExt, DataSetExt}
@@ -9,12 +9,14 @@ import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.bridge.scala.{BatchTableEnvironment, StreamTableEnvironment}
 import org.apache.flink.types.Row
 
-
 /**
- * Flink扩展工具类，利用隐式转换对已有的类追加自定义函数
- * Created by ChengLong on 2020年1月6日 16:31:56.
+ * 预定义fire框架中的扩展工具
+ *
+ * @author ChengLong
+ * @since 1.0.0
+ * @create 2020-12-22 13:51
  */
-object FlinkExt extends BaseFireExt {
+package object fire extends BaseFireExt {
 
   /**
    * StreamExecutionEnvironment扩展

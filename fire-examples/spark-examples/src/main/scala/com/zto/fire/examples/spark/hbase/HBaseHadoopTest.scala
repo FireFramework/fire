@@ -1,5 +1,6 @@
 package com.zto.fire.examples.spark.hbase
 
+import com.zto.fire._
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkCore
 import org.apache.hadoop.hbase.client.Scan
@@ -7,7 +8,6 @@ import org.apache.hadoop.hbase.filter.{CompareFilter, RegexStringComparator, Row
 import org.apache.spark.sql.{Encoders, Row}
 
 import scala.collection.JavaConversions
-import com.zto.fire.spark.ext.SparkExt._
 
 /**
   * 本示例演示Spark提供的hbase api封装后的使用

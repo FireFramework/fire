@@ -1,8 +1,8 @@
 package com.zto.fire.examples.spark.hbase
 
+import com.zto.fire._
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkCore
-import com.zto.fire.spark.ext.SparkExt._
 import org.apache.hadoop.hbase.client.Get
 import org.apache.spark.sql.Encoders
 

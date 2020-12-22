@@ -1,9 +1,9 @@
 package com.zto.fire.examples.flink.acc
 
+import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.ext.functions.FireMapFunction
 import org.apache.flink.api.scala._
-import com.zto.fire.flink.ext.FlinkExt._
 import org.apache.flink.streaming.api.scala.DataStream
 
 /**

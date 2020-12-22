@@ -1,9 +1,9 @@
 package com.zto.fire.examples.spark.streaming
 
+import com.zto.fire._
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.spark.BaseSparkStreaming
-import com.zto.fire.spark.ext.SparkExt._
 
 /**
  * kafka json解析

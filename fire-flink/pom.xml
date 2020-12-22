@@ -3,7 +3,6 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.zto.fire</groupId>
     <artifactId>fire-flink</artifactId>
-    <inceptionYear>2010</inceptionYear>
     <packaging>jar</packaging>
 
     <properties>
@@ -27,27 +26,27 @@
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-common</artifactId>
-            <version>${fire.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-core</artifactId>
-            <version>${fire.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-jdbc</artifactId>
-            <version>${fire.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-hbase</artifactId>
-            <version>${fire.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-metrics</artifactId>
-            <version>${fire.version}</version>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- flink计算引擎相关依赖 -->

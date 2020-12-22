@@ -1,7 +1,7 @@
 package com.zto.fire.examples.spark.structured
 
+import com.zto.fire._
 import com.zto.fire.spark.BaseStructuredStreaming
-import com.zto.fire.spark.ext.SparkExt._
 
 /**
  * 使用fire进行structured streaming开发的demo

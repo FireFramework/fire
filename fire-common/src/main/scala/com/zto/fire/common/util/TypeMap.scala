@@ -14,6 +14,7 @@ trait TypeMap {
   type JBoolean = java.lang.Boolean
   type JChar = java.lang.Character
   type JFloat = java.lang.Float
+  type JShort = java.lang.Short
   type JDouble = java.lang.Double
   type JBigDecimal = java.math.BigDecimal
   type JString = java.lang.String

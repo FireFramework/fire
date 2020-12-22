@@ -1,9 +1,9 @@
 package com.zto.fire.examples.spark.hbase
 
+import com.zto.fire._
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.BaseSparkCore
-import com.zto.fire.spark.ext.SparkExt._
 import org.apache.spark.sql.{Encoders, Row}
 
 import scala.collection.JavaConversions

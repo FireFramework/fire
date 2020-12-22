@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.util.Bytes
 import org.slf4j.LoggerFactory
 
 import scala.collection.Iterator
-import scala.collection.JavaConversions._
+//import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
 

@@ -1,8 +1,8 @@
 package com.zto.fire.examples.spark.structured
 
+import com.zto.fire._
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseStructuredStreaming
-import com.zto.fire.spark.ext.SparkExt._
 
 /**
  * 结构化流测试

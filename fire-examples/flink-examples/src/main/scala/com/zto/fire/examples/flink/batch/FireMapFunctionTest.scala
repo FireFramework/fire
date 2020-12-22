@@ -3,14 +3,12 @@ package com.zto.fire.examples.flink.batch
 import java.lang
 import java.util.UUID
 
+import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkBatch
 import com.zto.fire.flink.ext.functions.FireMapFunction
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.util.Collector
-import com.zto.fire.flink.ext.FlinkExt._
 import org.apache.flink.api.scala._
-
-import scala.collection.JavaConversions
 
 /**
  * 用于演示FireMapFunction的使用，FireMapFunction比RichMapFunction功能更强大
@@ -43,7 +41,7 @@ object FireMapFunctionTest extends BaseFlinkBatch {
       }
 
       override def mapPartition(values: lang.Iterable[Int], out: Collector[String]): Unit = {
-        JavaConversions.asScalaIterator(values.iterator()).foreach(i => out.collect(i.toString))
+        values.iterator().foreach(i => out.collect(i.toString))
       }
 
       override def close(): Unit = {

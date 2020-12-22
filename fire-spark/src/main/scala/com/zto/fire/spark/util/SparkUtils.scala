@@ -2,10 +2,10 @@ package com.zto.fire.spark.util
 
 import java.lang.reflect.Field
 
+import com.zto.fire._
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf, FireSparkConf, FireStringConf}
 import com.zto.fire.common.util._
-import com.zto.fire.predef._
 import com.zto.fire.spark.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
@@ -17,7 +17,6 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.Try
 

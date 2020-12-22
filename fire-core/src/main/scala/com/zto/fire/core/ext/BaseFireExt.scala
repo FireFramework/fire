@@ -1,5 +1,7 @@
 package com.zto.fire.core.ext
 
+import com.zto.fire.common.util.Tools
+
 /**
  * 隐式转换基类
  *
@@ -7,4 +9,4 @@ package com.zto.fire.core.ext
  * @since 1.2.0
  * @create 2020-12-16 15:55
  */
-trait BaseFireExt
+trait BaseFireExt extends Tools

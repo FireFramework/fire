@@ -136,9 +136,8 @@ class TableExt(table: Table) {
                        flushInterval: Long = 1000,
                        isMerge: Boolean = true,
                        keyNum: Int = 1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
+    import com.zto.fire._
     if (!isMerge) throw new IllegalArgumentException("该jdbc sink api暂不支持非merge语义，delete操作需单独实现")
-
-    import com.zto.fire.flink.ext.FlinkExt._
     this.table.toRetractStreamSingle.jdbcBatchUpdate2(sql, batch, flushInterval, keyNum) {
       row => fun(row)
     }.name("fire jdbc table sink")
@@ -165,7 +164,7 @@ class TableExt(table: Table) {
                                                multiVersion: Boolean = false,
                                                flushInterval: Long = 3000,
                                                keyNum: Int = 1): DataStreamSink[_] = {
-    import com.zto.fire.flink.ext.FlinkExt._
+    import com.zto.fire._
     this.table.hbaseOperPutTable2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
       val schema = table.getTableSchema
       row => {
@@ -197,8 +196,7 @@ class TableExt(table: Table) {
                          multiVersion: Boolean = false,
                          flushInterval: Long = 3000,
                          keyNum: Int = 1)(fun: Row => HBaseBaseBean[_]): DataStreamSink[_] = {
-
-    import com.zto.fire.flink.ext.FlinkExt._
+    import com.zto.fire._
     this.table.toRetractStreamSingle.addSink(new FlinkHBaseSink[Row](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
       override def map(value: Row): HBaseBaseBean[_] = fun(value)
     }).name("fire hbase table sink")

@@ -1,8 +1,8 @@
 package com.zto.fire.examples.spark.thread
 
+import com.zto.fire._
 import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.spark.BaseSparkStreaming
-import com.zto.fire.spark.ext.SparkExt._
 
 /**
   * 在driver中启用线程池的示例
