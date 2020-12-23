@@ -10,7 +10,7 @@ import com.codahale.metrics.{ConsoleReporter, MetricRegistry, Slf4jReporter}
  * Metrics模块测试
  *
  * @author ChengLong
- * @since 1.2.0
+ * @since 2.0.0
  * @create 2020-12-17 10:11
  */
 class MetricsTest {

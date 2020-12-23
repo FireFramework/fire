@@ -86,6 +86,7 @@ private[fire] trait ValueCheck {
         case collection: util.Collection[_] => require(!collection.isEmpty, s"第[ ${index} ]参数为空，异常信息：$message")
         case it: Iterable[_] => require(it.nonEmpty, s"第[ ${index} ]参数为空，异常信息：$message")
         case map: JMap[_, _] => require(map.nonEmpty, s"第[ ${index} ]参数为空，异常信息：$message")
+        case _ =>
       }
     })
   }

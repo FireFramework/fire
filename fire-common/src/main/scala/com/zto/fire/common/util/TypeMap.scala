@@ -4,7 +4,7 @@ package com.zto.fire.common.util
  * Java类型映射
  *
  * @author ChengLong
- * @since 1.2.0
+ * @since 2.0.0
  * @create 2020-12-16 15:40
  */
 trait TypeMap {

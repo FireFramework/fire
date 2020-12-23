@@ -24,7 +24,6 @@ import org.apache.hadoop.hbase.filter.{Filter, FilterList}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.io.compress.Compression
 import org.apache.hadoop.hbase.util.Bytes
-import org.slf4j.LoggerFactory
 
 import scala.collection.Iterator
 //import scala.collection.JavaConversions._
@@ -48,12 +47,11 @@ import scala.reflect.{ClassTag, classTag}
  * @author ChengLong 2020-11-11
  */
 private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extends Connector {
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
   // --------------------------------------- 反射缓存 --------------------------------------- //
+  private[this] var configuration: Configuration = _
   private[this] lazy val cacheFieldMap = new JConcurrentHashMap[Class[_], JMap[String, Field]]()
   private[this] lazy val cacheHConfigMap = new JConcurrentHashMap[Class[_], HConfig]()
   private[this] lazy val cacheTableExistsMap = new JConcurrentHashMap[String, Boolean]()
-  private[this] lazy val configuration: Configuration = this.initConfiguration
   private[this] lazy val connection: Connection = this.initConnection
   private[this] lazy val durability = this.initDurability
   private[this] lazy val threadPool = ThreadUtils.createThreadPool("HBaseOperPool", ThreadPoolType.SCHEDULED)
@@ -62,7 +60,6 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[this] lazy val row2BeanParamError = "参数不合法，HBase Row转为JavaBean失败."
   private[this] lazy val closeAdminError = "close admin执行失败"
   this.registerReload
-  this.registerClose
 
   /**
    * 批量插入多行多列，自动将HBaseBaseBean子类转为Put集合
@@ -266,28 +263,6 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
     }(this.logger, s"HBase scan ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${list.size}条",
       s"scan ${hbaseCluster(keyNum)}.${tableName}执行失败",
       "关闭HBase table对象或ResultScanner失败")
-  }
-
-  /**
-   * 用于初始化单例的configuration
-   * 注：配置文件中的参数优先级更高，会覆盖调用者传入的Configuration中同名的参数
-   */
-  @Internal
-  private[this] def initConfiguration: Configuration = {
-    val finalConf = if (this.conf != null) this.conf else HBaseConfiguration.create()
-
-    val url = hbaseClusterUrl(keyNum)
-    if (StringUtils.isNotBlank(url)) finalConf.set("hbase.zookeeper.quorum", url)
-
-    // 以spark.fire.hbase.conf.xxx[keyNum]开头的配置信息
-    PropUtils.sliceKeysByNum(hbaseConfPrefix, keyNum).foreach(kv => {
-      logger.info(s"hbase configuration: key=${kv._1} value=${kv._2}")
-      finalConf.set(kv._1, kv._2)
-    })
-
-    require(StringUtils.isNotBlank(finalConf.get("hbase.zookeeper.quorum")), s"未配置HBase集群信息，请通过以下参数指定：spark.hbase.cluster[$keyNum]=xxx")
-
-    finalConf
   }
 
   /**
@@ -972,16 +947,6 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   }
 
   /**
-   * 用于注册jvm退出前关闭连接
-   */
-  @Internal
-  private[this] def registerClose(): Unit = ShutdownHookManager.addShutdownHook() { () => {
-    if (connection != null) connection.close()
-    logger.info("HBase connection closed successfully.")
-  }
-  }
-
-  /**
    * 用于定时reload表是否存在的数据
    */
   @Internal
@@ -1001,6 +966,35 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
     }
   }
 
+  /**
+   * 用于初始化单例的configuration
+   */
+  @Internal
+  override protected def open(): Unit = {
+    val finalConf = if (this.conf != null) this.conf else HBaseConfiguration.create()
+
+    val url = hbaseClusterUrl(keyNum)
+    if (StringUtils.isNotBlank(url)) finalConf.set("hbase.zookeeper.quorum", url)
+
+    // 以spark.fire.hbase.conf.xxx[keyNum]开头的配置信息
+    PropUtils.sliceKeysByNum(hbaseConfPrefix, keyNum).foreach(kv => {
+      logger.info(s"hbase configuration: key=${kv._1} value=${kv._2}")
+      finalConf.set(kv._1, kv._2)
+    })
+
+    require(StringUtils.isNotBlank(finalConf.get("hbase.zookeeper.quorum")), s"未配置HBase集群信息，请通过以下参数指定：spark.hbase.cluster[$keyNum]=xxx")
+    this.configuration = finalConf
+  }
+
+  /**
+   * connector关闭
+   */
+  override protected def close(): Unit = {
+    if (this.connection != null && !this.connection.isClosed) {
+      this.connection.close()
+      logger.debug(s"释放HBase connection成功. keyNum=$keyNum")
+    }
+  }
 }
 
 /**
@@ -1010,11 +1004,13 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
 object HBaseConnector extends ConnectorFactory[HBaseConnector] {
 
   /**
-   * 创建指定集群标识的HBaseOper对象实例
+   * 创建HBaseConnector
    */
-  def apply(conf: Configuration = null, keyNum: Int = 1): HBaseConnector = {
-    this.instanceMap.putIfAbsent(keyNum, new HBaseConnector(conf, keyNum))
-    this.instanceMap.get(keyNum)
+  override protected def create(conf: Any = null, keyNum: Int = 1): HBaseConnector = {
+    requireNonEmpty(keyNum)
+    val connector = new HBaseConnector(conf.asInstanceOf[Configuration], keyNum)
+    logger.debug(s"创建HBaseConnector实例成功. keyNum=$keyNum")
+    connector
   }
 
   /**

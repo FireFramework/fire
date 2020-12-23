@@ -24,6 +24,7 @@ class HBaseConnectorTest {
   def init: Unit = {
     PropUtils.load("HBaseConnectorTest")
     this.hbase = HBaseConnector()
+    this.hbase2 = HBaseConnector()
     this.hbase2 = HBaseConnector(keyNum = 2)
   }
 

@@ -10,7 +10,6 @@ import com.zto.fire.common.util.{DataSourceManager, StringsUtils}
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -26,8 +25,7 @@ import scala.reflect.ClassTag
  * @author ChengLong 2020-11-27 10:31:03
  */
 private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends Connector {
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
-  private[this] lazy val connPool = this.init
+  private[this] var connPool: ComboPooledDataSource = _
   // 日志中sql截取的长度
   private lazy val logSqlLength = FireFrameworkConf.logSqlLength
   private[this] var username: String = _
@@ -35,15 +33,12 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
   private[this] var dbType: String = "unknown"
   private[this] lazy val finallyCatchLog = "释放jdbc资源失败"
 
+
   /**
-   * 初始化指定的连接池，未被使用
-   *
-   * @return
-   * 连接池对象
+   * c3p0线程池初始化
    */
-  @Internal
-  private[this] def init: ComboPooledDataSource = {
-    tryWithReturn {
+  override protected def open(): Unit = {
+    tryWithLog {
       // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
       this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
       this.url = if (StringUtils.isBlank(FireJdbcConf.url(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.url)) this.conf.url else FireJdbcConf.url(keyNum)
@@ -70,9 +65,20 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       pool.setMaxStatements(0)
       pool.setMaxStatementsPerConnection(0)
       pool.setMaxIdleTime(FireJdbcConf.maxIdleTime(keyNum))
-      pool
+      this.connPool = pool
     }(this.logger, s"完成数据库连接池[ $keyNum ] driver: ${this.dbType}", s"初始化数据库连接池[ $keyNum ]失败")
   }
+
+  /**
+   * 关闭c3p0数据库连接池
+   */
+  override protected def close(): Unit = {
+    if (this.connPool != null) {
+      this.connPool.close()
+      logger.debug(s"释放jdbc 连接池成功. keyNum=$keyNum")
+    }
+  }
+
 
   /**
    * 从指定的连接池中获取一个连接
@@ -335,11 +341,13 @@ case class JdbcConf(url: String, driverClass: String, username: String, password
 object JdbcConnector extends ConnectorFactory[JdbcConnector] {
 
   /**
-   * 创建指定集群标识的JdbcOper对象实例
+   * 约定创建connector子类实例的方法
    */
-  def apply(conf: JdbcConf = null, keyNum: Int = 1): JdbcConnector = {
-    this.instanceMap.putIfAbsent(keyNum, new JdbcConnector(conf, keyNum))
-    this.instanceMap.get(keyNum)
+  override protected def create(conf: Any = null, keyNum: Int = 1): JdbcConnector = {
+    requireNonEmpty(keyNum)
+    val connector = new JdbcConnector(conf.asInstanceOf[JdbcConf], keyNum)
+    logger.debug(s"创建JdbcConnector实例成功. keyNum=$keyNum")
+    connector
   }
 
   // ------------------------------- 兼容老API的使用方法，模拟静态方法的API使用方式 ------------------------------- //
