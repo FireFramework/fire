@@ -17,14 +17,14 @@ import java.util.Random;
  *
  * @author ChengLong 2019-04-08 13:57:31
  */
-public class SystemInfoUtils {
+public class OSUtils {
     private static String ip;
     private static String hostname;
     private static String pid;
     private static final String OSNAME = "os.name";
-    private static final Logger logger = LoggerFactory.getLogger(SystemInfoUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(OSUtils.class);
 
-    private SystemInfoUtils() {
+    private OSUtils() {
     }
 
     /**

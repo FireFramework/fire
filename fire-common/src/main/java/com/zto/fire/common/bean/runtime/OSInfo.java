@@ -1,6 +1,6 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.zto.fire.common.util.SystemInfoUtils;
+import com.zto.fire.common.util.OSUtils;
 import oshi.SystemInfo;
 import oshi.software.os.OperatingSystem;
 import oshi.util.FormatUtil;
@@ -93,8 +93,8 @@ public class OSInfo {
         osInfo.userName = System.getProperty("user.name");
         osInfo.userHome = System.getProperty("user.home");
         osInfo.userDir = System.getProperty("user.dir");
-        osInfo.ip = SystemInfoUtils.getIp();
-        osInfo.hostname = SystemInfoUtils.getHostName();
+        osInfo.ip = OSUtils.getIp();
+        osInfo.hostname = OSUtils.getHostName();
         OperatingSystem os = systemInfo.getOperatingSystem();
         osInfo.manufacturer = os.getManufacturer();
         osInfo.family = os.getFamily();

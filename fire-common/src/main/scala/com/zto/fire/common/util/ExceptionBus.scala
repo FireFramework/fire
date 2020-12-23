@@ -26,7 +26,7 @@ object ExceptionBus {
   // 异常总数计数器
   private[fire] lazy val exceptionCount = new AtomicLong(0)
   // 异常发生的主机ip
-  private[this] lazy val ip = SystemInfoUtils.getIp
+  private[this] lazy val ip = OSUtils.getIp
 
   /**
    * 向异常总线中投递异常对象

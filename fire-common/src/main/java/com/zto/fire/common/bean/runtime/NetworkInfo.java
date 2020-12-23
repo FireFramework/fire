@@ -1,6 +1,6 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.zto.fire.common.util.SystemInfoUtils;
+import com.zto.fire.common.util.OSUtils;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.hardware.NetworkIF;
@@ -134,7 +134,7 @@ public class NetworkInfo {
                 networkInfo.bytesSent = networkIF.getBytesSent();
                 networkInfo.packetsRecv = networkIF.getPacketsRecv();
                 networkInfo.packetsSent = networkIF.getPacketsSent();
-                networkInfo.ip = SystemInfoUtils.getIp();
+                networkInfo.ip = OSUtils.getIp();
                 networkInfo.ipv4 = networkIF.getIPv4addr();
                 networkInfo.ipv6 = networkIF.getIPv6addr();
                 networkInfo.mtu = networkIF.getMTU();

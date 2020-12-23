@@ -3,7 +3,7 @@ package com.zto.fire.core.bean;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.ExceptionBus;
-import com.zto.fire.common.util.SystemInfoUtils;
+import com.zto.fire.common.util.OSUtils;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -222,7 +222,7 @@ public class TimeCost implements Serializable {
     private TimeCost() {
         this.start = System.currentTimeMillis();
         this.startTime = DateFormatUtils.formatCurrentDateTime();
-        this.ip = SystemInfoUtils.getIp();
+        this.ip = OSUtils.getIp();
     }
 
     /**

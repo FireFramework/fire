@@ -201,8 +201,8 @@ class DataFrameExt(dataFrame: DataFrame) {
    * @param clazz
    * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbaseOperPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = 1): Unit = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperPutDF(tableName, clazz, this.dataFrame)
+  def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = 1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutDF(tableName, clazz, this.dataFrame)
   }
 
   /**

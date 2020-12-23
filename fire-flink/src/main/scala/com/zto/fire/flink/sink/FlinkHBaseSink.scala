@@ -7,7 +7,7 @@ import com.zto.fire.hbase.bean.HBaseBaseBean
 import scala.collection.JavaConversions
 
 /**
- * flink HBase sink组件，底层基于HBaseOper
+ * flink HBase sink组件，底层基于HBaseConnector
  *
  * @author ChengLong
  * @since 1.1.0

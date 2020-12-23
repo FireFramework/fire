@@ -79,8 +79,8 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
    * @param tableName
    * rowKey集合
    */
-  def hbaseOperDeleteDS(tableName: String, keyNum: Int = 1): Unit = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperDeleteDS(tableName, dataset.asInstanceOf[Dataset[String]])
+  def hbaseDeleteDS(tableName: String, keyNum: Int = 1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseDeleteDS(tableName, dataset.asInstanceOf[Dataset[String]])
   }
 
   /**
@@ -101,8 +101,8 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
    * @param clazz
    * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbaseOperPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = 1): Unit = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperPutDS[E](tableName, clazz, dataset.asInstanceOf[Dataset[E]])
+  def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = 1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutDS[E](tableName, clazz, dataset.asInstanceOf[Dataset[E]])
   }
 
   /**

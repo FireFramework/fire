@@ -2,7 +2,7 @@ package com.zto.fire.spark.ext.module
 
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireHBaseConf, FireSparkConf}
-import com.zto.fire.common.db.ConnectorFactory
+import com.zto.fire.common.db.{Connector, ConnectorFactory}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.predef._
@@ -21,7 +21,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Encoders, Row}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.DStream
-import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -40,13 +39,11 @@ import scala.reflect.ClassTag
  * @author ChengLong 2018年4月10日 10:39:28
  */
 class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient config: Configuration, batchSize: Int = 10000, keyNum: Int = 1)
-  extends HBaseContext(sc, config) {
-
+  extends HBaseContext(sc, config) with Connector {
   private[fire] lazy val finalBatchSize = if (FireHBaseConf.hbaseBatchSize(this.keyNum) != -1) FireHBaseConf.hbaseBatchSize(this.keyNum) else this.batchSize
-  private[this] lazy val hbaseOper = HBaseConnector(keyNum = this.keyNum)
+  private[this] lazy val hbaseConnector = HBaseConnector(keyNum = this.keyNum)
   private[this] lazy val sparkSession = SparkSingletonFactory.getSparkSession
   private[this] lazy val tableConfMap = new JConcurrentHashMap[String, Configuration]()
-  private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 根据RDD[String]批量删除，rdd是rowkey的集合
@@ -83,7 +80,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
 
   /**
    * 指定rowkey集合，进行批量删除操作内部会将这个集合转为RDD
-   * 推荐在较大量数据时使用，小数据量的删除操作仍推荐使用HBaseOper
+   * 推荐在较大量数据时使用，小数据量的删除操作仍推荐使用HBaseConnector
    *
    * @param tableName
    * HBase表名
@@ -118,7 +115,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     tryWithReturn {
       val rowKeyRDD = rdd.filter(StringUtils.isNotBlank(_)).map(rowKey => Bytes.toBytes(rowKey))
       val getRDD = this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
-        this.hbaseOper.hbaseRow2Bean(result, clazz)
+        this.hbaseConnector.hbaseRow2Bean(result, clazz)
       }).filter(bean => bean != null).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
       getRDD
     }(this.logger, s"execute bulkGetRDD(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
@@ -171,7 +168,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
   /**
    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
    * 内部实现是将rowkey集合转为RDD[String]，推荐在数据量较大
-   * 时使用。数据量较小请优先使用HBaseOper
+   * 时使用。数据量较小请优先使用HBaseConnector
    *
    * @param tableName
    * HBase表名
@@ -212,7 +209,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       this.bulkPut[T](rdd,
         TableName.valueOf(tableName),
         (putRecord: T) => {
-          this.hbaseOper.convert2Put[T](if (this.hbaseOper.getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, this.hbaseOper.getNullable[T])
+          this.hbaseConnector.convert2Put[T](if (this.hbaseConnector.getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, this.hbaseConnector.getNullable[T])
         })
     }(this.logger, s"execute bulkPutRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
@@ -221,7 +218,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * 批量写入，将自定义的JavaBean数据集批量并行写入
    * 到HBase的指定表中。内部会将自定义JavaBean的相应
    * 字段一一映射为Put对象，并完成一次写入。如果数据量
-   * 较大，推荐使用。数据量过小则推荐使用HBaseOper
+   * 较大，推荐使用。数据量过小则推荐使用HBaseConnector
    *
    * @param tableName
    * HBase表名
@@ -261,7 +258,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       if (scan.getCaching == -1) {
         scan.setCaching(this.finalBatchSize)
       }
-      this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => this.hbaseOper.hbaseRow2BeanList(it, clazz)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
+      this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => this.hbaseConnector.hbaseRow2BeanList(it, clazz)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
     }(this.logger, s"execute bulkScanRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -340,7 +337,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
 
     tryWithLog {
       this.streamBulkPut[T](dstream, TableName.valueOf(tableName), (putRecord: T) => {
-        this.hbaseOper.convert2Put[T](if (this.hbaseOper.getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, this.hbaseOper.getNullable[T])
+        this.hbaseConnector.convert2Put[T](if (this.hbaseConnector.getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, this.hbaseConnector.getNullable[T])
       })
     }(this.logger, s"execute bulkPutStream(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
@@ -362,7 +359,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       rdd.mapPartitions(it => {
         val putList = ListBuffer[(ImmutableBytesWritable, Put)]()
         it.foreach(t => {
-          putList += Tuple2(new ImmutableBytesWritable(), this.hbaseOper.convert2Put[T](t, this.hbaseOper.getNullable[T]))
+          putList += Tuple2(new ImmutableBytesWritable(), this.hbaseConnector.convert2Put[T](t, this.hbaseConnector.getNullable[T]))
         })
         putList.iterator
       }).saveAsNewAPIHadoopDataset(this.getConfiguration(tableName))
@@ -411,7 +408,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    */
   def hadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String): Unit = {
     requireNonEmpty(tableName, df)
-    val insertEmpty = this.hbaseOper.getNullable[T]
+    val insertEmpty = this.hbaseConnector.getNullable[T]
     tryWithLog {
       val fields = df.schema.fields
       df.rdd.mapPartitions(it => {
@@ -527,7 +524,7 @@ object HBaseBulkConnector extends ConnectorFactory[HBaseBulkConnector] {
 
   /**
    * 指定rowkey集合，进行批量删除操作内部会将这个集合转为RDD
-   * 推荐在较大量数据时使用，小数据量的删除操作仍推荐使用HBaseOper
+   * 推荐在较大量数据时使用，小数据量的删除操作仍推荐使用HBaseConnector
    *
    * @param tableName
    * HBase表名
@@ -595,7 +592,7 @@ object HBaseBulkConnector extends ConnectorFactory[HBaseBulkConnector] {
   /**
    * 根据rowKey集合批量获取数据，并映射为自定义的JavaBean类型
    * 内部实现是将rowkey集合转为RDD[String]，推荐在数据量较大
-   * 时使用。数据量较小请优先使用HBaseOper
+   * 时使用。数据量较小请优先使用HBaseConnector
    *
    * @param tableName
    * HBase表名
@@ -632,7 +629,7 @@ object HBaseBulkConnector extends ConnectorFactory[HBaseBulkConnector] {
    * 批量写入，将自定义的JavaBean数据集批量并行写入
    * 到HBase的指定表中。内部会将自定义JavaBean的相应
    * 字段一一映射为Put对象，并完成一次写入。如果数据量
-   * 较大，推荐使用。数据量过小则推荐使用HBaseOper
+   * 较大，推荐使用。数据量过小则推荐使用HBaseConnector
    *
    * @param tableName
    * HBase表名

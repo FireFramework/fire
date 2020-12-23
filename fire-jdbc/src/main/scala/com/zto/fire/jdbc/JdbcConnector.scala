@@ -5,7 +5,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Stateme
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf}
-import com.zto.fire.common.db.{Connector, ConnectorFactory}
+import com.zto.fire.common.db.{ConnectorFactory, FireConnector}
 import com.zto.fire.common.util.{DataSourceManager, StringsUtils}
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.predef._
@@ -21,10 +21,10 @@ import scala.reflect.ClassTag
  * @param conf
  * 代码级别的配置信息，允许为空，配置文件会覆盖相同配置项，也就是说配置文件拥有着跟高的优先级
  * @param keyNum
- * 用于区分连接不同的数据源，不同配置源对应不同的Oper实例
+ * 用于区分连接不同的数据源，不同配置源对应不同的Connector实例
  * @author ChengLong 2020-11-27 10:31:03
  */
-private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends Connector {
+private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
   private[this] var connPool: ComboPooledDataSource = _
   // 日志中sql截取的长度
   private lazy val logSqlLength = FireFrameworkConf.logSqlLength
@@ -32,7 +32,6 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
   private[this] var url: String = _
   private[this] var dbType: String = "unknown"
   private[this] lazy val finallyCatchLog = "释放jdbc资源失败"
-
 
   /**
    * c3p0线程池初始化
@@ -335,8 +334,8 @@ trait QueryCallback {
 case class JdbcConf(url: String, driverClass: String, username: String, password: String)
 
 /**
- * 用于单例构建伴生类JdbcOper的实例对象
- * 每个JdbcOper实例使用keyNum作为标识，并且与每个关系型数据库一一对应
+ * 用于单例构建伴生类JdbcConnector的实例对象
+ * 每个JdbcConnector实例使用keyNum作为标识，并且与每个关系型数据库一一对应
  */
 object JdbcConnector extends ConnectorFactory[JdbcConnector] {
 

@@ -29,13 +29,13 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
     stream.createOrReplaceTempView("student")
     val table = this.flink.sql("select id, name, age from student group by id, name, age")
     // 方式一、自动将row转为对应的JavaBean
-    // table.hbaseOperPutTable(this.tableName, classOf[Student])
-    this.flink.hbaseOperPutTable(table, this.tableName, classOf[Student], multiVersion = true)
+    // table.hbasePutTable(this.tableName, classOf[Student])
+    this.flink.hbasePutTable(table, this.tableName, classOf[Student], multiVersion = true)
 
     // 方式二、用户自定义取数规则，从row中创建HBaseBaseBean的子类
-    // table.hbaseOperPutTable2(this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+    // table.hbasePutTable2(this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
     // 或者
-    // this.flink.hbaseOperPutTable2(table, this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+    // this.flink.hbasePutTable2(table, this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
   }
 
   /**
@@ -46,9 +46,9 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
     val table = this.flink.sql("select id, name, age from student group by id, name, age")
 
     // 方式二、用户自定义取数规则，从row中创建HBaseBaseBean的子类
-    // table.hbaseOperPutTable2(this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+    // table.hbasePutTable2(this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
     // 或者
-    this.flink.hbaseOperPutTable2(table, this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+    this.flink.hbasePutTable2(table, this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
   }
 
   /**
@@ -56,13 +56,13 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
    */
   def testStreamHBaseSink(stream: DataStream[Student]): Unit = {
     // 方式一、DataStream中的数据类型为HBaseBaseBean的子类
-    // stream.hbaseOperPutDS(this.tableName)
-    this.flink.hbaseOperPutDS(stream, this.tableName)
+    // stream.hbasePutDS(this.tableName)
+    this.flink.hbasePutDS(stream, this.tableName)
 
     // 方式二、将value组装为HBaseBaseBean的子类，逻辑用户自定义
-    //stream.hbaseOperPutDS2(this.tableName)(value => value)
+    //stream.hbasePutDS2(this.tableName)(value => value)
     // 或者
-    // this.flink.hbaseOperPutDS2(stream, this.tableName)(value => value)
+    // this.flink.hbasePutDS2(stream, this.tableName)(value => value)
   }
 
   /**
@@ -70,9 +70,9 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
    */
   def testStreamHBaseSink2(stream: DataStream[Student]): Unit = {
     // 方式二、将value组装为HBaseBaseBean的子类，逻辑用户自定义
-    //stream.hbaseOperPutDS2(this.tableName)(value => value)
+    //stream.hbasePutDS2(this.tableName)(value => value)
     // 或者
-    this.flink.hbaseOperPutDS2(stream, this.tableName)(value => value)
+    this.flink.hbasePutDS2(stream, this.tableName)(value => value)
   }
 
   /**

@@ -356,7 +356,7 @@ object SparkUtils {
    * true: 集群模式  false：本地模式
    */
   def isCluster: Boolean = {
-    SystemInfoUtils.isLinux
+    OSUtils.isLinux
   }
 
   /**

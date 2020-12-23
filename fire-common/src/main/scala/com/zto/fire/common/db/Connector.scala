@@ -21,7 +21,7 @@ private[fire] trait Connector {
   /**
    * 用于注册释放资源
    */
-  private def hook(): Unit = {
+  private[this] def hook(): Unit = {
     ShutdownHookManager.addShutdownHook() { () => {
       this.close()
       logger.info("release connector successfully.")
@@ -32,16 +32,28 @@ private[fire] trait Connector {
   /**
    * connector资源初始化
    */
-  protected def open(): Unit
+  protected def open(): Unit = {
+    this.logger.debug("init connector.")
+  }
 
   /**
    * connector资源释放
    */
-  protected def close(): Unit
+  protected def close(): Unit = {
+    this.logger.debug("close connector.")
+  }
 }
 
 /**
- * 用于根据指定的keyNum创建不同的数据库连接实例
+ * 支持多集群的connector
+ *
+ * @param keyNum
+ * 对应的connector实例标识，不同的keyNum对应不同的集群连接实例
+ */
+private[fire] abstract class FireConnector(keyNum: Int = 1) extends Connector
+
+/**
+ * 用于根据指定的keyNum创建不同的connector实例
  */
 private[fire] abstract class ConnectorFactory[T] {
   private[fire] lazy val instanceMap = new ConcurrentHashMap[Int, T]()
@@ -53,7 +65,7 @@ private[fire] abstract class ConnectorFactory[T] {
   protected def create(conf: Any = null, keyNum: Int = 1): T
 
   /**
-   * 根据指定的keyNum返回单例的HBaseOper实例
+   * 根据指定的keyNum返回单例的HBaseConnector实例
    */
   def getInstance(keyNum: Int = 1): T = this.instanceMap.get(keyNum)
 

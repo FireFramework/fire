@@ -88,8 +88,8 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param tableName
     * rowKey集合
     */
-  def hbaseOperDeleteRDD(tableName: String, keyNum: Int = 1): Unit = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]])
+  def hbaseDeleteRDD(tableName: String, keyNum: Int = 1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]])
   }
 
   /**
@@ -170,8 +170,8 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * 目标类型
     * @return
     */
-  def hbaseOperGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = 1): RDD[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperGetRDD(tableName, clazz, rdd.asInstanceOf[RDD[String]])
+  def hbaseGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = 1): RDD[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetRDD(tableName, clazz, rdd.asInstanceOf[RDD[String]])
   }
 
   /**
@@ -185,8 +185,8 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * 目标类型
     * @return
     */
-  def hbaseOperGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = 1): Dataset[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperGetDS[T](tableName, clazz, rdd.asInstanceOf[RDD[String]])
+  def hbaseGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = 1): Dataset[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetDS[T](tableName, clazz, rdd.asInstanceOf[RDD[String]])
   }
 
   /**
@@ -200,8 +200,8 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * 目标类型
     * @return
     */
-  def hbaseOperGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = 1): DataFrame = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperGetDF(tableName, clazz, rdd.asInstanceOf[RDD[String]])
+  def hbaseGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = 1): DataFrame = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetDF(tableName, clazz, rdd.asInstanceOf[RDD[String]])
   }
 
   /**
@@ -210,8 +210,8 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param tableName
     * HBase表名
     */
-  def hbaseOperPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = 1): Unit = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperPutRDD[T](tableName, rdd.asInstanceOf[RDD[T]])
+  def hbasePutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = 1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutRDD[T](tableName, rdd.asInstanceOf[RDD[T]])
   }
 
   /**

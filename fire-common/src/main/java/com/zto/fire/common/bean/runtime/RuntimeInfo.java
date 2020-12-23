@@ -1,6 +1,6 @@
 package com.zto.fire.common.bean.runtime;
 
-import com.zto.fire.common.util.SystemInfoUtils;
+import com.zto.fire.common.util.OSUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
@@ -83,13 +83,13 @@ public class RuntimeInfo implements Serializable {
      */
     public static RuntimeInfo getRuntimeInfo() {
         if (StringUtils.isBlank(ip)) {
-            ip = SystemInfoUtils.getIp();
+            ip = OSUtils.getIp();
         }
         if (StringUtils.isBlank(hostname)) {
-            hostname = SystemInfoUtils.getHostName();
+            hostname = OSUtils.getHostName();
         }
         if (StringUtils.isBlank(pid)) {
-            pid = SystemInfoUtils.getPid();
+            pid = OSUtils.getPid();
         }
         runtimeInfo.jvmInfo = JvmInfo.getJvmInfo();
         runtimeInfo.classLoaderInfo = ClassLoaderInfo.getClassLoaderInfo();

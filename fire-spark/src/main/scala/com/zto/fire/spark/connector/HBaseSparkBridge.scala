@@ -25,7 +25,7 @@ import scala.reflect.ClassTag
   */
 private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
   private[this] lazy val spark = SparkSingletonFactory.getSparkSession
-  private[this] lazy val hbaseOper = HBaseConnector(keyNum = this.keyNum)
+  private[this] lazy val hbaseConnector = HBaseConnector(keyNum = this.keyNum)
 
   def batchSize: Int = FireHBaseConf.hbaseBatchSize()
 
@@ -39,7 +39,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * @param clazz
     * JavaBean类型，为HBaseBaseBean的子类
     */
-  def hbaseOperPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], df: DataFrame): Unit = {
+  def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], df: DataFrame): Unit = {
     df.mapPartitions(row => SparkUtils.sparkRowToBean(row, clazz))(Encoders.bean(clazz)).foreachPartition(it => {
       this.multiBatchInsert(tableName, it)
     })
@@ -55,7 +55,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * @param clazz
     * JavaBean类型，为HBaseBaseBean的子类
     */
-  def hbaseOperPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], ds: Dataset[E]): Unit = {
+  def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], ds: Dataset[E]): Unit = {
     ds.foreachPartition(it => {
       this.multiBatchInsert(tableName, it)
     })
@@ -67,7 +67,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * @param tableName
     * HBase表名
     */
-  def hbaseOperPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T]): Unit = {
+  def hbasePutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T]): Unit = {
     rdd.foreachPartition(it => {
       this.multiBatchInsert(tableName, it)
     })
@@ -86,8 +86,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * 目标类型
     * @return
     */
-  def hbaseOperScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): DataFrame = {
-    val beanRDD = this.hbaseOperScanRDD(tableName, clazz, scan)
+  def hbaseScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): DataFrame = {
+    val beanRDD = this.hbaseScanRDD(tableName, clazz, scan)
     // 将rdd转为DataFrame
     this.spark.createDataFrame(beanRDD, clazz)
   }
@@ -105,8 +105,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * 目标类型
     * @return
     */
-  def hbaseOperScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): Dataset[T] = {
-    val beanRDD = this.hbaseOperScanRDD(tableName, clazz, scan)
+  def hbaseScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): Dataset[T] = {
+    val beanRDD = this.hbaseScanRDD(tableName, clazz, scan)
     // 将rdd转为DataFrame
     spark.createDataset(beanRDD)(Encoders.bean(clazz))
   }
@@ -125,8 +125,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * 目标类型
     * @return
     */
-  def hbaseOperScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): Dataset[T] = {
-    this.hbaseOperScanDS[T](tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+  def hbaseScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): Dataset[T] = {
+    this.hbaseScanDS[T](tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
@@ -140,7 +140,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * @return
     */
   def hbaseHadoopScanRS(tableName: String, scan: Scan): RDD[(ImmutableBytesWritable, Result)] = {
-    val hbaseConf = this.hbaseOper.getConfiguration
+    val hbaseConf = this.hbaseConnector.getConfiguration
     hbaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
     hbaseConf.set(TableInputFormat.SCAN, HBaseUtils.convertScanToString(scan))
     // 将指定范围内的hbase数据转为rdd
@@ -269,8 +269,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * 目标类型
     * @return
     */
-  def hbaseOperScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): DataFrame = {
-    this.hbaseOperScanDF(tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+  def hbaseScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): DataFrame = {
+    this.hbaseScanDF(tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
@@ -282,10 +282,10 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * HBase scan对象
     * @return
     */
-  def hbaseOperScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): RDD[T] = {
+  def hbaseScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): RDD[T] = {
     val hbaseRDD = this.hbaseHadoopScanRS(tableName, scan)
     val scanRDD = hbaseRDD.mapPartitions(it => {
-      if (this.hbaseOper.getMultiVersion[T]) {
+      if (this.hbaseConnector.getMultiVersion[T]) {
         HBaseConnector(keyNum = keyNum).hbaseMultiVersionRow2BeanList(it, clazz)
       } else {
         HBaseConnector(keyNum = keyNum).hbaseRow2BeanList(it, clazz)
@@ -307,8 +307,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * 目标类型
     * @return
     */
-  def hbaseOperScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): Seq[T] = {
-    this.hbaseOper.scan(tableName, clazz, scan)
+  def hbaseScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): Seq[T] = {
+    this.hbaseConnector.scan(tableName, clazz, scan)
   }
 
   /**
@@ -325,8 +325,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * 目标类型
     * @return
     */
-  def hbaseOperScanList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): Seq[T] = {
-    this.hbaseOperScanList[T](tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+  def hbaseScanList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): Seq[T] = {
+    this.hbaseScanList[T](tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
@@ -342,7 +342,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * 目标类型
     * @return
     */
-  def hbaseOperGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeyRDD: RDD[String]): RDD[T] = {
+  def hbaseGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeyRDD: RDD[String]): RDD[T] = {
     val getRDD = rowKeyRDD.mapPartitions(it => {
       val beanList = ListBuffer[T]()
       val getList = ListBuffer[Get]()
@@ -351,14 +351,14 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
           val get = new Get(rowKey.getBytes)
             getList += get
             if (getList.size >= this.batchSize) {
-              beanList ++= this.hbaseOper.get(tableName, clazz, getList: _*)
+              beanList ++= this.hbaseConnector.get(tableName, clazz, getList: _*)
               getList.clear()
             }
         }
       })
 
       if (getList.nonEmpty) {
-        beanList ++= this.hbaseOper.get(tableName, clazz, getList: _*)
+        beanList ++= this.hbaseConnector.get(tableName, clazz, getList: _*)
         getList.clear()
       }
       beanList.iterator
@@ -379,8 +379,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * 目标类型
     * @return
     */
-  def hbaseOperGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeyRDD: RDD[String]): DataFrame = {
-    this.spark.createDataFrame(hbaseOperGetRDD(tableName, clazz, rowKeyRDD), clazz)
+  def hbaseGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeyRDD: RDD[String]): DataFrame = {
+    this.spark.createDataFrame(hbaseGetRDD(tableName, clazz, rowKeyRDD), clazz)
   }
 
   /**
@@ -396,8 +396,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * 目标类型
     * @return
     */
-  def hbaseOperGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeyRDD: RDD[String]): Dataset[T] = {
-    this.spark.createDataset(hbaseOperGetRDD(tableName, clazz, rowKeyRDD))(Encoders.bean(clazz))
+  def hbaseGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeyRDD: RDD[String]): Dataset[T] = {
+    this.spark.createDataset(hbaseGetRDD(tableName, clazz, rowKeyRDD))(Encoders.bean(clazz))
   }
 
   /**
@@ -408,8 +408,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * @param seq
     * HBaseBaseBean的子类集合
     */
-  def hbaseOperPutList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T]): Unit = {
-    this.hbaseOper.insert[T](tableName, seq: _*)
+  def hbasePutList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T]): Unit = {
+    this.hbaseConnector.insert[T](tableName, seq: _*)
   }
 
   /**
@@ -425,8 +425,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * @return
     * List[T]
     */
-  def hbaseOperGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[Get]): Seq[T] = {
-    this.hbaseOper.get[T](tableName, clazz, seq: _*)
+  def hbaseGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[Get]): Seq[T] = {
+    this.hbaseConnector.get[T](tableName, clazz, seq: _*)
   }
 
   /**
@@ -441,13 +441,13 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * @return
     * List[T]
     */
-  def hbaseOperGetList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[String]): Seq[T] = {
+  def hbaseGetList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[String]): Seq[T] = {
     val getList = ListBuffer[Get]()
     seq.filter(StringUtils.isNotBlank).foreach(rowKey => {
         getList += new Get(rowKey.getBytes)
     })
 
-    this.hbaseOperGetList[T](tableName, clazz, getList)
+    this.hbaseGetList[T](tableName, clazz, getList)
   }
 
    /**
@@ -458,8 +458,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * @param rowKeys
     * rowKey集合
     */
-  def hbaseOperDeleteList(tableName: String, rowKeys: Seq[String]): Unit = {
-    this.hbaseOper.deleteRows(tableName, rowKeys: _*)
+  def hbaseDeleteList(tableName: String, rowKeys: Seq[String]): Unit = {
+    this.hbaseConnector.deleteRows(tableName, rowKeys: _*)
   }
 
   /**
@@ -470,7 +470,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * @param rowKeyRDD
     * rowKey集合
     */
-  def hbaseOperDeleteRDD(tableName: String, rowKeyRDD: RDD[String]): Unit = {
+  def hbaseDeleteRDD(tableName: String, rowKeyRDD: RDD[String]): Unit = {
     rowKeyRDD.foreachPartition(it => {
       val rowKeyList = ListBuffer[String]()
       var count = 0
@@ -480,12 +480,12 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
           count += rowKeyList.size
         }
         if (rowKeyList.size >= batchSize) {
-          this.hbaseOper.deleteRows(tableName, rowKeyList: _*)
+          this.hbaseConnector.deleteRows(tableName, rowKeyList: _*)
           rowKeyList.clear()
         }
       })
       if (rowKeyList.nonEmpty) {
-        this.hbaseOper.deleteRows(tableName, rowKeyList: _*)
+        this.hbaseConnector.deleteRows(tableName, rowKeyList: _*)
         rowKeyList.clear()
       }
     })
@@ -499,8 +499,8 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     * @param dataSet
     * rowKey集合
     */
-  def hbaseOperDeleteDS(tableName: String, dataSet: Dataset[String]): Unit = {
-    this.hbaseOperDeleteRDD(tableName, dataSet.rdd)
+  def hbaseDeleteDS(tableName: String, dataSet: Dataset[String]): Unit = {
+    this.hbaseDeleteRDD(tableName, dataSet.rdd)
   }
 
   /**
@@ -517,12 +517,12 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
     iterator.foreach(bean => {
       list += bean
       if (list.size >= batchSize) {
-        this.hbaseOper.insert[E](tableName, list: _*)
+        this.hbaseConnector.insert[E](tableName, list: _*)
         count += list.size
         list.clear()
       }
     })
-    if (list.nonEmpty) this.hbaseOper.insert[E](tableName, list: _*)
+    if (list.nonEmpty) this.hbaseConnector.insert[E](tableName, list: _*)
     count += list.size
     list.clear()
   }

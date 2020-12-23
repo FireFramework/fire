@@ -38,7 +38,7 @@ public class ProcessUtil {
      * @return 命令执行结果的一行数据
      */
     public static String executeCmdForLine(String cmd) {
-        if (!SystemInfoUtils.isLinux() || StringUtils.isBlank(cmd)) {
+        if (!OSUtils.isLinux() || StringUtils.isBlank(cmd)) {
             // 如果是windows环境
             return " <windows environment.> ";
         }

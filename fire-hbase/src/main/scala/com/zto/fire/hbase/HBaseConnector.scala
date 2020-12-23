@@ -10,7 +10,7 @@ import com.alibaba.fastjson.JSON
 import com.zto.fire.common.anno.{FieldName, Internal}
 import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.common.conf.FireHBaseConf.{familyName, _}
-import com.zto.fire.common.db.{Connector, ConnectorFactory}
+import com.zto.fire.common.db.{Connector, ConnectorFactory, FireConnector}
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.util._
 import com.zto.fire.hbase.anno.HConfig
@@ -26,7 +26,6 @@ import org.apache.hadoop.hbase.io.compress.Compression
 import org.apache.hadoop.hbase.util.Bytes
 
 import scala.collection.Iterator
-//import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
 
@@ -42,11 +41,11 @@ import scala.reflect.{ClassTag, classTag}
  * @param conf
  * 代码级别的配置信息，允许为空，配置文件会覆盖相同配置项，也就是说配置文件拥有着跟高的优先级
  * @param keyNum
- * 用于区分连接不同的数据源，不同配置源对应不同的Oper实例
- * @since 1.1.2
+ * 用于区分连接不同的数据源，不同配置源对应不同的Connector实例
+ * @since 2.0.0
  * @author ChengLong 2020-11-11
  */
-private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extends Connector {
+private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
   // --------------------------------------- 反射缓存 --------------------------------------- //
   private[this] var configuration: Configuration = _
   private[this] lazy val cacheFieldMap = new JConcurrentHashMap[Class[_], JMap[String, Field]]()
@@ -54,7 +53,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[this] lazy val cacheTableExistsMap = new JConcurrentHashMap[String, Boolean]()
   private[this] lazy val connection: Connection = this.initConnection
   private[this] lazy val durability = this.initDurability
-  private[this] lazy val threadPool = ThreadUtils.createThreadPool("HBaseOperPool", ThreadPoolType.SCHEDULED)
+  private[this] lazy val threadPool = ThreadUtils.createThreadPool("HBaseConnectorPool", ThreadPoolType.SCHEDULED)
   // ------------------------------------ 表存在判断缓存 ------------------------------------ //
   private[this] lazy val tableExistsCacheEnable = tableExistsCache(this.keyNum)
   private[this] lazy val row2BeanParamError = "参数不合法，HBase Row转为JavaBean失败."
@@ -998,8 +997,8 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
 }
 
 /**
- * 用于单例构建伴生类HBaseOper的实例对象
- * 每个HBaseOper实例使用keyNum作为标识，并且与每个HBase集群一一对应
+ * 用于单例构建伴生类HBaseConnector的实例对象
+ * 每个HBaseConnector实例使用keyNum作为标识，并且与每个HBase集群一一对应
  */
 object HBaseConnector extends ConnectorFactory[HBaseConnector] {
 

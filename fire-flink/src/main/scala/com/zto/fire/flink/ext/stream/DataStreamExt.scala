@@ -192,14 +192,14 @@ class DataStreamExt[T](stream: DataStream[T]) {
    * @param keyNum
    * 配置文件中的key后缀
    */
-  def hbaseOperPutDS(tableName: String,
-                     insertEmpty: Boolean = true,
-                     batch: Int = 100,
-                     multiVersion: Boolean = false,
-                     flushInterval: Long = 3000,
-                     keyNum: Int = 1): DataStreamSink[_] = {
+  def hbasePutDS(tableName: String,
+                 insertEmpty: Boolean = true,
+                 batch: Int = 100,
+                 multiVersion: Boolean = false,
+                 flushInterval: Long = 3000,
+                 keyNum: Int = 1): DataStreamSink[_] = {
 
-    this.hbaseOperPutDS2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
+    this.hbasePutDS2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
       value => {
         if (!value.isInstanceOf[HBaseBaseBean[T]]) {
           throw new IllegalArgumentException("hbase sink 失败，DataStream中的数据类型必须为DataStream[HBaseBaseBean]")
@@ -227,12 +227,12 @@ class DataStreamExt[T](stream: DataStream[T]) {
    * @param fun
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
-  def hbaseOperPutDS2(tableName: String,
-                      insertEmpty: Boolean = true,
-                      batch: Int = 100,
-                      multiVersion: Boolean = false,
-                      flushInterval: Long = 3000,
-                      keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[_] = {
+  def hbasePutDS2(tableName: String,
+                  insertEmpty: Boolean = true,
+                  batch: Int = 100,
+                  multiVersion: Boolean = false,
+                  flushInterval: Long = 3000,
+                  keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[_] = {
     this.stream.addSink(new FlinkHBaseSink[T](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
       /**
        * 将数据构建成sink的格式

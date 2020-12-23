@@ -6,7 +6,7 @@ import com.zto.fire.jdbc.JdbcConnector
 import scala.collection.JavaConversions
 
 /**
- * flink jdbc sink组件，底层基于JdbcOper
+ * flink jdbc sink组件，底层基于JdbcConnector
  *
  * @author ChengLong
  * @since 1.1.0

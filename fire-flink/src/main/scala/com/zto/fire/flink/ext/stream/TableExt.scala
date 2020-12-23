@@ -157,15 +157,15 @@ class TableExt(table: Table) {
    * @param keyNum
    *                     配置文件中的key后缀
    */
-  def hbaseOperPutTable[T <: HBaseBaseBean[T]](tableName: String,
-                                               clazz: Class[T],
-                                               insertEmpty: Boolean = true,
-                                               batch: Int = 100,
-                                               multiVersion: Boolean = false,
-                                               flushInterval: Long = 3000,
-                                               keyNum: Int = 1): DataStreamSink[_] = {
+  def hbasePutTable[T <: HBaseBaseBean[T]](tableName: String,
+                                           clazz: Class[T],
+                                           insertEmpty: Boolean = true,
+                                           batch: Int = 100,
+                                           multiVersion: Boolean = false,
+                                           flushInterval: Long = 3000,
+                                           keyNum: Int = 1): DataStreamSink[_] = {
     import com.zto.fire._
-    this.table.hbaseOperPutTable2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
+    this.table.hbasePutTable2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
       val schema = table.getTableSchema
       row => {
         // 将row转为clazz对应的JavaBean
@@ -190,12 +190,12 @@ class TableExt(table: Table) {
    * @param keyNum
    *                     配置文件中的key后缀
    */
-  def hbaseOperPutTable2(tableName: String,
-                         insertEmpty: Boolean = true,
-                         batch: Int = 100,
-                         multiVersion: Boolean = false,
-                         flushInterval: Long = 3000,
-                         keyNum: Int = 1)(fun: Row => HBaseBaseBean[_]): DataStreamSink[_] = {
+  def hbasePutTable2(tableName: String,
+                     insertEmpty: Boolean = true,
+                     batch: Int = 100,
+                     multiVersion: Boolean = false,
+                     flushInterval: Long = 3000,
+                     keyNum: Int = 1)(fun: Row => HBaseBaseBean[_]): DataStreamSink[_] = {
     import com.zto.fire._
     this.table.toRetractStreamSingle.addSink(new FlinkHBaseSink[Row](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
       override def map(value: Row): HBaseBaseBean[_] = fun(value)

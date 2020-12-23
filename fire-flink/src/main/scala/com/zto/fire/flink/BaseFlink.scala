@@ -3,7 +3,7 @@ package com.zto.fire.flink
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf, FireSparkConf}
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{PropUtils, OSUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestfulRegister
 import com.zto.fire.flink.rest.FlinkSystemRestful
@@ -48,11 +48,11 @@ trait BaseFlink extends BaseFire {
    */
   override private[fire] def createContext(conf: Any): Unit = {
     retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
-      this.restPort = SystemInfoUtils.getRundomPort(FireFrameworkConf.restPortRandomBound)
+      this.restPort = OSUtils.getRundomPort(FireFrameworkConf.restPortRandomBound)
       this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
     }
     this.systemRestful = new FlinkSystemRestful(this, this.restfulRegister)
-    val restAddress = s"${SystemInfoUtils.getIp}:${this.restPort}"
+    val restAddress = s"${OSUtils.getIp}:${this.restPort}"
     PropUtils.setProperty(FireFrameworkConf.fireRestUrl(PropUtils.engine), s"http://$restAddress")
 
     // 注册到实时平台，并覆盖配置信息

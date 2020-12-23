@@ -6,7 +6,7 @@ import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.conf.{FireDateSchemaConf, FireFrameworkConf}
-import com.zto.fire.common.util.{FireUtils, PropUtils, StringsUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{FireUtils, PropUtils, StringsUtils, OSUtils}
 import com.zto.fire.core.bean.TimeCost
 import com.zto.fire.spark.task.SparkSchedulerManager
 import org.apache.commons.lang3.StringUtils
@@ -273,7 +273,7 @@ private[fire] object AccumulatorManager {
    */
   private[fire] def registerAccumulators(sc: SparkContext): Unit = this.synchronized {
     if (sc != null && accMap != null && accMap.nonEmpty) {
-      if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (SystemInfoUtils.isLinux) "10000" else "10").toInt)
+      if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (OSUtils.isLinux) "10000" else "10").toInt)
       // 将定时任务所在类的实例广播到每个executor端
       val taskSet = sc.broadcast(taskRegisterSet)
       val broadcastConf = sc.broadcast(SparkEnv.get.conf)

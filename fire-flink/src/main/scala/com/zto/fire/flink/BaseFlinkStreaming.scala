@@ -2,7 +2,7 @@ package com.zto.fire.flink
 
 import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{PropUtils, OSUtils}
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.java.utils.ParameterTool
@@ -66,7 +66,7 @@ trait BaseFlinkStreaming extends BaseFlink {
     super.createContext(conf)
     this.restfulRegister.startRestServer
     val finalConf = this.buildConf(conf.asInstanceOf[Configuration])
-    if (SystemInfoUtils.isLocal) {
+    if (OSUtils.isLocal) {
       this.env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(finalConf)
     } else {
       this.env = StreamExecutionEnvironment.getExecutionEnvironment

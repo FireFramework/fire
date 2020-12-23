@@ -26,7 +26,7 @@ private[fire] object FireJdbcConf {
   lazy val SPARK_DB_JDBC_MAX_RETRY = "spark.db.jdbc.max.retry"
   // fire框架针对jdbc操作后数据集的缓存策略
   lazy val SPARK_FIRE_JDBC_STORAGE_LEVEL = "spark.fire.jdbc.storage.level"
-  // 通过JdbcOper查询后将数据集放到多少个分区中，需根据实际的结果集做配置
+  // 通过JdbcConnector查询后将数据集放到多少个分区中，需根据实际的结果集做配置
   lazy val SPARK_FIRE_JDBC_QUERY_REPARTITIONS = "spark.fire.jdbc.query.partitions"
 
   // 默认的事务隔离级别
@@ -35,7 +35,7 @@ private[fire] object FireJdbcConf {
   lazy val jdbcBatchSize = 1000
   // fire框架针对jdbc操作后数据集的缓存策略
   lazy val jdbcStorageLevel = PropUtils.getString(this.SPARK_FIRE_JDBC_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
-  // 通过JdbcOper查询后将数据集放到多少个分区中，需根据实际的结果集做配置
+  // 通过JdbcConnector查询后将数据集放到多少个分区中，需根据实际的结果集做配置
   lazy val jdbcQueryPartitions = PropUtils.getInt(this.SPARK_FIRE_JDBC_QUERY_REPARTITIONS, 10)
 
   // spark.db.jdbc.url

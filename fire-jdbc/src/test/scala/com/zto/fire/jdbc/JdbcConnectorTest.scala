@@ -10,7 +10,7 @@ import org.junit.{Before, Test}
 import scala.collection.JavaConversions._
 
 /**
- * 用于测试JdbcOper相关API
+ * 用于测试JdbcConnector相关API
  *
  * @author ChengLong
  * @since 1.1.2
@@ -22,7 +22,7 @@ class JdbcConnectorTest {
 
   @Before
   def init: Unit = {
-    PropUtils.load("JdbcOperTest")
+    PropUtils.load("JdbcConnectorTest")
     this.jdbc = JdbcConnector()
     this.jdbc3 = JdbcConnector(keyNum = 3)
   }

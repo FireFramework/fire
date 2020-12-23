@@ -8,7 +8,7 @@ import org.junit.Assert._
 import org.junit.{Before, Test}
 
 /**
- * 用于单元测试HBaseOper中的API
+ * 用于单元测试HBaseConnector中的API
  *
  * @author ChengLong
  * @since 1.1.2
@@ -136,9 +136,9 @@ class HBaseConnectorTest {
   @Test
   @TestStep(step = 6, desc = "静态类型API测试")
   def testOldStyle: Unit = {
-    val hbaseOper1 = HBaseConnector(keyNum = 2)
-    val hbaseOper2 = HBaseConnector(keyNum = 2)
-    assertEquals(hbaseOper1 == hbaseOper2, true)
+    val hbaseConn1 = HBaseConnector(keyNum = 2)
+    val hbaseConn2 = HBaseConnector(keyNum = 2)
+    assertEquals(hbaseConn1 == hbaseConn2, true)
     println(HBaseConnector.tableExists("fire_test_1"))
     println(HBaseConnector.tableExists("fire_test_1"))
   }

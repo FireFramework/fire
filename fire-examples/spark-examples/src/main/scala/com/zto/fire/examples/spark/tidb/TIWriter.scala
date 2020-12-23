@@ -15,7 +15,7 @@ object TIWriter extends BaseSparkCore {
     val studentRDD = this.sc.parallelize(Student.newStudentList())
     val df = this.spark.createDataFrame(studentRDD, classOf[Student])
     // Student类型的DataFrame数据写入hbase
-    df.hbaseOperPutDF(this.tableName, classOf[Student])
+    df.hbasePutDF(this.tableName, classOf[Student])
     this.spark.stop()
   }
 }

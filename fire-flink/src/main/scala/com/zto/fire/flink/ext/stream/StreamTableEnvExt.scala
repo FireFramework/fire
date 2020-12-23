@@ -2,7 +2,7 @@ package com.zto.fire.flink.ext.stream
 
 import com.zto.fire._
 import com.zto.fire.hbase.bean.HBaseBaseBean
-import com.zto.fire.jdbc.JdbcOperBridge
+import com.zto.fire.jdbc.JdbcConnectorBridge
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.api.Table
@@ -16,7 +16,7 @@ import org.apache.flink.types.Row
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class StreamTableEnvExt(tableEnv: StreamTableEnvironment) extends JdbcOperBridge {
+class StreamTableEnvExt(tableEnv: StreamTableEnvironment) extends JdbcConnectorBridge {
 
   /**
    * 执行sql query操作
@@ -152,14 +152,14 @@ class StreamTableEnvExt(tableEnv: StreamTableEnvironment) extends JdbcOperBridge
    * @param keyNum
    * 配置文件中的key后缀
    */
-  def hbaseOperPutDS[T <: HBaseBaseBean[T]](stream: DataStream[T],
-                                            tableName: String,
-                                            insertEmpty: Boolean = true,
-                                            batch: Int = 100,
-                                            multiVersion: Boolean = false,
-                                            flushInterval: Long = 3000,
-                                            keyNum: Int = 1): DataStreamSink[_] = {
-    stream.hbaseOperPutDS(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)
+  def hbasePutDS[T <: HBaseBaseBean[T]](stream: DataStream[T],
+                                        tableName: String,
+                                        insertEmpty: Boolean = true,
+                                        batch: Int = 100,
+                                        multiVersion: Boolean = false,
+                                        flushInterval: Long = 3000,
+                                        keyNum: Int = 1): DataStreamSink[_] = {
+    stream.hbasePutDS(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)
   }
 
   /**
@@ -180,14 +180,14 @@ class StreamTableEnvExt(tableEnv: StreamTableEnvironment) extends JdbcOperBridge
    * @param fun
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
-  def hbaseOperPutDS2[T](stream: DataStream[T],
-                         tableName: String,
-                         insertEmpty: Boolean = true,
-                         batch: Int = 100,
-                         multiVersion: Boolean = false,
-                         flushInterval: Long = 3000,
-                         keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[_] = {
-    stream.hbaseOperPutDS2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)(fun)
+  def hbasePutDS2[T](stream: DataStream[T],
+                     tableName: String,
+                     insertEmpty: Boolean = true,
+                     batch: Int = 100,
+                     multiVersion: Boolean = false,
+                     flushInterval: Long = 3000,
+                     keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[_] = {
+    stream.hbasePutDS2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)(fun)
   }
 
   /**
@@ -204,15 +204,15 @@ class StreamTableEnvExt(tableEnv: StreamTableEnvironment) extends JdbcOperBridge
    * @param keyNum
    *                     配置文件中的key后缀
    */
-  def hbaseOperPutTable[T <: HBaseBaseBean[T]](table: Table,
-                                               tableName: String,
-                                               clazz: Class[T],
-                                               insertEmpty: Boolean = true,
-                                               batch: Int = 100,
-                                               multiVersion: Boolean = false,
-                                               flushInterval: Long = 3000,
-                                               keyNum: Int = 1): DataStreamSink[_] = {
-    table.hbaseOperPutTable[T](tableName, clazz, insertEmpty, batch, multiVersion, flushInterval, keyNum)
+  def hbasePutTable[T <: HBaseBaseBean[T]](table: Table,
+                                           tableName: String,
+                                           clazz: Class[T],
+                                           insertEmpty: Boolean = true,
+                                           batch: Int = 100,
+                                           multiVersion: Boolean = false,
+                                           flushInterval: Long = 3000,
+                                           keyNum: Int = 1): DataStreamSink[_] = {
+    table.hbasePutTable[T](tableName, clazz, insertEmpty, batch, multiVersion, flushInterval, keyNum)
   }
 
   /**
@@ -229,13 +229,13 @@ class StreamTableEnvExt(tableEnv: StreamTableEnvironment) extends JdbcOperBridge
    * @param keyNum
    *                     配置文件中的key后缀
    */
-  def hbaseOperPutTable2(table: Table,
-                         tableName: String,
-                         insertEmpty: Boolean = true,
-                         batch: Int = 100,
-                         multiVersion: Boolean = false,
-                         flushInterval: Long = 3000,
-                         keyNum: Int = 1)(fun: Row => HBaseBaseBean[_]): DataStreamSink[_] = {
-    table.hbaseOperPutTable2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)(fun)
+  def hbasePutTable2(table: Table,
+                     tableName: String,
+                     insertEmpty: Boolean = true,
+                     batch: Int = 100,
+                     multiVersion: Boolean = false,
+                     flushInterval: Long = 3000,
+                     keyNum: Int = 1)(fun: Row => HBaseBaseBean[_]): DataStreamSink[_] = {
+    table.hbasePutTable2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)(fun)
   }
 }

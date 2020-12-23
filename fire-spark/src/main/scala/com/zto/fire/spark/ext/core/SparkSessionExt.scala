@@ -9,7 +9,7 @@ import com.zto.fire.common.util.{KafkaUtils, LogUtils}
 import com.zto.fire.core.connector.HBaseSparkBridge
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
-import com.zto.fire.jdbc.{JdbcConnector, JdbcOperBridge}
+import com.zto.fire.jdbc.{JdbcConnector, JdbcConnectorBridge}
 import com.zto.fire.spark.ext.module.HBaseBulkConnector
 import com.zto.fire.spark.udf.UDFs
 import com.zto.fire.spark.util.SparkUtils
@@ -34,7 +34,7 @@ import scala.reflect.ClassTag
  * sparkSession对象
  * @author ChengLong 2019-5-18 10:51:19
  */
-class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
+class SparkSessionExt(spark: SparkSession) extends JdbcConnectorBridge {
   import spark.implicits._
 
   val sc: SparkContext = spark.sparkContext
@@ -438,7 +438,7 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
     rdd.hbaseBulkPutRDD(tableName, keyNum)
   }
 
-  /** hbaseOperInsertList
+  /** hbaseInsertList
    * 批量写入，将自定义的JavaBean数据集批量并行写入
    * 到HBase的指定表中。内部会将自定义JavaBean的相应
    * 字段一一映射为Put对象，并完成一次写入
@@ -750,8 +750,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * 目标类型
    * @return
    */
-  def hbaseOperScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): DataFrame = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperScanDF(tableName, clazz, scan)
+  def hbaseScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): DataFrame = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanDF(tableName, clazz, scan)
   }
 
   /**
@@ -768,8 +768,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * 目标类型
    * @return
    */
-  def hbaseOperScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): DataFrame = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperScanDF2(tableName, clazz, startRow, stopRow)
+  def hbaseScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): DataFrame = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanDF2(tableName, clazz, startRow, stopRow)
   }
 
   /**
@@ -785,8 +785,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * 目标类型
    * @return
    */
-  def hbaseOperScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): Dataset[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperScanDS[T](tableName, clazz, scan)
+  def hbaseScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): Dataset[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanDS[T](tableName, clazz, scan)
   }
 
   /**
@@ -803,8 +803,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * 目标类型
    * @return
    */
-  def hbaseOperScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): Dataset[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperScanDS2[T](tableName, clazz, startRow, stopRow)
+  def hbaseScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): Dataset[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanDS2[T](tableName, clazz, startRow, stopRow)
   }
 
   /**
@@ -815,8 +815,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * @param seq
    * HBaseBaseBean的子类集合
    */
-  def hbaseOperPutList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], keyNum: Int = 1): Unit = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperPutList[T](tableName, seq)
+  def hbasePutList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], keyNum: Int = 1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutList[T](tableName, seq)
   }
 
   /**
@@ -825,8 +825,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * @param tableName
    * HBase表名
    */
-  def hbaseOperPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], keyNum: Int = 1): Unit = {
-    rdd.hbaseOperPutRDD[T](tableName, keyNum)
+  def hbasePutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], keyNum: Int = 1): Unit = {
+    rdd.hbasePutRDD[T](tableName, keyNum)
   }
 
   /**
@@ -839,8 +839,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * @param clazz
    * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbaseOperPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], keyNum: Int = 1): Unit = {
-    df.hbaseOperPutDF(tableName, clazz, keyNum)
+  def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], keyNum: Int = 1): Unit = {
+    df.hbasePutDF(tableName, clazz, keyNum)
   }
 
   /**
@@ -851,8 +851,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * @param clazz
    * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbaseOperPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], clazz: Class[E], keyNum: Int = 1): Unit = {
-    dataset.hbaseOperPutDS[E](tableName, clazz, keyNum)
+  def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], clazz: Class[E], keyNum: Int = 1): Unit = {
+    dataset.hbasePutDS[E](tableName, clazz, keyNum)
   }
 
   /**
@@ -864,8 +864,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * HBase scan对象
    * @return
    */
-  def hbaseOperScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): RDD[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperScanRDD(tableName, clazz, scan)
+  def hbaseScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): RDD[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanRDD(tableName, clazz, scan)
   }
 
   /**
@@ -880,8 +880,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * 目标类型
    * @return
    */
-  def hbaseOperScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): RDD[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperScanRDD(tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+  def hbaseScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): RDD[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanRDD(tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
@@ -897,8 +897,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * 目标类型
    * @return
    */
-  def hbaseOperScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): Seq[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperScanList[T](tableName, clazz, scan)
+  def hbaseScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanList[T](tableName, clazz, scan)
   }
 
   /**
@@ -915,8 +915,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * 目标类型
    * @return
    */
-  def hbaseOperScanList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): Seq[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperScanList2[T](tableName, clazz, startRow, stopRow)
+  def hbaseScanList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanList2[T](tableName, clazz, startRow, stopRow)
   }
 
   /**
@@ -930,8 +930,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * 目标类型
    * @return
    */
-  def hbaseOperGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rdd: RDD[String], keyNum: Int = 1): RDD[T] = {
-    rdd.hbaseOperGetRDD(tableName, clazz, keyNum)
+  def hbaseGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rdd: RDD[String], keyNum: Int = 1): RDD[T] = {
+    rdd.hbaseGetRDD(tableName, clazz, keyNum)
   }
 
   /**
@@ -945,8 +945,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * 目标类型
    * @return
    */
-  def hbaseOperGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rdd: RDD[String], keyNum: Int = 1): DataFrame = {
-    rdd.hbaseOperGetDF(tableName, clazz, keyNum)
+  def hbaseGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rdd: RDD[String], keyNum: Int = 1): DataFrame = {
+    rdd.hbaseGetDF(tableName, clazz, keyNum)
   }
 
   /**
@@ -960,8 +960,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * 目标类型
    * @return
    */
-  def hbaseOperGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rdd: RDD[String], keyNum: Int = 1): Dataset[T] = {
-    rdd.hbaseOperGetDS[T](tableName, clazz, keyNum)
+  def hbaseGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rdd: RDD[String], keyNum: Int = 1): Dataset[T] = {
+    rdd.hbaseGetDS[T](tableName, clazz, keyNum)
   }
 
   /**
@@ -976,8 +976,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * @return
    * List[T]
    */
-  def hbaseOperGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[Get], keyNum: Int = 1): Seq[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperGetList[T](tableName, clazz, seq)
+  def hbaseGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[Get], keyNum: Int = 1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetList[T](tableName, clazz, seq)
   }
 
   /**
@@ -992,8 +992,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * @return
    * List[T]
    */
-  def hbaseOperGetList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[String], keyNum: Int = 1): Seq[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperGetList2[T](tableName, clazz, seq)
+  def hbaseGetList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[String], keyNum: Int = 1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetList2[T](tableName, clazz, seq)
   }
 
   /**
@@ -1004,8 +1004,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * @param rowKeys
    * rowKey集合
    */
-  def hbaseOperDeleteList(tableName: String, rowKeys: Seq[String], keyNum: Int = 1): Unit = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseOperDeleteList(tableName, rowKeys)
+  def hbaseDeleteList(tableName: String, rowKeys: Seq[String], keyNum: Int = 1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseDeleteList(tableName, rowKeys)
   }
 
   /**
@@ -1016,8 +1016,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * @param rowKeyRDD
    * rowKey的rdd集合
    */
-  def hbaseOperDeleteRDD(tableName: String, rowKeyRDD: RDD[String], keyNum: Int = 1): Unit = {
-    rowKeyRDD.hbaseOperDeleteRDD(tableName, keyNum)
+  def hbaseDeleteRDD(tableName: String, rowKeyRDD: RDD[String], keyNum: Int = 1): Unit = {
+    rowKeyRDD.hbaseDeleteRDD(tableName, keyNum)
   }
 
   /**
@@ -1026,8 +1026,8 @@ class SparkSessionExt(spark: SparkSession) extends JdbcOperBridge {
    * @param tableName
    * rowKey集合
    */
-  def hbaseOperDeleteDS(tableName: String, dataset: Dataset[String], keyNum: Int = 1): Unit = {
-    dataset.hbaseOperDeleteDS(tableName, keyNum)
+  def hbaseDeleteDS(tableName: String, dataset: Dataset[String], keyNum: Int = 1): Unit = {
+    dataset.hbaseDeleteDS(tableName, keyNum)
   }
 
   // ----------------------------------- Kafka 相关API ----------------------------------- //

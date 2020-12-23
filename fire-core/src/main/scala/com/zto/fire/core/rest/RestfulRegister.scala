@@ -5,7 +5,7 @@ import java.util.concurrent.ExecutorService
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.enu.ErrorCode
-import com.zto.fire.common.util.{EncryptUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{EncryptUtils, OSUtils}
 import org.slf4j.LoggerFactory
 import spark._
 
@@ -55,9 +55,9 @@ class RestfulRegister(val threadPool: ExecutorService) {
     if (!FireFrameworkConf.restEnable) return
 
     if (this.port == null) {
-      this.port(SystemInfoUtils.getRundomPort(FireFrameworkConf.restPortRandomBound))
+      this.port(OSUtils.getRundomPort(FireFrameworkConf.restPortRandomBound))
     }
-    val restPrefix = s"http://${SystemInfoUtils.getIp}:${this.port}"
+    val restPrefix = s"http://${OSUtils.getIp}:${this.port}"
 
     this.threadPool.execute(new Runnable {
       override def run(): Unit = {

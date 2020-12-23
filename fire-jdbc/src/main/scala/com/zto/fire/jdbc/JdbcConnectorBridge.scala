@@ -11,7 +11,7 @@ import scala.reflect.ClassTag
  * @since 1.1.0
  * @create 2020-05-22 15:55
  */
-trait JdbcOperBridge {
+trait JdbcConnectorBridge {
 
   /**
    * 关系型数据库插入、删除、更新操作

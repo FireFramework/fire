@@ -49,7 +49,7 @@ object JdbcTest extends BaseSparkCore {
     // 方式一：通过this.spark方式执行delete操作
     val sql = s"DELETE FROM $tableName WHERE id=?"
     this.spark.jdbcUpdate(sql, Seq(2))
-    // 方式二：通过JdbcOper.executeUpdate
+    // 方式二：通过JdbcConnector.executeUpdate
 
     // 同一个事务
     /*val connection = this.jdbc.getConnection()
@@ -78,7 +78,7 @@ object JdbcTest extends BaseSparkCore {
 
     // 将查询结果集以List[JavaBean]方式返回
     val list = this.spark.jdbcQuery(sql, Seq(1, 2, 3), classOf[Student])
-    // 方式二：使用JdbcOper
+    // 方式二：使用JdbcConnector
     list.foreach(x => println(JSON.toJSONString(x, SerializerFeature.NotWriteRootClassName)))
 
     // 将结果集封装到RDD中

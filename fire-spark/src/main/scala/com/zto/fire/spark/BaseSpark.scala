@@ -3,7 +3,7 @@ package com.zto.fire.spark
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf, FireSparkConf}
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.{PropUtils, SystemInfoUtils}
+import com.zto.fire.common.util.{PropUtils, OSUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestfulRegister
 import com.zto.fire.spark.acc.AccumulatorManager
@@ -110,11 +110,11 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
    */
   override private[fire] final def createContext(conf: Any): Unit = {
     retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
-      this.restPort = SystemInfoUtils.getRundomPort(FireFrameworkConf.restPortRandomBound)
+      this.restPort = OSUtils.getRundomPort(FireFrameworkConf.restPortRandomBound)
       this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
     }
     this.systemRestful = new SparkSystemRestful(this)
-    val restAddress = s"${SystemInfoUtils.getIp}:${this.restPort}"
+    val restAddress = s"${OSUtils.getIp}:${this.restPort}"
     PropUtils.setProperty(FireFrameworkConf.fireRestUrl(PropUtils.engine), s"http://$restAddress")
 
     // 注册到实时平台，并覆盖配置信息
@@ -135,7 +135,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     val sessionBuilder = SparkSession.builder().config(tmpConf)
     if (StringUtils.isNotBlank(hiveMetastoreUrl)) sessionBuilder.enableHiveSupport()
     // 在mac或windows环境下执行local模式，cpu数通过spark.local.cores指定，默认local[*]
-    if (SystemInfoUtils.isLocal) sessionBuilder.master(s"local[${FireSparkConf.localCores}]")
+    if (OSUtils.isLocal) sessionBuilder.master(s"local[${FireSparkConf.localCores}]")
     this.spark = sessionBuilder.getOrCreate()
 
     SparkSingletonFactory.setSparkSession(this.spark)
