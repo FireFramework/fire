@@ -5,6 +5,7 @@ import com.zto.fire.common.db.ConnectorFactory
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.hbase.utils.HBaseUtils
+import com.zto.fire.predef._
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hbase.client.{Get, Result, Scan}
@@ -534,11 +535,12 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
 object HBaseSparkBridge extends ConnectorFactory[HBaseSparkBridge] {
 
   /**
-   * 创建指定集群标识的HBaseSparkBridge对象实例
+   * 约定创建connector子类实例的方法
    */
-  def apply(keyNum: Int = 1): HBaseSparkBridge = {
-    this.instanceMap.putIfAbsent(keyNum, new HBaseSparkBridge(keyNum))
-    this.instanceMap.get(keyNum)
+  override protected def create(conf: Any = null, keyNum: Int = 1): HBaseSparkBridge = {
+    requireNonEmpty(keyNum)
+    val connector = new HBaseSparkBridge(keyNum)
+    logger.debug(s"创建HBaseSparkBridge实例成功. keyNum=$keyNum")
+    connector
   }
-
 }

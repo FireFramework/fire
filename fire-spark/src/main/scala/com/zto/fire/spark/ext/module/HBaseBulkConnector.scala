@@ -492,9 +492,11 @@ object HBaseBulkConnector extends ConnectorFactory[HBaseBulkConnector] {
   /**
    * 创建指定集群标识的HBaseContextExt对象实例
    */
-  def apply(conf: Configuration = null, keyNum: Int = 1): HBaseBulkConnector = {
-    this.instanceMap.putIfAbsent(keyNum, new HBaseBulkConnector(SparkSingletonFactory.getSparkSession.sparkContext, conf, keyNum))
-    this.instanceMap.get(keyNum)
+  override protected def create(conf: Any = null, keyNum: Int = 1): HBaseBulkConnector = {
+    requireNonEmpty(conf, keyNum)
+    val hadoopConf = if (conf != null) conf.asInstanceOf[Configuration] else HBaseConnector.getConfiguration(keyNum)
+    val connector = new HBaseBulkConnector(SparkSingletonFactory.getSparkSession.sparkContext, hadoopConf, keyNum)
+    connector
   }
 
   /**
