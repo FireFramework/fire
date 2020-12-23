@@ -1,10 +1,9 @@
 package com.zto.fire.examples.spark
 
-// 不论Spark或FLink，统一导入com.zto.fire._
 import com.zto.fire._
-import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.{BaseSparkCore, BaseSparkStreaming}
 
-object Test extends BaseSparkStreaming {
+object Test extends BaseSparkCore {
   val key = "fire.partitions"
 
   override def process: Unit = {
@@ -18,11 +17,11 @@ object Test extends BaseSparkStreaming {
     map.foreach(println)
     // 值校验，支持String/List/Map等等
     requireNonEmpty(map, "Map不能为空")
-    requireNonEmpty("", "字符串不能为空")
   }
 
 
   def main(args: Array[String]): Unit = {
-     this.init(10, false)
+    this.init()
+    this.stop
   }
 }

@@ -124,8 +124,7 @@ public class OSUtils {
      * 判断当前运行环境是否为linux
      */
     public static boolean isLinux() {
-        String os = System.getProperty(OSNAME);
-        return os.toLowerCase().startsWith("windows") || os.toLowerCase().contains("mac");
+        return !isWindows() && !isMac();
     }
 
     /**
