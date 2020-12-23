@@ -337,7 +337,7 @@ case class JdbcConf(url: String, driverClass: String, username: String, password
  * 用于单例构建伴生类JdbcConnector的实例对象
  * 每个JdbcConnector实例使用keyNum作为标识，并且与每个关系型数据库一一对应
  */
-object JdbcConnector extends ConnectorFactory[JdbcConnector] {
+object JdbcConnector extends ConnectorFactory[JdbcConnector] with JdbcFunctions {
 
   /**
    * 约定创建connector子类实例的方法
@@ -347,96 +347,5 @@ object JdbcConnector extends ConnectorFactory[JdbcConnector] {
     val connector = new JdbcConnector(conf.asInstanceOf[JdbcConf], keyNum)
     logger.debug(s"创建JdbcConnector实例成功. keyNum=$keyNum")
     connector
-  }
-
-  // ------------------------------- 兼容老API的使用方法，模拟静态方法的API使用方式 ------------------------------- //
-
-  /**
-   * 根据指定的keyNum获取对应的数据库连接
-   */
-  def getConnection(keyNum: Int = 1): Connection = JdbcConnector(keyNum = keyNum).getConnection
-
-  /**
-   * 更新操作
-   *
-   * @param sql
-   * 待执行的sql语句
-   * @param params
-   * sql中的参数
-   * @param connection
-   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
-   * @param commit
-   * 是否自动提交事务，默认为自动提交
-   * @param closeConnection
-   * 是否关闭connection，默认关闭
-   * @param keyNum
-   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-   * @return
-   * 影响的记录数
-   */
-  def executeUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
-    JdbcConnector(keyNum = keyNum).executeUpdate(sql, params, connection, commit, closeConnection)
-  }
-
-  /**
-   * 执行批量更新操作
-   *
-   * @param sql
-   * 待执行的sql语句
-   * @param paramsList
-   * sql的参数列表
-   * @param connection
-   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
-   * @param commit
-   * 是否自动提交事务，默认为自动提交
-   * @param closeConnection
-   * 是否关闭connection，默认关闭
-   * @param keyNum
-   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-   * @return
-   * 影响的记录数
-   */
-  def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
-    JdbcConnector(keyNum = keyNum).executeBatch(sql, paramsList, connection, commit, closeConnection)
-  }
-
-  /**
-   * 执行查询操作，以JavaBean方式返回结果集
-   *
-   * @param sql
-   * 查询语句
-   * @param params
-   * sql执行参数
-   * @param clazz
-   * JavaBean类型
-   * @param connection
-   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
-   * @param keyNum
-   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-   */
-  def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): List[T] = {
-    JdbcConnector(keyNum = keyNum).executeQuery(sql, params, clazz, connection)
-  }
-
-  /**
-   * 执行查询操作
-   *
-   * @param sql
-   * 查询语句
-   * @param params
-   * sql执行参数
-   * @param callback
-   * 查询回调
-   * @param connection
-   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
-   * @param keyNum
-   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
-   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
-   */
-  def executeQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null, keyNum: Int = 1): Unit = {
-    JdbcConnector(keyNum = keyNum).executeQueryCall(sql, params, callback, connection)
   }
 }
