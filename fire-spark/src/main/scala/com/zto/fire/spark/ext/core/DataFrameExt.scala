@@ -4,10 +4,10 @@ import java.util.Properties
 
 import com.zto.fire.common.conf.{FireJdbcConf, FireSparkConf}
 import com.zto.fire.common.util.ValueUtils
-import com.zto.fire.core.connector.HBaseSparkBridge
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.jdbc.util.DBUtils
+import com.zto.fire.spark.connector.HBaseSparkBridge
 import com.zto.fire.spark.ext.module.HBaseBulkConnector
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.commons.lang3.StringUtils

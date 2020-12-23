@@ -1,8 +1,8 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
-import com.zto.fire.core.connector.HBaseSparkBridge
 import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.spark.connector.HBaseSparkBridge
 import com.zto.fire.spark.ext.module.HBaseBulkConnector
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.kafka.clients.consumer.ConsumerRecord

@@ -6,7 +6,7 @@ import java.util.Properties
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireJdbcConf, FireKafkaConf, FireSparkConf}
 import com.zto.fire.common.util.{KafkaUtils, LogUtils}
-import com.zto.fire.core.connector.HBaseSparkBridge
+import com.zto.fire.spark.connector.HBaseSparkBridge
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.jdbc.{JdbcConnector, JdbcConnectorBridge}

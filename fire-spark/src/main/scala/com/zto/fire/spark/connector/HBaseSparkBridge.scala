@@ -1,4 +1,4 @@
-package com.zto.fire.core.connector
+package com.zto.fire.spark.connector
 
 import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.common.db.ConnectorFactory
