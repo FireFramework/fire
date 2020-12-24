@@ -20,7 +20,7 @@ import scala.collection.mutable.ListBuffer
  * @author ChengLong 2020年1月9日 13:52:16
  * @since 0.4.1
  */
-class TableExt(table: Table) {
+private[fire] class TableExt(table: Table) {
   lazy val streamTableEnv = FlinkSingletonFactory.getStreamTableEnv
   lazy val batchTableEnv = FlinkSingletonFactory.getBatchTableEnv
 

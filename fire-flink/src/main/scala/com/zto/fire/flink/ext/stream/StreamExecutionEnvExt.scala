@@ -23,7 +23,7 @@ import scala.collection.JavaConversions
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
+private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
 
   /**
    * 根据配置信息创建Kafka Consumer

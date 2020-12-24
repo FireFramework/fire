@@ -10,7 +10,7 @@ import org.apache.flink.types.Row
  * @author ChengLong 2020年3月30日 17:00:05
  * @since 0.4.1
  */
-class RowExt(row: Row) {
+private[fire] class RowExt(row: Row) {
 
   /**
    * 将flink的row转为指定类型的JavaBean

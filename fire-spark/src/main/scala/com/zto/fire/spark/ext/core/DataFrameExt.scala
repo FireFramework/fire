@@ -23,7 +23,7 @@ import scala.reflect._
  * @param dataFrame
  * dataFrame实例
  */
-class DataFrameExt(dataFrame: DataFrame) {
+private[fire] class DataFrameExt(dataFrame: DataFrame) {
 
   // 获取单例的HBaseContext对象
   private lazy val logger = LoggerFactory.getLogger(this.getClass)

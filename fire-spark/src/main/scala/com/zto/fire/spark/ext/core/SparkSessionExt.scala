@@ -14,7 +14,7 @@ import scala.reflect.ClassTag
  * sparkSession对象
  * @author ChengLong 2019-5-18 10:51:19
  */
-class SparkSessionExt(spark: SparkSession) extends JdbcConnectorBridge with JdbcSparkProvider
+private[fire] class SparkSessionExt(spark: SparkSession) extends JdbcConnectorBridge with JdbcSparkProvider
   with HBaseBulkProvider with SqlProvider with HBaseConnectorProvider with HBaseHadoopProvider with KafkaSparkProvider {
 
   /**

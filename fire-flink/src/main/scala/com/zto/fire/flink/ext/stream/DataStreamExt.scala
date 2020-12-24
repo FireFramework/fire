@@ -30,7 +30,7 @@ import scala.reflect.ClassTag
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class DataStreamExt[T](stream: DataStream[T]) {
+private[fire] class DataStreamExt[T](stream: DataStream[T]) {
   lazy val tableEnv = FlinkSingletonFactory.getStreamTableEnv
 
   /**

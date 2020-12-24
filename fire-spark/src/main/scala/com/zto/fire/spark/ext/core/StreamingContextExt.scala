@@ -20,7 +20,7 @@ import scala.collection.JavaConversions
  * StreamingContext对象
  * @author ChengLong 2019-5-18 11:03:59
  */
-class StreamingContextExt(ssc: StreamingContext) {
+private[fire] class StreamingContextExt(ssc: StreamingContext) {
 
   import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
   import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent

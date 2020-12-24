@@ -17,7 +17,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, Encoders}
  * @since 2.0.0
  * @create 2020-12-23 17:43
  */
-trait KafkaSparkProvider extends SparkProvider {
+private[ext] trait KafkaSparkProvider extends SparkProvider {
   import spark.implicits._
 
   /**

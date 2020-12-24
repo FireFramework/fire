@@ -18,7 +18,7 @@ import scala.reflect.ClassTag
  * @since 2.0.0
  * @create 2020-12-23 17:31
  */
-trait HBaseBulkProvider extends SparkProvider {
+private[ext] trait HBaseBulkProvider extends SparkProvider {
 
   /**
    * scan数据，并转为RDD

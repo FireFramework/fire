@@ -15,7 +15,7 @@ import org.apache.spark.streaming.dstream.DStream
  * @since 2.0.0
  * @create 2020-12-23 17:35
  */
-trait SqlProvider extends SparkProvider {
+private[ext] trait SqlProvider extends SparkProvider {
 
   /**
    * 清理 RDD、DataFrame、Dataset、DStream、TableName 缓存
