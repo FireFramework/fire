@@ -13,7 +13,7 @@ import scala.collection.JavaConversions
  * @author ChengLong 2020年1月11日 13:58:15
  * @since 0.4.1
  */
-class MultiCounterAccumulator extends SimpleAccumulator[ConcurrentHashMap[String, Long]] {
+private[fire] class MultiCounterAccumulator extends SimpleAccumulator[ConcurrentHashMap[String, Long]] {
   private[fire] val multiCounter = new ConcurrentHashMap[String, Long]()
 
   /**

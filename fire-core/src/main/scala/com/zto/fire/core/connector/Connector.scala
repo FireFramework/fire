@@ -1,4 +1,4 @@
-package com.zto.fire.common.db
+package com.zto.fire.core.connector
 
 import java.util.concurrent.ConcurrentHashMap
 
@@ -15,7 +15,6 @@ import org.slf4j.{Logger, LoggerFactory}
  */
 private[fire] trait Connector {
   protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
-  this.open()
   this.hook()
 
   /**
@@ -32,7 +31,7 @@ private[fire] trait Connector {
   /**
    * connector资源初始化
    */
-  protected def open(): Unit = {
+  protected[fire] def open(): Unit = {
     this.logger.debug("init connector.")
   }
 
@@ -55,7 +54,7 @@ private[fire] abstract class FireConnector(keyNum: Int = 1) extends Connector
 /**
  * 用于根据指定的keyNum创建不同的connector实例
  */
-private[fire] abstract class ConnectorFactory[T] {
+private[fire] abstract class ConnectorFactory[T <: Connector] {
   private[fire] lazy val instanceMap = new ConcurrentHashMap[Int, T]()
   protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
@@ -74,7 +73,9 @@ private[fire] abstract class ConnectorFactory[T] {
    */
   def apply(conf: Any = null, keyNum: Int = 1): T = {
     if (!this.instanceMap.containsKey(keyNum)) {
-      this.instanceMap.put(keyNum, this.create(conf, keyNum))
+      val instance: T = this.create(conf, keyNum)
+      instance.open()
+      this.instanceMap.put(keyNum, instance)
     }
     this.instanceMap.get(keyNum)
   }

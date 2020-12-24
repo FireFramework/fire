@@ -17,10 +17,10 @@ import org.apache.flink.streaming.api.windowing.time.Time
 object WindowTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    val dstream = this.ssc.createDirectStream().map(t => JSON.parseObject(t, classOf[Student])).map(s => (s.getName, s.getAge))
+    val dstream = this.env.createDirectStream().map(t => JSON.parseObject(t, classOf[Student])).map(s => (s.getName, s.getAge))
     this.testTimeWindow(dstream)
 
-    this.ssc.startAwaitTermination()
+    this.env.startAwaitTermination()
   }
 
   /**

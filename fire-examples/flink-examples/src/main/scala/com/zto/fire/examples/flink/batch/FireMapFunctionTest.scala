@@ -19,7 +19,7 @@ import org.apache.flink.api.scala._
 object FireMapFunctionTest extends BaseFlinkBatch {
 
   override def process: Unit = {
-    val dataset = this.sc.parallelize(1 to 10)
+    val dataset = this.env.parallelize(1 to 10)
 
     println("========使用FireMapFunction进行Map算子操作========")
     dataset.map(new FireMapFunction[Int, String]() {

@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.core.bean.TimeCost
+import com.zto.fire.core.TimeCost
 import org.apache.spark.util.AccumulatorV2
 
 /**
@@ -13,7 +13,7 @@ import org.apache.spark.util.AccumulatorV2
   *
   * @author ChengLong 2019-7-23 14:22:16
   */
-class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[String]] {
+private[fire] class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[String]] {
   // 用于存放日志的队列
   private val logQueue = new ConcurrentLinkedQueue[String]
   // 判断是否打开日志累加器

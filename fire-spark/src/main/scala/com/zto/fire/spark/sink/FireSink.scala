@@ -11,7 +11,7 @@ import org.apache.spark.sql.execution.streaming.Sink
  * @author ChengLong 2019年12月23日 10:09:55
  * @since 0.4.1
  */
-abstract class FireSink extends Sink with Logging {
+private[fire] abstract class FireSink extends Sink with Logging {
   @volatile protected var latestBatchId = -1L
   protected lazy val spark = SparkSingletonFactory.getSparkSession
 

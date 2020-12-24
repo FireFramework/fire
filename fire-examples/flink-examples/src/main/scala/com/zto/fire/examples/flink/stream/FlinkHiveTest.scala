@@ -16,7 +16,7 @@ object FlinkHiveTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     // 第三个参数需指定hive-site.xml具体的目录路径
-    val dstream = this.ssc.createDirectStream().map(t => JSON.parseObject(t, classOf[Student]))
+    val dstream = this.env.createDirectStream().map(t => JSON.parseObject(t, classOf[Student]))
     // 调用startNewChain与setParallelism一样，都有会导致使用新的slotGroup，也都是作用于点之前的算子
     // startNewChain后，前面的那个算子会使用default的parallelism
     dstream.filter(s => s != null).startNewChain().map(s => {
@@ -29,7 +29,7 @@ object FlinkHiveTest extends BaseFlinkStreaming {
     val joinedTable = this.flink.sql("select t1.bill_code, t2.name from scan_send t1 left join kafka t2 on t1.bill_code=t2.name")
     joinedTable.toRetractStream.print()
 
-    this.ssc.startAwaitTermination()
+    this.env.startAwaitTermination()
   }
 
   override def before(args: Array[String]): Unit = {

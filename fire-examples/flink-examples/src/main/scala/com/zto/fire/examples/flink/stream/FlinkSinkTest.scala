@@ -14,10 +14,10 @@ import org.apache.flink.configuration.Configuration
 object FlinkSinkTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    val dstream = this.ssc.createDirectStream().map(json => JSON.parseObject(json, classOf[Student]))
+    val dstream = this.env.createDirectStream().map(json => JSON.parseObject(json, classOf[Student]))
     dstream.map(t => t.getName).addSink(new MySink).setParallelism(1)
 
-    this.ssc.startAwaitTermination()
+    this.env.startAwaitTermination()
   }
 
   def main(args: Array[String]): Unit = {

@@ -12,7 +12,7 @@ import scala.reflect.ClassTag
  * @author ChengLong 2020年1月9日 13:52:16
  * @since 0.4.1
  */
-class BatchExecutionEnvExt(env: ExecutionEnvironment) {
+private[fire] class BatchExecutionEnvExt(env: ExecutionEnvironment) {
 
   /**
    * 提交job执行

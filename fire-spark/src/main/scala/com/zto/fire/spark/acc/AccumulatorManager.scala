@@ -6,8 +6,8 @@ import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.conf.{FireDateSchemaConf, FireFrameworkConf}
-import com.zto.fire.common.util.{FireUtils, PropUtils, StringsUtils, OSUtils}
-import com.zto.fire.core.bean.TimeCost
+import com.zto.fire.common.util.{FireUtils, OSUtils, PropUtils, StringsUtils}
+import com.zto.fire.core.TimeCost
 import com.zto.fire.spark.task.SparkSchedulerManager
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.broadcast.Broadcast
@@ -252,7 +252,7 @@ private[fire] object AccumulatorManager {
     if (sc != null && conf != null && FireFrameworkConf.dynamicConf) {
       val broadcastConf = sc.broadcast(conf)
       this.broadcastConf = broadcastConf
-      val rdd = sc.parallelize(1 to this.initExecutors.get, this.initExecutors.get)
+      val rdd = sc.parallelize(1 to this.initExecutors.get * 3, this.initExecutors.get * 3)
       rdd.foreachPartitionAsync(i => {
         this.broadcastConf = broadcastConf
         this.broadcastConf.value.getAll.foreach(kv => {
@@ -292,7 +292,7 @@ private[fire] object AccumulatorManager {
       })
 
       // 获取申请的executor数，设置累加器到conf中
-      val rdd = sc.parallelize(1 to this.initExecutors.get, this.initExecutors.get)
+      val rdd = sc.parallelize(1 to this.initExecutors.get * 3, this.initExecutors.get * 3)
       rdd.foreachPartition(i => {
         this.broadcastConf = broadcastConf
         // 将序列化后的累加器放置到conf中
@@ -300,7 +300,7 @@ private[fire] object AccumulatorManager {
         if (FireFrameworkConf.scheduleEnable) {
           // 从广播中获取到定时任务的实例，并在executor端完成注册
           val tasks = taskSet.value
-          if (tasks != null && tasks.size > 0 && !SparkSchedulerManager.getInstance().schedulerIsStarted()) {
+          if (tasks != null && tasks.nonEmpty && !SparkSchedulerManager.getInstance().schedulerIsStarted()) {
             SparkSchedulerManager.getInstance().registerTasks(tasks.toArray: _*)
           }
         }

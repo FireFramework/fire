@@ -10,7 +10,7 @@ import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
  * @author ChengLong 2020年1月9日 13:52:16
  * @since 0.4.1
  */
-class BatchTableEnvExt(env: BatchTableEnvironment) extends JdbcConnectorBridge {
+private[fire] class BatchTableEnvExt(env: BatchTableEnvironment) extends JdbcConnectorBridge {
 
   /**
    * 执行sql query操作

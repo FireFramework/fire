@@ -3,7 +3,7 @@ package com.zto.fire.flink.rest
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
-import com.zto.fire.common.util._
+import com.zto.fire.common.util.{ExceptionBus, _}
 import com.zto.fire.core.rest.{RestCase, RestfulRegister, SystemRestful}
 import com.zto.fire.flink.BaseFlink
 import org.apache.commons.lang3.StringUtils

@@ -19,7 +19,7 @@ object FlinkAccTest extends BaseFlinkStreaming {
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
   override def process: Unit = {
-    val dstream = this.ssc.fromCollection(1 to 100)
+    val dstream = this.env.fromCollection(1 to 100)
     // 使用内置的计数器
     this.testFlinkCounter(dstream)
   }
@@ -42,7 +42,7 @@ object FlinkAccTest extends BaseFlinkStreaming {
       }
     })
 
-    val result = this.ssc.startAwaitTermination()
+    val result = this.env.startAwaitTermination()
 
     // 获取计数器中的值
     val longCount = result.getAccumulatorResult[Long]("LongCount")

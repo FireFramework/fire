@@ -14,7 +14,7 @@ object FlinkTest extends BaseFlinkStreaming {
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
   override def process: Unit = {
-    val dstream = this.ssc.createDirectStream().map(json => {
+    val dstream = this.env.createDirectStream().map(json => {
       logger.debug("FlinkTest {}", "task")
       JSON.parseObject(json, classOf[Student])
     }).setParallelism(2)
@@ -32,7 +32,7 @@ object FlinkTest extends BaseFlinkStreaming {
       println("-------->" + row.rowToBean(tableSchema, classOf[Student]))
     })
 
-    this.ssc.startAwaitTermination()
+    this.env.startAwaitTermination()
   }
 
   def main(args: Array[String]): Unit = {

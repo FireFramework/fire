@@ -17,7 +17,8 @@ import scala.reflect.ClassTag
  * @since 2.0.0
  * @create 2020-12-23 15:44
  */
-trait HBaseFunctions {
+private[hbase] trait HBaseFunctions {
+
   /**
    * 构建Get对象
    *

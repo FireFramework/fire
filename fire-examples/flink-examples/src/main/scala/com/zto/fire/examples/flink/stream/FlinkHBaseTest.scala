@@ -92,7 +92,7 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     require(this.args != null && this.args.length > 0, "请传递main方法参数")
-    val stream = this.ssc.createDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student]))
+    val stream = this.env.createDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student]))
 
     this.args(0) match {
       case "testTableHBaseSink" => this.testTableHBaseSink(stream)
@@ -103,7 +103,7 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
       case _ => throw new IllegalArgumentException("未匹配到任何方法名称，请检查！")
     }
 
-    this.ssc.startAwaitTermination()
+    this.env.startAwaitTermination()
   }
 
   def main(args: Array[String]): Unit = {

@@ -13,7 +13,7 @@ import scala.collection.JavaConversions._
   *
   * @author ChengLong 2019-8-16 16:56:06
   */
-class MultiCounterAccumulator extends AccumulatorV2[(String, Long), ConcurrentHashMap[String, Long]] {
+private[fire] class MultiCounterAccumulator extends AccumulatorV2[(String, Long), ConcurrentHashMap[String, Long]] {
   private[fire] val multiCounter = new ConcurrentHashMap[String, Long]()
   // 判断是否打开多值累加器
   private lazy val isEnable = FireFrameworkConf.accEnable && FireFrameworkConf.accMultiCounterEnable

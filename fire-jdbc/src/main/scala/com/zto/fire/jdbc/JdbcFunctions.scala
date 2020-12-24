@@ -11,7 +11,7 @@ import scala.reflect.ClassTag
  * @since 2.0.0
  * @create 2020-12-23 15:49
  */
-trait JdbcFunctions {
+private[fire] trait JdbcFunctions {
 
   /**
    * 根据指定的keyNum获取对应的数据库连接

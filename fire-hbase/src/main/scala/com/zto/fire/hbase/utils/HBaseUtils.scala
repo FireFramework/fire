@@ -10,7 +10,7 @@ import org.apache.hadoop.hbase.util.Base64
   *
   * @author ChengLong 2019-6-23 13:36:16
   */
-object HBaseUtils {
+private[fire] object HBaseUtils {
 
   /**
     * 将scan对象转为String

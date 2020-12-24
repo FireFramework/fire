@@ -1,4 +1,4 @@
-package com.zto.fire.core.bean;
+package com.zto.fire.core;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import com.zto.fire.common.util.DateFormatUtils;

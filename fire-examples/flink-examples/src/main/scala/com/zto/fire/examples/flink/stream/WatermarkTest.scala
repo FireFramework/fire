@@ -33,7 +33,7 @@ object WatermarkTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     // source端接入消息并解析
-    val dstream = this.ssc.createDirectStream().filter(str => StringUtils.isNotBlank(str) && str.contains("}")).map(str => {
+    val dstream = this.env.createDirectStream().filter(str => StringUtils.isNotBlank(str) && str.contains("}")).map(str => {
       val student = JSON.parseObject(str, classOf[Student])
       (student, DateFormatUtils.formatDateTime(student.getCreateTime).getTime)
     })
@@ -65,7 +65,7 @@ object WatermarkTest extends BaseFlinkStreaming {
     // 获取由于延迟太久而被丢弃的数据
     windowDStream.getSideOutput[(Student, Long)](this.outputTag.asInstanceOf[OutputTag[(Student, Long)]]).map(t => ("丢弃", t)).print()
 
-    this.ssc.startAwaitTermination()
+    this.env.startAwaitTermination()
   }
 
   /**

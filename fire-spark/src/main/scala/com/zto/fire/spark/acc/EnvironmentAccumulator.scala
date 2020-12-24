@@ -11,7 +11,7 @@ import org.apache.spark.util.AccumulatorV2
  *
  * @author ChengLong 2019年11月6日 16:56:38
  */
-class EnvironmentAccumulator extends AccumulatorV2[String, ConcurrentLinkedQueue[String]] {
+private[fire] class EnvironmentAccumulator extends AccumulatorV2[String, ConcurrentLinkedQueue[String]] {
   // 用于存放运行时信息的队列
   private val envInfoQueue = new ConcurrentLinkedQueue[String]
   // 判断是否打开运行时信息累加器

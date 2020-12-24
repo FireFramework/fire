@@ -19,7 +19,7 @@ object FlinkBatchTest extends BaseFlinkBatch {
   }
 
   def testAccumulator: Unit = {
-    val result = this.sc.parallelize(1 to 10).map(new RichMapFunction[Int, Int] {
+    val result = this.env.parallelize(1 to 10).map(new RichMapFunction[Int, Int] {
       val counter = new IntCounter()
 
       override def open(parameters: Configuration): Unit = {
@@ -33,7 +33,7 @@ object FlinkBatchTest extends BaseFlinkBatch {
     })
     result.writeAsText("J:\\test\\flink.result", FileSystem.WriteMode.OVERWRITE)
 
-    val result2 = this.sc.parallelize(1 to 10).map(new RichMapFunction[Int, Int] {
+    val result2 = this.env.parallelize(1 to 10).map(new RichMapFunction[Int, Int] {
       override def map(value: Int): Int = {
         this.getRuntimeContext.getIntCounter("myCounter").add(value)
         value

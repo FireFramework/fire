@@ -1,7 +1,7 @@
 package com.zto.fire.spark.connector
 
 import com.zto.fire.common.conf.FireHBaseConf
-import com.zto.fire.common.db.ConnectorFactory
+import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.hbase.utils.HBaseUtils
@@ -23,7 +23,7 @@ import scala.reflect.ClassTag
   *
   * @author ChengLong 2019-5-10 14:39:39
   */
-private[fire] class HBaseSparkBridge(keyNum: Int = 1) {
+private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
   private[this] lazy val spark = SparkSingletonFactory.getSparkSession
   private[this] lazy val hbaseConnector = HBaseConnector(keyNum = this.keyNum)
 

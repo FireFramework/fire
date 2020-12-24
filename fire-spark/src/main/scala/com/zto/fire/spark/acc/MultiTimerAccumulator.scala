@@ -16,7 +16,7 @@ import scala.collection.mutable
  *
  * @author ChengLong 2019-8-21 14:22:12
  */
-class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBasedTable[String, String, Long]] {
+private[fire] class MultiTimerAccumulator extends AccumulatorV2[(String, Long, String), HashBasedTable[String, String, Long]] {
   private[fire] lazy val timerCountTable = HashBasedTable.create[String, String, Long]
   // 用于记录上次清理过期累加数据的时间
   private var lastClearTime = new Date

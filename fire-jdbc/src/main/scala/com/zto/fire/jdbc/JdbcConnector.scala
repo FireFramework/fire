@@ -5,8 +5,8 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Stateme
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf}
-import com.zto.fire.common.db.{ConnectorFactory, FireConnector}
 import com.zto.fire.common.util.{DataSourceManager, StringsUtils}
+import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
@@ -36,7 +36,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
   /**
    * c3p0线程池初始化
    */
-  override protected def open(): Unit = {
+  override protected[fire] def open(): Unit = {
     tryWithLog {
       // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
       this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
@@ -49,7 +49,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       val password = if (StringUtils.isBlank(FireJdbcConf.password(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.password)) this.conf.password else FireJdbcConf.password(keyNum)
       // 识别数据源类型是oracle、mysql等
       this.dbType = DBUtils.dbTypeParser(driverClass, this.url)
-      logger.info(s"架识别到当前jdbc数据源标识为：${this.dbType}")
+      logger.info(s"Fire框架识别到当前jdbc数据源标识为：${this.dbType}")
 
       // 创建c3p0数据库连接池实例
       val pool = new ComboPooledDataSource(true)

@@ -9,4 +9,4 @@ import com.zto.fire.common.util.Tools
  * @since 2.0.0
  * @create 2020-12-16 15:55
  */
-trait BaseFireExt extends Tools
+private[fire] trait BaseFireExt extends Tools

@@ -18,7 +18,7 @@ import org.apache.flink.util.Collector
 object ListStateTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    val dstream = this.ssc.fromCollection(Seq((1, 1), (1, 2), (1, 3), (2, 1), (2, 2), (2, 3)))
+    val dstream = this.env.fromCollection(Seq((1, 1), (1, 2), (1, 3), (2, 1), (2, 2), (2, 3)))
     dstream.keyBy(1).flatMap(new FireMapFunction[(Int, Int), (Int, Int)] {
       var valueState: ValueState[(Int, Int)] = _
 
@@ -50,7 +50,7 @@ object ListStateTest extends BaseFlinkStreaming {
       }
     }).setParallelism(1).print()
 
-    this.ssc.startAwaitTermination()
+    this.env.startAwaitTermination()
   }
 
   def main(args: Array[String]): Unit = {

@@ -16,7 +16,7 @@ import scala.collection.mutable._
   *
   * @author ChengLong 2019-3-16 09:56:56
   */
-class RestfulRegister(val threadPool: ExecutorService) {
+private[fire] class RestfulRegister(val threadPool: ExecutorService) {
   private val restList = ListBuffer[RestCase]()
   private var port: Integer = _
   private val logger = LoggerFactory.getLogger(this.getClass)

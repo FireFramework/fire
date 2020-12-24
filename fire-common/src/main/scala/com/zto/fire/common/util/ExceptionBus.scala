@@ -2,10 +2,10 @@ package com.zto.fire.common.util
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
+import com.zto.fire.predef._
 import com.google.common.collect.EvictingQueue
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.predef._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConversions

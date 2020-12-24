@@ -10,9 +10,9 @@ import com.alibaba.fastjson.JSON
 import com.zto.fire.common.anno.{FieldName, Internal}
 import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.common.conf.FireHBaseConf.{familyName, _}
-import com.zto.fire.common.db.{Connector, ConnectorFactory, FireConnector}
 import com.zto.fire.common.enu.ThreadPoolType
-import com.zto.fire.common.util._
+import com.zto.fire.common.util.{DataSourceManager, _}
+import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.hbase.anno.HConfig
 import com.zto.fire.hbase.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.predef._
@@ -20,7 +20,6 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase._
 import org.apache.hadoop.hbase.client.{Durability, _}
-import org.apache.hadoop.hbase.filter.{Filter, FilterList}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.io.compress.Compression
 import org.apache.hadoop.hbase.util.Bytes
@@ -969,7 +968,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * 用于初始化单例的configuration
    */
   @Internal
-  override protected def open(): Unit = {
+  override protected[fire] def open(): Unit = {
     val finalConf = if (this.conf != null) this.conf else HBaseConfiguration.create()
 
     val url = hbaseClusterUrl(keyNum)

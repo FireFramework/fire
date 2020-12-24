@@ -2,7 +2,7 @@ package com.zto.fire.spark.connector
 
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireHBaseConf, FireSparkConf}
-import com.zto.fire.common.db.{Connector, ConnectorFactory}
+import com.zto.fire.core.connector.{Connector, ConnectorFactory}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.predef._
@@ -38,7 +38,7 @@ import scala.reflect.ClassTag
  * HBase相关配置参数
  * @author ChengLong 2018年4月10日 10:39:28
  */
-class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient config: Configuration, batchSize: Int = 10000, keyNum: Int = 1)
+private[fire] class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient config: Configuration, batchSize: Int = 10000, keyNum: Int = 1)
   extends HBaseContext(sc, config) with Connector {
   private[fire] lazy val finalBatchSize = if (FireHBaseConf.hbaseBatchSize(this.keyNum) != -1) FireHBaseConf.hbaseBatchSize(this.keyNum) else this.batchSize
   private[this] lazy val hbaseConnector = HBaseConnector(keyNum = this.keyNum)
@@ -484,7 +484,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
  * 用于单例构建伴生类HBaseContextExt的实例对象
  * 每个HBaseContextExt实例使用keyNum作为标识，并且与每个HBase集群一一对应
  */
-object HBaseBulkConnector extends ConnectorFactory[HBaseBulkConnector] with HBaseBulkFunctions {
+private[fire] object HBaseBulkConnector extends ConnectorFactory[HBaseBulkConnector] with HBaseBulkFunctions {
 
   /**
    * 创建指定集群标识的HBaseContextExt对象实例

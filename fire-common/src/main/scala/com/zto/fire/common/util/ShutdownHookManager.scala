@@ -2,8 +2,8 @@ package com.zto.fire.common.util
 
 import java.util.PriorityQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import com.zto.fire.predef._
 
+import com.zto.fire.predef._
 import org.slf4j.LoggerFactory
 
 /**

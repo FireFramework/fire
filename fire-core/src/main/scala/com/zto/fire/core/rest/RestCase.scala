@@ -11,4 +11,4 @@ import spark.{Request, Response}
   * rest服务地址
   * @author ChengLong 2019-3-16 09:58:06
   */
-case class RestCase(method: String, path: String, fun: (Request, Response) => AnyRef)
+private[fire] case class RestCase(method: String, path: String, fun: (Request, Response) => AnyRef)
