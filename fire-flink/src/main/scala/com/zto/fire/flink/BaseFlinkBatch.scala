@@ -2,7 +2,7 @@ package com.zto.fire.flink
 
 import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.{PropUtils, OSUtils}
+import com.zto.fire.common.util.{OSUtils, PropUtils}
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.java.utils.ParameterTool
@@ -16,8 +16,8 @@ import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
  */
 trait BaseFlinkBatch extends BaseFlink {
   override val jobType: JobType = JobType.FLINK_BATCH
-  protected var env, sc: ExecutionEnvironment = _
-  protected var tableEnv, flink: BatchTableEnvironment = _
+  protected var env: ExecutionEnvironment = _
+  protected var tableEnv, flink, fire: BatchTableEnvironment = _
 
   /**
    * 构建或合并Configuration
@@ -72,13 +72,13 @@ trait BaseFlinkBatch extends BaseFlink {
     }
     this.env.getConfig.setGlobalJobParameters(ParameterTool.fromMap(finalConf.toMap))
     this.configParse(this.env)
-    this.sc = this.env
     this.tableEnv = BatchTableEnvironment.create(this.env)
     if (StringUtils.isNotBlank(FireHiveConf.getHiveConfDir)) {
       this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hive)
       this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
     }
     this.flink = this.tableEnv
+    this.fire = this.flink
     FlinkSingletonFactory.setEnv(this.env).setTableEnv(this.tableEnv)
     this.deployConf
   }
@@ -88,9 +88,9 @@ trait BaseFlinkBatch extends BaseFlink {
    */
   override protected def deployConf: Unit = {
     if (!FireFrameworkConf.deployConf) return
-    this.sc.fromCollection(1 to this.sc.getParallelism)
+    this.env.fromCollection(1 to this.env.getParallelism)
       .map(FlinkUtils.initMapFunction)
-      .setParallelism(this.sc.getParallelism)
+      .setParallelism(this.env.getParallelism)
       .name("fire init")
   }
 

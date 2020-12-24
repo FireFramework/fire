@@ -18,8 +18,8 @@ import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
  * @author ChengLong 2020年1月7日 10:50:19
  */
 trait BaseFlinkStreaming extends BaseFlink {
-  protected var env, ssc: StreamExecutionEnvironment = _
-  protected var tableEnv, flink: StreamTableEnvironment = _
+  protected var env, senv: StreamExecutionEnvironment = _
+  protected var tableEnv, flink, fire: StreamTableEnvironment = _
   override val jobType: JobType = JobType.FLINK_STREAMING
   // 用于存放延期的数据
   protected val outputTag = new OutputTag[Any]("later_data")
@@ -73,7 +73,7 @@ trait BaseFlinkStreaming extends BaseFlink {
     }
     this.env.getConfig.setGlobalJobParameters(ParameterTool.fromMap(finalConf.toMap))
     this.configParse(this.env)
-    this.ssc = this.env
+    this.senv = this.env
     val settings = EnvironmentSettings.newInstance.useBlinkPlanner.inStreamingMode.build
     this.tableEnv = StreamTableEnvironment.create(this.env, settings)
     if (StringUtils.isNotBlank(FireHiveConf.getHiveConfDir)) {
@@ -81,6 +81,7 @@ trait BaseFlinkStreaming extends BaseFlink {
       this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
     }
     this.flink = this.tableEnv
+    this.fire = this.flink
     FlinkSingletonFactory.setStreamEnv(this.env).setStreamTableEnv(this.tableEnv)
     this.deployConf
   }
@@ -91,7 +92,7 @@ trait BaseFlinkStreaming extends BaseFlink {
   override protected def deployConf: Unit = {
     if (!FireFrameworkConf.deployConf) return
     // fire框架初始化操作，将配置信息分发到每个slot中
-    this.ssc.fromCollection(1 to this.env.getMaxParallelism).map(FlinkUtils.initMapFunction).setParallelism(this.env.getMaxParallelism).name("fire init")
+    this.env.fromCollection(1 to this.env.getMaxParallelism).map(FlinkUtils.initMapFunction).setParallelism(this.env.getMaxParallelism).name("fire init")
   }
 
 

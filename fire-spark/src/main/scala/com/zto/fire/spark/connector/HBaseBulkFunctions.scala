@@ -1,4 +1,4 @@
-package com.zto.fire.spark.ext.module
+package com.zto.fire.spark.connector
 
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import org.apache.hadoop.hbase.client.Scan

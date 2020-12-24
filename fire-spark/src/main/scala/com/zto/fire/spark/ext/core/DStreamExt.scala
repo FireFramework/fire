@@ -1,7 +1,7 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire.hbase.bean.HBaseBaseBean
-import com.zto.fire.spark.ext.module.HBaseBulkConnector
+import com.zto.fire.spark.connector.HBaseBulkConnector
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.common.message.MessageExt
 import org.apache.spark.storage.StorageLevel

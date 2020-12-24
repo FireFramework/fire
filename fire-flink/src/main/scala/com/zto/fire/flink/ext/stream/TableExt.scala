@@ -27,7 +27,7 @@ class TableExt(table: Table) {
   /**
    * 逐条打印每行记录
    */
-  def show: Unit = {
+  def show(): Unit = {
     this.table.addSink(row => println(row))
   }
 

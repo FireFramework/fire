@@ -4,7 +4,8 @@ import com.zto.fire.common.conf.{FireFrameworkConf, FireHBaseConf, FireKuduConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.core.util.SingletonFactory
 import com.zto.fire.hbase.HBaseConnector
-import com.zto.fire.spark.ext.module.{HBaseBulkConnector, KuduContextExt}
+import com.zto.fire.spark.connector.HBaseBulkConnector
+import com.zto.fire.spark.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils
 import org.apache.kudu.spark.kudu.KuduContext
 import org.apache.spark.sql.SparkSession

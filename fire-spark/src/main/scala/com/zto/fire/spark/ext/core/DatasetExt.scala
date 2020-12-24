@@ -1,8 +1,7 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire.hbase.bean.HBaseBaseBean
-import com.zto.fire.spark.connector.HBaseSparkBridge
-import com.zto.fire.spark.ext.module.HBaseBulkConnector
+import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.spark.sql._
 import org.apache.spark.sql.streaming.Trigger

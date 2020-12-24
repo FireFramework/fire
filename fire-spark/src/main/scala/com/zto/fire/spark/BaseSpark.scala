@@ -24,16 +24,15 @@ import org.apache.spark.{SparkConf, SparkContext}
  */
 trait BaseSpark extends SparkListener with BaseFire with Serializable {
   private[fire] var _conf: SparkConf = _
-  var spark: SparkSession = _
-  var sc: SparkContext = _
-  var catalog: Catalog = _
-  var ssc: StreamingContext = _
-  var hiveContext: SQLContext = _
-  var sqlContext: SQLContext = _
-  var kuduContext: KuduContextExt = _
-  val acc = AccumulatorManager
-  var batchDuration: Long = _
-  var listener: SparkListener = _
+  protected[fire] var spark, fire: SparkSession = _
+  protected[fire] var sc: SparkContext = _
+  protected[fire] var catalog: Catalog = _
+  protected[fire] var ssc: StreamingContext = _
+  protected[fire] var hiveContext, sqlContext: SQLContext = _
+  protected[fire] var kuduContext: KuduContextExt = _
+  protected[fire] val acc = AccumulatorManager
+  protected[fire] var batchDuration: Long = _
+  protected[fire] var listener: SparkListener = _
 
   /**
    * 获取配置信息
@@ -137,7 +136,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     // 在mac或windows环境下执行local模式，cpu数通过spark.local.cores指定，默认local[*]
     if (OSUtils.isLocal) sessionBuilder.master(s"local[${FireSparkConf.localCores}]")
     this.spark = sessionBuilder.getOrCreate()
-
+    this.fire = this.spark
     SparkSingletonFactory.setSparkSession(this.spark)
     this.spark.registerUDF()
     this.sc = this.spark.sparkContext

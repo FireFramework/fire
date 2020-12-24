@@ -1,4 +1,4 @@
-package com.zto.fire.spark.ext.module
+package com.zto.fire.spark.connector
 
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireHBaseConf, FireSparkConf}

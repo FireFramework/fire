@@ -1,13 +1,13 @@
 package com.zto.fire.examples.spark
 
 import com.zto.fire._
-import com.zto.fire.spark.{BaseSparkCore, BaseSparkStreaming}
+import com.zto.fire.spark.BaseSparkCore
 
 object Test extends BaseSparkCore {
   val key = "fire.partitions"
 
   override def process: Unit = {
-    val rdd = this.spark.parallelize(1 to 10)
+    val rdd = this.fire.parallelize(1 to 10)
     println(rdd.count())
     // java相关的集合以J开头
     val map = new JHashMap[String, Int]()

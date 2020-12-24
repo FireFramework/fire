@@ -3,12 +3,14 @@ package com.zto.fire.core
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
 
+import com.zto.fire.predef._
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf, FirePrintModuleConf}
 import com.zto.fire.common.enu.{JobType, ThreadPoolType}
 import com.zto.fire.common.util.{FireUtils, _}
 import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
 import com.zto.fire.core.task.SchedulerManager
 import org.apache.log4j.{Level, Logger}
+import org.slf4j
 import org.slf4j.LoggerFactory
 import spark.Spark
 
@@ -20,42 +22,40 @@ import spark.Spark
  */
 trait BaseFire {
   // 任务启动时间戳
-  val startTime = DateFormatUtils.currentTime
+  protected[fire] val startTime: Long = currentTime
   // web ui地址
-  var webUI: String = _
+  protected[fire] var webUI, applicationId: String = _
   // main方法参数
-  var args: Array[String] = _
-  // yarn任务的applicationId
-  var applicationId: String = _
+  protected[fire] var args: Array[String] = _
   // 当前任务的类型标识
-  val jobType = JobType.UNDEFINED
+  protected[fire] val jobType = JobType.UNDEFINED
   // fire框架内置的restful接口
   private[fire] var systemRestful: SystemRestful = _
   // restful接口注册
   private[fire] var restfulRegister: RestfulRegister = _
   // fire restful服务端口号
-  var restPort: Int = _
+  protected[fire] var restPort: Int = _
   // 用于子类的锁状态判断，默认关闭状态
-  lazy val lock = new AtomicBoolean(false)
+  protected[fire] lazy val lock = new AtomicBoolean(false)
   // 是否已停止
-  lazy val isStoped = new AtomicBoolean(false)
+  protected[fire] lazy val isStoped = new AtomicBoolean(false)
   // 当前任务的类名（包名+类名）
-  val className = this.getClass.getName.replace("$", "")
+  protected[fire] lazy val className: JString = this.getClass.getName.replace("$", "")
   // 当前任务的类名
-  val driverClass = this.getClass.getSimpleName.replace("$", "")
-  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
+  protected[fire] lazy val driverClass: JString = this.getClass.getSimpleName.replace("$", "")
+  protected[fire] lazy val logger: slf4j.Logger = LoggerFactory.getLogger(this.getClass)
   // 默认的任务名称为类名
-  var appName = this.driverClass
+  protected[fire] var appName: _root_.com.zto.fire.predef.JString = this.driverClass
   // fire内置线程池
-  lazy val threadPool = ThreadUtils.createThreadPool("FireThreadPool", ThreadPoolType.FIXED, FireFrameworkConf.threadPoolSize)
-  lazy val threadPoolSchedule = ThreadUtils.createThreadPool("FireThreadPoolSchedule", ThreadPoolType.SCHEDULED, FireFrameworkConf.threadPoolSchedulerSize).asInstanceOf[ScheduledExecutorService]
-  this.boot
+  protected[fire] lazy val threadPool: ExecutorService = ThreadUtils.createThreadPool("FireThreadPool", ThreadPoolType.FIXED, FireFrameworkConf.threadPoolSize)
+  protected[fire] lazy val threadPoolSchedule: ScheduledExecutorService = ThreadUtils.createThreadPool("FireThreadPoolSchedule", ThreadPoolType.SCHEDULED, FireFrameworkConf.threadPoolSchedulerSize).asInstanceOf[ScheduledExecutorService]
+  this.boot()
 
   /**
    * 生命周期方法：初始化fire框架必要的信息
    * 注：该方法会同时在driver端与executor端执行
    */
-  private[fire] def boot: Unit = {
+  private[fire] def boot(): Unit = {
     FireUtils.splash
     PropUtils.sliceKeys(FireFrameworkConf.SPARK_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
   }
@@ -63,14 +63,14 @@ trait BaseFire {
   /**
    * 在加载任务配置文件前将被加载
    */
-  private[fire] def loadConf: Unit = {
+  private[fire] def loadConf(): Unit = {
     // 加载配置文件
   }
 
   /**
    * 用于将不同引擎的配置信息、累计器信息等传递到executor端或taskmanager端
    */
-  protected def deployConf: Unit = {
+  protected def deployConf(): Unit = {
     // 用于在分布式环境下分发配置信息
   }
 
@@ -110,7 +110,7 @@ trait BaseFire {
    * 生命周期方法：具体的用户开发的业务逻辑代码
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
-  def process: Unit
+  def process(): Unit
 
   /**
    * 生命周期方法：用于资源回收与清理，子类复写实现具体逻辑
@@ -123,7 +123,7 @@ trait BaseFire {
   /**
    * 生命周期方法：用于回收资源
    */
-  def stop: Unit
+  def stop(): Unit
 
   /**
    * 生命周期方法：进行fire框架的资源回收
