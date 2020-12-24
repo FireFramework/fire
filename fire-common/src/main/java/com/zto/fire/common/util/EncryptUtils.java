@@ -64,7 +64,7 @@ public class EncryptUtils {
                 int number = b & 0xff;// 加盐
                 String str = Integer.toHexString(number);
                 if (str.length() == 1) {
-                    buffer.append("0");
+                    buffer.append('0');
                 }
                 buffer.append(str);
             }
@@ -86,7 +86,7 @@ public class EncryptUtils {
         }
         try {
             MessageDigest sha = MessageDigest.getInstance(key);
-            sha.update(message.getBytes());
+            sha.update(message.getBytes(StandardCharsets.UTF_8));
             return new BigInteger(sha.digest()).toString(32);
         } catch (Exception e) {
             logger.error("生成SHA加密出错", e);

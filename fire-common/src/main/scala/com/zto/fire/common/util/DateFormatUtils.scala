@@ -267,8 +267,9 @@ object DateFormatUtils {
     * 判断两个日期是否为同一月份
     */
   def isSameMonth(day1: String, day2: String): Boolean = {
-    val d1 = this.getTimeFormat().parse(day1)
-    val d2 = this.getTimeFormat().parse(day2)
+    val format = this.getTimeFormat()
+    val d1 = format.parse(day1)
+    val d2 = format.parse(day2)
     this.isSameMonth(d1, d2)
   }
 

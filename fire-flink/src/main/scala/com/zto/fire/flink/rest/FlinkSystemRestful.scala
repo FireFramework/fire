@@ -47,8 +47,6 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
         this.logger.error(s"[kill] 执行kill任务失败：json=$json", e)
         msg.buildError("执行kill任务失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -81,8 +79,6 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
         this.logger.error(s"[sql] 执行用户sql失败：json=$json", e)
         msg.buildError("执行用户sql失败，异常堆栈：" + ExceptionBus.stackTrace(e), ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 }

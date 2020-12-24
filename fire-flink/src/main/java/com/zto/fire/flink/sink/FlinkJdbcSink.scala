@@ -1,9 +1,8 @@
 package com.zto.fire.flink.sink
 
+import com.zto.fire.predef._
 import com.zto.fire.common.conf.FireJdbcConf
 import com.zto.fire.jdbc.JdbcConnector
-
-import scala.collection.JavaConversions
 
 /**
  * flink jdbc sink组件，底层基于JdbcConnector
@@ -25,6 +24,6 @@ abstract class FlinkJdbcSink[IN](sql: String,
    * 该方法会被flush方法自动调用
    */
   override def sink: Unit = {
-    JdbcConnector.executeBatch(sql, JavaConversions.asScalaBuffer(this.buffer), keyNum = keyNum)
+    JdbcConnector.executeBatch(sql, this.buffer, keyNum = keyNum)
   }
 }

@@ -7,7 +7,7 @@ import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.enu.{DataSource, ErrorCode}
 import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.BaseFire
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import spark.{Request, Response}
 
 import scala.collection.JavaConversions
@@ -18,7 +18,7 @@ import scala.collection.JavaConversions
  * @author ChengLong 2020年4月2日 13:58:08
  */
 protected[fire] abstract class SystemRestful(engine: BaseFire) {
-  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
+  protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
   // 用于记录当前任务所访问的数据源
   private lazy val dataSource = collection.mutable.Map[DataSource, String]()
   this.register
@@ -49,8 +49,6 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
         this.logger.error(s"[log] 获取数据源列表失败", e)
         msg.buildError("获取数据源列表失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 }

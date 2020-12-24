@@ -11,7 +11,6 @@ object Test extends BaseSparkCore {
     println(rdd.count())
     // java相关的集合以J开头
     val map = new JHashMap[String, Int]()
-    val set = new JHashSet[JInt]()
     map.put("1", 1)
     // 不需要手动转为scala map，fire会自动将java的转为scala的
     map.foreach(println)

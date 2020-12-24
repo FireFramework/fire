@@ -23,7 +23,7 @@ public class TimeCost implements Serializable {
     // 多核cpu使用率
     private String cpuUsage;
     // 用于区分埋点日志和用户日志
-    private Boolean isFire = false;
+    private boolean isFire = false;
     private String id = UUID.randomUUID().toString();
     // 任务的applicationId
     private static String applicationId;

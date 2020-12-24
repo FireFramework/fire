@@ -4,7 +4,6 @@ import java.util
 import java.util.concurrent.{ConcurrentHashMap, ScheduledExecutorService, TimeUnit}
 
 import com.google.common.collect.EvictingQueue
-import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf._
 import com.zto.fire.common.enu.{DataSource, ThreadPoolType}
 import com.zto.fire.predef._
@@ -26,7 +25,6 @@ private[fire] class DataSourceManager {
   private lazy val sqlQueue = EvictingQueue.create[DBSqlSource](buriedPointDatasourceMaxSize)
   private[this] lazy val threadPool = ThreadUtils.createThreadPool("DataSourceManager", ThreadPoolType.SCHEDULED)
   this.sqlParse()
-  this.registerShutdown()
 
   /**
    * 用于异步解析sql中使用到的表，并放到datasourceMap中
@@ -41,7 +39,7 @@ private[fire] class DataSourceManager {
               val sqlSource = sqlQueue.poll()
               if (sqlSource != null) {
                 val tableNames = SQLUtils.tableParse(sqlSource.sql)
-                if (tableNames.nonEmpty) {
+                if (tableNames != null && tableNames.nonEmpty) {
                   tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
                     add(DataSource.parse(sqlSource.datasource), DBDataSource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, sqlSource.sink))
                   })
@@ -76,17 +74,6 @@ private[fire] class DataSourceManager {
    * 获取所有使用到的数据源
    */
   private[fire] def get: util.Map[DataSource, util.HashSet[DataSourceDesc]] = this.datasourceMap
-
-  /**
-   * 注册关闭线程池
-   */
-  @Internal
-  private[this] def registerShutdown(): Unit = {
-    ShutdownHookManager.addShutdownHook() { () => {
-      ThreadUtils.shutdown(this.threadPool)
-    }
-    }
-  }
 }
 
 /**
