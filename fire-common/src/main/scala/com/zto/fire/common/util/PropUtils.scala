@@ -369,18 +369,18 @@ object PropUtils {
   def sliceKeys(keyStart: String): collection.immutable.Map[String, String] = {
     if (!this.cachedConfMap.contains(keyStart)) {
       val confMap = new mutable.HashMap[String, String]()
-      this.props.keySet().foreach(key => {
+      this.props.keySet().filter(_ != null).foreach(key => {
         // 舍弃key前缀的前缀，兼容不同的引擎导致的key前缀不同的问题
-        val keyStartContent = keyStart.substring(keyStart.indexOf("."), keyStart.length)
-        if (key != null && key.toString.contains(keyStartContent)) {
-          val keyStr = key.toString
+        val keyStartContent = keyStart.substring(keyStart.indexOf('.'), keyStart.length)
+        val keyStr = key.toString
+        if (keyStr.contains(keyStartContent)) {
           val keySuffix = keyStr.substring(keyStr.indexOf(keyStartContent) + keyStartContent.length, keyStr.length)
           confMap.put(keySuffix, this.getProperty(keyStr))
         }
       })
       this.cachedConfMap.put(keyStart, confMap.toMap)
     }
-    this.cachedConfMap.get(keyStart).get
+    this.cachedConfMap(keyStart)
   }
 
   /**

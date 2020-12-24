@@ -80,6 +80,7 @@ private[fire] trait ValueCheck {
     var index = 0
     params.foreach(param => {
       index += 1
+      require(param != null, s"第[ ${index} ]参数为空，异常信息：$message")
       param match {
         case str: String => require(StringUtils.isNotBlank(str), s"第[ ${index} ]参数为空，异常信息：$message")
         case array: Array[_] => require(array.nonEmpty, s"第[ ${index} ]参数为空，异常信息：$message")

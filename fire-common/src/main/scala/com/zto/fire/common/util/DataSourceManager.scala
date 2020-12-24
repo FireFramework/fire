@@ -4,9 +4,11 @@ import java.util
 import java.util.concurrent.{ConcurrentHashMap, ScheduledExecutorService, TimeUnit}
 
 import com.google.common.collect.EvictingQueue
+import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf._
 import com.zto.fire.common.enu.{DataSource, ThreadPoolType}
 import com.zto.fire.predef._
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 /**
@@ -23,28 +25,31 @@ private[fire] class DataSourceManager {
   // 用于收集来自不同数据源的sql语句，后续会异步进行SQL解析，考虑到分布式场景下会有很多重复的SQL执行，因此使用了线程不安全的队列即可满足需求
   private lazy val sqlQueue = EvictingQueue.create[DBSqlSource](buriedPointDatasourceMaxSize)
   private[this] lazy val threadPool = ThreadUtils.createThreadPool("DataSourceManager", ThreadPoolType.SCHEDULED)
-  this.sqlParse
+  this.sqlParse()
+  this.registerShutdown()
 
   /**
    * 用于异步解析sql中使用到的表，并放到datasourceMap中
    */
-  private[this] def sqlParse: Unit = {
-    if (buriedPointDatasourceEnable) {
+  private[this] def sqlParse(): Unit = {
+    if (buriedPointDatasourceEnable && threadPool != null) {
       threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(new Runnable {
         override def run(): Unit = {
           val start = currentTime
-          for (i <- 1 until sqlQueue.size()) {
-            val sqlSource = sqlQueue.poll()
-            if (sqlSource != null) {
-              val tableNames = SQLUtils.tableParse(sqlSource.sql)
-              if (tableNames.nonEmpty) {
-                tableNames.foreach(tableName => {
-                  add(DataSource.parse(sqlSource.datasource), DBDataSource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, sqlSource.sink))
-                })
+          if (sqlQueue != null) {
+            for (i <- 1 until sqlQueue.size()) {
+              val sqlSource = sqlQueue.poll()
+              if (sqlSource != null) {
+                val tableNames = SQLUtils.tableParse(sqlSource.sql)
+                if (tableNames.nonEmpty) {
+                  tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
+                    add(DataSource.parse(sqlSource.datasource), DBDataSource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, sqlSource.sink))
+                  })
+                }
               }
             }
+            logger.info(s"定时解析SQL埋点中的表信息,耗时：${timecost(start)}")
           }
-          logger.info(s"定时解析SQL埋点中的表信息,耗时：${timecost(start)}")
         }
       }, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod, TimeUnit.SECONDS)
     }
@@ -71,6 +76,17 @@ private[fire] class DataSourceManager {
    * 获取所有使用到的数据源
    */
   private[fire] def get: util.Map[DataSource, util.HashSet[DataSourceDesc]] = this.datasourceMap
+
+  /**
+   * 注册关闭线程池
+   */
+  @Internal
+  private[this] def registerShutdown(): Unit = {
+    ShutdownHookManager.addShutdownHook() { () => {
+      ThreadUtils.shutdown(this.threadPool)
+    }
+    }
+  }
 }
 
 /**

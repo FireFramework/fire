@@ -21,6 +21,7 @@ private[fire] class RestfulRegister(val threadPool: ExecutorService) {
   private var port: Integer = _
   private val logger = LoggerFactory.getLogger(this.getClass)
   private[this] lazy val mainClassName: String = FireFrameworkConf.driverClassName
+  require(this.threadPool != null, "threadPool不能为空")
 
   /**
     * 注册新的rest接口
@@ -61,7 +62,7 @@ private[fire] class RestfulRegister(val threadPool: ExecutorService) {
 
     this.threadPool.execute(new Runnable {
       override def run(): Unit = {
-        restList.foreach(rest => {
+        restList.filter(_ != null).foreach(rest => {
           if (FireFrameworkConf.fireRestUrlShow) logger.info(s"---------> start rest: ${FirePS1Conf.wrap(restPrefix + rest.path, FirePS1Conf.BLUE, FirePS1Conf.UNDER_LINE)} successfully. <---------")
           rest.method match {
             case "get" | "GET" => Spark.get(rest.path, new Route {

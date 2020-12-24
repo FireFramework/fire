@@ -44,7 +44,7 @@ object LogUtils {
   /**
    * 以固定的风格打印map中的内容
    */
-  def logMap(logger: Logger, map: Map[_, _], title: String): Unit = {
+  def logMap(logger: Logger = this.logger, map: Map[_, _], title: String): Unit = {
     if (logger != null && map != null && map.nonEmpty) {
       LogUtils.logStyle(logger, title)(logger => {
         map.foreach(kv => logger.info(s"---> ${kv._1} = ${kv._2}"))

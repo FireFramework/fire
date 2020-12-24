@@ -6,6 +6,7 @@ import java.util.{Calendar, Date, TimeZone}
 import com.zto.fire.common.conf.{FireCronConf, FireDateSchemaConf}
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.DateUtils
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -15,11 +16,10 @@ import scala.collection.mutable.ArrayBuffer
   */
 object DateFormatUtils {
   private val timeZoneShangHai = "Asia/Shanghai"
+  private lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
     * 将日期格式化为 yyyy-MM-dd HH:mm:ss
-    *
-    * @return
     */
   def getTimeFormat(): SimpleDateFormat = {
     val timeFormat: SimpleDateFormat = new SimpleDateFormat(FireDateSchemaConf.yyyy_MM_ddHHmmss)
@@ -29,9 +29,6 @@ object DateFormatUtils {
 
   /**
     * 给定yyyy-MM-dd HH:mm:ss 格式数据，返回yyyy-MM-dd
-    *
-    * @param dateTime
-    * @return
     */
   def getDateFromDateTimeStr(dateTime: String) = {
     if (StringUtils.isNotBlank(dateTime) && dateTime.length() > 10) {
@@ -43,17 +40,13 @@ object DateFormatUtils {
 
   /**
     * 给定yyyy-MM-dd HH:mm:ss 格式数据，返回yyyyMMdd格式的时间分区
-    *
-    * @param dateTime
     */
-  def getPartitionDate(dateTime: String) = {
+  def getPartitionDate(dateTime: String): String = {
     this.getDateFromDateTimeStr(dateTime).replace("-", "")
   }
 
   /**
     * 将日期格式化为 yyyy-MM-dd
-    *
-    * @return
     */
   def getDateFormat(): SimpleDateFormat = {
     this.getSchemaFormat()
@@ -61,8 +54,6 @@ object DateFormatUtils {
 
   /**
     * 将日期格式化为 yyyy-MM-dd
-    *
-    * @return
     */
   def getSchemaFormat(schema: String = FireDateSchemaConf.yyyy_MM_dd): SimpleDateFormat = {
     val dateFormat: SimpleDateFormat = new SimpleDateFormat(schema)
@@ -72,9 +63,6 @@ object DateFormatUtils {
 
   /**
     * 格式化Date为yyyy-MM-dd格式的字符串
-    *
-    * @param date
-    * @return
     */
   def formatDate(date: Date): String = {
     this.getDateFormat().format(date)
@@ -82,9 +70,6 @@ object DateFormatUtils {
 
   /**
     * 将日期格式化为 yyyy-MM-dd hh:mm:ss 格式的字符串
-    *
-    * @param dateTime
-    * @return
     */
   def formatDateTime(dateTime: Date): String = {
     if (dateTime != null) this.getTimeFormat().format(dateTime) else ""
@@ -104,9 +89,6 @@ object DateFormatUtils {
 
   /**
     * 将字符串格式化为yyyy-MM-dd的日期
-    *
-    * @param date
-    * @return
     */
   def formatDate(date: String): Date = {
     this.getDateFormat().parse(date)
@@ -114,9 +96,6 @@ object DateFormatUtils {
 
   /**
     * 将字符串格式化为yyyy-MM-dd hh:mm:ss的日期
-    *
-    * @param dateTime
-    * @return
     */
   def formatDateTime(dateTime: String): Date = {
     this.getTimeFormat().parse(dateTime)
@@ -124,8 +103,6 @@ object DateFormatUtils {
 
   /**
     * 将当期系统时间格式化为yyyy-MM-dd 并返回字符串
-    *
-    * @return
     */
   def formatCurrentDate(): String = {
     this.formatDate(new Date)
@@ -133,8 +110,6 @@ object DateFormatUtils {
 
   /**
     * 将当期系统时间格式化为yyyy-MM-dd hh:mm:ss并返回字符串
-    *
-    * @return
     */
   def formatCurrentDateTime(): String = {
     this.formatDateTime(new Date)
@@ -145,7 +120,6 @@ object DateFormatUtils {
     *
     * @param schema
     * 指定的schema
-    * @return
     */
   def formatCurrentBySchema(schema: String): String = {
     this.formatBySchema(new Date, schema)
@@ -153,9 +127,6 @@ object DateFormatUtils {
 
   /**
     * 将指定的unix元年时间转为yyyy-MM-dd 的字符串
-    *
-    * @param date
-    * @return
     */
   def formatUnixDate(date: Long): String = {
     this.formatDate(new Date(date))
@@ -163,9 +134,6 @@ object DateFormatUtils {
 
   /**
     * 将指定的unix元年时间转为yyyy-MM-dd hh:mm:ss 的字符串
-    *
-    * @param dateTime
-    * @return
     */
   def formatUnixDateTime(dateTime: Long): String = {
     this.formatDateTime(new Date(dateTime))
@@ -173,11 +141,6 @@ object DateFormatUtils {
 
   /**
     * 对日期进行格式转换
-    *
-    * @param dateTimeStr
-    * @param srcSchema
-    * @param destSchema
-    * @return
     */
   def dateSchemaFormat(dateTimeStr: String, srcSchema: String, destSchema: String): String = {
     if (StringUtils.isBlank(dateTimeStr)) {
@@ -192,11 +155,6 @@ object DateFormatUtils {
 
   /**
     * 对日期进行格式转换
-    *
-    * @param dateTime
-    * @param srcSchema
-    * @param destSchema
-    * @return
     */
   def dateSchemaFormat(dateTime: Date, srcSchema: String, destSchema: String): Date = {
     val timeFormat: SimpleDateFormat = new SimpleDateFormat(srcSchema)
@@ -208,14 +166,11 @@ object DateFormatUtils {
 
   /**
     * 判断两个日期是否为同一天
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isSameDay(day1: String, day2: String): Boolean = {
     if (StringUtils.isNotBlank(day1) && StringUtils.isNotBlank(day2)) {
-      DateUtils.isSameDay(this.getTimeFormat.parse(day1), this.getTimeFormat.parse(day2))
+      val format = this.getTimeFormat()
+      DateUtils.isSameDay(format.parse(day1), format.parse(day2))
     } else {
       false
     }
@@ -223,10 +178,6 @@ object DateFormatUtils {
 
   /**
     * 判断两个日期是否为同一天
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isSameDay(day1: Date, day2: Date): Boolean = {
     DateUtils.isSameDay(day1, day2)
@@ -237,10 +188,10 @@ object DateFormatUtils {
     */
   def isSameDay(date: String): Boolean = {
     try {
-      DateUtils.isSameDay(new Date(), this.getTimeFormat.parse(date))
+      DateUtils.isSameDay(new Date(), this.getTimeFormat().parse(date))
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        logger.error("isSameDay判断失败", e)
         false
       }
     }
@@ -248,15 +199,12 @@ object DateFormatUtils {
 
   /**
     * 判断两个日期是否为同一小时（前提是同一天）
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isSameHour(day1: String, day2: String): Boolean = {
     if (StringUtils.isNotBlank(day1) && StringUtils.isNotBlank(day2)) {
-      val d1 = this.getTimeFormat.parse(day1)
-      val d2 = this.getTimeFormat.parse(day2)
+      val format = this.getTimeFormat()
+      val d1 = format.parse(day1)
+      val d2 = format.parse(day2)
       if (this.isSameDay(d1, d2)) {
         d1.getHours == d2.getHours
       } else {
@@ -269,10 +217,6 @@ object DateFormatUtils {
 
   /**
     * 判断两个日期是否为同一小时（前提是同一天）
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isSameHour(day1: Date, day2: Date): Boolean = {
     if (this.isSameDay(day1, day2)) {
@@ -284,10 +228,6 @@ object DateFormatUtils {
 
   /**
     * 判断两个日期是否为同一星期（必须是同年同月）
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isSameWeek(day1: Date, day2: Date): Boolean = {
     if (this.isSameYear(day1, day2) && this.isSameMonth(day1, day2)) {
@@ -304,15 +244,12 @@ object DateFormatUtils {
 
   /**
     * 判断两个日期是否为同一星期（必须是同年同月）
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isSameWeek(day1: String, day2: String): Boolean = {
     if (StringUtils.isNotBlank(day1) && StringUtils.isNotBlank(day2)) {
-      val d1 = this.getTimeFormat.parse(day1)
-      val d2 = this.getTimeFormat.parse(day2)
+      val format = this.getTimeFormat()
+      val d1 = format.parse(day1)
+      val d2 = format.parse(day2)
       this.isSameWeek(d1, d2)
     } else {
       false
@@ -321,10 +258,6 @@ object DateFormatUtils {
 
   /**
     * 判断两个日期是否为同一月份
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isSameMonth(day1: Date, day2: Date): Boolean = {
     day1.getMonth == day2.getMonth
@@ -332,23 +265,15 @@ object DateFormatUtils {
 
   /**
     * 判断两个日期是否为同一月份
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isSameMonth(day1: String, day2: String): Boolean = {
-    val d1 = this.getTimeFormat.parse(day1)
-    val d2 = this.getTimeFormat.parse(day2)
+    val d1 = this.getTimeFormat().parse(day1)
+    val d2 = this.getTimeFormat().parse(day2)
     this.isSameMonth(d1, d2)
   }
 
   /**
     * 判断两个日期是否为同一年
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isSameYear(day1: Date, day2: Date): Boolean = {
     day1.getYear == day2.getYear
@@ -356,23 +281,16 @@ object DateFormatUtils {
 
   /**
     * 判断两个日期是否为同一年
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isSameYear(day1: String, day2: String): Boolean = {
-    val d1 = this.getTimeFormat.parse(day1)
-    val d2 = this.getTimeFormat.parse(day2)
+    val format = this.getTimeFormat()
+    val d1 = format.parse(day1)
+    val d2 = format.parse(day2)
     this.isSameYear(d1, d2)
   }
 
   /**
     * day1是否大于day2
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isBig(day1: String, day2: String): Boolean = {
     if (StringUtils.isNotBlank(day1) && StringUtils.isNotBlank(day2)) {
@@ -388,10 +306,6 @@ object DateFormatUtils {
 
   /**
     * day1是否小于day2
-    *
-    * @param day1
-    * @param day2
-    * @return
     */
   def isSmall(day1: String, day2: String): Boolean = {
     !this.isBig(day1, day2)
@@ -399,11 +313,6 @@ object DateFormatUtils {
 
   /**
     * day 是否介于day1与day2之间
-    *
-    * @param day
-    * @param day1
-    * @param day2
-    * @return
     */
   def isBetween(day: String, day1: String, day2: String) = {
     this.isSmall(day, day2) && this.isBig(day, day1)
@@ -441,10 +350,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行年度加减
-    *
-    * @param dateTimeStr
-    * @param years
-    * @return
     */
   def addYears(dateTimeStr: String, years: Int): String = {
     if (StringUtils.isNotBlank(dateTimeStr) && !"null".equals(dateTimeStr) && !"NULL".equals(dateTimeStr)) {
@@ -457,10 +362,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行年度加减
-    *
-    * @param dateTime
-    * @param years
-    * @return
     */
   def addYears(dateTime: Date, years: Int): String = {
     if (dateTime != null) {
@@ -472,10 +373,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行月份加减
-    *
-    * @param dateTimeStr
-    * @param mons
-    * @return
     */
   def addMons(dateTimeStr: String, mons: Int): String = {
     if (StringUtils.isNotBlank(dateTimeStr) && !"null".equals(dateTimeStr) && !"NULL".equals(dateTimeStr)) {
@@ -488,10 +385,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行月份加减
-    *
-    * @param dateTime
-    * @param mons
-    * @return
     */
   def addMons(dateTime: Date, mons: Int): String = {
     if (dateTime != null) {
@@ -503,10 +396,6 @@ object DateFormatUtils {
 
   /**
     * 对指定日期增加天
-    *
-    * @param dateTimeStr
-    * @param days
-    * @return
     */
   def addDays(dateTimeStr: String, days: Int): String = {
     if (StringUtils.isNotBlank(dateTimeStr) && !"null".equals(dateTimeStr) && !"NULL".equals(dateTimeStr)) {
@@ -519,10 +408,6 @@ object DateFormatUtils {
 
   /**
     * 对指定日期增加天
-    *
-    * @param dateTime
-    * @param days
-    * @return
     */
   def addDays(dateTime: Date, days: Int): String = {
     if (dateTime != null) {
@@ -545,10 +430,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行天加减
-    *
-    * @param dateTimeStr
-    * @param weeks
-    * @return
     */
   def addWeeks(dateTimeStr: String, weeks: Int): String = {
     if (StringUtils.isNotBlank(dateTimeStr) && !"null".equals(dateTimeStr) && !"NULL".equals(dateTimeStr)) {
@@ -561,10 +442,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行天加减
-    *
-    * @param dateTime
-    * @param weeks
-    * @return
     */
   def addWeeks(dateTime: Date, weeks: Int): String = {
     if (dateTime != null) {
@@ -576,10 +453,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行小时加减
-    *
-    * @param dateTimeStr
-    * @param hours
-    * @return
     */
   def addHours(dateTimeStr: String, hours: Int): String = {
     if (StringUtils.isNotBlank(dateTimeStr) && !"null".equals(dateTimeStr) && !"NULL".equals(dateTimeStr)) {
@@ -592,10 +465,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行小时加减
-    *
-    * @param dateTime
-    * @param hours
-    * @return
     */
   def addHours(dateTime: Date, hours: Int): String = {
     if (dateTime != null) {
@@ -607,10 +476,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行分钟加减
-    *
-    * @param dateTimeStr
-    * @param minutes
-    * @return
     */
   def addMins(dateTimeStr: String, minutes: Int): String = {
     if (StringUtils.isNotBlank(dateTimeStr) && !"null".equals(dateTimeStr) && !"NULL".equals(dateTimeStr)) {
@@ -623,10 +488,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行分钟加减
-    *
-    * @param dateTime
-    * @param minutes
-    * @return
     */
   def addMins(dateTime: Date, minutes: Int): String = {
     if (dateTime != null) {
@@ -638,10 +499,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行秒钟加减
-    *
-    * @param dateTimeStr
-    * @param seconds
-    * @return
     */
   def addSecs(dateTimeStr: String, seconds: Int): String = {
     if (StringUtils.isNotBlank(dateTimeStr) && !"null".equals(dateTimeStr) && !"NULL".equals(dateTimeStr)) {
@@ -654,10 +511,6 @@ object DateFormatUtils {
 
   /**
     * 对指定的时间字段进行秒钟加减
-    *
-    * @param dateTime
-    * @param seconds
-    * @return
     */
   def addSecs(dateTime: Date, seconds: Int): String = {
     if (dateTime != null) {
@@ -672,9 +525,6 @@ object DateFormatUtils {
     *
     * @param prefix
     * 指定拼接前缀
-    * @param day1
-    * @param day2
-    * @return
     */
   def getBetweenDate(prefix: String, day1: String, day2: String): Array[String] = {
     val dates = ArrayBuffer[String]()
@@ -701,40 +551,6 @@ object DateFormatUtils {
   }
 
   /**
-    * 计算制定时间范围内的所有日期，使用制定字符串进行连接
-    *
-    * @param startDate
-    * 开始时间：yyyy-MM-dd hh:mm:ss格式
-    * @param endDate
-    * 结束时间：yyyy-MM-dd hh:mm:ss格式
-    * @param con
-    * 连接字符串
-    * @return
-    */
-  def getDistanceDays(startDate: String, endDate: String, con: String = "|"): String = {
-    if (StringUtils.isNotBlank(startDate) && StringUtils.isNotBlank(endDate)) {
-      val startDateStr = this.dateSchemaFormat(startDate, FireDateSchemaConf.yyyy_MM_ddHHmmss, FireDateSchemaConf.yyyyMMdd)
-      val sb: StringBuilder = new StringBuilder(startDateStr + con)
-      var tmpDay: String = ""
-      tmpDay = this.addDays(startDate, 1)
-      while (this.isBetween(tmpDay, startDate, endDate) && !sb.toString().contains(tmpDay)) {
-        sb.append(this.dateSchemaFormat(tmpDay, FireDateSchemaConf.yyyy_MM_ddHHmmss, FireDateSchemaConf.yyyyMMdd) + con)
-        tmpDay = this.addDays(tmpDay, 1)
-      }
-      if (!sb.toString().contains(this.dateSchemaFormat(endDate, FireDateSchemaConf.yyyy_MM_ddHHmmss, FireDateSchemaConf.yyyyMMdd))) {
-        sb.append(this.dateSchemaFormat(endDate, FireDateSchemaConf.yyyy_MM_ddHHmmss, FireDateSchemaConf.yyyyMMdd))
-      }
-      if (sb.charAt(sb.length - 1).toString.equals(con)) {
-        sb.substring(0, sb.length - 1)
-      } else {
-        sb.toString()
-      }
-    } else {
-      startDate
-    }
-  }
-
-  /**
     * 将yyyy-MM-dd hh:mm:ss类型日期truncate为月初零点
     */
   def truncateMonth(dateTime: Date): String = {
@@ -750,9 +566,6 @@ object DateFormatUtils {
 
   /**
     * 取年月日
-    *
-    * @param dataTime
-    * @return
     */
   def getyyyyMMdd(dataTime: String): String = {
     if (StringUtils.isNotBlank(dataTime) && dataTime.length >= 10) {
@@ -764,9 +577,6 @@ object DateFormatUtils {
 
   /**
     * 取年月日
-    *
-    * @param dataTime
-    * @return
     */
   def getyyyyMM(dataTime: String): String = {
     if (StringUtils.isNotBlank(dataTime) && dataTime.length >= 7) {
@@ -778,9 +588,6 @@ object DateFormatUtils {
 
   /**
     * 取年月日
-    *
-    * @param dataTime
-    * @return
     */
   def getyyyy(dataTime: String): String = {
     if (StringUtils.isNotBlank(dataTime) && dataTime.length >= 4) {
@@ -792,9 +599,6 @@ object DateFormatUtils {
 
   /**
     * 获取指定日期的月初时间，如为空则返回系统当前时间对应的月初
-    *
-    * @param dateTime
-    * @return
     */
   def truncateMonthStr(dateTime: String): String = {
     var dateTimeStr = dateTime
@@ -806,9 +610,6 @@ object DateFormatUtils {
 
   /**
     * 根据指定的时间和格式，将时间格式化为hive分区格式
-    *
-    * @param dateTime
-    * @param schema
     */
   def getPartitionTime(dateTime: String = this.formatCurrentDateTime(), schema: String = FireDateSchemaConf.yyyyMMdd): String = {
     this.dateSchemaFormat(dateTime, FireDateSchemaConf.yyyy_MM_ddHHmmss, schema)
@@ -816,19 +617,13 @@ object DateFormatUtils {
 
   /**
     * 将当前系统时间格式化为指定的格式作为分区
-    *
-    * @param schema
     */
-  def getCurrentPartitionTime(schema: String = FireDateSchemaConf.yyyyMMdd) = {
+  def getCurrentPartitionTime(schema: String = FireDateSchemaConf.yyyyMMdd): String = {
     getPartitionTime(this.formatCurrentDateTime(), schema)
   }
 
   /**
     * 获取两个时间间隔的毫秒数
-    *
-    * @param before
-    * @param after
-    * @return
     */
   def interval(before: Date, after: Date): Long = {
     after.getTime - before.getTime
@@ -836,10 +631,6 @@ object DateFormatUtils {
 
   /**
     * 获取两个时间间隔的毫秒数
-    *
-    * @param before
-    * @param after
-    * @return
     */
   def interval(before: String, after: String): Long = {
     this.formatDateTime(after).getTime - this.formatDateTime(before).getTime
@@ -876,47 +667,9 @@ object DateFormatUtils {
 
   /**
     * 获取整点小时
-    *
-    * @param dateStr
-    * @return
     */
   def truncateHour(dateStr: String): String = {
     this.dateSchemaFormat(dateStr, FireDateSchemaConf.yyyy_MM_ddHHmmss, FireDateSchemaConf.yyyyMMddHH)
-  }
-
-  /**
-    * 将时间转为通用的yyyy-MM-dd HH:mm:ss格式
-    *
-    * @param dateTime
-    * @return
-    * yyyy-MM-dd HH:mm:ss时间
-    */
-  def formatOggTime2GeneralTime(dateTime: String): String = {
-    if (dateTime != null) {
-      val count = dateTime.indexOf(" ")
-      if (count != -1) {
-        dateTime
-      } else {
-        dateTime.replaceFirst(":", " ")
-      }
-    } else {
-      null
-    }
-  }
-
-  /**
-    * 日期格式转换，原格式为：yyyy-MM-dd:HH:mm:ss或yyyy-MM-dd HH:mm:ss
-    *
-    * @param dateTime
-    * @param schema
-    * @return
-    */
-  def oggDateSchemaFormat(dateTime: String, schema: String): String = {
-    if (StringUtils.isNotBlank(dateTime) && StringUtils.isNotBlank(schema)) {
-      DateFormatUtils.dateSchemaFormat(this.formatOggTime2GeneralTime(dateTime), FireDateSchemaConf.yyyy_MM_ddHHmmss, schema)
-    } else {
-      dateTime
-    }
   }
 
   /**
@@ -981,9 +734,6 @@ object DateFormatUtils {
 
   /**
     * 判断给定的时间的秒位的个位是否为0秒，如00/10/20/30/40/60/60
-    *
-    * @param date
-    * @return
     */
   def isSecondDivisibleZero(date: Date = new Date): Boolean = {
     val cal = Calendar.getInstance()
@@ -994,9 +744,6 @@ object DateFormatUtils {
 
   /**
     * 判断给定的时间的秒位的个位是否为0秒，如00/10/20/30/40/60/60
-    *
-    * @param dateTime
-    * @return
     */
   def isSecondDivisibleZero(dateTime: String): Boolean = {
     this.isSecondDivisibleZero(this.formatDateTime(dateTime))
@@ -1004,9 +751,6 @@ object DateFormatUtils {
 
   /**
     * 判断给定的时间的秒位是否为00秒
-    *
-    * @param date
-    * @return
     */
   def isZeroSecond(date: Date = new Date): Boolean = {
     val cal = Calendar.getInstance()
@@ -1017,10 +761,6 @@ object DateFormatUtils {
 
   /**
     * 判断给定的时间的秒位是否为00秒
-    *
-    * @param dateTime
-    * 时间
-    * @return
     */
   def isZeroSecond(dateTime: String): Boolean = {
     this.isZeroSecond(this.formatDateTime(dateTime))
@@ -1028,9 +768,6 @@ object DateFormatUtils {
 
   /**
     * 判断给定的时间的分钟位是否为00分
-    *
-    * @param date
-    * @return
     */
   def isZeroMinute(date: Date = new Date): Boolean = {
     if (this.isZeroSecond(date)) {
@@ -1045,10 +782,6 @@ object DateFormatUtils {
 
   /**
     * 判断给定的时间的分钟位是否为00分
-    *
-    * @param dateTime
-    * 时间
-    * @return
     */
   def isZeroMinute(dateTime: String): Boolean = {
     this.isZeroMinute(this.formatDateTime(dateTime))
@@ -1056,9 +789,6 @@ object DateFormatUtils {
 
   /**
     * 判断给定的时间的小时位是否为00时
-    *
-    * @param date
-    * @return
     */
   def isZeroHour(date: Date = new Date): Boolean = {
     if (this.isZeroMinute(date)) {
@@ -1073,10 +803,6 @@ object DateFormatUtils {
 
   /**
     * 判断给定的时间的小时位是否为00时
-    *
-    * @param dateTime
-    * 时间
-    * @return
     */
   def isZeroHour(dateTime: String): Boolean = {
     this.isZeroHour(this.formatDateTime(dateTime))
@@ -1084,19 +810,15 @@ object DateFormatUtils {
 
   /**
     * 获取系统当前时间，精确到秒
-    *
-    * @return
     */
-  def currentTime = {
+  def currentTime: Long = {
     System.currentTimeMillis() / 1000
   }
 
   /**
     * 计算运行时长
-    *
-    * @param startTime
     */
-  def runTime(startTime: Long) = {
+  def runTime(startTime: Long): String = {
     val currentTime = this.currentTime
     val apartTime = currentTime - startTime
     val hours = apartTime / 3600

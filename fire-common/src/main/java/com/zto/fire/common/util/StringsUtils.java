@@ -101,7 +101,7 @@ public class StringsUtils {
         final StringBuilder hexString = new StringBuilder();
         for (int i = 0; i < byteArray.length; i++) {
             if ((byteArray[i] & 0xff) < 0x10)//0~F前面不零
-                hexString.append("0");
+                hexString.append('0');
             hexString.append(Integer.toHexString(0xFF & byteArray[i]));
         }
         return hexString.toString().toLowerCase();
@@ -211,17 +211,17 @@ public class StringsUtils {
     public static Object parseString(String str) {
         if (StringsUtils.isLong(str)) {
             String longStr = str.toUpperCase().replace("L", "");
-            return Long.parseLong(longStr);
+            return Long.valueOf(longStr);
         } else if (StringsUtils.isInt(str)) {
-            return Integer.parseInt(str);
+            return Integer.valueOf(str);
         } else if (StringsUtils.isBoolean(str)) {
-            return Boolean.parseBoolean(str);
+            return Boolean.valueOf(str);
         } else if (StringsUtils.isFloat(str)) {
             String floatStr = str.toUpperCase().replace("F", "");
-            return Float.parseFloat(floatStr);
+            return Float.valueOf(floatStr);
         } else if (StringsUtils.isDouble(str)) {
             String doubleStr = str.toUpperCase().replace("D", "");
-            return Double.parseDouble(doubleStr);
+            return Double.valueOf(doubleStr);
         } else {
             return str;
         }

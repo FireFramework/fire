@@ -39,8 +39,8 @@ object KafkaUtils {
     properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, host)
     properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
     properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
-    properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer])
-    properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer])
+    properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
+    properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
     properties.put("auto.offset.reset", "earliest")
     new KafkaConsumer[String, String](properties)
   }

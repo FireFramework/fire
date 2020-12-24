@@ -2,12 +2,12 @@ package com.zto.fire.common.util
 
 import java.util.concurrent._
 
+import com.zto.fire.predef._
 import com.zto.fire.common.conf.FirePS1Conf
 import com.zto.fire.common.enu.ThreadPoolType
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions
 
 /**
  * 线程相关工具类
@@ -194,7 +194,20 @@ object ThreadUtils {
   def shutdown(poolName: String): Unit = {
     if (StringUtils.isNotBlank(poolName) && this.threadPoolMap.containsKey(poolName)) {
       val threadPool = this.threadPoolMap.get(poolName)
-      if (threadPool != null && !threadPool.isShutdown) threadPool.shutdownNow()
+      if (threadPool != null && !threadPool.isShutdown) {
+        threadPool.shutdownNow()
+        this.logger.debug(s"关闭线程池：${poolName}")
+      }
+    }
+  }
+
+  /**
+   * 用于释放指定的线程池
+   */
+  def shutdown(pool: ExecutorService): Unit = {
+    if (pool != null && !pool.isShutdown) {
+      pool.shutdown()
+      this.logger.debug(s"关闭线程池：${pool}")
     }
   }
 
@@ -204,13 +217,13 @@ object ThreadUtils {
   private[fire] def shutdown: Unit = {
     val poolNum = this.threadPoolMap.size()
     if (this.threadPoolMap.size() > 0) {
-      JavaConversions.mapAsScalaConcurrentMap(this.threadPoolMap).foreach(pool => {
-        if (pool != null && pool._2 != null) {
+      this.threadPoolMap.foreach(pool => {
+        if (pool != null && pool._2 != null && !pool._2.isShutdown) {
           pool._2.shutdownNow()
-          println(s"${FirePS1Conf.GREEN}---> 完成线程池[ ${pool._1} ]的资源回收. <---${FirePS1Conf.DEFAULT}")
+          logger.info(s"${FirePS1Conf.GREEN}---> 完成线程池[ ${pool._1} ]的资源回收. <---${FirePS1Conf.DEFAULT}")
         }
       })
     }
-    println(s"${FirePS1Conf.PINK}---> 完成所有线程池回收，总计：${poolNum}个. <---${FirePS1Conf.DEFAULT}")
+    logger.info(s"${FirePS1Conf.PINK}---> 完成所有线程池回收，总计：${poolNum}个. <---${FirePS1Conf.DEFAULT}")
   }
 }

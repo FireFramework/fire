@@ -42,12 +42,14 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
     FlinkUtils.syncConf(this.getRuntimeContext.getExecutionConfig)
     if (this.flushInterval > 0 && batch > 0) {
       this.scheduler = Executors.newScheduledThreadPool(1)
-      this.scheduledFuture = this.scheduler.scheduleWithFixedDelay(new Runnable {
-        override def run(): Unit = this.synchronized {
-          if (closed.get()) return
-          flush
-        }
-      }, this.flushInterval, this.flushInterval, TimeUnit.MILLISECONDS)
+      if (this.scheduler != null) {
+        this.scheduledFuture = this.scheduler.scheduleWithFixedDelay(new Runnable {
+          override def run(): Unit = this.synchronized {
+            if (closed.get()) return
+            flush
+          }
+        }, this.flushInterval, this.flushInterval, TimeUnit.MILLISECONDS)
+      }
     }
   }
 
@@ -109,6 +111,7 @@ abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends R
       this.logger.info(s"执行flushInternal操作 sink.size=${this.buffer.size()} batch=${this.batch} flushInterval=${this.flushInterval}")
       val loop = new Breaks
       loop.breakable {
+        if (this.maxRetry == null || this.maxRetry < 1) this.maxRetry = 1
         for (i <- 1L to this.maxRetry) {
           try {
             this.sink
