@@ -51,28 +51,27 @@ object FlinkUtils extends Serializable {
    * @return
    */
   def rowToBean[T](schema: FlinkTableSchema, row: Row, clazz: Class[T]): T = {
+    requireNonEmpty(schema, row, clazz)
     val obj = clazz.newInstance()
-    if (row != null && clazz != null) {
-      tryWithLog {
-        this.extendSchemaTable(schema)
-        clazz.getDeclaredFields.foreach(field => {
-          ReflectionUtils.setAccessible(field)
-          val anno = field.getAnnotation(classOf[FieldName])
-          val begin = if (anno == null) true else !anno.disuse()
-          if (begin) {
-            val fieldName = if (anno != null && ValueUtils.isNotEmpty(anno.value())) anno.value().trim else field.getName
-            if (this.schemaTable.contains(schema, fieldName)) {
-              val fieldIndex = this.schemaTable.get(schema, fieldName)
-              field.set(obj, row.getField(fieldIndex))
-            }
+    tryWithLog {
+      this.extendSchemaTable(schema)
+      clazz.getDeclaredFields.foreach(field => {
+        ReflectionUtils.setAccessible(field)
+        val anno = field.getAnnotation(classOf[FieldName])
+        val begin = if (anno == null) true else !anno.disuse()
+        if (begin) {
+          val fieldName = if (anno != null && ValueUtils.isNotEmpty(anno.value())) anno.value().trim else field.getName
+          if (this.schemaTable.contains(schema, fieldName)) {
+            val fieldIndex = this.schemaTable.get(schema, fieldName)
+            field.set(obj, row.getField(fieldIndex))
           }
-        })
-        if (obj.isInstanceOf[HBaseBaseBean[T]]) {
-          val method = ReflectionUtils.getMethodByName(clazz, "buildRowKey")
-          if (method != null) method.invoke(obj)
         }
-      } (this.logger, catchLog = "flink row转为JavaBean过程中发生异常.")
-    }
+      })
+      if (obj.isInstanceOf[HBaseBaseBean[T]]) {
+        val method = ReflectionUtils.getMethodByName(clazz, "buildRowKey")
+        if (method != null) method.invoke(obj)
+      }
+    }(this.logger, catchLog = "flink row转为JavaBean过程中发生异常.")
     obj
   }
 

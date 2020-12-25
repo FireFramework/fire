@@ -1,5 +1,7 @@
 package com.zto.fire.examples.spark.hbase
 
+import java.nio.charset.StandardCharsets
+
 import com.zto.fire._
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkCore
@@ -69,7 +71,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     studentList.foreach(println)
 
     val getList = ListBuffer[Get]()
-    rowKeys.map(rowkey => (getList += new Get(rowkey.getBytes)))
+    rowKeys.map(rowkey => (getList += new Get(rowkey.getBytes(StandardCharsets.UTF_8))))
     // 获取多版本形式存放的记录，并获取最新的两个版本就
     val studentList2 = this.spark.hbaseGetList(this.tableName1, classOf[Student], getList)
     studentList2.foreach(println)

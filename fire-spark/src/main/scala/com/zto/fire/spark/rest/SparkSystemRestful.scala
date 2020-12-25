@@ -70,8 +70,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[setConf] 设置配置信息失败：json=$json", e)
         msg.buildError("设置配置信息失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -104,8 +102,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[log] 获取函数信息失败：json=$json", e)
         msg.buildError("获取函数信息失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -152,8 +148,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[log] 获取表字段信息失败：json=$json", e)
         msg.buildError("获取表字段信息失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -194,8 +188,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[log] 获取表元数据信息失败：json=$json", e)
         msg.buildError("获取表元数据信息失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -219,8 +211,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[log] 获取数据库列表失败", e)
         msg.buildError("获取数据库列表失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -240,8 +230,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[log] 获取单值累加器失败：json=$json", e)
         msg.buildError("获取多值累加器失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -260,8 +248,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[log] 获取多值累加器失败：json=$json", e)
         msg.buildError("获取多值累加器失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -286,8 +272,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[log] 获取timer累加器失败：json=$json", e)
         msg.buildError("获取timer累加器失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -320,8 +304,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[log] 日志获取失败：json=$json", e)
         msg.buildError("日志获取失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -354,8 +336,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[env] 运行时信息获取失败：json=$json", e)
         msg.buildError("运行时信息获取失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -380,8 +360,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[kill] 执行kill任务失败：json=$json", e)
         msg.buildError("执行kill任务失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -408,8 +386,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[cancelJob] kill job失败：json=$json", e)
         msg.buildError("kill job失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -436,8 +412,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[cancelStage] kill stage失败：json=$json", e)
         msg.buildError("kill stage失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -472,8 +446,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[sql] 执行用户sql失败：json=$json", e)
         msg.buildError("执行用户sql失败，异常堆栈：" + ExceptionBus.stackTrace(e), ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 
@@ -521,8 +493,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.logger.error(s"[sparkInfo] 获取spark信息失败：json=$json", e)
         msg.buildError("获取spark信息失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 

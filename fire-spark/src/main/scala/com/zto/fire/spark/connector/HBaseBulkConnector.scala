@@ -1,5 +1,7 @@
 package com.zto.fire.spark.connector
 
+import java.nio.charset.StandardCharsets
+
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireHBaseConf, FireSparkConf}
 import com.zto.fire.core.connector.{Connector, ConnectorFactory}

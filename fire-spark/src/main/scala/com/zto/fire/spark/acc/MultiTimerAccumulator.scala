@@ -112,19 +112,17 @@ private[fire] class MultiTimerAccumulator extends AccumulatorV2[(String, Long, S
 
       val timeOutSet = new mutable.HashSet[String]()
       this.timerCountTable.rowMap().foreach(kmap => {
-        kmap._2.foreach(kv => {
+        kmap._2.filter(_ != null).foreach(kv => {
           if (kv._1.compareTo(criticalTime) <= 0 && StringUtils.isNotBlank(kmap._1) && StringUtils.isNotBlank(kv._1)) {
             timeOutSet += kmap._1 + "#" + kv._1
           }
         })
       })
 
-      if (timeOutSet != null && timeOutSet.nonEmpty) {
-        timeOutSet.map(t => (t.split("#"))).foreach(kv => {
-          this.timerCountTable.remove(kv(0), kv(1))
-        })
-        this.lastClearTime = currentDate
-      }
+      timeOutSet.filter(StringUtils.isNotBlank).map(t => (t.split("#"))).foreach(kv => {
+        this.timerCountTable.remove(kv(0), kv(1))
+      })
+      this.lastClearTime = currentDate
     }
   }
 }

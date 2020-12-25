@@ -1,5 +1,7 @@
 package com.zto.fire.hbase
 
+import java.nio.charset.StandardCharsets
+
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import org.apache.commons.lang3.StringUtils
@@ -32,11 +34,11 @@ private[hbase] trait HBaseFunctions {
                maxVersions: Int = 1,
                filter: Filter = null): Get = {
     require(StringUtils.isNotBlank(rowKey), "buildGet执行失败，rowKey不能为空！")
-    val get = new Get(rowKey.getBytes())
+    val get = new Get(rowKey.getBytes(StandardCharsets.UTF_8))
     if (StringUtils.isNotBlank(family) && StringUtils.isNotBlank(qualifier)) {
-      get.addColumn(family.getBytes, qualifier.getBytes)
+      get.addColumn(family.getBytes(StandardCharsets.UTF_8), qualifier.getBytes(StandardCharsets.UTF_8))
     } else if (StringUtils.isNotBlank(family)) {
-      get.addFamily(family.getBytes)
+      get.addFamily(family.getBytes(StandardCharsets.UTF_8))
     }
     if (filter != null) get.setFilter(filter)
     if (maxVersions > 0) get.setMaxVersions(maxVersions)
@@ -58,12 +60,12 @@ private[hbase] trait HBaseFunctions {
                 filterList: FilterList = null,
                 batch: Int = -1): Scan = {
     val scan = new Scan
-    if (StringUtils.isNotBlank(startRow)) scan.setStartRow(startRow.getBytes)
-    if (StringUtils.isNotBlank(endRow)) scan.setStopRow(endRow.getBytes)
+    if (StringUtils.isNotBlank(startRow)) scan.setStartRow(startRow.getBytes(StandardCharsets.UTF_8))
+    if (StringUtils.isNotBlank(endRow)) scan.setStopRow(endRow.getBytes(StandardCharsets.UTF_8))
     if (StringUtils.isNotBlank(family) && StringUtils.isNotBlank(qualifier)) {
-      scan.addColumn(family.getBytes, qualifier.getBytes)
+      scan.addColumn(family.getBytes(StandardCharsets.UTF_8), qualifier.getBytes(StandardCharsets.UTF_8))
     } else if (StringUtils.isNotBlank(family)) {
-      scan.addFamily(family.getBytes)
+      scan.addFamily(family.getBytes(StandardCharsets.UTF_8))
     }
     if (filterList != null) scan.setFilter(filterList)
     if (maxVersions > 0) scan.setMaxVersions(maxVersions)

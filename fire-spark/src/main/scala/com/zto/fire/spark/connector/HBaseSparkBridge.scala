@@ -1,5 +1,7 @@
 package com.zto.fire.spark.connector
 
+import java.nio.charset.StandardCharsets
+
 import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.hbase.HBaseConnector
@@ -348,7 +350,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyN
       val getList = ListBuffer[Get]()
       it.foreach(rowKey => {
         if (StringUtils.isNotBlank(rowKey)) {
-          val get = new Get(rowKey.getBytes)
+          val get = new Get(rowKey.getBytes(StandardCharsets.UTF_8))
             getList += get
             if (getList.size >= this.batchSize) {
               beanList ++= this.hbaseConnector.get(tableName, clazz, getList: _*)
@@ -444,7 +446,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyN
   def hbaseGetList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[String]): Seq[T] = {
     val getList = ListBuffer[Get]()
     seq.filter(StringUtils.isNotBlank).foreach(rowKey => {
-        getList += new Get(rowKey.getBytes)
+        getList += new Get(rowKey.getBytes(StandardCharsets.UTF_8))
     })
 
     this.hbaseGetList[T](tableName, clazz, getList)

@@ -177,8 +177,6 @@ trait BaseSparkStreaming extends BaseSpark {
         this.logger.error(s"[hotRestart] 执行热重启成功失败：json=$json", "rest")
         msg.buildError("执行热重启成功失败", ErrorCode.ERROR)
       }
-    } finally {
-      msg.toString
     }
   }
 

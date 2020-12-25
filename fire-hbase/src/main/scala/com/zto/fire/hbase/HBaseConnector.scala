@@ -3,10 +3,12 @@ package com.zto.fire.hbase
 import java.lang.reflect.Field
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInt, Long => JLong, Short => JShort, String => JString}
 import java.math.{BigDecimal => JBigDecimal}
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.{ScheduledExecutorService, TimeUnit, ConcurrentHashMap => JConcurrentHashMap}
 import java.util.{HashMap => JHashMap, Map => JMap}
 
 import com.alibaba.fastjson.JSON
+import com.google.common.collect.Maps
 import com.zto.fire.common.anno.{FieldName, Internal}
 import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.common.conf.FireHBaseConf.{familyName, _}
@@ -70,7 +72,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
     var table: Table = null
     tryWithFinally {
       table = this.getTable(tableName)
-      val beanList = if (this.getMultiVersion[T]) beans.map((bean: T) => new MultiVersionsBean(bean)) else beans
+      val beanList = if (this.getMultiVersion[T]) beans.filter(_ != null).map((bean: T) => new MultiVersionsBean(bean)) else beans
       val putList = beanList.map(bean => convert2Put(bean.asInstanceOf[T], this.getNullable[T]))
       this.insert(tableName, putList: _*)
     } {
@@ -85,7 +87,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @param puts      Put集合
    */
   def insert(tableName: String, puts: Put*): Unit = {
-    require(this.isExists(tableName) && puts != null && puts.nonEmpty, "参数不合法，批量HBase insert失败")
+    require(puts != null && puts.nonEmpty && this.isExists(tableName), "参数不合法，批量HBase insert失败")
 
     var table: Table = null
     tryWithFinally {
@@ -137,7 +139,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * HBase Result
    */
   def getResult(tableName: String, getList: Get*): ListBuffer[Result] = {
-    require(this.isExists(tableName) && getList != null && getList.nonEmpty, "参数不合法，执行HBase 批量get失败")
+    require(getList != null && getList.nonEmpty && this.isExists(tableName), "参数不合法，执行HBase 批量get失败")
 
     var table: Table = null
     val list = ListBuffer[Result]()
@@ -177,7 +179,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @return 指定类型的List
    */
   def scanResultScanner(tableName: String, scan: Scan): ResultScanner = {
-    require(this.isExists(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
+    require(scan != null && this.isExists(tableName), s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
 
     var table: Table = null
     var rsScanner: ResultScanner = null
@@ -240,21 +242,23 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @return 指定类型的List
    */
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): ListBuffer[T] = {
-    require(this.isExists(tableName) && scan != null, s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
+    require(scan != null && this.isExists(tableName), s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
 
     val list = ListBuffer[T]()
     var rsScanner: ResultScanner = null
     tryWithFinally {
       rsScanner = this.scanResultScanner(tableName, scan)
-      rsScanner.foreach(rs => {
-        if (this.getMultiVersion[T]) {
-          val objList = this.hbaseMultiRow2Bean(rs, clazz)
-          if (objList != null && objList.nonEmpty) list ++= objList
-        } else {
-          val obj = hbaseRow2Bean(rs, clazz)
-          if (obj != null) list += obj
-        }
-      })
+      if (rsScanner != null) {
+        rsScanner.foreach(rs => {
+          if (this.getMultiVersion[T]) {
+            val objList = this.hbaseMultiRow2Bean(rs, clazz)
+            if (objList != null && objList.nonEmpty) list ++= objList
+          } else {
+            val obj = hbaseRow2Bean(rs, clazz)
+            if (obj != null) list += obj
+          }
+        })
+      }
       list
     } {
       this.closeResultScanner(rsScanner)
@@ -295,21 +299,23 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[this] def getFieldNameMap[T <: HBaseBaseBean[T]](clazz: Class[T]): JMap[String, Field] = {
     if (!this.cacheFieldMap.containsKey(clazz)) {
       val allFields = ReflectionUtils.getAllFields(clazz)
-      val fieldMap = new JHashMap[String, Field](allFields.size)
+      val fieldMap = Maps.newHashMapWithExpectedSize[String, Field](allFields.size())
 
-      allFields.values.filter(field => field != null).foreach(field => {
-        val fieldName = field.getAnnotation(classOf[FieldName])
-        var family = ""
-        var qualifier = ""
-        if (fieldName != null) {
-          family = fieldName.family
-          qualifier = fieldName.value
-        }
+      if (allFields != null) {
+        allFields.values.filter(field => field != null).foreach(field => {
+          val fieldName = field.getAnnotation(classOf[FieldName])
+          var family = ""
+          var qualifier = ""
+          if (fieldName != null) {
+            family = fieldName.family
+            qualifier = fieldName.value
+          }
 
-        if (StringUtils.isBlank(family)) family = familyName(keyNum)
-        if (StringUtils.isBlank(qualifier)) qualifier = field.getName
-        fieldMap.put(family + ":" + qualifier, field)
-      })
+          if (StringUtils.isBlank(family)) family = familyName(keyNum)
+          if (StringUtils.isBlank(qualifier)) qualifier = field.getName
+          fieldMap.put(family + ":" + qualifier, field)
+        })
+      }
       cacheFieldMap.put(clazz, fieldMap)
     }
 
@@ -354,20 +360,22 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[this] def multiCell2Field[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T], fieldMap: JMap[String, Field]): ListBuffer[T] = {
     val objList = ListBuffer[T]()
     tryWithLog {
-      rs.rawCells.foreach(cell => {
-        val obj = new MultiVersionsBean
-        val rowKey = new String(CellUtil.cloneRow(cell))
-        val family = new String(CellUtil.cloneFamily(cell))
-        val qualifier = new String(CellUtil.cloneQualifier(cell))
-        val value = CellUtil.cloneValue(cell)
-        val field = fieldMap.get(family + ":" + qualifier)
-        this.setFieldBytesValue(obj, field, value)
-        val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
-        require(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
-        idField.set(obj, rowKey)
-        if (StringUtils.isNotBlank(obj.getMultiFields)) objList.add(JSON.parseObject(obj.getMultiFields, clazz))
-      })
-    }(this.logger, catchLog = s"将多版本json数据转为类型${clazz.getName}过程中发生失败.")
+      if (rs != null) {
+        rs.rawCells.filter(_ != null).foreach(cell => {
+          val obj = new MultiVersionsBean
+          val rowKey = new String(CellUtil.cloneRow(cell), StandardCharsets.UTF_8)
+          val family = new String(CellUtil.cloneFamily(cell), StandardCharsets.UTF_8)
+          val qualifier = new String(CellUtil.cloneQualifier(cell), StandardCharsets.UTF_8)
+          val value = CellUtil.cloneValue(cell)
+          val field = fieldMap.get(family + ":" + qualifier)
+          this.setFieldBytesValue(obj, field, value)
+          val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
+          require(idField != null, s"${clazz}中必须有名为rowKey的成员变量")
+          idField.set(obj, rowKey)
+          if (StringUtils.isNotBlank(obj.getMultiFields)) objList.add(JSON.parseObject(obj.getMultiFields, clazz))
+        })
+      }
+    }(this.logger, catchLog = s"将多版本json数据转为类型${clazz}过程中发生失败.")
     objList
   }
 
@@ -404,17 +412,19 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    */
   @Internal
   private[this] def convertCells2Fields[T <: HBaseBaseBean[T]](fieldMap: JMap[String, Field], obj: T, cells: Array[Cell]): String = {
-    require(cells != null && obj != null)
+    require(fieldMap != null && cells != null && obj != null)
 
     var rowKey = ""
-    cells.foreach(cell => {
-      rowKey = new String(CellUtil.cloneRow(cell))
-      val family = new String(CellUtil.cloneFamily(cell))
-      val qualifier = new String(CellUtil.cloneQualifier(cell))
-      val value = CellUtil.cloneValue(cell)
-      val field = fieldMap.get(family + ":" + qualifier)
-      this.setFieldBytesValue(obj, field, value)
-    })
+    if (cells != null) {
+      cells.filter(_ != null).foreach(cell => {
+        rowKey = new String(CellUtil.cloneRow(cell), StandardCharsets.UTF_8)
+        val family = new String(CellUtil.cloneFamily(cell), StandardCharsets.UTF_8)
+        val qualifier = new String(CellUtil.cloneQualifier(cell), StandardCharsets.UTF_8)
+        val value = CellUtil.cloneValue(cell)
+        val field = fieldMap.get(family + ":" + qualifier)
+        this.setFieldBytesValue(obj, field, value)
+      })
+    }
     rowKey
   }
 
@@ -476,7 +486,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
     require(rsArr != null && rsArr.nonEmpty && clazz != null, row2BeanParamError)
     val fieldMap = getFieldNameMap(classOf[MultiVersionsBean])
-    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
     rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList ++= this.multiCell2Field(rs, clazz, fieldMap))
     objList
@@ -493,7 +503,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def hbaseRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
     require(it != null && clazz != null, row2BeanParamError)
     val fieldMap = this.getFieldNameMap(clazz)
-    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val beanList = ListBuffer[T]()
     tryWithLog {
       it.foreach(t => {
@@ -501,7 +511,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
         val cells = t._2.rawCells()
         val rowKey = this.convertCells2Fields(fieldMap, obj, cells)
         val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
-        require(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
+        require(idField != null, s"${clazz}中必须有名为rowKey的成员变量")
         idField.set(obj, rowKey)
         beanList += obj
       })
@@ -548,12 +558,12 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
         val method = ReflectionUtils.getMethodByName(clazz, "buildRowKey")
         tmpObj = method.invoke(tmpObj).asInstanceOf[T]
         rowKeyObj = rowKeyField.get(tmpObj)
-        require(rowKeyObj != null, s"rowKey不能为空，请检查${clazz.getName}中是否实现buildRowKey()方法！")
+        require(rowKeyObj != null, s"rowKey不能为空，请检查${clazz}中是否实现buildRowKey()方法！")
       }
 
       val allFields = ReflectionUtils.getAllFields(clazz)
-      require(allFields != null && allFields.nonEmpty, s"在${clazz.getName}中未找到任何成员变量，请检查！")
-      val rowKey = rowKeyObj.toString.getBytes
+      require(allFields != null && allFields.nonEmpty, s"在${clazz}中未找到任何成员变量，请检查！")
+      val rowKey = rowKeyObj.toString.getBytes(StandardCharsets.UTF_8)
       val put = new Put(rowKey)
       put.setDurability(this.durability)
       allFields.values().foreach(field => {
@@ -573,8 +583,8 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
           if (fieldName == null || (fieldName != null && !fieldName.disuse())) {
             if (StringUtils.isBlank(familyName)) familyName = FireHBaseConf.familyName(keyNum)
             if (StringUtils.isBlank(name)) name = field.getName
-            val famliyByte = familyName.getBytes
-            val qualifierByte = name.getBytes
+            val famliyByte = familyName.getBytes(StandardCharsets.UTF_8)
+            val qualifierByte = name.getBytes(StandardCharsets.UTF_8)
             if (objValue != null) {
               val objValueStr = objValue.toString
               val toBytes = field.getType match {
@@ -868,7 +878,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @param rowKeys   待删除的rowKey集合
    */
   def deleteRows(tableName: String, rowKeys: String*): Unit = {
-    if (this.isExists(tableName) && rowKeys != null && rowKeys.nonEmpty) {
+    if (rowKeys != null && rowKeys.nonEmpty && this.isExists(tableName)) {
       var table: Table = null
       tryWithFinally {
         val tbName = TableName.valueOf(tableName)
@@ -876,7 +886,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
 
         val deletes = ListBuffer[Delete]()
         rowKeys.filter(StringUtils.isNotBlank).foreach(rowKey => {
-          deletes += new Delete(rowKey.getBytes)
+          deletes += new Delete(rowKey.getBytes(StandardCharsets.UTF_8))
         })
 
         table.delete(deletes)
@@ -899,8 +909,8 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def deleteFamilies(tableName: String, rowKey: String, families: String*): Unit = {
     if (families != null && families.nonEmpty && StringUtils.isNotBlank(tableName)
       && StringUtils.isNotBlank(rowKey) && isExists(tableName)) {
-      val delete = new Delete(rowKey.getBytes())
-      families.filter(StringUtils.isNotBlank).foreach(family => delete.addFamily(family.getBytes()))
+      val delete = new Delete(rowKey.getBytes(StandardCharsets.UTF_8))
+      families.filter(StringUtils.isNotBlank).foreach(family => delete.addFamily(family.getBytes(StandardCharsets.UTF_8)))
 
       var table: Table = null
       tryWithFinally {
@@ -928,8 +938,8 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def deleteQualifiers(tableName: String, rowKey: String, family: String, qualifiers: String*): Unit = {
     if (StringUtils.isNotBlank(tableName) && StringUtils.isNotBlank(rowKey)
       && StringUtils.isNotBlank(family) && qualifiers != null && qualifiers.nonEmpty) {
-      val delete = new Delete(rowKey.getBytes)
-      qualifiers.foreach(qualifier => delete.addColumns(family.getBytes, qualifier.getBytes))
+      val delete = new Delete(rowKey.getBytes(StandardCharsets.UTF_8))
+      qualifiers.foreach(qualifier => delete.addColumns(family.getBytes(StandardCharsets.UTF_8), qualifier.getBytes(StandardCharsets.UTF_8)))
       var table: Table = null
 
       tryWithFinally {

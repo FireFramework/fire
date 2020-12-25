@@ -58,7 +58,7 @@ public class EncryptUtils {
         try {
             // 得到一个信息摘要器
             MessageDigest digest = MessageDigest.getInstance("md5");
-            byte[] result = digest.digest(message.getBytes());
+            byte[] result = digest.digest(message.getBytes(StandardCharsets.UTF_8));
             StringBuilder buffer = new StringBuilder();
             for (byte b : result) {
                 int number = b & 0xff;// 加盐
