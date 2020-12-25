@@ -1,12 +1,9 @@
 package com.zto.fire.common.util;
 
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 文件操作工具类
@@ -14,45 +11,8 @@ import java.util.List;
  * @author ChengLong 2018年8月22日 13:10:03
  */
 public class FileUtils {
-    private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
-
     private FileUtils() {}
 
-    /**
-     * 创建文件夹
-     */
-    public static void mkDirs(String path) {
-        if (org.apache.commons.lang3.StringUtils.isBlank(path)) {
-            return;
-        }
-        FileUtils.mkDirs(new File(path));
-    }
-
-    /**
-     * 创建文件夹
-     */
-    public static void mkDirs(File path) {
-        if (path == null) {
-            return;
-        }
-        try {
-            if (!path.exists()) {
-                path.mkdirs();
-            }
-        } catch (Exception e) {
-            logger.error("创建文件夹失败", e);
-        }
-    }
-
-    /**
-     * 判断文件是否存在
-     */
-    public static boolean exists(String file) {
-        if (StringUtils.isBlank(file)) {
-            return false;
-        }
-        return new File(file).exists();
-    }
 
     /**
      * 递归查找指定目录下的文件
@@ -65,7 +25,7 @@ public class FileUtils {
         File searchFile = null;
         File dir = new File(path);
         if (dir.exists() && dir.isDirectory()) {
-            for (File file : dir.listFiles()) {
+            for (File file : Objects.requireNonNull(dir.listFiles())) {
                 if (file.isDirectory()) {
                     searchFile = findFile(file.getPath(), fileName, fileList);
                 } else {
