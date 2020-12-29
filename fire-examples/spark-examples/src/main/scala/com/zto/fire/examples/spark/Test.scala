@@ -7,6 +7,10 @@ object Test extends BaseSparkCore {
   val key = "fire.partitions"
 
   override def process: Unit = {
+    logger.debug("======= execute process =======")
+    logger.info("======= execute process =======")
+    logger.warn("======= execute process =======")
+    logger.error("======= execute process =======")
     val rdd = this.fire.parallelize(1 to 10)
     println(rdd.count())
     // java相关的集合以J开头

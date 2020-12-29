@@ -27,6 +27,16 @@
             <artifactId>fire-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>fire-jdbc</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>fire-hbase</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

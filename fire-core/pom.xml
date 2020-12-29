@@ -16,6 +16,11 @@
             <artifactId>fire-common</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>fire-metrics</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
