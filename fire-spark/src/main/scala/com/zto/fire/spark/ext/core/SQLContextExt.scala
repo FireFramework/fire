@@ -2,6 +2,7 @@ package com.zto.fire.spark.ext.core
 
 import java.util.Properties
 
+import com.zto.fire._
 import com.zto.fire.common.conf.{FireJdbcConf, FireKuduConf, FireSparkConf}
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.spark.ext.module.KuduContextExt
@@ -141,12 +142,14 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * @param tables
    * 多个表名
    */
-  def uncacheTables(tables: String*) = {
-    tables.foreach(tableName => {
-      if (sqlContext.isCached(tableName)) {
-        sqlContext.uncacheTable(tableName)
-      }
-    })
+  def uncacheTables(tables: String*): Unit = {
+    if (isNotEmpty(tables)) {
+      tables.filter(StringUtils.isNotBlank).foreach(tableName => {
+        if (sqlContext.isCached(tableName)) {
+          sqlContext.uncacheTable(tableName)
+        }
+      })
+    }
   }
 
   /**
@@ -168,8 +171,8 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * 多个表名
    */
   def dropHiveTable(tableNames: String*): Unit = {
-    if (tableNames != null) {
-      tableNames.foreach(tableName => {
+    if (isNotEmpty(tableNames)) {
+      tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
         sqlContext.sql(s"DROP TABLE IF EXISTS $tableName")
       })
     }
@@ -184,7 +187,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * 分区
    */
   def addPartitions(tableName: String, partitions: String*): Unit = {
-    if (StringUtils.isNotBlank(tableName) && partitions != null) {
+    if (isAllNotEmpty(tableName, partitions)) {
       partitions.foreach(ds => {
         this.addPartition(tableName, ds, FireSparkConf.partitionName)
       })
@@ -202,7 +205,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * 分区字段名称，默认ds
    */
   def addPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
-    if (StringUtils.isNotBlank(tableName) && StringUtils.isNotBlank(partition) && StringUtils.isNotBlank(partitionName)) {
+    if (isAllNotEmpty(tableName, partition, partitionName)) {
       sqlContext.sql(s"ALTER TABLE $tableName ADD IF NOT EXISTS partition($partitionName='$partition')")
     }
   }
@@ -216,7 +219,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * 分区
    */
   def dropPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
-    if (StringUtils.isNotBlank(tableName) && StringUtils.isNotBlank(partition)) {
+    if (isAllNotEmpty(tableName, partition, partitionName)) {
       sqlContext.sql(s"ALTER TABLE $tableName DROP IF EXISTS partition($partitionName='$partition')")
     }
   }

@@ -299,24 +299,26 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[this] def getFieldNameMap[T <: HBaseBaseBean[T]](clazz: Class[T]): JMap[String, Field] = {
     if (!this.cacheFieldMap.containsKey(clazz)) {
       val allFields = ReflectionUtils.getAllFields(clazz)
-      val fieldMap = Maps.newHashMapWithExpectedSize[String, Field](allFields.size())
-
       if (allFields != null) {
-        allFields.values.filter(field => field != null).foreach(field => {
-          val fieldName = field.getAnnotation(classOf[FieldName])
-          var family = ""
-          var qualifier = ""
-          if (fieldName != null) {
-            family = fieldName.family
-            qualifier = fieldName.value
-          }
+        val fieldMap = Maps.newHashMapWithExpectedSize[String, Field](allFields.size())
 
-          if (StringUtils.isBlank(family)) family = familyName(keyNum)
-          if (StringUtils.isBlank(qualifier)) qualifier = field.getName
-          fieldMap.put(family + ":" + qualifier, field)
-        })
+        if (allFields != null) {
+          allFields.values.filter(field => field != null).foreach(field => {
+            val fieldName = field.getAnnotation(classOf[FieldName])
+            var family = ""
+            var qualifier = ""
+            if (fieldName != null) {
+              family = fieldName.family
+              qualifier = fieldName.value
+            }
+
+            if (StringUtils.isBlank(family)) family = familyName(keyNum)
+            if (StringUtils.isBlank(qualifier)) qualifier = field.getName
+            fieldMap.put(family + ":" + qualifier, field)
+          })
+        }
+        cacheFieldMap.put(clazz, fieldMap)
       }
-      cacheFieldMap.put(clazz, fieldMap)
     }
 
     this.cacheFieldMap.get(clazz)
@@ -395,7 +397,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
       val cells = rs.rawCells
       val rowKey = convertCells2Fields(fieldMap, obj, cells)
       val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
-      require(idField != null, s"${clazz.getName}中必须有名为rowKey的成员变量")
+      require(idField != null, s"${clazz}中必须有名为rowKey的成员变量")
       ReflectionUtils.setAccessible(idField)
       idField.set(obj, rowKey)
     }(this.logger, catchLog = "将HBase cell中的值转换并赋值给field过程中报错.")
@@ -439,7 +441,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): T = {
     require(rs != null && !rs.isEmpty && clazz != null, row2BeanParamError)
     val fieldMap = this.getFieldNameMap(clazz)
-    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     this.cell2Field(clazz, fieldMap, rs)
   }
 
@@ -454,7 +456,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
     require(rsArr != null && rsArr.nonEmpty && clazz != null, row2BeanParamError)
     val fieldMap = this.getFieldNameMap(clazz)
-    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
     rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList += this.cell2Field(clazz, fieldMap, rs))
     objList
@@ -471,7 +473,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): ListBuffer[T] = {
     require(rs != null && !rs.isEmpty && clazz != null, row2BeanParamError)
     val fieldMap = this.getFieldNameMap(classOf[MultiVersionsBean])
-    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz.getName}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     this.multiCell2Field(rs, clazz, fieldMap)
   }
 
