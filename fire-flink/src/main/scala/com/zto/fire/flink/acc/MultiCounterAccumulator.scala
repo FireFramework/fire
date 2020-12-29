@@ -63,7 +63,7 @@ private[fire] class MultiCounterAccumulator extends SimpleAccumulator[Concurrent
    * 存在的累加，不存在的直接添加
    */
   private[this] def mergeMap(value: ConcurrentHashMap[String, Long]): Unit = {
-    if (ValueUtils.isNotEmpty(value)) {
+    if (ValueUtils.noEmpty(value)) {
       JavaConversions.mapAsScalaMap(value).foreach(kv => {
         this.multiCounter.put(kv._1, this.multiCounter.getOrDefault(kv._1, 0) + kv._2)
       })

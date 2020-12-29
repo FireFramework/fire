@@ -29,7 +29,7 @@ object FlinkSingletonFactory extends SingletonFactory {
    * 设置TableEnv实例
    */
   private[fire] def setAppName(appName: String): this.type = {
-    if (ValueUtils.isNotEmpty(appName) && ValueUtils.isEmpty(this.appName)) this.appName = appName
+    if (ValueUtils.noEmpty(appName) && ValueUtils.isEmpty(this.appName)) this.appName = appName
     this
   }
 

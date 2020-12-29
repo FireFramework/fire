@@ -1,5 +1,6 @@
 package com.zto.fire.common.conf
 
+import com.zto.fire.predef._
 import com.zto.fire.common.util.DateFormatUtils
 
 /**
@@ -10,6 +11,8 @@ import com.zto.fire.common.util.DateFormatUtils
  * @create 2020-07-13 15:03
  */
 private[fire] object FirePrintModuleConf {
+
+
   // 打印多值累加器开始
   def multiAccStart: Unit = println(s"[${FirePS1Conf.PINK}${DateFormatUtils.formatCurrentDateTime()}${FirePS1Conf.DEFAULT}]--- ${FirePS1Conf.GREEN}MultiAccumulators Start ... ${FirePS1Conf.DEFAULT}---------------------------------------------")
 
@@ -29,7 +32,7 @@ private[fire] object FirePrintModuleConf {
   def multiAccValue(t: (String, Long)): Unit = println(s"${t._1} : ${FirePS1Conf.YELLOW}${t._2}${FirePS1Conf.DEFAULT}")
 
   // 总耗时打印
-  def endTimeCost(startTime: Long): Unit = println(s"总耗时：${FirePS1Conf.RED}${DateFormatUtils.runTime(startTime)}${FirePS1Conf.DEFAULT} The end...${FirePS1Conf.DEFAULT}")
+  def endTimeCost(startTime: Long): Unit = println(s"总耗时：${FirePS1Conf.RED}${timecost(startTime)}${FirePS1Conf.DEFAULT} The end...${FirePS1Conf.DEFAULT}")
 
   // 实时相关
   def realTimeProcessMethod: String = s"${FirePS1Conf.RED}子类必须通过覆写process()方法实现具体逻辑${FirePS1Conf.DEFAULT}"

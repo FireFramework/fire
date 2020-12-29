@@ -777,9 +777,9 @@ object KuduContextExt {
    */
   private[this] def initPool: Unit = {
     if (isInit.compareAndSet(false, true)) {
-      if (ValueUtils.isNotEmpty(FireKuduConf.impalaJdbcDriverName)) Class.forName(FireKuduConf.impalaJdbcDriverName)
+      if (ValueUtils.noEmpty(FireKuduConf.impalaJdbcDriverName)) Class.forName(FireKuduConf.impalaJdbcDriverName)
 
-      impalaDaemons.filter(ValueUtils.isNotEmpty(_)).map(_.trim).foreach(ip => {
+      impalaDaemons.filter(ValueUtils.noEmpty(_)).map(_.trim).foreach(ip => {
         val conn: Connection = DriverManager.getConnection(s"jdbc:hive2://$ip:21050/;auth=noSasl")
         println(s"已成功创建impala连接：$ip")
         this.dataSource.push(conn)
@@ -835,7 +835,7 @@ object KuduContextExt {
     try {
       con = this.getConnection
       stmt = con.createStatement
-      sqls.filter(ValueUtils.isNotEmpty(_)).foreach(sql => {
+      sqls.filter(ValueUtils.noEmpty(_)).foreach(sql => {
         stmt.execute(sql)
       })
     } catch {
@@ -859,10 +859,10 @@ object KuduContextExt {
    * 分区的结束时间（开）
    */
   def addPartition(tables: Seq[String], start: String, end: String): Unit = {
-    if (ValueUtils.isEmpty(tables) || ValueUtils.isEmpty(start) || ValueUtils.isEmpty(end)) return
+    if (ValueUtils.isEmpty(tables, start, end)) return
 
-    val sqls = tables.filter(ValueUtils.isNotEmpty).map(table => s"""ALTER TABLE $table ADD IF NOT EXISTS RANGE PARTITION '$start' <= VALUES < '$end'""")
-    if (ValueUtils.isNotEmpty(sqls)) this.execute(sqls: _*)
+    val sqls = tables.filter(ValueUtils.noEmpty(_)).map(table => s"""ALTER TABLE $table ADD IF NOT EXISTS RANGE PARTITION '$start' <= VALUES < '$end'""")
+    if (ValueUtils.noEmpty(sqls)) this.execute(sqls: _*)
   }
 
   /**

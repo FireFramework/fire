@@ -120,7 +120,7 @@ private[fire] class DataFrameExt(dataFrame: DataFrame) {
         it.foreach(row => {
           count += 1
           params = ListBuffer[Any]()
-          if (ValueUtils.isNotEmpty(fields)) {
+          if (ValueUtils.noEmpty(fields)) {
             // 若调用者指定了某些列，则取这些列的数据
             fields.foreach(field => {
               val index = row.fieldIndex(field)

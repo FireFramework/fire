@@ -59,7 +59,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
     try {
       this.logger.info(s"请求fire更新配置信息：$json")
       val confMap = JSON.parseObject(json, classOf[java.util.HashMap[String, String]])
-      if (ValueUtils.isNotEmpty(confMap)) {
+      if (ValueUtils.noEmpty(confMap)) {
         PropUtils.setProperties(JavaConversions.mapAsScalaMap(confMap))
         this.baseSpark._conf.setAll(PropUtils.toMap)
         this.baseSpark.acc.broadcastNewConf(this.baseSpark.sc, this.baseSpark._conf)

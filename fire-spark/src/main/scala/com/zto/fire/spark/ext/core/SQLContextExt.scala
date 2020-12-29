@@ -143,7 +143,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * 多个表名
    */
   def uncacheTables(tables: String*): Unit = {
-    if (isNotEmpty(tables)) {
+    if (noEmpty(tables)) {
       tables.filter(StringUtils.isNotBlank).foreach(tableName => {
         if (sqlContext.isCached(tableName)) {
           sqlContext.uncacheTable(tableName)
@@ -171,7 +171,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * 多个表名
    */
   def dropHiveTable(tableNames: String*): Unit = {
-    if (isNotEmpty(tableNames)) {
+    if (noEmpty(tableNames)) {
       tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
         sqlContext.sql(s"DROP TABLE IF EXISTS $tableName")
       })
@@ -187,7 +187,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * 分区
    */
   def addPartitions(tableName: String, partitions: String*): Unit = {
-    if (isAllNotEmpty(tableName, partitions)) {
+    if (noEmpty(tableName, partitions)) {
       partitions.foreach(ds => {
         this.addPartition(tableName, ds, FireSparkConf.partitionName)
       })
@@ -205,7 +205,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * 分区字段名称，默认ds
    */
   def addPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
-    if (isAllNotEmpty(tableName, partition, partitionName)) {
+    if (noEmpty(tableName, partition, partitionName)) {
       sqlContext.sql(s"ALTER TABLE $tableName ADD IF NOT EXISTS partition($partitionName='$partition')")
     }
   }
@@ -219,7 +219,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * 分区
    */
   def dropPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
-    if (isAllNotEmpty(tableName, partition, partitionName)) {
+    if (noEmpty(tableName, partition, partitionName)) {
       sqlContext.sql(s"ALTER TABLE $tableName DROP IF EXISTS partition($partitionName='$partition')")
     }
   }

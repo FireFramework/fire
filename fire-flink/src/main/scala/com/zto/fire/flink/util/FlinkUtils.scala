@@ -60,7 +60,7 @@ object FlinkUtils extends Serializable {
         val anno = field.getAnnotation(classOf[FieldName])
         val begin = if (anno == null) true else !anno.disuse()
         if (begin) {
-          val fieldName = if (anno != null && ValueUtils.isNotEmpty(anno.value())) anno.value().trim else field.getName
+          val fieldName = if (anno != null && ValueUtils.noEmpty(anno.value())) anno.value().trim else field.getName
           if (this.schemaTable.contains(schema, fieldName)) {
             val fieldIndex = this.schemaTable.get(schema, fieldName)
             field.set(obj, row.getField(fieldIndex))

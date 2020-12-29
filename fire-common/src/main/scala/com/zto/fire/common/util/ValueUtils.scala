@@ -18,21 +18,22 @@ private[fire] trait ValueCheck {
   /**
    * 值为空判断，支持任意类型
    *
-   * @param param
+   * @param params
    * 参数值
    * @return
    * true:empty false:not empty
    */
-  def isEmpty(param: Any): Boolean = {
-    if (param == null) return true
-    param match {
+  def isEmpty(params: Any *): Boolean = {
+    if (params == null || params.isEmpty) return true
+    params.map {
+      case null => true
       case str: String => StringUtils.isBlank(str)
       case array: Array[_] => array.isEmpty
       case collection: util.Collection[_] => collection.isEmpty
       case it: Iterable[_] => it.isEmpty
       case map: JMap[_, _] => map.isEmpty
       case _ => false
-    }
+    }.count(_ == true) > 0
   }
 
   /**
@@ -43,30 +44,7 @@ private[fire] trait ValueCheck {
    * @return
    * true:not empty false:empty
    */
-  def isNotEmpty(param: Any): Boolean = !this.isEmpty(param)
-
-  /**
-   * 校验多个参数是否都为空
-   *
-   * @param params
-   * 多个参数
-   * @return
-   * true：存在为空的参数 false：全都不为空
-   */
-  def isExistsEmpty(params: Any*): Boolean = {
-    if (params == null || params.isEmpty) return true
-    params.count(this.isEmpty) > 0
-  }
-
-  /**
-   * 校验多个参数是否不存在为空的
-   *
-   * @param params
-   * 多个参数
-   * @return
-   * true：全都不为空 false：存在为空的
-   */
-  def isAllNotEmpty(params: Any*): Boolean = !this.isExistsEmpty(params: _*)
+  def noEmpty(param: Any *): Boolean = !this.isEmpty(param: _*)
 
   /**
    * 参数非空约束（严格模式，进一步验证集合是否有元素）
@@ -80,16 +58,21 @@ private[fire] trait ValueCheck {
     var index = 0
     params.foreach(param => {
       index += 1
-      require(param != null, s"第[ ${index} ]参数为空，异常信息：$message")
       param match {
-        case str: String => require(StringUtils.isNotBlank(str), s"第[ ${index} ]参数为空，异常信息：$message")
-        case array: Array[_] => require(array.nonEmpty, s"第[ ${index} ]参数为空，异常信息：$message")
-        case collection: util.Collection[_] => require(!collection.isEmpty, s"第[ ${index} ]参数为空，异常信息：$message")
-        case it: Iterable[_] => require(it.nonEmpty, s"第[ ${index} ]参数为空，异常信息：$message")
-        case map: JMap[_, _] => require(map.nonEmpty, s"第[ ${index} ]参数为空，异常信息：$message")
+        case null => require(param != null, msg(index, message))
+        case str: String => require(StringUtils.isNotBlank(str), msg(index, message))
+        case array: Array[_] => require(array.nonEmpty, msg(index, message))
+        case collection: util.Collection[_] => require(!collection.isEmpty, msg(index, message))
+        case it: Iterable[_] => require(it.nonEmpty, msg(index, message))
+        case map: JMap[_, _] => require(map.nonEmpty, msg(index, message))
         case _ =>
       }
     })
+
+    /**
+     * 构建异常信息
+     */
+    def msg(index: Int, msg: String): String = s"第[ ${index} ]参数为空，异常信息：$message"
   }
 }
 
