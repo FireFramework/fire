@@ -30,11 +30,10 @@
         <module>fire-common</module>
         <module>fire-core</module>
         <module>fire-metrics</module>
-        <module>fire-spark</module>
-        <module>fire-flink</module>
         <module>fire-examples</module>
         <module>fire-external</module>
         <module>fire-connectors</module>
+        <module>fire-engines</module>
     </modules>
 
     <dependencies>

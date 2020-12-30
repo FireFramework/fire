@@ -106,7 +106,7 @@ public abstract class FireMapFunction<I, O> extends AbstractRichFunction impleme
      */
     protected <T> scala.collection.immutable.List<T> getBroadcastVariable(String name) {
         Objects.requireNonNull(name, "广播变量名称不能为空！");
-        Buffer<T> broadcastList = JavaConversions.asScalaBuffer(this.getRuntimeContext().getBroadcastVariable(name));
+        Buffer<T> broadcastList = (Buffer<T>) JavaConversions.asScalaBuffer(this.getRuntimeContext().getBroadcastVariable(name));
         return broadcastList.toList();
     }
 
