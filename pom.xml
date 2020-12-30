@@ -33,9 +33,8 @@
         <module>fire-spark</module>
         <module>fire-flink</module>
         <module>fire-examples</module>
-        <module>fire-apollo</module>
-        <module>fire-hbase</module>
-        <module>fire-jdbc</module>
+        <module>fire-external</module>
+        <module>fire-connectors</module>
     </modules>
 
     <dependencies>

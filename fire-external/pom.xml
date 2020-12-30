@@ -1,8 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.zto.fire</groupId>
-  <artifactId>fire-jdbc</artifactId>
-  <name>${project.artifactId}</name>
+  <artifactId>fire-external</artifactId>
+  <packaging>pom</packaging>
 
   <parent>
     <groupId>com.zto.fire</groupId>
@@ -11,8 +10,11 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
+  <modules>
+    <module>fire-apollo</module>
+  </modules>
+
   <dependencies>
-    <!-- fire相关模块依赖 -->
     <dependency>
       <groupId>com.zto.fire</groupId>
       <artifactId>fire-common</artifactId>
@@ -22,28 +24,6 @@
       <groupId>com.zto.fire</groupId>
       <artifactId>fire-core</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.zto.fire</groupId>
-      <artifactId>fire-metrics</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>${mysql.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>9.4.1212</version>
-      <scope>${maven.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>c3p0</groupId>
-      <artifactId>c3p0</artifactId>
-      <version>0.9.1.2</version>
     </dependency>
   </dependencies>
 </project>
