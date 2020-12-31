@@ -83,12 +83,6 @@
             <version>${kafka.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
-        <!--<dependency>
-          <groupId>org.apache.flink</groupId>
-          <artifactId>flink-table</artifactId>
-          <version>${flink.version}</version>
-          <scope>${maven.scope}</scope>
-        </dependency>-->
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-api-java-bridge_${scala.binary.version}</artifactId>
@@ -167,16 +161,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <!-- hive相关依赖 -->
         <dependency>
             <groupId>org.apache.hive</groupId>
-            <artifactId>hive-metastore</artifactId>
-            <version>${hive.version}</version>
-            <scope>${maven.scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-common</artifactId>
+            <artifactId>hive-exec</artifactId>
             <version>${hive.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>

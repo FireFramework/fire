@@ -6,6 +6,8 @@ syntax: glob
 *.bak
 #*.off
 *.old
+*.dat
+*.log
 
 # eclipse conf file
 .settings
@@ -39,3 +41,4 @@ build.log
 
 #SHITTY output not in target directory
 build.log
+/memory/

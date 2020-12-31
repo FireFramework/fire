@@ -7,7 +7,7 @@ object Test extends BaseSparkCore {
   val key = "fire.partitions"
 
   override def process: Unit = {
-    val rdd = this.fire.parallelize(1 to 10)
+    val rdd = this.fire.parallelize(1 to 10, 5)
     println(rdd.count())
     // java相关的集合以J开头
     val map = new JHashMap[String, Int]()

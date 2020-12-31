@@ -252,7 +252,7 @@ private[fire] object AccumulatorManager {
     if (sc != null && conf != null && FireFrameworkConf.dynamicConf) {
       val broadcastConf = sc.broadcast(conf)
       this.broadcastConf = broadcastConf
-      val rdd = sc.parallelize(1 to this.initExecutors.get * 3, this.initExecutors.get * 3)
+      val rdd = sc.parallelize(1 to this.initExecutors.get * 10, this.initExecutors.get * 3)
       rdd.foreachPartitionAsync(i => {
         this.broadcastConf = broadcastConf
         this.broadcastConf.value.getAll.foreach(kv => {

@@ -45,7 +45,6 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       val driverClass = if (StringUtils.isBlank(FireJdbcConf.driverClass(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
       require(StringUtils.isNotBlank(driverClass), "数据库driverClass不能为空")
       this.username = if (StringUtils.isBlank(FireJdbcConf.user(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.username)) this.conf.username else FireJdbcConf.user(keyNum)
-      require(StringUtils.isNotBlank(this.username), "数据库username不能为空")
       val password = if (StringUtils.isBlank(FireJdbcConf.password(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.password)) this.conf.password else FireJdbcConf.password(keyNum)
       // 识别数据源类型是oracle、mysql等
       this.dbType = DBUtils.dbTypeParser(driverClass, this.url)
@@ -55,8 +54,8 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       val pool = new ComboPooledDataSource(true)
       pool.setJdbcUrl(this.url)
       pool.setDriverClass(driverClass)
-      pool.setUser(this.username)
-      pool.setPassword(password)
+      if (StringUtils.isNotBlank(this.username)) pool.setUser(this.username)
+      if (StringUtils.isNotBlank(password)) pool.setPassword(password)
       pool.setMaxPoolSize(FireJdbcConf.maxPoolSize(keyNum))
       pool.setMinPoolSize(FireJdbcConf.minPoolSize(keyNum))
       pool.setAcquireIncrement(FireJdbcConf.acquireIncrement(keyNum))
