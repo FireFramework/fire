@@ -18,8 +18,8 @@ import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
  * @author ChengLong 2020年1月7日 10:50:19
  */
 trait BaseFlinkStreaming extends BaseFlink {
-  protected var env, senv: StreamExecutionEnvironment = _
-  protected var tableEnv, flink, fire: StreamTableEnvironment = _
+  protected var env, senv, flink, fire: StreamExecutionEnvironment = _
+  protected var tableEnv: StreamTableEnvironment = _
   override val jobType: JobType = JobType.FLINK_STREAMING
   // 用于存放延期的数据
   protected val outputTag = new OutputTag[Any]("later_data")
@@ -80,7 +80,7 @@ trait BaseFlinkStreaming extends BaseFlink {
       this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hive)
       this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
     }
-    this.flink = this.tableEnv
+    this.flink = this.env
     this.fire = this.flink
     FlinkSingletonFactory.setStreamEnv(this.env).setStreamTableEnv(this.tableEnv)
     this.deployConf

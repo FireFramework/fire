@@ -92,7 +92,7 @@ public class HttpClientUtils {
         String responses = "";
         PostMethod postMethod = new PostMethod();
         HttpClient httpClient = new HttpClient();
-        postMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 10000);
+        postMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 3000);
         postMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler());
         // 设置请求头
         setHeaders(postMethod, headers);

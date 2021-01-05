@@ -23,13 +23,12 @@ object FlinkHiveTest extends BaseFlinkStreaming {
       Thread.sleep(1000 * 60)
       s
     }).createOrReplaceTempView("kafka")
-    this.flink.sql("select * from kafka").show
+    this.flink.sql("select * from kafka").print()
     // 查询操作
-    this.flink.sql("select * from tmp.zto_scan_send order by bill_code limit 10").createOrReplaceTempView("scan_send")
+    this.flink.sql("select * from tmp.zto_scan_send order by bill_code limit 10")//.createOrReplaceTempView("scan_send")
     val joinedTable = this.flink.sql("select t1.bill_code, t2.name from scan_send t1 left join kafka t2 on t1.bill_code=t2.name")
-    joinedTable.toRetractStream.print()
 
-    this.env.startAwaitTermination()
+    this.fire.start()
   }
 
   override def before(args: Array[String]): Unit = {

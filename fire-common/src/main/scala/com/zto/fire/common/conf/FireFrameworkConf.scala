@@ -40,6 +40,8 @@ private[fire] object FireFrameworkConf {
   lazy val SPARK_FIRE_RESTFUL_MAX_THREAD = "spark.fire.restful.max.thread"
   // 用于配置是否抛弃配置中心独立运行
   lazy val SPARK_FIRE_CONFIG_CENTER_ENABLE = "spark.fire.config_center.enable"
+  // 本地运行环境下（Windows、Mac）是否调用配置中心接口获取配置信息
+  lazy val SPARK_FIRE_CONFIG_CENTER_LOCAL_ENABLE = "spark.fire.config_center.local.enable"
   // 配置中心接口调用秘钥
   lazy val SPARK_FIRE_CONFIG_CENTER_SECRET = "spark.fire.config_center.register.conf.secret"
   // fire框架restful端口冲突重试次数
@@ -176,6 +178,8 @@ private[fire] object FireFrameworkConf {
   lazy val restfulMaxThread = PropUtils.getInt(this.SPARK_FIRE_RESTFUL_MAX_THREAD, 8)
   // 用于配置是否抛弃配置中心独立运行
   lazy val configCenterEnable = PropUtils.getBoolean(this.SPARK_FIRE_CONFIG_CENTER_ENABLE, true)
+  // 本地运行环境下（Windows、Mac）是否调用配置中心接口获取配置信息
+  lazy val configCenterLocalEnable = PropUtils.getBoolean(this.SPARK_FIRE_CONFIG_CENTER_LOCAL_ENABLE, false)
   // 配置中心接口调用秘钥
   lazy val configCenterSecret = PropUtils.getString(this.SPARK_FIRE_CONFIG_CENTER_SECRET, "21fa30b7f2082b1b12dfbc7c8c6d70b9")
   // fire框架restful端口冲突重试次数

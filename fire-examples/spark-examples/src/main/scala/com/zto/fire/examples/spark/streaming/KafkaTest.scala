@@ -55,7 +55,7 @@ object KafkaTest extends BaseSparkStreaming {
     val dstream5 = this.ssc.createDirectStream(keyNum = 5)
     dstream5.print(1)
 
-    this.ssc.startAwaitTermination()
+    this.fire.start
   }
 
   @Scheduled(fixedInterval = 60 * 1000, scope = "all")

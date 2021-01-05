@@ -14,6 +14,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
+import org.apache.flink.table.api.TableResult
 
 import scala.collection.JavaConversions
 
@@ -84,13 +85,13 @@ private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
   }
 
   /**
-   * 提交job执行
-   *
-   * @param jobName
-   * job名称
+   * 执行sql语句
+   * 支持DDL、DML
    */
-  def startAwaitTermination(jobName: String = ""): JobExecutionResult = {
-    if (ValueUtils.isEmpty(jobName)) this.env.execute() else this.env.execute(jobName)
+  def sql(sql: String): TableResult = {
+    require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
+    require(FlinkSingletonFactory.getStreamTableEnv != null, "StreamTableEnvironment不能为空，请启动fire以后再尝试调用")
+    FlinkSingletonFactory.getStreamTableEnv.executeSql(sql)
   }
 
   /**
@@ -104,4 +105,19 @@ private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
   def parallelize[T: TypeInformation](seq: Seq[T]): DataStream[T] = {
     this.env.fromCollection[T](seq)
   }
+
+  /**
+   * 提交job执行
+   *
+   * @param jobName
+   * job名称
+   */
+  def startAwaitTermination(jobName: String = ""): JobExecutionResult = {
+    if (ValueUtils.isEmpty(jobName)) this.env.execute() else this.env.execute(jobName)
+  }
+
+  /**
+   * 提交Flink Streaming Graph并执行
+   */
+  def start(jobName: String = ""): JobExecutionResult = this.startAwaitTermination(jobName)
 }

@@ -2,6 +2,7 @@ package com.zto.fire.core.connector
 
 import java.util.concurrent.ConcurrentHashMap
 
+import com.zto.fire.predef._
 import com.zto.fire.common.util.ShutdownHookManager
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -72,11 +73,10 @@ private[fire] abstract class ConnectorFactory[T <: Connector] {
    * 创建指定集群标识的connector对象实例
    */
   def apply(conf: Any = null, keyNum: Int = 1): T = {
-    if (!this.instanceMap.containsKey(keyNum)) {
+    this.instanceMap.mergeGet(keyNum) {
       val instance: T = this.create(conf, keyNum)
       instance.open()
-      this.instanceMap.put(keyNum, instance)
+      instance
     }
-    this.instanceMap.get(keyNum)
   }
 }

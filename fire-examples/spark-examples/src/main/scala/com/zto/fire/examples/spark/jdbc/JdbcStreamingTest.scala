@@ -23,7 +23,7 @@ object JdbcStreamingTest extends BaseSparkStreaming {
       })
     })
 
-    this.ssc.startAwaitTermination()
+    this.fire.start
   }
 
   def main(args: Array[String]): Unit = {

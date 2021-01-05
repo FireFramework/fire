@@ -9,6 +9,7 @@ import com.zto.fire.spark.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils
 import org.apache.kudu.spark.kudu.KuduContext
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.{SparkContext, SparkEnv}
 
 /**
@@ -16,9 +17,10 @@ import org.apache.spark.{SparkContext, SparkEnv}
  * Created by ChengLong on 2018-04-25.
  */
 object SparkSingletonFactory extends SingletonFactory {
-  @transient private var hbaseContext: HBaseBulkConnector = _
-  @transient private var kuduContext: KuduContextExt = _
-  private[fire] var sparkSession: SparkSession = _
+  private[this] var sparkSession: SparkSession = _
+  private[this] var streamingContext: StreamingContext = _
+  @transient private[this] var hbaseContext: HBaseBulkConnector = _
+  @transient private[this] var kuduContext: KuduContextExt = _
   private var jobClassName: String = _
 
   /**
@@ -27,13 +29,32 @@ object SparkSingletonFactory extends SingletonFactory {
    * @return
    * SparkSession实例
    */
-  def getSparkSession: SparkSession = this.sparkSession
+  def getSparkSession: SparkSession = this.synchronized {
+    this.sparkSession
+  }
 
   /**
    * SparkSession赋值
    */
-  def setSparkSession(sparkSession: SparkSession): Unit = this.synchronized {
-    if (this.sparkSession == null) this.sparkSession = sparkSession
+  private[fire] def setSparkSession(sparkSession: SparkSession): Unit = this.synchronized {
+    require(sparkSession != null, "SparkSession实例不能为空")
+    this.sparkSession = sparkSession
+  }
+
+  /**
+   * 设置StreamingContext
+   * 允许重复赋值，兼容热重启导致的StreamingContext重新被创建
+   */
+  private[fire] def setStreamingContext(ssc: StreamingContext): Unit = this.synchronized {
+    require(ssc != null, "StreamingContext实例不能为空")
+    this.streamingContext = ssc
+  }
+
+  /**
+   * 获取StreamingContext实例
+   */
+  def getStreamingContext: StreamingContext = this.synchronized {
+    this.streamingContext
   }
 
   /**
@@ -71,7 +92,7 @@ object SparkSingletonFactory extends SingletonFactory {
   def getKuduContextInstance(sparkContext: SparkContext): KuduContextExt = this.synchronized {
     if (this.kuduContext == null && StringUtils.isNotBlank(FireKuduConf.kuduMaster)) {
       val kuduContextTmp = new KuduContext(FireKuduConf.kuduMaster, sparkContext)
-      this.kuduContext = new KuduContextExt(SparkSingletonFactory.sparkSession.sqlContext, kuduContextTmp)
+      this.kuduContext = new KuduContextExt(this.sparkSession.sqlContext, kuduContextTmp)
     }
     this.kuduContext
   }

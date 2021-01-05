@@ -2,7 +2,7 @@ package com.zto.fire.examples.flink.batch
 
 import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkBatch
-import com.zto.fire.flink.ext.functions.FireMapFunction
+import com.zto.fire.flink.ext.function.FireMapFunction
 import org.apache.flink.api.scala._
 
 /**
@@ -19,7 +19,7 @@ object FlinkBrocastTest extends BaseFlinkBatch {
 
     ds.map(new FireMapFunction[Int, String] {
       // 获取广播变量中的值给当前成员变量（若不想在open方法中获取值，请使用lazy关键字）
-      lazy val broadcastSet: List[String] = this.getBroadcastVariable[String]("brocastDS")
+      lazy val broadcastSet: Seq[String] = this.getBroadcastVariable[String]("brocastDS")
 
       override def map(value: Int): String = {
         this.broadcastSet(value - 1)

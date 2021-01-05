@@ -1,7 +1,10 @@
 package com.zto.fire.examples.spark
 
 import com.zto.fire._
+import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkCore
+
+import scala.reflect.ClassTag
 
 object Test extends BaseSparkCore {
   val key = "fire.partitions"
@@ -18,9 +21,17 @@ object Test extends BaseSparkCore {
     requireNonEmpty(map, "Map不能为空")
   }
 
+  def hello[T: ClassTag](name: String): Unit = {
+    println(getParamType[T])
+  }
+
 
   def main(args: Array[String]): Unit = {
-    this.init()
-    this.stop
+    /*this.init()
+    this.stop*/
+    val jmap = new JHashMap[Int, Student]()
+    println(jmap.mergeGet(1)(new Student))
+    println(jmap.mergeGet(1)(new Student))
+    hello[Int]("name")
   }
 }

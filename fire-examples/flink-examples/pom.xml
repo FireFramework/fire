@@ -21,7 +21,11 @@
             <artifactId>fire-flink</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.sparkjava</groupId>
+            <artifactId>spark-core</artifactId>
+            <version>${sparkjava.version}</version>
+        </dependency>
         <!-- flink计算引擎相关依赖 -->
         <dependency>
             <groupId>org.apache.flink</groupId>

@@ -8,7 +8,7 @@ import com.zto.fire.common.enu.{ErrorCode, JobType, RequestMethod}
 import com.zto.fire.common.util.{KafkaUtils, PropUtils}
 import com.zto.fire.core.rest.RestCase
 import com.zto.fire.spark.bean.RestartParams
-import com.zto.fire.spark.util.SparkUtils
+import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import spark.{Request, Response}
@@ -99,6 +99,7 @@ trait BaseSparkStreaming extends BaseSpark {
         this.ssc
       }
     }
+    SparkSingletonFactory.setStreamingContext(this.ssc)
     this._conf = tmpConf
   }
 

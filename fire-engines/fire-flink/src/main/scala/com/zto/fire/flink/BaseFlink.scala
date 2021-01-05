@@ -56,7 +56,7 @@ trait BaseFlink extends BaseFire {
     PropUtils.setProperty(FireFrameworkConf.fireRestUrl(PropUtils.engine), s"http://$restAddress")
 
     // 注册到实时平台，并覆盖配置信息
-    if (this.jobType == JobType.FLINK_STREAMING && FireFrameworkConf.configCenterEnable) PropUtils.invokeConfigCenter(this.className, restAddress)
+    if (this.jobType == JobType.FLINK_STREAMING) PropUtils.invokeConfigCenter(this.className, restAddress)
     PropUtils.print()
     FlinkSchedulerManager.getInstance().registerTasks(this)
     // 创建HiveCatalog

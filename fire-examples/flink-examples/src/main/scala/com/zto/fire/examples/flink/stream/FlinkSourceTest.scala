@@ -18,7 +18,7 @@ object FlinkSourceTest extends BaseFlinkStreaming {
     // 注意Time的包不要导错，来自org.apache.flink.streaming.api.windowing.time.Time
     dstream.timeWindowAll(Time.seconds(2)).sum(0).setParallelism(1).print
 
-    this.env.startAwaitTermination()
+    this.fire.start()
   }
 
   def main(args: Array[String]): Unit = {

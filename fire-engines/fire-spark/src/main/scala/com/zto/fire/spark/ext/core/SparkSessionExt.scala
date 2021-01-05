@@ -2,6 +2,7 @@ package com.zto.fire.spark.ext.core
 
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import com.zto.fire.spark.ext.provider._
+import com.zto.fire.spark.util.SparkSingletonFactory
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 
@@ -29,5 +30,14 @@ private[fire] class SparkSessionExt(spark: SparkSession) extends JdbcConnectorBr
    */
   def parallelize[T: ClassTag](seq: Seq[T], numSlices: Int = sc.defaultParallelism): RDD[T] = {
     this.sc.parallelize(seq, numSlices)
+  }
+
+  /**
+   * 启动StreamingContext
+   */
+  def start: Unit = {
+    if (SparkSingletonFactory.getStreamingContext != null) {
+      SparkSingletonFactory.getStreamingContext.start()
+    }
   }
 }

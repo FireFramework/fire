@@ -33,7 +33,7 @@ object ThreadTest extends BaseSparkStreaming {
       println("count--> " + rdd.count())
     })
 
-    this.ssc.startAwaitTermination()
+    this.fire.start
   }
 
   /**

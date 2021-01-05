@@ -26,7 +26,7 @@ object KafkaDemo extends BaseFlinkStreaming {
 
       override def map(in: String): Int = in.length
     }).print
-    this.env.startAwaitTermination()
+    this.fire.start()
   }
 
 }

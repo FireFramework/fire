@@ -7,7 +7,7 @@ import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf}
 import com.zto.fire.common.util.{FireUtils, PropUtils, ReflectionUtils, ValueUtils}
 import com.zto.fire.flink.bean.FlinkTableSchema
-import com.zto.fire.flink.ext.functions.FireMapFunction
+import com.zto.fire.flink.ext.function.FireMapFunction
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
@@ -156,7 +156,7 @@ object FlinkUtils extends Serializable {
    */
   def initMapFunction: FireMapFunction[Int, Int] = {
     new FireMapFunction[Int, Int]() {
-      override def open(parameters: Configuration): Unit = FlinkUtils.syncConf(this.getExecutionConfig)
+      override def open(parameters: Configuration): Unit = FlinkUtils.syncConf(this.runtimeContext.getExecutionConfig)
 
       override def map(value: Int): Int = value
     }

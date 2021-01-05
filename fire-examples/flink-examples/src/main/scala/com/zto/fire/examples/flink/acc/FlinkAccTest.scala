@@ -2,7 +2,7 @@ package com.zto.fire.examples.flink.acc
 
 import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkStreaming
-import com.zto.fire.flink.ext.functions.FireMapFunction
+import com.zto.fire.flink.ext.function.FireMapFunction
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.DataStream
 
@@ -33,16 +33,17 @@ object FlinkAccTest extends BaseFlinkStreaming {
     // 在不同的map函数中进行累加全局有效
     dstream.map(new FireMapFunction[Int, Int]() {
       override def map(value: Int): Int = {
-        // 多值计数器根据累加器的名称区分不同的计数器
-        this.addMultiCounter("LongCount", value.longValue())
-        this.addMultiCounter("IntCount", value)
-        this.addMultiCounter("IntCount2", value * 2)
-        this.addMultiCounter("DoubleCount", value.doubleValue())
+        // 多值计数器根据累加器的值类型区分不同的计数器，比如传参为Double类型，则累加至DoubleCounter中
+        this.addCounter("LongCount", value.longValue())
+        this.addCounter("IntCount", value)
+        this.addCounter("IntCount2", value * 2)
+        this.addCounter("DoubleCount", value.doubleValue())
+        Thread.sleep(5000)
         value
       }
     })
 
-    val result = this.env.startAwaitTermination()
+    val result = this.fire.start()
 
     // 获取计数器中的值
     val longCount = result.getAccumulatorResult[Long]("LongCount")
@@ -53,6 +54,7 @@ object FlinkAccTest extends BaseFlinkStreaming {
     println("累加值IntCount：" + intCount)
     val intCount2 = result.getAccumulatorResult[Integer]("IntCount2")
     println("累加值IntCount2：" + intCount2)
+    Thread.currentThread().join()
 
     this.stop
   }

@@ -72,6 +72,7 @@ public class Student extends HBaseBaseBean<Student> {
     }
 
     public Student() {
+        System.out.println("创建Student对象");
     }
 
     public Student(Long id) {

@@ -117,4 +117,9 @@ private[fire] class StreamingContextExt(ssc: StreamingContext) {
     ssc.awaitTermination()
     Thread.currentThread().join()
   }
+
+  /**
+   * 提交Spark Streaming Graph并执行
+   */
+  def start: Unit = this.startAwaitTermination()
 }

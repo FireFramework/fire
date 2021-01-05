@@ -442,6 +442,8 @@ object PropUtils {
    * 调用外部配置中心接口获取配合信息
    */
   def invokeConfigCenter(className: String, rest: String): Unit = {
+    if (!FireFrameworkConf.configCenterEnable || (OSUtils.isLocal && !FireFrameworkConf.configCenterLocalEnable)) return
+
     val param =
       s"""
          |{"className": "$className", "url": "http://$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.configCenterSecret}"}
