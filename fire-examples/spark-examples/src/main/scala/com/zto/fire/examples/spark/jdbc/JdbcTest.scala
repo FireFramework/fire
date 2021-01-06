@@ -27,35 +27,35 @@ object JdbcTest extends BaseSparkCore {
   def testJdbcUpdate: Unit = {
     // 执行insert操作
     val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-    this.spark.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1))
+    this.fire.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1))
     // 更新配置文件中指定的第二个关系型数据库
-    this.spark.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1), keyNum = 2)
+    this.fire.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1), keyNum = 2)
 
     // 执行更新操作
     val updateSql = s"UPDATE $tableName SET name=? WHERE id=?"
-    this.spark.jdbcUpdate(updateSql, Seq("root", 1))
+    this.fire.jdbcUpdate(updateSql, Seq("root", 1))
 
     // 执行批量操作
     val batchSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-    this.spark.jdbcBatchUpdate(batchSql, Seq(Seq("spark1", 21, DateFormatUtils.formatCurrentDateTime(), 100.123, 1),
+    this.fire.jdbcBatchUpdate(batchSql, Seq(Seq("spark1", 21, DateFormatUtils.formatCurrentDateTime(), 100.123, 1),
       Seq("flink2", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
       Seq("flink3", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
       Seq("flink4", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
       Seq("flink5", 27, DateFormatUtils.formatCurrentDateTime(), 17.236, 0)))
 
     // 执行批量更新
-    this.spark.jdbcBatchUpdate(s"update $tableName set sex=? where id=?", Seq(Seq(1, 1), Seq(2, 2), Seq(3, 3), Seq(4, 4), Seq(5, 5), Seq(6, 6)))
+    this.fire.jdbcBatchUpdate(s"update $tableName set sex=? where id=?", Seq(Seq(1, 1), Seq(2, 2), Seq(3, 3), Seq(4, 4), Seq(5, 5), Seq(6, 6)))
 
-    // 方式一：通过this.spark方式执行delete操作
+    // 方式一：通过this.fire方式执行delete操作
     val sql = s"DELETE FROM $tableName WHERE id=?"
-    this.spark.jdbcUpdate(sql, Seq(2))
+    this.fire.jdbcUpdate(sql, Seq(2))
     // 方式二：通过JdbcConnector.executeUpdate
 
     // 同一个事务
     /*val connection = this.jdbc.getConnection()
-    this.spark.jdbcBatchUpdate("insert", connection = connection, commit = false, closeConnection = false)
-    this.spark.jdbcBatchUpdate("delete", connection = connection, commit = false, closeConnection = false)
-    this.spark.jdbcBatchUpdate("update", connection = connection, commit = true, closeConnection = true)*/
+    this.fire.jdbcBatchUpdate("insert", connection = connection, commit = false, closeConnection = false)
+    this.fire.jdbcBatchUpdate("delete", connection = connection, commit = false, closeConnection = false)
+    this.fire.jdbcBatchUpdate("update", connection = connection, commit = true, closeConnection = true)*/
   }
 
 
@@ -66,7 +66,7 @@ object JdbcTest extends BaseSparkCore {
     val sql = s"select * from $tableName where id in (?, ?, ?)"
 
     // 执行sql查询，并对查询结果集进行处理
-    this.spark.jdbcQueryCall(sql, Seq(1, 2, 3), new QueryCallback {
+    this.fire.jdbcQueryCall(sql, Seq(1, 2, 3), new QueryCallback {
       override def process(rs: ResultSet): Int = {
         while (rs.next()) {
           // 对每条记录进行处理
@@ -77,20 +77,20 @@ object JdbcTest extends BaseSparkCore {
     })
 
     // 将查询结果集以List[JavaBean]方式返回
-    val list = this.spark.jdbcQuery(sql, Seq(1, 2, 3), classOf[Student])
+    val list = this.fire.jdbcQuery(sql, Seq(1, 2, 3), classOf[Student])
     // 方式二：使用JdbcConnector
     list.foreach(x => println(JSON.toJSONString(x, SerializerFeature.NotWriteRootClassName)))
 
     // 将结果集封装到RDD中
-    val rdd = this.spark.jdbcQueryRDD(sql, Seq(1, 2, 3), classOf[Student])
+    val rdd = this.fire.jdbcQueryRDD(sql, Seq(1, 2, 3), classOf[Student])
     rdd.printEachPartition
 
     // 将结果集封装到DataFrame中
-    val df = this.spark.jdbcQueryDF(sql, Seq(1, 2, 3), classOf[Student])
+    val df = this.fire.jdbcQueryDF(sql, Seq(1, 2, 3), classOf[Student])
     df.show(10, false)
 
     // 将jdbc查询结果集封装到Dataset中
-    val ds = this.spark.jdbcQueryDS(sql, Seq(1, 2, 3), classOf[Student])
+    val ds = this.fire.jdbcQueryDS(sql, Seq(1, 2, 3), classOf[Student])
     ds.show(10, false)
   }
 
@@ -99,12 +99,12 @@ object JdbcTest extends BaseSparkCore {
     */
   def testTableLoad: Unit = {
     // 一次加载整张的jdbc小表，注：大表严重不建议使用该方法
-    this.spark.jdbcTableLoadAll(this.tableName).show(100, false)
+    this.fire.jdbcTableLoadAll(this.tableName).show(100, false)
     // 根据指定分区字段的上下边界分布式加载数据
-    this.spark.jdbcTableLoadBound(this.tableName, "id", 1, 10, 2).show(100, false)
+    this.fire.jdbcTableLoadBound(this.tableName, "id", 1, 10, 2).show(100, false)
     val where = Array[String]("id >=1 and id <=3", "id >=6 and id <=9", "name='root'")
     // 根据指定的条件进行数据加载，条件的个数决定了load数据的并发度
-    this.spark.jdbcTableLoad(tableName, where).show(100, false)
+    this.fire.jdbcTableLoad(tableName, where).show(100, false)
   }
 
   /**
@@ -112,18 +112,18 @@ object JdbcTest extends BaseSparkCore {
     */
   def testTableSave: Unit = {
     // 批量将DataFrame数据写入到对应结构的关系型表中
-    val df = this.spark.createDataFrame(Student.newStudentList(), classOf[Student])
+    val df = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])
     // 第二个参数默认为SaveMode.Append，可以指定SaveMode.Overwrite
     df.jdbcTableSave(this.tableName, SaveMode.Overwrite)
     // 利用sparkSession方式将DataFrame数据保存到配置的第二个数据源中
-    this.spark.jdbcTableSave(df, this.tableName, SaveMode.Overwrite, keyNum = 2)
+    this.fire.jdbcTableSave(df, this.tableName, SaveMode.Overwrite, keyNum = 2)
   }
 
   /**
    * 将DataFrame数据写入到关系型数据库中
    */
   def testDataFrameSave: Unit = {
-    val df = this.spark.createDataFrame(Student.newStudentList(), classOf[Student])
+    val df = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])
 
     val insertSql = s"INSERT INTO spark_test(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
     // 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序，batch用于指定批次大小，默认取spark.db.jdbc.batch.size配置的值
@@ -132,11 +132,11 @@ object JdbcTest extends BaseSparkCore {
     df.repartition(3).jdbcBatchUpdate(s"delete from yuncang.$tableName where pri_id=?", Seq("pri_id"), batch = 100)
 
     df.createOrReplaceTempViewCache("student")
-    val sqlDF = this.spark.sql("select name, age, createTime from student where id>=1").repartition(1)
+    val sqlDF = this.fire.sql("select name, age, createTime from student where id>=1").repartition(1)
     // 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
     sqlDF.jdbcBatchUpdate("insert into spark_test(name, age, createTime) values(?, ?, ?)")
     // 等同以上方式
-    // this.spark.jdbcBatchUpdateDF(sqlDF, "insert into spark_test(name, age, createTime) values(?, ?, ?)")
+    // this.fire.jdbcBatchUpdateDF(sqlDF, "insert into spark_test(name, age, createTime) values(?, ?, ?)")
   }
 
   /**
@@ -158,7 +158,7 @@ object JdbcTest extends BaseSparkCore {
       }
     }, keyNum = 5)
     this.logger.info("driver sql执行成功")
-    val rdd = this.spark.parallelize(1 to 3, 3)
+    val rdd = this.fire.createRDD(1 to 3, 3)
     rdd.foreachPartition(it => {
       it.foreach(i => {
         JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
@@ -171,7 +171,7 @@ object JdbcTest extends BaseSparkCore {
       this.logger.info("sql执行成功")
     })
 
-    val rdd2 = this.spark.parallelize(1 to 3, 3)
+    val rdd2 = this.fire.createRDD(1 to 3, 3)
     rdd2.foreachPartition(it => {
       it.foreach(i => {
         JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {

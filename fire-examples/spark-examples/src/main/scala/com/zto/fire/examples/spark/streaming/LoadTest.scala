@@ -23,7 +23,7 @@ object LoadTest extends BaseSparkStreaming {
    */
   @Scheduled(fixedInterval = 1000 * 60 * 1, concurrent = false, initialDelay = 1000 * 30)
   def reload(): Unit = {
-    this.spark.sql(LoadTestSQL.loadSQL).show(10, false)
+    this.fire.sql(LoadTestSQL.loadSQL).show(10, false)
   }
 
   /**
@@ -35,14 +35,14 @@ object LoadTest extends BaseSparkStreaming {
   override def process: Unit = {
     this.loadNewConfigTable
 
-    val dstream = this.ssc.createDirectStream()
+    val dstream = this.fire.createKafkaDirectStream()
     dstream.foreachRDD(rdd => {
       if (rdd.isNotEmpty) {
         // 一、将json解析并注册为临时表，默认不cache临时表
         rdd.kafkaJson2Table("test", cacheTable = true)
         // toLowerDF表示将大写的字段转为小写
-        this.spark.sql("select after.* from test").toLowerDF.show(1, false)
-        this.spark.sql(LoadTestSQL.jsonParseSQL)
+        this.fire.sql("select after.* from test").toLowerDF.show(1, false)
+        this.fire.sql(LoadTestSQL.jsonParseSQL)
       }
     })
 

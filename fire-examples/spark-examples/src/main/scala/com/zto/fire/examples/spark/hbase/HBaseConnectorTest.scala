@@ -26,7 +26,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHbasePutList: Unit = {
     val studentList = Student.newStudentList()
-    this.spark.hbasePutList(this.tableName1, JavaConversions.asScalaBuffer(studentList))
+    this.fire.hbasePutList(this.tableName1, JavaConversions.asScalaBuffer(studentList))
   }
 
   /**
@@ -35,7 +35,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHbasePutRDD: Unit = {
     val studentList = Student.buildStudentList()
-    val studentRDD = this.spark.parallelize(JavaConversions.asScalaBuffer(studentList), 2)
+    val studentRDD = this.fire.createRDD(JavaConversions.asScalaBuffer(studentList), 2)
     // 为空的字段不插入
     studentRDD.hbasePutRDD(this.tableName1)
   }
@@ -45,7 +45,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHBaseConnectorPutDF: Unit = {
     val studentList = Student.buildStudentList()
-    val studentDF = this.spark.createDataFrame(studentList, classOf[Student])
+    val studentDF = this.fire.createDataFrame(studentList, classOf[Student])
     // 每个批次插100条
     studentDF.hbasePutDF(this.tableName1, classOf[Student])
   }
@@ -56,7 +56,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHbasePutDS: Unit = {
     val studentList = Student.buildStudentList()
-    val studentDS = this.spark.createDataset(JavaConversions.asScalaBuffer(studentList))(Encoders.bean(classOf[Student]))
+    val studentDS = this.fire.createDataset(JavaConversions.asScalaBuffer(studentList))(Encoders.bean(classOf[Student]))
     // 以多版本形式插入
     studentDS.hbasePutDS(this.tableName1, classOf[Student])
   }
@@ -67,13 +67,13 @@ object HBaseConnectorTest extends BaseSparkCore {
   def testHbaseGetList: Unit = {
     println("===========testHbaseGetList===========")
     val rowKeys = Seq("1", "2", "3", "5", "6")
-    val studentList = this.spark.hbaseGetList2(this.tableName1, classOf[Student], rowKeys)
+    val studentList = this.fire.hbaseGetList2(this.tableName1, classOf[Student], rowKeys)
     studentList.foreach(println)
 
     val getList = ListBuffer[Get]()
     rowKeys.map(rowkey => (getList += new Get(rowkey.getBytes(StandardCharsets.UTF_8))))
     // 获取多版本形式存放的记录，并获取最新的两个版本就
-    val studentList2 = this.spark.hbaseGetList(this.tableName1, classOf[Student], getList)
+    val studentList2 = this.fire.hbaseGetList(this.tableName1, classOf[Student], getList)
     studentList2.foreach(println)
   }
 
@@ -83,9 +83,9 @@ object HBaseConnectorTest extends BaseSparkCore {
   def testHbaseGetRDD: Unit = {
     println("===========testHBaseConnectorGetRDD===========")
     val getList = Seq("1", "2", "3", "5", "6")
-    val getRDD = this.spark.parallelize(getList, 2)
+    val getRDD = this.fire.createRDD(getList, 2)
     // 以多版本方式get，并将结果集封装到rdd中返回
-    val studentRDD = this.spark.hbaseGetRDD(this.tableName1, classOf[Student], getRDD)
+    val studentRDD = this.fire.hbaseGetRDD(this.tableName1, classOf[Student], getRDD)
     studentRDD.printEachPartition
   }
 
@@ -95,9 +95,9 @@ object HBaseConnectorTest extends BaseSparkCore {
   def testHbaseGetDF: Unit = {
     println("===========testHBaseConnectorGetDF===========")
     val getList = Seq("1", "2", "3", "4", "5", "6")
-    val getRDD = this.spark.parallelize(getList, 3)
+    val getRDD = this.fire.createRDD(getList, 3)
     // get到的结果以dataframe形式返回
-    val studentDF = this.spark.hbaseGetDF(this.tableName1, classOf[Student], getRDD)
+    val studentDF = this.fire.hbaseGetDF(this.tableName1, classOf[Student], getRDD)
     studentDF.show(100, false)
   }
 
@@ -107,9 +107,9 @@ object HBaseConnectorTest extends BaseSparkCore {
   def testHBaseConnectorGetDS: Unit = {
     println("===========testHBaseConnectorGetDS===========")
     val getList = Seq("1", "2", "3", "4", "5", "6")
-    val getRDD = this.spark.parallelize(getList, 2)
+    val getRDD = this.fire.createRDD(getList, 2)
     // 指定在多版本获取时只取最新的两个版本
-    val studentDS = this.spark.hbaseGetDS(this.tableName1, classOf[Student], getRDD)
+    val studentDS = this.fire.hbaseGetDS(this.tableName1, classOf[Student], getRDD)
     studentDS.show(100, false)
   }
 
@@ -118,7 +118,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHbaseScanList: Unit = {
     println("===========testHbaseScanList===========")
-    val list = this.spark.hbaseScanList2(this.tableName1, classOf[Student], "1", "6")
+    val list = this.fire.hbaseScanList2(this.tableName1, classOf[Student], "1", "6")
     list.foreach(println)
   }
 
@@ -127,7 +127,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHbaseScanRDD: Unit = {
     println("===========testHbaseScanRDD===========")
-    val rdd = this.spark.hbaseScanRDD2(this.tableName1, classOf[Student], "1", "6")
+    val rdd = this.fire.hbaseScanRDD2(this.tableName1, classOf[Student], "1", "6")
     rdd.repartition(3).printEachPartition
   }
 
@@ -136,7 +136,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHbaseScanDF: Unit = {
     println("===========testHbaseScanDF===========")
-    val dataFrame = this.spark.hbaseScanDF2(this.tableName1, classOf[Student], "1", "6")
+    val dataFrame = this.fire.hbaseScanDF2(this.tableName1, classOf[Student], "1", "6")
     dataFrame.repartition(3).show(100, false)
   }
 
@@ -145,7 +145,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHbaseScanDS: Unit = {
     println("===========testHbaseScanDF===========")
-    val dataSet = this.spark.hbaseScanDS2(this.tableName1, classOf[Student], "1", "6")
+    val dataSet = this.fire.hbaseScanDS2(this.tableName1, classOf[Student], "1", "6")
     dataSet.show(100, false)
   }
 
@@ -154,7 +154,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHbaseDeleteList: Unit = {
     val rowKeyList = Seq(1.toString, 2.toString, 5.toString, 8.toString)
-    this.spark.hbaseDeleteList(this.tableName1, rowKeyList)
+    this.fire.hbaseDeleteList(this.tableName1, rowKeyList)
   }
 
   /**
@@ -162,7 +162,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHbaseDeleteRDD: Unit = {
     val rowKeyList = Seq(1.toString, 2.toString, 3.toString, 4.toString, 5.toString, 6.toString, 7.toString, 8.toString, 9.toString, 10.toString)
-    val rowKeyRDD = this.spark.parallelize(rowKeyList, 2)
+    val rowKeyRDD = this.fire.createRDD(rowKeyList, 2)
     rowKeyRDD.hbaseDeleteRDD(this.tableName1)
   }
 
@@ -171,7 +171,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHbaseDeleteDS: Unit = {
     val rowKeyList = Seq(1.toString, 2.toString, 5.toString, 8.toString)
-    val rowKeyDS = this.spark.createDataset(rowKeyList)(Encoders.STRING)
+    val rowKeyDS = this.fire.createDataset(rowKeyList)(Encoders.STRING)
     rowKeyDS.hbaseDeleteDS(this.tableName1)
   }
 

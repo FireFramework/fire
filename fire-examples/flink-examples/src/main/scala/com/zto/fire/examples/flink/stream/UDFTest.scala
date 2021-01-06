@@ -18,9 +18,9 @@ object UDFTest extends BaseFlinkStreaming {
   override def process: Unit = {
     val dataset = this.env.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()))
 
-    this.flink.registerDataStream("test", dataset)
+    //this.flink.registerDataStream("test", dataset)
     // 注册udf
-    this.flink.udf("appendFire", new AppendFire)
+    //this.flink.udf("appendFire", new AppendFire)
     // 在sql中使用自定义的udf
     this.flink.sql("select appendFire(name), appendFire(age) from test")
 

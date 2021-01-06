@@ -54,6 +54,7 @@ object SparkSingletonFactory extends SingletonFactory {
    * 获取StreamingContext实例
    */
   def getStreamingContext: StreamingContext = this.synchronized {
+    assert(this.streamingContext != null, "StreamingContext还没初始化，请稍后再试")
     this.streamingContext
   }
 

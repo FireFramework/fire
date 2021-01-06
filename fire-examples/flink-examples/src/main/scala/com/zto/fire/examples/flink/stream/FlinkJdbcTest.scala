@@ -30,7 +30,7 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
     // 方式一、table中的列顺序和类型需与jdbc sql中的占位符顺序保持一致
     // table.jdbcBatchUpdate(sql, keyNum = 3).setParallelism(1)
     // 或者
-    this.flink.jdbcBatchUpdateTable(table, sql, keyNum = 3).setParallelism(1)
+    // this.flink.jdbcBatchUpdateTable(table, sql, keyNum = 3).setParallelism(1)
 
     // 方式二、自定义row取数规则，适用于row中的列个数和顺序与sql占位符不一致的情况
     /*table.jdbcBatchUpdate2(sql, flushInterval = 10000, keyNum = 3)(row => {
@@ -51,7 +51,7 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
     // 注：要保证DataStream中字段名称是JavaBean的名称，非表中字段名称 顺序要与占位符顺序一致，个数也要一致
     // stream.jdbcBatchUpdate(sql, fields, keyNum = 3).setParallelism(3)
     // 或者
-    this.flink.jdbcBatchUpdateStream(stream, sql, fields).setParallelism(1)
+    // this.flink.jdbcBatchUpdateStream(stream, sql, fields).setParallelism(1)
 
     // 方式二、通过用户指定的匿名函数方式进行数据的组装，适用于上面方法无法反射获取值的情况，适用面更广
     /*stream.jdbcBatchUpdate2(sql, 3, 30000, keyNum = 3) {
@@ -67,12 +67,12 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
 
   def testJdbc: Unit = {
     // 执行查询操作
-    val studentList = this.flink.jdbcQuery(s"select * from $tableName", clazz = classOf[Student], keyNum = 3)
+    /*val studentList = this.flink.jdbcQuery(s"select * from $tableName", clazz = classOf[Student], keyNum = 3)
     val dataStream = this.env.fromCollection(studentList)
     dataStream.print()
 
     // 执行增删改操作
-    this.flink.jdbcUpdate(s"delete from $tableName", keyNum = 3)
+    this.flink.jdbcUpdate(s"delete from $tableName", keyNum = 3)*/
   }
 
   override def process: Unit = {

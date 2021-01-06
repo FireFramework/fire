@@ -13,7 +13,7 @@ object HBaseStreamingTest extends BaseSparkStreaming {
   private val tableName = "fire_test_5"
 
   override def process: Unit = {
-    val dstream = this.ssc.createDirectStream()
+    val dstream = this.fire.createKafkaDirectStream()
 
     dstream.repartition(5).foreachRDD(rdd => {
       rdd.foreachPartition(it => {

@@ -13,10 +13,10 @@ import com.zto.fire.spark.util.SparkUtils
 object MapTest extends BaseStructuredStreaming {
 
   override def process: Unit = {
-    this.spark.loadKafkaParseJson()
+    this.fire.loadKafkaParseJson()
 
     // 将字段转为与JavaBean对应的类型
-    val sqlDF = this.spark.sql("select cast(age as int), createTime, cast(length as decimal), name, rowKey, cast(sex as boolean) from kafka")
+    val sqlDF = this.fire.sql("select cast(age as int), createTime, cast(length as decimal), name, rowKey, cast(sex as boolean) from kafka")
 
     // 执行map操作
     sqlDF.map(row => {

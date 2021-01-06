@@ -14,7 +14,7 @@ object CrossHiveClusterReader extends BaseSparkCore {
       .format("orc")
       .load(this.dfsUrl)
     sendaDF.createOrReplaceTempView("tmp1")
-    this.spark.sql("select count(1) from tmp1 where ds>=20190315").show()
+    this.fire.sql("select count(1) from tmp1 where ds>=20190315").show()
     println(DateFormatUtils.runTime(startTime))
 
     startTime = DateFormatUtils.currentTime
@@ -31,7 +31,7 @@ object CrossHiveClusterReader extends BaseSparkCore {
       s"${this.dfsUrl}/ds=20190322"
     )
     sendaDF2.createOrReplaceTempView("tmp2")
-    this.spark.sql("select count(1) from tmp2").show()
+    this.fire.sql("select count(1) from tmp2").show()
     println(DateFormatUtils.runTime(startTime))
   }
 }

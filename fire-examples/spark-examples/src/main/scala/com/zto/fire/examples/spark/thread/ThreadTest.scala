@@ -28,7 +28,7 @@ object ThreadTest extends BaseSparkStreaming {
     // 以子线程方式执行print方法中的逻辑
     this.runAsThread(this.print)
 
-    val dstream = this.ssc.createDirectStream()
+    val dstream = this.fire.createKafkaDirectStream()
     dstream.foreachRDD(rdd => {
       println("count--> " + rdd.count())
     })
@@ -48,7 +48,7 @@ object ThreadTest extends BaseSparkStreaming {
     */
   def showSchema: Unit = {
     println(s"${DateFormatUtils.formatCurrentDateTime()}--------------> atFixRate <----------------")
-    this.spark.sql("use tmp")
-    spark.sql("show tables").show(false)
+    this.fire.sql("use tmp")
+    this.fire.sql("show tables").show(false)
   }
 }

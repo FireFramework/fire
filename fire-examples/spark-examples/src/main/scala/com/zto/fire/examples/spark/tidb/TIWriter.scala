@@ -12,10 +12,10 @@ object TIWriter extends BaseSparkCore {
 
   def main(args: Array[String]): Unit = {
     this.init()
-    val studentRDD = this.sc.parallelize(Student.newStudentList())
-    val df = this.spark.createDataFrame(studentRDD, classOf[Student])
+    val studentRDD = this.fire.createRDD(Student.newStudentList())
+    val df = this.fire.createDataFrame(studentRDD, classOf[Student])
     // Student类型的DataFrame数据写入hbase
     df.hbasePutDF(this.tableName, classOf[Student])
-    this.spark.stop()
+    this.fire.stop()
   }
 }

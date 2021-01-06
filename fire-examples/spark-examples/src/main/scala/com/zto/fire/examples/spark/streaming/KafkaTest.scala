@@ -25,7 +25,7 @@ object KafkaTest extends BaseSparkStreaming {
   }
 
   override def process: Unit = {
-    val dstream = this.ssc.createDirectStream()
+    val dstream = this.fire.createKafkaDirectStream()
     dstream.foreachRDD(rdd => {
       // 更新并缓存维表动作，具体要根据锁的标记判断是否执行
       this.cacheTable
@@ -33,26 +33,26 @@ object KafkaTest extends BaseSparkStreaming {
       // 一、将json解析并注册为临时表，默认不cache临时表
       rdd.kafkaJson2Table("test", cacheTable = true)
       // toLowerDF表示将大写的字段转为小写
-      this.spark.sql("select * from test").toLowerDF.show(1, false)
-      /*this.spark.sql("select after.* from test").toLowerDF.show(1, false)
-      this.spark.sql("select after.* from test where after.order_type=1").toLowerDF.show(1, false)*/
+      this.fire.sql("select * from test").toLowerDF.show(1, false)
+      /*this.fire.sql("select after.* from test").toLowerDF.show(1, false)
+      this.fire.sql("select after.* from test where after.order_type=1").toLowerDF.show(1, false)*/
 
       // 二、直接将json按指定的schema解析（只解析after），fieldNameUpper=true表示按大写方式解析，并自动转为小写
       // rdd.kafkaJson2DF(classOf[OrderCommon], fieldNameUpper = true).show(1, false)
       // 递归解析所有指定的字段，包括before、table、offset等字段
       // rdd.kafkaJson2DF(classOf[OrderCommon], parseAll = true, fieldNameUpper = true, isMySQL = false).show(1, false)
 
-      this.spark.uncache("test")
+      this.fire.uncache("test")
     })
 
-    val dstream2 = this.ssc.createDirectStream(keyNum = 2)
+    val dstream2 = this.fire.createKafkaDirectStream(keyNum = 2)
     dstream2.print(1)
-    val dstream3 = this.ssc.createDirectStream(keyNum = 3)
+    val dstream3 = this.fire.createKafkaDirectStream(keyNum = 3)
     dstream3.count().foreachRDD(rdd => {
       println("count=" + rdd.count())
     })
     dstream3.print(1)
-    val dstream5 = this.ssc.createDirectStream(keyNum = 5)
+    val dstream5 = this.fire.createKafkaDirectStream(keyNum = 5)
     dstream5.print(1)
 
     this.fire.start

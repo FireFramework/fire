@@ -73,7 +73,10 @@ object FlinkSingletonFactory extends SingletonFactory {
    * @return
    * TableEnv实例
    */
-  private[fire] def getStreamTableEnv: StreamTableEnvironment = this.streamTableEnv
+  private[fire] def getStreamTableEnv: StreamTableEnvironment = {
+    require(this.streamTableEnv != null, "StreamTableEnvironment仍未被实例化，请稍后再试")
+    this.streamTableEnv
+  }
 
   /**
    * 获取TableEnv实例

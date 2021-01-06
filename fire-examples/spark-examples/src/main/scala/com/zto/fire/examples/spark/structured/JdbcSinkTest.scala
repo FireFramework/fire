@@ -11,10 +11,10 @@ object JdbcSinkTest extends BaseStructuredStreaming {
 
   override def process: Unit = {
     // 接入kafka并解析json，支持大小写，默认表名为kafka
-    val kafkaDataset = this.spark.loadKafkaParseJson()
+    val kafkaDataset = this.fire.loadKafkaParseJson()
     // 直接使用或sql
     /*kafkaDataset.print()
-    this.spark.sql("select * from kafka").print()*/
+    this.fire.sql("select * from kafka").print()*/
 
     // jdbc的sql语句
     val insertSql = "insert into spark_test(name, age, createTime, length, sex, rowKey) values(?,?,?,?,?,?)"
@@ -24,8 +24,8 @@ object JdbcSinkTest extends BaseStructuredStreaming {
     // 插入所有列并在Seq中列举DataFrame指定顺序，该顺序必须与insertSql中的问号占位符存在绑定关系
     // kafkaDataset.select("data.*").jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex", "rowKey"))
 
-    this.spark.createDataFrame(Student.newStudentList(), classOf[Student]).createOrReplaceTempViewCache("student")
-    this.spark.sql(
+    this.fire.createDataFrame(Student.newStudentList(), classOf[Student]).createOrReplaceTempViewCache("student")
+    this.fire.sql(
       """
         |select
         | t.name,

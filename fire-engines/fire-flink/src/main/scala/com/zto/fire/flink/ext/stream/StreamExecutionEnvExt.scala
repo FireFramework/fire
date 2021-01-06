@@ -25,6 +25,7 @@ import scala.collection.JavaConversions
  * @since 0.4.1
  */
 private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
+  private[fire] lazy val tableEnv = FlinkSingletonFactory.getStreamTableEnv
 
   /**
    * 根据配置信息创建Kafka Consumer
@@ -85,13 +86,28 @@ private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
   }
 
   /**
+   * 创建DStream流
+   *
+   * @param kafkaParams
+   * kafka相关的配置参数
+   * @return
+   * DStream
+   */
+  def createKafkaDirectStream(kafkaParams: Map[String, Object] = null,
+                         topics: Set[String] = null,
+                         specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
+                         runtimeContext: RuntimeContext = null,
+                         keyNum: Int = 1): DataStream[String] = {
+    this.createDirectStream(kafkaParams, topics, specificStartupOffsets, runtimeContext, keyNum)
+  }
+
+  /**
    * 执行sql语句
    * 支持DDL、DML
    */
   def sql(sql: String): TableResult = {
     require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
-    require(FlinkSingletonFactory.getStreamTableEnv != null, "StreamTableEnvironment不能为空，请启动fire以后再尝试调用")
-    FlinkSingletonFactory.getStreamTableEnv.executeSql(sql)
+    this.tableEnv.executeSql(sql)
   }
 
   /**
@@ -105,6 +121,16 @@ private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
   def parallelize[T: TypeInformation](seq: Seq[T]): DataStream[T] = {
     this.env.fromCollection[T](seq)
   }
+
+  /**
+   * 使用集合元素创建DataStream
+   *
+   * @param seq
+   * 元素集合
+   * @tparam T
+   * 元素的类型
+   */
+  def createCollectionStream[T: TypeInformation](seq: Seq[T]): DataStream[T] = this.env.fromCollection[T](seq)
 
   /**
    * 提交job执行

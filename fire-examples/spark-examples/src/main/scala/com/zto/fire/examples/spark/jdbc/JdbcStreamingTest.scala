@@ -14,7 +14,7 @@ object JdbcStreamingTest extends BaseSparkStreaming {
     * 2. 支持streaming热重启（可在不关闭streaming任务的前提下修改batch时间）
     */
   override def process: Unit = {
-    val dstream = this.ssc.createDirectStream()
+    val dstream = this.fire.createKafkaDirectStream()
 
     dstream.repartition(5).foreachRDD(rdd => {
       rdd.foreachPartition(it => {

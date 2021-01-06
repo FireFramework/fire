@@ -29,10 +29,10 @@ object HBaseBulkTest extends BaseSparkCore {
     */
   def testHbaseBulkPutRDD(multiVersion: Boolean = false): Unit = {
     // 方式一：将rdd的数据写入到hbase中，rdd类型必须为HBaseBaseBean的子类
-    val rdd = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
+    val rdd = this.fire.createRDD(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
     // rdd.hbaseBulkPutRDD(this.tableName2)
-    // 方式二：使用this.spark.hbaseBulkPut将rdd中的数据写入到hbase
-    this.spark.hbaseBulkPutRDD(this.tableName2, rdd)
+    // 方式二：使用this.fire.hbaseBulkPut将rdd中的数据写入到hbase
+    this.fire.hbaseBulkPutRDD(this.tableName2, rdd)
 
     // 第二个参数指定false表示不插入为null的字段到hbase中
     // rdd.hbaseBulkPutRDD(this.tableName2, insertEmpty = false)
@@ -45,12 +45,12 @@ object HBaseBulkTest extends BaseSparkCore {
     */
   def testHbaseBulkPutDF(multiVersion: Boolean = false): Unit = {
     // 方式一：将DataFrame的数据写入到hbase中
-    val rdd = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
-    val studentDF = this.spark.createDataFrame(rdd, classOf[Student])
+    val rdd = this.fire.createRDD(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
+    val studentDF = this.fire.createDataFrame(rdd, classOf[Student])
     // insertEmpty=false表示为空的字段不插入
     studentDF.hbaseBulkPutDF(this.tableName2, classOf[Student])
     // 方式二：
-    // this.spark.hbaseBulkPutDF(this.tableName2, studentDF, classOf[Student])
+    // this.fire.hbaseBulkPutDF(this.tableName2, studentDF, classOf[Student])
   }
 
   /**
@@ -58,12 +58,12 @@ object HBaseBulkTest extends BaseSparkCore {
     */
   def testHbaseBulkPutDS(multiVersion: Boolean = false): Unit = {
     // 方式一：将DataFrame的数据写入到hbase中
-    val rdd = this.spark.parallelize(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
-    val studentDataset = this.spark.createDataset(rdd)(Encoders.bean(classOf[Student]))
+    val rdd = this.fire.createRDD(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
+    val studentDataset = this.fire.createDataset(rdd)(Encoders.bean(classOf[Student]))
     // multiVersion=true表示以多版本形式插入
     studentDataset.hbaseBulkPutDS(this.tableName2)
     // 方式二：
-    // this.spark.hbaseBulkPutDS(this.tableName3, studentDataset)
+    // this.fire.hbaseBulkPutDS(this.tableName3, studentDataset)
   }
 
   /**
@@ -73,10 +73,10 @@ object HBaseBulkTest extends BaseSparkCore {
     println("===========testHBaseBulkGetSeq===========")
     // 方式一：使用rowKey集合读取hbase中的数据
     val seq = Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString)
-    val studentRDD = this.spark.hbaseBulkGetSeq(this.tableName2, seq, classOf[Student])
+    val studentRDD = this.fire.hbaseBulkGetSeq(this.tableName2, seq, classOf[Student])
     studentRDD.foreach(println)
-    // 方式二：使用this.spark.hbaseBulkGetRDD
-    /*val studentRDD2 = this.spark.hbaseBulkGetSeq(this.tableName2, seq, classOf[Student])
+    // 方式二：使用this.fire.hbaseBulkGetRDD
+    /*val studentRDD2 = this.fire.hbaseBulkGetSeq(this.tableName2, seq, classOf[Student])
     studentRDD2.foreach(println)*/
   }
 
@@ -86,11 +86,11 @@ object HBaseBulkTest extends BaseSparkCore {
   def testHBaseBulkGetRDD: Unit = {
     println("===========testHBaseBulkGetRDD===========")
     // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
-    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString), 2)
+    val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString), 2)
     val studentRDD = rowKeyRdd.hbaseBulkGetRDD(this.tableName2, classOf[Student])
     studentRDD.foreach(println)
-    // 方式二：使用this.spark.hbaseBulkGetRDD
-    // val studentRDD2 = this.spark.hbaseBulkGetRDD(this.tableName2, rowKeyRdd, classOf[Student])
+    // 方式二：使用this.fire.hbaseBulkGetRDD
+    // val studentRDD2 = this.fire.hbaseBulkGetRDD(this.tableName2, rowKeyRdd, classOf[Student])
     // studentRDD2.foreach(println)
   }
 
@@ -100,11 +100,11 @@ object HBaseBulkTest extends BaseSparkCore {
   def testHBaseBulkGetDF: Unit = {
     println("===========testHBaseBulkGetDF===========")
     // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
-    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString), 2)
+    val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString), 2)
     val studentDF = rowKeyRdd.hbaseBulkGetDF(this.tableName2, classOf[Student])
     studentDF.show(100, false)
-    // 方式二：使用this.spark.hbaseBulkGetDF
-    val studentDF2 = this.spark.hbaseBulkGetDF(this.tableName2, rowKeyRdd, classOf[Student])
+    // 方式二：使用this.fire.hbaseBulkGetDF
+    val studentDF2 = this.fire.hbaseBulkGetDF(this.tableName2, rowKeyRdd, classOf[Student])
     studentDF2.show(100, false)
   }
 
@@ -114,11 +114,11 @@ object HBaseBulkTest extends BaseSparkCore {
   def testHBaseBulkGetDS: Unit = {
     println("===========testHBaseBulkGetDS===========")
     // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
-    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString), 2)
+    val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString), 2)
     val studentDS = rowKeyRdd.hbaseBulkGetDS(this.tableName2, classOf[Student])
     studentDS.show(100, false)
-    // 方式二：使用this.spark.hbaseBulkGetDF
-    // val studentDS2 = this.spark.hbaseBulkGetDS(this.tableName2, rowKeyRdd, classOf[Student])
+    // 方式二：使用this.fire.hbaseBulkGetDF
+    // val studentDS2 = this.fire.hbaseBulkGetDS(this.tableName2, rowKeyRdd, classOf[Student])
     // studentDS2.show(100, false)
   }
 
@@ -128,7 +128,7 @@ object HBaseBulkTest extends BaseSparkCore {
   def testHbaseBulkScanRDD: Unit = {
     println("===========testHbaseBulkScanRDD===========")
     // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为RDD[Student]
-    val scanRDD = this.spark.hbaseBulkScanRDD2(this.tableName2, classOf[Student], "1", "6")
+    val scanRDD = this.fire.hbaseBulkScanRDD2(this.tableName2, classOf[Student], "1", "6")
     scanRDD.foreach(println)
   }
 
@@ -138,7 +138,7 @@ object HBaseBulkTest extends BaseSparkCore {
   def testHbaseBulkScanDF: Unit = {
     println("===========testHbaseBulkScanDF===========")
     // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为DataFrame
-    val scanDF = this.spark.hbaseBulkScanDF2(this.tableName2, classOf[Student], "1", "6")
+    val scanDF = this.fire.hbaseBulkScanDF2(this.tableName2, classOf[Student], "1", "6")
     scanDF.show(100, false)
   }
 
@@ -148,7 +148,7 @@ object HBaseBulkTest extends BaseSparkCore {
   def testHbaseBulkScanDS: Unit = {
     println("===========testHbaseBulkScanDS===========")
     // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为Dataset[Student]
-    val scanDS = this.spark.hbaseBulkScanDS(this.tableName2, classOf[Student], HBaseConnector.buildScan("1", "6"))
+    val scanDS = this.fire.hbaseBulkScanDS(this.tableName2, classOf[Student], HBaseConnector.buildScan("1", "6"))
     scanDS.show(100, false)
   }
 
@@ -157,12 +157,12 @@ object HBaseBulkTest extends BaseSparkCore {
     */
   def testHBaseBulkDeleteRDD: Unit = {
     // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
-    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 5.toString, 6.toString), 2)
+    val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 5.toString, 6.toString), 2)
     // 根据rowKey删除
     rowKeyRdd.hbaseBulkDeleteRDD(this.tableName2)
 
-    // 方式二：使用this.spark.hbaseBulkDeleteRDD
-    // this.spark.hbaseBulkDeleteRDD(this.tableName1, rowKeyRdd)
+    // 方式二：使用this.fire.hbaseBulkDeleteRDD
+    // this.fire.hbaseBulkDeleteRDD(this.tableName1, rowKeyRdd)
   }
 
   /**
@@ -170,12 +170,12 @@ object HBaseBulkTest extends BaseSparkCore {
     */
   def testHBaseBulkDeleteDS: Unit = {
     // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
-    val rowKeyRdd = this.spark.parallelize(Seq(1.toString, 2.toString, 5.toString, 6.toString), 2)
+    val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 5.toString, 6.toString), 2)
     // 根据rowKey删除
-    this.spark.createDataset(rowKeyRdd)(Encoders.STRING).hbaseBulkDeleteDS(this.tableName2)
+    this.fire.createDataset(rowKeyRdd)(Encoders.STRING).hbaseBulkDeleteDS(this.tableName2)
 
-    // 方式二：使用this.spark.hbaseBulkDeleteDS
-    // this.spark.hbaseBulkDeleteDS(this.tableName1, rowKeyRdd)
+    // 方式二：使用this.fire.hbaseBulkDeleteDS
+    // this.fire.hbaseBulkDeleteDS(this.tableName1, rowKeyRdd)
   }
 
 

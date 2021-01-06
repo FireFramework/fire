@@ -5,8 +5,8 @@ import com.zto.fire.spark.BaseSparkCore
 object TestHive extends BaseSparkCore {
 
   override def process: Unit = {
-    this.spark.sql("use dim")
-    this.spark.sql("show tables").show(100, false)
+    this.fire.sql("use dim")
+    this.fire.sql("show tables").show(100, false)
   }
 
 

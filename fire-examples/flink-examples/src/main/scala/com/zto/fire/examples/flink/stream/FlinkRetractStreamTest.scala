@@ -15,7 +15,7 @@ object FlinkRetractStreamTest extends BaseFlinkStreaming {
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
   override def process: Unit = {
-    val dstream = this.env.createDirectStream().map(json => JSON.parseObject(json, classOf[Student])).shuffle
+    val dstream = this.fire.createKafkaDirectStream().map(json => JSON.parseObject(json, classOf[Student])).shuffle
     dstream.createOrReplaceTempView("student")
     val table = this.tableEnv.sql("select name, age, createTime, length, sex from student group by name, age, createTime, length, sex")
 

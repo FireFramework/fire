@@ -15,10 +15,10 @@ object HiveClusterReader extends BaseSparkCore {
     // 必须调用init()方法完成sparkSession的初始化
     this.init()
 
-    // spark为sparkSession的实例，已经在init()中完成初始化，可以直接通过this.spark方式调用
-    this.spark.sql("use tmp")
-    this.spark.sql("show tables").show(100, false)
+    // spark为sparkSession的实例，已经在init()中完成初始化，可以直接通过this.fire或this.spark方式调用
+    this.fire.sql("use tmp")
+    this.fire.sql("show tables").show(100, false)
 
-    this.spark.stop()
+    this.fire.stop()
   }
 }

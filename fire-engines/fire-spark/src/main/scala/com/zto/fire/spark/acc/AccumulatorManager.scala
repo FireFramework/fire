@@ -250,10 +250,11 @@ private[fire] object AccumulatorManager {
    */
   private[fire] def broadcastNewConf(sc: SparkContext, conf: SparkConf): Unit = {
     if (sc != null && conf != null && FireFrameworkConf.dynamicConf) {
+      val executorNum = this.getInitExecutors(sc)
       val broadcastConf = sc.broadcast(conf)
       this.broadcastConf = broadcastConf
-      val rdd = sc.parallelize(1 to this.initExecutors.get * 10, this.initExecutors.get * 3)
-      rdd.foreachPartitionAsync(i => {
+      val rdd = sc.parallelize(1 to executorNum * 10, executorNum * 3)
+      rdd.foreachPartitionAsync(_ => {
         this.broadcastConf = broadcastConf
         this.broadcastConf.value.getAll.foreach(kv => {
           PropUtils.setProperty(kv._1, kv._2)
@@ -265,6 +266,14 @@ private[fire] object AccumulatorManager {
   }
 
   /**
+   * 获取当前任务的executor数
+   */
+  private[this] def getInitExecutors(sc: SparkContext): Int = {
+    if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (OSUtils.isLinux) "10000" else "10").toInt)
+    this.initExecutors.get()
+  }
+
+  /**
    * 注册多个自定义累加器到每个executor
    *
    * @param sc
@@ -273,7 +282,7 @@ private[fire] object AccumulatorManager {
    */
   private[fire] def registerAccumulators(sc: SparkContext): Unit = this.synchronized {
     if (sc != null && accMap != null && accMap.nonEmpty) {
-      if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (OSUtils.isLinux) "10000" else "10").toInt)
+      val executorNum = this.getInitExecutors(sc)
       // 将定时任务所在类的实例广播到每个executor端
       val taskSet = sc.broadcast(taskRegisterSet)
       val broadcastConf = sc.broadcast(SparkEnv.get.conf)
@@ -292,8 +301,8 @@ private[fire] object AccumulatorManager {
       })
 
       // 获取申请的executor数，设置累加器到conf中
-      val rdd = sc.parallelize(1 to this.initExecutors.get * 3, this.initExecutors.get * 3)
-      rdd.foreachPartition(i => {
+      val rdd = sc.parallelize(1 to executorNum * 10, executorNum * 3)
+      rdd.foreachPartition(_ => {
         this.broadcastConf = broadcastConf
         // 将序列化后的累加器放置到conf中
         accumulatorMap.foreach(accSer => SparkEnv.get.conf.set(accSer._1, StringsUtils.toHexString(accSer._2)))

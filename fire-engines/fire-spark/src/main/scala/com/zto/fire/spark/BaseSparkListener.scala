@@ -22,7 +22,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
    * 当SparkContext启动时触发
    */
   override def onApplicationStart(applicationStart: SparkListenerApplicationStart): Unit = {
-    this.logger.info(s"Spark 初始化完成.", this.module)
+    this.logger.info(s"Spark 初始化完成.")
     this.baseSpark.onApplicationStart(applicationStart)
   }
 

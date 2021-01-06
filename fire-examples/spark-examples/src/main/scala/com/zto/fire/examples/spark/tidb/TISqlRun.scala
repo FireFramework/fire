@@ -12,7 +12,7 @@ object TISqlRun extends BaseSparkCore {
 
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder().getOrCreate()
-    this.spark = spark
+    this.fire = spark
     this.runAsSchedule(this.runSQL, 10, 2, true)
   }
 

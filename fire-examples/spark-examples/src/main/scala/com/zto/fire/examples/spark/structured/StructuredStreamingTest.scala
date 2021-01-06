@@ -15,9 +15,9 @@ object StructuredStreamingTest extends BaseStructuredStreaming {
    */
   override def process: Unit = {
     // 接入kafka消息，并将消息解析为DataFrame，同时注册临时表，表名默认为kafka，也可传参手动指定表名
-    val kafkaDataset = this.spark.loadKafkaParseJson()
+    val kafkaDataset = this.fire.loadKafkaParseJson()
     // 进行sql查询，支持嵌套的json，并且支持大小写的json
-    this.spark.sql("select table, after.bill_code, after.scan_site from kafka").print()
+    this.fire.sql("select table, after.bill_code, after.scan_site from kafka").print()
     // 使用api的方式进行查询操作
     kafkaDataset.select("after.PDA_CODE", "after.bill_code").print(numRows = 1, truncate = false)
   }

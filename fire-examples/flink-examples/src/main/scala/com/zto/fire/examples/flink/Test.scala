@@ -1,12 +1,12 @@
-package com.zto.fire.examples.spark
+package com.zto.fire.examples.flink
 
 import com.zto.fire._
-import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.flink.BaseFlinkStreaming
 
 /**
- * 基于Fire进行Spark Streaming开发
+ * 基于Fire进行Flink Streaming开发
  */
-object Test extends BaseSparkStreaming {
+object Test extends BaseFlinkStreaming {
 
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream()

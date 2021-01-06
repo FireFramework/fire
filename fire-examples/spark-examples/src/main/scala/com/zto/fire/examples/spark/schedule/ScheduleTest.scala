@@ -41,8 +41,8 @@ object ScheduleTest extends BaseSparkStreaming {
   def cacheTable: Unit = {
     // 加载完成维表以后上锁
     if (this.lock.compareAndSet(false, true)) {
-      this.spark.uncache("test")
-      this.spark.cacheTables("test")
+      this.fire.uncache("test")
+      this.fire.cacheTables("test")
     }
   }
 

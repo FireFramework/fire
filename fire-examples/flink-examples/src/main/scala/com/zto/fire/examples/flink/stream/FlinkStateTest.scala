@@ -11,13 +11,15 @@ import org.apache.flink.api.scala._
 /**
  * 用于演示基于FireMapFunction的状态使用
  * 本例演示KeyedStream相关的状态使用，也就是说stream是通过keyBy分组过的
+ * 1. 由于经过keyBy算子进行了分组，因此相同key的算子都会跑到同一个subtask中执行，并行度的改变也就不会影响状态数据的一致性
+ * 2. 状态在不同的task之间是隔离的，也就是说对同一个keyedStream进行多次map操作，每个map中的状态是不一样的，是隔离开来的
  *
  * @author ChengLong 2021年1月5日09:13:50
  * @since 2.0.0
  */
 object FlinkStateTest extends BaseFlinkStreaming {
   // 将dstream声明为成员变量时，一定要加lazy关键字，避免env还没初始化导致空指针异常
-  lazy val dstream = this.env.parallelize(Seq((1, 1), (1, 2), (1, 3), (1, 6), (1, 9), (2, 1), (2, 2), (3, 1))).keyBy(0)
+  lazy val dstream = this.fire.createCollectionStream(Seq((1, 1), (1, 2), (1, 3), (1, 6), (1, 9), (2, 1), (2, 2), (3, 1))).keyBy(0)
 
   /**
    * 一、基于FireMapFunction演示ValueState、ListState、MapState的使用
@@ -35,7 +37,9 @@ object FlinkStateTest extends BaseFlinkStreaming {
         // 第一个参数是状态实例名称，不可重复，ttlConfig参数如果不指定，则默认不启用ttl，生产环境强烈建议开启
         // 1. ValueState与KeyedStream中的每个key是一一对应的
         val valueState = this.getState[Int]("value_state", ttlConfig)
-        valueState.update(value._2)
+        valueState.update(value._2 + valueState.value())
+        logger.warn(s"key=${value._1} 状态结果：" + valueState.value())
+        Thread.sleep(10000)
 
         // 2. 获取ListState，该状态的特点是KeyedStream中的每个key都单独对应一个List集合
         listState.add(value._2)
@@ -129,7 +133,7 @@ object FlinkStateTest extends BaseFlinkStreaming {
    * 业务逻辑处理，该方法会被fire自动调用，可避免main方法中代码过于臃肿
    */
   override def process: Unit = {
-    this.env.setParallelism(1)
+    this.fire.setParallelism(3)
     // 演示ValueState、ListState、MapState的使用
     this.testSimpleState
     // 演示AggregatingState、getReducingState的使用

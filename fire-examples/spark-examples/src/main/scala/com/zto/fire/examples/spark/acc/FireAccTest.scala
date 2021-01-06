@@ -21,7 +21,7 @@ object FireAccTest extends BaseSparkStreaming {
     if (this.args != null) {
       this.args.foreach(arg => println(arg + " "))
     }
-    val dstream = this.ssc.createDirectStream()
+    val dstream = this.fire.createKafkaDirectStream()
     dstream.foreachRDD(rdd => {
       rdd.coalesce(this.conf.getInt(key, 10)).foreachPartition(t => {
         println("conf=" + this.conf.getInt(key, 10) + " PropUtils=" + PropUtils.getString(key))
