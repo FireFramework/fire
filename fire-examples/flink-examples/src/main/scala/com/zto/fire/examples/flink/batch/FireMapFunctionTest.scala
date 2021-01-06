@@ -20,8 +20,8 @@ import org.apache.flink.api.scala._
  * @author ChengLong 2020-4-9 15:59:19
  */
 object FireMapFunctionTest extends BaseFlinkBatch {
-  lazy val dataset = this.env.parallelize(1 to 10)
-  lazy val dataset2 = this.env.parallelize(1 to 3)
+  lazy val dataset = this.fire.createCollectionDataSet(1 to 10)
+  lazy val dataset2 = this.fire.createCollectionDataSet(1 to 3)
 
   override def process: Unit = {
     this.testMap

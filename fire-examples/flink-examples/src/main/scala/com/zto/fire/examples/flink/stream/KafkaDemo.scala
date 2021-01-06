@@ -13,7 +13,7 @@ object KafkaDemo extends BaseFlinkStreaming {
   }
 
   override def process(): Unit = {
-    val kafkaStream = this.env.createDirectStream()
+    val kafkaStream = this.fire.createKafkaDirectStream()
 
     kafkaStream.map(new RichMapFunction[String, Int] {
       override def open(parameters: Configuration): Unit = {

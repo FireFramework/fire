@@ -16,8 +16,8 @@ import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
  */
 trait BaseFlinkBatch extends BaseFlink {
   override val jobType: JobType = JobType.FLINK_BATCH
-  protected var env: ExecutionEnvironment = _
-  protected var tableEnv, flink, fire: BatchTableEnvironment = _
+  protected var env, flink, fire: ExecutionEnvironment = _
+  protected var tableEnv: BatchTableEnvironment = _
 
   /**
    * 构建或合并Configuration
@@ -77,7 +77,7 @@ trait BaseFlinkBatch extends BaseFlink {
       this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hive)
       this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
     }
-    this.flink = this.tableEnv
+    this.flink = this.env
     this.fire = this.flink
     FlinkSingletonFactory.setEnv(this.env).setTableEnv(this.tableEnv)
     this.deployConf

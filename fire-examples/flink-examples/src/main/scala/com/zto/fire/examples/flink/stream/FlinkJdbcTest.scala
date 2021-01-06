@@ -77,7 +77,7 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     println("=========execute process method========")
-    val stream = this.env.createDirectStream().filter(JSONUtils.checkJson _).map(json => JSON.parseObject(json, classOf[Student]))
+    val stream = this.fire.createKafkaDirectStream().filter(JSONUtils.checkJson _).map(json => JSON.parseObject(json, classOf[Student]))
     println("=========execute stream========")
 
     // this.testTableJdbcSink(stream)
@@ -86,7 +86,7 @@ object FlinkJdbcTest extends BaseFlinkStreaming {
     this.testJdbc
     println("=========execute testJdbc========")
 
-    this.env.execute("JdbcTest")
+    this.fire.start("JdbcTest")
     println("=========execute()========")
   }
 

@@ -33,7 +33,7 @@ object WatermarkTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     // source端接入消息并解析
-    val dstream = this.env.createDirectStream().filter(str => StringUtils.isNotBlank(str) && str.contains("}")).map(str => {
+    val dstream = this.fire.createKafkaDirectStream().filter(str => StringUtils.isNotBlank(str) && str.contains("}")).map(str => {
       val student = JSON.parseObject(str, classOf[Student])
       (student, DateFormatUtils.formatDateTime(student.getCreateTime).getTime)
     })

@@ -13,7 +13,7 @@ import org.apache.flink.api.scala._
 object FlinkPartitioner extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    val dstream = this.env.parallelize(1 to 10)
+    val dstream = this.fire.createCollectionStream(1 to 10)
     // 将当前所有输出值都输出到下游算子的第一个实例中，会导致严重的性能问题，谨慎使用
     dstream.global.print()
     // 将当前输出中的每一条记录随机输出到下游的每一个实例中，可显著解决数据倾斜问题

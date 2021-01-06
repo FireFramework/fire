@@ -13,9 +13,9 @@ import org.apache.flink.api.scala._
 object FlinkBrocastTest extends BaseFlinkBatch {
 
   override def process: Unit = {
-    val ds = this.env.fromElements(1, 2, 3, 4, 5)
+    val ds = this.fire.createCollectionDataSet(Seq(1, 2, 3, 4, 5))
     // flink中可以广播的数据必须是Dataset
-    val brocastDS = this.env.parallelize(Seq("a", "b", "c", "d", "e"))
+    val brocastDS = this.fire.createCollectionDataSet(Seq("a", "b", "c", "d", "e"))
 
     ds.map(new FireMapFunction[Int, String] {
       // 获取广播变量中的值给当前成员变量（若不想在open方法中获取值，请使用lazy关键字）

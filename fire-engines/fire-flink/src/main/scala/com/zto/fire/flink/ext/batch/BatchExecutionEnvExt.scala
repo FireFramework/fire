@@ -34,4 +34,13 @@ private[fire] class BatchExecutionEnvExt(env: ExecutionEnvironment) {
   def parallelize[T: TypeInformation: ClassTag](seq: Seq[T], parallelism: Int = this.env.getParallelism): DataSet[T] = {
     this.env.fromCollection[T](seq).setParallelism(parallelism)
   }
+
+  /**
+   * 使用集合元素创建DataStream
+   * @param seq
+   *            元素集合
+   * @tparam T
+   *           元素的类型
+   */
+  def createCollectionDataSet[T: TypeInformation: ClassTag](seq: Seq[T], parallelism: Int = this.env.getParallelism): DataSet[T] = this.parallelize[T](seq, parallelism)
 }

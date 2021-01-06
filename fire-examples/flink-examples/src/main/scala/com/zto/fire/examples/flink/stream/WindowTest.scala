@@ -17,7 +17,7 @@ import org.apache.flink.streaming.api.windowing.time.Time
 object WindowTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    val dstream = this.env.createDirectStream().map(t => JSON.parseObject(t, classOf[Student])).map(s => (s.getName, s.getAge))
+    val dstream = this.fire.createKafkaDirectStream().map(t => JSON.parseObject(t, classOf[Student])).map(s => (s.getName, s.getAge))
     this.testTimeWindow(dstream)
 
     this.fire.start()

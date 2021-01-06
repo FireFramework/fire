@@ -92,7 +92,7 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     require(this.args != null && this.args.length > 0, "请传递main方法参数")
-    val stream = this.env.createDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student]))
+    val stream = this.fire.createKafkaDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student]))
 
     this.args(0) match {
       case "testTableHBaseSink" => this.testTableHBaseSink(stream)

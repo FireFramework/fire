@@ -14,7 +14,7 @@ import org.apache.flink.streaming.api.windowing.time.Time
 object FlinkSourceTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    val dstream = this.env.addSource(new MySource).setParallelism(2)
+    val dstream = this.fire.addSource(new MySource).setParallelism(2)
     // 注意Time的包不要导错，来自org.apache.flink.streaming.api.windowing.time.Time
     dstream.timeWindowAll(Time.seconds(2)).sum(0).setParallelism(1).print
 
