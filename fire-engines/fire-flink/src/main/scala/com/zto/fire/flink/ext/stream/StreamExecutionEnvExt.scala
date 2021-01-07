@@ -72,7 +72,8 @@ private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
     if (runtimeContext != null) kafkaConsumer.setRuntimeContext(runtimeContext)
     if (specificStartupOffsets != null) kafkaConsumer.setStartFromSpecificOffsets(JavaConversions.mapAsJavaMap(specificStartupOffsets))
     // 设置从指定时间戳位置开始消费kafka
-    kafkaConsumer.setStartFromTimestamp(FireKafkaConf.kafkaStartFromTimeStamp(keyNum))
+    val startFromTimeStamp = FireKafkaConf.kafkaStartFromTimeStamp(keyNum)
+    if (startFromTimeStamp > 0) kafkaConsumer.setStartFromTimestamp(FireKafkaConf.kafkaStartFromTimeStamp(keyNum))
     // 是否在checkpoint时记录offset值
     kafkaConsumer.setCommitOffsetsOnCheckpoints(FireKafkaConf.kafkaCommitOnCheckpoint(keyNum))
     // 设置从最早的位置开始消费

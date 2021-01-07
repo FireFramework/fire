@@ -46,6 +46,22 @@ private[fire] class DataStreamExt[T](stream: DataStream[T]) {
   }
 
   /**
+   * 为当前DataStream设定uid与name
+   *
+   * @param uid
+   * uid
+   * @param name
+   * name
+   * @return
+   * 当前实例
+   */
+  def uname(uid: String, name: String = ""): DataStream[T] = {
+    if (StringUtils.isNotBlank(uid)) stream.uid(uid)
+    if (StringUtils.isNotBlank(name)) stream.name(name)
+    this.stream
+  }
+
+  /**
    * 预先注册flink累加器
    *
    * @param acc

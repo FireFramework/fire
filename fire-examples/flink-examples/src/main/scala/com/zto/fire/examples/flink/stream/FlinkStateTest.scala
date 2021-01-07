@@ -52,7 +52,7 @@ object FlinkStateTest extends BaseFlinkStreaming {
 
         value._2
       }
-    })
+    }).uname(uid = "simpleState", name = "状态累加")  // 通过uname进行uid与name的指定
   }
 
   /**
@@ -102,7 +102,7 @@ object FlinkStateTest extends BaseFlinkStreaming {
           override def merge(a: Int, b: Int): Int = a + b
         }
       }
-    })
+    }).uname("testFunctionState")
   }
 
   /**
@@ -126,7 +126,7 @@ object FlinkStateTest extends BaseFlinkStreaming {
         logger.warn(s"当前key=${value._1} value=${value._2} state=${state.get} sum=$sum")
         (value._1.toString, Some(sum))
       }
-    })
+    }).uid("flatMapWithState").name("计算状态")
   }
 
   /**
@@ -137,9 +137,9 @@ object FlinkStateTest extends BaseFlinkStreaming {
     // 演示ValueState、ListState、MapState的使用
     this.testSimpleState
     // 演示AggregatingState、getReducingState的使用
-    this.testFunctionState
+    // this.testFunctionState
     // 演示mapWithState的使用
-    this.testWithState
+    // this.testWithState
 
     this.fire.start("Flink State Test")
   }
