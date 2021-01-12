@@ -5,7 +5,7 @@ import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf, FireSparkConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{OSUtils, PropUtils}
 import com.zto.fire.core.BaseFire
-import com.zto.fire.core.rest.RestfulRegister
+import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.ext.module.KuduContextExt
 import com.zto.fire.spark.rest.SparkSystemRestful
@@ -109,16 +109,10 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 构建一系列context对象
    */
   override private[fire] final def createContext(conf: Any): Unit = {
-    retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
-      this.restPort = OSUtils.getRundomPort(FireFrameworkConf.restPortRandomBound)
-      this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
-    }
+    this.restfulRegister = new RestServerManager().startRestPort
     this.systemRestful = new SparkSystemRestful(this)
-    val restAddress = s"${OSUtils.getIp}:${this.restPort}"
-    PropUtils.setProperty(FireFrameworkConf.fireRestUrl(PropUtils.engine), s"http://$restAddress")
-
     // 注册到实时平台，并覆盖配置信息
-    if (this.jobType != JobType.SPARK_CORE) PropUtils.invokeConfigCenter(this.className, restAddress)
+    PropUtils.invokeConfigCenter(this.className)
     PropUtils.print()
 
     // 构建SparkConf信息

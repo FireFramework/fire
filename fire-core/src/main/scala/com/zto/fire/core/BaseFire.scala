@@ -7,7 +7,7 @@ import com.zto.fire.predef._
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf, FirePrintModuleConf}
 import com.zto.fire.common.enu.{JobType, ThreadPoolType}
 import com.zto.fire.common.util.{FireUtils, _}
-import com.zto.fire.core.rest.{RestfulRegister, SystemRestful}
+import com.zto.fire.core.rest.{RestServerManager, SystemRestful}
 import com.zto.fire.core.task.SchedulerManager
 import org.apache.log4j.{Level, Logger}
 import org.slf4j
@@ -32,9 +32,7 @@ trait BaseFire {
   // fire框架内置的restful接口
   private[fire] var systemRestful: SystemRestful = _
   // restful接口注册
-  private[fire] var restfulRegister: RestfulRegister = _
-  // fire restful服务端口号
-  protected[fire] var restPort: Int = _
+  private[fire] var restfulRegister: RestServerManager = _
   // 用于子类的锁状态判断，默认关闭状态
   protected[fire] lazy val lock = new AtomicBoolean(false)
   // 是否已停止

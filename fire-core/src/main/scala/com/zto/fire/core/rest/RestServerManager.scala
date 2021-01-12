@@ -1,67 +1,79 @@
 package com.zto.fire.core.rest
 
-import java.util.concurrent.ExecutorService
+import java.net.ServerSocket
 
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.enu.ErrorCode
-import com.zto.fire.common.util.{EncryptUtils, OSUtils}
+import com.zto.fire.common.util.{EncryptUtils, OSUtils, PropUtils, ThreadUtils}
+import com.zto.fire.predef._
 import org.slf4j.LoggerFactory
 import spark._
 
 import scala.collection.mutable._
 
 /**
-  * Fire框架的restful服务注册
-  *
-  * @author ChengLong 2019-3-16 09:56:56
-  */
-private[fire] class RestfulRegister(val threadPool: ExecutorService) {
-  private val restList = ListBuffer[RestCase]()
-  private var port: Integer = _
-  private val logger = LoggerFactory.getLogger(this.getClass)
+ * Fire框架的rest服务管理器
+ *
+ * @author ChengLong 2019-3-16 09:56:56
+ */
+private[fire] class RestServerManager {
+  private[this] var port: Int = _
+  private[this] var restPrefix: String = _
+  private[this] var socket: ServerSocket = _
+  private[this] lazy val restList = ListBuffer[RestCase]()
+  private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
   private[this] lazy val mainClassName: String = FireFrameworkConf.driverClassName
-  require(this.threadPool != null, "threadPool不能为空")
+  private[this] lazy val threadPool = ThreadUtils.createThreadPool("FireRestServerPool")
 
   /**
-    * 注册新的rest接口
-    *
-    * @param rest
-    * rest的封装信息
-    * @return
-    */
-  def addRest(rest: RestCase): this.type = {
+   * 注册新的rest接口
+   *
+   * @param rest
+   * rest的封装信息
+   * @return
+   */
+  private[fire] def addRest(rest: RestCase): this.type = {
     this.restList += rest
     this
   }
 
   /**
-    * rest占用的端口号
-    *
-    * @param port
-    * 端口号
-    * @return
-    */
-  def port(port: Int): this.type = {
-    Spark.threadPool(FireFrameworkConf.restfulMaxThread, 2, -1)
-    Spark.port(port)
-    this.port = port
+   * 获取Fire RestServer占用的端口号
+   */
+  def restPort: Int = this.port
+
+  /**
+   * rest占用的端口号
+   */
+  private[fire] def startRestPort: this.type = this.synchronized {
+    if (this.port != null) {
+      Spark.threadPool(FireFrameworkConf.restfulMaxThread, 2, -1)
+      // 端口占用失败默认重试3次
+      retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
+        val randomPort = OSUtils.getRundomPort
+        Spark.port(randomPort)
+        this.port = randomPort
+      }
+      // 获取到未被占用的端口后，rest server不会立即绑定，为了避免被其他应用占用
+      // 此处使用ServerSocket占用该端口，等真正启动rest server前再关闭该ServerSocket以便释放端口
+      this.socket = new ServerSocket(this.port)
+      this.restPrefix = s"http://${OSUtils.getIp}:${this.port}"
+      PropUtils.setProperty(FireFrameworkConf.fireRestUrl(PropUtils.engine), s"$restPrefix")
+    }
     this
   }
 
   /**
-    * 注册并以子线程方式开启rest服务
-    */
-  def startRestServer: Unit = {
+   * 注册并以子线程方式开启rest服务
+   */
+  private[fire] def startRestServer: Unit = this.synchronized {
     if (!FireFrameworkConf.restEnable) return
-
-    if (this.port == null) {
-      this.port(OSUtils.getRundomPort(FireFrameworkConf.restPortRandomBound))
-    }
-    val restPrefix = s"http://${OSUtils.getIp}:${this.port}"
-
+    if (this.port == null) this.startRestPort
     this.threadPool.execute(new Runnable {
       override def run(): Unit = {
+        // 释放Socket占用的端口给RestServer使用，避免被其他服务所占用
+        if (socket != null && !socket.isClosed) socket.close()
         restList.filter(_ != null).foreach(rest => {
           if (FireFrameworkConf.fireRestUrlShow) logger.info(s"---------> start rest: ${FirePS1Conf.wrap(restPrefix + rest.path, FirePS1Conf.BLUE, FirePS1Conf.UNDER_LINE)} successfully. <---------")
           rest.method match {
@@ -104,8 +116,8 @@ private[fire] class RestfulRegister(val threadPool: ExecutorService) {
   }
 
   /**
-    * 通过header进行用户权限校验
-    */
+   * 通过header进行用户权限校验
+   */
   private[fire] def checkAuth(request: Request): ResultMsg = {
     val msg = new ResultMsg
     val auth = request.headers("Authorization")

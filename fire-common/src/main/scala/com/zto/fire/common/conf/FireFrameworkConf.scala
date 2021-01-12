@@ -99,7 +99,6 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_BURIED_POINT_DATASOURCE_INITIAL_DELAY = "spark.fire.buried_point.datasource.initialDelay"
   lazy val FIRE_BURIED_POINT_DATASOURCE_PERIOD = "spark.fire.buried_point.datasource.period"
   lazy val FIRE_BURIED_POINT_DATASOURCE_MAP = "spark.fire.buried_point.datasource.map."
-  lazy val FIRE_REST_PORT_RANDOM_BOUND = "spark.fire.rest.port.random.bound"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -123,8 +122,6 @@ private[fire] object FireFrameworkConf {
   lazy val threadPoolSize = PropUtils.getInt(this.FIRE_THREAD_POOL_SIZE, 5)
   // fire内置定时任务线程池大小
   lazy val threadPoolSchedulerSize = PropUtils.getInt(this.FIRE_THREAD_POOL_SCHEDULE_SIZE, 5)
-  // fire rest server 随机端口号的范围
-  lazy val restPortRandomBound = PropUtils.getInt(this.FIRE_REST_PORT_RANDOM_BOUND, 100)
 
   // fire日志打印黑名单
   lazy val fireConfBlackList: Set[String] = {

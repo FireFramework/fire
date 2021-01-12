@@ -5,7 +5,7 @@ import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf,
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{PropUtils, OSUtils}
 import com.zto.fire.core.BaseFire
-import com.zto.fire.core.rest.RestfulRegister
+import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.flink.rest.FlinkSystemRestful
 import com.zto.fire.flink.task.FlinkSchedulerManager
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
@@ -47,16 +47,10 @@ trait BaseFlink extends BaseFire {
    * 初始化flink运行时环境
    */
   override private[fire] def createContext(conf: Any): Unit = {
-    retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
-      this.restPort = OSUtils.getRundomPort(FireFrameworkConf.restPortRandomBound)
-      this.restfulRegister = new RestfulRegister(this.threadPool).port(restPort)
-    }
+    this.restfulRegister = new RestServerManager().startRestPort
     this.systemRestful = new FlinkSystemRestful(this, this.restfulRegister)
-    val restAddress = s"${OSUtils.getIp}:${this.restPort}"
-    PropUtils.setProperty(FireFrameworkConf.fireRestUrl(PropUtils.engine), s"http://$restAddress")
-
     // 注册到实时平台，并覆盖配置信息
-    if (this.jobType == JobType.FLINK_STREAMING) PropUtils.invokeConfigCenter(this.className, restAddress)
+    PropUtils.invokeConfigCenter(this.className)
     PropUtils.print()
     FlinkSchedulerManager.getInstance().registerTasks(this)
     // 创建HiveCatalog

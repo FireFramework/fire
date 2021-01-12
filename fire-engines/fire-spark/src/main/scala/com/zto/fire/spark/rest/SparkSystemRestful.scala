@@ -478,7 +478,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.sparkInfoBean.setDriverMemoryOverhead(this.baseSpark.sc.getConf.get("spark.yarn.driver.memoryOverhead", "0"))
         this.sparkInfoBean.setDriverHost(this.baseSpark.sc.getConf.get("spark.driver.host", "0"))
         this.sparkInfoBean.setDriverPort(this.baseSpark.sc.getConf.get("spark.driver.port", "0"))
-        this.sparkInfoBean.setRestPort(this.baseSpark.restPort.toString)
+        this.sparkInfoBean.setRestPort(this.baseSpark.restfulRegister.restPort.toString)
         this.sparkInfoBean.setExecutorMemoryOverhead(this.baseSpark.sc.getConf.get("spark.yarn.executor.memoryOverhead", "0"))
         this.sparkInfoBean.setProperties(PropUtils.cover)
         this.sparkInfoBean.computeCpuMemory()

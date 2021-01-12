@@ -154,7 +154,7 @@ object KafkaUtils {
       "key.deserializer" -> classOf[StringDeserializer],
       "value.deserializer" -> classOf[StringDeserializer],
       "session.timeout.ms" -> FireKafkaConf.kafkaSessionTimeOut(keyNum),
-      "requrest.timeout.ms" -> FireKafkaConf.kafkaRequestTimeOut(keyNum),
+      "request.timeout.ms" -> FireKafkaConf.kafkaRequestTimeOut(keyNum),
       "max.poll.interval.ms" -> FireKafkaConf.kafkaPollInterval(keyNum)
     )
 

@@ -96,7 +96,7 @@ private[fire] class SparkSessionExt(spark: SparkSession) extends JdbcConnectorBr
    */
   def start(): Unit = {
     if (this.ssc != null) {
-      this.ssc.start()
+      this.ssc.startAwaitTermination()
     }
   }
 }

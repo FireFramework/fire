@@ -2,7 +2,7 @@ package com.zto.fire.common.util
 
 import java.io.FileReader
 
-import com.zto.fire.common.conf.FirePS1Conf
+import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.slf4j.LoggerFactory
 
@@ -32,9 +32,10 @@ private[fire] object FireUtils extends Serializable {
    * 获取fire版本号
    */
   def fireVersion: String = {
-    val reader = new MavenXpp3Reader
+    /*val reader = new MavenXpp3Reader
     val model = reader.read(new FileReader("pom.xml"))
-    model.getVersion
+    model.getVersion*/
+    "v2.0.0"
   }
 
   /**
@@ -56,7 +57,7 @@ private[fire] object FireUtils extends Serializable {
           |                 \/__/        |:|  |        \:\__\
           |                               \|__|         \/__/     version
           |
-          |""".stripMargin.replace("version", s"version ${FirePS1Conf.PINK + this.fireVersion}")
+          |""".stripMargin.replace("version", s"version ${FirePS1Conf.PINK + FireFrameworkConf.fireVersion}")
 
       this.logger.warn(FirePS1Conf.GREEN + info + FirePS1Conf.DEFAULT)
       this.isSplash = true

@@ -1,6 +1,7 @@
 package com.zto.fire.common.util
 
 import java.io.{FileInputStream, InputStream}
+import java.util
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -295,7 +296,7 @@ object PropUtils {
   def setProperties(map: java.util.Map[String, Object]): Unit = {
     if (map != null) {
       map.foreach(kv => {
-        if (StringUtils.isNotBlank(kv._1) && kv._2!= null) {
+        if (StringUtils.isNotBlank(kv._1) && kv._2 != null) {
           this.props.setProperty(kv._1, kv._2.toString)
         }
       })
@@ -439,15 +440,26 @@ object PropUtils {
   }
 
   /**
+   * 构建配置中心请求参数
+   *
+   * @param className
+   * 当前任务主类名
+   */
+  private[this] def buildRequestParam(className: String): String = {
+    val rest = PropUtils.getString(FireFrameworkConf.fireRestUrl(PropUtils.engine), "")
+    if (StringUtils.isBlank(rest)) logger.warn("Fire Rest Server 地址为空，将无法完成注册")
+    s"""
+       |{"className": "$className", "url": "$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.configCenterSecret}"}
+      """.stripMargin
+  }
+
+  /**
    * 调用外部配置中心接口获取配合信息
    */
-  def invokeConfigCenter(className: String, rest: String): Unit = {
+  def invokeConfigCenter(className: String): Unit = {
     if (!FireFrameworkConf.configCenterEnable || (OSUtils.isLocal && !FireFrameworkConf.configCenterLocalEnable)) return
 
-    val param =
-      s"""
-         |{"className": "$className", "url": "http://$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.configCenterSecret}"}
-      """.stripMargin
+    val param = buildRequestParam(className)
     var conf = ""
     try {
       conf = HttpClientUtils.doPost(FireFrameworkConf.configCenterProdAddress, param)
@@ -465,12 +477,12 @@ object PropUtils {
       }
     } finally {
       if (StringUtils.isNotBlank(conf)) {
-        this.logger.info("成功获取配置中心配置信息：" + conf)
+        this.logger.info(s"成功获取配置中心配置信息：${conf}")
         val msg = JSON.parseObject(conf)
         if (msg != null && msg.get("code") == 200) {
           val content = msg.get("content")
           if (content != null) {
-            val confMap = JSON.parseObject(content.toString, classOf[java.util.HashMap[String, String]])
+            val confMap = JSON.parseObject(content.toString, classOf[util.HashMap[String, String]])
             if (confMap != null && !confMap.isEmpty) {
               PropUtils.setProperties(confMap)
             }
@@ -479,6 +491,7 @@ object PropUtils {
       }
     }
   }
+
 
   /**
    * 获取所有的数据源信息

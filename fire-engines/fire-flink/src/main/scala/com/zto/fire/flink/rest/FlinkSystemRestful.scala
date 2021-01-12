@@ -4,7 +4,7 @@ import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util.{ExceptionBus, _}
-import com.zto.fire.core.rest.{RestCase, RestfulRegister, SystemRestful}
+import com.zto.fire.core.rest.{RestCase, RestServerManager, SystemRestful}
 import com.zto.fire.flink.BaseFlink
 import org.apache.commons.lang3.StringUtils
 import spark._
@@ -14,7 +14,7 @@ import spark._
  *
  * @author ChengLong 2020年4月2日 13:50:01
  */
-private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegister: RestfulRegister) extends SystemRestful(baseFlink) {
+private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegister: RestServerManager) extends SystemRestful(baseFlink) {
 
   /**
    * 注册Flink引擎restful接口
