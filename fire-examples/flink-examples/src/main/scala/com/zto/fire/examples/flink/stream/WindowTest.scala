@@ -20,7 +20,7 @@ object WindowTest extends BaseFlinkStreaming {
     val dstream = this.fire.createKafkaDirectStream().map(t => JSON.parseObject(t, classOf[Student])).map(s => (s.getName, s.getAge))
     this.testTimeWindow(dstream)
 
-    this.fire.start()
+    this.fire.start
   }
 
   /**

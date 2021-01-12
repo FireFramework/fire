@@ -103,7 +103,7 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
       case _ => throw new IllegalArgumentException("未匹配到任何方法名称，请检查！")
     }
 
-    this.fire.start()
+    this.fire.start
   }
 
   def main(args: Array[String]): Unit = {

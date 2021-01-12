@@ -4,6 +4,7 @@ import java.util.Properties
 
 import com.zto.fire.common.conf.FireKafkaConf
 import com.zto.fire.common.util.{KafkaUtils, ValueUtils}
+import com.zto.fire.core.Api
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.JobExecutionResult
@@ -24,7 +25,7 @@ import scala.collection.JavaConversions
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
+private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api {
   private[fire] lazy val tableEnv = FlinkSingletonFactory.getStreamTableEnv
 
   /**
@@ -146,5 +147,10 @@ private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) {
   /**
    * 提交Flink Streaming Graph并执行
    */
-  def start(jobName: String = ""): JobExecutionResult = this.startAwaitTermination(jobName)
+  def start(jobName: String): JobExecutionResult = this.startAwaitTermination(jobName)
+
+  /**
+   * 流的启动
+   */
+  override def start: JobExecutionResult = this.env.execute()
 }

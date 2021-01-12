@@ -31,7 +31,7 @@ object FlinkRetractStreamTest extends BaseFlinkStreaming {
     // 类似于structured streaming中自动维护结果表，并进行update操作
     // this.flink.toRetractStream[Row](table).print()
 
-    this.fire.start()
+    this.fire.start
   }
 
   def main(args: Array[String]): Unit = {

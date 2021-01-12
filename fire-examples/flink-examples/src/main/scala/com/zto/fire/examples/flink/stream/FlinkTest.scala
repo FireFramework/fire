@@ -32,7 +32,7 @@ object FlinkTest extends BaseFlinkStreaming {
       println("-------->" + row.rowToBean(tableSchema, classOf[Student]))
     })
 
-    this.fire.start()
+    this.fire.start("FlinkTest")
   }
 
   def main(args: Array[String]): Unit = {

@@ -1,6 +1,7 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
+import com.zto.fire.core.Api
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import com.zto.fire.spark.ext.provider._
 import com.zto.fire.spark.util.SparkSingletonFactory
@@ -20,7 +21,7 @@ import scala.reflect.ClassTag
  * sparkSession对象
  * @author ChengLong 2019-5-18 10:51:19
  */
-private[fire] class SparkSessionExt(spark: SparkSession) extends JdbcConnectorBridge with JdbcSparkProvider
+private[fire] class SparkSessionExt(spark: SparkSession) extends Api with JdbcConnectorBridge with JdbcSparkProvider
   with HBaseBulkProvider with SqlProvider with HBaseConnectorProvider with HBaseHadoopProvider with KafkaSparkProvider {
   private[fire] lazy val ssc = SparkSingletonFactory.getStreamingContext
   private[this] lazy val appName = ssc.sparkContext.appName
@@ -94,9 +95,10 @@ private[fire] class SparkSessionExt(spark: SparkSession) extends JdbcConnectorBr
   /**
    * 启动StreamingContext
    */
-  def start(): Unit = {
+  override def start(): Unit = {
     if (this.ssc != null) {
       this.ssc.startAwaitTermination()
     }
   }
+
 }

@@ -17,7 +17,7 @@ object FlinkSinkTest extends BaseFlinkStreaming {
     val dstream = this.fire.createDirectStream().map(json => JSON.parseObject(json, classOf[Student]))
     dstream.map(t => t.getName).addSink(new MySink).setParallelism(1)
 
-    this.fire.start()
+    this.fire.start
   }
 
   def main(args: Array[String]): Unit = {

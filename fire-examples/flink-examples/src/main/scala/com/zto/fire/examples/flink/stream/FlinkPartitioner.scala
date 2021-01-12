@@ -33,7 +33,7 @@ object FlinkPartitioner extends BaseFlinkStreaming {
     // dstream.map(t => (t, t)).keyBy(KeySelector[Int, Int]())
     // 自定义分区，需继承Partitioner并实现自己的partition分区算法
     dstream.map(t => (t, t)).partitionCustom(new HashPartitioner, 0).print()
-    this.fire.start()
+    this.fire.start
 
     this.stop
   }

@@ -43,7 +43,7 @@ object FlinkAccTest extends BaseFlinkStreaming {
       }
     })
 
-    val result = this.fire.start()
+    val result = this.fire.start
 
     // 获取计数器中的值
     val longCount = result.getAccumulatorResult[Long]("LongCount")

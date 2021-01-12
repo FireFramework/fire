@@ -28,7 +28,7 @@ object FlinkHiveTest extends BaseFlinkStreaming {
     this.flink.sql("select * from tmp.zto_scan_send order by bill_code limit 10")//.createOrReplaceTempView("scan_send")
     val joinedTable = this.flink.sql("select t1.bill_code, t2.name from scan_send t1 left join kafka t2 on t1.bill_code=t2.name")
 
-    this.fire.start()
+    this.fire.start
   }
 
   override def before(args: Array[String]): Unit = {
