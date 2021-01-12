@@ -109,7 +109,7 @@ public class OSUtils {
         int randomPort = getServerRandomPort();
         int port = randomPort;
         try (ServerSocket socket = new ServerSocket(randomPort)) {
-            logger.info("成功获取随机端口号：{}", port);
+            logger.debug("成功获取随机端口号：{}", port);
         } catch (Exception e) {
             logger.error("端口号{}已被占用，尝试扫描新的未被占用的端口号.", randomPort);
             // 当发现端口已被占用时，递归重试，直至扫描到未被占用的端口
