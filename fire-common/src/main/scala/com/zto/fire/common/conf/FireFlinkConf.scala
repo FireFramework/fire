@@ -43,6 +43,9 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER = "flink.stream.checkpoint.tolerable.failure.number"
   lazy val FLINK_STREAM_CHECKPOINT_EXTERNALIZED = "flink.stream.checkpoint.externalized"
 
+  // flink sql相关配置
+  lazy val FLINK_SQL_CONF_PREFIX = "flink.sql.conf."
+
 
   lazy val autoGenerateUidEnable = PropUtils.getBoolean(this.FLINK_AUTO_GENERATE_UID_ENABLE, true)
   lazy val autoTypeRegistrationEnable = PropUtils.getBoolean(this.FLINK_AUTO_TYPE_REGISTRATION_ENABLE, true)
@@ -73,4 +76,7 @@ private[fire] object FireFlinkConf {
   lazy val streamCheckpointPreferRecovery = PropUtils.getBoolean(this.FLINK_STREAM_CHECKPOINT_PREFER_RECOVERY, false)
   lazy val streamCheckpointTolerableTailureNumber = PropUtils.getInt(this.FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER, 0)
   lazy val streamCheckpointExternalized = PropUtils.getString(this.FLINK_STREAM_CHECKPOINT_EXTERNALIZED, "RETAIN_ON_CANCELLATION")
+
+  // flink sql相关配置
+  lazy val flinkSqlConfig = PropUtils.sliceKeys(this.FLINK_SQL_CONF_PREFIX)
 }
