@@ -93,27 +93,17 @@ public class OSUtils {
         return hostname;
     }
 
-    /**
-     * 获取用户可用的服务器端口范围内的随机端口号
-     *
-     * @return 1024 ~ 65535之间的随机端口
-     */
-    private static int getServerRandomPort() {
-        return random.nextInt(65535) % (65535 - 1024 + 1) + 1024;
-    }
 
     /**
      * 随机获取系统未被使用的端口号
      */
     public static int getRundomPort() {
-        int randomPort = getServerRandomPort();
-        int port = randomPort;
-        try (ServerSocket socket = new ServerSocket(randomPort)) {
+        int port = 0;
+        try (ServerSocket socket = new ServerSocket(0)) {
+            port = socket.getLocalPort();
             logger.debug("成功获取随机端口号：{}", port);
         } catch (Exception e) {
-            logger.error("端口号{}已被占用，尝试扫描新的未被占用的端口号.", randomPort);
-            // 当发现端口已被占用时，递归重试，直至扫描到未被占用的端口
-            port = getRundomPort();
+            logger.error("端口号{}已被占用，尝试扫描新的未被占用的端口号.");
         }
         return port;
     }

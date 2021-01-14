@@ -10,8 +10,8 @@ import java.util.Map;
  * @author ChengLong 2019-4-11 09:06:26
  */
 public class StringsUtils {
-
-    private StringsUtils() {}
+    private StringsUtils() {
+    }
 
     /**
      * 处理成超链接
