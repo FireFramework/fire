@@ -21,7 +21,6 @@ object SparkSingletonFactory extends SingletonFactory {
   private[this] var streamingContext: StreamingContext = _
   @transient private[this] var hbaseContext: HBaseBulkConnector = _
   @transient private[this] var kuduContext: KuduContextExt = _
-  private var jobClassName: String = _
 
   /**
    * 获取SparkSession实例
@@ -56,16 +55,6 @@ object SparkSingletonFactory extends SingletonFactory {
   def getStreamingContext: StreamingContext = this.synchronized {
     assert(this.streamingContext != null, "StreamingContext还没初始化，请稍后再试")
     this.streamingContext
-  }
-
-  /**
-   * 用于获取当前的job全类名
-   */
-  def getJobClassName: String = this.synchronized {
-    if (StringUtils.isBlank(this.jobClassName)) {
-      this.jobClassName = SparkEnv.get.conf.get(FireFrameworkConf.DRIVER_CLASS_NAME, "")
-    }
-    this.jobClassName
   }
 
 

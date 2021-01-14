@@ -32,7 +32,9 @@ object FlinkTest extends BaseFlinkStreaming {
       println("-------->" + row.rowToBean(tableSchema, classOf[Student]))
     })
 
-    this.fire.start("FlinkTest")
+    // 不指定job name，则默认当前类名
+    // this.fire.start
+    this.fire.start("Fire Test")
   }
 
   def main(args: Array[String]): Unit = {

@@ -43,7 +43,7 @@ trait BaseFire {
   protected[fire] lazy val driverClass: JString = this.getClass.getSimpleName.replace("$", "")
   protected[fire] lazy val logger: slf4j.Logger = LoggerFactory.getLogger(this.getClass)
   // 默认的任务名称为类名
-  protected[fire] var appName: _root_.com.zto.fire.predef.JString = this.driverClass
+  protected[fire] var appName: JString = this.driverClass
   // fire内置线程池
   protected[fire] lazy val threadPool: ExecutorService = ThreadUtils.createThreadPool("FireThreadPool", ThreadPoolType.FIXED, FireFrameworkConf.threadPoolSize)
   protected[fire] lazy val threadPoolSchedule: ScheduledExecutorService = ThreadUtils.createThreadPool("FireThreadPoolSchedule", ThreadPoolType.SCHEDULED, FireFrameworkConf.threadPoolSchedulerSize).asInstanceOf[ScheduledExecutorService]

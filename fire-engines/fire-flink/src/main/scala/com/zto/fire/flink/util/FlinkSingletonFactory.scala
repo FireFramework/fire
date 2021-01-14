@@ -1,6 +1,5 @@
 package com.zto.fire.flink.util
 
-import com.zto.fire.common.util.ValueUtils
 import com.zto.fire.core.util.SingletonFactory
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
@@ -11,7 +10,6 @@ import org.apache.flink.table.api.bridge.scala.{BatchTableEnvironment, StreamTab
   * Created by ChengLong on 2020年1月6日 16:50:56.
   */
 object FlinkSingletonFactory extends SingletonFactory {
-  @transient private[this] var appName: String = _
   @transient private[this] var streamEnv: StreamExecutionEnvironment = _
   @transient private[this] var streamTableEnv: StreamTableEnvironment = _
   @transient private[this] var env: ExecutionEnvironment = _
@@ -24,15 +22,6 @@ object FlinkSingletonFactory extends SingletonFactory {
     if (env != null && this.streamEnv == null) this.streamEnv = env
     this
   }
-
-  /**
-   * 设置TableEnv实例
-   */
-  private[fire] def setAppName(appName: String): this.type = {
-    if (ValueUtils.noEmpty(appName) && ValueUtils.isEmpty(this.appName)) this.appName = appName
-    this
-  }
-
 
   /**
     * 设置TableEnv实例

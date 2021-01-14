@@ -152,5 +152,5 @@ private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) exten
   /**
    * 流的启动
    */
-  override def start: JobExecutionResult = this.env.execute()
+  override def start: JobExecutionResult = this.env.execute(FlinkSingletonFactory.getAppName)
 }

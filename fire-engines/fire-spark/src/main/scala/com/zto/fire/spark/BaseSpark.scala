@@ -52,6 +52,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     if (StringUtils.isNotBlank(FireSparkConf.appName)) {
       this.appName = FireSparkConf.appName
     }
+    SparkSingletonFactory.setAppName(this.appName)
     super.boot
     this.logger.info("<-- 完成fire框架初始化 -->")
   }
