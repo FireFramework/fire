@@ -12,7 +12,7 @@ object Test extends BaseSparkStreaming {
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream()
     dstream.print
-    this.fire.start()
+    this.fire.start
   }
 
   def main(args: Array[String]): Unit = {

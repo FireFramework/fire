@@ -4,7 +4,7 @@ import com.zto.fire.core.ext.BaseFireExt
 import com.zto.fire.flink.ext.batch.{BatchExecutionEnvExt, BatchTableEnvExt, DataSetExt}
 import com.zto.fire.flink.ext.stream._
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
-import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
+import org.apache.flink.streaming.api.scala.{DataStream, KeyedStream, StreamExecutionEnvironment}
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.bridge.scala.{BatchTableEnvironment, StreamTableEnvironment}
 import org.apache.flink.types.Row
@@ -46,6 +46,16 @@ package object fire extends BaseFireExt {
    * DataStream对象
    */
   implicit class DataStreamExtBridge[T](dataStream: DataStream[T]) extends DataStreamExt(dataStream) {
+
+  }
+
+  /**
+   * KeyedStream扩展
+   *
+   * @param keyedStream
+   * KeyedStream对象
+   */
+  implicit class KeyedStreamExtBridge[T, K](keyedStream: KeyedStream[T, K]) extends KeyedStreamExt[T, K](keyedStream) {
 
   }
 
@@ -96,4 +106,5 @@ package object fire extends BaseFireExt {
   implicit class RowExtBridge(row: Row) extends RowExt(row) {
 
   }
+
 }

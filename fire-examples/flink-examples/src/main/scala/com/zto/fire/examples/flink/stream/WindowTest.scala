@@ -5,12 +5,15 @@ import com.alibaba.fastjson.JSON
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
+import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala.DataStream
+import org.apache.flink.streaming.api.windowing.assigners.{EventTimeSessionWindows, ProcessingTimeSessionWindows, SlidingProcessingTimeWindows, TumblingEventTimeWindows, TumblingProcessingTimeWindows}
 import org.apache.flink.streaming.api.windowing.time.Time
 
 /**
- * window相当于将源源不断的流按一定的规则切分成不同的段，然后为每段分别计算
+ * window相当于将源源不断的流按一定的规则切分成有界流，然后为每个有界流分别计算
  * 当程序挂掉重启后，window中的数据不会丢失，会接着之前的window继续计算
+ * 注：不建议使用windowAll，该api会将数据发送到同一个分区，造成严重的性能问题
  *
  * @author ChengLong 2020-4-18 14:34:58
  */
@@ -48,9 +51,14 @@ object WindowTest extends BaseFlinkStreaming {
    */
   def testTimeWindow(dstream: DataStream[(String, Integer)]): Unit = {
     // 窗口的宽度为1s，每隔1s钟处理过去1s的数据，这1s的时间内窗口中的记录数可多可少
-    dstream.timeWindowAll(Time.seconds(1)).sum(1).print()
+    // dstream.timeWindowAll(Time.seconds(1)).sum(1).print()
+    // 创建一个基于process时间（支持event时间）的滑动窗口，窗口大小为10秒，每隔5秒创建一个
+    dstream.keyBy(0).slidingTimeWindow(Time.seconds(10), Time.seconds(5), timeCharacteristic = TimeCharacteristic.ProcessingTime).sum(1).printToErr()
+    // 创建一个滚动窗口
+    // dstream.keyBy(0).tumblingTimeWindow(Time.seconds(10)).sum(1).print()
+    // 创建一个session会话窗口，当5秒内没有消息进入，则单独划分一个窗口
+    dstream.keyBy(0).sessionTimeWindow(Time.seconds(5)).sum(1).printToErr()
   }
-
 
   def main(args: Array[String]): Unit = {
     this.init()

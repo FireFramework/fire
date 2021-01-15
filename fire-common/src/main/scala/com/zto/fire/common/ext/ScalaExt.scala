@@ -19,6 +19,7 @@ trait ScalaExt {
   implicit class StringExt[K, V](str: String) {
     // 用于匹配带有下划线字符串的正则
     private[this] lazy val humpPattern = Pattern.compile("(.*)_(\\w)(.*)")
+    private[this] lazy val maxHumpMapSize = 10000
 
     /**
      * 数据表字段名转换为驼峰式名字的实体类属性名
@@ -30,7 +31,7 @@ trait ScalaExt {
       val humpStr = if (matcher.find) {
         (matcher.group(1) + matcher.group(2).toUpperCase + matcher.group(3)).toHump
       } else str
-      if (humpMap.size <= 10000) humpMap += (humpStr -> str)
+      if (humpMap.size <= this.maxHumpMapSize) humpMap += (humpStr -> str)
       humpStr
     }
 
