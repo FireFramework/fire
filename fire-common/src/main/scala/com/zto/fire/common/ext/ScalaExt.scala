@@ -30,7 +30,7 @@ trait ScalaExt {
       val humpStr = if (matcher.find) {
         (matcher.group(1) + matcher.group(2).toUpperCase + matcher.group(3)).toHump
       } else str
-      humpMap += (humpStr -> str)
+      if (humpMap.size <= 10000) humpMap += (humpStr -> str)
       humpStr
     }
 
