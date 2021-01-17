@@ -1,13 +1,12 @@
 package com.zto.fire.examples.flink.stream
 
-import com.zto.fire._
 import com.alibaba.fastjson.JSON
+import com.zto.fire._
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala.DataStream
-import org.apache.flink.streaming.api.windowing.assigners.{EventTimeSessionWindows, ProcessingTimeSessionWindows, SlidingProcessingTimeWindows, TumblingEventTimeWindows, TumblingProcessingTimeWindows}
 import org.apache.flink.streaming.api.windowing.time.Time
 
 /**
@@ -30,7 +29,7 @@ object WindowTest extends BaseFlinkStreaming {
    * 如果是keyedStream，则窗口函数为countWindow
    */
   private def testCountWindow(dstream: DataStream[(String, Integer)]): Unit = {
-    dstream.keyBy(0)
+    dstream.keyBy(_._1)
       // 第一个参数表示窗口大小，窗口的容量是2条记录，达到2条会满，作为一个单独的window实例
       // 第二个参数如果不指定，则表示为滚动窗口（没有重叠），如果指定则为滑动窗口（有重叠）
       // 以下表示每隔1条数据统计一次window数据，而这个window中包含2条记录
@@ -51,13 +50,13 @@ object WindowTest extends BaseFlinkStreaming {
    */
   def testTimeWindow(dstream: DataStream[(String, Integer)]): Unit = {
     // 窗口的宽度为1s，每隔1s钟处理过去1s的数据，这1s的时间内窗口中的记录数可多可少
-    // dstream.timeWindowAll(Time.seconds(1)).sum(1).print()
+    dstream.timeWindowAll(Time.seconds(1)).sum(1).print()
     // 创建一个基于process时间（支持event时间）的滑动窗口，窗口大小为10秒，每隔5秒创建一个
-    dstream.keyBy(0).slidingTimeWindow(Time.seconds(10), Time.seconds(5), timeCharacteristic = TimeCharacteristic.ProcessingTime).sum(1).printToErr()
+    dstream.keyBy(_._1).slidingTimeWindow(Time.seconds(10), Time.seconds(5), timeCharacteristic = TimeCharacteristic.ProcessingTime).sum(1).printToErr()
     // 创建一个滚动窗口
-    // dstream.keyBy(0).tumblingTimeWindow(Time.seconds(10)).sum(1).print()
+    dstream.keyBy(_._1).tumblingTimeWindow(Time.seconds(10)).sum(1).print()
     // 创建一个session会话窗口，当5秒内没有消息进入，则单独划分一个窗口
-    dstream.keyBy(0).sessionTimeWindow(Time.seconds(5)).sum(1).printToErr()
+    dstream.keyBy(_._1).sessionTimeWindow(Time.seconds(5)).sum(1).printToErr()
   }
 
   def main(args: Array[String]): Unit = {
