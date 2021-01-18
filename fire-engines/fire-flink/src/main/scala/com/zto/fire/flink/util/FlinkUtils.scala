@@ -1,5 +1,6 @@
 package com.zto.fire.flink.util
 
+import java.net.{URL, URLClassLoader}
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.google.common.collect.HashBasedTable
@@ -181,5 +182,21 @@ object FlinkUtils extends Serializable {
       PropUtils.sliceKeys(FireFrameworkConf.SPARK_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
       PropUtils.print()
     }
+  }
+
+  /**
+   * 加载指定路径下的udf jar包
+   */
+  def loadUdfJar: Unit = {
+    val udfJarUrl = PropUtils.getString("flink.sql.conf.pipeline.jars", "")
+    if (StringUtils.isBlank(udfJarUrl)) {
+      logger.warn(udfJarUrl, "flink udf jar包路径不能为空，请在配置文件中通过：flink.sql.conf.pipeline.jars=/path/to/udf.jar 指定")
+      return
+    }
+
+    val method = classOf[URLClassLoader].getDeclaredMethod("addURL", classOf[URL])
+    method.setAccessible(true)
+    val classLoader = ClassLoader.getSystemClassLoader.asInstanceOf[URLClassLoader]
+    method.invoke(classLoader, new URL(udfJarUrl))
   }
 }

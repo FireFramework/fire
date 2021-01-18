@@ -11,6 +11,7 @@ import org.apache.flink.configuration.{ConfigConstants, Configuration}
 import org.apache.flink.streaming.api.scala.{OutputTag, StreamExecutionEnvironment}
 import org.apache.flink.table.api.EnvironmentSettings
 import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
+import com.zto.fire._
 
 /**
  * flink streaming通用父接口
@@ -77,7 +78,7 @@ trait BaseFlinkStreaming extends BaseFlink {
     val settings = EnvironmentSettings.newInstance.useBlinkPlanner.inStreamingMode.build
     this.tableEnv = StreamTableEnvironment.create(this.env, settings)
     val tableConfig = this.tableEnv.getConfig.getConfiguration
-    FireFlinkConf.flinkSqlConfig.filter(kv => kv != null && StringUtils.isNotBlank(kv._1) && StringUtils.isNotBlank(kv._2)).foreach(kv => tableConfig.setString(kv._1, kv._2))
+    FireFlinkConf.flinkSqlConfig.filter(kv => noEmpty(kv, kv._1, kv._2)).foreach(kv => tableConfig.setString(kv._1, kv._2))
     if (StringUtils.isNotBlank(FireHiveConf.getHiveConfDir)) {
       this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hive)
       this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
@@ -85,6 +86,13 @@ trait BaseFlinkStreaming extends BaseFlink {
     this.flink = this.env
     this.fire = this.flink
     FlinkSingletonFactory.setStreamEnv(this.env).setStreamTableEnv(this.tableEnv)
+    FlinkUtils.loadUdfJar
+    // 自动注册配置文件中指定的udf函数
+    FireFlinkConf.flinkUdfList.filter(udf => noEmpty(udf, udf._1, udf._2)).foreach(udf => {
+      val createFunction = s"CREATE FUNCTION ${udf._1} AS '${udf._2}'"
+      this.tableEnv.executeSql(createFunction)
+      logger.info(s"execute sql: $createFunction")
+    })
     this.deployConf
   }
 

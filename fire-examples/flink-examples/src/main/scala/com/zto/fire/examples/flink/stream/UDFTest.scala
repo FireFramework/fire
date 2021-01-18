@@ -6,8 +6,6 @@ import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
 import org.apache.flink.table.functions.ScalarFunction
 
-import scala.collection.JavaConversions
-
 /**
  * 自定义udf测试
  *
@@ -16,27 +14,26 @@ import scala.collection.JavaConversions
  */
 object UDFTest extends BaseFlinkStreaming {
   override def process: Unit = {
-    val dataset = this.flink.createCollectionStream(JavaConversions.asScalaBuffer(Student.buildStudentList()))
-
-    //this.flink.registerDataStream("test", dataset)
+    this.flink.setParallelism(10)
+    val dataset = this.flink.createCollectionStream(Student.newStudentList()).map(t => t).setParallelism(5)
+    this.tableEnv.registerDataStream("test", dataset)
     // 注册udf
-    //this.flink.udf("appendFire", new AppendFire)
+    this.tableEnv.createTemporarySystemFunction("appendFire", classOf[Udf])
     // 在sql中使用自定义的udf
-    this.flink.sql("select appendFire(name), appendFire(age) from test")
+    this.flink.sql("select fireUdf(name), fireUdf(age) from test").print()
+    dataset.print("dataset")
 
-    this.flink.execute("udf test")
+    this.flink.execute()
   }
 
   def main(args: Array[String]): Unit = {
     this.init()
   }
+
 }
 
-/**
- * 自定义udf方式，继承自ScalarFunction，并定义名称为eval的方法
- */
-class AppendFire extends ScalarFunction {
 
+class Udf extends ScalarFunction {
   /**
    * 为指定字段的值追加fire字符串
    *
@@ -45,5 +42,10 @@ class AppendFire extends ScalarFunction {
    * @return
    * 追加fire字符串后的字符串
    */
-  def eval(field: Any): Any = field + "->fire"
+  def eval(field: String): String = field + "->fire"
+
+  /**
+   * 支持函数的重载，会自动判断输入字段的类型调用相应的函数
+   */
+  def eval(field: JInt): String = field + "-> Int fire"
 }

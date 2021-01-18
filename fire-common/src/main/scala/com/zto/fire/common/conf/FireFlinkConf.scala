@@ -45,6 +45,8 @@ private[fire] object FireFlinkConf {
 
   // flink sql相关配置
   lazy val FLINK_SQL_CONF_PREFIX = "flink.sql.conf."
+  // udf自动注册
+  lazy val FLINK_SQL_UDF = "flink.sql.udf."
 
 
   lazy val autoGenerateUidEnable = PropUtils.getBoolean(this.FLINK_AUTO_GENERATE_UID_ENABLE, true)
@@ -79,4 +81,6 @@ private[fire] object FireFlinkConf {
 
   // flink sql相关配置
   lazy val flinkSqlConfig = PropUtils.sliceKeys(this.FLINK_SQL_CONF_PREFIX)
+  // 用于自动注册udf jar包中的函数
+  lazy val flinkUdfList = PropUtils.sliceKeys(this.FLINK_SQL_UDF)
 }
