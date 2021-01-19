@@ -68,7 +68,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @param beans     HBaseBaseBean子类集合
    */
   def insert[T <: HBaseBaseBean[T] : ClassTag](tableName: String, beans: T*): Unit = {
-    require(beans != null && beans.nonEmpty, "参数不合法，批量HBase insert失败")
+    requireNonEmpty(tableName, beans)("参数不合法，批量HBase insert失败")
     var table: Table = null
     tryWithFinally {
       table = this.getTable(tableName)
@@ -87,7 +87,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @param puts      Put集合
    */
   def insert(tableName: String, puts: Put*): Unit = {
-    require(puts != null && puts.nonEmpty && this.isExists(tableName), "参数不合法，批量HBase insert失败")
+    requireNonEmpty(tableName, puts)("参数不合法，批量HBase insert失败")
 
     var table: Table = null
     tryWithFinally {
@@ -110,7 +110,6 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @return 目标对象实例
    */
   def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeys: String*): ListBuffer[T] = {
-    require(rowKeys != null && rowKeys.nonEmpty, "参数不合法，rowKey不能为空")
     val getList = for (rowKey <- rowKeys) yield HBaseConnector.buildGet(rowKey)
     this.get[T](tableName, clazz, getList: _*)
   }
@@ -124,6 +123,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @return 目标对象实例
    */
   def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], gets: Get*)(implicit canOverload: Boolean = true): ListBuffer[T] = {
+    requireNonEmpty(tableName, clazz, gets)("参数不合法，无法进行HBase Get操作")
     tryWithReturn {
       val resultList = this.getResult(tableName, gets: _*)
       if (this.getMultiVersion[T]) this.hbaseMultiRow2Bean(resultList, clazz) else this.hbaseRow2Bean(resultList, clazz)
@@ -139,13 +139,13 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * HBase Result
    */
   def getResult(tableName: String, getList: Get*): ListBuffer[Result] = {
-    require(getList != null && getList.nonEmpty && this.isExists(tableName), "参数不合法，执行HBase 批量get失败")
+    requireNonEmpty(tableName, getList)("参数不合法，执行HBase 批量get失败")
 
     var table: Table = null
     val list = ListBuffer[Result]()
     tryWithFinally {
       DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName, sink = false)
-      table = this.getConnection.getTable(TableName.valueOf(tableName))
+      table = this.getTable(tableName)
       list ++= table.get(getList)
       list
     } {
@@ -162,7 +162,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * HBase Result
    */
   def getResult[T: ClassTag](tableName: String, rowKeyList: String*): ListBuffer[Result] = {
-    require(rowKeyList != null && rowKeyList.nonEmpty, "参数不合法，rowKey集合不能为空.")
+    requireNonEmpty(tableName, rowKeyList)("参数不合法，rowKey集合不能为空.")
     val getList = for (rowKey <- rowKeyList) yield HBaseConnector.buildGet(rowKey)
     val starTime = currentTime
     val resultList = this.getResult(tableName, getList: _*)
@@ -179,7 +179,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @return 指定类型的List
    */
   def scanResultScanner(tableName: String, scan: Scan): ResultScanner = {
-    require(scan != null && this.isExists(tableName), s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
+    requireNonEmpty(tableName, scan)(s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
 
     var table: Table = null
     var rsScanner: ResultScanner = null
@@ -215,6 +215,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @return 指定类型的List
    */
   def scanResultScanner(tableName: String, startRow: String, endRow: String): ResultScanner = {
+    requireNonEmpty(tableName, startRow, endRow)
     val scan = HBaseConnector.buildScan(startRow, endRow)
     this.scanResultScanner(tableName, scan)
   }
@@ -229,6 +230,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @return 指定类型的List
    */
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, endRow: String): ListBuffer[T] = {
+    requireNonEmpty(tableName, clazz, startRow, endRow)
     val scan = HBaseConnector.buildScan(startRow, endRow)
     this.scan[T](tableName, clazz, scan)
   }
@@ -242,7 +244,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @return 指定类型的List
    */
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): ListBuffer[T] = {
-    require(scan != null && this.isExists(tableName), s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
+    requireNonEmpty(tableName, clazz, scan)(s"参数不合法，scan ${hbaseCluster(keyNum)}.${tableName}失败.")
 
     val list = ListBuffer[T]()
     var rsScanner: ResultScanner = null
@@ -414,7 +416,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    */
   @Internal
   private[this] def convertCells2Fields[T <: HBaseBaseBean[T]](fieldMap: JMap[String, Field], obj: T, cells: Array[Cell]): String = {
-    require(fieldMap != null && cells != null && obj != null)
+    requireNonEmpty(fieldMap, obj, cells)
 
     var rowKey = ""
     if (cells != null) {
@@ -439,7 +441,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    */
   @Internal
   private[fire] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): T = {
-    require(rs != null && !rs.isEmpty && clazz != null, row2BeanParamError)
+    requireNonEmpty(rs, clazz)("参数不合法，HBase Row转为JavaBean失败.")
     val fieldMap = this.getFieldNameMap(clazz)
     require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     this.cell2Field(clazz, fieldMap, rs)
@@ -454,7 +456,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    */
   @Internal
   private[fire] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
-    require(rsArr != null && rsArr.nonEmpty && clazz != null, row2BeanParamError)
+    requireNonEmpty(rsArr, clazz)("参数不合法，HBase Row转为JavaBean失败.")
     val fieldMap = this.getFieldNameMap(clazz)
     require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
@@ -471,7 +473,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    */
   @Internal
   private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): ListBuffer[T] = {
-    require(rs != null && !rs.isEmpty && clazz != null, row2BeanParamError)
+    requireNonEmpty(rs, clazz)("参数不合法，HBase MultiRow转为JavaBean失败.")
     val fieldMap = this.getFieldNameMap(classOf[MultiVersionsBean])
     require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     this.multiCell2Field(rs, clazz, fieldMap)
@@ -486,7 +488,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    */
   @Internal
   private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
-    require(rsArr != null && rsArr.nonEmpty && clazz != null, row2BeanParamError)
+    requireNonEmpty(rsArr, clazz)("参数不合法，HBase Row转为JavaBean失败.")
     val fieldMap = getFieldNameMap(classOf[MultiVersionsBean])
     require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
@@ -503,7 +505,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    */
   @Internal
   private[fire] def hbaseRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
-    require(it != null && clazz != null, row2BeanParamError)
+    requireNonEmpty(it, clazz)
     val fieldMap = this.getFieldNameMap(clazz)
     require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val beanList = ListBuffer[T]()
@@ -530,7 +532,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    */
   @Internal
   private[fire] def hbaseMultiVersionRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
-    require(it != null && clazz != null, row2BeanParamError)
+    requireNonEmpty(it, clazz)
     val beanList = ListBuffer[T]()
     tryWithLog {
       it.foreach(t => {
@@ -550,7 +552,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    */
   @Internal
   private[fire] def convert2Put[T <: HBaseBaseBean[T]](obj: T, insertEmpty: Boolean): Put = {
-    require(obj != null, "参数不能为空，无法将对象转为HBase Put对象")
+    requireNonEmpty(obj, insertEmpty)("参数不能为空，无法将对象转为HBase Put对象")
     tryWithReturn {
       var tmpObj = obj
       val clazz = tmpObj.getClass
@@ -682,6 +684,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * 列族
    */
   private[fire] def createTable(tableName: String, families: String*): Unit = {
+    requireNonEmpty(tableName, families)("执行createTable失败")
     var admin: Admin = null
     tryWithFinally {
       admin = this.getConnection.getAdmin
@@ -712,6 +715,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @param tableName 表名
    */
   private[fire] def dropTable(tableName: String): Unit = {
+    requireNonEmpty(tableName)("执行dropTable失败")
     var admin: Admin = null
     tryWithFinally {
       admin = this.getConnection.getAdmin
@@ -735,6 +739,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @param tableName 表名
    */
   private[fire] def enableTable(tableName: String): Unit = {
+    requireNonEmpty(tableName)("执行enableTable失败")
     var admin: Admin = null
     tryWithFinally {
       admin = this.getConnection.getAdmin
@@ -755,6 +760,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @param tableName 表名
    */
   private[fire] def disableTable(tableName: String): Unit = {
+    requireNonEmpty(tableName)("执行disableTable失败")
     var admin: Admin = null
     tryWithFinally {
       admin = this.getConnection.getAdmin
@@ -776,6 +782,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @param preserveSplits 是否保留所有的split信息
    */
   private[fire] def truncateTable(tableName: String, preserveSplits: Boolean = true): Unit = {
+    requireNonEmpty(tableName, preserveSplits)("执行truncateTable失败")
     var admin: Admin = null
     tryWithFinally {
       admin = this.getConnection.getAdmin
@@ -880,11 +887,10 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @param rowKeys   待删除的rowKey集合
    */
   def deleteRows(tableName: String, rowKeys: String*): Unit = {
-    if (rowKeys != null && rowKeys.nonEmpty && this.isExists(tableName)) {
+    if (noEmpty(tableName, rowKeys)) {
       var table: Table = null
       tryWithFinally {
-        val tbName = TableName.valueOf(tableName)
-        table = this.getConnection.getTable(tbName)
+        table = this.getTable(tableName)
 
         val deletes = ListBuffer[Delete]()
         rowKeys.filter(StringUtils.isNotBlank).foreach(rowKey => {
@@ -909,15 +915,13 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    */
   @Internal
   private[fire] def deleteFamilies(tableName: String, rowKey: String, families: String*): Unit = {
-    if (families != null && families.nonEmpty && StringUtils.isNotBlank(tableName)
-      && StringUtils.isNotBlank(rowKey) && isExists(tableName)) {
+    if (noEmpty(tableName, rowKey, families)) {
       val delete = new Delete(rowKey.getBytes(StandardCharsets.UTF_8))
       families.filter(StringUtils.isNotBlank).foreach(family => delete.addFamily(family.getBytes(StandardCharsets.UTF_8)))
 
       var table: Table = null
       tryWithFinally {
-        val tbName = TableName.valueOf(tableName)
-        table = this.getConnection.getTable(tbName)
+        table = this.getTable(tableName)
         table.delete(delete)
         DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName)
       } {
@@ -938,15 +942,13 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    */
   @Internal
   private[fire] def deleteQualifiers(tableName: String, rowKey: String, family: String, qualifiers: String*): Unit = {
-    if (StringUtils.isNotBlank(tableName) && StringUtils.isNotBlank(rowKey)
-      && StringUtils.isNotBlank(family) && qualifiers != null && qualifiers.nonEmpty) {
+    if (noEmpty(tableName, rowKey, family, qualifiers)) {
       val delete = new Delete(rowKey.getBytes(StandardCharsets.UTF_8))
       qualifiers.foreach(qualifier => delete.addColumns(family.getBytes(StandardCharsets.UTF_8), qualifier.getBytes(StandardCharsets.UTF_8)))
       var table: Table = null
 
       tryWithFinally {
-        val tbName = TableName.valueOf(tableName)
-        table = this.getConnection.getTable(tbName)
+        table = this.getTable(tableName)
         table.delete(delete)
         DataSourceManager.addDBDataSource("HBase", hbaseCluster(keyNum), tableName)
       } {
