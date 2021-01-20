@@ -1,9 +1,6 @@
 package com.zto.fire.common.util
 
-import com.zto.fire.common.enu.DataSource
 import org.junit.Test
-import scala.collection.JavaConversions._
-import org.junit.Assert._
 
 /**
  * DatasourceManager单元测试

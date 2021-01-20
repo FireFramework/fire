@@ -6,7 +6,6 @@ import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.BaseSparkCore
 import org.apache.spark.sql.{Encoders, Row}
 
-import scala.collection.JavaConversions
 
 /**
   * 本示例用于演示spark中使用bulk api完成HBase的读写
@@ -27,9 +26,9 @@ object HBaseBulkTest extends BaseSparkCore {
   /**
     * 使用bulk的方式将rdd写入到hbase
     */
-  def testHbaseBulkPutRDD(multiVersion: Boolean = false): Unit = {
+  def testHbaseBulkPutRDD: Unit = {
     // 方式一：将rdd的数据写入到hbase中，rdd类型必须为HBaseBaseBean的子类
-    val rdd = this.fire.createRDD(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
+    val rdd = this.fire.createRDD(Student.newStudentList(), 2)
     // rdd.hbaseBulkPutRDD(this.tableName2)
     // 方式二：使用this.fire.hbaseBulkPut将rdd中的数据写入到hbase
     this.fire.hbaseBulkPutRDD(this.tableName2, rdd)
@@ -43,9 +42,9 @@ object HBaseBulkTest extends BaseSparkCore {
   /**
     * 使用bulk的方式将DataFrame写入到hbase
     */
-  def testHbaseBulkPutDF(multiVersion: Boolean = false): Unit = {
+  def testHbaseBulkPutDF: Unit = {
     // 方式一：将DataFrame的数据写入到hbase中
-    val rdd = this.fire.createRDD(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
+    val rdd = this.fire.createRDD(Student.newStudentList(), 2)
     val studentDF = this.fire.createDataFrame(rdd, classOf[Student])
     // insertEmpty=false表示为空的字段不插入
     studentDF.hbaseBulkPutDF(this.tableName2, classOf[Student])
@@ -56,9 +55,9 @@ object HBaseBulkTest extends BaseSparkCore {
   /**
     * 使用bulk的方式将Dataset写入到hbase
     */
-  def testHbaseBulkPutDS(multiVersion: Boolean = false): Unit = {
+  def testHbaseBulkPutDS: Unit = {
     // 方式一：将DataFrame的数据写入到hbase中
-    val rdd = this.fire.createRDD(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
+    val rdd = this.fire.createRDD(Student.newStudentList(), 2)
     val studentDataset = this.fire.createDataset(rdd)(Encoders.bean(classOf[Student]))
     // multiVersion=true表示以多版本形式插入
     studentDataset.hbaseBulkPutDS(this.tableName2)
@@ -184,13 +183,12 @@ object HBaseBulkTest extends BaseSparkCore {
     * 注：此方法会被自动调用
     */
   override def process: Unit = {
-    val multiVersion = false
-    this.testHBaseBulkDeleteRDD
-    // this.testHBaseBulkDeleteDS
+    // this.testHBaseBulkDeleteRDD
+    this.testHBaseBulkDeleteDS
 
-    // this.testHbaseBulkPutRDD(multiVersion)
-    // this.testHbaseBulkPutDF(multiVersion)
-    this.testHbaseBulkPutDS(multiVersion)
+    // this.testHbaseBulkPutRDD
+    this.testHbaseBulkPutDF
+    // this.testHbaseBulkPutDS
 
     println("=========get========")
     this.testHBaseBulkGetRDD

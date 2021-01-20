@@ -2,13 +2,12 @@ package com.zto.fire.common.util
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
-import com.zto.fire.predef._
 import com.google.common.collect.EvictingQueue
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.predef._
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.JavaConversions
 
 /**
  * Fire框架异常总线，用于收集各引擎执行task过程中发生的异常信息
@@ -43,7 +42,7 @@ object ExceptionBus {
    */
   @Internal
   private[fire] def getAndClear: (String, List[(Long, Throwable)]) = this.synchronized {
-    val list = JavaConversions.collectionAsScalaIterable(this.queue).toList
+    val list = this.queue.toList
     this.queue.clear()
     queueSize.set(0)
     this.logger.info(s"成功收集异常总线中的异常对象共计：${list.size}条，异常总线将会被清空.")

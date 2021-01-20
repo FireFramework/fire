@@ -27,8 +27,6 @@ import scala.reflect.ClassTag
   */
 private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
   private[this] lazy val spark = SparkSingletonFactory.getSparkSession
-  private[this] lazy val hbaseConnector = HBaseConnector(keyNum = this.keyNum)
-
   def batchSize: Int = FireHBaseConf.hbaseBatchSize()
 
   /**
@@ -142,7 +140,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyN
     * @return
     */
   def hbaseHadoopScanRS(tableName: String, scan: Scan): RDD[(ImmutableBytesWritable, Result)] = {
-    val hbaseConf = this.hbaseConnector.getConfiguration
+    val hbaseConf = HBaseConnector(keyNum = this.keyNum).getConfiguration
     hbaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
     hbaseConf.set(TableInputFormat.SCAN, HBaseUtils.convertScanToString(scan))
     // 将指定范围内的hbase数据转为rdd
@@ -287,7 +285,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyN
   def hbaseScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): RDD[T] = {
     val hbaseRDD = this.hbaseHadoopScanRS(tableName, scan)
     val scanRDD = hbaseRDD.mapPartitions(it => {
-      if (this.hbaseConnector.getMultiVersion[T]) {
+      if (HBaseConnector(keyNum = this.keyNum).getMultiVersion[T]) {
         HBaseConnector(keyNum = keyNum).hbaseMultiVersionRow2BeanList(it, clazz)
       } else {
         HBaseConnector(keyNum = keyNum).hbaseRow2BeanList(it, clazz)
@@ -310,7 +308,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyN
     * @return
     */
   def hbaseScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): Seq[T] = {
-    this.hbaseConnector.scan(tableName, clazz, scan)
+    HBaseConnector(keyNum = this.keyNum).scan(tableName, clazz, scan)
   }
 
   /**
@@ -353,14 +351,14 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyN
           val get = new Get(rowKey.getBytes(StandardCharsets.UTF_8))
             getList += get
             if (getList.size >= this.batchSize) {
-              beanList ++= this.hbaseConnector.get(tableName, clazz, getList: _*)
+              beanList ++= HBaseConnector(keyNum = this.keyNum).get(tableName, clazz, getList: _*)
               getList.clear()
             }
         }
       })
 
       if (getList.nonEmpty) {
-        beanList ++= this.hbaseConnector.get(tableName, clazz, getList: _*)
+        beanList ++= HBaseConnector(keyNum = this.keyNum).get(tableName, clazz, getList: _*)
         getList.clear()
       }
       beanList.iterator
@@ -411,7 +409,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyN
     * HBaseBaseBean的子类集合
     */
   def hbasePutList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T]): Unit = {
-    this.hbaseConnector.insert[T](tableName, seq: _*)
+    HBaseConnector(keyNum = this.keyNum).insert[T](tableName, seq: _*)
   }
 
   /**
@@ -428,7 +426,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyN
     * List[T]
     */
   def hbaseGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[Get]): Seq[T] = {
-    this.hbaseConnector.get[T](tableName, clazz, seq: _*)
+    HBaseConnector(keyNum = this.keyNum).get[T](tableName, clazz, seq: _*)
   }
 
   /**
@@ -461,7 +459,7 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyN
     * rowKey集合
     */
   def hbaseDeleteList(tableName: String, rowKeys: Seq[String]): Unit = {
-    this.hbaseConnector.deleteRows(tableName, rowKeys: _*)
+    HBaseConnector(keyNum = this.keyNum).deleteRows(tableName, rowKeys: _*)
   }
 
   /**
@@ -482,12 +480,12 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyN
           count += rowKeyList.size
         }
         if (rowKeyList.size >= batchSize) {
-          this.hbaseConnector.deleteRows(tableName, rowKeyList: _*)
+          HBaseConnector(keyNum = this.keyNum).deleteRows(tableName, rowKeyList: _*)
           rowKeyList.clear()
         }
       })
       if (rowKeyList.nonEmpty) {
-        this.hbaseConnector.deleteRows(tableName, rowKeyList: _*)
+        HBaseConnector(keyNum = this.keyNum).deleteRows(tableName, rowKeyList: _*)
         rowKeyList.clear()
       }
     })
@@ -519,12 +517,12 @@ private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyN
     iterator.foreach(bean => {
       list += bean
       if (list.size >= batchSize) {
-        this.hbaseConnector.insert[E](tableName, list: _*)
+        HBaseConnector(keyNum = this.keyNum).insert[E](tableName, list: _*)
         count += list.size
         list.clear()
       }
     })
-    if (list.nonEmpty) this.hbaseConnector.insert[E](tableName, list: _*)
+    if (list.nonEmpty) HBaseConnector(keyNum = this.keyNum).insert[E](tableName, list: _*)
     count += list.size
     list.clear()
   }

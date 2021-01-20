@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.rocketmq.spark.{ConsumerStrategy, RocketMQConfig}
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions
+import com.zto.fire._
 
 /**
  * RocketMQ相关工具类
@@ -51,9 +51,9 @@ object RocketMQUtils {
 
     // 以spark.rocket.conf.开头的配置优先级最高
     val confMap = FireRocketMQConf.rocketConfMap(keyNum)
-    if (confMap.nonEmpty) optionParams.putAll(JavaConversions.mapAsJavaMap(confMap))
+    if (confMap.nonEmpty) optionParams.putAll(confMap)
     // 日志记录RocketMQ的配置信息
-    LogUtils.logMap(this.logger, JavaConversions.mapAsScalaMap(optionParams).toMap, s"RocketMQ configuration. keyNum=$keyNum.")
+    LogUtils.logMap(this.logger, optionParams.toMap, s"RocketMQ configuration. keyNum=$keyNum.")
 
     optionParams
   }

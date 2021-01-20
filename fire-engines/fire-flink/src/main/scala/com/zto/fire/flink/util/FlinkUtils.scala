@@ -19,8 +19,6 @@ import org.apache.flink.types.Row
 import org.apache.log4j.{Level, Logger}
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions
-
 /**
  * flink相关工具类
  *
@@ -177,7 +175,7 @@ object FlinkUtils extends Serializable {
         val clientClass = configMap.getOrDefault(FireFlinkConf.FLINK_CLIENT_SIMPLE_CLASS_NAME, "")
         val jobType = configMap.getOrDefault(FireFlinkConf.FLINK_FIRE_CONFIGURATION, "")
         PropUtils.load(jobType, clientClass)
-        PropUtils.setProperties(JavaConversions.mapAsScalaMap(configMap))
+        PropUtils.setProperties(configMap)
       }
       PropUtils.sliceKeys(FireFrameworkConf.SPARK_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
       PropUtils.print()

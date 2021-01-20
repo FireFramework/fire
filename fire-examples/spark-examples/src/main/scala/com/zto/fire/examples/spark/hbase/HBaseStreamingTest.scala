@@ -17,7 +17,7 @@ object HBaseStreamingTest extends BaseSparkStreaming {
 
     dstream.repartition(5).foreachRDD(rdd => {
       rdd.foreachPartition(it => {
-        HBaseConnector.insert(this.tableName, Student.buildStudentList())
+        HBaseConnector.insert(this.tableName, Student.newStudentList())
         val student = HBaseConnector.get(this.tableName, classOf[Student], Seq("1"))
       })
     })

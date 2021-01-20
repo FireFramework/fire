@@ -10,8 +10,6 @@ import com.zto.fire.core.BaseFire
 import org.slf4j.{Logger, LoggerFactory}
 import spark.{Request, Response}
 
-import scala.collection.JavaConversions
-
 /**
  * 系统预定义的restful服务抽象
  *
@@ -41,7 +39,7 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
       if (this.dataSource.isEmpty) {
         this.dataSource ++= PropUtils.getDatasource
       }
-      val dataSource = JSON.toJSONString(JavaConversions.mapAsJavaMap(this.dataSource), SerializerFeature.NotWriteRootClassName)
+      val dataSource = JSON.toJSONString(this.dataSource, SerializerFeature.NotWriteRootClassName)
       this.logger.info(s"[DataSource] 获取数据源列表成功：counter=$dataSource")
       msg.buildSuccess(dataSource, "获取数据源列表成功")
     } catch {

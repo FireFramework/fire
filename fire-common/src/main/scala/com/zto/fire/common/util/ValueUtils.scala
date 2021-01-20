@@ -2,10 +2,8 @@ package com.zto.fire.common.util
 
 import java.util
 
-import com.zto.fire.predef.JMap
+import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
-
-import scala.collection.JavaConversions._
 
 /**
  * 值校验工具，支持任意对象、字符串、集合、map、rdd、dataset是否为空的校验

@@ -8,7 +8,7 @@ import com.zto.fire.common.util.DateFormatUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.AccumulatorV2
 
-import scala.collection.JavaConversions._
+import com.zto.fire._
 import scala.collection.mutable
 
 /**

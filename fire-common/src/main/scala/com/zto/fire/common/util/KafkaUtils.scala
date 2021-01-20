@@ -4,6 +4,7 @@ import java.util
 import java.util.Properties
 
 import com.zto.fire.common.conf.FireKafkaConf
+import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetAndTimestamp}
 import org.apache.kafka.common.TopicPartition
@@ -63,7 +64,6 @@ object KafkaUtils {
         val partitionInfos = kafkaConsumer.partitionsFor(topic)
         val topicPartitions = new util.ArrayList[TopicPartition]
         val timestampsToSearch = new util.HashMap[TopicPartition, java.lang.Long]
-        import scala.collection.JavaConversions._
         for (partitionInfo <- partitionInfos) {
           topicPartitions.add(new TopicPartition(partitionInfo.topic, partitionInfo.partition))
           timestampsToSearch.put(new TopicPartition(partitionInfo.topic, partitionInfo.partition), timestamp)
@@ -75,7 +75,6 @@ object KafkaUtils {
         this.logger.info("根据时间戳获取偏移量：map.size={}", map.size())
         var offsetTimestamp: OffsetAndTimestamp = null
         this.logger.info("开始设置各分区初始偏移量...")
-        import scala.collection.JavaConversions._
         for (entry <- map.entrySet) { // 如果设置的查询偏移量的时间点大于最大的索引记录时间，那么value就为空
           offsetTimestamp = entry.getValue
           if (offsetTimestamp != null) { // 设置读取消息的偏移量
@@ -89,7 +88,6 @@ object KafkaUtils {
       }
       // 消费消息
       val records = kafkaConsumer.poll(10000)
-      import scala.collection.JavaConversions._
       for (record <- records if StringUtils.isBlank(msg)) {
         if (timestamp == null) {
           msg = record.value

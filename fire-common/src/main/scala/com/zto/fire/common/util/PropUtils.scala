@@ -7,11 +7,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import com.alibaba.fastjson.JSON
 import com.zto.fire.common.conf._
+import com.zto.fire.predef._
 import com.zto.fire.common.enu.DataSource
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.Map
 

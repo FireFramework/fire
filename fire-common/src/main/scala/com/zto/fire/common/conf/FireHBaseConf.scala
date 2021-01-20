@@ -3,8 +3,8 @@ package com.zto.fire.common.conf
 import java.util
 
 import com.zto.fire.common.util.PropUtils
+import com.zto.fire.predef._
 
-import scala.collection.JavaConversions
 
 /**
  * hbase相关配置
@@ -37,7 +37,7 @@ private[fire] object FireHBaseConf {
   lazy val TABLE_EXISTS_CACHE_PERIOD = "spark.fire.hbase.table.exists.cache.period"
 
   // hbase集群映射地址
-  lazy val hbaseClusterMap: util.Map[String, String] = JavaConversions.mapAsJavaMap(PropUtils.sliceKeys(hbaseClusterMapPrefix))
+  lazy val hbaseClusterMap: util.Map[String, String] = PropUtils.sliceKeys(hbaseClusterMapPrefix)
   // hbase java api 配置前缀
   lazy val hbaseConfPrefix = "spark.fire.hbase.conf."
 

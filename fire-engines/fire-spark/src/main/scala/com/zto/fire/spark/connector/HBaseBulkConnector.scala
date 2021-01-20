@@ -1,7 +1,5 @@
 package com.zto.fire.spark.connector
 
-import java.nio.charset.StandardCharsets
-
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireHBaseConf, FireSparkConf}
 import com.zto.fire.core.connector.{Connector, ConnectorFactory}
@@ -43,8 +41,8 @@ import scala.reflect.ClassTag
 private[fire] class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient config: Configuration, batchSize: Int = 10000, keyNum: Int = 1)
   extends HBaseContext(sc, config) with Connector {
   private[fire] lazy val finalBatchSize = if (FireHBaseConf.hbaseBatchSize(this.keyNum) != -1) FireHBaseConf.hbaseBatchSize(this.keyNum) else this.batchSize
-  private[this] lazy val hbaseConnector = HBaseConnector(keyNum = this.keyNum)
   private[this] lazy val sparkSession = SparkSingletonFactory.getSparkSession
+  @transient
   private[this] lazy val tableConfMap = new JConcurrentHashMap[String, Configuration]()
 
   /**
@@ -117,7 +115,7 @@ private[fire] class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala
     tryWithReturn {
       val rowKeyRDD = rdd.filter(StringUtils.isNotBlank(_)).map(rowKey => Bytes.toBytes(rowKey))
       val getRDD = this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
-        this.hbaseConnector.hbaseRow2Bean(result, clazz)
+        HBaseConnector(keyNum = this.keyNum).hbaseRow2Bean(result, clazz)
       }).filter(bean => bean != null).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
       getRDD
     }(this.logger, s"execute bulkGetRDD(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
@@ -211,7 +209,7 @@ private[fire] class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala
       this.bulkPut[T](rdd,
         TableName.valueOf(tableName),
         (putRecord: T) => {
-          this.hbaseConnector.convert2Put[T](if (this.hbaseConnector.getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, this.hbaseConnector.getNullable[T])
+          HBaseConnector(keyNum = this.keyNum).convert2Put[T](if (HBaseConnector(keyNum = this.keyNum).getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, HBaseConnector(keyNum = this.keyNum).getNullable[T])
         })
     }(this.logger, s"execute bulkPutRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
@@ -260,7 +258,7 @@ private[fire] class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala
       if (scan.getCaching == -1) {
         scan.setCaching(this.finalBatchSize)
       }
-      this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => this.hbaseConnector.hbaseRow2BeanList(it, clazz)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
+      this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseConnector(keyNum = this.keyNum).hbaseRow2BeanList(it, clazz)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
     }(this.logger, s"execute bulkScanRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -339,7 +337,7 @@ private[fire] class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala
 
     tryWithLog {
       this.streamBulkPut[T](dstream, TableName.valueOf(tableName), (putRecord: T) => {
-        this.hbaseConnector.convert2Put[T](if (this.hbaseConnector.getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, this.hbaseConnector.getNullable[T])
+        HBaseConnector(keyNum = this.keyNum).convert2Put[T](if (HBaseConnector(keyNum = this.keyNum).getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, HBaseConnector(keyNum = this.keyNum).getNullable[T])
       })
     }(this.logger, s"execute bulkPutStream(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
@@ -361,7 +359,7 @@ private[fire] class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala
       rdd.mapPartitions(it => {
         val putList = ListBuffer[(ImmutableBytesWritable, Put)]()
         it.foreach(t => {
-          putList += Tuple2(new ImmutableBytesWritable(), this.hbaseConnector.convert2Put[T](t, this.hbaseConnector.getNullable[T]))
+          putList += Tuple2(new ImmutableBytesWritable(), HBaseConnector(keyNum = this.keyNum).convert2Put[T](t, HBaseConnector(keyNum = this.keyNum).getNullable[T]))
         })
         putList.iterator
       }).saveAsNewAPIHadoopDataset(this.getConfiguration(tableName))
@@ -410,7 +408,7 @@ private[fire] class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala
    */
   def hadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String): Unit = {
     requireNonEmpty(tableName, df)
-    val insertEmpty = this.hbaseConnector.getNullable[T]
+    val insertEmpty = HBaseConnector(keyNum = this.keyNum).getNullable[T]
     tryWithLog {
       val fields = df.schema.fields
       df.rdd.mapPartitions(it => {
@@ -492,7 +490,6 @@ private[fire] object HBaseBulkConnector extends ConnectorFactory[HBaseBulkConnec
    * 创建指定集群标识的HBaseContextExt对象实例
    */
   override protected def create(conf: Any = null, keyNum: Int = 1): HBaseBulkConnector = {
-    requireNonEmpty(conf, keyNum)
     val hadoopConf = if (conf != null) conf.asInstanceOf[Configuration] else HBaseConnector.getConfiguration(keyNum)
     val connector = new HBaseBulkConnector(SparkSingletonFactory.getSparkSession.sparkContext, hadoopConf, keyNum)
     connector

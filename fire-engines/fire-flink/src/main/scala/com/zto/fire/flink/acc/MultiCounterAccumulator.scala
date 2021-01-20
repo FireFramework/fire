@@ -2,10 +2,9 @@ package com.zto.fire.flink.acc
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.zto.fire.common.util.ValueUtils
+import com.zto.fire.predef._
 import org.apache.flink.api.common.accumulators.{Accumulator, SimpleAccumulator}
 
-import scala.collection.JavaConversions
 
 /**
  * flink 自定义多值累加器
@@ -63,8 +62,8 @@ private[fire] class MultiCounterAccumulator extends SimpleAccumulator[Concurrent
    * 存在的累加，不存在的直接添加
    */
   private[this] def mergeMap(value: ConcurrentHashMap[String, Long]): Unit = {
-    if (ValueUtils.noEmpty(value)) {
-      JavaConversions.mapAsScalaMap(value).foreach(kv => {
+    if (noEmpty(value)) {
+      value.foreach(kv => {
         this.multiCounter.put(kv._1, this.multiCounter.getOrDefault(kv._1, 0) + kv._2)
       })
     }

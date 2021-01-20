@@ -8,7 +8,6 @@ import com.zto.fire.spark.BaseSparkCore
 import org.apache.hadoop.hbase.client.Get
 import org.apache.spark.sql.Encoders
 
-import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -26,7 +25,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   def testHbasePutList: Unit = {
     val studentList = Student.newStudentList()
-    this.fire.hbasePutList(this.tableName1, JavaConversions.asScalaBuffer(studentList))
+    this.fire.hbasePutList(this.tableName1, studentList)
   }
 
   /**
@@ -34,8 +33,8 @@ object HBaseConnectorTest extends BaseSparkCore {
     * rdd的类型必须为HBaseBaseBean的子类
     */
   def testHbasePutRDD: Unit = {
-    val studentList = Student.buildStudentList()
-    val studentRDD = this.fire.createRDD(JavaConversions.asScalaBuffer(studentList), 2)
+    val studentList = Student.newStudentList()
+    val studentRDD = this.fire.createRDD(studentList, 2)
     // 为空的字段不插入
     studentRDD.hbasePutRDD(this.tableName1)
   }
@@ -43,8 +42,8 @@ object HBaseConnectorTest extends BaseSparkCore {
   /**
     * 使用HBaseConnector插入一个DataFrame的数据
     */
-  def testHBaseConnectorPutDF: Unit = {
-    val studentList = Student.buildStudentList()
+  def testHBasePutDF: Unit = {
+    val studentList = Student.newStudentList()
     val studentDF = this.fire.createDataFrame(studentList, classOf[Student])
     // 每个批次插100条
     studentDF.hbasePutDF(this.tableName1, classOf[Student])
@@ -54,9 +53,9 @@ object HBaseConnectorTest extends BaseSparkCore {
     * 使用HBaseConnector插入一个Dataset的数据
     * dataset的类型必须为HBaseBaseBean的子类
     */
-  def testHbasePutDS: Unit = {
-    val studentList = Student.buildStudentList()
-    val studentDS = this.fire.createDataset(JavaConversions.asScalaBuffer(studentList))(Encoders.bean(classOf[Student]))
+  def testHBasePutDS: Unit = {
+    val studentList = Student.newStudentList()
+    val studentDS = this.fire.createDataset(studentList)(Encoders.bean(classOf[Student]))
     // 以多版本形式插入
     studentDS.hbasePutDS(this.tableName1, classOf[Student])
   }
@@ -104,8 +103,8 @@ object HBaseConnectorTest extends BaseSparkCore {
   /**
     * 使用HBaseConnector get数据，并将结果以Dataset方式返回
     */
-  def testHBaseConnectorGetDS: Unit = {
-    println("===========testHBaseConnectorGetDS===========")
+  def testHBaseGetDS: Unit = {
+    println("===========testHBaseGetDS===========")
     val getList = Seq("1", "2", "3", "4", "5", "6")
     val getRDD = this.fire.createRDD(getList, 2)
     // 指定在多版本获取时只取最新的两个版本
@@ -160,7 +159,7 @@ object HBaseConnectorTest extends BaseSparkCore {
   /**
     * 根据指定的rowKey rdd，批量删除指定的记录
     */
-  def testHbaseDeleteRDD: Unit = {
+  def testHBaseDeleteRDD: Unit = {
     val rowKeyList = Seq(1.toString, 2.toString, 3.toString, 4.toString, 5.toString, 6.toString, 7.toString, 8.toString, 9.toString, 10.toString)
     val rowKeyRDD = this.fire.createRDD(rowKeyList, 2)
     rowKeyRDD.hbaseDeleteRDD(this.tableName1)
@@ -181,21 +180,19 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   override def process: Unit = {
     // 指定是否以多版本的形式读写
-    val multiVersion = false
-    this.testHbaseDeleteRDD
-    // this.testHBaseConnectorDeleteRDD
-    // this.testHBaseConnectorDeleteDS
-    this.testHbasePutRDD
-    // this.testHBaseConnectorPutList
-    // this.testHBaseConnectorPutRDD
-    // this.testHBaseConnectorPutDF
-    // this.testHBaseConnectorPutDS
+    this.testHBaseDeleteRDD
+    this.testHbaseDeleteDS
+
+    // this.testHbasePutRDD
+    // this.testHbasePutList
+    this.testHBasePutDF
+    // this.testHBasePutDS
 
     println("=========get========")
     this.testHbaseGetList
     this.testHbaseGetRDD
     this.testHbaseGetDF
-    this.testHBaseConnectorGetDS
+    this.testHBaseGetDS
 
     println("=========scan========")
     this.testHbaseScanList

@@ -2,13 +2,13 @@ package com.zto.fire.spark.util
 
 import java.lang.reflect.Field
 
+import com.zto.fire._
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.util.ReflectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 
-import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
 

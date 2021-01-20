@@ -3,14 +3,12 @@ package com.zto.fire.examples.bean;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.zto.fire.common.anno.FieldName;
-import com.zto.fire.hbase.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.zto.fire.hbase.anno.HConfig;
+import com.zto.fire.hbase.bean.HBaseBaseBean;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -19,9 +17,8 @@ import java.util.Objects;
  *
  * @author ChengLong 2019-6-20 16:06:16
  */
+// @HConfig(multiVersion = true)
 public class Student extends HBaseBaseBean<Student> {
-    @FieldName(value = "Student", disuse = true)
-    protected static final transient Logger logger = LoggerFactory.getLogger(Student.class);
     private Long id;
     private String name;
     private Integer age;
@@ -72,7 +69,7 @@ public class Student extends HBaseBaseBean<Student> {
     }
 
     public Student() {
-        System.out.println("创建Student对象");
+
     }
 
     public Student(Long id) {
@@ -146,55 +143,6 @@ public class Student extends HBaseBaseBean<Student> {
                 new Student(9L, "streaming", 10, BigDecimal.valueOf(10.1), true, dateTime),
                 new Student(10L, "sql", 12, BigDecimal.valueOf(12.1), true, dateTime)
         );
-    }
-
-    /**
-     * 构建student集合
-     *
-     * @return
-     */
-    public static List<Student> buildStudentList() {
-        List<Student> studentList = new LinkedList<>();
-        try {
-            for (int i = 1; i <= 1; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(1L, "root", i + 1, BigDecimal.valueOf((long) 1 + i), true, DateFormatUtils.formatCurrentDateTime());
-                studentList.add(stu);
-            }
-
-            for (int i = 1; i <= 2; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(2L, "admin", i + 2, BigDecimal.valueOf(2019.05180919 + i), false, DateFormatUtils.formatCurrentDateTime());
-                studentList.add(stu);
-            }
-
-            for (int i = 1; i <= 3; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(3L, "spark", i + 3, BigDecimal.valueOf(33.1415926 + i));
-                studentList.add(stu);
-            }
-
-            for (int i = 1; i <= 3; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(4L, "flink", i + 4, BigDecimal.valueOf(4.2 + i), true, DateFormatUtils.formatCurrentDateTime());
-                studentList.add(stu);
-            }
-
-            for (int i = 1; i <= 3; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(5L, "hadoop", i + 5, BigDecimal.valueOf(5.5 + i), false, DateFormatUtils.formatCurrentDateTime());
-                studentList.add(stu);
-            }
-            for (int i = 1; i <= 3; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(6L, "hbase", i + 6, BigDecimal.valueOf(66.66 + i), true, DateFormatUtils.formatCurrentDateTime());
-                studentList.add(stu);
-            }
-        } catch (Exception e) {
-            logger.error("Sleep线程异常", e);
-        }
-
-        return studentList;
     }
 
     @Override

@@ -11,7 +11,7 @@ import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.KafkaUtils
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions
+import com.zto.fire._
 
 /**
  * StreamingContext扩展
@@ -101,7 +101,7 @@ private[fire] class StreamingContextExt(ssc: StreamingContext) {
 
     RocketMqUtils.createMQPullStream(this.ssc,
       finalGroupId,
-      JavaConversions.asJavaCollection(finalTopics.split(",").toList),
+      finalTopics.split(",").toList,
       finalConsumerStrategy,
       finalAutoCommit,
       forceSpecial = FireRocketMQConf.rocketForceSpecial(keyNum),

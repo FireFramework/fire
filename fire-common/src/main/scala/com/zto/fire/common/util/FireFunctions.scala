@@ -14,7 +14,7 @@ import scala.util.Try
  * @since 1.0.0
  * @create 2020-12-16 15:45
  */
-trait FireFunctions {
+trait FireFunctions extends Serializable {
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
   private[this] lazy val tryLog = ""
   private[this] lazy val catchLog = "执行try的过程中发生异常"

@@ -1,5 +1,6 @@
 package com.zto.fire.spark
 
+
 import com.alibaba.fastjson.JSON
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
@@ -12,8 +13,8 @@ import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import spark.{Request, Response}
+import com.zto.fire._
 
-import scala.collection.JavaConversions
 
 /**
  * 实时平台Spark通用父类
@@ -113,7 +114,7 @@ trait BaseSparkStreaming extends BaseSpark {
     // 若重启SparkContext对象，则设置restful传递过来的新的配置信息
     if (this.externalConf != null && this.externalConf.isRestartSparkContext) {
       if (this.externalConf.getSparkConf != null && this.externalConf.getSparkConf.size() > 0) {
-        tmpConf.setAll(JavaConversions.mapAsScalaMap(this.externalConf.getSparkConf))
+        tmpConf.setAll(this.externalConf.getSparkConf)
       }
     }
 

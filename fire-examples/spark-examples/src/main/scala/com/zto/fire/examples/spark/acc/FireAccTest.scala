@@ -7,7 +7,6 @@ import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.util.{DateFormatUtils, PropUtils}
 import com.zto.fire.spark.BaseSparkStreaming
 
-import scala.collection.JavaConversions
 
 /**
  * 用于演示与测试Fire框架内置的累加器
@@ -46,10 +45,10 @@ object FireAccTest extends BaseSparkStreaming {
    */
   def printAcc: Unit = {
     println(s"===============${DateFormatUtils.formatCurrentDateTime()}=============")
-    JavaConversions.asScalaSet(this.acc.getMultiTimer.cellSet()).foreach(t => println(s"key：" + t.getRowKey + " 时间：" + t.getColumnKey + " " + t.getValue + "条"))
+    this.acc.getMultiTimer.cellSet().foreach(t => println(s"key：" + t.getRowKey + " 时间：" + t.getColumnKey + " " + t.getValue + "条"))
 
     println("单值：" + this.acc.getCounter)
-    JavaConversions.mapAsScalaConcurrentMap(this.acc.getMultiCounter).foreach(t => {
+    this.acc.getMultiCounter.foreach(t => {
       println("多值：key=" + t._1 + " value=" + t._2)
     })
     val size = this.acc.getMultiTimer.cellSet().size()

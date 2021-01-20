@@ -1,7 +1,7 @@
 package com.zto.fire.hbase
 
 import com.zto.fire.common.anno.{Internal, TestStep}
-import com.zto.fire.common.db.v2.bean.Student
+import com.zto.fire.common.db.bean.Student
 import com.zto.fire.common.util.{DataSourceManager, PropUtils}
 import com.zto.fire.predef._
 import org.junit.Assert._

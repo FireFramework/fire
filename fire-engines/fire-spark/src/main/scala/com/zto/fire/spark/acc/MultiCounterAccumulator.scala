@@ -2,11 +2,11 @@ package com.zto.fire.spark.acc
 
 import java.util.concurrent.ConcurrentHashMap
 
+import com.zto.fire._
 import com.zto.fire.common.conf.FireFrameworkConf
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.AccumulatorV2
 
-import scala.collection.JavaConversions._
 
 /**
   * 多值累加器

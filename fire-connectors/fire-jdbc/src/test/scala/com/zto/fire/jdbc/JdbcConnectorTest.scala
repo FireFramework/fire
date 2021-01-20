@@ -1,15 +1,11 @@
 package com.zto.fire.jdbc
 
-import java.sql.DriverManager
-
 import com.zto.fire.common.anno.TestStep
-import com.zto.fire.common.db.v2.bean.Student
+import com.zto.fire.common.db.bean.Student
 import com.zto.fire.common.util.{DataSourceManager, PropUtils}
-import org.apache.log4j.{Level, Logger}
+import com.zto.fire.predef._
 import org.junit.Assert._
 import org.junit.{After, Before, Test}
-
-import scala.collection.JavaConversions._
 
 /**
  * 用于测试JdbcConnector相关API

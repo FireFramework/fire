@@ -7,8 +7,6 @@ import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.filter.{CompareFilter, RegexStringComparator, RowFilter}
 import org.apache.spark.sql.{Encoders, Row}
 
-import scala.collection.JavaConversions
-
 /**
   * 本示例演示Spark提供的hbase api封装后的使用
   * 注：使用Spark写hbase的方式适用于海量数据离线写
@@ -22,7 +20,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 基于saveAsNewAPIHadoopDataset封装，将rdd数据保存到hbase中
     */
   def testHbaseHadoopPutRDD: Unit = {
-    val studentRDD = this.fire.createRDD(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
+    val studentRDD = this.fire.createRDD(Student.newStudentList(), 2)
     this.fire.hbaseHadoopPutRDD(this.tableName3, studentRDD)
     // 方式二：直接基于rdd进行方法调用
     // studentRDD.hbaseHadoopPutRDD(this.tableName1)
@@ -32,7 +30,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 基于saveAsNewAPIHadoopDataset封装，将DataFrame数据保存到hbase中
     */
   def testHbaseHadoopPutDF: Unit = {
-    val studentRDD = this.fire.createRDD(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
+    val studentRDD = this.fire.createRDD(Student.newStudentList(), 2)
     val studentDF = this.fire.createDataFrame(studentRDD, classOf[Student])
     // 由于DataFrame相较于Dataset和RDD是弱类型的数据集合，所以需要传递具体的类型classOf[Type]
     this.fire.hbaseHadoopPutDF(this.tableName3, studentDF, classOf[Student])
@@ -44,7 +42,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 基于saveAsNewAPIHadoopDataset封装，将Dataset数据保存到hbase中
     */
   def testHbaseHadoopPutDS: Unit = {
-    val studentDS = this.fire.createDataset(JavaConversions.asScalaBuffer(Student.buildStudentList()))(Encoders.bean(classOf[Student]))
+    val studentDS = this.fire.createDataset(Student.newStudentList())(Encoders.bean(classOf[Student]))
     this.fire.hbaseHadoopPutDS(this.tableName3, studentDS)
     // 方式二：基于DataFrame进行方法调用
     // studentDS.hbaseHadoopPutDS(this.tableName3)
@@ -64,7 +62,7 @@ object HBaseHadoopTest extends BaseSparkCore {
       row.getAs("id").toString
     }
 
-    val studentRDD = this.fire.createRDD(JavaConversions.asScalaBuffer(Student.buildStudentList()), 2)
+    val studentRDD = this.fire.createRDD(Student.newStudentList(), 2)
     this.fire.createDataFrame(studentRDD, classOf[Student]).createOrReplaceTempView("student")
     // 指定rowKey构建的函数
     this.fire.sql("select age,createTime,id,length,name,sex from student").hbaseHadoopPutDFRow(this.tableName3, buildRowKey)

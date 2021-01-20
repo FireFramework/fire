@@ -16,7 +16,6 @@ import org.apache.commons.lang3.StringUtils
 import spark._
 import com.zto.fire._
 
-import scala.collection.JavaConversions
 
 /**
  * 系统预定义的restful服务，为Spark计算引擎提供接口服务
@@ -60,7 +59,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       this.logger.info(s"请求fire更新配置信息：$json")
       val confMap = JSON.parseObject(json, classOf[java.util.HashMap[String, String]])
       if (ValueUtils.noEmpty(confMap)) {
-        PropUtils.setProperties(JavaConversions.mapAsScalaMap(confMap))
+        PropUtils.setProperties(confMap)
         this.baseSpark._conf.setAll(PropUtils.toMap)
         this.baseSpark.acc.broadcastNewConf(this.baseSpark.sc, this.baseSpark._conf)
       }
@@ -284,7 +283,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
     val json = request.body
     try {
       val logs = new StringBuilder("[")
-      JavaConversions.asScalaIterator(this.baseSpark.acc.getLog.iterator()).foreach(log => {
+      this.baseSpark.acc.getLog.iterator().foreach(log => {
         logs.append(log + ",")
       })
 
@@ -316,7 +315,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
     val json = request.body
     try {
       val envInfo = new StringBuilder("[")
-      JavaConversions.asScalaIterator(this.baseSpark.acc.getEnv.iterator()).foreach(env => {
+      this.baseSpark.acc.getEnv.iterator().foreach(env => {
         envInfo.append(env + ",")
       })
 
@@ -462,7 +461,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.sparkInfoBean.setAppName(this.baseSpark.appName)
         this.sparkInfoBean.setClassName(this.baseSpark.className)
         this.sparkInfoBean.setFireVersion(FireFrameworkConf.fireVersion)
-        this.sparkInfoBean.setConf(JavaConversions.mapAsJavaMap(this.baseSpark.spark.conf.getAll))
+        this.sparkInfoBean.setConf(this.baseSpark.spark.conf.getAll)
         this.sparkInfoBean.setVersion(this.baseSpark.sc.version)
         this.sparkInfoBean.setMaster(this.baseSpark.sc.master)
         this.sparkInfoBean.setApplicationId(this.baseSpark.sc.applicationId)

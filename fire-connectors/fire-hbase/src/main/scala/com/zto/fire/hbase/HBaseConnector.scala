@@ -350,7 +350,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
         }
         field.set(obj, toValue)
       } else if (field != null) field.set(obj, null)
-    }(this.logger, catchLog = s"为filed ${field.getName}设置赋值过程中出现异常")
+    }(this.logger, catchLog = s"为filed ${field}设置赋值过程中出现异常")
   }
 
   /**
@@ -374,7 +374,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
           val field = fieldMap.get(family + ":" + qualifier)
           this.setFieldBytesValue(obj, field, value)
           val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
-          require(idField != null, s"${clazz}中必须有名为rowKey的成员变量")
+          requireNonEmpty(idField)(s"${clazz}中必须有名为rowKey的成员变量")
           idField.set(obj, rowKey)
           if (StringUtils.isNotBlank(obj.getMultiFields)) objList.add(JSON.parseObject(obj.getMultiFields, clazz))
         })
@@ -399,7 +399,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
       val cells = rs.rawCells
       val rowKey = convertCells2Fields(fieldMap, obj, cells)
       val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
-      require(idField != null, s"${clazz}中必须有名为rowKey的成员变量")
+      requireNonEmpty(idField)(s"${clazz}中必须有名为rowKey的成员变量")
       ReflectionUtils.setAccessible(idField)
       idField.set(obj, rowKey)
     }(this.logger, catchLog = "将HBase cell中的值转换并赋值给field过程中报错.")
@@ -443,7 +443,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): T = {
     requireNonEmpty(rs, clazz)("参数不合法，HBase Row转为JavaBean失败.")
     val fieldMap = this.getFieldNameMap(clazz)
-    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     this.cell2Field(clazz, fieldMap, rs)
   }
 
@@ -458,7 +458,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
     requireNonEmpty(rsArr, clazz)("参数不合法，HBase Row转为JavaBean失败.")
     val fieldMap = this.getFieldNameMap(clazz)
-    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
     rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList += this.cell2Field(clazz, fieldMap, rs))
     objList
@@ -475,7 +475,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): ListBuffer[T] = {
     requireNonEmpty(rs, clazz)("参数不合法，HBase MultiRow转为JavaBean失败.")
     val fieldMap = this.getFieldNameMap(classOf[MultiVersionsBean])
-    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     this.multiCell2Field(rs, clazz, fieldMap)
   }
 
@@ -490,7 +490,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
     requireNonEmpty(rsArr, clazz)("参数不合法，HBase Row转为JavaBean失败.")
     val fieldMap = getFieldNameMap(classOf[MultiVersionsBean])
-    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
     rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList ++= this.multiCell2Field(rs, clazz, fieldMap))
     objList
@@ -507,7 +507,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[fire] def hbaseRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
     requireNonEmpty(it, clazz)
     val fieldMap = this.getFieldNameMap(clazz)
-    require(fieldMap != null && fieldMap.nonEmpty, s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
+    requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val beanList = ListBuffer[T]()
     tryWithLog {
       it.foreach(t => {
@@ -515,7 +515,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
         val cells = t._2.rawCells()
         val rowKey = this.convertCells2Fields(fieldMap, obj, cells)
         val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
-        require(idField != null, s"${clazz}中必须有名为rowKey的成员变量")
+        requireNonEmpty(idField)(s"${clazz}中必须有名为rowKey的成员变量")
         idField.set(obj, rowKey)
         beanList += obj
       })
@@ -562,11 +562,11 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
         val method = ReflectionUtils.getMethodByName(clazz, "buildRowKey")
         tmpObj = method.invoke(tmpObj).asInstanceOf[T]
         rowKeyObj = rowKeyField.get(tmpObj)
-        require(rowKeyObj != null, s"rowKey不能为空，请检查${clazz}中是否实现buildRowKey()方法！")
+        requireNonEmpty(rowKeyObj)(s"rowKey不能为空，请检查${clazz}中是否实现buildRowKey()方法！")
       }
 
       val allFields = ReflectionUtils.getAllFields(clazz)
-      require(allFields != null && allFields.nonEmpty, s"在${clazz}中未找到任何成员变量，请检查！")
+      requireNonEmpty(allFields)(s"在${clazz}中未找到任何成员变量，请检查！")
       val rowKey = rowKeyObj.toString.getBytes(StandardCharsets.UTF_8)
       val put = new Put(rowKey)
       put.setDurability(this.durability)
@@ -826,7 +826,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   def closeTable(table: Table): Unit = {
     tryWithLog {
       if (table != null) table.close()
-    }(logger, "关闭HBase table对象失败", isThrow = false)
+    }(logger, catchLog = "关闭HBase table对象失败", isThrow = true)
   }
 
   /**
@@ -994,7 +994,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
       finalConf.set(kv._1, kv._2)
     })
 
-    require(StringUtils.isNotBlank(finalConf.get("hbase.zookeeper.quorum")), s"未配置HBase集群信息，请通过以下参数指定：spark.hbase.cluster[$keyNum]=xxx")
+    requireNonEmpty(finalConf.get("hbase.zookeeper.quorum"))(s"未配置HBase集群信息，请通过以下参数指定：spark.hbase.cluster[$keyNum]=xxx")
     this.configuration = finalConf
   }
 

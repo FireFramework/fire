@@ -2,6 +2,7 @@ package com.zto.fire.flink.ext.stream
 
 import java.util.Properties
 
+import com.zto.fire._
 import com.zto.fire.common.conf.FireKafkaConf
 import com.zto.fire.common.util.{KafkaUtils, ValueUtils}
 import com.zto.fire.core.Api
@@ -71,7 +72,7 @@ private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) exten
     val kafkaConsumer = this.createKafkaConsumer(kafkaParams, topics, keyNum)
 
     if (runtimeContext != null) kafkaConsumer.setRuntimeContext(runtimeContext)
-    if (specificStartupOffsets != null) kafkaConsumer.setStartFromSpecificOffsets(JavaConversions.mapAsJavaMap(specificStartupOffsets))
+    if (specificStartupOffsets != null) kafkaConsumer.setStartFromSpecificOffsets(specificStartupOffsets)
     // 设置从指定时间戳位置开始消费kafka
     val startFromTimeStamp = FireKafkaConf.kafkaStartFromTimeStamp(keyNum)
     if (startFromTimeStamp > 0) kafkaConsumer.setStartFromTimestamp(FireKafkaConf.kafkaStartFromTimeStamp(keyNum))

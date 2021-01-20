@@ -4,7 +4,7 @@ import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkStreaming
 
 /**
- *
+ * Flink流式计算任务模板
  *
  * @author ChengLong
  * @since 1.0.0

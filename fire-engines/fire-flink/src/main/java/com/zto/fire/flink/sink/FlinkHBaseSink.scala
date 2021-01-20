@@ -1,10 +1,8 @@
 package com.zto.fire.flink.sink
 
 import com.zto.fire.common.conf.FireHBaseConf
-import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
 
-import scala.collection.JavaConversions
 
 /**
  * flink HBase sink组件，底层基于HBaseConnector

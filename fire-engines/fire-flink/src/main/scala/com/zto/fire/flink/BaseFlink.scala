@@ -2,8 +2,7 @@ package com.zto.fire.flink
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf, FireSparkConf}
-import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.{PropUtils, OSUtils}
+import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.flink.rest.FlinkSystemRestful

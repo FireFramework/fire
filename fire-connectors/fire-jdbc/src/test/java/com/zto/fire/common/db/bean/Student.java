@@ -1,9 +1,7 @@
-package com.zto.fire.common.db.v2.bean;
+package com.zto.fire.common.db.bean;
 
 import com.alibaba.fastjson.JSON;
 import com.zto.fire.common.anno.FieldName;
-import com.zto.fire.hbase.anno.HConfig;
-import com.zto.fire.hbase.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
 
 import java.math.BigDecimal;
@@ -11,12 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * For test only.
  * @author ChengLong
  * @create 2020-11-13 17:46
  * @since 1.0.0
  */
-@HConfig(nullable = true, multiVersion = true)
-public class Student extends HBaseBaseBean<Student> {
+public class Student {
     private Long id;
     private String name;
     private Integer age;
@@ -47,12 +45,6 @@ public class Student extends HBaseBaseBean<Student> {
             e.printStackTrace();
         }
         return list;
-    }
-
-    @Override
-    public Student buildRowKey() {
-        this.rowKey = this.id.toString();
-        return this;
     }
 
     @Override
