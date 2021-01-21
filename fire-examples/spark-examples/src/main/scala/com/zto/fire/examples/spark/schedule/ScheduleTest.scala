@@ -15,12 +15,17 @@ import com.zto.fire.spark.util.SparkUtils
 object ScheduleTest extends BaseSparkStreaming {
 
   /**
-   * 只在driver端执行，不允许同一时刻同时执行该方法
-   * startAt用于指定首次执行时间
+   * 声明了@Scheduled注解的方法是定时任务方法，会周期性执行
+   *
+   * @cron cron表达式
+   * @scope 默认同时在driver端和executor端执行，如果指定了driver，则只在driver端定时执行
+   * @concurrent 上一个周期定时任务未执行完成时是否允许下一个周期任务开始执行
+   * @startAt 用于指定第一次开始执行的时间
+   * @initialDelay 延迟多长时间开始执行第一次定时任务
    */
-  @Scheduled(cron = "0/5 * * * * ?", scope = "driver", concurrent = false, startAt = "2019-11-05 11:30:00")
-  def test1: Unit = {
-    this.logger.info("executorId=" + SparkUtils.getExecutorId + "====方法 test1() 每5秒执行====" + DateFormatUtils.formatCurrentDateTime())
+  @Scheduled(cron = "0/5 * * * * ?", scope = "driver", concurrent = false, startAt = "2021-01-21 11:30:00", initialDelay = 60000)
+  def loadTable: Unit = {
+    this.logger.info("更新维表动作")
   }
 
   /**
