@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>fire-spark</artifactId>
+    <artifactId>fire-spark_${spark.reference}</artifactId>
     <packaging>jar</packaging>
 
     <parent>
@@ -95,7 +95,7 @@
         <!-- kudu相关依赖 -->
         <dependency>
             <groupId>org.apache.kudu</groupId>
-            <artifactId>kudu-spark2_${scala.binary.version}</artifactId>
+            <artifactId>kudu-spark2_${kudu.scala.binary.version}</artifactId>
             <version>${kudu.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>

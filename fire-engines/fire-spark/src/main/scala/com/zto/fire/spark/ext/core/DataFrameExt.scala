@@ -112,7 +112,7 @@ private[fire] class DataFrameExt(dataFrame: DataFrame) {
         .start()
     } else {
       // 非structured streaming调用
-      dataFrame.foreachPartition(it => {
+      dataFrame.rdd.foreachPartition(it => {
         var count: Int = 0
         val list = ListBuffer[ListBuffer[Any]]()
         var params: ListBuffer[Any] = null
