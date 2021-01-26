@@ -269,7 +269,7 @@ private[fire] object AccumulatorManager {
    * 获取当前任务的executor数
    */
   private[this] def getInitExecutors(sc: SparkContext): Int = {
-    if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (OSUtils.isLinux) "10000" else "10").toInt)
+    if (this.initExecutors.get() == 0) this.initExecutors.set(sc.getConf.get("spark.executor.instances", if (OSUtils.isLinux) "1000" else "10").toInt)
     this.initExecutors.get()
   }
 
