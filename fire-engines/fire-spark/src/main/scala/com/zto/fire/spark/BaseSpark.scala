@@ -69,7 +69,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 生命周期方法：进行fire框架的资源回收
    * 注：不允许子类覆盖
    */
-  override final def shutdown(stopGracefully: Boolean = true): Unit = {
+  override protected[fire] final def shutdown(stopGracefully: Boolean = true): Unit = {
     try {
       this.logger.info("<-- 完成用户资源回收 -->")
 

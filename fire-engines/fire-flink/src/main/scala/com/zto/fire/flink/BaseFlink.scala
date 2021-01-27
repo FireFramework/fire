@@ -87,7 +87,7 @@ trait BaseFlink extends BaseFire {
    * 生命周期方法：进行fire框架的资源回收
    * 注：不允许子类覆盖
    */
-  override def shutdown(stopGracefully: Boolean = true): Unit = {
+  override protected[fire] final def shutdown(stopGracefully: Boolean = true): Unit = {
     super.shutdown(stopGracefully)
     System.exit(0)
   }
