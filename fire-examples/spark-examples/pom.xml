@@ -3,10 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>spark-examples_${spark.reference}</artifactId>
     <packaging>jar</packaging>
+    <name>spark-examples</name>
 
     <parent>
         <groupId>com.zto.fire</groupId>
-        <artifactId>fire-examples</artifactId>
+        <artifactId>fire-examples_2.12</artifactId>
         <version>2.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
@@ -14,7 +15,7 @@
     <dependencies>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>fire-common</artifactId>
+            <artifactId>fire-common_${scala.binary.version}</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
