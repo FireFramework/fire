@@ -2,15 +2,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.zto.fire</groupId>
-    <artifactId>fire-parent</artifactId>
+    <artifactId>fire-parent_2.12</artifactId>
     <packaging>pom</packaging>
     <version>2.0.0-SNAPSHOT</version>
+    <name>fire-parent</name>
 
     <properties>
-        <spark.version>2.3.2</spark.version>
+        <fire.version>${project.version}</fire.version>
+        <spark.version>3.0.1</spark.version>
         <flink.version>1.12.0</flink.version>
-        <scala.version>2.11.12</scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
+        <scala.version>2.12.12</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
         <maven.scope>provided</maven.scope>
         <kudu.version>1.4.0</kudu.version>
         <kafka.version>0.11.0.2</kafka.version>
@@ -113,7 +115,7 @@
             </snapshots>
         </repository>
         <repository>
-            <id>huaweicloud</id>
+            <id>central</id>
             <url>https://mirrors.huaweicloud.com/repository/maven/</url>
             <releases>
                 <enabled>true</enabled>
@@ -136,7 +138,7 @@
             </snapshots>
         </pluginRepository>
         <pluginRepository>
-            <id>huaweicloud</id>
+            <id>central</id>
             <url>https://mirrors.huaweicloud.com/repository/maven/</url>
             <releases>
                 <enabled>true</enabled>
