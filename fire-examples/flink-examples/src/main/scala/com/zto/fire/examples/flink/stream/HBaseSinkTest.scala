@@ -19,7 +19,7 @@ import scala.collection.mutable.ListBuffer
  * @since 1.1.0
  * @create 2020-5-25 16:32:50
  */
-object FlinkHBaseTest extends BaseFlinkStreaming {
+object HBaseSinkTest extends BaseFlinkStreaming {
   lazy val tableName = "fire_test_1"
 
   /**
@@ -27,15 +27,15 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
    */
   def testTableHBaseSink(stream: DataStream[Student]): Unit = {
     stream.createOrReplaceTempView("student")
-    val table = this.flink.sql("select id, name, age from student group by id, name, age")
+    val table = this.flink.sqlQuery("select id, name, age from student group by id, name, age")
     // 方式一、自动将row转为对应的JavaBean
-    // table.hbasePutTable(this.tableName, classOf[Student])
-    // this.tableEnv.hbasePutTable(table, this.tableName, classOf[Student], multiVersion = true)
+    table.hbasePutTable[Student](this.tableName).setParallelism(1)
+    this.fire.hbasePutTable(table, this.tableName)
 
     // 方式二、用户自定义取数规则，从row中创建HBaseBaseBean的子类
-    // table.hbasePutTable2(this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+    table.hbasePutTable2(this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
     // 或者
-    // this.flink.hbasePutTable2(table, this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+    this.fire.hbasePutTable2(table, this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
   }
 
   /**
@@ -43,12 +43,12 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
    */
   def testTableHBaseSink2(stream: DataStream[Student]): Unit = {
     stream.createOrReplaceTempView("student")
-    val table = this.flink.sql("select id, name, age from student group by id, name, age")
+    val table = this.fire.sqlQuery("select id, name, age from student group by id, name, age")
 
     // 方式二、用户自定义取数规则，从row中创建HBaseBaseBean的子类
-    // table.hbasePutTable2(this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+    table.hbasePutTable2(this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
     // 或者
-    //this.flink.hbasePutTable2(table, this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+    this.flink.hbasePutTable2(table, this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
   }
 
   /**
@@ -57,12 +57,12 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
   def testStreamHBaseSink(stream: DataStream[Student]): Unit = {
     // 方式一、DataStream中的数据类型为HBaseBaseBean的子类
     // stream.hbasePutDS(this.tableName)
-    //this.flink.hbasePutDS(stream, this.tableName)
+    this.fire.hbasePutDS[Student](stream, this.tableName)
 
     // 方式二、将value组装为HBaseBaseBean的子类，逻辑用户自定义
-    //stream.hbasePutDS2(this.tableName)(value => value)
+    stream.hbasePutDS2(this.tableName)(value => value)
     // 或者
-    // this.flink.hbasePutDS2(stream, this.tableName)(value => value)
+    this.fire.hbasePutDS2(stream, this.tableName)(value => value)
   }
 
   /**
@@ -70,9 +70,9 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
    */
   def testStreamHBaseSink2(stream: DataStream[Student]): Unit = {
     // 方式二、将value组装为HBaseBaseBean的子类，逻辑用户自定义
-    //stream.hbasePutDS2(this.tableName)(value => value)
+    stream.hbasePutDS2(this.tableName)(value => value)
     // 或者
-    //this.flink.hbasePutDS2(stream, this.tableName)(value => value)
+    this.fire.hbasePutDS2(stream, this.tableName)(value => value)
   }
 
   /**
@@ -91,17 +91,13 @@ object FlinkHBaseTest extends BaseFlinkStreaming {
   }
 
   override def process: Unit = {
-    require(this.args != null && this.args.length > 0, "请传递main方法参数")
-    val stream = this.fire.createKafkaDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student]))
+    val stream = this.fire.createKafkaDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student])).setParallelism(1)
 
-    this.args(0) match {
-      case "testTableHBaseSink" => this.testTableHBaseSink(stream)
-      case "testTableHBaseSink2" => this.testTableHBaseSink2(stream)
-      case "testStreamHBaseSink" => this.testStreamHBaseSink(stream)
-      case "testStreamHBaseSink2" => this.testStreamHBaseSink2(stream)
-      case "testHBase" => this.testHBase
-      case _ => throw new IllegalArgumentException("未匹配到任何方法名称，请检查！")
-    }
+    // this.testTableHBaseSink(stream)
+    this.testStreamHBaseSink(stream)
+    /*this.testTableHBaseSink2(stream)
+    this.testStreamHBaseSink2(stream)
+    this.testHBase*/
 
     this.fire.start
   }

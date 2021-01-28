@@ -15,12 +15,11 @@ object FlinkTest extends BaseFlinkStreaming {
    */
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream().map(json => {
-      logger.debug("FlinkTest {}", "task")
       JSON.parseObject(json, classOf[Student])
     }).setParallelism(2)
 
     dstream.createOrReplaceTempView("student")
-    val table = this.tableEnv.sql("select * from student")
+    val table = this.fire.sqlQuery("select * from student")
 
     // table无法序列化，因此需在此处获取schema信息，传入到addSink中
     val tableSchema = table.getTableSchema

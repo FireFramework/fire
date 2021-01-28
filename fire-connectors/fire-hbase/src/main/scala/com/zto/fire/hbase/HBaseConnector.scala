@@ -57,7 +57,6 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
   private[this] lazy val threadPool = ThreadUtils.createThreadPool("HBaseConnectorPool", ThreadPoolType.SCHEDULED)
   // ------------------------------------ 表存在判断缓存 ------------------------------------ //
   private[this] lazy val tableExistsCacheEnable = tableExistsCache(this.keyNum)
-  private[this] lazy val row2BeanParamError = "参数不合法，HBase Row转为JavaBean失败."
   private[this] lazy val closeAdminError = "close admin执行失败"
   this.registerReload
 

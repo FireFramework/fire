@@ -3,10 +3,11 @@ package com.zto.fire.flink.ext.stream
 import java.lang.reflect.Field
 
 import com.zto.fire.common.util.ReflectionUtils
-import com.zto.fire.flink.sink.{FlinkHBaseSink, FlinkJdbcSink}
+import com.zto.fire.flink.sink.{HBaseSink, JdbcSink}
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire._
+import com.zto.fire.hbase.HBaseConnector
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.accumulators.SimpleAccumulator
 import org.apache.flink.api.common.functions.RichMapFunction
@@ -134,7 +135,7 @@ private[fire] class DataStreamExt[T](stream: DataStream[T]) {
                       batch: Int = 10,
                       flushInterval: Long = 1000,
                       keyNum: Int = 1): DataStreamSink[T] = {
-    this.stream.addSink(new FlinkJdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
+    this.stream.addSink(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       var fieldMap: java.util.Map[String, Field] = _
       var clazz: Class[_] = _
 
@@ -185,7 +186,7 @@ private[fire] class DataStreamExt[T](stream: DataStream[T]) {
                        batch: Int = 10,
                        flushInterval: Long = 1000,
                        keyNum: Int = 1)(fun: T => Seq[Any]): DataStreamSink[T] = {
-    this.stream.addSink(new FlinkJdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
+    this.stream.addSink(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       override def map(value: T): Seq[Any] = {
         fun(value)
       }
@@ -197,30 +198,20 @@ private[fire] class DataStreamExt[T](stream: DataStream[T]) {
    *
    * @param tableName
    * hbase表名
-   * @param insertEmpty
-   * 为空的字段是否插入到hbase中
    * @param batch
    * 每次sink最大的记录数
-   * @param multiVersion
-   * 是否以多版本形式保存
    * @param flushInterval
    * 多久flush一次（毫秒）
    * @param keyNum
    * 配置文件中的key后缀
    */
-  def hbasePutDS(tableName: String,
-                 insertEmpty: Boolean = true,
+  def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
                  batch: Int = 100,
-                 multiVersion: Boolean = false,
                  flushInterval: Long = 3000,
                  keyNum: Int = 1): DataStreamSink[_] = {
-
-    this.hbasePutDS2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
+    this.hbasePutDS2[E](tableName, batch, flushInterval, keyNum) {
       value => {
-        if (!value.isInstanceOf[HBaseBaseBean[T]]) {
-          throw new IllegalArgumentException("hbase sink 失败，DataStream中的数据类型必须为DataStream[HBaseBaseBean]")
-        }
-        value.asInstanceOf[HBaseBaseBean[T]]
+        value.asInstanceOf[E]
       }
     }
   }
@@ -230,12 +221,8 @@ private[fire] class DataStreamExt[T](stream: DataStream[T]) {
    *
    * @param tableName
    * hbase表名
-   * @param insertEmpty
-   * 为空的字段是否插入到hbase中
    * @param batch
    * 每次sink最大的记录数
-   * @param multiVersion
-   * 是否以多版本形式保存
    * @param flushInterval
    * 多久flush一次（毫秒）
    * @param keyNum
@@ -243,19 +230,16 @@ private[fire] class DataStreamExt[T](stream: DataStream[T]) {
    * @param fun
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
-  def hbasePutDS2(tableName: String,
-                  insertEmpty: Boolean = true,
+  def hbasePutDS2[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
                   batch: Int = 100,
-                  multiVersion: Boolean = false,
                   flushInterval: Long = 3000,
-                  keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[_] = {
-    this.stream.addSink(new FlinkHBaseSink[T](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
+                  keyNum: Int = 1)(fun: T => E): DataStreamSink[_] = {
+    HBaseConnector.checkClass[E]()
+    this.stream.addSink(new HBaseSink[T, E](tableName, batch, flushInterval, keyNum) {
       /**
        * 将数据构建成sink的格式
        */
-      override def map(value: T): HBaseBaseBean[_] = {
-        fun(value)
-      }
+      override def map(value: T): E = fun(value)
     }).name("fire hbase stream sink")
   }
 

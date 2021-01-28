@@ -1,8 +1,9 @@
 package com.zto.fire.flink.ext.stream
 
 import com.zto.fire.flink.bean.FlinkTableSchema
-import com.zto.fire.flink.sink.FlinkHBaseSink
+import com.zto.fire.flink.sink.HBaseSink
 import com.zto.fire.flink.util.FlinkSingletonFactory
+import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.datastream.DataStreamSink
@@ -12,6 +13,7 @@ import org.apache.flink.table.api.bridge.scala._
 import org.apache.flink.types.Row
 
 import scala.collection.mutable.ListBuffer
+import scala.reflect.ClassTag
 
 
 /**
@@ -140,7 +142,7 @@ private[fire] class TableExt(table: Table) {
     if (!isMerge) throw new IllegalArgumentException("该jdbc sink api暂不支持非merge语义，delete操作需单独实现")
     this.table.toRetractStreamSingle.jdbcBatchUpdate2(sql, batch, flushInterval, keyNum) {
       row => fun(row)
-    }.name("fire jdbc table sink")
+    }.name("fire jdbc sink")
   }
 
   /**
@@ -148,28 +150,23 @@ private[fire] class TableExt(table: Table) {
    *
    * @param tableName
    *                     HBase表名
-   * @param insertEmpty  为空的字段是否插入
    * @param batch
    *                     每次sink最大的记录数
-   * @param multiVersion 是否以多版本方式写入
    * @param flushInterval
    *                     多久flush一次（毫秒）
    * @param keyNum
    *                     配置文件中的key后缀
    */
-  def hbasePutTable[T <: HBaseBaseBean[T]](tableName: String,
-                                           clazz: Class[T],
-                                           insertEmpty: Boolean = true,
+  def hbasePutTable[T <: HBaseBaseBean[T]: ClassTag](tableName: String,
                                            batch: Int = 100,
-                                           multiVersion: Boolean = false,
                                            flushInterval: Long = 3000,
                                            keyNum: Int = 1): DataStreamSink[_] = {
     import com.zto.fire._
-    this.table.hbasePutTable2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
+    this.table.hbasePutTable2[T](tableName, batch, flushInterval, keyNum) {
       val schema = table.getTableSchema
       row => {
         // 将row转为clazz对应的JavaBean
-        val hbaseBean = row.rowToBean(schema, clazz)
+        val hbaseBean = row.rowToBean(schema, getParamType[T])
         if (!hbaseBean.isInstanceOf[HBaseBaseBean[T]]) throw new IllegalArgumentException("clazz参数必须是HBaseBaseBean的子类")
         hbaseBean
       }
@@ -181,24 +178,21 @@ private[fire] class TableExt(table: Table) {
    *
    * @param tableName
    *                     HBase表名
-   * @param insertEmpty  为空的字段是否插入
    * @param batch
    *                     每次sink最大的记录数
-   * @param multiVersion 是否以多版本方式写入
    * @param flushInterval
    *                     多久flush一次（毫秒）
    * @param keyNum
    *                     配置文件中的key后缀
    */
-  def hbasePutTable2(tableName: String,
-                     insertEmpty: Boolean = true,
+  def hbasePutTable2[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
                      batch: Int = 100,
-                     multiVersion: Boolean = false,
                      flushInterval: Long = 3000,
-                     keyNum: Int = 1)(fun: Row => HBaseBaseBean[_]): DataStreamSink[_] = {
+                     keyNum: Int = 1)(fun: Row => T): DataStreamSink[_] = {
     import com.zto.fire._
-    this.table.toRetractStreamSingle.addSink(new FlinkHBaseSink[Row](tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum) {
-      override def map(value: Row): HBaseBaseBean[_] = fun(value)
-    }).name("fire hbase table sink")
+    HBaseConnector.checkClass[T]()
+    this.table.toRetractStreamSingle.addSink(new HBaseSink[Row, T](tableName, batch, flushInterval, keyNum) {
+      override def map(value: Row): T = fun(value)
+    }).name("fire hbase sink")
   }
 }

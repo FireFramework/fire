@@ -6,7 +6,9 @@ import com.zto.fire._
 import com.zto.fire.common.conf.FireKafkaConf
 import com.zto.fire.common.util.{KafkaUtils, ValueUtils}
 import com.zto.fire.core.Api
+import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvider}
 import com.zto.fire.flink.util.FlinkSingletonFactory
+import com.zto.fire.jdbc.JdbcConnectorBridge
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.JobExecutionResult
 import org.apache.flink.api.common.functions.RuntimeContext
@@ -16,7 +18,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
-import org.apache.flink.table.api.TableResult
+import org.apache.flink.table.api.{Table, TableResult}
 
 import scala.collection.JavaConversions
 
@@ -26,8 +28,16 @@ import scala.collection.JavaConversions
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api {
+private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with JdbcConnectorBridge
+  with HBaseConnectorProvider with JdbcFlinkProvider {
   private[fire] lazy val tableEnv = FlinkSingletonFactory.getStreamTableEnv
+
+  /**
+   * 创建Socket流
+   */
+  def createSocketTextStream(hostname: String, port: Int, delimiter: Char = '\n', maxRetry: Long = 0): DataStream[String] = {
+    this.env.socketTextStream(hostname, port, delimiter, maxRetry)
+  }
 
   /**
    * 根据配置信息创建Kafka Consumer
@@ -97,11 +107,23 @@ private[fire] class StreamExecutionEnvExt(env: StreamExecutionEnvironment) exten
    * DStream
    */
   def createKafkaDirectStream(kafkaParams: Map[String, Object] = null,
-                         topics: Set[String] = null,
-                         specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
-                         runtimeContext: RuntimeContext = null,
-                         keyNum: Int = 1): DataStream[String] = {
+                              topics: Set[String] = null,
+                              specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
+                              runtimeContext: RuntimeContext = null,
+                              keyNum: Int = 1): DataStream[String] = {
     this.createDirectStream(kafkaParams, topics, specificStartupOffsets, runtimeContext, keyNum)
+  }
+
+  /**
+   * 执行sql query操作
+   *
+   * @param sql
+   * sql语句
+   * @return
+   * table对象
+   */
+  def sqlQuery(sql: String): Table = {
+    this.tableEnv.sqlQuery(sql)
   }
 
   /**

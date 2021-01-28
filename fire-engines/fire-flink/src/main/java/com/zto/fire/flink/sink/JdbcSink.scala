@@ -11,10 +11,10 @@ import com.zto.fire.jdbc.JdbcConnector
  * @since 1.1.0
  * @create 2020-05-22 10:37
  */
-abstract class FlinkJdbcSink[IN](sql: String,
-                                 batch: Int = 10,
-                                 flushInterval: Long = 1000,
-                                 keyNum: Int = 1) extends BaseFlinkSink[IN, Seq[Any]](batch, flushInterval) {
+abstract class JdbcSink[IN](sql: String,
+                            batch: Int = 10,
+                            flushInterval: Long = 1000,
+                            keyNum: Int = 1) extends BaseSink[IN, Seq[Any]](batch, flushInterval) {
 
   // jdbc操作失败时允许最大重试次数
   this.maxRetry = FireJdbcConf.maxRetry(keyNum)

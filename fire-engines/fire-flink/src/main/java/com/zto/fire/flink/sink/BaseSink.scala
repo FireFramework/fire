@@ -25,7 +25,7 @@ import scala.util.control._
  * @since 1.1.0
  * @create 2020-05-21 15:27
  */
-abstract class BaseFlinkSink[IN, OUT](batch: Int, flushInterval: Long) extends RichSinkFunction[IN] with CheckpointedFunction {
+abstract class BaseSink[IN, OUT](batch: Int, flushInterval: Long) extends RichSinkFunction[IN] with CheckpointedFunction {
   protected var maxRetry: Long = 3
   private var flushException: Exception = _
   @transient protected var scheduler: ScheduledExecutorService = _

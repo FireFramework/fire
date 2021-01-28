@@ -2,6 +2,7 @@ package com.zto.fire.hbase
 
 import java.nio.charset.StandardCharsets
 
+import com.zto.fire.predef._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import org.apache.commons.lang3.StringUtils
@@ -293,4 +294,12 @@ private[hbase] trait HBaseFunctions {
    * @return HBase Configuration对象
    */
   def getConfiguration(keyNum: Int = 1): Configuration = HBaseConnector(keyNum = keyNum).getConfiguration
+
+  /**
+   * 校验类型合法性，class必须是HBaseBaseBean的子类
+   */
+  def checkClass[T: ClassTag](clazz: Class[_] = null): Unit = {
+    val finalClazz = if (clazz != null) clazz else getParamType[T]
+    if (finalClazz == null || finalClazz.getSuperclass != classOf[HBaseBaseBean[_]]) throw new IllegalArgumentException("请指定泛型类型，该泛型必须是HBaseBaseBean的子类，如：this.fire.hbasePutTable[JavaBean]")
+  }
 }

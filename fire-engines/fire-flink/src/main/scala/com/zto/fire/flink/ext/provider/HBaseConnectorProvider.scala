@@ -7,6 +7,8 @@ import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.api.Table
 import org.apache.flink.types.Row
 
+import scala.reflect.ClassTag
+
 /**
  * 为上层扩展层提供HBaseConnector API
  *
@@ -21,25 +23,19 @@ private[ext] trait HBaseConnectorProvider {
    *
    * @param tableName
    * hbase表名
-   * @param insertEmpty
-   * 为空的字段是否插入到hbase中
    * @param batch
    * 每次sink最大的记录数
-   * @param multiVersion
-   * 是否以多版本形式保存
    * @param flushInterval
    * 多久flush一次（毫秒）
    * @param keyNum
    * 配置文件中的key后缀
    */
-  def hbasePutDS[T <: HBaseBaseBean[T]](stream: DataStream[T],
+  def hbasePutDS[T <: HBaseBaseBean[T]: ClassTag](stream: DataStream[T],
                                         tableName: String,
-                                        insertEmpty: Boolean = true,
                                         batch: Int = 100,
-                                        multiVersion: Boolean = false,
                                         flushInterval: Long = 3000,
                                         keyNum: Int = 1): DataStreamSink[_] = {
-    stream.hbasePutDS(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)
+    stream.hbasePutDS(tableName, batch, flushInterval, keyNum)
   }
 
   /**
@@ -47,12 +43,8 @@ private[ext] trait HBaseConnectorProvider {
    *
    * @param tableName
    * hbase表名
-   * @param insertEmpty
-   * 为空的字段是否插入到hbase中
    * @param batch
    * 每次sink最大的记录数
-   * @param multiVersion
-   * 是否以多版本形式保存
    * @param flushInterval
    * 多久flush一次（毫秒）
    * @param keyNum
@@ -60,14 +52,12 @@ private[ext] trait HBaseConnectorProvider {
    * @param fun
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
-  def hbasePutDS2[T](stream: DataStream[T],
-                     tableName: String,
-                     insertEmpty: Boolean = true,
-                     batch: Int = 100,
-                     multiVersion: Boolean = false,
-                     flushInterval: Long = 3000,
-                     keyNum: Int = 1)(fun: T => HBaseBaseBean[T]): DataStreamSink[_] = {
-    stream.hbasePutDS2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)(fun)
+  def hbasePutDS2[T <: HBaseBaseBean[T] : ClassTag](stream: DataStream[T],
+                                                    tableName: String,
+                                                    batch: Int = 100,
+                                                    flushInterval: Long = 3000,
+                                                    keyNum: Int = 1)(fun: T => T): DataStreamSink[_] = {
+    stream.hbasePutDS2[T](tableName, batch, flushInterval, keyNum)(fun)
   }
 
   /**
@@ -75,24 +65,19 @@ private[ext] trait HBaseConnectorProvider {
    *
    * @param tableName
    *                     HBase表名
-   * @param insertEmpty  为空的字段是否插入
    * @param batch
    *                     每次sink最大的记录数
-   * @param multiVersion 是否以多版本方式写入
    * @param flushInterval
    *                     多久flush一次（毫秒）
    * @param keyNum
    *                     配置文件中的key后缀
    */
-  def hbasePutTable[T <: HBaseBaseBean[T]](table: Table,
+  def hbasePutTable[T <: HBaseBaseBean[T]: ClassTag](table: Table,
                                            tableName: String,
-                                           clazz: Class[T],
-                                           insertEmpty: Boolean = true,
                                            batch: Int = 100,
-                                           multiVersion: Boolean = false,
                                            flushInterval: Long = 3000,
                                            keyNum: Int = 1): DataStreamSink[_] = {
-    table.hbasePutTable[T](tableName, clazz, insertEmpty, batch, multiVersion, flushInterval, keyNum)
+    table.hbasePutTable[T](tableName, batch, flushInterval, keyNum)
   }
 
   /**
@@ -100,22 +85,18 @@ private[ext] trait HBaseConnectorProvider {
    *
    * @param tableName
    *                     HBase表名
-   * @param insertEmpty  为空的字段是否插入
    * @param batch
    *                     每次sink最大的记录数
-   * @param multiVersion 是否以多版本方式写入
    * @param flushInterval
    *                     多久flush一次（毫秒）
    * @param keyNum
    *                     配置文件中的key后缀
    */
-  def hbasePutTable2(table: Table,
+  def hbasePutTable2[T <: HBaseBaseBean[T]: ClassTag](table: Table,
                      tableName: String,
-                     insertEmpty: Boolean = true,
                      batch: Int = 100,
-                     multiVersion: Boolean = false,
                      flushInterval: Long = 3000,
-                     keyNum: Int = 1)(fun: Row => HBaseBaseBean[_]): DataStreamSink[_] = {
-    table.hbasePutTable2(tableName, insertEmpty, batch, multiVersion, flushInterval, keyNum)(fun)
+                     keyNum: Int = 1)(fun: Row => T): DataStreamSink[_] = {
+    table.hbasePutTable2[T](tableName, batch, flushInterval, keyNum)(fun)
   }
 }
