@@ -1,5 +1,7 @@
 package com.zto.fire.spark.ext.core
 
+import java.io.InputStream
+
 import com.zto.fire._
 import com.zto.fire.core.Api
 import com.zto.fire.jdbc.JdbcConnectorBridge
@@ -10,7 +12,8 @@ import org.apache.rocketmq.common.message.MessageExt
 import org.apache.rocketmq.spark.{ConsumerStrategy, LocationStrategy}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.apache.spark.streaming.dstream.{DStream, InputDStream}
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.streaming.dstream.{DStream, InputDStream, ReceiverInputDStream}
 
 import scala.reflect.ClassTag
 
@@ -53,6 +56,30 @@ private[fire] class SparkSessionExt(spark: SparkSession) extends Api with JdbcCo
   def createRDD[T: ClassTag](seq: Seq[T], numSlices: Int = sc.defaultParallelism): RDD[T] = {
     this.parallelize[T](seq, numSlices)
   }
+
+  /**
+   * 创建socket流
+   */
+  def createSocketStream[T: ClassTag](
+                                       hostname: String,
+                                       port: Int,
+                                       converter: (InputStream) => Iterator[T],
+                                       storageLevel: StorageLevel
+                                     ): ReceiverInputDStream[T] = {
+    this.ssc.socketStream[T](hostname, port, converter, storageLevel)
+  }
+
+  /**
+   * 创建socket文本流
+   */
+  def createSocketTextStream(
+                              hostname: String,
+                              port: Int,
+                              storageLevel: StorageLevel = StorageLevel.MEMORY_AND_DISK_SER_2
+                            ): ReceiverInputDStream[String] = {
+    this.ssc.socketTextStream(hostname, port, storageLevel)
+  }
+
 
   /**
    * 构建Kafka DStream流
