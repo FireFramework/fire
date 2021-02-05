@@ -6,9 +6,10 @@ import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.conf.{FireDateSchemaConf, FireFrameworkConf}
-import com.zto.fire.common.util.{FireUtils, OSUtils, PropUtils, StringsUtils}
-import com.zto.fire.core.TimeCost
+import com.zto.fire.common.util.{ExceptionBus, FireUtils, OSUtils, PropUtils, StringsUtils}
+import com.zto.fire.predef._
 import com.zto.fire.spark.task.SparkSchedulerManager
+import com.zto.fire.spark.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.util.LongAccumulator
@@ -24,6 +25,7 @@ import scala.collection.mutable
  */
 private[fire] object AccumulatorManager {
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
+  private lazy val executorId = SparkUtils.getExecutorId
   // 累加器名称，含有fire的名字将会显示在webui中
   private[this] val counterLabel = "fire-counter"
   private[fire] val counter = new LongAccumulator
@@ -95,21 +97,42 @@ private[fire] object AccumulatorManager {
   /**
    * 将timeCost累加到日志累加器中
    *
-   * @param timeCost
+   * @param log
    * TimeCost实例对象
    */
-  def addLog(timeCost: TimeCost): Unit = {
+  def addLog(log: String): Unit = {
+    if (isEmpty(log)) return
     if (FireUtils.isSparkEngine) {
       val env = SparkEnv.get
       if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
         val logAccumulator = SparkEnv.get.conf.get(this.logAccumulatorLabel, "")
         if (StringUtils.isNotBlank(logAccumulator)) {
           val logAcc: LogAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(logAccumulator)))
-          logAcc.add(timeCost)
+          logAcc.add(log)
         }
       } else {
-        this.logAccumulator.add(timeCost)
+        this.logAccumulator.add(log)
       }
+    }
+  }
+
+  /**
+   * 添加异常堆栈日志到累加器中
+   *
+   * @param exceptionList
+   * 堆栈列表
+   */
+  def addExceptionLog(exceptionList: List[(String, Throwable)], count: Long): Unit = {
+    exceptionList.foreach(t => this.addLog(exceptionStack(t)))
+
+    /**
+     * 转换throwable为堆栈信息
+     */
+    def exceptionStack(exceptionTuple: (String, Throwable)): String = {
+      s"""
+         |异常信息<< ip：${OSUtils.getIp} executorId：${executorId} 异常时间：${exceptionTuple._1} 累计：${count}次. >>
+         |异常堆栈：${ExceptionBus.stackTrace(exceptionTuple._2)}
+         |""".stripMargin
     }
   }
 

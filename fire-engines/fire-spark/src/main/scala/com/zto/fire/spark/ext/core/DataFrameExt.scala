@@ -12,6 +12,7 @@ import com.zto.fire.spark.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
@@ -24,7 +25,6 @@ import scala.reflect._
  * dataFrame实例
  */
 private[fire] class DataFrameExt(dataFrame: DataFrame) {
-
   // 获取单例的HBaseContext对象
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -33,13 +33,15 @@ private[fire] class DataFrameExt(dataFrame: DataFrame) {
    *
    * @param tmpTableName
    * 临时表名
+   * @param storageLevel
+   * 指定存储级别
    * @return
    * 生成的DataFrame
    */
-  def createOrReplaceTempViewCache(tmpTableName: String): DataFrame = {
+  def createOrReplaceTempViewCache(tmpTableName: String, storageLevel: StorageLevel = StorageLevel.MEMORY_AND_DISK_SER): DataFrame = {
     if (StringUtils.isNotBlank(tmpTableName)) {
       dataFrame.createOrReplaceTempView(tmpTableName)
-      dataFrame.sqlContext.cacheTable(tmpTableName)
+      this.dataFrame.sparkSession.catalog.cacheTable(tmpTableName, storageLevel)
     }
     dataFrame
   }

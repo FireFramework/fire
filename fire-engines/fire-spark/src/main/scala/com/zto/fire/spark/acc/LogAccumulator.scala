@@ -13,7 +13,7 @@ import org.apache.spark.util.AccumulatorV2
   *
   * @author ChengLong 2019-7-23 14:22:16
   */
-private[fire] class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLinkedQueue[String]] {
+private[fire] class LogAccumulator extends AccumulatorV2[String, ConcurrentLinkedQueue[String]] {
   // 用于存放日志的队列
   private val logQueue = new ConcurrentLinkedQueue[String]
   // 判断是否打开日志累加器
@@ -27,7 +27,7 @@ private[fire] class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLin
   /**
     * 用于复制累加器
     */
-  override def copy(): AccumulatorV2[TimeCost, ConcurrentLinkedQueue[String]] = new LogAccumulator
+  override def copy(): AccumulatorV2[String, ConcurrentLinkedQueue[String]] = new LogAccumulator
 
   /**
     * driver端执行有效，用于清空累加器
@@ -37,12 +37,12 @@ private[fire] class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLin
   /**
     * executor端执行，用于收集日志信息
     *
-    * @param timeCost
-    * 日志记录对象
+    * @param log
+    * 日志信息
     */
-  override def add(timeCost: TimeCost): Unit = {
-    if (this.isEnable && timeCost != null) {
-      this.logQueue.add(JSON.toJSONString(timeCost, SerializerFeature.WriteNullStringAsEmpty))
+  override def add(log: String): Unit = {
+    if (this.isEnable) {
+      this.logQueue.add(log)
       this.clear
     }
   }
@@ -53,7 +53,7 @@ private[fire] class LogAccumulator extends AccumulatorV2[TimeCost, ConcurrentLin
     * @param other
     * executor端累加结果
     */
-  override def merge(other: AccumulatorV2[TimeCost, ConcurrentLinkedQueue[String]]): Unit = {
+  override def merge(other: AccumulatorV2[String, ConcurrentLinkedQueue[String]]): Unit = {
     if (other != null && other.value.size() > 0) {
       this.logQueue.addAll(other.value)
       this.clear

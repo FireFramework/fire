@@ -17,4 +17,11 @@ private[fire] class SparkInternalTask(baseSpark: BaseSpark) extends FireInternal
    */
   @Scheduled(fixedInterval = 60000, scope = "all", initialDelay = 60000L, concurrent = false)
   override def jvmMonitor: Unit = super.jvmMonitor
+
+
+  /*@Scheduled(fixedInterval = 10000, scope = "driver", initialDelay = 30000L, concurrent = false)
+  def showException: Unit = {
+    val queue = this.baseSpark.acc.getLog
+    queue.foreach(log => println(log))
+  }*/
 }

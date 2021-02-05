@@ -26,8 +26,8 @@ class ExceptionBusTest {
     })
 
     val t = ExceptionBus.getAndClear
-    assertEquals(t._2.size, 1000)
-    t._2.foreach(t => stackTrace(t._2))
+    assertEquals(t._1.size, 1000)
+    t._1.foreach(t => stackTrace(t._2))
 
     // 上一次获取后queue中的记录数为0
     assertEquals(ExceptionBus.queueSize.get(), 0)

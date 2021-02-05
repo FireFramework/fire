@@ -19,34 +19,33 @@ import org.slf4j.{Logger, LoggerFactory}
 object ExceptionBus {
   private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
   // 用于保存收集而来的异常对象
-  private[this] lazy val queue = EvictingQueue.create[(Long, Throwable)](FireFrameworkConf.exceptionBusSize)
+  @transient
+  private[this] lazy val queue = EvictingQueue.create[(String, Throwable)](FireFrameworkConf.exceptionBusSize)
   // 队列大小，对比queue.size有性能优势
   private[fire] lazy val queueSize = new AtomicInteger(0)
   // 异常总数计数器
   private[fire] lazy val exceptionCount = new AtomicLong(0)
-  // 异常发生的主机ip
-  private[this] lazy val ip = OSUtils.getIp
 
   /**
    * 向异常总线中投递异常对象
    */
   def post(t: Throwable): Boolean = this.synchronized {
     exceptionCount.incrementAndGet()
-    this.queue.offer((currentTime, t))
+    this.queue.offer((DateFormatUtils.formatCurrentDateTime(), t))
   }
 
   /**
    * 获取并清空queue
    *
-   * @return (ip, 异常集合)
+   * @return 异常集合
    */
   @Internal
-  private[fire] def getAndClear: (String, List[(Long, Throwable)]) = this.synchronized {
+  private[fire] def getAndClear: (List[(String, Throwable)], Long) = this.synchronized {
     val list = this.queue.toList
     this.queue.clear()
     queueSize.set(0)
-    this.logger.info(s"成功收集异常总线中的异常对象共计：${list.size}条，异常总线将会被清空.")
-    (ip, list)
+    this.logger.warn(s"成功收集异常总线中的异常对象共计：${list.size}条，异常总线将会被清空.")
+    (list, this.exceptionCount.get())
   }
 
   /**
