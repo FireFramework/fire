@@ -5,7 +5,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Stateme
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf}
-import com.zto.fire.common.util.{DataSourceManager, StringsUtils}
+import com.zto.fire.common.util.{DataSourceManager, PropUtils, StringsUtils}
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.predef._
@@ -38,6 +38,10 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
    */
   override protected[fire] def open(): Unit = {
     tryWithLog {
+      PropUtils.setProperty("spark.db.jdbc.url", "jdbc:clickhouse://192.168.127.160:8123/default")
+      PropUtils.setProperty("spark.db.jdbc.driver", "ru.yandex.clickhouse.ClickHouseDriver")
+      PropUtils.setProperty("spark.db.jdbc.user", "default")
+      PropUtils.setProperty("spark.db.jdbc.password", "default")
       // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
       this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
       this.url = if (StringUtils.isBlank(FireJdbcConf.url(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.url)) this.conf.url else FireJdbcConf.url(keyNum)
@@ -154,6 +158,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
     var stat: PreparedStatement = null
 
     var batch = 0
+    var count = 0
     tryWithFinally {
       conn.setAutoCommit(false)
       stat = conn.prepareStatement(sql)
@@ -175,10 +180,11 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       // 执行批量更新
       val retVal = stat.executeBatch
       if (commit) conn.commit()
+      count = retVal.sum
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
-    }(this.logger, s"executeBatch success. keyNum: ${keyNum} count: $batch \n${this.sqlBuriedPoint(sql)}",
+    }(this.logger, s"executeBatch success. keyNum: ${keyNum} count: $count \n${this.sqlBuriedPoint(sql)}",
       s"executeBatch failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
   }
 
