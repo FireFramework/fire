@@ -49,7 +49,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
   override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
     this.baseSpark.onExecutorAdded(executorAdded)
     if (this.baseSpark.jobType != JobType.SPARK_CORE) this.needRegister.compareAndSet(false, true)
-    this.logger.info(s"executor[${executorAdded.executorId}] added. host: [${executorAdded.executorInfo.executorHost}].", this.module)
+    this.logger.debug(s"executor[${executorAdded.executorId}] added. host: [${executorAdded.executorInfo.executorHost}].", this.module)
   }
 
   /**
@@ -57,7 +57,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
    */
   override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
     this.baseSpark.onExecutorRemoved(executorRemoved)
-    this.logger.info(s"executor[${executorRemoved.executorId}] removed. reason: [${executorRemoved.reason}].", this.module)
+    this.logger.debug(s"executor[${executorRemoved.executorId}] removed. reason: [${executorRemoved.reason}].", this.module)
   }
 
   /**

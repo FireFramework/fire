@@ -1,6 +1,6 @@
 package com.zto.fire.jdbc
 
-import java.sql.Connection
+import java.sql.{Connection, ResultSet}
 
 import scala.reflect.ClassTag
 
@@ -98,7 +98,7 @@ private[fire] trait JdbcFunctions {
    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    */
-  def executeQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null, keyNum: Int = 1): Unit = {
+  def executeQueryCall(sql: String, params: Seq[Any] = null, callback: ResultSet => Int = null, connection: Connection = null, keyNum: Int = 1): Unit = {
     JdbcConnector(keyNum = keyNum).executeQueryCall(sql, params, callback, connection)
   }
 }

@@ -12,7 +12,7 @@ import com.zto.fire.common.enu.DataSource
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
+import scala.collection.{immutable, mutable}
 import scala.collection.mutable.Map
 
 /**
@@ -107,7 +107,7 @@ object PropUtils {
    * 配置的value
    */
   def getProperty(key: String): String = {
-    if (!this.isMerge.get && "spark".equals(this.engine)) this.mergeSparkConf
+    if (this.isMerge.compareAndSet(false, true)) this.mergeEngineConf
     if (this.compatible) {
       // 兼容配置key的前缀变化，适配flink.为前缀的配置项
       val value = this.props.getProperty(key.replaceFirst("spark", this.engine))
@@ -433,10 +433,13 @@ object PropUtils {
   /**
    * 合并Conf中的配置信息
    */
-  def mergeSparkConf: Unit = {
-    if (!this.compatible && "spark".equals(this.engine)) {
-      // DataPool.mergeConf
-    }
+  private[this] def mergeEngineConf: Unit = {
+    logger.info("开始合并计算引擎所有配置 ...")
+    val clazz = Class.forName("com.zto.fire.core.conf.EngineConfHelper")
+    val method = clazz.getDeclaredMethod("getEngineConf")
+    val map = method.invoke(null).asInstanceOf[immutable.Map[String, String]]
+    if (map.nonEmpty) this.setProperties(map)
+    logger.info(s"完成计算引擎配置信息的同步，总计：${map.size}条")
   }
 
   /**

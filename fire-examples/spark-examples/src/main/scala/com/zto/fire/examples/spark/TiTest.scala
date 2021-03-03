@@ -1,7 +1,15 @@
 package com.zto.fire.examples.spark
 
+import java.sql.ResultSet
+
 import com.zto.fire._
+import com.zto.fire.common.conf.FireJdbcConf
+import com.zto.fire.core.conf.EngineConf
+import com.zto.fire.examples.bean.Student
+import com.zto.fire.jdbc.{JdbcConnector, QueryCallback}
 import com.zto.fire.spark.BaseSparkCore
+
+import scala.collection.immutable
 
 /**
  *
@@ -12,7 +20,7 @@ import com.zto.fire.spark.BaseSparkCore
  */
 object TiTest extends BaseSparkCore {
 
-  override def process: Unit = {
+  def process1: Unit = {
     val tiDF = this.spark.sql(
       """
         |select
@@ -142,8 +150,7 @@ object TiTest extends BaseSparkCore {
         |	forecast_last_center_pull_site_id,
         |	rec_kpi_transfer_center_id,
         |	rec_kpi_center_id
-        |from rtdb.zto_ss_bill_order_detail_base t
-        |where t.order_create_date>='2021-01-19' AND t.order_create_date<'2021-02-10'
+        |from tmp.tidb_to_clickhouse t
         |""".stripMargin).cache()
     println("总记录数：" + tiDF.count())
     /*this.spark.sql("use tmp")
@@ -151,8 +158,31 @@ object TiTest extends BaseSparkCore {
     tiDF.coalesce(99).jdbcBatchUpdate("insert into default.zto_ss_bill_order_detail_base values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", batch = 3000)
   }
 
+  override def process: Unit = {
+    val df = this.spark.createDataFrame(Student.newStudentList(), classOf[Student])
+    df.repartition(10).foreachPartition(it => {
+        JdbcConnector.executeQueryCall("select count(1) from default.zto_ss_bill_order_detail_base", callback = rs => {
+          println("结果集：" + rs)
+          1
+        })
+    })
+    println("driver:" + FireJdbcConf.driverClass(1))
+    Thread.currentThread().join()
+  }
+
+  def getA(a: Int): String = {
+    println("执行getA")
+    "执行getA"
+  }
+
   def main(args: Array[String]): Unit = {
-    this.init()
-    this.stop
+    /*this.init()
+    this.stop*/
+    var a = 1
+    tryWithLog {
+      println("执行block")
+      a = a + 1
+      println(a)
+    } (this.logger, getA(a))
   }
 }

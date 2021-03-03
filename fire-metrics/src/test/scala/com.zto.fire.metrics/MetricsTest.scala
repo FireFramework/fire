@@ -5,6 +5,9 @@ import java.util.concurrent.TimeUnit
 
 import com.codahale.metrics.jvm.{FileDescriptorRatioGauge, GarbageCollectorMetricSet, MemoryUsageGaugeSet, ThreadStatesGaugeSet}
 import com.codahale.metrics.{ConsoleReporter, MetricRegistry, Slf4jReporter}
+import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
+import org.junit.Test
 
 /**
  * Metrics模块测试
@@ -63,4 +66,32 @@ class MetricsTest {
 
     Thread.sleep(100000)
   }
+
+  @Test
+  def testAntlr: Unit = {
+    val input = CharStreams.fromString(
+      """
+        |a=(1+2+3)*10/5
+        |a
+        |""".stripMargin)
+    val lexer = new HelloLexer(input)
+    val tokens = new CommonTokenStream(lexer)
+    val parser = new HelloParser(tokens)
+    val tree = parser.prog()
+    val visitor = new HelloMyVisitor()
+    visitor.visit(tree)
+  }
+
+  @Test
+  def testArrayInit: Unit = {
+    val input = CharStreams.fromString("{1,2,{3}}")
+    val lexer = new ArrayInitLexer(input)
+    val tokens = new CommonTokenStream(lexer)
+    val parser = new ArrayInitParser(tokens)
+    val tree = parser.init()
+    val walker = new ParseTreeWalker
+    walker.walk(new MyArrayInitListener(), tree)
+    println()
+  }
+
 }

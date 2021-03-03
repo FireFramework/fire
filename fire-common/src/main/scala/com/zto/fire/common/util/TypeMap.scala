@@ -32,4 +32,5 @@ trait TypeMap {
   type JLinkedList[E] = java.util.LinkedList[E]
   type JQueue[E] = java.util.Queue[E]
   type JPriorityQueue[E] = java.util.PriorityQueue[E]
+  type JCollections = java.util.Collections
 }

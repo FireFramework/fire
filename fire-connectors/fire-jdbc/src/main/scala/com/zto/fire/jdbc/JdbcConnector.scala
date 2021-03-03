@@ -5,7 +5,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Stateme
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf}
-import com.zto.fire.common.util.{DataSourceManager, PropUtils, StringsUtils}
+import com.zto.fire.common.util.{DataSourceManager, StringsUtils}
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.predef._
@@ -38,10 +38,6 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
    */
   override protected[fire] def open(): Unit = {
     tryWithLog {
-      PropUtils.setProperty("spark.db.jdbc.url", "jdbc:clickhouse://192.168.127.160:8123/default")
-      PropUtils.setProperty("spark.db.jdbc.driver", "ru.yandex.clickhouse.ClickHouseDriver")
-      PropUtils.setProperty("spark.db.jdbc.user", "default")
-      PropUtils.setProperty("spark.db.jdbc.password", "default")
       // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
       this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
       this.url = if (StringUtils.isBlank(FireJdbcConf.url(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.url)) this.conf.url else FireJdbcConf.url(keyNum)
@@ -203,11 +199,9 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
   def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null): List[T] = {
     val listBuffer = ListBuffer[T]()
 
-    this.executeQueryCall(sql, params, new QueryCallback {
-      override def process(rs: ResultSet): Int = {
-        listBuffer ++= DBUtils.dbResultSet2Bean(rs, clazz)
-        listBuffer.size
-      }
+    this.executeQueryCall(sql, params, rs => {
+      listBuffer ++= DBUtils.dbResultSet2Bean(rs, clazz)
+      listBuffer.size
     }, connection)
 
     listBuffer.toList
@@ -225,7 +219,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
    * @param connection
    * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
    */
-  def executeQueryCall(sql: String, params: Seq[Any] = null, callback: QueryCallback = null, connection: Connection = null): Unit = {
+  def executeQueryCall(sql: String, params: Seq[Any] = null, callback: ResultSet => Int = null, connection: Connection = null): Unit = {
     val conn = if (connection == null) this.getConnection else connection
     var stat: PreparedStatement = null
     var rs: ResultSet = null
@@ -243,7 +237,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       rs = stat.executeQuery
 
       if (rs != null && callback != null) {
-        count = callback.process(rs)
+        count = callback(rs)
       }
     } {
       this.release(sql, conn, stat, rs)
@@ -303,26 +297,6 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
 
 }
 
-
-/**
- * 内部回调trait，用于处理ResultSet结果集
- *
- * @author ChengLong
- *         2016-11-16 09:22:11
- */
-trait QueryCallback {
-
-  /**
-   * 回调方法，对返回结果进行处理
-   *
-   * @param rs
-   * 查询的结果集
-   * @return
-   * 结果集记录数
-   */
-  @throws[Exception]
-  def process(rs: ResultSet): Int
-}
 
 /**
  * jdbc最基本的配置信息，如果配置文件中有，则会覆盖代码中的配置

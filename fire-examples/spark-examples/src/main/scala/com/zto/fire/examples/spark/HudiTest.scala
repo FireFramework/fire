@@ -59,9 +59,10 @@ object HudiTest extends BaseSparkCore {
       // 设置要同步的hive库名
       .option(HIVE_DATABASE_OPT_KEY, "tmp")
       // 设置要同步的hive表名
-      .option(HIVE_TABLE_OPT_KEY, "t_hudi_student")
+      .option(HIVE_TABLE_OPT_KEY, "t_hudi")
       // 设置数据集注册并同步到hive
       .option(HIVE_SYNC_ENABLED_OPT_KEY, "true")
+      .option(META_SYNC_ENABLED_OPT_KEY, "true")
       // 设置当分区变更时，当前数据的分区目录是否变更
       .option(HoodieIndexConfig.BLOOM_INDEX_UPDATE_PARTITION_PATH, "true")
       // 设置要同步的分区列名
@@ -79,7 +80,7 @@ object HudiTest extends BaseSparkCore {
       .option("hoodie.insert.shuffle.parallelism", "2")
       .option("hoodie.upsert.shuffle.parallelism", "2")
       .mode(Overwrite)
-      .save("hdfs://ns1/tmp/hudi")
+      .save("hdfs://ns1/user/hive/warehouse/tmp.db/t_hudi")
   }
 
   /**
@@ -135,6 +136,21 @@ object HudiTest extends BaseSparkCore {
   }
 
   /**
+   * 从hudi中读取数据
+   */
+  def readHDFS: Unit = {
+    val roViewDF = this.spark
+      .read.format("org.apache.hudi")
+      // /*的个数与PARTITIONPATH_FIELD_OPT_KEY指定的目录级数有关，如果分区路径是：region/country/city，则是四个/*
+      // 如果分区路径是ds=20200208这种，则是两个/*。所以这个 /*数=PARTITIONPATH_FIELD_OPT_KEY+1
+      .load("hdfs://ns1/tmp/hudi2/*")
+    //load(basePath) 如果使用 "/partitionKey=partitionValue" 文件夹命名格式，Spark将自动识别分区信息
+
+    roViewDF.createOrReplaceTempView(tableName)
+    spark.sql(s"select * from $tableName order by id").show(false)
+  }
+
+  /**
    * 增量查询
    */
   def readNew: Unit = {
@@ -158,6 +174,7 @@ object HudiTest extends BaseSparkCore {
     println("step 2.读取删除后的数据")
     this.read*/
     this.insertHive
+    // this.readHDFS
   }
 
   def main(args: Array[String]): Unit = {

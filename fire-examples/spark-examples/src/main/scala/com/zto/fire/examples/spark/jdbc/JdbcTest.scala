@@ -12,18 +12,18 @@ import com.zto.fire.spark.BaseSparkCore
 import org.apache.spark.sql.SaveMode
 
 /**
-  * Spark jdbc操作
-  *
-  * @author ChengLong 2019-6-17 15:17:38
-  */
+ * Spark jdbc操作
+ *
+ * @author ChengLong 2019-6-17 15:17:38
+ */
 object JdbcTest extends BaseSparkCore {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "t_cluster_info"
   lazy val tableName3 = "t_cluster_status"
 
   /**
-    * 使用jdbc方式对关系型数据库进行增删改操作
-    */
+   * 使用jdbc方式对关系型数据库进行增删改操作
+   */
   def testJdbcUpdate: Unit = {
     // 执行insert操作
     val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
@@ -60,20 +60,18 @@ object JdbcTest extends BaseSparkCore {
 
 
   /**
-    * 使用jdbc方式对关系型数据库进行查询操作
-    */
+   * 使用jdbc方式对关系型数据库进行查询操作
+   */
   def testJdbcQuery: Unit = {
     val sql = s"select * from $tableName where id in (?, ?, ?)"
 
     // 执行sql查询，并对查询结果集进行处理
-    this.fire.jdbcQueryCall(sql, Seq(1, 2, 3), new QueryCallback {
-      override def process(rs: ResultSet): Int = {
-        while (rs.next()) {
-          // 对每条记录进行处理
-          println("driver=> id=" + rs.getLong(1))
-        }
-        1
+    this.fire.jdbcQueryCall(sql, Seq(1, 2, 3), callback = rs => {
+      while (rs.next()) {
+        // 对每条记录进行处理
+        println("driver=> id=" + rs.getLong(1))
       }
+      1
     })
 
     // 将查询结果集以List[JavaBean]方式返回
@@ -95,8 +93,8 @@ object JdbcTest extends BaseSparkCore {
   }
 
   /**
-    * 使用spark方式对表进行数据加载操作
-    */
+   * 使用spark方式对表进行数据加载操作
+   */
   def testTableLoad: Unit = {
     // 一次加载整张的jdbc小表，注：大表严重不建议使用该方法
     this.fire.jdbcTableLoadAll(this.tableName).show(100, false)
@@ -108,8 +106,8 @@ object JdbcTest extends BaseSparkCore {
   }
 
   /**
-    * 使用spark方式批量写入DataFrame数据到关系型数据库
-    */
+   * 使用spark方式批量写入DataFrame数据到关系型数据库
+   */
   def testTableSave: Unit = {
     // 批量将DataFrame数据写入到对应结构的关系型表中
     val df = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])
@@ -140,32 +138,26 @@ object JdbcTest extends BaseSparkCore {
   }
 
   /**
-    * 在executor中执行jdbc操作
-    */
+   * 在executor中执行jdbc操作
+   */
   def testExecutor: Unit = {
-    JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
-      override def process(rs: ResultSet): Int = {
-        // this.mark()
-        Thread.sleep(1000)
-        // this.log(s"=============driver123 $tableName2=============")
-        1
-      }
+    JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = rs => {
+      // this.mark()
+      Thread.sleep(1000)
+      // this.log(s"=============driver123 $tableName2=============")
+      1
     }, keyNum = 3)
-    JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
-      override def process(rs: ResultSet): Int = {
-        // this.log(s"=============driver $tableName2=============")
-        1
-      }
+    JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = rs => {
+      // this.log(s"=============driver $tableName2=============")
+      1
     }, keyNum = 5)
     this.logger.info("driver sql执行成功")
     val rdd = this.fire.createRDD(1 to 3, 3)
     rdd.foreachPartition(it => {
       it.foreach(i => {
-        JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
-          override def process(rs: ResultSet): Int = {
-            // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
-            1
-          }
+        JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = rs => {
+          // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+          1
         }, keyNum = 3)
       })
       this.logger.info("sql执行成功")
@@ -174,11 +166,9 @@ object JdbcTest extends BaseSparkCore {
     val rdd2 = this.fire.createRDD(1 to 3, 3)
     rdd2.foreachPartition(it => {
       it.foreach(i => {
-        JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, new QueryCallback {
-          override def process(rs: ResultSet): Int = {
-            // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
-            1
-          }
+        JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = rs => {
+          // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+          1
         }, keyNum = 5)
         this.logger.info("sql执行成功")
       })
