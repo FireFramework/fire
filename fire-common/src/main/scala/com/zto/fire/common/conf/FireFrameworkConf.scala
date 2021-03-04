@@ -20,6 +20,8 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_THREAD_POOL_SCHEDULE_SIZE = "spark.fire.thread.pool.schedule.size"
   // 是否启用fire框架restful服务
   lazy val SPARK_FIRE_REST_ENABLE = "spark.fire.rest.enable"
+  lazy val FIRE_CONF_DEPLOY_ENGINE = "spark.fire.conf.deploy.engine"
+  lazy val ENGINE_CONF_HELPER = "com.zto.fire.core.conf.EngineConfHelper"
   // rest接口权限认证
   lazy val SPARK_FIRE_REST_FILTER_ENABLE = "spark.fire.rest.filter.enable"
   // 用于配置是否关闭fire内置的所有累加器
@@ -105,7 +107,8 @@ private[fire] object FireFrameworkConf {
    * 不同数据配置使用统一的前缀：spark.fire.buried_point.datasource.map.
    */
   def buriedPointDatasourceMap: Map[String, String] = PropUtils.sliceKeys(this.FIRE_BURIED_POINT_DATASOURCE_MAP)
-
+  // 不同引擎配置获取具体的实现
+  lazy val confDeployEngine = PropUtils.getString(this.FIRE_CONF_DEPLOY_ENGINE, "")
   // 定时解析埋点SQL的执行频率（s）
   lazy val buriedPointDatasourcePeriod = PropUtils.getInt(this.FIRE_BURIED_POINT_DATASOURCE_PERIOD, 60)
   // 定时解析埋点SQL的初始延迟（s）

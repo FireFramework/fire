@@ -1,4 +1,4 @@
-package com.zto.fire.common.conf
+package com.zto.fire.jdbc.conf
 
 import com.zto.fire.common.util.PropUtils
 

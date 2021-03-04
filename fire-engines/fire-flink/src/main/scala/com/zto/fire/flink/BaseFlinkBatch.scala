@@ -1,8 +1,9 @@
 package com.zto.fire.flink
 
-import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{OSUtils, PropUtils}
+import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.java.utils.ParameterTool

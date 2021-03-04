@@ -10,13 +10,13 @@ import java.util.{HashMap => JHashMap, Map => JMap}
 import com.alibaba.fastjson.JSON
 import com.google.common.collect.Maps
 import com.zto.fire.common.anno.{FieldName, Internal}
-import com.zto.fire.common.conf.FireHBaseConf
-import com.zto.fire.common.conf.FireHBaseConf.{familyName, _}
+import com.zto.fire.hbase.conf.FireHBaseConf.{familyName, _}
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.util.{DataSourceManager, _}
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.hbase.anno.HConfig
 import com.zto.fire.hbase.bean.{HBaseBaseBean, MultiVersionsBean}
+import com.zto.fire.hbase.conf.FireHBaseConf
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration

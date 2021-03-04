@@ -1,7 +1,8 @@
 package com.zto.fire.spark.ext.provider
 
 import com.zto.fire._
-import com.zto.fire.common.conf.FireSparkConf
+import com.zto.fire.common.conf.FireHiveConf
+import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.udf.UDFs
 import com.zto.fire.spark.util.SparkSingletonFactory
 import org.apache.spark.rdd.RDD
@@ -189,7 +190,7 @@ private[ext] trait SqlProvider extends SparkProvider {
    * @param partitionName
    * 分区字段名称，默认ds
    */
-  def addPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
+  def addPartition(tableName: String, partition: String, partitionName: String = FireHiveConf.partitionName): Unit = {
     SparkSingletonFactory.getSparkSession.sqlContext.addPartition(tableName, partition, partitionName)
   }
 
@@ -201,7 +202,7 @@ private[ext] trait SqlProvider extends SparkProvider {
    * @param partition
    * 分区
    */
-  def dropPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
+  def dropPartition(tableName: String, partition: String, partitionName: String = FireHiveConf.partitionName): Unit = {
     SparkSingletonFactory.getSparkSession.sqlContext.dropPartition(tableName, partition, partitionName)
   }
 
@@ -267,7 +268,7 @@ private[ext] trait SqlProvider extends SparkProvider {
    * @param cols
    * 多个列，逗号分隔
    */
-  def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = FireSparkConf.partitionName): Unit = {
+  def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = FireHiveConf.partitionName): Unit = {
     SparkSingletonFactory.getSparkSession.sqlContext.insertIntoPartition(srcTableName, destTableName, ds, cols, partitionName)
   }
 
@@ -281,7 +282,7 @@ private[ext] trait SqlProvider extends SparkProvider {
    * @param querySQL
    * 查询语句
    */
-  def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = FireSparkConf.partitionName, overwrite: Boolean = false): Unit = {
+  def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = FireHiveConf.partitionName, overwrite: Boolean = false): Unit = {
     SparkSingletonFactory.getSparkSession.sqlContext.insertIntoPartitionAsSelect(destTableName, ds, querySQL, partitionName, overwrite)
   }
 
@@ -293,7 +294,7 @@ private[ext] trait SqlProvider extends SparkProvider {
    * @param querySQL
    * 查询sql语句
    */
-  def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = FireSparkConf.partitionName): Unit = {
+  def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = FireHiveConf.partitionName): Unit = {
     SparkSingletonFactory.getSparkSession.sqlContext.insertIntoDymPartitionAsSelect(destTableName, querySQL, partitionName)
   }
 

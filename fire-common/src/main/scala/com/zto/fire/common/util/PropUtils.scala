@@ -435,7 +435,7 @@ object PropUtils {
    */
   private[this] def mergeEngineConf: Unit = {
     logger.info("开始合并计算引擎所有配置 ...")
-    val clazz = Class.forName("com.zto.fire.core.conf.EngineConfHelper")
+    val clazz = Class.forName(FireFrameworkConf.ENGINE_CONF_HELPER)
     val method = clazz.getDeclaredMethod("getEngineConf")
     val map = method.invoke(null).asInstanceOf[immutable.Map[String, String]]
     if (map.nonEmpty) this.setProperties(map)
@@ -493,61 +493,6 @@ object PropUtils {
         }
       }
     }
-  }
-
-
-  /**
-   * 获取所有的数据源信息
-   *
-   * @return
-   * 数据源列表
-   */
-  private[fire] def getDatasource: mutable.HashMap[DataSource, String] = {
-    val dataSourceMap = new mutable.HashMap[DataSource, String]()
-
-    /**
-     * 相同数据源进行merge操作
-     */
-    def merge(datasource: DataSource, key: String, datasourceKey: String): Unit = {
-      if (key.contains(datasourceKey.replaceFirst("spark", this.engine))) {
-        val currentConf = this.getString(key)
-        mergeMap(datasource, currentConf)
-      }
-    }
-
-    /**
-     * 合并map的value
-     */
-    def mergeMap(dataSource: DataSource, appendValue: String): Unit = {
-      val value = dataSourceMap.getOrElse(dataSource, "")
-      if (StringUtils.isNotBlank(value) && !value.contains(appendValue)) dataSourceMap.put(dataSource, value + " | " + appendValue) else dataSourceMap.put(dataSource, appendValue)
-    }
-
-    this.props.keySet().map(key => key.toString).filter(key => !key.contains("cluster.map")).foreach(key => {
-      // 配置的Hive源
-      merge(DataSource.HIVE, key, FireHiveConf.HIVE_CLUSTER)
-      // 配置的HBase源
-      merge(DataSource.HBASE, key, FireHBaseConf.HBASE_CLUSTER_URL)
-      // 配置的Kafka源
-      merge(DataSource.KAFKA, key, FireKafkaConf.KAFKA_BROKERS_NAME)
-      // 配置的RocketMQ源
-      merge(DataSource.ROCKETMQ, key, FireRocketMQConf.ROCKET_BROKERS_NAME)
-      // JDBC源
-      if (key.contains(FireJdbcConf.SPARK_DB_JDBC_URL_KEY.replaceFirst("spark", this.engine))) {
-        val value = this.getString(key)
-        if (value.contains("mysql")) {
-          mergeMap(DataSource.MYSQL, value)
-        } else if (value.contains("oracle")) {
-          mergeMap(DataSource.ORACLE, value)
-        } else if (value.contains("tidb")) {
-          mergeMap(DataSource.TIDB, value)
-        } else if (value.contains("sqlserver")) {
-          mergeMap(DataSource.SQLSERVER, value)
-        }
-      }
-    })
-
-    dataSourceMap
   }
 
 }

@@ -2,10 +2,10 @@ package com.zto.fire.spark.connector
 
 import java.nio.charset.StandardCharsets
 
-import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.hbase.conf.FireHBaseConf
 import com.zto.fire.hbase.utils.HBaseUtils
 import com.zto.fire.predef._
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}

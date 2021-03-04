@@ -3,7 +3,7 @@ package com.zto.fire.spark.sink
 import java.util.Objects
 
 import com.zto.fire._
-import com.zto.fire.common.conf.FireJdbcConf
+import com.zto.fire.jdbc.conf.FireJdbcConf
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.DataFrame
 

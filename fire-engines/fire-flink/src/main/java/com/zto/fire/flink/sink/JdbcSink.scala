@@ -1,8 +1,8 @@
 package com.zto.fire.flink.sink
 
 import com.zto.fire.predef._
-import com.zto.fire.common.conf.FireJdbcConf
 import com.zto.fire.jdbc.JdbcConnector
+import com.zto.fire.jdbc.conf.FireJdbcConf
 
 /**
  * flink jdbc sink组件，底层基于JdbcConnector

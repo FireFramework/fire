@@ -4,9 +4,10 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Stateme
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.anno.Internal
-import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf}
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.util.{DataSourceManager, StringsUtils}
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
+import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils

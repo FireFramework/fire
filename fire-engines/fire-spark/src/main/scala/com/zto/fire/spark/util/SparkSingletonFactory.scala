@@ -1,9 +1,10 @@
 package com.zto.fire.spark.util
 
-import com.zto.fire.common.conf.{FireFrameworkConf, FireHBaseConf, FireKuduConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireKuduConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.core.util.SingletonFactory
 import com.zto.fire.hbase.HBaseConnector
+import com.zto.fire.hbase.conf.FireHBaseConf
 import com.zto.fire.spark.connector.HBaseBulkConnector
 import com.zto.fire.spark.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils

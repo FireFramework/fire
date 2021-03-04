@@ -4,9 +4,10 @@ import java.sql.ResultSet
 import java.util.{Date, Properties}
 
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.conf.{FireFrameworkConf, FireJdbcConf}
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.DataSource
 import com.zto.fire.common.util.ReflectionUtils
+import com.zto.fire.jdbc.conf.FireJdbcConf
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable.ListBuffer

@@ -7,7 +7,7 @@ package com.zto.fire.common.util
  * @since 2.0.0
  * @create 2020-12-16 15:40
  */
-trait TypeMap {
+trait JavaTypeMap {
   // Java API库映射
   type JInt = java.lang.Integer
   type JLong = java.lang.Long

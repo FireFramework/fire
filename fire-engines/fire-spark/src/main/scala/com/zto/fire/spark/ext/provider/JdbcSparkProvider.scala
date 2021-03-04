@@ -4,8 +4,8 @@ import java.sql.Connection
 import java.util.Properties
 
 import com.zto.fire._
-import com.zto.fire.common.conf.FireJdbcConf
 import com.zto.fire.jdbc.JdbcConnector
+import com.zto.fire.jdbc.conf.FireJdbcConf
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Encoders, SaveMode}

@@ -5,9 +5,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf}
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.util.{FireUtils, PropUtils, ReflectionUtils, ValueUtils}
 import com.zto.fire.flink.bean.FlinkTableSchema
+import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.ext.function.FireMapFunction
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.predef._

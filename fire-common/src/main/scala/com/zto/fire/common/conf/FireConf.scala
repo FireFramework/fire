@@ -14,18 +14,10 @@ private[fire] class FireConf {
 
   // Fire框架相关配置
   val frameworkConf = FireFrameworkConf
-  // flink相关配置
-  val flinkConf = FireFlinkConf
-  // 关系型数据库连接池相关配置
-  val jdbcConf = FireJdbcConf
-  // Spark相关常量配置
-  val sparkConf = FireSparkConf
   // kafka相关配置
   val kafkaConf = FireKafkaConf
   // rocketMQ相关配置
   val rocketMQConf = FireRocketMQConf
-  // hbase相关配置
-  val hbaseConf = FireHBaseConf
   // impala相关配置
   val kuduConf = FireKuduConf
   // 周期相关字符串
@@ -48,8 +40,6 @@ private[fire] class FireConf {
   val hiveConf = FireHiveConf
   // 预设状态
   val statusConf = FireStatusConf
-  // HDFS配置
-  val hdfsConf = FireHDFSConf
 }
 
 object FireConf extends FireConf

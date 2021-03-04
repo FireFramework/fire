@@ -4,8 +4,9 @@ import java.lang.reflect.Field
 
 import com.zto.fire._
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf, FireSparkConf, FireStringConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf, FireStringConf}
 import com.zto.fire.common.util._
+import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
@@ -232,8 +233,8 @@ object SparkUtils {
    * @return
    * 库名.表名
    */
-  def getFullTableName(dbName: String = FireSparkConf.defaultDB, tableName: String): String = {
-    val dbNameStr = if (StringUtils.isBlank(dbName)) FireSparkConf.defaultDB else dbName
+  def getFullTableName(dbName: String = FireHiveConf.defaultDB, tableName: String): String = {
+    val dbNameStr = if (StringUtils.isBlank(dbName)) FireHiveConf.defaultDB else dbName
     s"$dbNameStr.$tableName"
   }
 

@@ -1,4 +1,4 @@
-package com.zto.fire.common.conf
+package com.zto.fire.flink.conf
 
 import com.zto.fire.common.util.PropUtils
 

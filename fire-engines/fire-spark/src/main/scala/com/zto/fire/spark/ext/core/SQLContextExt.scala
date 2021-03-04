@@ -3,8 +3,10 @@ package com.zto.fire.spark.ext.core
 import java.util.Properties
 
 import com.zto.fire._
-import com.zto.fire.common.conf.{FireJdbcConf, FireKuduConf, FireSparkConf}
+import com.zto.fire.common.conf.{FireHiveConf, FireKuduConf}
+import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils
+import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.ext.module.KuduContextExt
 import com.zto.fire.spark.util.{KuduUtils, SparkSingletonFactory}
 import org.apache.commons.lang3.StringUtils
@@ -189,7 +191,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
   def addPartitions(tableName: String, partitions: String*): Unit = {
     if (noEmpty(tableName, partitions)) {
       partitions.foreach(ds => {
-        this.addPartition(tableName, ds, FireSparkConf.partitionName)
+        this.addPartition(tableName, ds, FireHiveConf.partitionName)
       })
     }
   }
@@ -204,7 +206,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * @param partitionName
    * 分区字段名称，默认ds
    */
-  def addPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
+  def addPartition(tableName: String, partition: String, partitionName: String = FireHiveConf.partitionName): Unit = {
     if (noEmpty(tableName, partition, partitionName)) {
       sqlContext.sql(s"ALTER TABLE $tableName ADD IF NOT EXISTS partition($partitionName='$partition')")
     }
@@ -218,7 +220,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * @param partition
    * 分区
    */
-  def dropPartition(tableName: String, partition: String, partitionName: String = FireSparkConf.partitionName): Unit = {
+  def dropPartition(tableName: String, partition: String, partitionName: String = FireHiveConf.partitionName): Unit = {
     if (noEmpty(tableName, partition, partitionName)) {
       sqlContext.sql(s"ALTER TABLE $tableName DROP IF EXISTS partition($partitionName='$partition')")
     }
@@ -235,7 +237,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
   def dropPartitions(tableName: String, partitions: String*): Unit = {
     if (StringUtils.isNotBlank(tableName) && partitions != null) {
       partitions.foreach(ds => {
-        this.dropPartition(tableName, ds, FireSparkConf.partitionName)
+        this.dropPartition(tableName, ds, FireHiveConf.partitionName)
       })
     }
   }
@@ -307,7 +309,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * @param cols
    * 多个列，逗号分隔
    */
-  def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = FireSparkConf.partitionName): Unit = {
+  def insertIntoPartition(srcTableName: String, destTableName: String, ds: String, cols: String, partitionName: String = FireHiveConf.partitionName): Unit = {
     sqlContext.sql(
       s"""
          |INSERT INTO TABLE $destTableName partition($partitionName='$ds')
@@ -326,7 +328,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * @param querySQL
    * 查询语句
    */
-  def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = FireSparkConf.partitionName, overwrite: Boolean = false): Unit = {
+  def insertIntoPartitionAsSelect(destTableName: String, ds: String, querySQL: String, partitionName: String = FireHiveConf.partitionName, overwrite: Boolean = false): Unit = {
     val overwriteVal = if (overwrite) "OVERWRITE" else "INTO"
     sqlContext.sql(
       s"""
@@ -343,7 +345,7 @@ private[fire] class SQLContextExt(sqlContext: SQLContext) {
    * @param querySQL
    * 查询语句
    */
-  def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = FireSparkConf.partitionName): Unit = {
+  def insertIntoDymPartitionAsSelect(destTableName: String, querySQL: String, partitionName: String = FireHiveConf.partitionName): Unit = {
     sqlContext.sql(
       s"""
          |INSERT INTO TABLE $destTableName partition($partitionName)

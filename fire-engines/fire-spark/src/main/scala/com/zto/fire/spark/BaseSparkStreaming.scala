@@ -4,7 +4,7 @@ package com.zto.fire.spark
 import com.alibaba.fastjson.JSON
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
-import com.zto.fire.common.conf.{FireFrameworkConf, FireKafkaConf, FireSparkConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireKafkaConf}
 import com.zto.fire.common.enu.{ErrorCode, JobType, RequestMethod}
 import com.zto.fire.common.util.{KafkaUtils, PropUtils}
 import com.zto.fire.core.rest.RestCase
@@ -14,6 +14,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import spark.{Request, Response}
 import com.zto.fire._
+import com.zto.fire.spark.conf.FireSparkConf
 
 
 /**

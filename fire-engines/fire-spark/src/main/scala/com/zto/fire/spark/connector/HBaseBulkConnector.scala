@@ -1,11 +1,12 @@
 package com.zto.fire.spark.connector
 
 import com.zto.fire.common.anno.Internal
-import com.zto.fire.common.conf.{FireHBaseConf, FireSparkConf}
 import com.zto.fire.core.connector.{Connector, ConnectorFactory}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.{HBaseBaseBean, MultiVersionsBean}
+import com.zto.fire.hbase.conf.FireHBaseConf
 import com.zto.fire.predef._
+import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration

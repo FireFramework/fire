@@ -12,6 +12,6 @@ import scala.util.control.Breaks
  * @since 1.0.0
  * @create 2020-12-16 16:23
  */
-trait Tools extends Breaks with TypeMap with ValueCheck with FireFunctions with JavaExt with ScalaExt with ScalaUtils with WrapAsScala with WrapAsJava {
+trait Tools extends Breaks with JavaTypeMap with ValueCheck with FireFunctions with JavaExt with ScalaExt with ScalaUtils with WrapAsScala with WrapAsJava {
 
 }

@@ -1,9 +1,9 @@
 package com.zto.fire.flink.sink
 
 import com.zto.fire._
-import com.zto.fire.common.conf.FireHBaseConf
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.hbase.conf.FireHBaseConf
 
 import scala.reflect.ClassTag
 

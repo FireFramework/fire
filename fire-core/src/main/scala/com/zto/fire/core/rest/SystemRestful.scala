@@ -37,7 +37,7 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
     val msg = new ResultMsg
     try {
       if (this.dataSource.isEmpty) {
-        this.dataSource ++= PropUtils.getDatasource
+        // this.dataSource ++= PropUtils.getDatasource
       }
       val dataSource = JSON.toJSONString(this.dataSource, SerializerFeature.NotWriteRootClassName)
       this.logger.info(s"[DataSource] 获取数据源列表成功：counter=$dataSource")

@@ -1,10 +1,11 @@
 package com.zto.fire.flink
 
 import com.zto.fire._
-import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf, FireSparkConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
+import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.rest.FlinkSystemRestful
 import com.zto.fire.flink.task.FlinkSchedulerManager
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
@@ -57,7 +58,7 @@ trait BaseFlink extends BaseFire {
     if (StringUtils.isNotBlank(hiveConfDir)) {
       this.logger.info("enabled flink-hive support.")
       this.logger.info(s"hive-site.xml path is $hiveConfDir")
-      this.hive = new HiveCatalog(FireHiveConf.hiveCatalogName, FireSparkConf.defaultDB, hiveConfDir, FireHiveConf.hiveVersion)
+      this.hive = new HiveCatalog(FireHiveConf.hiveCatalogName, FireHiveConf.defaultDB, hiveConfDir, FireHiveConf.hiveVersion)
     }
   }
 

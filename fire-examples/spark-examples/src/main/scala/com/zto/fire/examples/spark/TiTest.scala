@@ -3,9 +3,9 @@ package com.zto.fire.examples.spark
 import java.sql.ResultSet
 
 import com.zto.fire._
-import com.zto.fire.common.conf.FireJdbcConf
 import com.zto.fire.core.conf.EngineConf
 import com.zto.fire.examples.bean.Student
+import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.{JdbcConnector, QueryCallback}
 import com.zto.fire.spark.BaseSparkCore
 

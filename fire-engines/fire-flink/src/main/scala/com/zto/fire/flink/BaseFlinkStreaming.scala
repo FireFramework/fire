@@ -1,8 +1,8 @@
 package com.zto.fire.flink
 
-import com.zto.fire.common.conf.{FireFlinkConf, FireFrameworkConf, FireHiveConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.{PropUtils, OSUtils}
+import com.zto.fire.common.util.{OSUtils, PropUtils}
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.java.utils.ParameterTool
@@ -12,6 +12,7 @@ import org.apache.flink.streaming.api.scala.{OutputTag, StreamExecutionEnvironme
 import org.apache.flink.table.api.EnvironmentSettings
 import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import com.zto.fire._
+import com.zto.fire.flink.conf.FireFlinkConf
 
 /**
  * flink streaming通用父接口

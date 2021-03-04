@@ -18,6 +18,14 @@ private[fire] object FireHiveConf {
   lazy val HIVE_CLUSTER_MAP_PREFIX = "spark.fire.hive.cluster.map."
   lazy val HIVE_SITE_PATH_MAP_PREFIX = "spark.fire.hive.site.path.map."
   lazy val HIVE_CONF_PREFIX = "spark.hive.conf."
+  // 默认的库名
+  lazy val DEFAULT_DATABASE_NAME = "spark.fire.hive.default.database.name"
+  // 默认的数据库名称
+  lazy val dbName = "tmp"
+  // 默认的分区名称
+  lazy val DEFAULT_TABLE_PARTITION_NAME = "spark.fire.hive.table.default.partition.name"
+  // 默认的partition名称
+  lazy val defaultPartitionName = "ds"
 
   // hive集群标识（batch/streaming/test）
   lazy val hiveCluster = PropUtils.getString(this.HIVE_CLUSTER, "")
@@ -31,6 +39,8 @@ private[fire] object FireHiveConf {
   lazy val hiveCatalogName = PropUtils.getString(this.HIVE_CATALOG_NAME, "hive")
   // hive的set配置，如：this.spark.sql("set hive.exec.dynamic.partition=true")
   lazy val hiveConfMap = PropUtils.sliceKeys(this.HIVE_CONF_PREFIX)
+  lazy val defaultDB = PropUtils.getString(this.DEFAULT_DATABASE_NAME, this.dbName)
+  lazy val partitionName = PropUtils.getString(this.DEFAULT_TABLE_PARTITION_NAME, this.defaultPartitionName)
 
   /**
    * 根据hive集群名称获取metastore地址
