@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.runtime.util.EnvironmentInformation
 import org.apache.flink.types.Row
 import org.apache.log4j.{Level, Logger}
 import org.slf4j.LoggerFactory
@@ -167,7 +168,6 @@ object FlinkUtils extends Serializable {
    */
   def syncConf(config: ExecutionConfig): Unit = {
     if (this.isSyncConf.compareAndSet(false, true)) {
-      PropUtils.compatible("flink")
       // 切换为flink引擎后才能调用splash
       FireUtils.splash
       PropUtils.load("flink")
@@ -198,4 +198,14 @@ object FlinkUtils extends Serializable {
     val classLoader = ClassLoader.getSystemClassLoader.asInstanceOf[URLClassLoader]
     method.invoke(classLoader, new URL(udfJarUrl))
   }
+
+  /**
+   * 判断当前环境是否为JobManager
+   */
+  def isJobManager: Boolean = EnvironmentInformation.IS_JOBMANAGER
+
+  /**
+   * 判断当前环境是否为TaskManager
+   */
+  def isTaskManager: Boolean = !this.isJobManager
 }

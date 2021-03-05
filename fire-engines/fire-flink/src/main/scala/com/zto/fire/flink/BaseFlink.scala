@@ -33,7 +33,6 @@ trait BaseFlink extends BaseFire {
    * 注：该方法会同时在driver端与executor端执行
    */
   override private[fire] def boot: Unit = {
-    PropUtils.compatible("flink")
     PropUtils.load(FireFrameworkConf.FLINK_CONF_FILE)
     this.loadConf
     PropUtils.load(this.appName)

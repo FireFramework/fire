@@ -21,6 +21,7 @@ package org.apache.flink.configuration;
 import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.PropUtils;
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.runtime.util.EnvironmentInformation;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,8 @@ import scala.collection.JavaConversions;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -212,19 +215,17 @@ public final class GlobalConfiguration {
      * 加载必要的配置文件
      */
     private static void loadTaskConfiguration(Configuration config) {
-        PropUtils.compatible("flink");
-
+        isJobManager = EnvironmentInformation.IS_JOBMANAGER;
         // 二次开发代码，用于加载任务同名配置文件中的flink参数
-        String className = config.getString("", "");
-        if (className != null && className.contains(".")) {
+        String className = config.getString("flink.fire.className", "");
+        if (isJobManager && className != null && className.contains(".")) {
             String simpleClassName = className.substring(className.lastIndexOf('.') + 1, className.length());
             if (simpleClassName.length() > 0) {
-                PropUtils.loadFile(FireFrameworkConf.FLINK_CONF_FILE());
                 PropUtils.loadFile(FireFrameworkConf.FLINK_STREAMING_CONF_FILE());
                 // 加载任务同名的配置文件
                 PropUtils.loadFile(simpleClassName);
                 // 加载外部系统配置信息，覆盖同名配置文件中的配置，实现动态替换
-                if (isJobManager) PropUtils.invokeConfigCenter(className);
+                PropUtils.invokeConfigCenter(className);
 
                 JavaConversions.mapAsJavaMap(PropUtils.toMap()).forEach((k, v) -> {
                     if (!k.startsWith("spark.")) {
@@ -237,8 +238,6 @@ public final class GlobalConfiguration {
                 config.setString("flink.jobmanager.label", Boolean.toString(isJobManager));
                 PropUtils.setProperties(config.confData);
             }
-        } else {
-            LOG.warn("请通过-yD参数指定flink.fire.className任务的类名称，若不指定，则类同名配置文件中的flink相关参数将无法生效.");
         }
     }
 

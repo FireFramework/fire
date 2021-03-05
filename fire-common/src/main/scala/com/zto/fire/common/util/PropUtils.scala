@@ -8,12 +8,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.alibaba.fastjson.JSON
 import com.zto.fire.common.conf._
 import com.zto.fire.predef._
-import com.zto.fire.common.enu.DataSource
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
-import scala.collection.{immutable, mutable}
 import scala.collection.mutable.Map
+import scala.collection.{immutable, mutable}
 
 /**
  * 读取配置文件工具类
@@ -21,27 +20,67 @@ import scala.collection.mutable.Map
  */
 object PropUtils {
   private val props = new Properties()
+  private val engines = Array[String]("fire", "spark", "flink")
   // 用于判断是否merge过
   private[fire] val isMerge = new AtomicBoolean(false)
-  // key的前缀
-  private[fire] var engine = "spark"
-  // 是否兼容key的前缀配置
-  private var compatible = false
+  // 引擎类型判断，当前阶段紧支持spark与flink，未来若支持新的引擎，则需在此处做支持
+  private[fire] val engine = if (this.isExists("spark")) "spark" else "flink"
+  // 是否兼容非spark.开头的前缀配置
+  private val compatible = if (engine.equals("spark")) false else true
   // 加载默认配置文件
-  this.load(FireFrameworkConf.FIRE_CONF_FILE)
+  this.load(this.engines: _*)
   // 避免已被加载的配置文件被重复加载
   private[this] lazy val alreadyLoadMap = new mutable.HashMap[String, String]()
   // 缓存已经加载的配置map
   private[this] lazy val cachedConfMap = new mutable.HashMap[String, collection.immutable.Map[String, String]]()
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
+
   /**
-   * 用于设置兼容的key的前缀
+   * 判断指定的配置文件是否存在
+   * @param fileName
+   *                 配置文件名称
    */
-  def compatible(keyPrefix: String): Unit = {
-    if (StringUtils.isNotBlank(keyPrefix) && !keyPrefix.equals("spark")) {
-      this.engine = keyPrefix.trim
-      this.compatible = true
+  def isExists(fileName: String): Boolean = {
+    var resource: InputStream = null
+    try {
+      resource = this.getInputStream(fileName)
+      if (resource == null) false else true
+    } finally {
+      if (resource != null) {
+        IOUtils.close(resource)
+      }
+    }
+  }
+
+  /**
+   * 获取完整的配置文件名称
+   */
+  private[this] def getFullName(fileName: String): String =  if (fileName.endsWith(".properties")) fileName else s"$fileName.properties"
+
+  /**
+   * 获取指定配置文件的输入流
+   * 注：此api调用者需主动关闭输入流
+   *
+   * @param fileName
+   * 配置文件名称
+   */
+  private[this] def getInputStream(fileName: String): InputStream = {
+    val fullName = this.getFullName(fileName)
+    var resource: InputStream = null
+    try {
+      resource = FileUtils.resourceFileExists(fullName)
+      if (resource == null) {
+        val findFileName = FindClassUtils.findFileInJar(fullName)
+        if (StringUtils.isNotBlank(findFileName)) {
+          if (FindClassUtils.isJar) {
+            resource = FileUtils.resourceFileExists(findFileName)
+          } else {
+            resource = new FileInputStream(findFileName)
+          }
+        }
+      }
+      resource
     }
   }
 
@@ -52,26 +91,16 @@ object PropUtils {
    * 配置文件名称
    */
   def loadFile(fileName: String): this.type = {
-    if (StringUtils.isNotBlank(fileName) && !this.alreadyLoadMap.contains(fileName)) {
-      val fullName = if (fileName.endsWith(".properties")) fileName else s"$fileName.properties"
+    val fullName = this.getFullName(fileName)
+    if (StringUtils.isNotBlank(fullName) && !this.alreadyLoadMap.contains(fullName)) {
       var resource: InputStream = null
       try {
-        resource = FileUtils.resourceFileExists(fullName)
-        if (resource == null) {
-          val findFileName = FindClassUtils.findFileInJar(fullName)
-          if (StringUtils.isNotBlank(findFileName)) {
-            if (FindClassUtils.isJar) {
-              resource = FileUtils.resourceFileExists(findFileName)
-            } else {
-              resource = new FileInputStream(findFileName)
-            }
-          }
-        }
-        if (resource == null) this.logger.warn(s"未找到配置文件[ $fullName ]，请核实！")
+        resource = this.getInputStream(fullName)
+        if (resource == null && !this.engines.contains(fileName)) this.logger.warn(s"未找到配置文件[ $fullName ]，请核实！")
         if (resource != null) {
           this.logger.warn(s"${FirePS1Conf.YELLOW} -------------> loaded ${fullName} <------------- ${FirePS1Conf.DEFAULT}")
           props.load(resource)
-          this.alreadyLoadMap.put(fileName, fileName)
+          this.alreadyLoadMap.put(fullName, fullName)
         }
       } finally {
         if (resource != null) {

@@ -14,6 +14,7 @@ import scala.collection.immutable
  * @create 2021-03-02 10:48
  */
 private[fire] trait EngineConf {
+  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 获取引擎的所有配置信息
@@ -24,13 +25,12 @@ private[fire] trait EngineConf {
 /**
  * 用于获取不同引擎的配置信息
  */
-private[fire] object EngineConfHelper {
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
+private[fire] object EngineConfHelper extends EngineConf {
 
   /**
    * 通过反射获取不同引擎的配置信息
    */
-  def getEngineConf: Map[String, String] = {
+  override def getEngineConf: Map[String, String] = {
     var clazz: Class[_] = null
     try {
       clazz = Class.forName(FireFrameworkConf.confDeployEngine)
