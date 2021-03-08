@@ -90,7 +90,7 @@ object PropUtils {
    * @param fileName
    * 配置文件名称
    */
-  def loadFile(fileName: String): this.type = {
+  def loadFile(fileName: String): this.type = this.synchronized {
     val fullName = this.getFullName(fileName)
     if (StringUtils.isNotBlank(fullName) && !this.alreadyLoadMap.contains(fullName)) {
       var resource: InputStream = null
@@ -306,7 +306,7 @@ object PropUtils {
    * @param map
    * java map，存放多个配置信息
    */
-  def setProperties(map: Map[String, String]): Unit = {
+  def setProperties(map: Map[String, String]): Unit = this.synchronized {
     if (map != null) {
       map.foreach(kv => {
         if (StringUtils.isNotBlank(kv._1) && StringUtils.isNotBlank(kv._2)) {
@@ -322,7 +322,7 @@ object PropUtils {
    * @param map
    * java map，存放多个配置信息
    */
-  def setProperties(map: java.util.Map[String, Object]): Unit = {
+  def setProperties(map: java.util.Map[String, Object]): Unit = this.synchronized {
     if (map != null) {
       map.foreach(kv => {
         if (StringUtils.isNotBlank(kv._1) && kv._2 != null) {
@@ -340,7 +340,7 @@ object PropUtils {
    * @param value
    * 配置的value
    */
-  def setProperty(key: String, value: String): Unit = {
+  def setProperty(key: String, value: String): Unit = this.synchronized {
     if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
       this.props.setProperty(key, value)
     }

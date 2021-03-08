@@ -1,6 +1,7 @@
 package com.zto.fire.spark.conf
 
 import com.zto.fire.core.conf.EngineConf
+import com.zto.fire.spark.util.SparkUtils
 import org.apache.spark.SparkEnv
 
 /**
@@ -17,7 +18,7 @@ private[fire] class SparkEngineConf extends EngineConf {
    */
   override def getEngineConf: Map[String, String] = {
     val env = SparkEnv.get
-    if (env != null) {
+    if (env != null && SparkUtils.isExecutor) {
       env.conf.getAll.toMap
     } else {
       Map.empty[String, String]

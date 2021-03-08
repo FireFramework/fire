@@ -2,6 +2,8 @@ package com.zto.fire.flink.conf
 
 import com.zto.fire.predef._
 import com.zto.fire.core.conf.EngineConf
+import com.zto.fire.flink.util.FlinkUtils
+import org.apache.flink.configuration.GlobalConfiguration
 import org.apache.flink.runtime.util.EnvironmentInformation
 
 /**
@@ -17,6 +19,11 @@ private[fire] class FlinkEngineConf extends EngineConf  {
    * 获取Flink引擎的所有配置信息
    */
   override def getEngineConf: Map[String, String] = {
-    EnvironmentInformation.settings.toMap
+    val map = if (FlinkUtils.isTaskManager) {
+      EnvironmentInformation.settings.toMap
+    } else if (FlinkUtils.isJobManager) {
+      GlobalConfiguration.settings.toMap
+    } else Map.empty
+    map.toMap
   }
 }

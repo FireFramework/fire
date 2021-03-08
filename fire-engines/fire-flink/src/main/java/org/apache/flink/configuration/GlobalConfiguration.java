@@ -56,6 +56,7 @@ public final class GlobalConfiguration {
     private static ServerSocket restServerSocket = null;
     // 任务的运行模式
     private static String runMode;
+    public static Map<String, String> settings = new HashMap<>();
 
     static {
         try {
@@ -267,6 +268,8 @@ public final class GlobalConfiguration {
             String simpleClassName = className.substring(className.lastIndexOf('.') + 1);
             if (simpleClassName.length() > 0) {
                 PropUtils.loadFile(FireFrameworkConf.FLINK_STREAMING_CONF_FILE());
+                // 将所有configuration信息同步到PropUtils中
+                PropUtils.setProperties(config.confData);
                 // 加载任务同名的配置文件
                 PropUtils.loadFile(simpleClassName);
                 // 构建fire rest接口地址
@@ -275,15 +278,10 @@ public final class GlobalConfiguration {
                 PropUtils.invokeConfigCenter(className);
                 PropUtils.setProperty("flink.run.mode", runMode);
 
-                JavaConversions.mapAsJavaMap(PropUtils.toMap()).forEach((k, v) -> {
-                    if (!k.startsWith("spark.")) {
-                        config.setString(k, v);
-                        LOG.debug("load configuration：{}={}", k, v);
-                    }
+                JavaConversions.mapAsJavaMap(PropUtils.toFlinkConfMap()).forEach((k, v) -> {
+                    config.setString(k, v);
+                    settings.put(k, v);
                 });
-
-                // 将所有configuration信息同步到PropUtils中
-                PropUtils.setProperties(config.confData);
             }
         }
     }
