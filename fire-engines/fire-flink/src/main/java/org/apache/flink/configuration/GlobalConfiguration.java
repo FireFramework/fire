@@ -19,7 +19,9 @@
 package org.apache.flink.configuration;
 
 import com.zto.fire.common.conf.FireFrameworkConf;
+import com.zto.fire.common.util.OSUtils;
 import com.zto.fire.common.util.PropUtils;
+import com.zto.fire.flink.util.FlinkUtils;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.runtime.util.EnvironmentInformation;
 import org.apache.flink.util.Preconditions;
@@ -29,6 +31,7 @@ import scala.collection.JavaConversions;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,8 +50,42 @@ public final class GlobalConfiguration {
 
     // the hidden content to be displayed
     public static final String HIDDEN_CONTENT = "******";
-
+    // 用于判断是JobManager还是TaskManager
     private static boolean isJobManager = false;
+    // fire rest服务占用端口
+    private static ServerSocket restServerSocket = null;
+    // 任务的运行模式
+    private static String runMode;
+
+    static {
+        try {
+            restServerSocket = new ServerSocket(0);
+        } catch (Exception e) {
+            LOG.error("创建Socket失败", e);
+        }
+    }
+
+    /**
+     * 获取随机分配的Rest端口号
+     */
+    public static int getRestPort() {
+        return restServerSocket.getLocalPort();
+    }
+
+    /**
+     * 获取rest服务端口号，并关闭Socket
+     */
+    public static int getRestPortAndClose() {
+        int port = restServerSocket.getLocalPort();
+        if (restServerSocket != null && !restServerSocket.isClosed()) {
+            try {
+                restServerSocket.close();
+            } catch (Exception e) {
+                LOG.error("关闭Rest Socket失败", e);
+            }
+        }
+        return port;
+    }
 
     // --------------------------------------------------------------------------------------------
 
@@ -212,30 +249,40 @@ public final class GlobalConfiguration {
     }
 
     /**
+     * 获取当前任务运行模式
+     */
+    public static String getRunMode() {
+        return runMode;
+    }
+
+    /**
      * 加载必要的配置文件
      */
     private static void loadTaskConfiguration(Configuration config) {
         isJobManager = EnvironmentInformation.IS_JOBMANAGER;
         // 二次开发代码，用于加载任务同名配置文件中的flink参数
         String className = config.getString("flink.fire.className", "");
+        runMode = config.getString("execution.target", "");
         if (isJobManager && className != null && className.contains(".")) {
-            String simpleClassName = className.substring(className.lastIndexOf('.') + 1, className.length());
+            String simpleClassName = className.substring(className.lastIndexOf('.') + 1);
             if (simpleClassName.length() > 0) {
                 PropUtils.loadFile(FireFrameworkConf.FLINK_STREAMING_CONF_FILE());
                 // 加载任务同名的配置文件
                 PropUtils.loadFile(simpleClassName);
+                // 构建fire rest接口地址
+                PropUtils.setProperty(FireFrameworkConf.fireRestUrl("flink"), "http://" + OSUtils.getIp() + ":" + getRestPort());
                 // 加载外部系统配置信息，覆盖同名配置文件中的配置，实现动态替换
                 PropUtils.invokeConfigCenter(className);
+                PropUtils.setProperty("flink.run.mode", runMode);
 
                 JavaConversions.mapAsJavaMap(PropUtils.toMap()).forEach((k, v) -> {
                     if (!k.startsWith("spark.")) {
                         config.setString(k, v);
-                        LOG.info("load configuration：{}={}", k, v);
+                        LOG.debug("load configuration：{}={}", k, v);
                     }
                 });
 
                 // 将所有configuration信息同步到PropUtils中
-                config.setString("flink.jobmanager.label", Boolean.toString(isJobManager));
                 PropUtils.setProperties(config.confData);
             }
         }

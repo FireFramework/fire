@@ -45,16 +45,21 @@ private[fire] class RestServerManager {
   def restPort: Int = this.port
 
   /**
-   * rest占用的端口号
+   * 为rest服务指定监听端口
    */
-  private[fire] def startRestPort: this.type = this.synchronized {
+  private[fire] def startRestPort(port: Int = 0): this.type = this.synchronized {
     if (this.port == null && !this.isStarted) {
       Spark.threadPool(FireFrameworkConf.restfulMaxThread, 2, -1)
       // 端口占用失败默认重试3次
-      retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
-        val randomPort = OSUtils.getRundomPort
-        Spark.port(randomPort)
-        this.port = randomPort
+      if (port == 0) {
+        retry(FireFrameworkConf.restfulPortRetryNum, FireFrameworkConf.restfulPortRetryDuration) {
+          val randomPort = OSUtils.getRundomPort
+          Spark.port(randomPort)
+          this.port = randomPort
+        }
+      } else {
+        Spark.port(port)
+        this.port = port
       }
       // 获取到未被占用的端口后，rest server不会立即绑定，为了避免被其他应用占用
       // 此处使用ServerSocket占用该端口，等真正启动rest server前再关闭该ServerSocket以便释放端口
@@ -71,7 +76,7 @@ private[fire] class RestServerManager {
   private[fire] def startRestServer: Unit = this.synchronized {
     if (!FireFrameworkConf.restEnable || this.isStarted) return
     this.isStarted = true
-    if (this.port == null) this.startRestPort
+    if (this.port == null) this.startRestPort()
     // 批量注册接口地址
     this.threadPool.execute(new Runnable {
       override def run(): Unit = {

@@ -12,7 +12,7 @@ import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig
 import org.apache.flink.api.scala.ExecutionEnvironment
-import org.apache.flink.configuration.Configuration
+import org.apache.flink.configuration.{Configuration, GlobalConfiguration}
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
@@ -46,10 +46,11 @@ trait BaseFlink extends BaseFire {
    * 初始化flink运行时环境
    */
   override private[fire] def createContext(conf: Any): Unit = {
-    this.restfulRegister = new RestServerManager().startRestPort
-    this.systemRestful = new FlinkSystemRestful(this, this.restfulRegister)
-    // 注册到实时平台，并覆盖配置信息
-    PropUtils.invokeConfigCenter(this.className)
+    if (FlinkUtils.isYarnApplicationMode) {
+      // fire rest 服务仅支持flink的yarn-application模式
+      this.restfulRegister = new RestServerManager().startRestPort(GlobalConfiguration.getRestPortAndClose)
+      this.systemRestful = new FlinkSystemRestful(this, this.restfulRegister)
+    }
     PropUtils.print()
     FlinkSchedulerManager.getInstance().registerTasks(this)
     // 创建HiveCatalog

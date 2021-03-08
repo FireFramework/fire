@@ -15,7 +15,7 @@ import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
-import org.apache.flink.configuration.Configuration
+import org.apache.flink.configuration.{Configuration, GlobalConfiguration}
 import org.apache.flink.runtime.util.EnvironmentInformation
 import org.apache.flink.types.Row
 import org.apache.log4j.{Level, Logger}
@@ -208,4 +208,14 @@ object FlinkUtils extends Serializable {
    * 判断当前环境是否为TaskManager
    */
   def isTaskManager: Boolean = !this.isJobManager
+
+  /**
+   * 获取flink的运行模式
+   */
+  def runMode: String = GlobalConfiguration.getRunMode
+
+  /**
+   * 判断当前运行模式是否为yarn-application模式
+   */
+  def isYarnApplicationMode: Boolean = "yarn-application".equalsIgnoreCase(this.runMode)
 }

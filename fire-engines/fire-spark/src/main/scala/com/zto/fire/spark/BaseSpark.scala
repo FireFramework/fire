@@ -110,7 +110,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 构建一系列context对象
    */
   override private[fire] final def createContext(conf: Any): Unit = {
-    this.restfulRegister = new RestServerManager().startRestPort
+    this.restfulRegister = new RestServerManager().startRestPort()
     this.systemRestful = new SparkSystemRestful(this)
     // 注册到实时平台，并覆盖配置信息
     PropUtils.invokeConfigCenter(this.className)
