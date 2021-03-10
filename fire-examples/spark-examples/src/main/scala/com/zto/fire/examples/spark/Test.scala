@@ -1,10 +1,8 @@
 package com.zto.fire.examples.spark
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Scheduled
-import com.zto.fire.common.util.{DateFormatUtils, ExceptionBus, OSUtils}
+import com.zto.fire.common.util.PropUtils
 import com.zto.fire.spark.BaseSparkStreaming
-import com.zto.fire.spark.util.SparkUtils
 
 
 /**
@@ -24,26 +22,15 @@ object Test extends BaseSparkStreaming {
     println("----showException")*/
     println("累加值：" + this.acc.getCounter)
   }*/
-
   override def process: Unit = {
+    logger.error("driver打印：" + PropUtils.getString("spark.fire.hello"))
     (1 to 1000).foreach(count => {
       this.fire.createRDD(1 to 1000, 10).foreachPartition(it => {
-        tryWithLog {
-          this.acc.addCounter(1)
-          val a = 1 / 0
-        } (isThrow = false)
+        logger.error("executor打印：" + PropUtils.getString("spark.fire.hello"))
       })
-      Thread.sleep(10000)
+      Thread.sleep(1000)
     })
-    spark.sql(
-      """
-        |create table tmp.xxl as
-        |select *, case when (channel like '%微信%' or channel like '%支付宝%') then 1
-        |when channel not like '%微信%' and channel not like '%支付宝%' then 2 else 0 end  as channel_index
-        |from ml.arrive_t_feature_sum_spark_total_bak where ds='20201227'
-        |and rec_site_id<>0 and disp_site_id<>0 and send_city_id is not null and receiv_city_id is not null
-        |and earliest2disp2rec_hour_diff>=16 and earliest2disp2rec_hour_diff<=144 DISTRIBUTE BY rand()
-        |""".stripMargin).show(100, false)
+    Thread.currentThread().join()
   }
 
   def main(args: Array[String]): Unit = {

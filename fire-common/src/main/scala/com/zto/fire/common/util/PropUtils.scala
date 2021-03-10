@@ -129,22 +129,29 @@ object PropUtils {
 
   /**
    * 根据key获取配置信息
-   *
+   * 注：其他均需要通过该API进行配置的获取,禁止直接调用：props.getProperty
    * @param key
    * 配置的key
    * @return
    * 配置的value
    */
-  def getProperty(key: String): String = {
+  def getProperty(key: String, adaptive: Boolean = FireFrameworkConf.adaptivePrefix): String = {
     if (this.isMerge.compareAndSet(false, true)) this.mergeEngineConf
+    // 对于没有指定引擎开头的配置，自适应添加引擎前缀
+    val adaptiveKey = if (adaptive && !key.startsWith(s"${this.engine}.")) s"${this.engine}.$key" else key
     if (this.compatible) {
       // 兼容配置key的前缀变化，适配flink.为前缀的配置项
-      val value = this.props.getProperty(key.replaceFirst("spark", this.engine))
-      if (StringUtils.isNotBlank(value)) value else this.props.getProperty(key)
+      val value = this.getOriginalProperty(adaptiveKey.replaceFirst("spark", this.engine))
+      if (StringUtils.isNotBlank(value)) value else this.getOriginalProperty(adaptiveKey)
     } else {
-      this.props.getProperty(key)
+      this.getOriginalProperty(adaptiveKey)
     }
   }
+
+  /**
+   * 获取原生的配置信息
+   */
+  private[fire] def getOriginalProperty(key: String): String = this.props.getProperty(key)
 
   /**
    * 获取字符串
@@ -306,13 +313,9 @@ object PropUtils {
    * @param map
    * java map，存放多个配置信息
    */
-  def setProperties(map: Map[String, String]): Unit = this.synchronized {
+  def setProperties(map: mutable.Map[String, String]): Unit = this.synchronized {
     if (map != null) {
-      map.foreach(kv => {
-        if (StringUtils.isNotBlank(kv._1) && StringUtils.isNotBlank(kv._2)) {
-          this.props.setProperty(kv._1, kv._2)
-        }
-      })
+      map.foreach(kv => this.setProperty(kv._1, kv._2))
     }
   }
 
@@ -322,11 +325,11 @@ object PropUtils {
    * @param map
    * java map，存放多个配置信息
    */
-  def setProperties(map: java.util.Map[String, Object]): Unit = this.synchronized {
+  def setProperties(map: JMap[String, Object]): Unit = this.synchronized {
     if (map != null) {
       map.foreach(kv => {
         if (StringUtils.isNotBlank(kv._1) && kv._2 != null) {
-          this.props.setProperty(kv._1, kv._2.toString)
+          this.setProperty(kv._1, kv._2.toString)
         }
       })
     }
@@ -334,6 +337,7 @@ object PropUtils {
 
   /**
    * 设置指定的配置
+   * 注：其他均需要通过该API进行配置的设定,禁止直接调用：props.setProperty
    *
    * @param key
    * 配置的key
@@ -342,9 +346,16 @@ object PropUtils {
    */
   def setProperty(key: String, value: String): Unit = this.synchronized {
     if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
-      this.props.setProperty(key, value)
+      // 对于开启自适应前缀的配置，自动添加引擎前缀
+      val mergeKey = if (FireFrameworkConf.adaptivePrefix && !key.startsWith(s"${this.engine}.")) s"${this.engine}.$key" else key
+      this.setOriginalProperty(mergeKey, value)
     }
   }
+
+  /**
+   * 添加原生的配置信息
+   */
+  private[fire] def setOriginalProperty(key: String, value: String): Unit = this.synchronized(this.props.setProperty(key, value))
 
   /**
    * 隐蔽密码信息后返回
@@ -353,7 +364,7 @@ object PropUtils {
     val conf = new Properties()
     this.props.keySet().foreach(key => {
       if (key != null && !key.toString.contains("pass")) {
-        conf.setProperty(key.toString, this.props.getProperty(key.toString))
+        conf.setProperty(key.toString, this.getProperty(key.toString))
       }
     })
     conf
@@ -387,7 +398,7 @@ object PropUtils {
     val confMap = scala.collection.mutable.Map[String, String]()
     this.props.keySet().foreach(key => {
       if (key != null) {
-        confMap += (key.toString -> this.props.getProperty(key.toString))
+        confMap += (key.toString -> this.getProperty(key.toString))
       }
     })
     confMap
@@ -405,7 +416,7 @@ object PropUtils {
         val keyStr = key.toString
         if (keyStr.contains(keyStartContent)) {
           val keySuffix = keyStr.substring(keyStr.indexOf(keyStartContent) + keyStartContent.length, keyStr.length)
-          confMap.put(keySuffix, this.getProperty(keyStr))
+          confMap.put(keySuffix, this.getProperty(keyStr, false))
         }
       })
       this.cachedConfMap.put(keyStart, confMap.toMap)
@@ -449,11 +460,11 @@ object PropUtils {
    * @return
    * confMap
    */
-  def toFlinkConfMap: Map[String, String] = {
-    val confMap = scala.collection.mutable.Map[String, String]()
-    this.props.keySet().filter(t => t != null && !t.toString.startsWith("spark")).foreach(key => {
+  def toEngineConfMap: Map[String, String] = {
+    val confMap = mutable.Map[String, String]()
+    this.props.keySet().filter(t => t != null && t.toString.startsWith(this.engine)).foreach(key => {
       if (key != null) {
-        confMap += (key.toString -> this.props.getProperty(key.toString))
+        confMap += (key.toString -> this.getProperty(key.toString))
       }
     })
     confMap
@@ -463,12 +474,13 @@ object PropUtils {
    * 合并Conf中的配置信息
    */
   private[this] def mergeEngineConf: Unit = {
-    logger.info("开始合并计算引擎所有配置 ...")
     val clazz = Class.forName(FireFrameworkConf.ENGINE_CONF_HELPER)
     val method = clazz.getDeclaredMethod("getEngineConf")
     val map = method.invoke(null).asInstanceOf[immutable.Map[String, String]]
-    if (map.nonEmpty) this.setProperties(map)
-    logger.info(s"完成计算引擎配置信息的同步，总计：${map.size}条")
+    if (map.nonEmpty) {
+      this.setProperties(map)
+      logger.debug(s"完成计算引擎配置信息的同步，总计：${map.size}条")
+    }
   }
 
   /**

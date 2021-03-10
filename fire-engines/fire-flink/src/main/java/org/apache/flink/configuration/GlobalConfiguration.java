@@ -21,7 +21,6 @@ package org.apache.flink.configuration;
 import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.OSUtils;
 import com.zto.fire.common.util.PropUtils;
-import com.zto.fire.flink.util.FlinkUtils;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.runtime.util.EnvironmentInformation;
 import org.apache.flink.util.Preconditions;
@@ -53,10 +52,10 @@ public final class GlobalConfiguration {
     // 用于判断是JobManager还是TaskManager
     private static boolean isJobManager = false;
     // fire rest服务占用端口
-    private static ServerSocket restServerSocket = null;
+    private static ServerSocket restServerSocket;
     // 任务的运行模式
     private static String runMode;
-    public static Map<String, String> settings = new HashMap<>();
+    private static final Map<String, String> settings = new HashMap<>();
 
     static {
         try {
@@ -64,6 +63,13 @@ public final class GlobalConfiguration {
         } catch (Exception e) {
             LOG.error("创建Socket失败", e);
         }
+    }
+
+    /**
+     * 获取配置信息
+     */
+    public static Map<String, String> getSettings() {
+        return settings;
     }
 
     /**
@@ -260,13 +266,15 @@ public final class GlobalConfiguration {
      * 加载必要的配置文件
      */
     private static void loadTaskConfiguration(Configuration config) {
-        isJobManager = EnvironmentInformation.IS_JOBMANAGER;
+        isJobManager = EnvironmentInformation.isJobManager();
         // 二次开发代码，用于加载任务同名配置文件中的flink参数
         String className = config.getString("flink.fire.className", "");
         runMode = config.getString("execution.target", "");
         if (isJobManager && className != null && className.contains(".")) {
             String simpleClassName = className.substring(className.lastIndexOf('.') + 1);
             if (simpleClassName.length() > 0) {
+                // TODO: 判断批处理模式，并加载对应配置文件
+                // PropUtils.load(FireFrameworkConf.FLINK_BATCH_CONF_FILE)
                 PropUtils.loadFile(FireFrameworkConf.FLINK_STREAMING_CONF_FILE());
                 // 将所有configuration信息同步到PropUtils中
                 PropUtils.setProperties(config.confData);
@@ -278,7 +286,7 @@ public final class GlobalConfiguration {
                 PropUtils.invokeConfigCenter(className);
                 PropUtils.setProperty("flink.run.mode", runMode);
 
-                JavaConversions.mapAsJavaMap(PropUtils.toFlinkConfMap()).forEach((k, v) -> {
+                JavaConversions.mapAsJavaMap(PropUtils.toEngineConfMap()).forEach((k, v) -> {
                     config.setString(k, v);
                     settings.put(k, v);
                 });

@@ -38,8 +38,6 @@ abstract class BaseSink[IN, OUT](batch: Int, flushInterval: Long) extends RichSi
    * 初始化定时调度器，用于定时flush数据到目标组件
    */
   override def open(parameters: Configuration): Unit = {
-    // 将配置文件同步到task-manager端
-    FlinkUtils.syncConf(this.getRuntimeContext.getExecutionConfig)
     if (this.flushInterval > 0 && batch > 0) {
       this.scheduler = Executors.newScheduledThreadPool(1)
       if (this.scheduler != null) {

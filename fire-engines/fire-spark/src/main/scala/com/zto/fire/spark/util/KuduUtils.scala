@@ -5,8 +5,10 @@ import java.lang.reflect.Field
 import com.zto.fire._
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.util.ReflectionUtils
+import com.zto.fire.spark.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
 
 import scala.collection.mutable.ListBuffer
@@ -146,5 +148,25 @@ object KuduUtils {
     } else {
       s"impala::$tableName"
     }
+  }
+
+  /**
+   * 以Map的方式获取Hive表的字段名称和类型
+   *
+   * @param tableName
+   *                  db.hiveTable
+   * @return
+   * Map[FieldName, FieldType]
+   */
+  def getTableSchemaAsMap(hiveContext: HiveContext, kuduContext: KuduContextExt, tableName: String): Map[String, String] = {
+    val dataFrame = if (tableName.startsWith("impala")) {
+      kuduContext.loadKuduTable(tableName)
+    } else {
+      hiveContext.table(tableName)
+    }
+
+    dataFrame.schema.map(s => {
+      (s.name, s.dataType.simpleString)
+    }).toMap
   }
 }

@@ -47,8 +47,22 @@ public class EnvironmentInformation {
     public static final String UNKNOWN = "<unknown>";
 
     // 用于判断是否为JobManager
-    public static Boolean IS_JOBMANAGER = true;
-    public static Map<String, String> settings = new ConcurrentHashMap<>();
+    private static Boolean IS_JOBMANAGER = true;
+    private static final Map<String, String> settings = new ConcurrentHashMap<>();
+
+    /**
+     * 用不判断当前组件是否为JobManager
+     */
+    public static boolean isJobManager() {
+        return IS_JOBMANAGER;
+    }
+
+    /**
+     * 获取配置信息
+     */
+    public static Map<String, String> getSettings() {
+        return settings;
+    }
 
     /**
      * Returns the version of the code as String.

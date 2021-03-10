@@ -12,12 +12,11 @@ import com.zto.fire.spark.rest.SparkSystemRestful
 import com.zto.fire.spark.task.{SparkInternalTask, SparkSchedulerManager}
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.Logging
+import org.apache.spark.{Logging, SparkConf, SparkContext, SparkEnv}
 import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.{SparkConf, SparkContext}
 
 /**
  * Spark通用父类
@@ -45,9 +44,11 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 注：该方法会同时在driver端与executor端执行
    */
   override private[fire] final def boot: Unit = {
-    PropUtils.load(FireFrameworkConf.SPARK_CONF_FILE)
-    this.loadConf
-    PropUtils.load(this.appName)
+    // 进Driver端进行引擎配置与用户配置的加载，executor端会通过fire进行分发，应避免在executor端加载引擎和用户配置文件
+    if (SparkUtils.isDriver) {
+      this.loadConf
+      PropUtils.load(this.appName)
+    }
     PropUtils.setProperty(FireFrameworkConf.DRIVER_CLASS_NAME, this.className)
     if (StringUtils.isNotBlank(FireSparkConf.appName)) {
       this.appName = FireSparkConf.appName

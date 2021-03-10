@@ -1,24 +1,20 @@
 package com.zto.fire.flink.util
 
 import java.net.{URL, URLClassLoader}
-import java.util.concurrent.atomic.AtomicBoolean
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{FireUtils, PropUtils, ReflectionUtils, ValueUtils}
+import com.zto.fire.common.util.{PropUtils, ReflectionUtils, ValueUtils}
 import com.zto.fire.flink.bean.FlinkTableSchema
 import com.zto.fire.flink.conf.FireFlinkConf
-import com.zto.fire.flink.ext.function.FireMapFunction
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
-import org.apache.flink.configuration.{Configuration, GlobalConfiguration}
+import org.apache.flink.configuration.GlobalConfiguration
 import org.apache.flink.runtime.util.EnvironmentInformation
 import org.apache.flink.types.Row
-import org.apache.log4j.{Level, Logger}
 import org.slf4j.LoggerFactory
 
 /**
@@ -30,8 +26,6 @@ import org.slf4j.LoggerFactory
 object FlinkUtils extends Serializable {
   // 维护schema、fieldName与fieldIndex关系
   private[this] val schemaTable = HashBasedTable.create[FlinkTableSchema, String, Int]
-  // 用于判断是否已同步配置信息到task-manager端
-  private lazy val isSyncConf = new AtomicBoolean(false)
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
@@ -153,43 +147,12 @@ object FlinkUtils extends Serializable {
   }
 
   /**
-   * 用于构建fire框架初始化的MapFunction对象
-   */
-  def initMapFunction: FireMapFunction[Int, Int] = {
-    new FireMapFunction[Int, Int]() {
-      override def open(parameters: Configuration): Unit = FlinkUtils.syncConf(this.runtimeContext.getExecutionConfig)
-
-      override def map(value: Int): Int = value
-    }
-  }
-
-  /**
-   * 用于task-manager端同步配置信息
-   */
-  def syncConf(config: ExecutionConfig): Unit = {
-    if (this.isSyncConf.compareAndSet(false, true)) {
-      // 切换为flink引擎后才能调用splash
-      FireUtils.splash
-      PropUtils.load("flink")
-      if (config != null) {
-        val configMap = config.getGlobalJobParameters.toMap
-        val clientClass = configMap.getOrDefault(FireFlinkConf.FLINK_CLIENT_SIMPLE_CLASS_NAME, "")
-        val jobType = configMap.getOrDefault(FireFlinkConf.FLINK_FIRE_CONFIGURATION, "")
-        PropUtils.load(jobType, clientClass)
-        PropUtils.setProperties(configMap)
-      }
-      PropUtils.sliceKeys(FireFrameworkConf.SPARK_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
-      PropUtils.print()
-    }
-  }
-
-  /**
    * 加载指定路径下的udf jar包
    */
   def loadUdfJar: Unit = {
-    val udfJarUrl = PropUtils.getString("flink.sql.conf.pipeline.jars", "")
+    val udfJarUrl = PropUtils.getString(FireFlinkConf.FLINK_SQL_CONF_UDF_JARS, "")
     if (StringUtils.isBlank(udfJarUrl)) {
-      logger.warn(udfJarUrl, "flink udf jar包路径不能为空，请在配置文件中通过：flink.sql.conf.pipeline.jars=/path/to/udf.jar 指定")
+      logger.warn(udfJarUrl, s"flink udf jar包路径不能为空，请在配置文件中通过：${FireFlinkConf.FLINK_SQL_CONF_UDF_JARS}=/path/to/udf.jar 指定")
       return
     }
 
@@ -202,7 +165,7 @@ object FlinkUtils extends Serializable {
   /**
    * 判断当前环境是否为JobManager
    */
-  def isJobManager: Boolean = EnvironmentInformation.IS_JOBMANAGER
+  def isJobManager: Boolean = EnvironmentInformation.isJobManager
 
   /**
    * 判断当前环境是否为TaskManager

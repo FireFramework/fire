@@ -7,13 +7,11 @@ import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf, FireStringConf}
 import com.zto.fire.common.util._
 import com.zto.fire.spark.conf.FireSparkConf
-import com.zto.fire.spark.ext.module.KuduContextExt
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkEnv
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.CatalystTypeConverters
-import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.LoggerFactory
@@ -204,26 +202,6 @@ object SparkUtils {
 
 
   /**
-   * 以Map的方式获取Hive表的字段名称和类型
-   *
-   * @param tableName
-   *                  db.hiveTable
-   * @return
-   * Map[FieldName, FieldType]
-   */
-  def getTableSchemaAsMap(hiveContext: HiveContext, kuduContext: KuduContextExt, tableName: String): Map[String, String] = {
-    val dataFrame = if (tableName.startsWith("impala")) {
-      kuduContext.loadKuduTable(tableName)
-    } else {
-      hiveContext.table(tableName)
-    }
-
-    dataFrame.schema.map(s => {
-      (s.name, s.dataType.simpleString)
-    }).toMap
-  }
-
-  /**
    * 获取表的全名
    *
    * @param dbName
@@ -317,11 +295,7 @@ object SparkUtils {
    */
   def isExecutor: Boolean = {
     val executorId = this.getExecutorId
-    if ("driver".equalsIgnoreCase(executorId)) {
-      false
-    } else {
-      true
-    }
+    if (StringUtils.isNotBlank(executorId) && !"driver".equalsIgnoreCase(executorId)) true else false
   }
 
   /**
@@ -347,7 +321,8 @@ object SparkUtils {
    * @return true: driver false: executor
    */
   def isDriver: Boolean = {
-    !this.isExecutor
+    val label = this.getExecutorId
+    if (StringUtils.isBlank(label) || "driver".equalsIgnoreCase(label)) true else false
   }
 
   /**

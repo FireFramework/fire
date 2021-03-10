@@ -31,7 +31,7 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_STREAM_TIME_CHARACTERISTIC = "flink.stream.time.characteristic"
   lazy val FLINK_DRIVER_CLASS_NAME = "flink.driver.class.name"
   lazy val FLINK_CLIENT_SIMPLE_CLASS_NAME = "flink.client.simple.class.name"
-  lazy val FLINK_FIRE_CONFIGURATION = "flink.fire.configuration"
+  lazy val FLINK_SQL_CONF_UDF_JARS = "flink.sql.conf.pipeline.jars"
 
   // checkpoint相关配置项
   lazy val FLINK_STREAM_CHECKPOINT_INTERVAL = "flink.stream.checkpoint.interval"

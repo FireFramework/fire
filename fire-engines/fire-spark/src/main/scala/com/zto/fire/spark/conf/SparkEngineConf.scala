@@ -17,9 +17,8 @@ private[fire] class SparkEngineConf extends EngineConf {
    * 获取引擎的所有配置信息
    */
   override def getEngineConf: Map[String, String] = {
-    val env = SparkEnv.get
-    if (env != null && SparkUtils.isExecutor) {
-      env.conf.getAll.toMap
+    if (SparkUtils.isExecutor) {
+      SparkEnv.get.conf.getAll.toMap
     } else {
       Map.empty[String, String]
     }

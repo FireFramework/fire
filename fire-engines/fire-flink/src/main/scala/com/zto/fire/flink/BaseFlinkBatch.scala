@@ -1,13 +1,12 @@
 package com.zto.fire.flink
 
-import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
+import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{OSUtils, PropUtils}
-import com.zto.fire.flink.conf.FireFlinkConf
-import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
+import com.zto.fire.flink.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.api.scala.{ExecutionEnvironment, _}
+import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
 import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
 
@@ -32,7 +31,7 @@ trait BaseFlinkBatch extends BaseFlink {
   override def buildConf(conf: Configuration): Configuration = {
     val finalConf = if (conf != null) conf else {
       val tmpConf = new Configuration()
-      PropUtils.toFlinkConfMap.foreach(t => tmpConf.setString(t._1, t._2))
+      PropUtils.toEngineConfMap.foreach(t => tmpConf.setString(t._1, t._2))
       tmpConf
     }
     finalConf.setBoolean(ConfigConstants.LOCAL_START_WEBSERVER, true)
@@ -81,26 +80,6 @@ trait BaseFlinkBatch extends BaseFlink {
     this.flink = this.env
     this.fire = this.flink
     FlinkSingletonFactory.setEnv(this.env).setTableEnv(this.tableEnv)
-    this.deployConf
-  }
-
-  /**
-   * 用于fire框架初始化，传递累加器与配置信息到taskManager端
-   */
-  override protected def deployConf: Unit = {
-    if (!FireFrameworkConf.deployConf) return
-    this.env.fromCollection(1 to this.env.getParallelism)
-      .map(FlinkUtils.initMapFunction)
-      .setParallelism(this.env.getParallelism)
-      .name("fire init")
-  }
-
-  /**
-   * 在加载任务配置文件前将被加载
-   */
-  override private[fire] def loadConf: Unit = {
-    PropUtils.load(FireFrameworkConf.FLINK_BATCH_CONF_FILE)
-    PropUtils.setProperty(FireFlinkConf.FLINK_FIRE_CONFIGURATION, FireFrameworkConf.FLINK_BATCH_CONF_FILE)
   }
 
   /**
