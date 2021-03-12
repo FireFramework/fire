@@ -14,27 +14,27 @@ private[fire] object FireRocketMQConf {
   lazy val rocketOffsetLargest = "latest"
   lazy val rocketOffsetSmallest = "earliest"
   lazy val rocketConsumerTag = "*"
-  lazy val rocketClusterMapConfStart = "spark.rocket.cluster.map."
+  lazy val rocketClusterMapConfStart = "rocket.cluster.map."
   // 初始化kafka集群名称与地址映射
   private lazy val rocketClusterMap = PropUtils.sliceKeys(rocketClusterMapConfStart)
-  lazy val rocketConfStart = "spark.rocket.conf."
+  lazy val rocketConfStart = "rocket.conf."
   // rocketMQ name server
-  lazy val ROCKET_BROKERS_NAME = "spark.rocket.brokers.name"
+  lazy val ROCKET_BROKERS_NAME = "rocket.brokers.name"
   // rocketMQ topic信息，多个以逗号分隔
-  lazy val ROCKET_TOPICS = "spark.rocket.topics"
+  lazy val ROCKET_TOPICS = "rocket.topics"
   // rocketMQ groupId
-  val ROCKET_GROUP_ID = "spark.rocket.group.id"
+  val ROCKET_GROUP_ID = "rocket.group.id"
   // 丢失数据是否失败
-  lazy val ROCKET_FAIL_ON_DATA_LOSS = "spark.rocket.failOnDataLoss"
-  lazy val ROCKET_FORCE_SPECIAL = "spark.rocket.forceSpecial"
+  lazy val ROCKET_FAIL_ON_DATA_LOSS = "rocket.failOnDataLoss"
+  lazy val ROCKET_FORCE_SPECIAL = "rocket.forceSpecial"
   // 是否自动维护offset
-  lazy val ROCKET_ENABLE_AUTO_COMMIT = "spark.rocket.enable.auto.commit"
+  lazy val ROCKET_ENABLE_AUTO_COMMIT = "rocket.enable.auto.commit"
   // RocketMQ起始消费位点
-  lazy val ROCKET_STARTING_OFFSET = "spark.rocket.starting.offsets"
+  lazy val ROCKET_STARTING_OFFSET = "rocket.starting.offsets"
   // rocketMq订阅的tag
-  lazy val ROCKET_CONSUMER_TAG = "spark.rocket.consumer.tag"
+  lazy val ROCKET_CONSUMER_TAG = "rocket.consumer.tag"
   // 每次拉取每个partition的消息数
-  lazy val ROCKET_PULL_MAX_SPEED_PER_PARTITION = "spark.rocket.pull.max.speed.per.partition"
+  lazy val ROCKET_PULL_MAX_SPEED_PER_PARTITION = "rocket.pull.max.speed.per.partition"
 
   // rocket-client配置信息
   def rocketConfMap(keyNum: Int = 1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(rocketConfStart, keyNum)

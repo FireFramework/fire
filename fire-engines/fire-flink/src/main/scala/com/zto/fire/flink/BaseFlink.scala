@@ -51,7 +51,7 @@ trait BaseFlink extends BaseFire {
       this.restfulRegister = new RestServerManager().startRestPort(GlobalConfiguration.getRestPortAndClose)
       this.systemRestful = new FlinkSystemRestful(this, this.restfulRegister)
     }
-    PropUtils.print()
+    PropUtils.show()
     FlinkSchedulerManager.getInstance().registerTasks(this)
     // 创建HiveCatalog
     val hiveConfDir = FireHiveConf.getHiveConfDir

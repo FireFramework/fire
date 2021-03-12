@@ -25,21 +25,21 @@ object PropUtils {
   private[fire] val isMerge = new AtomicBoolean(false)
   // 引擎类型判断，当前阶段紧支持spark与flink，未来若支持新的引擎，则需在此处做支持
   private[fire] val engine = if (this.isExists("spark")) "spark" else "flink"
-  // 是否兼容非spark.开头的前缀配置
-  private val compatible = if (engine.equals("spark")) false else true
   // 加载默认配置文件
   this.load(this.engines: _*)
   // 避免已被加载的配置文件被重复加载
   private[this] lazy val alreadyLoadMap = new mutable.HashMap[String, String]()
-  // 缓存已经加载的配置map
+  // 用于存放所有的配置信息
+  private[fire] lazy val settingsMap = new mutable.HashMap[String, String]()
+  // 用于存放固定前缀，而后缀不同的配置信息
   private[this] lazy val cachedConfMap = new mutable.HashMap[String, collection.immutable.Map[String, String]]()
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
-
   /**
    * 判断指定的配置文件是否存在
+   *
    * @param fileName
-   *                 配置文件名称
+   * 配置文件名称
    */
   def isExists(fileName: String): Boolean = {
     var resource: InputStream = null
@@ -56,7 +56,7 @@ object PropUtils {
   /**
    * 获取完整的配置文件名称
    */
-  private[this] def getFullName(fileName: String): String =  if (fileName.endsWith(".properties")) fileName else s"$fileName.properties"
+  private[this] def getFullName(fileName: String): String = if (fileName.endsWith(".properties")) fileName else s"$fileName.properties"
 
   /**
    * 获取指定配置文件的输入流
@@ -100,6 +100,10 @@ object PropUtils {
         if (resource != null) {
           this.logger.warn(s"${FirePS1Conf.YELLOW} -------------> loaded ${fullName} <------------- ${FirePS1Conf.DEFAULT}")
           props.load(resource)
+          // 将所有的配置信息存放到settings中，并统一添加key的引擎前缀，如：
+          // 如果是spark引擎，则key前缀统一添加spark. 如果是flink引擎，则统一添加flink.
+          props.foreach(prop => this.settingsMap.put(this.adaptiveKey(prop._1), prop._2))
+          props.clear()
           this.alreadyLoadMap.put(fullName, fullName)
         }
       } finally {
@@ -128,30 +132,30 @@ object PropUtils {
   }
 
   /**
+   * 自适应key的前缀
+   */
+  private[this] def adaptiveKey(key: String): String = {
+    if (!key.startsWith(s"${this.engine}.")) s"${this.engine}.$key" else key
+  }
+
+  /**
    * 根据key获取配置信息
    * 注：其他均需要通过该API进行配置的获取,禁止直接调用：props.getProperty
+   *
    * @param key
    * 配置的key
    * @return
    * 配置的value
    */
-  def getProperty(key: String, adaptive: Boolean = FireFrameworkConf.adaptivePrefix): String = {
+  def getProperty(key: String): String = {
     if (this.isMerge.compareAndSet(false, true)) this.mergeEngineConf
-    // 对于没有指定引擎开头的配置，自适应添加引擎前缀
-    val adaptiveKey = if (adaptive && !key.startsWith(s"${this.engine}.")) s"${this.engine}.$key" else key
-    if (this.compatible) {
-      // 兼容配置key的前缀变化，适配flink.为前缀的配置项
-      val value = this.getOriginalProperty(adaptiveKey.replaceFirst("spark", this.engine))
-      if (StringUtils.isNotBlank(value)) value else this.getOriginalProperty(adaptiveKey)
-    } else {
-      this.getOriginalProperty(adaptiveKey)
-    }
+    this.getOriginalProperty(this.adaptiveKey(key))
   }
 
   /**
    * 获取原生的配置信息
    */
-  private[fire] def getOriginalProperty(key: String): String = this.props.getProperty(key)
+  private[fire] def getOriginalProperty(key: String): String = this.settingsMap.getOrElse(key, "")
 
   /**
    * 获取字符串
@@ -346,43 +350,32 @@ object PropUtils {
    */
   def setProperty(key: String, value: String): Unit = this.synchronized {
     if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
-      // 对于开启自适应前缀的配置，自动添加引擎前缀
-      val mergeKey = if (FireFrameworkConf.adaptivePrefix && !key.startsWith(s"${this.engine}.")) s"${this.engine}.$key" else key
-      this.setOriginalProperty(mergeKey, value)
+      this.setOriginalProperty(this.adaptiveKey(key), value)
     }
   }
 
   /**
    * 添加原生的配置信息
    */
-  private[fire] def setOriginalProperty(key: String, value: String): Unit = this.synchronized(this.props.setProperty(key, value))
+  private[fire] def setOriginalProperty(key: String, value: String): Unit = this.synchronized(this.settingsMap.put(key, value))
 
   /**
    * 隐蔽密码信息后返回
    */
-  def cover: Properties = {
-    val conf = new Properties()
-    this.props.keySet().foreach(key => {
-      if (key != null && !key.toString.contains("pass")) {
-        conf.setProperty(key.toString, this.getProperty(key.toString))
-      }
-    })
-    conf
+  def cover: Map[String, String] = {
+    this.settingsMap.filter(t => !t._1.contains("pass"))
   }
 
   /**
    * 打印配置文件中的kv
    */
-  def print(): Unit = {
+  def show(): Unit = {
     if (!FireFrameworkConf.fireConfShow) return
     LogUtils.logStyle(this.logger, "Fire configuration.")(logger => {
-      this.props.keySet().foreach(key => {
+      this.settingsMap.foreach(key => {
         // 如果包含配置黑名单，则不打印
-        if (key != null && FireFrameworkConf.fireConfBlackList.filter(conf => key.toString.contains(conf)).isEmpty) {
-          // 如果是spark引擎，则忽略flink相关配置；如果是flink引擎，则忽略spark相关配置
-          if (("spark".equals(this.engine) && !key.toString.startsWith("flink")) || ("flink".equals(this.engine) && !key.toString.startsWith("spark"))) {
-            logger.info(s">>${FirePS1Conf.PINK} $key --> ${this.props.get(key)} ${FirePS1Conf.DEFAULT}")
-          }
+        if (key != null && !FireFrameworkConf.fireConfBlackList.exists(conf => key.toString.contains(conf))) {
+          logger.info(s">>${FirePS1Conf.PINK} ${key._1} --> ${key._2} ${FirePS1Conf.DEFAULT}")
         }
       })
     })
@@ -394,29 +387,23 @@ object PropUtils {
    * @return
    * confMap
    */
-  def toMap: Map[String, String] = {
-    val confMap = scala.collection.mutable.Map[String, String]()
-    this.props.keySet().foreach(key => {
-      if (key != null) {
-        confMap += (key.toString -> this.getProperty(key.toString))
-      }
-    })
-    confMap
+  def settings: Map[String, String] = {
+    val map = Map[String, String] ()
+    map.putAll(this.settingsMap)
+    map
   }
 
   /**
    * 指定key的前缀获取所有该前缀的key与value
    */
-  def sliceKeys(keyStart: String): collection.immutable.Map[String, String] = {
+  def sliceKeys(keyStart: String): immutable.Map[String, String] = {
     if (!this.cachedConfMap.contains(keyStart)) {
       val confMap = new mutable.HashMap[String, String]()
-      this.props.keySet().filter(_ != null).foreach(key => {
-        // 舍弃key前缀的前缀，兼容不同的引擎导致的key前缀不同的问题
-        val keyStartContent = keyStart.substring(keyStart.indexOf('.'), keyStart.length)
-        val keyStr = key.toString
-        if (keyStr.contains(keyStartContent)) {
-          val keySuffix = keyStr.substring(keyStr.indexOf(keyStartContent) + keyStartContent.length, keyStr.length)
-          confMap.put(keySuffix, this.getProperty(keyStr, false))
+      this.settingsMap.foreach(key => {
+        val adaptiveKeyStar = this.adaptiveKey(keyStart)
+        if (key._1.contains(adaptiveKeyStar)) {
+          val keySuffix = key._1.substring(adaptiveKeyStar.length)
+          confMap.put(keySuffix, key._2)
         }
       })
       this.cachedConfMap.put(keyStart, confMap.toMap)
@@ -452,22 +439,6 @@ object PropUtils {
       }
     })
     map.toMap
-  }
-
-  /**
-   * 将配置信息转为Map，并设置到Flink Configuration中
-   *
-   * @return
-   * confMap
-   */
-  def toEngineConfMap: Map[String, String] = {
-    val confMap = mutable.Map[String, String]()
-    this.props.keySet().filter(t => t != null && t.toString.startsWith(this.engine)).foreach(key => {
-      if (key != null) {
-        confMap += (key.toString -> this.getProperty(key.toString))
-      }
-    })
-    confMap
   }
 
   /**

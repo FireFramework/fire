@@ -39,7 +39,7 @@ trait BaseFlinkStreaming extends BaseFlink {
   override def buildConf(conf: Configuration): Configuration = {
     val finalConf = if (conf != null) conf else {
       val tmpConf = new Configuration()
-      PropUtils.toEngineConfMap.foreach(t => tmpConf.setString(t._1, t._2))
+      PropUtils.settings.foreach(t => tmpConf.setString(t._1, t._2))
       tmpConf
     }
     finalConf.setBoolean(ConfigConstants.LOCAL_START_WEBSERVER, true)

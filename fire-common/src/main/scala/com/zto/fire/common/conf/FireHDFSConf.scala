@@ -12,8 +12,8 @@ import org.apache.commons.lang3.StringUtils
  */
 private[fire] object FireHDFSConf {
   // 是否启用高可用
-  lazy val HDFS_HA = "spark.hdfs.ha.enable"
-  lazy val HDFS_HA_PREFIX = "spark.hdfs.ha.conf."
+  lazy val HDFS_HA = "hdfs.ha.enable"
+  lazy val HDFS_HA_PREFIX = "hdfs.ha.conf."
 
 
   // 配置是否启用hdfs HA

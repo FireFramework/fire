@@ -10,20 +10,20 @@ import com.zto.fire.common.util.PropUtils
  * @create 2020-07-13 15:02
  */
 private[fire] object FireHiveConf {
-  lazy val HIVE_CLUSTER = "spark.hive.cluster"
+  lazy val HIVE_CLUSTER = "hive.cluster"
   // hive版本号
-  lazy val HIVE_VERSION = "spark.hive.version"
+  lazy val HIVE_VERSION = "hive.version"
   // hive的catalog名称
-  lazy val HIVE_CATALOG_NAME = "spark.hive.catalog.name"
-  lazy val HIVE_CLUSTER_MAP_PREFIX = "spark.fire.hive.cluster.map."
-  lazy val HIVE_SITE_PATH_MAP_PREFIX = "spark.fire.hive.site.path.map."
-  lazy val HIVE_CONF_PREFIX = "spark.hive.conf."
+  lazy val HIVE_CATALOG_NAME = "hive.catalog.name"
+  lazy val HIVE_CLUSTER_MAP_PREFIX = "fire.hive.cluster.map."
+  lazy val HIVE_SITE_PATH_MAP_PREFIX = "fire.hive.site.path.map."
+  lazy val HIVE_CONF_PREFIX = "hive.conf."
   // 默认的库名
-  lazy val DEFAULT_DATABASE_NAME = "spark.fire.hive.default.database.name"
+  lazy val DEFAULT_DATABASE_NAME = "fire.hive.default.database.name"
   // 默认的数据库名称
   lazy val dbName = "tmp"
   // 默认的分区名称
-  lazy val DEFAULT_TABLE_PARTITION_NAME = "spark.fire.hive.table.default.partition.name"
+  lazy val DEFAULT_TABLE_PARTITION_NAME = "fire.hive.table.default.partition.name"
   // 默认的partition名称
   lazy val defaultPartitionName = "ds"
 

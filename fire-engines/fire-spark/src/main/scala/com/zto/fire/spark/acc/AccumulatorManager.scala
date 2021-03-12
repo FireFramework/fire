@@ -264,7 +264,7 @@ private[fire] object AccumulatorManager {
     if (this.broadcastConf != null) {
       this.broadcastConf.value
     } else {
-      new SparkConf().setAll(PropUtils.toMap)
+      new SparkConf().setAll(PropUtils.settings)
     }
   }
 

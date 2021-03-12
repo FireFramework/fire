@@ -60,7 +60,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       val confMap = JSON.parseObject(json, classOf[java.util.HashMap[String, String]])
       if (ValueUtils.noEmpty(confMap)) {
         PropUtils.setProperties(confMap)
-        this.baseSpark._conf.setAll(PropUtils.toMap)
+        this.baseSpark._conf.setAll(PropUtils.settings)
         this.baseSpark.acc.broadcastNewConf(this.baseSpark.sc, this.baseSpark._conf)
       }
       msg.buildSuccess("配置信息已更新", ErrorCode.SUCCESS.toString)

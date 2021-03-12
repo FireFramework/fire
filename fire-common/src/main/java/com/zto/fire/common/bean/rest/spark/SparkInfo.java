@@ -63,7 +63,7 @@ public class SparkInfo {
     // 当前driver系统时间
     private String timestamp = DateFormatUtils.formatCurrentDateTime();
     // 配置信息
-    private Properties properties;
+    private Map<String, String> properties;
 
     public String getAppName() {
         return appName;
@@ -273,11 +273,11 @@ public class SparkInfo {
         this.restPort = restPort;
     }
 
-    public Properties getProperties() {
+    public Map<String, String> getProperties() {
         return properties;
     }
 
-    public void setProperties(Properties properties) {
+    public void setProperties(Map<String, String> properties) {
         this.properties = properties;
     }
 

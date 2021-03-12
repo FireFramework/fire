@@ -12,79 +12,79 @@ import org.apache.commons.lang3.StringUtils
  */
 private[fire] object FireFrameworkConf {
   // fire版本号
-  lazy val SPARK_FIRE_VERSION = "spark.fire.version"
-  lazy val DRIVER_CLASS_NAME = "spark.driver.class.name"
+  lazy val SPARK_FIRE_VERSION = "fire.version"
+  lazy val DRIVER_CLASS_NAME = "driver.class.name"
   // fire内置线程池大小
-  lazy val FIRE_THREAD_POOL_SIZE = "spark.fire.thread.pool.size"
+  lazy val FIRE_THREAD_POOL_SIZE = "fire.thread.pool.size"
   // fire内置定时任务线程池大小
-  lazy val FIRE_THREAD_POOL_SCHEDULE_SIZE = "spark.fire.thread.pool.schedule.size"
+  lazy val FIRE_THREAD_POOL_SCHEDULE_SIZE = "fire.thread.pool.schedule.size"
   // 是否启用fire框架restful服务
-  lazy val SPARK_FIRE_REST_ENABLE = "spark.fire.rest.enable"
-  lazy val FIRE_CONF_DEPLOY_ENGINE = "spark.fire.conf.deploy.engine"
+  lazy val SPARK_FIRE_REST_ENABLE = "fire.rest.enable"
+  lazy val FIRE_CONF_DEPLOY_ENGINE = "fire.conf.deploy.engine"
   lazy val ENGINE_CONF_HELPER = "com.zto.fire.core.conf.EngineConfHelper"
   // rest接口权限认证
-  lazy val SPARK_FIRE_REST_FILTER_ENABLE = "spark.fire.rest.filter.enable"
+  lazy val SPARK_FIRE_REST_FILTER_ENABLE = "fire.rest.filter.enable"
   // 用于配置是否关闭fire内置的所有累加器
-  lazy val SPARK_FIRE_ACC_ENABLE = "spark.fire.acc.enable"
+  lazy val SPARK_FIRE_ACC_ENABLE = "fire.acc.enable"
   // 日志累加器开关
-  lazy val SPARK_FIRE_ACC_LOG_ENABLE = "spark.fire.acc.log.enable"
+  lazy val SPARK_FIRE_ACC_LOG_ENABLE = "fire.acc.log.enable"
   // 多值累加器开关
-  lazy val SPARK_FIRE_ACC_MULTI_COUNTER_ENABLE = "spark.fire.acc.multi.counter.enable"
+  lazy val SPARK_FIRE_ACC_MULTI_COUNTER_ENABLE = "fire.acc.multi.counter.enable"
   // 多时间维度累加器开关
-  lazy val SPARK_FIRE_ACC_MULTI_TIMER_ENABLE = "spark.fire.acc.multi.timer.enable"
+  lazy val SPARK_FIRE_ACC_MULTI_TIMER_ENABLE = "fire.acc.multi.timer.enable"
   // env累加器开关
-  lazy val SPARK_FIRE_ACC_ENV_ENABLE = "spark.fire.acc.env.enable"
+  lazy val SPARK_FIRE_ACC_ENV_ENABLE = "fire.acc.env.enable"
   // fire框架埋点日志开关，当关闭后，埋点的日志将不再被记录到日志累加器中，并且也不再打印
-  lazy val SPARK_FIRE_LOG_ENABLE = "spark.fire.log.enable"
+  lazy val SPARK_FIRE_LOG_ENABLE = "fire.log.enable"
   // 用于限定fire框架中sql日志的字符串长度
-  lazy val SPARK_FIRE_LOG_SQL_LENGTH = "spark.fire.log.sql.length"
+  lazy val SPARK_FIRE_LOG_SQL_LENGTH = "fire.log.sql.length"
   // fire框架rest接口服务最大线程数
-  lazy val SPARK_FIRE_RESTFUL_MAX_THREAD = "spark.fire.restful.max.thread"
+  lazy val SPARK_FIRE_RESTFUL_MAX_THREAD = "fire.restful.max.thread"
   // 用于配置是否抛弃配置中心独立运行
-  lazy val SPARK_FIRE_CONFIG_CENTER_ENABLE = "spark.fire.config_center.enable"
+  lazy val SPARK_FIRE_CONFIG_CENTER_ENABLE = "fire.config_center.enable"
   // 本地运行环境下（Windows、Mac）是否调用配置中心接口获取配置信息
-  lazy val SPARK_FIRE_CONFIG_CENTER_LOCAL_ENABLE = "spark.fire.config_center.local.enable"
+  lazy val SPARK_FIRE_CONFIG_CENTER_LOCAL_ENABLE = "fire.config_center.local.enable"
   // 配置中心接口调用秘钥
-  lazy val SPARK_FIRE_CONFIG_CENTER_SECRET = "spark.fire.config_center.register.conf.secret"
+  lazy val SPARK_FIRE_CONFIG_CENTER_SECRET = "fire.config_center.register.conf.secret"
   // fire框架restful端口冲突重试次数
-  lazy val SPARK_FIRE_RESTFUL_PORT_RETRY_NUM = "spark.fire.restful.port.retry_num"
+  lazy val SPARK_FIRE_RESTFUL_PORT_RETRY_NUM = "fire.restful.port.retry_num"
   // fire框架restful端口冲突重试时间（ms）
-  lazy val SPARK_FIRE_RESTFUL_PORT_RETRY_DURATION = "spark.fire.restful.port.retry_duration"
-  lazy val SPARK_LOG_LEVEL_CONF_PREFIX = "spark.fire.log.level.conf."
+  lazy val SPARK_FIRE_RESTFUL_PORT_RETRY_DURATION = "fire.restful.port.retry_duration"
+  lazy val SPARK_LOG_LEVEL_CONF_PREFIX = "fire.log.level.conf."
   // 日志记录器保留最少的记录数
-  lazy val SPARK_FIRE_ACC_LOG_MIN_SIZE = "spark.fire.acc.log.min.size"
+  lazy val SPARK_FIRE_ACC_LOG_MIN_SIZE = "fire.acc.log.min.size"
   // 日志记录器保留最多的记录数
-  lazy val SPARK_FIRE_ACC_LOG_MAX_SIZE = "spark.fire.acc.log.max.size"
+  lazy val SPARK_FIRE_ACC_LOG_MAX_SIZE = "fire.acc.log.max.size"
   // env累加器保留最多的记录数
-  lazy val SPARK_FIRE_ACC_ENV_MAX_SIZE = "spark.fire.acc.env.max.size"
+  lazy val SPARK_FIRE_ACC_ENV_MAX_SIZE = "fire.acc.env.max.size"
   // env累加器保留最少的记录数
-  lazy val SPARK_FIRE_ACC_ENV_MIN_SIZE = "spark.fire.acc.env.min.size"
+  lazy val SPARK_FIRE_ACC_ENV_MIN_SIZE = "fire.acc.env.min.size"
   // timer累加器保留最大的记录数
-  lazy val SPARK_FIRE_ACC_TIMER_MAX_SIZE = "spark.fire.acc.timer.max.size"
+  lazy val SPARK_FIRE_ACC_TIMER_MAX_SIZE = "fire.acc.timer.max.size"
   // timer累加器清理几小时之前的记录
-  lazy val SPARK_FIRE_ACC_TIMER_MAX_HOUR = "spark.fire.acc.timer.max.hour"
+  lazy val SPARK_FIRE_ACC_TIMER_MAX_HOUR = "fire.acc.timer.max.hour"
   // 定时调度任务黑名单（定时任务方法名），以逗号分隔
-  lazy val SPARK_FIRE_SCHEDULER_BLACKLIST = "spark.fire.scheduler.blacklist"
+  lazy val SPARK_FIRE_SCHEDULER_BLACKLIST = "fire.scheduler.blacklist"
   // 用于配置是否启用任务定时调度
-  lazy val SPARK_FIRE_TASK_SCHEDULE_ENABLE = "spark.fire.task.schedule.enable"
+  lazy val SPARK_FIRE_TASK_SCHEDULE_ENABLE = "fire.task.schedule.enable"
   // quartz最大线程池大小
-  lazy val SPARK_FIRE_QUARTZ_MAX_THREAD = "spark.fire.quartz.max.thread"
+  lazy val SPARK_FIRE_QUARTZ_MAX_THREAD = "fire.quartz.max.thread"
   // fire框架restful地址
   def fireRestUrl(engine: String = "spark"): String = s"$engine.fire.rest.url"
   // 配置中心生产环境注册地址
-  lazy val SPARK_CONFIG_CENTER_REGISTER_CONF_PROD_ADDRESS = "spark.fire.config_center.register.conf.prod.address"
+  lazy val SPARK_CONFIG_CENTER_REGISTER_CONF_PROD_ADDRESS = "fire.config_center.register.conf.prod.address"
   // 配置中心测试环境注册地址
-  lazy val SPARK_CONFIG_CENTER_REGISTER_CONF_TEST_ADDRESS = "spark.fire.config_center.register.conf.test.address"
+  lazy val SPARK_CONFIG_CENTER_REGISTER_CONF_TEST_ADDRESS = "fire.config_center.register.conf.test.address"
   // spark streaming的remember时间，-1表示不生效(ms)
-  lazy val SPARK_FIRE_STREAMING_REMEMBER = "spark.fire.streaming.remember"
+  lazy val SPARK_FIRE_STREAMING_REMEMBER = "fire.streaming.remember"
   // 配置打印黑名单，配置项以逗号分隔
-  lazy val SPARK_FIRE_CONF_PRINT_BLACKLIST = "spark.fire.conf.print.blacklist"
+  lazy val SPARK_FIRE_CONF_PRINT_BLACKLIST = "fire.conf.print.blacklist"
   // 是否启用动态配置功能
-  lazy val SPARK_FIRE_DYNAMIC_CONF_ENABLE = "spark.fire.dynamic.conf.enable"
+  lazy val SPARK_FIRE_DYNAMIC_CONF_ENABLE = "fire.dynamic.conf.enable"
   // 是否打印配置信息
-  lazy val SPARK_FIRE_CONF_SHOW_ENABLE = "spark.fire.conf.show.enable"
+  lazy val SPARK_FIRE_CONF_SHOW_ENABLE = "fire.conf.show.enable"
   // 是否将fire restful地址以日志形式打印
-  lazy val SPARK_FIRE_REST_URL_SHOW_ENABLE = "spark.fire.rest.url.show.enable"
+  lazy val SPARK_FIRE_REST_URL_SHOW_ENABLE = "fire.rest.url.show.enable"
   // 各引擎单独配置文件名称（省略扩展名.properties）
   lazy val FIRE_CONF_FILE = "fire"
   lazy val SPARK_CONF_FILE = "spark"
@@ -94,18 +94,18 @@ private[fire] object FireFrameworkConf {
   lazy val FLINK_CONF_FILE = "flink"
   lazy val FLINK_STREAMING_CONF_FILE = "flink-streaming"
   lazy val FLINK_BATCH_CONF_FILE = "flink-batch"
-  lazy val FIRE_DEPLOY_CONF_ENABLE = "spark.fire.deploy_conf.enable"
-  lazy val FIRE_EXCEPTION_BUS_SIZE = "spark.fire.exception_bus.size"
-  lazy val FIRE_BURIED_POINT_DATASOURCE_ENABLE = "spark.fire.buried_point.datasource.enable"
-  lazy val FIRE_BURIED_POINT_DATASOURCE_MAX_SIZE = "spark.fire.buried_point.datasource.max.size"
-  lazy val FIRE_BURIED_POINT_DATASOURCE_INITIAL_DELAY = "spark.fire.buried_point.datasource.initialDelay"
-  lazy val FIRE_BURIED_POINT_DATASOURCE_PERIOD = "spark.fire.buried_point.datasource.period"
-  lazy val FIRE_BURIED_POINT_DATASOURCE_MAP = "spark.fire.buried_point.datasource.map."
-  lazy val FIRE_CONF_ADAPTIVE_PREFIX = "spark.fire.conf.adaptive.prefix"
+  lazy val FIRE_DEPLOY_CONF_ENABLE = "fire.deploy_conf.enable"
+  lazy val FIRE_EXCEPTION_BUS_SIZE = "fire.exception_bus.size"
+  lazy val FIRE_BURIED_POINT_DATASOURCE_ENABLE = "fire.buried_point.datasource.enable"
+  lazy val FIRE_BURIED_POINT_DATASOURCE_MAX_SIZE = "fire.buried_point.datasource.max.size"
+  lazy val FIRE_BURIED_POINT_DATASOURCE_INITIAL_DELAY = "fire.buried_point.datasource.initialDelay"
+  lazy val FIRE_BURIED_POINT_DATASOURCE_PERIOD = "fire.buried_point.datasource.period"
+  lazy val FIRE_BURIED_POINT_DATASOURCE_MAP = "fire.buried_point.datasource.map."
+  lazy val FIRE_CONF_ADAPTIVE_PREFIX = "fire.conf.adaptive.prefix"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
-   * 不同数据配置使用统一的前缀：spark.fire.buried_point.datasource.map.
+   * 不同数据配置使用统一的前缀：fire.buried_point.datasource.map.
    */
   def buriedPointDatasourceMap: Map[String, String] = PropUtils.sliceKeys(this.FIRE_BURIED_POINT_DATASOURCE_MAP)
   // 不同引擎配置获取具体的实现

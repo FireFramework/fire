@@ -286,7 +286,7 @@ public final class GlobalConfiguration {
                 PropUtils.invokeConfigCenter(className);
                 PropUtils.setProperty("flink.run.mode", runMode);
 
-                JavaConversions.mapAsJavaMap(PropUtils.toEngineConfMap()).forEach((k, v) -> {
+                JavaConversions.mapAsJavaMap(PropUtils.settings()).forEach((k, v) -> {
                     config.setString(k, v);
                     settings.put(k, v);
                 });
@@ -303,7 +303,7 @@ public final class GlobalConfiguration {
         Preconditions.checkNotNull(key, "key is null");
         final String keyInLower = key.toLowerCase();
         // 二次开发代码，用于隐藏webui中敏感信息
-        String hideKeys = JavaConversions.mapAsJavaMap(PropUtils.toMap()).getOrDefault("spark.fire.conf.print.blacklist", "password,secret,fs.azure.account.key");
+        String hideKeys = JavaConversions.mapAsJavaMap(PropUtils.settings()).getOrDefault("spark.fire.conf.print.blacklist", "password,secret,fs.azure.account.key");
         if (hideKeys != null && hideKeys.length() > 0) {
             String[] hideKeyArr = hideKeys.split(",");
             for (String hideKey : hideKeyArr) {

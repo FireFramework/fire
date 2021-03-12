@@ -115,11 +115,11 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     this.systemRestful = new SparkSystemRestful(this)
     // 注册到实时平台，并覆盖配置信息
     PropUtils.invokeConfigCenter(this.className)
-    PropUtils.print()
+    PropUtils.show()
 
     // 构建SparkConf信息
     val tmpConf = if (conf == null) this.buildConf(null) else conf.asInstanceOf[SparkConf]
-    tmpConf.setAll(PropUtils.toMap)
+    tmpConf.setAll(PropUtils.settings)
     tmpConf.set("spark.driver.class.simple.name", this.driverClass)
 
     // 设置hive metastore地址

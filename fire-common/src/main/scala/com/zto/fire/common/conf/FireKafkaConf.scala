@@ -14,29 +14,29 @@ private[fire] object FireKafkaConf {
   lazy val offsetLargest = "latest"
   lazy val offsetSmallest = "earliest"
   lazy val offsetNone = "none"
-  lazy val clusterMapConfStart = "spark.fire.kafka.cluster.map."
-  lazy val kafkaConfStart = "spark.kafka.conf."
-  lazy val KAFKA_BROKERS_NAME = "spark.kafka.brokers.name"
+  lazy val clusterMapConfStart = "fire.kafka.cluster.map."
+  lazy val kafkaConfStart = "kafka.conf."
+  lazy val KAFKA_BROKERS_NAME = "kafka.brokers.name"
   // kafka的topic列表，以逗号分隔
-  lazy val KAFKA_TOPICS = "spark.kafka.topics"
+  lazy val KAFKA_TOPICS = "kafka.topics"
   // group.id
-  lazy val KAFKA_GROUP_ID = "spark.kafka.group.id"
+  lazy val KAFKA_GROUP_ID = "kafka.group.id"
   // kafka起始消费位点
-  lazy val KAFKA_STARTING_OFFSET = "spark.kafka.starting.offsets"
+  lazy val KAFKA_STARTING_OFFSET = "kafka.starting.offsets"
   // kafka结束消费位点
-  lazy val KAFKA_ENDING_OFFSET = "spark.kafka.ending.offsets"
+  lazy val KAFKA_ENDING_OFFSET = "kafka.ending.offsets"
   // 是否自动维护offset
-  lazy val KAFKA_ENABLE_AUTO_COMMIT = "spark.kafka.enable.auto.commit"
+  lazy val KAFKA_ENABLE_AUTO_COMMIT = "kafka.enable.auto.commit"
   // 丢失数据是否失败
-  lazy val KAFKA_FAIL_ON_DATA_LOSS = "spark.kafka.failOnDataLoss"
+  lazy val KAFKA_FAIL_ON_DATA_LOSS = "kafka.failOnDataLoss"
   // kafka session超时时间
-  lazy val KAFKA_SESSION_TIMEOUT_MS = "spark.kafka.session.timeout.ms"
+  lazy val KAFKA_SESSION_TIMEOUT_MS = "kafka.session.timeout.ms"
   // kafka request超时时间
-  lazy val KAFKA_REQUEST_TIMEOUT_MS = "spark.kafka.request.timeout.ms"
-  lazy val KAFKA_MAX_POLL_INTERVAL_MS = "spark.kafka.max.poll.interval.ms"
-  lazy val KAFKA_COMMIT_OFFSETS_ON_CHECKPOINTS = "spark.kafka.CommitOffsetsOnCheckpoints"
-  lazy val KAFKA_START_FROM_TIMESTAMP = "spark.kafka.StartFromTimestamp"
-  lazy val KAFKA_START_FROM_GROUP_OFFSETS = "spark.kafka.StartFromGroupOffsets"
+  lazy val KAFKA_REQUEST_TIMEOUT_MS = "kafka.request.timeout.ms"
+  lazy val KAFKA_MAX_POLL_INTERVAL_MS = "kafka.max.poll.interval.ms"
+  lazy val KAFKA_COMMIT_OFFSETS_ON_CHECKPOINTS = "kafka.CommitOffsetsOnCheckpoints"
+  lazy val KAFKA_START_FROM_TIMESTAMP = "kafka.StartFromTimestamp"
+  lazy val KAFKA_START_FROM_GROUP_OFFSETS = "kafka.StartFromGroupOffsets"
 
   // 初始化kafka集群名称与地址映射
   private[fire] lazy val kafkaMap = PropUtils.sliceKeys(clusterMapConfStart)
