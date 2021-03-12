@@ -1,11 +1,9 @@
 package com.zto.fire.common.util
 
 import java.io.{FileInputStream, InputStream}
-import java.util
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 
-import com.alibaba.fastjson.JSON
 import com.zto.fire.common.conf._
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
@@ -122,11 +120,7 @@ object PropUtils {
    * 配置文件名称
    */
   def load(fileNames: String*): this.type = {
-    if (fileNames != null && fileNames.nonEmpty) {
-      fileNames.foreach(fileName => {
-        this.loadFile(fileName)
-      })
-    }
+    if (noEmpty(fileNames)) fileNames.foreach(this.loadFile)
 
     this
   }
@@ -160,9 +154,7 @@ object PropUtils {
   /**
    * 获取字符串
    */
-  def getString(key: String): String = {
-    this.getProperty(key)
-  }
+  def getString(key: String): String = this.getProperty(key)
 
   /**
    * 获取拼接后数值的配置字符串
@@ -362,9 +354,7 @@ object PropUtils {
   /**
    * 隐蔽密码信息后返回
    */
-  def cover: Map[String, String] = {
-    this.settingsMap.filter(t => !t._1.contains("pass"))
-  }
+  def cover: Map[String, String] = this.settingsMap.filter(t => !t._1.contains("pass"))
 
   /**
    * 打印配置文件中的kv
@@ -455,56 +445,7 @@ object PropUtils {
   }
 
   /**
-   * 构建配置中心请求参数
-   *
-   * @param className
-   * 当前任务主类名
-   */
-  private[this] def buildRequestParam(className: String): String = {
-    val rest = PropUtils.getString(FireFrameworkConf.fireRestUrl(PropUtils.engine), "")
-    if (StringUtils.isBlank(rest)) logger.warn("Fire Rest Server 地址为空，将无法完成注册")
-    s"""
-       |{"className": "$className", "url": "$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.configCenterSecret}"}
-      """.stripMargin
-  }
-
-  /**
    * 调用外部配置中心接口获取配合信息
    */
-  def invokeConfigCenter(className: String): Unit = {
-    if (!FireFrameworkConf.configCenterEnable || (OSUtils.isLocal && !FireFrameworkConf.configCenterLocalEnable)) return
-
-    val param = buildRequestParam(className)
-    var conf = ""
-    try {
-      conf = HttpClientUtils.doPost(FireFrameworkConf.configCenterProdAddress, param)
-    } catch {
-      case e: Exception => {
-        this.logger.error("调用配置中心接口失败，开始尝试调用测试环境配置中心接口。", e)
-        try {
-          conf = HttpClientUtils.doPost(FireFrameworkConf.configCenterTestAddress, param)
-        } catch {
-          case e: Exception => {
-            this.logger.error("无法从配置中心获取到该任务的配置信息，如遇配置中心注册接口不可用，仍需紧急发布，请将配置中心中的配置复制到当前任务的配置文件中，并通过以下配置关闭获取配置中心配置的接口，并重启任务：spark.fire.config_center.enable=false", e)
-            throw e
-          }
-        }
-      }
-    } finally {
-      if (StringUtils.isNotBlank(conf)) {
-        this.logger.info(s"成功获取配置中心配置信息：${conf}")
-        val msg = JSON.parseObject(conf)
-        if (msg != null && msg.get("code") == 200) {
-          val content = msg.get("content")
-          if (content != null) {
-            val confMap = JSON.parseObject(content.toString, classOf[util.HashMap[String, String]])
-            if (confMap != null && !confMap.isEmpty) {
-              PropUtils.setProperties(confMap)
-            }
-          }
-        }
-      }
-    }
-  }
-
+  def invokeConfigCenter(className: String): Unit = ConfigurationCenterManager.invokeConfigCenter(className)
 }
