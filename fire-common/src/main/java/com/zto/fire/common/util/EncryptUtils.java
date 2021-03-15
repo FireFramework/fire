@@ -1,5 +1,6 @@
 package com.zto.fire.common.util;
 
+import com.zto.fire.common.conf.FireFrameworkConf;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,6 @@ import java.util.Objects;
  * @author ChengLong 2018年7月16日 09:53:59
  */
 public class EncryptUtils {
-    private static final String SECRET = "($zto%-%fire$)";
     private static final String ERROR_MESSAGE = "参数不合法";
     private static final Logger logger = LoggerFactory.getLogger(EncryptUtils.class);
 
@@ -105,7 +105,7 @@ public class EncryptUtils {
         if (StringUtils.isBlank(auth)) {
             return false;
         }
-        String fireAuth = EncryptUtils.md5Encrypt(SECRET + privateKey + DateFormatUtils.formatCurrentDate());
+        String fireAuth = EncryptUtils.md5Encrypt(FireFrameworkConf.restServerSecret() + privateKey + DateFormatUtils.formatCurrentDate());
         return fireAuth.equals(auth);
     }
 }

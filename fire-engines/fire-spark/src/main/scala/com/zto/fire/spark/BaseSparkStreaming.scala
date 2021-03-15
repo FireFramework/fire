@@ -79,7 +79,7 @@ trait BaseSparkStreaming extends BaseSpark {
       } else {
         this.ssc = new StreamingContext(this.sc, Seconds(Math.abs(this.batchDuration)))
       }
-      val rememberTime = FireFrameworkConf.streamingRemember
+      val rememberTime = FireSparkConf.streamingRemember
       if (rememberTime > 0) this.ssc.remember(Milliseconds(Math.abs(rememberTime)))
       SparkSingletonFactory.setStreamingContext(this.ssc)
       this.process

@@ -5,7 +5,7 @@ import java.util.{Date, Properties}
 
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.enu.DataSource
+import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import org.apache.commons.lang3.StringUtils
@@ -139,7 +139,7 @@ object DBUtils {
    */
   def dbTypeParser(driverClass: String, url: String): String = {
     var dbType = "unknown"
-    DataSource.values().map(_.toString).foreach(datasource => {
+    Datasource.values().map(_.toString).foreach(datasource => {
       if (driverClass.toUpperCase.contains(datasource)) dbType = datasource
     })
 

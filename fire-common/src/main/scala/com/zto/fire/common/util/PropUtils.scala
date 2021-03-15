@@ -435,7 +435,7 @@ object PropUtils {
    * 合并Conf中的配置信息
    */
   private[this] def mergeEngineConf: Unit = {
-    val clazz = Class.forName(FireFrameworkConf.ENGINE_CONF_HELPER)
+    val clazz = Class.forName(FireFrameworkConf.FIRE_ENGINE_CONF_HELPER)
     val method = clazz.getDeclaredMethod("getEngineConf")
     val map = method.invoke(null).asInstanceOf[immutable.Map[String, String]]
     if (map.nonEmpty) {

@@ -55,7 +55,7 @@ trait BaseFire {
    */
   private[fire] def boot(): Unit = {
     FireUtils.splash
-    PropUtils.sliceKeys(FireFrameworkConf.SPARK_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
+    PropUtils.sliceKeys(FireFrameworkConf.FIRE_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
   }
 
   /**

@@ -38,7 +38,7 @@ private[ext] trait JdbcSparkProvider extends SparkProvider {
    */
   def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): RDD[T] = {
     val rsList = JdbcConnector.executeQuery[T](sql, params, clazz, connection, keyNum)
-    this.sc.parallelize(rsList, FireJdbcConf.jdbcQueryPartitions).persist(StorageLevel.fromString(FireJdbcConf.jdbcStorageLevel))
+    this.sc.parallelize(rsList, FireJdbcConf.jdbcQueryPartition).persist(StorageLevel.fromString(FireJdbcConf.jdbcStorageLevel))
   }
 
   /**

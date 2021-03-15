@@ -2,7 +2,7 @@ package com.zto.fire.hbase
 
 import com.zto.fire.common.anno.{Internal, TestStep}
 import com.zto.fire.common.db.bean.Student
-import com.zto.fire.common.util.{DataSourceManager, PropUtils}
+import com.zto.fire.common.util.{DatasourceManager, PropUtils}
 import com.zto.fire.predef._
 import org.junit.Assert._
 import org.junit.{Before, Test}
@@ -83,7 +83,7 @@ class HBaseConnectorTest {
     scanList.foreach(println)
 
     for (i <- 1 to 5) {
-      DataSourceManager.get.foreach(t => {
+      DatasourceManager.get.foreach(t => {
         t._2.foreach(source => {
           println("数据源：" + t._1.toString + " " + source)
         })
@@ -110,8 +110,8 @@ class HBaseConnectorTest {
     val scanStudentList2 = this.hbase2.scan(this.tableName2, classOf[Student], "1", "6")
     assertEquals(scanStudentList2.size, 3)
 
-    assertEquals(DataSourceManager.get.size(), 1)
-    DataSourceManager.get.foreach(t => {
+    assertEquals(DatasourceManager.get.size(), 1)
+    DatasourceManager.get.foreach(t => {
       t._2.foreach(println)
     })
   }

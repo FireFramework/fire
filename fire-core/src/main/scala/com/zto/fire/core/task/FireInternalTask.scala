@@ -1,10 +1,14 @@
 package com.zto.fire.core.task
 
+import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.serializer.SerializeConfig
 import com.zto.fire.common.bean.runtime.RuntimeInfo
-import com.zto.fire.common.conf.FirePS1Conf
+import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.util.UnitFormatUtils.DateUnitEnum
-import com.zto.fire.common.util.{LogUtils, UnitFormatUtils}
+import com.zto.fire.common.util.{DatasourceManager, DateFormatUtils, EncryptUtils, HttpClientUtils, LogUtils, UnitFormatUtils}
 import com.zto.fire.core.BaseFire
+import com.zto.fire.predef._
+import org.apache.commons.httpclient.Header
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
@@ -14,8 +18,34 @@ import org.slf4j.{Logger, LoggerFactory}
  * @since 1.0.0
  * @create 2020-07-14 11:02
  */
-private[fire] class FireInternalTask(baseFir: BaseFire) extends Serializable {
-  protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
+private[fire] class FireInternalTask(baseFire: BaseFire) extends Serializable {
+  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
+
+  /**
+   * fire框架内部接口调用工具
+   *
+   * @param urlSuffix
+   * 接口后缀
+   * @param json
+   * 请求参数
+   * @return
+   * 接口响应结果
+   */
+  protected def restInvoke(urlSuffix: String, json: String): String = {
+    if (FireFrameworkConf.restEnable && noEmpty(FireFrameworkConf.fireRestUrl, urlSuffix)) {
+      val restful = FireFrameworkConf.fireRestUrl + urlSuffix
+
+      tryWithReturn {
+        val secret = EncryptUtils.md5Encrypt(FireFrameworkConf.restServerSecret + this.baseFire.className + DateFormatUtils.formatCurrentDate)
+        if (noEmpty(json)) {
+          HttpClientUtils.doPost(restful, json, new Header("Content-Type", "application/json"), new Header("Authorization", secret))
+        } else {
+          HttpClientUtils.doGet(restful, new Header("Content-Type", "application/json"), new Header("Authorization", secret))
+        }
+      }(this.logger, "接口调用成功", "接口调用失败，请检查")
+    }
+    ""
+  }
 
   /**
    * 定时采集运行时的jvm、gc、thread、cpu、memory、disk等信息

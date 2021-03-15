@@ -4,9 +4,10 @@ import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
-import com.zto.fire.common.enu.{DataSource, ErrorCode}
-import com.zto.fire.common.util.PropUtils
+import com.zto.fire.common.enu.{Datasource, ErrorCode}
+import com.zto.fire.common.util.DatasourceDesc
 import com.zto.fire.core.BaseFire
+import com.zto.fire.predef.{JHashMap, JHashSet, _}
 import org.slf4j.{Logger, LoggerFactory}
 import spark.{Request, Response}
 
@@ -18,7 +19,7 @@ import spark.{Request, Response}
 protected[fire] abstract class SystemRestful(engine: BaseFire) {
   protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
   // 用于记录当前任务所访问的数据源
-  private lazy val dataSource = collection.mutable.Map[DataSource, String]()
+  private lazy val datasourceMap = new JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
   this.register
 
   /**
@@ -32,20 +33,34 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
    * @return
    * 数据源列表
    */
-  @Rest("/system/dataSource")
-  protected def dataSource(request: Request, response: Response): AnyRef = {
+  @Rest("/system/datasource")
+  protected def datasource(request: Request, response: Response): AnyRef = {
     val msg = new ResultMsg
     try {
-      if (this.dataSource.isEmpty) {
-        // this.dataSource ++= PropUtils.getDatasource
-      }
-      val dataSource = JSON.toJSONString(this.dataSource, SerializerFeature.NotWriteRootClassName)
+      val dataSource = JSON.toJSONString(this.datasourceMap, SerializerFeature.NotWriteRootClassName)
       this.logger.info(s"[DataSource] 获取数据源列表成功：counter=$dataSource")
       msg.buildSuccess(dataSource, "获取数据源列表成功")
     } catch {
       case e => {
         this.logger.error(s"[log] 获取数据源列表失败", e)
         msg.buildError("获取数据源列表失败", ErrorCode.ERROR)
+      }
+    }
+  }
+
+  @Rest("/system/collectDatasource")
+  def collectDatasource(request: Request, response: Response): AnyRef = {
+    val msg = new ResultMsg
+    try {
+      val json = request.body()
+      println("数据源driver：" + json)
+      val datasource = JSON.parseObject(json, classOf[JHashMap[Datasource, JHashSet[DatasourceDesc]]])
+      if (datasource.nonEmpty) this.datasourceMap.putAll(datasource)
+      msg.buildSuccess(datasource, "添加数据源列表成功")
+    }catch {
+      case e => {
+        this.logger.error(s"[log] 添加数据源列表失败", e)
+        msg.buildError("添加数据源列表失败", ErrorCode.ERROR)
       }
     }
   }

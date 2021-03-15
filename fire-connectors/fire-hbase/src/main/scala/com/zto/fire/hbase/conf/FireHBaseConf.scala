@@ -14,32 +14,32 @@ import com.zto.fire.predef._
  * @create 2020-07-13 15:08
  */
 private[fire] object FireHBaseConf {
-  lazy val HBASE_BATCH = "spark.fire.hbase.batch.size"
-  lazy val HBBASE_COLUMN_FAMILY_KEY = "spark.hbase.column.family"
-  lazy val HBASE_MAX_RETRY = "spark.hbase.max.retry"
-  lazy val HBASE_CLUSTER_URL = "spark.hbase.cluster"
-  lazy val HBASE_DURABILITY = "spark.hbase.durability"
+  lazy val HBASE_BATCH = "fire.hbase.batch.size"
+  lazy val HBBASE_COLUMN_FAMILY_KEY = "hbase.column.family"
+  lazy val HBASE_MAX_RETRY = "hbase.max.retry"
+  lazy val HBASE_CLUSTER_URL = "hbase.cluster"
+  lazy val HBASE_DURABILITY = "hbase.durability"
   // fire框架针对hbase操作后数据集的缓存策略，配置列表详见：StorageLevel.scala（配置不区分大小写）
-  lazy val SPARK_FIRE_HBASE_STORAGE_LEVEL = "spark.fire.hbase.storage.level"
+  lazy val FIRE_HBASE_STORAGE_LEVEL = "fire.hbase.storage.level"
   // 通过HBase scan后repartition的分区数
-  @deprecated("use spark.fire.hbase.scan.partitions", "v1.0.0")
-  lazy val SPARK_FIRE_HBASE_SCAN_REPARTITIONS = "spark.fire.hbase.scan.repartitions"
-  lazy val SPARK_FIRE_HBASE_SCAN_PARTITIONS = "spark.fire.hbase.scan.partitions"
+  @deprecated("use fire.hbase.scan.partitions", "v1.0.0")
+  lazy val FIRE_HBASE_SCAN_REPARTITIONS = "fire.hbase.scan.repartitions"
+  lazy val FIRE_HBASE_SCAN_PARTITIONS = "fire.hbase.scan.partitions"
   // hbase集群映射配置前缀
-  lazy val hbaseClusterMapPrefix = "spark.fire.hbase.cluster.map."
+  lazy val hbaseClusterMapPrefix = "fire.hbase.cluster.map."
   // 是否开启HBase表存在判断的缓存
-  lazy val TABLE_EXISTS_CACHE_ENABLE = "spark.fire.hbase.table.exists.cache.enable"
+  lazy val TABLE_EXISTS_CACHE_ENABLE = "fire.hbase.table.exists.cache.enable"
   // 是否开启HBase表存在列表缓存的定时更新任务
-  lazy val TABLE_EXISTS_CACHE_RELOAD_ENABLE = "spark.fire.hbase.table.exists.cache.reload.enable"
+  lazy val TABLE_EXISTS_CACHE_RELOAD_ENABLE = "fire.hbase.table.exists.cache.reload.enable"
   // 定时刷新缓存HBase表任务的初始延迟
-  lazy val TABLE_EXISTS_CACHE_INITIAL_DELAY = "spark.fire.hbase.table.exists.cache.initialDelay"
+  lazy val TABLE_EXISTS_CACHE_INITIAL_DELAY = "fire.hbase.table.exists.cache.initialDelay"
   // 定时刷新缓存HBase表任务的执行频率
-  lazy val TABLE_EXISTS_CACHE_PERIOD = "spark.fire.hbase.table.exists.cache.period"
+  lazy val TABLE_EXISTS_CACHE_PERIOD = "fire.hbase.table.exists.cache.period"
 
   // hbase集群映射地址
   lazy val hbaseClusterMap: util.Map[String, String] = PropUtils.sliceKeys(hbaseClusterMapPrefix)
   // hbase java api 配置前缀
-  lazy val hbaseConfPrefix = "spark.fire.hbase.conf."
+  lazy val hbaseConfPrefix = "fire.hbase.conf."
 
   // 是否开启HBase表存在判断的缓存
   def tableExistsCache(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.TABLE_EXISTS_CACHE_ENABLE, true)
@@ -72,11 +72,11 @@ private[fire] object FireHBaseConf {
   def hbaseDurability(keyNum: Int = 1): String = PropUtils.getString(this.HBASE_DURABILITY, keyNum, "")
 
   // HBase结果集的缓存策略配置
-  def hbaseStorageLevel: String = PropUtils.getString(this.SPARK_FIRE_HBASE_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
+  def hbaseStorageLevel: String = PropUtils.getString(this.FIRE_HBASE_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
 
   // 通过HBase scan后repartition的分区数，默认1200
   def hbaseHadoopScanPartitions: Int = {
-    val partitions = PropUtils.getInt(this.SPARK_FIRE_HBASE_SCAN_PARTITIONS, -1)
-    if (partitions != -1) partitions else PropUtils.getInt(this.SPARK_FIRE_HBASE_SCAN_REPARTITIONS, 1200)
+    val partitions = PropUtils.getInt(this.FIRE_HBASE_SCAN_PARTITIONS, -1)
+    if (partitions != -1) partitions else PropUtils.getInt(this.FIRE_HBASE_SCAN_REPARTITIONS, 1200)
   }
 }

@@ -65,7 +65,7 @@ private[fire] class RestServerManager {
       // 此处使用ServerSocket占用该端口，等真正启动rest server前再关闭该ServerSocket以便释放端口
       this.socket = new ServerSocket(this.port)
       this.restPrefix = s"http://${OSUtils.getIp}:${this.port}"
-      PropUtils.setProperty(FireFrameworkConf.fireRestUrl(PropUtils.engine), s"$restPrefix")
+      PropUtils.setProperty(FireFrameworkConf.FIRE_REST_URL, s"$restPrefix")
     }
     this
   }

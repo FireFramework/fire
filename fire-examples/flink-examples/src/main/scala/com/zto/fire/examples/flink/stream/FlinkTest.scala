@@ -7,8 +7,6 @@ import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.util.FlinkUtils
 import org.apache.flink.api.scala._
-import org.apache.flink.configuration.GlobalConfiguration
-import org.apache.flink.runtime.util.EnvironmentInformation
 import org.apache.flink.types.Row
 
 object FlinkTest extends BaseFlinkStreaming {
@@ -24,12 +22,12 @@ object FlinkTest extends BaseFlinkStreaming {
 
     dstream.createOrReplaceTempView("student")
     val table = this.fire.sqlQuery("select * from student")
-    println("flink.hello========>" + PropUtils.getString("flink.hello", "not_found"))
+    println("fire.rest.url========>" + PropUtils.getString("fire.rest.url", "not_found"))
     // toRetractStream支持状态更新、删除操作，比例sql中含有group by 等聚合操作，后进来的记录会导致已有的聚合结果不正确
     // 使用toRetractStream后会将之前的旧的聚合结果重新发送一次，并且tuple中的flag标记为false，然后再发送一条正确的结果
     // 类似于structured streaming中自动维护结果表，并进行update操作
     this.tableEnv.toRetractStream[Row](table).map(t => t._2).addSink(row => {
-      println("flink.hello========>" + PropUtils.getString("flink.hello", "not_found"))
+      println("fire.rest.url========>" + PropUtils.getString("fire.rest.url", "not_found"))
       println("是否为TaskManager========>" + FlinkUtils.isJobManager)
       println("运行模式========>" + FlinkUtils.runMode)
     })

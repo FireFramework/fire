@@ -5,7 +5,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Stateme
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{DataSourceManager, StringsUtils}
+import com.zto.fire.common.util.{DatasourceManager, StringsUtils}
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils
@@ -40,7 +40,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
   override protected[fire] def open(): Unit = {
     tryWithLog {
       // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
-      this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]")
+      this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.url(keyNum)} ]")
       this.url = if (StringUtils.isBlank(FireJdbcConf.url(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.url)) this.conf.url else FireJdbcConf.url(keyNum)
       require(StringUtils.isNotBlank(this.url), "数据库url不能为空")
       val driverClass = if (StringUtils.isBlank(FireJdbcConf.driverClass(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
@@ -65,7 +65,8 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       pool.setMaxStatementsPerConnection(0)
       pool.setMaxIdleTime(FireJdbcConf.maxIdleTime(keyNum))
       this.connPool = pool
-    }(this.logger, s"完成数据库连接池[ $keyNum ] driver: ${this.dbType}", s"初始化数据库连接池[ $keyNum ]失败")
+      this.logger.info(s"创建数据库连接池[ $keyNum ] driver: ${this.dbType}")
+    }(this.logger, s"数据库连接池创建成功", s"初始化数据库连接池[ $keyNum ]失败")
   }
 
   /**
@@ -90,7 +91,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       val connection = this.connPool.getConnection
       this.logger.debug(s"获取数据库连接[ ${keyNum} ]成功")
       connection
-    }(this.logger, catchLog = s"获取数据库连接[ ${FireJdbcConf.SPARK_DB_JDBC_URL_KEY}$keyNum ]发生异常，请检查配置文件")
+    }(this.logger, catchLog = s"获取数据库连接[ ${FireJdbcConf.JDBC_URL}$keyNum ]发生异常，请检查配置文件")
   }
 
   /**
@@ -127,10 +128,11 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       }
       retVal = stat.executeUpdate
       if (commit) conn.commit()
+      this.logger.info(s"executeUpdate success. keyNum: ${keyNum} count: $retVal")
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
-    }(this.logger, s"executeUpdate success. keyNum: ${keyNum} count: $retVal \n${this.sqlBuriedPoint(sql)}",
+    }(this.logger, s"${this.sqlBuriedPoint(sql)}",
       s"executeUpdate failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
   }
 
@@ -178,10 +180,11 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       val retVal = stat.executeBatch
       if (commit) conn.commit()
       count = retVal.sum
+      this.logger.info(s"executeBatch success. keyNum: ${keyNum} count: $count")
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
-    }(this.logger, s"executeBatch success. keyNum: ${keyNum} count: $count \n${this.sqlBuriedPoint(sql)}",
+    }(this.logger, s"${this.sqlBuriedPoint(sql)}",
       s"executeBatch failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
   }
 
@@ -240,9 +243,10 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       if (rs != null && callback != null) {
         count = callback(rs)
       }
+      this.logger.info(s"executeQueryCall success. keyNum: ${keyNum} count: $count")
     } {
       this.release(sql, conn, stat, rs)
-    }(this.logger, s"executeQueryCall success. keyNum: ${keyNum} count: $count \n${this.sqlBuriedPoint(sql, false)}",
+    }(this.logger, s"${this.sqlBuriedPoint(sql, false)}",
       s"executeQueryCall failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, false)}", finallyCatchLog)
   }
 
@@ -292,7 +296,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
    */
   @Internal
   private[this] def sqlBuriedPoint(sql: String, sink: Boolean = true): String = {
-    DataSourceManager.addSql(this.dbType, this.url, this.username, sql, sink)
+    DatasourceManager.addSql(this.dbType, this.url, this.username, sql, sink)
     StringsUtils.substring(sql, 0, this.logSqlLength)
   }
 

@@ -9,7 +9,7 @@ import org.junit.Test
  * @since 1.1.2
  * @create 2020-11-26 16:32
  */
-class DataSourceManagerTest {
+class DatasourceManagerTest {
 
   @Test
   def testAddGet: Unit = {

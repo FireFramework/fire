@@ -281,7 +281,7 @@ public final class GlobalConfiguration {
                 // 加载任务同名的配置文件
                 PropUtils.loadFile(simpleClassName);
                 // 构建fire rest接口地址
-                PropUtils.setProperty(FireFrameworkConf.fireRestUrl("flink"), "http://" + OSUtils.getIp() + ":" + getRestPort());
+                PropUtils.setProperty(FireFrameworkConf.FIRE_REST_URL(), "http://" + OSUtils.getIp() + ":" + getRestPort());
                 // 加载外部系统配置信息，覆盖同名配置文件中的配置，实现动态替换
                 PropUtils.invokeConfigCenter(className);
                 PropUtils.setProperty("flink.run.mode", runMode);

@@ -2,7 +2,7 @@ package com.zto.fire.jdbc
 
 import com.zto.fire.common.anno.TestStep
 import com.zto.fire.common.db.bean.Student
-import com.zto.fire.common.util.{DataSourceManager, PropUtils}
+import com.zto.fire.common.util.{DatasourceManager, PropUtils}
 import com.zto.fire.predef._
 import org.junit.Assert._
 import org.junit.{After, Before, Test}
@@ -71,7 +71,7 @@ class JdbcConnectorTest {
     studentList33.foreach(println)
 
     for (i <- 1 to 5) {
-      DataSourceManager.get.foreach(t => {
+      DatasourceManager.get.foreach(t => {
         t._2.foreach(source => {
           println("数据源：" + t._1.toString + " " + source)
         })

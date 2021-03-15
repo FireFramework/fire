@@ -25,7 +25,7 @@ private[fire] object ConfigurationCenterManager extends Serializable {
    * 当前任务主类名
    */
   private[this] def buildRequestParam(className: String): String = {
-    val rest = PropUtils.getString(FireFrameworkConf.fireRestUrl(PropUtils.engine), "")
+    val rest = FireFrameworkConf.fireRestUrl
     if (StringUtils.isBlank(rest)) this.logger.warn("Fire Rest Server 地址为空，将无法完成注册")
     s"""
        |{"className": "$className", "url": "$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.configCenterSecret}"}

@@ -5,7 +5,7 @@ import java.util.concurrent.{ConcurrentHashMap, ScheduledExecutorService, TimeUn
 
 import com.google.common.collect.EvictingQueue
 import com.zto.fire.common.conf.FireFrameworkConf._
-import com.zto.fire.common.enu.{DataSource, ThreadPoolType}
+import com.zto.fire.common.enu.{Datasource, ThreadPoolType}
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
@@ -17,13 +17,13 @@ import org.slf4j.LoggerFactory
  * @since 1.0.0
  * @create 2020-11-26 15:30
  */
-private[fire] class DataSourceManager {
+private[fire] class DatasourceManager {
   private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
   // 用于存放当前任务用到的数据源信息
-  private[this] lazy val datasourceMap = new ConcurrentHashMap[DataSource, util.HashSet[DataSourceDesc]]()
+  private[this] lazy val datasourceMap = new ConcurrentHashMap[Datasource, util.HashSet[DatasourceDesc]]()
   // 用于收集来自不同数据源的sql语句，后续会异步进行SQL解析，考虑到分布式场景下会有很多重复的SQL执行，因此使用了线程不安全的队列即可满足需求
   private lazy val sqlQueue = EvictingQueue.create[DBSqlSource](buriedPointDatasourceMaxSize)
-  private[this] lazy val threadPool = ThreadUtils.createThreadPool("DataSourceManager", ThreadPoolType.SCHEDULED)
+  private[this] lazy val threadPool = ThreadUtils.createThreadPool("DatasourceManager", ThreadPoolType.SCHEDULED)
   this.sqlParse()
 
   /**
@@ -41,7 +41,7 @@ private[fire] class DataSourceManager {
                 val tableNames = SQLUtils.tableParse(sqlSource.sql)
                 if (tableNames != null && tableNames.nonEmpty) {
                   tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
-                    add(DataSource.parse(sqlSource.datasource), DBDataSource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, sqlSource.sink))
+                    add(Datasource.parse(sqlSource.datasource), DBDatasource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, sqlSource.sink))
                   })
                 }
               }
@@ -56,10 +56,10 @@ private[fire] class DataSourceManager {
   /**
    * 添加一个数据源描述信息
    */
-  private[fire] def add(sourceType: DataSource, datasourceDesc: DataSourceDesc): Unit = {
+  private[fire] def add(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = {
     var set = this.datasourceMap.get(sourceType)
     if (set == null) {
-      set = new util.HashSet[DataSourceDesc]()
+      set = new util.HashSet[DatasourceDesc]()
     }
     set.add(datasourceDesc)
     this.datasourceMap.put(sourceType, set)
@@ -73,14 +73,14 @@ private[fire] class DataSourceManager {
   /**
    * 获取所有使用到的数据源
    */
-  private[fire] def get: util.Map[DataSource, util.HashSet[DataSourceDesc]] = this.datasourceMap
+  private[fire] def get: util.Map[Datasource, util.HashSet[DatasourceDesc]] = this.datasourceMap
 }
 
 /**
  * 对外暴露API，用于收集并处理各种埋点信息
  */
-private[fire] object DataSourceManager {
-  private lazy val manager = new DataSourceManager
+private[fire] object DatasourceManager {
+  private lazy val manager = new DatasourceManager
 
   /**
    * 添加一条sql记录到队列中
@@ -113,8 +113,8 @@ private[fire] object DataSourceManager {
    * @param username
    * 连接用户名
    */
-  private[fire] def addDBDataSource(datasource: String, cluster: String, tableName: String, username: String = "", sink: Boolean = true): Unit = {
-    this.manager.add(DataSource.parse(datasource), DBDataSource(datasource, cluster, tableName, username, sink))
+  private[fire] def addDBDatasource(datasource: String, cluster: String, tableName: String, username: String = "", sink: Boolean = true): Unit = {
+    this.manager.add(Datasource.parse(datasource), DBDatasource(datasource, cluster, tableName, username, sink))
   }
 
   /**
@@ -131,20 +131,20 @@ private[fire] object DataSourceManager {
    * @param groupId
    * 消费组标识
    */
-  private[fire] def addMQDataSource(datasource: String, cluster: String, topics: String, groupId: String, sink: Boolean = false): Unit = {
-    this.manager.add(DataSource.parse(datasource), MQDataSource(datasource, cluster, topics, groupId, sink))
+  private[fire] def addMQDatasource(datasource: String, cluster: String, topics: String, groupId: String, sink: Boolean = false): Unit = {
+    this.manager.add(Datasource.parse(datasource), MQDatasource(datasource, cluster, topics, groupId, sink))
   }
 
   /**
    * 获取所有使用到的数据源
    */
-  private[fire] def get: util.Map[DataSource, util.HashSet[DataSourceDesc]] = this.manager.get
+  private[fire] def get: util.Map[Datasource, util.HashSet[DatasourceDesc]] = this.manager.get
 }
 
 /**
  * 数据源描述
  */
-trait DataSourceDesc
+trait DatasourceDesc
 
 /**
  * 面向数据库类型的数据源，带有tableName
@@ -160,7 +160,7 @@ trait DataSourceDesc
  * @param username
  * 使用关系型数据库时作为jdbc的用户名，HBase留空
  */
-case class DBDataSource(datasource: String, cluster: String, tableName: String, username: String = "", sink: Boolean = true) extends DataSourceDesc
+case class DBDatasource(datasource: String, cluster: String, tableName: String, username: String = "", sink: Boolean = true) extends DatasourceDesc
 
 /**
  * 面向数据库类型的数据源，需将SQL中的tableName主动解析
@@ -175,7 +175,7 @@ case class DBDataSource(datasource: String, cluster: String, tableName: String, 
  *            使用关系型数据库时作为jdbc的用户名，HBase留空
  * @param sql 执行的SQL语句
  */
-case class DBSqlSource(datasource: String, cluster: String, username: String, sql: String, sink: Boolean = true) extends DataSourceDesc
+case class DBSqlSource(datasource: String, cluster: String, username: String, sql: String, sink: Boolean = true) extends DatasourceDesc
 
 /**
  * MQ类型数据源，如：kafka、RocketMQ等
@@ -191,4 +191,4 @@ case class DBSqlSource(datasource: String, cluster: String, username: String, sq
  * @param groupId
  * 任务的groupId
  */
-case class MQDataSource(datasource: String, cluster: String, topics: String, groupId: String, sink: Boolean = false) extends DataSourceDesc
+case class MQDatasource(datasource: String, cluster: String, topics: String, groupId: String, sink: Boolean = false) extends DatasourceDesc
