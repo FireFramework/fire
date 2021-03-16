@@ -20,7 +20,7 @@ import scala.reflect.ClassTag
  * @since 2.0.0
  * @create 2020-12-23 17:48
  */
-private[ext] trait JdbcSparkProvider extends SparkProvider {
+trait JdbcSparkProvider extends SparkProvider {
 
   /**
    * 执行查询操作，以RDD方式返回结果集

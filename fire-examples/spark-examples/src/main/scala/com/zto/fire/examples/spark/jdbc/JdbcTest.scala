@@ -7,7 +7,7 @@ import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire._
 import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.jdbc.{JdbcConnector, QueryCallback}
+import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.spark.BaseSparkCore
 import org.apache.spark.sql.SaveMode
 

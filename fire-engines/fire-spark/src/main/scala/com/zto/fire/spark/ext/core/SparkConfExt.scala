@@ -9,6 +9,6 @@ import org.apache.spark.SparkConf
   * sparkConf对象
   * @author ChengLong 2019-5-18 10:50:35
   */
-private[fire] class SparkConfExt(sparkConf: SparkConf) {
+class SparkConfExt(sparkConf: SparkConf) {
 
 }

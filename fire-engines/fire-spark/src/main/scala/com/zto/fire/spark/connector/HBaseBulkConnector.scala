@@ -39,7 +39,7 @@ import scala.reflect.ClassTag
  * HBase相关配置参数
  * @author ChengLong 2018年4月10日 10:39:28
  */
-private[fire] class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient config: Configuration, batchSize: Int = 10000, keyNum: Int = 1)
+class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient config: Configuration, batchSize: Int = 10000, keyNum: Int = 1)
   extends HBaseContext(sc, config) with Connector {
   private[fire] lazy val finalBatchSize = if (FireHBaseConf.hbaseBatchSize(this.keyNum) != -1) FireHBaseConf.hbaseBatchSize(this.keyNum) else this.batchSize
   private[this] lazy val sparkSession = SparkSingletonFactory.getSparkSession

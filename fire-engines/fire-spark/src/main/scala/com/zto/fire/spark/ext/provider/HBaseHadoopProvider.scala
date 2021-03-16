@@ -17,7 +17,7 @@ import scala.reflect.ClassTag
  * @since 2.0.0
  * @create 2020-12-23 17:41
  */
-private[ext] trait HBaseHadoopProvider extends SparkProvider {
+trait HBaseHadoopProvider extends SparkProvider {
 
   /**
    * 使用Spark API的方式将RDD中的数据分多个批次插入到HBase中

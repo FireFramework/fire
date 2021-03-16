@@ -20,7 +20,7 @@ import org.apache.spark.sql.{DataFrame, SQLContext, SaveMode}
  * sqlContext对象
  * @author ChengLong 2019-5-18 10:52:00
  */
-private[fire] class SQLContextExt(sqlContext: SQLContext) {
+class SQLContextExt(sqlContext: SQLContext) {
 
   /**
    * 获取KuduContext实例

@@ -25,7 +25,7 @@ import scala.reflect.ClassTag
   *
   * @author ChengLong 2019-5-10 14:39:39
   */
-private[fire] class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
+class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
   private[this] lazy val spark = SparkSingletonFactory.getSparkSession
   def batchSize: Int = FireHBaseConf.hbaseBatchSize()
 

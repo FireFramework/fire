@@ -16,7 +16,7 @@ import scala.reflect.ClassTag
  * @since 2.0.0
  * @create 2020-12-24 10:16
  */
-private[ext] trait HBaseConnectorProvider {
+trait HBaseConnectorProvider {
 
   /**
    * hbase批量sink操作，DataStream[T]中的T必须是HBaseBaseBean的子类

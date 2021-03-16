@@ -24,7 +24,7 @@ import scala.reflect.ClassTag
  * sparkSession对象
  * @author ChengLong 2019-5-18 10:51:19
  */
-private[fire] class SparkSessionExt(spark: SparkSession) extends Api with JdbcConnectorBridge with JdbcSparkProvider
+class SparkSessionExt(spark: SparkSession) extends Api with JdbcConnectorBridge with JdbcSparkProvider
   with HBaseBulkProvider with SqlProvider with HBaseConnectorProvider with HBaseHadoopProvider with KafkaSparkProvider {
   private[fire] lazy val ssc = SparkSingletonFactory.getStreamingContext
   private[this] lazy val appName = ssc.sparkContext.appName

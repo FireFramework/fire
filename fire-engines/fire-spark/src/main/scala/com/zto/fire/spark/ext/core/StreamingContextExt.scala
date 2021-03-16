@@ -20,7 +20,7 @@ import com.zto.fire._
  * StreamingContext对象
  * @author ChengLong 2019-5-18 11:03:59
  */
-private[fire] class StreamingContextExt(ssc: StreamingContext) {
+class StreamingContextExt(ssc: StreamingContext) {
 
   import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
   import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent

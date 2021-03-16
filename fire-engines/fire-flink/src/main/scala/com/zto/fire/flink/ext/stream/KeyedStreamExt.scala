@@ -13,7 +13,7 @@ import org.apache.flink.streaming.api.windowing.windows.Window
  * @since 2.0.0
  * @create 2021-01-15 10:20
  */
-private[fire] class KeyedStreamExt[T, K](keyedStream: KeyedStream[T, K]) {
+class KeyedStreamExt[T, K](keyedStream: KeyedStream[T, K]) {
 
   /**
    * 创建滑动窗口

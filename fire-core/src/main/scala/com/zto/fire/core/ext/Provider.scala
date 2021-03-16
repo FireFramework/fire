@@ -9,6 +9,6 @@ import org.slf4j.LoggerFactory
  * @since 2.0.0
  * @create 2020-12-23 17:52
  */
-private[fire] trait Provider {
+trait Provider {
   protected lazy val logger = LoggerFactory.getLogger(this.getClass)
 }

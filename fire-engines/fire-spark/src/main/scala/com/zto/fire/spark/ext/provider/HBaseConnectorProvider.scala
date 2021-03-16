@@ -17,7 +17,7 @@ import scala.reflect.ClassTag
  * @since 1.0.0
  * @create 2020-12-23 17:39
  */
-private[ext] trait HBaseConnectorProvider extends SparkProvider {
+trait HBaseConnectorProvider extends SparkProvider {
 
   /**
    * Scan指定HBase表的数据，并映射为DataFrame

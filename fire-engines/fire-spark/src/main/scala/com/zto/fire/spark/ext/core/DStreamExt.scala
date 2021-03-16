@@ -17,7 +17,7 @@ import scala.reflect._
  * stream对象
  * @author ChengLong 2019-5-18 11:06:56
  */
-private[fire] class DStreamExt[T: ClassTag](stream: DStream[T]) {
+class DStreamExt[T: ClassTag](stream: DStream[T]) {
 
   /**
    * DStrea数据实时写入

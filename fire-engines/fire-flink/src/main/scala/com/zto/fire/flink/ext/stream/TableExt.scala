@@ -22,7 +22,7 @@ import scala.reflect.ClassTag
  * @author ChengLong 2020年1月9日 13:52:16
  * @since 0.4.1
  */
-private[fire] class TableExt(table: Table) {
+class TableExt(table: Table) {
   lazy val streamTableEnv = FlinkSingletonFactory.getStreamTableEnv
   lazy val batchTableEnv = FlinkSingletonFactory.getBatchTableEnv
 

@@ -15,7 +15,7 @@ import scala.reflect.ClassTag
  * @since 2.0.0
  * @create 2020-12-23 15:46
  */
-private[fire] trait HBaseBulkFunctions {
+trait HBaseBulkFunctions {
   /**
    * 根据RDD[String]批量删除，rdd是rowkey的集合
    * 类型为String

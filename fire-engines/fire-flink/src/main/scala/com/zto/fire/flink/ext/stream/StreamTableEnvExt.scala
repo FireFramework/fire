@@ -12,7 +12,7 @@ import org.apache.flink.table.functions.ScalarFunction
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-private[fire] class StreamTableEnvExt(tableEnv: StreamTableEnvironment) {
+class StreamTableEnvExt(tableEnv: StreamTableEnvironment) {
 
   /**
    * 注册自定义udf函数

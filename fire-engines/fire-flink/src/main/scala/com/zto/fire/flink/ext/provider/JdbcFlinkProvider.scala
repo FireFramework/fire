@@ -13,7 +13,7 @@ import org.apache.flink.types.Row
  * @since 2.0.0
  * @create 2020-12-24 10:18
  */
-private[ext] trait JdbcFlinkProvider {
+trait JdbcFlinkProvider {
 
   /**
    * jdbc批量sink操作，根据用户指定的DataStream中字段的顺序，依次填充到sql中的占位符所对应的位置

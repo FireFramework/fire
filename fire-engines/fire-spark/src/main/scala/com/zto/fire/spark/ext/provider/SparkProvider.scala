@@ -10,7 +10,7 @@ import com.zto.fire.spark.util.SparkSingletonFactory
  * @since 2.0.0
  * @create 2020-12-23 17:49
  */
-private[ext] trait SparkProvider extends Provider {
+trait SparkProvider extends Provider {
   protected lazy val spark = SparkSingletonFactory.getSparkSession
   protected lazy val sc = spark.sparkContext
 }

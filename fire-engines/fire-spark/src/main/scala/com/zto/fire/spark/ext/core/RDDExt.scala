@@ -20,7 +20,7 @@ import scala.reflect.{ClassTag, classTag}
   *
   * @author ChengLong 2019-5-18 10:28:31
   */
-private[fire] class RDDExt[T: ClassTag](rdd: RDD[T]) {
+class RDDExt[T: ClassTag](rdd: RDD[T]) {
   private lazy val spark = SparkSingletonFactory.getSparkSession
 
   import spark.implicits._

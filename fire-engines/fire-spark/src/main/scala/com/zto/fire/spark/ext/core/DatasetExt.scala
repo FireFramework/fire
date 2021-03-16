@@ -16,7 +16,7 @@ import scala.reflect._
  * dataset对象
  * @author ChengLong 2019-5-18 11:02:56
  */
-private[fire] class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
+class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
 
   /**
    * 用于检查当前Dataset是否为空

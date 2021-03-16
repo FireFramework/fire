@@ -10,7 +10,7 @@ import org.apache.flink.table.api.Table
  * @author ChengLong 2020年1月15日 16:35:03
  * @since 0.4.1
  */
-private[fire] class DataSetExt[T](dataSet: DataSet[T]){
+class DataSetExt[T](dataSet: DataSet[T]){
   lazy val tableEnv = FlinkSingletonFactory.getBatchTableEnv
 
   /**

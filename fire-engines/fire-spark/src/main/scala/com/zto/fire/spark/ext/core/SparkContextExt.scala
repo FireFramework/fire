@@ -9,6 +9,6 @@ import org.apache.spark.SparkContext
   * SparkContext对象
   * @author ChengLong 2019-5-18 10:53:56
   */
-private[fire] class SparkContextExt(sc: SparkContext) {
+class SparkContextExt(sc: SparkContext) {
 
 }
