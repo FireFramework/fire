@@ -20,22 +20,22 @@
     <dependencies>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>fire-common</artifactId>
+            <artifactId>fire-common_${scala.binary.version}</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>fire-core</artifactId>
+            <artifactId>fire-core_${scala.binary.version}</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>fire-jdbc</artifactId>
+            <artifactId>fire-jdbc_${scala.binary.version}</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>fire-hbase</artifactId>
+            <artifactId>fire-hbase_${scala.binary.version}</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
