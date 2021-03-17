@@ -106,6 +106,16 @@
 
     <repositories>
         <repository>
+            <id>zto</id>
+            <url>http://maven.dev.ztosys.com/nexus/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
             <id>aliyun</id>
             <url>https://maven.aliyun.com/repository/central</url>
             <releases>
@@ -128,6 +138,16 @@
     </repositories>
 
     <pluginRepositories>
+        <pluginRepository>
+            <id>zto</id>
+            <url>http://maven.dev.ztosys.com/nexus/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
         <pluginRepository>
             <id>aliyun</id>
             <url>https://maven.aliyun.com/repository/central</url>
