@@ -55,15 +55,15 @@ object JdbcSinkTest extends BaseFlinkStreaming {
     this.fire.jdbcBatchUpdateStream(stream, sql, fields).setParallelism(1)
 
     // 方式二、通过用户指定的匿名函数方式进行数据的组装，适用于上面方法无法反射获取值的情况，适用面更广
-    stream.jdbcBatchUpdate2(sql, 3, 30000, keyNum = 3) {
+    /*stream.jdbcBatchUpdate2(sql, 3, 30000, keyNum = 3) {
       // 在此处指定取数逻辑，定义如何将dstream中每列数据映射到sql中的占位符
       value => Seq(value.getName, value.getAge, DateFormatUtils.formatCurrentDateTime(), value.getLength, value.getSex)
-    }.setParallelism(1)
+    }.setParallelism(1)*/
 
     // 或者
-    this.flink.jdbcBatchUpdateStream2(stream, sql) {
+    /*this.flink.jdbcBatchUpdateStream2(stream, sql) {
       value => Seq(value.getName, value.getAge, DateFormatUtils.formatCurrentDateTime(), value.getLength, value.getSex)
-    }.setParallelism(2)
+    }.setParallelism(2)*/
   }
 
   def testJdbc: Unit = {
@@ -80,7 +80,7 @@ object JdbcSinkTest extends BaseFlinkStreaming {
     val stream = this.fire.createKafkaDirectStream().filter(JSONUtils.checkJson _).map(json => JSON.parseObject(json, classOf[Student]))
     // this.testTableJdbcSink(stream)
     this.testStreamJdbcSink(stream)
-    // this.testJdbc
+    this.testJdbc
 
     this.fire.start("JdbcTest")
   }

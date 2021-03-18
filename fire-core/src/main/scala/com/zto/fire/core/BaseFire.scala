@@ -44,6 +44,8 @@ trait BaseFire {
   protected[fire] lazy val logger: slf4j.Logger = LoggerFactory.getLogger(this.getClass)
   // 默认的任务名称为类名
   protected[fire] var appName: JString = this.driverClass
+  // 配置信息
+  protected lazy val conf = PropUtils
   // fire内置线程池
   protected[fire] lazy val threadPool: ExecutorService = ThreadUtils.createThreadPool("FireThreadPool", ThreadPoolType.FIXED, FireFrameworkConf.threadPoolSize)
   protected[fire] lazy val threadPoolSchedule: ScheduledExecutorService = ThreadUtils.createThreadPool("FireThreadPoolSchedule", ThreadPoolType.SCHEDULED, FireFrameworkConf.threadPoolSchedulerSize).asInstanceOf[ScheduledExecutorService]
@@ -135,11 +137,6 @@ trait BaseFire {
       FirePrintModuleConf.endTimeCost(this.startTime)
     }
   }
-
-  /**
-   * 获取配置信息
-   */
-  def conf: PropUtils.type = PropUtils
 
   /**
    * 以子线程方式执行函数调用

@@ -409,7 +409,7 @@ public class EnvironmentInformation {
                         IS_JOBMANAGER = false;
                     }
                     if (!"-D".equals(command)) {
-                        String[] properties = command.replace("-D", "").split("=");
+                        String[] properties = command.replace("-D", "").split("=", 2);
                         if (properties != null && properties.length == 2 && properties[0] != null && properties[1] != null) {
                             settings.put(properties[0], properties[1]);
                         }

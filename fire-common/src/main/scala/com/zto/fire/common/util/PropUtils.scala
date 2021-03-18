@@ -440,7 +440,8 @@ object PropUtils {
     val map = method.invoke(null).asInstanceOf[immutable.Map[String, String]]
     if (map.nonEmpty) {
       this.setProperties(map)
-      logger.debug(s"完成计算引擎配置信息的同步，总计：${map.size}条")
+      logger.info(s"完成计算引擎配置信息的同步，总计：${map.size}条")
+      map.foreach(k => logger.debug("合并：k=" + k._1 + " v=" + k._2))
     }
   }
 
