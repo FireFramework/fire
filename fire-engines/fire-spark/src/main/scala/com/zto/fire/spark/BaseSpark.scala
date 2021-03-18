@@ -35,11 +35,6 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
   protected[fire] var listener: SparkListener = _
 
   /**
-   * 获取配置信息
-   */
-  def conf = this.acc.getConf
-
-  /**
    * 生命周期方法：初始化fire框架必要的信息
    * 注：该方法会同时在driver端与executor端执行
    */

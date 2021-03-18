@@ -76,6 +76,27 @@ object SparkUtils {
    * 映射为对象的集合
    */
   def sparkRowToBean[T](it: Iterator[Row], clazz: Class[T], toUppercase: Boolean = false): Iterator[T] = {
+    /**
+     * 用于索引给定的字段名称在Row中的index
+     * 同时兼容标注了@FieldName的字段可以被正常索引到
+     */
+    def fieldIndex(row: Row, fieldName: String, annoFieldName: String): Int = {
+      try {
+        row.fieldIndex(annoFieldName)
+      } catch {
+        case _: Exception => {
+          try {
+            row.fieldIndex(fieldName)
+          } catch {
+            case e: Exception => {
+              this.logger.error(s"将Spark Row转JavaBean失败，未能匹配${fieldName}或${annoFieldName}", e)
+              -1
+            }
+          }
+        }
+      }
+    }
+
     val list = ListBuffer[T]()
     if (it != null && clazz != null) {
       val fields = clazz.getDeclaredFields
@@ -88,18 +109,21 @@ object SparkUtils {
           if (anno == null || (anno != null && !anno.disuse())) {
             var fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
             fieldName = if (toUppercase) fieldName.toUpperCase else fieldName
-            if (this.containsColumn(row, fieldName)) {
-              val index = row.fieldIndex(fieldName.trim)
-              val fieldType = field.getType
-              if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
-              else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getAs[IntegerType](index))
-              else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getAs[LongType](index))
-              else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getAs[DecimalType](index))
-              else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getAs[BooleanType](index))
-              else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getAs[DoubleType](index))
-              else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getAs[FloatType](index))
-              else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getAs[ShortType](index))
-              else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getAs[DateType](index))
+            // 兼容标注了@FieldName的字段
+            if (this.containsColumn(row, fieldName) || this.containsColumn(row, field.getName)) {
+              val index = fieldIndex(row, field.getName, fieldName.trim)
+              if (index >= 0) {
+                val fieldType = field.getType
+                if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
+                else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getAs[IntegerType](index))
+                else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getAs[LongType](index))
+                else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getAs[DecimalType](index))
+                else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getAs[BooleanType](index))
+                else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getAs[DoubleType](index))
+                else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getAs[FloatType](index))
+                else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getAs[ShortType](index))
+                else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getAs[DateType](index))
+              }
             }
           }
         })

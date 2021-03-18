@@ -127,8 +127,6 @@ object JdbcTest extends BaseSparkCore {
     // 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序，batch用于指定批次大小，默认取spark.db.jdbc.batch.size配置的值
     df.jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
 
-    df.repartition(3).jdbcBatchUpdate(s"delete from yuncang.$tableName where pri_id=?", Seq("pri_id"), batch = 100)
-
     df.createOrReplaceTempViewCache("student")
     val sqlDF = this.fire.sql("select name, age, createTime from student where id>=1").repartition(1)
     // 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
@@ -141,13 +139,13 @@ object JdbcTest extends BaseSparkCore {
    * 在executor中执行jdbc操作
    */
   def testExecutor: Unit = {
-    JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = rs => {
+    JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = _ => {
       // this.mark()
       Thread.sleep(1000)
       // this.log(s"=============driver123 $tableName2=============")
       1
     }, keyNum = 3)
-    JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = rs => {
+    JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = _ => {
       // this.log(s"=============driver $tableName2=============")
       1
     }, keyNum = 5)
@@ -155,7 +153,7 @@ object JdbcTest extends BaseSparkCore {
     val rdd = this.fire.createRDD(1 to 3, 3)
     rdd.foreachPartition(it => {
       it.foreach(i => {
-        JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = rs => {
+        JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = _ => {
           // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
           1
         }, keyNum = 3)
@@ -166,7 +164,7 @@ object JdbcTest extends BaseSparkCore {
     val rdd2 = this.fire.createRDD(1 to 3, 3)
     rdd2.foreachPartition(it => {
       it.foreach(i => {
-        JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = rs => {
+        JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = _ => {
           // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
           1
         }, keyNum = 5)
@@ -177,13 +175,13 @@ object JdbcTest extends BaseSparkCore {
 
   override def process: Unit = {
     // 测试环境测试
-    this.testJdbcUpdate
-    /*this.testJdbcQuery
-    this.testTableLoad
-    this.testTableSave
-    this.testDataFrameSave*/
+    /*this.testJdbcUpdate
+    this.testJdbcQuery
+    this.testTableLoad*/
+    // this.testTableSave
+    // this.testDataFrameSave
     // 生产环境测试
-    // this.testExecutor
+    this.testExecutor
   }
 
   def main(args: Array[String]): Unit = {

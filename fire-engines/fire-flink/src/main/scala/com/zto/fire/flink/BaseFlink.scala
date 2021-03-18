@@ -25,7 +25,7 @@ import org.apache.flink.table.catalog.hive.HiveCatalog
  * @author ChengLong 2020年1月7日 09:31:09
  */
 trait BaseFlink extends BaseFire {
-  protected var conf: Configuration = _
+  protected[fire] var _conf: Configuration = _
   protected var hive: HiveCatalog = _
 
   /**

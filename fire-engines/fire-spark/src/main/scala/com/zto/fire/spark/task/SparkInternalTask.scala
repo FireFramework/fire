@@ -33,7 +33,7 @@ private[fire] class SparkInternalTask(baseSpark: BaseSpark) extends FireInternal
   /**
    * 数据源收集任务，收集driver与executor用到的数据源信息
    */
-  @Scheduled(fixedInterval = 1000 * 60 * 10, scope = "all", initialDelay = 60000L, concurrent = false)
+  @Scheduled(fixedInterval = 60000L, scope = "all", initialDelay = 60000L, concurrent = false, repeatCount = 30)
   def datasource: Unit = {
     if (FireFrameworkConf.restEnable) {
       val datasourceMap = DatasourceManager.get

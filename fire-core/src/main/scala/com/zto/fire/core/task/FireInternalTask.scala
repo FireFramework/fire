@@ -1,15 +1,13 @@
 package com.zto.fire.core.task
 
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializeConfig
 import com.zto.fire.common.bean.runtime.RuntimeInfo
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.util.UnitFormatUtils.DateUnitEnum
-import com.zto.fire.common.util.{DatasourceManager, DateFormatUtils, EncryptUtils, HttpClientUtils, LogUtils, UnitFormatUtils}
+import com.zto.fire.common.util._
 import com.zto.fire.core.BaseFire
 import com.zto.fire.predef._
 import org.apache.commons.httpclient.Header
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 
 /**
  * Fire框架内部的定时任务
@@ -42,7 +40,7 @@ private[fire] class FireInternalTask(baseFire: BaseFire) extends Serializable {
         } else {
           HttpClientUtils.doGet(restful, new Header("Content-Type", "application/json"), new Header("Authorization", secret))
         }
-      }(this.logger, "接口调用成功", "接口调用失败，请检查")
+      }(this.logger, "接口调用成功", "Fire内部接口调用失败，请检查")
     }
     ""
   }

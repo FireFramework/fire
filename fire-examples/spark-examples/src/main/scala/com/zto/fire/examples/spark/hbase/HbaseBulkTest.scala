@@ -183,12 +183,12 @@ object HBaseBulkTest extends BaseSparkCore {
     * 注：此方法会被自动调用
     */
   override def process: Unit = {
-    // this.testHBaseBulkDeleteRDD
-    this.testHBaseBulkDeleteDS
+    this.testHBaseBulkDeleteRDD
+    // this.testHBaseBulkDeleteDS
 
     // this.testHbaseBulkPutRDD
-    this.testHbaseBulkPutDF
-    // this.testHbaseBulkPutDS
+    // this.testHbaseBulkPutDF
+    this.testHbaseBulkPutDS
 
     println("=========get========")
     this.testHBaseBulkGetRDD

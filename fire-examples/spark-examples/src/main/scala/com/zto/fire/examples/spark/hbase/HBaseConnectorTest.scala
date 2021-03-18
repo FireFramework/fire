@@ -180,12 +180,12 @@ object HBaseConnectorTest extends BaseSparkCore {
     */
   override def process: Unit = {
     // 指定是否以多版本的形式读写
-    this.testHBaseDeleteRDD
+    // this.testHBaseDeleteRDD
     this.testHbaseDeleteDS
 
     // this.testHbasePutRDD
-    // this.testHbasePutList
-    this.testHBasePutDF
+    this.testHbasePutList
+    // this.testHBasePutDF
     // this.testHBasePutDS
 
     println("=========get========")

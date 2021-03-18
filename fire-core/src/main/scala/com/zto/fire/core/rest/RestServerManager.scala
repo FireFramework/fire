@@ -19,7 +19,6 @@ import scala.collection.mutable._
  */
 private[fire] class RestServerManager {
   private[this] var port: JInt = null
-  private[this] var isStarted = false
   private[this] var restPrefix: String = _
   private[this] var socket: ServerSocket = _
   private[this] lazy val restList = ListBuffer[RestCase]()
@@ -48,7 +47,7 @@ private[fire] class RestServerManager {
    * 为rest服务指定监听端口
    */
   private[fire] def startRestPort(port: Int = 0): this.type = this.synchronized {
-    if (this.port == null && !this.isStarted) {
+    if (this.port == null && !RestServerManager.isStarted) {
       Spark.threadPool(FireFrameworkConf.restfulMaxThread, 2, -1)
       // 端口占用失败默认重试3次
       if (port == 0) {
@@ -74,8 +73,8 @@ private[fire] class RestServerManager {
    * 注册并以子线程方式开启rest服务
    */
   private[fire] def startRestServer: Unit = this.synchronized {
-    if (!FireFrameworkConf.restEnable || this.isStarted) return
-    this.isStarted = true
+    if (!FireFrameworkConf.restEnable || RestServerManager.isStarted) return
+    RestServerManager.isStarted = true
     if (this.port == null) this.startRestPort()
     // 批量注册接口地址
     this.threadPool.execute(new Runnable {
@@ -142,5 +141,13 @@ private[fire] class RestServerManager {
     }
     msg
   }
+}
 
+private[fire] object RestServerManager {
+  private[RestServerManager] var isStarted = false
+
+  /**
+   * 用于判断fire rest是否启动
+   */
+  def serverStarted:Boolean = this.isStarted
 }

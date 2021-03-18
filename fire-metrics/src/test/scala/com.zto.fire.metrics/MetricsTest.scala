@@ -67,7 +67,7 @@ class MetricsTest {
     Thread.sleep(100000)
   }
 
-  @Test
+  /*@Test
   def testAntlr: Unit = {
     val input = CharStreams.fromString(
       """
@@ -92,6 +92,6 @@ class MetricsTest {
     val walker = new ParseTreeWalker
     walker.walk(new MyArrayInitListener(), tree)
     println()
-  }
+  }*/
 
 }

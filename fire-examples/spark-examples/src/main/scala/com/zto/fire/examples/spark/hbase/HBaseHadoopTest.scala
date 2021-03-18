@@ -2,6 +2,7 @@ package com.zto.fire.examples.spark.hbase
 
 import com.zto.fire._
 import com.zto.fire.examples.bean.Student
+import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.BaseSparkCore
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.filter.{CompareFilter, RegexStringComparator, RowFilter}
@@ -73,8 +74,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     */
   def testHBaseHadoopScanRDD: Unit = {
     println("===========testHBaseHadoopScanRDD===========")
-    val daysFilter = new RowFilter(CompareFilter.CompareOp.EQUAL, new RegexStringComparator("20190613|20190614|20190615|20190616"))
-    val studentRDD = this.fire.hbaseHadoopScanRDD(this.tableName3, new Scan().setFilter(daysFilter), classOf[Student])
+    val studentRDD = this.fire.hbaseHadoopScanRDD2(this.tableName3, classOf[Student], "1", "6")
     studentRDD.printEachPartition
   }
 
@@ -92,9 +92,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     */
   def testHBaseHadoopScanDS: Unit = {
     println("===========testHBaseHadoopScanDS===========")
-    val scan = new Scan()
-    scan.setTimeRange(1575216000000L, 1575648000000L)
-    val studentDS = this.fire.hbaseHadoopScanDS(this.tableName3, classOf[Student], scan)
+    val studentDS = this.fire.hbaseHadoopScanDS2(this.tableName3, classOf[Student], "1", "6")
     studentDS.show(100, false)
   }
 
@@ -103,10 +101,11 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 注：此方法会被自动调用
     */
   override def process: Unit = {
-    this.testHbaseHadoopPutRDD
+    HBaseConnector.truncateTable(this.tableName3)
+    // this.testHbaseHadoopPutRDD
     // this.testHbaseHadoopPutDF
     // this.testHbaseHadoopPutDS
-    // this.testHbaseHadoopPutDFRow
+    this.testHbaseHadoopPutDFRow
 
     this.testHBaseHadoopScanRDD
     this.testHBaseHadoopScanDF

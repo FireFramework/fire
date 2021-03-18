@@ -46,7 +46,7 @@ private[fire] class DatasourceManager {
                 }
               }
             }
-            logger.info(s"异步解析SQL埋点中的表信息,耗时：${timecost(start)}")
+            logger.debug(s"异步解析SQL埋点中的表信息,耗时：${timecost(start)}")
           }
         }
       }, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod, TimeUnit.SECONDS)

@@ -137,6 +137,11 @@ trait BaseFire {
   }
 
   /**
+   * 获取配置信息
+   */
+  def conf: PropUtils.type = PropUtils
+
+  /**
    * 以子线程方式执行函数调用
    *
    * @param fun

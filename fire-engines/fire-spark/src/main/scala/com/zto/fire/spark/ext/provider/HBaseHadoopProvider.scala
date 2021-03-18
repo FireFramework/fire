@@ -105,7 +105,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * 目标类型
    * @return
    */
-  def hbaseHadoopScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, clazz: Class[T], keyNum: Int = 1): RDD[T] = {
+  def hbaseHadoopScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): RDD[T] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseHadoopScanRDD[T](tableName, clazz, scan)
   }
 

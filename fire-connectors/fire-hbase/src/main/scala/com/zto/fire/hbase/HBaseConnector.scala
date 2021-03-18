@@ -93,7 +93,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
       table = this.getTable(tableName)
       table.put(puts)
       DatasourceManager.addDBDatasource("HBase", hbaseCluster(keyNum), tableName)
-      this.logger.info(s"HBase insert ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${puts.size}条}")
+      this.logger.info(s"HBase insert ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${puts.size}条")
     } {
       this.closeTable(table)
     }(this.logger, "HBase insert",
@@ -307,7 +307,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
         val fieldMap = Maps.newHashMapWithExpectedSize[String, Field](allFields.size())
 
         if (allFields != null) {
-          allFields.values.filter(field => field != null).foreach(field => {
+          allFields.values.filter(_ != null).foreach(field => {
             val fieldName = field.getAnnotation(classOf[FieldName])
             var family = ""
             var qualifier = ""
@@ -854,7 +854,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
     if (this.tableExistsCacheEnable) {
       // 如果走缓存
       if (!this.cacheTableExistsMap.containsKey(tableName)) {
-        this.logger.info(s"已缓存${tableName}是否存在信息，后续将走缓存.")
+        this.logger.debug(s"已缓存${tableName}是否存在信息，后续将走缓存.")
         this.cacheTableExistsMap.put(tableName, this.tableExists(tableName))
       }
       this.cacheTableExistsMap.get(tableName)
@@ -875,11 +875,11 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
     tryWithFinally {
       admin = this.getConnection.getAdmin
       val isExists = admin.tableExists(TableName.valueOf(tableName))
+      this.logger.debug(s"HBase tableExists ${hbaseCluster(keyNum)}.${tableName}获取成功")
       isExists
     } {
       closeAdmin(admin)
-    }(logger, s"HBase tableExists ${hbaseCluster(keyNum)}.${tableName}获取成功",
-      s"判断HBase表${hbaseCluster(keyNum)}.${tableName}是否存在失败")
+    }(logger, catchLog = s"判断HBase表${hbaseCluster(keyNum)}.${tableName}是否存在失败")
   }
 
   /**
@@ -972,9 +972,9 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
           cacheTableExistsMap.foreach(kv => {
             cacheTableExistsMap.update(kv._1, tableExists(kv._1))
             // 将用到的表信息加入到数据源管理器中
-            logger.info(s"定时reload HBase表：${kv._1} 信息成功.")
+            logger.debug(s"定时reload HBase表：${kv._1} 信息成功.")
           })
-          logger.info(s"定时reload HBase耗时：${timecost(start)}")
+          logger.debug(s"定时reload HBase耗时：${timecost(start)}")
         }
       }, tableExistCacheInitialDelay(this.keyNum), tableExistCachePeriod(this.keyNum), TimeUnit.SECONDS)
     }

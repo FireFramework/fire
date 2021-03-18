@@ -44,7 +44,7 @@ trait BaseFlinkStreaming extends BaseFlink {
     }
     finalConf.setBoolean(ConfigConstants.LOCAL_START_WEBSERVER, true)
 
-    this.conf = finalConf
+    this._conf = finalConf
     finalConf
   }
 
