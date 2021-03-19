@@ -40,7 +40,7 @@ class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
     * JavaBean类型，为HBaseBaseBean的子类
     */
   def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], df: DataFrame): Unit = {
-    df.rdd.mapPartitions(row => SparkUtils.sparkRowToBean(row, clazz)).foreachPartition(it => {
+    df.mapPartitions(row => SparkUtils.sparkRowToBean(row, clazz))(Encoders.bean(clazz)).foreachPartition((it: Iterator[E]) => {
       this.multiBatchInsert(tableName, it)
     })
   }
@@ -56,7 +56,7 @@ class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
     * JavaBean类型，为HBaseBaseBean的子类
     */
   def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], ds: Dataset[E]): Unit = {
-    ds.rdd.foreachPartition(it => {
+    ds.foreachPartition((it: Iterator[E]) => {
       this.multiBatchInsert(tableName, it)
     })
   }

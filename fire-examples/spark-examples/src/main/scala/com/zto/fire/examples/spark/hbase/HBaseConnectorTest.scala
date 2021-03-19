@@ -18,6 +18,7 @@ import scala.collection.mutable.ListBuffer
   */
 object HBaseConnectorTest extends BaseSparkCore {
   private val tableName1 = "fire_test_1"
+  private val tableName2 = "fire_test_2"
 
   /**
     * 使用HBaseConnector插入一个集合，可以是list、set等集合
@@ -57,7 +58,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     val studentList = Student.newStudentList()
     val studentDS = this.fire.createDataset(studentList)(Encoders.bean(classOf[Student]))
     // 以多版本形式插入
-    studentDS.hbasePutDS(this.tableName1, classOf[Student])
+    studentDS.hbasePutDS(this.tableName2, classOf[Student])
   }
 
   /**
@@ -184,9 +185,9 @@ object HBaseConnectorTest extends BaseSparkCore {
     this.testHbaseDeleteDS
 
     // this.testHbasePutRDD
-    this.testHbasePutList
-    // this.testHBasePutDF
-    // this.testHBasePutDS
+    // this.testHbasePutList
+    this.testHBasePutDF
+    this.testHBasePutDS
 
     println("=========get========")
     this.testHbaseGetList

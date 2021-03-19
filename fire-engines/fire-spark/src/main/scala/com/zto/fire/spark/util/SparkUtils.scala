@@ -510,7 +510,7 @@ object SparkUtils {
    *            具体处理逻辑，将数据sink到目标源
    */
   def datasetForeachPartitionBatch[T, E](df: Dataset[T], mapFun: T => E, sinkFun: ListBuffer[E] => Unit, batch: Int = 1000): Unit = {
-    df.rdd.foreachPartition(it => {
+    df.foreachPartition((it: Iterator[T]) => {
       var count: Int = 0
       val list = ListBuffer[E]()
 
