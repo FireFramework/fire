@@ -32,6 +32,26 @@ public class ReflectionUtils {
     }
 
     /**
+     * 根据类名反射获取Class对象
+     */
+    public static Class<?> forName(String className) {
+        try {
+            return Class.forName(className);
+        } catch (Exception e) {
+            logger.error("未找到类信息：" + className, e);
+            return null;
+        }
+    }
+
+    /**
+     * 用于判断某类是否存在指定的字段
+     */
+    public static boolean containsField(Class<?> clazz, String fieldName) {
+        Field field = getFieldByName(clazz, fieldName);
+        return field != null ? true : false;
+    }
+
+    /**
      * 获取所有公有字段，并返回Map
      */
     private static Map<String, Field> getFields(Class<?> clazz) {
@@ -106,6 +126,14 @@ public class ReflectionUtils {
      */
     public static Method getMethodByName(Class<?> clazz, String methodName) {
         return getAllMethods(clazz).get(methodName);
+    }
+
+    /**
+     * 用于判断某类是否存在指定的方法名
+     */
+    public static boolean containsMethod(Class<?> clazz, String methodName) {
+        Method method = getMethodByName(clazz, methodName);
+        return method != null ? true : false;
     }
 
     /**
