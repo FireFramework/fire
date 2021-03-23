@@ -74,6 +74,7 @@ class StreamingContextExt(ssc: StreamingContext) {
                              tag: String = null,
                              consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                              locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
+                             instance: String = "",
                              keyNum: Int = 1): InputDStream[MessageExt] = {
 
     // 获取topic信息，配置文件优先级高于代码中指定的
@@ -98,6 +99,7 @@ class StreamingContextExt(ssc: StreamingContext) {
     require(!finalRocketParam.isEmpty, "RocketMQ相关配置不能为空！")
     require(finalRocketParam.containsKey(RocketMQConfig.NAME_SERVER_ADDR), s"RocketMQ nameserver.addr不能为空，请在配置文件中指定：spark.rocket.brokers.name$keyNum")
     require(finalRocketParam.containsKey(RocketMQConfig.CONSUMER_TAG), s"RocketMQ tag不能为空，请在配置文件中指定：spark.rocket.consumer.tag$keyNum")
+    if (StringUtils.isNotBlank(instance)) finalRocketParam.put("consumer.instance", instance)
 
     RocketMqUtils.createMQPullStream(this.ssc,
       finalGroupId,
