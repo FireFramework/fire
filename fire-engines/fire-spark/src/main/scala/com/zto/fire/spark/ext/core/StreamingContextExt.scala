@@ -68,7 +68,7 @@ class StreamingContextExt(ssc: StreamingContext) {
    * @return
    * rocketMQ DStream
    */
-  def createRocketPullStream(rocketParam: java.util.Map[String, String] = null,
+  def createRocketPullStream(rocketParam: JMap[String, String] = null,
                              groupId: String = this.appName,
                              topics: String = null,
                              tag: String = null,
@@ -99,7 +99,10 @@ class StreamingContextExt(ssc: StreamingContext) {
     require(!finalRocketParam.isEmpty, "RocketMQ相关配置不能为空！")
     require(finalRocketParam.containsKey(RocketMQConfig.NAME_SERVER_ADDR), s"RocketMQ nameserver.addr不能为空，请在配置文件中指定：spark.rocket.brokers.name$keyNum")
     require(finalRocketParam.containsKey(RocketMQConfig.CONSUMER_TAG), s"RocketMQ tag不能为空，请在配置文件中指定：spark.rocket.consumer.tag$keyNum")
-    if (StringUtils.isNotBlank(instance)) finalRocketParam.put("consumer.instance", instance)
+    // 消费者标识
+    val instanceId = FireRocketMQConf.rocketInstanceId(keyNum)
+    val finalInstanceId = if (StringUtils.isNotBlank(instanceId)) instanceId else instance
+    if (StringUtils.isNotBlank(finalInstanceId)) finalRocketParam.put("consumer.instance", finalInstanceId)
 
     RocketMqUtils.createMQPullStream(this.ssc,
       finalGroupId,

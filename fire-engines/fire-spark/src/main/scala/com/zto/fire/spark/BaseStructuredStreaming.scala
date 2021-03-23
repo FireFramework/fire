@@ -21,7 +21,7 @@ class BaseStructuredStreaming extends BaseSpark {
   override def init(conf: Any = null, args: Array[String] = null): Unit = {
     super.init(conf, args)
     // 添加时间监听器
-    this.spark.streams.addListener(new BaseStreamingQueryListener)
+    this._spark.streams.addListener(new BaseStreamingQueryListener)
     this.restfulRegister.startRestServer
     this.process
   }

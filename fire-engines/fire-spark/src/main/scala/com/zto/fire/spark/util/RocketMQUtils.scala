@@ -26,13 +26,13 @@ object RocketMQUtils {
    * @return
    * rocketMQ相关配置
    */
-  def rocketParams(rocketParam: java.util.Map[String, String] = null,
+  def rocketParams(rocketParam: JMap[String, String] = null,
                    groupId: String = null,
                    rocketNameServer: String = null,
                    tag: String = null,
-                   keyNum: Int = 1): java.util.Map[String, String] = {
+                   keyNum: Int = 1): JMap[String, String] = {
 
-    val optionParams = if (rocketParam != null) rocketParam else new java.util.HashMap[String, String]()
+    val optionParams = if (rocketParam != null) rocketParam else new JHashMap[String, String]()
     if (StringUtils.isNotBlank(groupId)) optionParams.put(RocketMQConfig.CONSUMER_GROUP, groupId)
 
     // rocket name server 配置

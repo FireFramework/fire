@@ -109,14 +109,15 @@ class SparkSessionExt(spark: SparkSession) extends Api with JdbcConnectorBridge 
    * @return
    * rocketMQ DStream
    */
-  def createRocketMqPullStream(rocketParam: Map[String, String] = null,
+  def createRocketMqPullStream(rocketParam: JMap[String, String] = null,
                                groupId: String = this.appName,
                                topics: String = null,
                                tag: String = null,
                                consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                                locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
+                               instance: String = "",
                                keyNum: Int = 1): InputDStream[MessageExt] = {
-    this.ssc.createRocketPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, keyNum)
+    this.ssc.createRocketPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum)
   }
 
   /**

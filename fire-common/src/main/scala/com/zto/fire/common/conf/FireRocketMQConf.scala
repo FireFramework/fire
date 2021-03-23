@@ -35,6 +35,10 @@ private[fire] object FireRocketMQConf {
   lazy val ROCKET_CONSUMER_TAG = "rocket.consumer.tag"
   // 每次拉取每个partition的消息数
   lazy val ROCKET_PULL_MAX_SPEED_PER_PARTITION = "rocket.pull.max.speed.per.partition"
+  lazy val ROCKET_INSTANCE_ID = "spark.rocket.consumer.instance"
+
+  // 用于标识消费者的名称
+  def rocketInstanceId(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_INSTANCE_ID, keyNum, "")
 
   // rocket-client配置信息
   def rocketConfMap(keyNum: Int = 1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(rocketConfStart, keyNum)

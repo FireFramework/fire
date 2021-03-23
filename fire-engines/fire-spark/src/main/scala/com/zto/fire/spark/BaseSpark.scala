@@ -24,7 +24,8 @@ import org.apache.spark.streaming.StreamingContext
  */
 trait BaseSpark extends SparkListener with BaseFire with Logging with Serializable {
   private[fire] var _conf: SparkConf = _
-  protected[fire] var spark, fire: SparkSession = _
+  protected[fire] var _spark: SparkSession = _
+  protected lazy val spark, fire: SparkSession = _spark
   protected[fire] var sc: SparkContext = _
   protected[fire] var catalog: Catalog = _
   protected[fire] var ssc: StreamingContext = _
@@ -57,8 +58,8 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 生命周期方法：用于关闭SparkContext
    */
   override final def stop: Unit = {
-    if (this.spark != null && this.sc != null && !this.sc.isStopped) {
-      this.spark.stop()
+    if (this._spark != null && this.sc != null && !this.sc.isStopped) {
+      this._spark.stop()
     }
   }
 
@@ -127,27 +128,26 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     if (StringUtils.isNotBlank(hiveMetastoreUrl)) sessionBuilder.enableHiveSupport()
     // 在mac或windows环境下执行local模式，cpu数通过spark.local.cores指定，默认local[*]
     if (OSUtils.isLocal) sessionBuilder.master(s"local[${FireSparkConf.localCores}]")
-    this.spark = sessionBuilder.getOrCreate()
-    this.fire = this.spark
-    SparkSingletonFactory.setSparkSession(this.spark)
-    this.spark.registerUDF()
-    this.sc = this.spark.sparkContext
+    this._spark = sessionBuilder.getOrCreate()
+    SparkSingletonFactory.setSparkSession(this._spark)
+    this._spark.registerUDF()
+    this.sc = this._spark.sparkContext
     // 关联所连接的hive集群，根据预制方案启用HDFS HA
     SparkUtils.linkHiveCluster(this.sc.hadoopConfiguration)
-    this.catalog = this.spark.catalog
+    this.catalog = this._spark.catalog
     this.sc.setLogLevel(FireSparkConf.logLevel)
     this.listener = new BaseSparkListener(this)
     this.sc.addSparkListener(listener)
     // this.initLogging(this.className)
-    this.hiveContext = this.spark.sqlContext
+    this.hiveContext = this._spark.sqlContext
     this.sqlContext = this.hiveContext
     this.kuduContext = SparkSingletonFactory.getKuduContextInstance(this.sc)
-    this.applicationId = SparkUtils.getApplicationId(this.spark)
-    this.webUI = SparkUtils.getWebUI(this.spark)
+    this.applicationId = SparkUtils.getApplicationId(this._spark)
+    this.webUI = SparkUtils.getWebUI(this._spark)
     this._conf = tmpConf
     this.deployConf
     this.logger.info("<-- 完成Spark运行时信息初始化 -->")
-    SparkUtils.executeHiveConfSQL(this.spark)
+    SparkUtils.executeHiveConfSQL(this._spark)
   }
 
   /**
