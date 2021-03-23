@@ -91,7 +91,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       val connection = this.connPool.getConnection
       this.logger.debug(s"获取数据库连接[ ${keyNum} ]成功")
       connection
-    }(this.logger, catchLog = s"获取数据库连接[ ${FireJdbcConf.JDBC_URL}$keyNum ]发生异常，请检查配置文件")
+    }(this.logger, catchLog = s"获取数据库连接[ ${FireJdbcConf.url(keyNum)} ]发生异常，请检查配置文件")
   }
 
   /**

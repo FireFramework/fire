@@ -1,8 +1,8 @@
 package com.zto.fire.examples.flink.stream
 
-import com.zto.fire._
 import com.alibaba.fastjson.JSON
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
+import com.zto.fire._
+import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
@@ -15,7 +15,7 @@ import org.apache.flink.streaming.api.scala.DataStream
  * @since 1.1.0
  * @create 2020-05-22 11:10
  */
-object JdbcSinkTest extends BaseFlinkStreaming {
+object ClickhouseTest extends BaseFlinkStreaming {
   lazy val tableName = "spark_test"
 
   val fields = "name, age, createTime, length, sex".split(",")
@@ -52,7 +52,7 @@ object JdbcSinkTest extends BaseFlinkStreaming {
     // 注：要保证DataStream中字段名称是JavaBean的名称，非表中字段名称 顺序要与占位符顺序一致，个数也要一致
     // stream.jdbcBatchUpdate(sql, fields, keyNum = 3).setParallelism(3)
     // 或者
-    // this.fire.jdbcBatchUpdateStream(stream, sql, fields).setParallelism(1)
+    this.fire.jdbcBatchUpdateStream(stream, sql, fields).setParallelism(1)
 
     // 方式二、通过用户指定的匿名函数方式进行数据的组装，适用于上面方法无法反射获取值的情况，适用面更广
     /*stream.jdbcBatchUpdate2(sql, 3, 30000, keyNum = 3) {
@@ -61,28 +61,23 @@ object JdbcSinkTest extends BaseFlinkStreaming {
     }.setParallelism(1)*/
 
     // 或者
-    this.flink.jdbcBatchUpdateStream2(stream, sql) {
+    /*this.flink.jdbcBatchUpdateStream2(stream, sql) {
       value => Seq(value.getName, value.getAge, DateFormatUtils.formatCurrentDateTime(), value.getLength, value.getSex)
-    }.setParallelism(2)
+    }.setParallelism(2)*/
   }
 
   def testJdbc: Unit = {
-    // 执行查询操作
-    val studentList = this.flink.jdbcQuery(s"select * from $tableName", clazz = classOf[Student], keyNum = 3)
-    val dataStream = this.env.fromCollection(studentList)
-    dataStream.print()
-
     // 执行增删改操作
-    this.flink.jdbcUpdate(s"delete from $tableName", keyNum = 3)
+    this.fire.jdbcQuery(s"select * from $tableName", null, classOf[Student])
   }
 
   override def process: Unit = {
-    val stream = this.fire.createKafkaDirectStream().filter(JSONUtils.checkJson _).map(json => JSON.parseObject(json, classOf[Student]))
+    // val stream = this.fire.createKafkaDirectStream().filter(JSONUtils.checkJson _).map(json => JSON.parseObject(json, classOf[Student]))
     // this.testTableJdbcSink(stream)
-    this.testStreamJdbcSink(stream)
-    // this.testJdbc
+    // this.testStreamJdbcSink(stream)
+    this.testJdbc
 
-    this.fire.start("JdbcTest")
+    // this.fire.start("JdbcTest")
   }
 
 
