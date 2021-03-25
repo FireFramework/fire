@@ -24,7 +24,7 @@ trait BaseFlinkStreaming extends BaseFlink {
   protected var tableEnv: StreamTableEnvironment = _
   override val jobType: JobType = JobType.FLINK_STREAMING
   // 用于存放延期的数据
-  protected val outputTag = new OutputTag[Any]("later_data")
+  protected lazy val outputTag = new OutputTag[Any]("later_data")
 
 
   /**
