@@ -433,12 +433,12 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         return msg.buildError(s"sql不合法，在线调试功能只支持查询操作", ErrorCode.ERROR)
       }
 
-      if (this.baseSpark == null || this.baseSpark.spark == null) {
+      if (this.baseSpark == null || this.baseSpark._spark == null) {
         this.logger.warn(s"[sql] 系统正在初始化，请稍后再试：json=$json")
         return "系统正在初始化，请稍后再试"
       }
 
-      val sqlResult = this.baseSpark.spark.sql(sql.replace("memory.", "")).limit(1000).showString()
+      val sqlResult = this.baseSpark._spark.sql(sql.replace("memory.", "")).limit(1000).showString()
       this.logger.info(s"成功执行以下查询：${sql}\n执行结果如下：\n" + sqlResult)
       msg.buildSuccess(sqlResult, ErrorCode.SUCCESS.toString)
     } catch {
@@ -462,7 +462,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.sparkInfoBean.setAppName(this.baseSpark.appName)
         this.sparkInfoBean.setClassName(this.baseSpark.className)
         this.sparkInfoBean.setFireVersion(FireFrameworkConf.fireVersion)
-        this.sparkInfoBean.setConf(this.baseSpark.spark.conf.getAll)
+        this.sparkInfoBean.setConf(this.baseSpark._spark.conf.getAll)
         this.sparkInfoBean.setVersion(this.baseSpark.sc.version)
         this.sparkInfoBean.setMaster(this.baseSpark.sc.master)
         this.sparkInfoBean.setApplicationId(this.baseSpark.sc.applicationId)

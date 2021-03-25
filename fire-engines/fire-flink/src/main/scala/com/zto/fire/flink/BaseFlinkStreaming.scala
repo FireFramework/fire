@@ -89,11 +89,13 @@ trait BaseFlinkStreaming extends BaseFlink {
     FlinkSingletonFactory.setStreamEnv(this.env).setStreamTableEnv(this.tableEnv)
     FlinkUtils.loadUdfJar
     // 自动注册配置文件中指定的udf函数
-    FireFlinkConf.flinkUdfList.filter(udf => noEmpty(udf, udf._1, udf._2)).foreach(udf => {
-      val createFunction = s"CREATE FUNCTION ${udf._1} AS '${udf._2}'"
-      this.tableEnv.executeSql(createFunction)
-      logger.info(s"execute sql: $createFunction")
-    })
+    if (FireFlinkConf.flinkUdfEnable) {
+      FireFlinkConf.flinkUdfList.filter(udf => noEmpty(udf, udf._1, udf._2)).foreach(udf => {
+        val createFunction = s"CREATE FUNCTION ${udf._1} AS '${udf._2}'"
+        this.tableEnv.executeSql(createFunction)
+        logger.info(s"execute sql: $createFunction")
+      })
+    }
   }
 
   /**
