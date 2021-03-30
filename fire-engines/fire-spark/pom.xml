@@ -48,6 +48,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -59,6 +60,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-streaming-kafka-0-10_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
 
         <!-- hadoop相关依赖 -->
@@ -86,17 +88,19 @@
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
             <version>${hbase.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-spark</artifactId>
+            <artifactId>hbase-spark_${spark.version}_${scala.binary.version}</artifactId>
             <version>${hbase.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
 
         <!-- kudu相关依赖 -->
         <dependency>
             <groupId>org.apache.kudu</groupId>
-            <artifactId>kudu-spark2_${kudu.scala.binary.version}</artifactId>
+            <artifactId>kudu-spark_${spark.version}_${scala.binary.version}</artifactId>
             <version>${kudu.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
@@ -112,13 +116,30 @@
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-client</artifactId>
             <version>${rocketmq.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-spark</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <artifactId>rocketmq-spark_${spark.version}_${scala.binary.version}</artifactId>
+            <version>0.0.2</version>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>hadoop-2.7</id>
+            <dependencies>
+
+            </dependencies>
+        </profile>
+        <profile>
+            <id>hadoop-3.2</id>
+            <dependencies>
+
+            </dependencies>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
             <plugin>
