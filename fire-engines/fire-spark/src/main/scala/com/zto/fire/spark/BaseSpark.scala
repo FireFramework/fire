@@ -12,11 +12,12 @@ import com.zto.fire.spark.rest.SparkSystemRestful
 import com.zto.fire.spark.task.{SparkInternalTask, SparkSchedulerManager}
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.{Logging, SparkConf, SparkContext, SparkEnv}
 import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.internal.Logging
 
 /**
  * Spark通用父类

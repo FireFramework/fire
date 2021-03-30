@@ -1,13 +1,13 @@
 package com.zto.fire.examples.spark
 
 import java.sql.ResultSet
-
 import com.zto.fire._
 import com.zto.fire.core.conf.EngineConf
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.spark.BaseSparkCore
+import org.apache.spark.sql.Row
 
 import scala.collection.immutable
 
@@ -160,7 +160,7 @@ object TiTest extends BaseSparkCore {
 
   override def process: Unit = {
     val df = this.spark.createDataFrame(Student.newStudentList(), classOf[Student])
-    df.repartition(10).foreachPartition(it => {
+    df.repartition(10).foreachPartition((it: Iterator[Row]) => {
         JdbcConnector.executeQueryCall("select count(1) from default.zto_ss_bill_order_detail_base", callback = rs => {
           println("结果集：" + rs)
           1

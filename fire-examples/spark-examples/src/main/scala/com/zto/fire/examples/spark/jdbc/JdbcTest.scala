@@ -179,9 +179,9 @@ object JdbcTest extends BaseSparkCore {
     this.testJdbcQuery
     this.testTableLoad*/
     // this.testTableSave
-    this.testDataFrameSave
+    // this.testDataFrameSave
     // 生产环境测试
-    // this.testExecutor
+    this.testExecutor
   }
 
   def main(args: Array[String]): Unit = {

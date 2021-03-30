@@ -7,7 +7,7 @@
 
     <parent>
         <groupId>com.zto.fire</groupId>
-        <artifactId>fire-engines_2.11</artifactId>
+        <artifactId>fire-engines_2.12</artifactId>
         <version>2.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
