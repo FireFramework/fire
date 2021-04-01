@@ -1,17 +1,13 @@
 package com.zto.fire.flink.sink
 
-import java.util.Collections
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.{Executors, ScheduledExecutorService, ScheduledFuture, TimeUnit}
-
-import com.google.common.collect.Lists
-import com.zto.fire.flink.util.FlinkUtils
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.runtime.state.{FunctionInitializationContext, FunctionSnapshotContext}
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 import org.slf4j.LoggerFactory
 
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent._
 import scala.util.control._
 
 /**
@@ -32,7 +28,7 @@ abstract class BaseSink[IN, OUT](batch: Int, flushInterval: Long) extends RichSi
   @transient protected var scheduledFuture: ScheduledFuture[_] = _
   protected lazy val closed = new AtomicBoolean(false)
   protected lazy val logger = LoggerFactory.getLogger(this.getClass)
-  @transient protected lazy val buffer = Collections.synchronizedList[OUT](Lists.newArrayListWithCapacity(this.batch))
+  @transient protected lazy val buffer = new CopyOnWriteArrayList[OUT]()
 
   /**
    * 初始化定时调度器，用于定时flush数据到目标组件
