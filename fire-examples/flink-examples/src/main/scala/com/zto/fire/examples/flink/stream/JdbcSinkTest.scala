@@ -78,7 +78,7 @@ object JdbcSinkTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     val stream = this.fire.createKafkaDirectStream().filter(JSONUtils.checkJson _).map(json => JSON.parseObject(json, classOf[Student]))
-    this.testTableJdbcSink(stream)
+    // this.testTableJdbcSink(stream)
     this.testStreamJdbcSink(stream)
     this.testJdbc
 

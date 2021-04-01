@@ -22,7 +22,6 @@ import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.OSUtils;
 import com.zto.fire.common.util.PropUtils;
 import org.apache.flink.annotation.Internal;
-import org.apache.flink.runtime.util.EnvironmentInformation;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +29,7 @@ import scala.collection.JavaConversions;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
@@ -266,13 +266,25 @@ public final class GlobalConfiguration {
      * 加载必要的配置文件
      */
     private static void loadTaskConfiguration(Configuration config) {
-        isJobManager = EnvironmentInformation.isJobManager();
         // 二次开发代码，用于加载任务同名配置文件中的flink参数
-        String className = config.getString("flink.fire.className", "");
-        runMode = config.getString("execution.target", "");
+        // 获取当前任务的类名称
+        String className = config.getString("$internal.application.main", config.getString("flink.fire.className", ""));
+        // 获取当前任务的运行模式：yarn-application或yarn-per-job
+        runMode = config.getString("flink.execution.target", config.getString("execution.target", ""));
+
+        try {
+            Class env = Class.forName("org.apache.flink.runtime.util.EnvironmentInformation");
+            Method method = env.getMethod("isJobManager");
+            isJobManager = Boolean.valueOf(method.invoke(null) + "");
+        } catch (Exception e) {
+            LOG.error("调用EnvironmentInformation.isJobManager()失败", e);
+        }
+
+        // 配置信息仅在JobManager端进行加载，TaskManager端会被主动的merge
         if (isJobManager && className != null && className.contains(".")) {
             String simpleClassName = className.substring(className.lastIndexOf('.') + 1);
             if (simpleClassName.length() > 0) {
+                System.out.println("-------------------------》加载配置信息");
                 // TODO: 判断批处理模式，并加载对应配置文件
                 // PropUtils.load(FireFrameworkConf.FLINK_BATCH_CONF_FILE)
                 PropUtils.loadFile(FireFrameworkConf.FLINK_STREAMING_CONF_FILE());

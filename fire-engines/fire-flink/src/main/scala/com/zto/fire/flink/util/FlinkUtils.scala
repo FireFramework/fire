@@ -1,7 +1,5 @@
 package com.zto.fire.flink.util
 
-import java.net.{URL, URLClassLoader}
-
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.util.{PropUtils, ReflectionUtils, ValueUtils}
@@ -12,10 +10,10 @@ import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
-import org.apache.flink.configuration.GlobalConfiguration
-import org.apache.flink.runtime.util.EnvironmentInformation
 import org.apache.flink.types.Row
 import org.slf4j.LoggerFactory
+
+import java.net.{URL, URLClassLoader}
 
 /**
  * flink相关工具类
@@ -27,6 +25,8 @@ object FlinkUtils extends Serializable {
   // 维护schema、fieldName与fieldIndex关系
   private[this] val schemaTable = HashBasedTable.create[FlinkTableSchema, String, Int]
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
+  private var jobManager: Option[Boolean] = None
+  private var mode: Option[String] = None
 
   /**
    * 将schema、fieldName与fieldIndex信息维护到table中
@@ -165,7 +165,18 @@ object FlinkUtils extends Serializable {
   /**
    * 判断当前环境是否为JobManager
    */
-  def isJobManager: Boolean = EnvironmentInformation.isJobManager
+  def isJobManager: Boolean = {
+    if (this.jobManager.isEmpty) {
+      val envClass = Class.forName("org.apache.flink.runtime.util.EnvironmentInformation")
+      if (ReflectionUtils.containsMethod(envClass, "isJobManager")) {
+        val method = envClass.getMethod("isJobManager")
+        jobManager = Some((method.invoke(null) + "").toBoolean)
+      } else {
+        logger.error("未找到方法：EnvironmentInformation.isJobManager()")
+      }
+    }
+    jobManager.getOrElse(true)
+  }
 
   /**
    * 判断当前环境是否为TaskManager
@@ -175,10 +186,26 @@ object FlinkUtils extends Serializable {
   /**
    * 获取flink的运行模式
    */
-  def runMode: String = GlobalConfiguration.getRunMode
+  def runMode: String = {
+    if (this.mode.isEmpty) {
+      val globalConfClass = Class.forName("org.apache.flink.configuration.GlobalConfiguration")
+      if (ReflectionUtils.containsMethod(globalConfClass, "getRunMode")) {
+        val method = globalConfClass.getMethod("getRunMode")
+        this.mode = Some(method.invoke(null) + "")
+      } else {
+        logger.error("未找到方法：GlobalConfiguration.getRunMode()")
+      }
+    }
+    this.mode.getOrElse("yarn-per-job")
+  }
 
   /**
    * 判断当前运行模式是否为yarn-application模式
    */
   def isYarnApplicationMode: Boolean = "yarn-application".equalsIgnoreCase(this.runMode)
+
+  /**
+   * 判断当前运行模式是否为yarn-per-job模式
+   */
+  def isYarnPerJobMode: Boolean = "yarn-per-job".equalsIgnoreCase(this.runMode)
 }
