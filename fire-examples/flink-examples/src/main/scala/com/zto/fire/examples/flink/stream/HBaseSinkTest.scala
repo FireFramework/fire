@@ -96,12 +96,15 @@ object HBaseSinkTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     val stream = this.fire.createKafkaDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student])).setParallelism(1)
-
+    HBaseConnector.truncateTable(this.tableName)
+    HBaseConnector.truncateTable(this.tableName2)
+    HBaseConnector.truncateTable(this.tableName3)
+    HBaseConnector.truncateTable(this.tableName5)
     this.testTableHBaseSink(stream)
     // this.testStreamHBaseSink(stream)
-    // this.testStreamHBaseSink2(stream)
+    this.testStreamHBaseSink2(stream)
     // this.testTableHBaseSink2(stream)
-    // this.testHBase
+    this.testHBase
 
     this.fire.start
   }

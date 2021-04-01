@@ -20,6 +20,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_THREAD_POOL_SCHEDULE_SIZE = "fire.thread.pool.schedule.size"
   // 是否启用fire框架restful服务
   lazy val FIRE_REST_ENABLE = "fire.rest.enable"
+  lazy val FIRE_REST_URL_HOSTNAME = "fire.rest.url.hostname"
   lazy val FIRE_CONF_DEPLOY_ENGINE = "fire.conf.deploy.engine"
   lazy val FIRE_ENGINE_CONF_HELPER = "com.zto.fire.core.conf.EngineConfHelper"
   // rest接口权限认证
@@ -106,6 +107,8 @@ private[fire] object FireFrameworkConf {
   def buriedPointDatasourceMap: Map[String, String] = PropUtils.sliceKeys(this.FIRE_BURIED_POINT_DATASOURCE_MAP)
   // 获取当前任务的rest server访问地址
   lazy val fireRestUrl = PropUtils.getString(this.FIRE_REST_URL, "")
+  // 是否启用hostname作为fire rest url
+  lazy val restUrlHostname = PropUtils.getBoolean(this.FIRE_REST_URL_HOSTNAME, false)
   // 不同引擎配置获取具体的实现
   lazy val confDeployEngine = PropUtils.getString(this.FIRE_CONF_DEPLOY_ENGINE, "")
   // 定时解析埋点SQL的执行频率（s）

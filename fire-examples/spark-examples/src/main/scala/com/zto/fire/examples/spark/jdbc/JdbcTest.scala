@@ -114,7 +114,7 @@ object JdbcTest extends BaseSparkCore {
     // 第二个参数默认为SaveMode.Append，可以指定SaveMode.Overwrite
     df.jdbcTableSave(this.tableName, SaveMode.Overwrite)
     // 利用sparkSession方式将DataFrame数据保存到配置的第二个数据源中
-    this.fire.jdbcTableSave(df, this.tableName, SaveMode.Overwrite, keyNum = 2)
+    this.fire.jdbcTableSave(df, this.tableName, SaveMode.Overwrite)
   }
 
   /**
@@ -175,13 +175,13 @@ object JdbcTest extends BaseSparkCore {
 
   override def process: Unit = {
     // 测试环境测试
-    /*this.testJdbcUpdate
+    this.testJdbcUpdate
     this.testJdbcQuery
-    this.testTableLoad*/
-    // this.testTableSave
-    // this.testDataFrameSave
+    this.testTableLoad
+    this.testTableSave
+    this.testDataFrameSave
     // 生产环境测试
-    this.testExecutor
+    // this.testExecutor
   }
 
   def main(args: Array[String]): Unit = {

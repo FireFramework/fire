@@ -61,7 +61,7 @@ object KafkaTest extends BaseSparkStreaming {
   @Scheduled(fixedInterval = 60 * 1000, scope = "all")
   def loadTable: Unit = {
     println(s"${DateFormatUtils.formatCurrentDateTime()}=================== 每分钟执行loadTable ===================")
-    this._conf.getAll.foreach(conf => println(conf._1 + " -> " + conf._2))
+    this.conf.settingsMap.foreach(conf => println(conf._1 + " -> " + conf._2))
   }
 
   @Scheduled(cron = "0 0 * * * ?")

@@ -53,7 +53,6 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
     val msg = new ResultMsg
     try {
       val json = request.body()
-      println("数据源driver：" + json)
       val datasource = JSON.parseObject(json, classOf[JHashMap[Datasource, JHashSet[DatasourceDesc]]])
       if (datasource.nonEmpty) this.datasourceMap.putAll(datasource)
       msg.buildSuccess(datasource, "添加数据源列表成功")

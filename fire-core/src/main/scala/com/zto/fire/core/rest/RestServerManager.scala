@@ -63,7 +63,9 @@ private[fire] class RestServerManager {
       // 获取到未被占用的端口后，rest server不会立即绑定，为了避免被其他应用占用
       // 此处使用ServerSocket占用该端口，等真正启动rest server前再关闭该ServerSocket以便释放端口
       this.socket = new ServerSocket(this.port)
-      this.restPrefix = s"http://${OSUtils.getIp}:${this.port}"
+      // 接口地址：hostname还是以ip地址
+      val address = if (FireFrameworkConf.restUrlHostname) OSUtils.getHostName else OSUtils.getIp
+      this.restPrefix = s"http://$address:${this.port}"
       PropUtils.setProperty(FireFrameworkConf.FIRE_REST_URL, s"$restPrefix")
     }
     this

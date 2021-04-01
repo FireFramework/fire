@@ -54,7 +54,9 @@ object ExceptionBus {
   @Internal
   private[fire] def offAndLogError(logger: Logger, msg: String, t: Throwable): Unit = {
     this.post(t)
-    if (logger != null) logger.error(msg, t) else t.printStackTrace()
+    if (noEmpty(msg)) {
+      if (logger != null) logger.error(msg, t) else t.printStackTrace()
+    }
   }
 
   /**

@@ -184,6 +184,7 @@ object HBaseBulkTest extends BaseSparkCore {
     */
   override def process: Unit = {
     this.testHBaseBulkDeleteRDD
+    HBaseConnector.truncateTable(this.tableName2)
     // this.testHBaseBulkDeleteDS
 
     // this.testHbaseBulkPutRDD

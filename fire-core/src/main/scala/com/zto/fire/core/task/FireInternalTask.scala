@@ -40,7 +40,7 @@ private[fire] class FireInternalTask(baseFire: BaseFire) extends Serializable {
         } else {
           HttpClientUtils.doGet(restful, new Header("Content-Type", "application/json"), new Header("Authorization", secret))
         }
-      }(this.logger, "接口调用成功", "Fire内部接口调用失败，请检查")
+      }(this.logger, "接口调用成功", "")
     }
     ""
   }

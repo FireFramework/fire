@@ -1,9 +1,9 @@
 package com.zto.fire.examples.spark.hbase
 
 import java.nio.charset.StandardCharsets
-
 import com.zto.fire._
 import com.zto.fire.examples.bean.Student
+import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.BaseSparkCore
 import org.apache.hadoop.hbase.client.Get
 import org.apache.spark.sql.Encoders
@@ -183,6 +183,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     // 指定是否以多版本的形式读写
     // this.testHBaseDeleteRDD
     this.testHbaseDeleteDS
+    HBaseConnector.truncateTable(this.tableName1)
 
     // this.testHbasePutRDD
     // this.testHbasePutList

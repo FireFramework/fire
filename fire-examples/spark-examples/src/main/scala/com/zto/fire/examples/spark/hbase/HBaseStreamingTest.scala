@@ -15,10 +15,12 @@ object HBaseStreamingTest extends BaseSparkStreaming {
 
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream()
+    HBaseConnector.truncateTable(this.tableName3)
+    HBaseConnector.truncateTable(this.tableName5, keyNum = 2)
 
     dstream.repartition(3).foreachRDD(rdd => {
       rdd.foreachPartition(it => {
-        HBaseConnector.insert(this.tableName3, Student.newStudentList(), keyNum = 2)
+        HBaseConnector.insert(this.tableName3, Student.newStudentList())
         val student = HBaseConnector.get(this.tableName5, classOf[Student], Seq("1", "2"))
         student.foreach(t => logger.error("HBase1 Get结果：" + t))
 
