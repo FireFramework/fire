@@ -80,13 +80,13 @@
         <!-- hbase相关依赖 -->
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-            <version>${hbase.version}</version>
+            <artifactId>hbase-client_${spark.reference}</artifactId>
+            <version>1.2.0-cdh5.12.1</version>
             <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-spark_${spark.version}_${scala.binary.version}</artifactId>
+            <artifactId>hbase-spark_${spark.reference}</artifactId>
             <version>${hbase.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
@@ -94,7 +94,7 @@
         <!-- kudu相关依赖 -->
         <dependency>
             <groupId>org.apache.kudu</groupId>
-            <artifactId>kudu-spark_${spark.version}_${scala.binary.version}</artifactId>
+            <artifactId>kudu-spark_${spark.reference}</artifactId>
             <version>${kudu.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
