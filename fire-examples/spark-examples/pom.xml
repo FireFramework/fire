@@ -39,7 +39,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.67</version>
+            <version>${fastjson.version}</version>
         </dependency>
 
         <!-- spark相关依赖 -->

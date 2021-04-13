@@ -26,6 +26,7 @@
         <rocketmq.version>4.0.0-incubating</rocketmq.version>
         <mysql.version>5.1.30</mysql.version>
         <guava.version>18.0</guava.version>
+        <fastjson.version>1.2.76</fastjson.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>${scala.binary.version}.${scala.minor.version}</scala.version>
         <!-- Fire框架针对不同Spark&Flink版本不同scala环境的支持 -->
@@ -65,7 +66,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.67</version>
+            <version>${fastjson.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
