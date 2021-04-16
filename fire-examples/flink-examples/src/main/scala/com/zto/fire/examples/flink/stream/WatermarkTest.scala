@@ -1,11 +1,7 @@
 package com.zto.fire.examples.flink.stream
 
-import java.text.SimpleDateFormat
-
 import com.zto.fire._
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializerFeature
-import com.zto.fire.common.util.DateFormatUtils
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.ext.watermark.FirePeriodicWatermarks
@@ -17,6 +13,8 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindo
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow
 import org.apache.flink.util.Collector
+
+import java.text.SimpleDateFormat
 
 /**
  * 水位线的使用要求：
@@ -34,7 +32,7 @@ object WatermarkTest extends BaseFlinkStreaming {
   override def process: Unit = {
     // source端接入消息并解析
     val dstream = this.fire.createKafkaDirectStream().filter(str => StringUtils.isNotBlank(str) && str.contains("}")).map(str => {
-      val student = JSON.parseObject(str, classOf[Student])
+      val student = JSONUtils.parseObject[Student](str)
       (student, DateFormatUtils.formatDateTime(student.getCreateTime).getTime)
     })
 
@@ -76,10 +74,10 @@ object WatermarkTest extends BaseFlinkStreaming {
    */
   class WindowFunctionTest extends WindowFunction[(Student, Long), (Student, Long), Student, TimeWindow] {
     override def apply(key: Student, window: TimeWindow, input: Iterable[(Student, Long)], out: Collector[(Student, Long)]): Unit = {
-      println("-->" + JSON.toJSONString(key, SerializerFeature.NotWriteRootClassName))
+      println("-->" + JSONUtils.toJSONString(key))
       val sortedList = input.toList.sortBy(_._2)
       sortedList.foreach(t => {
-        println("---> " + JSON.toJSONString(t._1, SerializerFeature.NotWriteRootClassName))
+        println("---> " + JSONUtils.toJSONString(t._1))
         out.collect(t)
       })
     }

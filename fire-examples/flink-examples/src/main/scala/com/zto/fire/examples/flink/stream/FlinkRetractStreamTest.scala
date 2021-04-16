@@ -1,7 +1,7 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
-import com.alibaba.fastjson.JSON
+import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
@@ -16,7 +16,7 @@ object FlinkRetractStreamTest extends BaseFlinkStreaming {
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
   override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream().map(json => JSON.parseObject(json, classOf[Student])).shuffle
+    val dstream = this.fire.createKafkaDirectStream().map(json => JSONUtils.parseObject[Student](json)).shuffle
     dstream.createOrReplaceTempView("student")
     val table = this.fire.sqlQuery("select name, age, createTime, length, sex from student group by name, age, createTime, length, sex")
 

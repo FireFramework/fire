@@ -1,7 +1,6 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
-import com.alibaba.fastjson.JSON
 import com.zto.fire.common.util.{JSONUtils, PropUtils}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
@@ -16,8 +15,8 @@ object FlinkTest extends BaseFlinkStreaming {
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
   override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream().filter(str => JSONUtils.isJson(str)).map(json => {
-      JSON.parseObject(json, classOf[Student])
+    /*val dstream = this.fire.createKafkaDirectStream().filter(str => JsonUtils.isJson(str)).map(json => {
+      JsonUtils.parseObject[Student](json)
     }).setParallelism(2)
 
     dstream.createOrReplaceTempView("student")
@@ -30,7 +29,10 @@ object FlinkTest extends BaseFlinkStreaming {
       println("fire.rest.url========>" + PropUtils.getString("fire.rest.url", "not_found"))
       println("是否为TaskManager========>" + FlinkUtils.isJobManager)
       println("运行模式========>" + FlinkUtils.runMode)
-    })
+    })*/
+    this.fire.createKafkaDirectStream().map(t => {
+      this.logger.info(t)
+    }).print()
 
     // 不指定job name，则默认当前类名
     // this.fire.start

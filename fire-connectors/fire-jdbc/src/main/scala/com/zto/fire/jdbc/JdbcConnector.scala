@@ -40,8 +40,9 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
   override protected[fire] def open(): Unit = {
     tryWithLog {
       // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
-      this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.url(keyNum)} ]")
-      this.url = if (StringUtils.isBlank(FireJdbcConf.url(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.url)) this.conf.url else FireJdbcConf.url(keyNum)
+      this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.jdbcUrl(keyNum)} ]")
+      // 支持url和别名两种配置方式
+      this.url = if (StringUtils.isBlank(FireJdbcConf.jdbcUrl(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.url)) this.conf.url else FireJdbcConf.jdbcUrl(keyNum)
       require(StringUtils.isNotBlank(this.url), "数据库url不能为空")
       val driverClass = if (StringUtils.isBlank(FireJdbcConf.driverClass(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
       require(StringUtils.isNotBlank(driverClass), "数据库driverClass不能为空")

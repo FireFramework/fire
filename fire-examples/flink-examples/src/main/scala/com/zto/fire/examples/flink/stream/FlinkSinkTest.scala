@@ -1,12 +1,12 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
-import com.alibaba.fastjson.JSON
+import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
-import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 
 /**
  * 自定义sink的实现
@@ -14,7 +14,7 @@ import org.apache.flink.configuration.Configuration
 object FlinkSinkTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    val dstream = this.fire.createDirectStream().map(json => JSON.parseObject(json, classOf[Student]))
+    val dstream = this.fire.createDirectStream().map(json => JSONUtils.parseObject[Student](json))
     dstream.map(t => t.getName).addSink(new MySink).setParallelism(1)
 
     this.fire.start

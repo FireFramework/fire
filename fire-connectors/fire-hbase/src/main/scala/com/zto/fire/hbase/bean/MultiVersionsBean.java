@@ -1,8 +1,7 @@
 package com.zto.fire.hbase.bean;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.zto.fire.common.anno.FieldName;
+import com.zto.fire.common.util.JSONUtils;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.converters.BigDecimalConverter;
@@ -53,7 +52,7 @@ public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
 
     public MultiVersionsBean(HBaseBaseBean<?> target) {
         this.target = (HBaseBaseBean) target.buildRowKey();
-        this.multiFields = JSON.toJSONString(this.target, SerializerFeature.WriteMapNullValue);
+        this.multiFields = JSONUtils.toJSONString(this.target);
     }
 
     public MultiVersionsBean() {
@@ -64,8 +63,8 @@ public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
     public MultiVersionsBean buildRowKey() {
         try {
             if (this.target == null && StringUtils.isNotBlank(this.multiFields)) {
-                Map<String, String> map = JSON.parseObject(this.multiFields, Map.class);
-                Class<?> clazz = Class.forName(map.get("className"));
+                Map<Object, Object> map = JSONUtils.parseObject(this.multiFields, Map.class);
+                Class<?> clazz = Class.forName(map.get("className").toString());
                 HBaseBaseBean<?> bean = (HBaseBaseBean) clazz.newInstance();
                 BeanUtils.populate(bean, map);
                 this.target = (HBaseBaseBean) bean.buildRowKey();

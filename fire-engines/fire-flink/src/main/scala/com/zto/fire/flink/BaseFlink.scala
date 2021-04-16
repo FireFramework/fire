@@ -35,7 +35,7 @@ trait BaseFlink extends BaseFire {
   override private[fire] def boot: Unit = {
     PropUtils.load(FireFrameworkConf.FLINK_CONF_FILE)
     this.loadConf
-    PropUtils.load(this.appName)
+    PropUtils.load(FireFrameworkConf.userCommonConf: _*).load(this.appName)
     PropUtils.setProperty(FireFlinkConf.FLINK_DRIVER_CLASS_NAME, this.className)
     PropUtils.setProperty(FireFlinkConf.FLINK_CLIENT_SIMPLE_CLASS_NAME, this.driverClass)
     FlinkSingletonFactory.setAppName(this.appName)

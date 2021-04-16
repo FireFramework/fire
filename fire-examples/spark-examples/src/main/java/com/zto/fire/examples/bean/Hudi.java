@@ -1,8 +1,7 @@
 package com.zto.fire.examples.bean;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.zto.fire.common.util.DateFormatUtils;
+import com.zto.fire.common.util.JSONUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -96,7 +95,7 @@ public class Hudi {
 
     @Override
     public String toString() {
-        return JSON.toJSONString(this, SerializerFeature.WriteNullListAsEmpty);
+        return JSONUtils.toJSONString(this);
     }
 
     public static List<Hudi> newHudiList() {

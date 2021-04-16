@@ -29,7 +29,7 @@ private[fire] object FireSparkConf {
   lazy val localCores = PropUtils.getString(this.SPARK_LOCAL_CORES, "*")
   lazy val logLevel = PropUtils.getString(this.SPARK_LOG_LEVEL, "info").toUpperCase
   lazy val saveMode = PropUtils.getString(this.SPARK_SAVE_MODE, "Append")
-  lazy val parallelism = PropUtils.getInt(this.SPARK_PARALLELISM)
+  lazy val parallelism = PropUtils.getInt(this.SPARK_PARALLELISM, 200)
   lazy val chkPointDirPrefix = PropUtils.getString(this.SPARK_CHK_POINT_DIR, this.sparkChkPointDir)
   lazy val confBathDuration = PropUtils.getInt(this.SPARK_STREAMING_BATCH_DURATION, -1)
 }

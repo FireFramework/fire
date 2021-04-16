@@ -1,11 +1,9 @@
 package com.zto.fire.core.rest
 
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.enu.{Datasource, ErrorCode}
-import com.zto.fire.common.util.DatasourceDesc
+import com.zto.fire.common.util.{DatasourceDesc, JSONUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.predef.{JHashMap, JHashSet, _}
 import org.slf4j.{Logger, LoggerFactory}
@@ -37,7 +35,7 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
   protected def datasource(request: Request, response: Response): AnyRef = {
     val msg = new ResultMsg
     try {
-      val dataSource = JSON.toJSONString(this.datasourceMap, SerializerFeature.NotWriteRootClassName)
+      val dataSource = JSONUtils.toJSONString(this.datasourceMap)
       this.logger.info(s"[DataSource] 获取数据源列表成功：counter=$dataSource")
       msg.buildSuccess(dataSource, "获取数据源列表成功")
     } catch {
@@ -53,7 +51,7 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
     val msg = new ResultMsg
     try {
       val json = request.body()
-      val datasource = JSON.parseObject(json, classOf[JHashMap[Datasource, JHashSet[DatasourceDesc]]])
+      val datasource = JSONUtils.parseObject[JHashMap[Datasource, JHashSet[DatasourceDesc]]](json)
       if (datasource.nonEmpty) this.datasourceMap.putAll(datasource)
       msg.buildSuccess(datasource, "添加数据源列表成功")
     }catch {

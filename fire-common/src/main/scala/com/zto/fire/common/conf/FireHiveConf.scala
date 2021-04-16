@@ -46,7 +46,7 @@ private[fire] object FireHiveConf {
    * 根据hive集群名称获取metastore地址
    */
   def getMetastoreUrl: String = {
-    if (this.hiveMetastoreMap.contains(hiveCluster)) this.hiveMetastoreMap(hiveCluster) else hiveCluster
+    this.hiveMetastoreMap.getOrElse(hiveCluster, hiveCluster)
   }
 
   /**
@@ -56,6 +56,6 @@ private[fire] object FireHiveConf {
    * /path/to/hive-site.xml
    */
   def getHiveConfDir: String = {
-    if (this.hiveSiteMap.contains(hiveCluster)) this.hiveSiteMap(hiveCluster) else hiveCluster
+    this.hiveSiteMap.getOrElse(hiveCluster, hiveCluster)
   }
 }

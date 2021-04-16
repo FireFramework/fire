@@ -1,7 +1,7 @@
 package com.zto.fire.examples.flink.stream
 
-import com.alibaba.fastjson.JSON
 import com.zto.fire._
+import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
@@ -19,7 +19,7 @@ import org.apache.flink.streaming.api.windowing.time.Time
 object WindowTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream().map(t => JSON.parseObject(t, classOf[Student])).map(s => (s.getName, s.getAge))
+    val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t)).map(s => (s.getName, s.getAge))
     this.testTimeWindow(dstream)
 
     this.fire.start

@@ -286,7 +286,7 @@ class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
     val hbaseRDD = this.hbaseHadoopScanRS(tableName, scan)
     val scanRDD = hbaseRDD.mapPartitions(it => {
       if (HBaseConnector(keyNum = this.keyNum).getMultiVersion[T]) {
-        HBaseConnector(keyNum = keyNum).hbaseMultiVersionRow2BeanList(it, clazz)
+        HBaseConnector(keyNum = keyNum).hbaseMultiVersionRow2BeanList[T](it, clazz)
       } else {
         HBaseConnector(keyNum = keyNum).hbaseRow2BeanList(it, clazz)
       }

@@ -1,9 +1,9 @@
 package com.zto.fire.core;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.ExceptionBus;
 import com.zto.fire.common.util.OSUtils;
+import org.apache.htrace.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -34,7 +34,7 @@ public class TimeCost implements Serializable {
     private Integer stageId;
     private Long taskId;
     private Integer partitionId;
-    @JSONField(serialize = false)
+    @JsonIgnore
     private Throwable exception;
     private String stackTraceInfo;
     private String level = "WARN";

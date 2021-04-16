@@ -53,6 +53,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_RESTFUL_PORT_RETRY_DURATION = "fire.restful.port.retry_duration"
   lazy val FIRE_REST_SERVER_SECRET = "fire.rest.server.secret"
   lazy val FIRE_LOG_LEVEL_CONF_PREFIX = "fire.log.level.conf."
+  lazy val FIRE_USER_COMMON_CONF = "fire.user.common.conf"
   // 日志记录器保留最少的记录数
   lazy val FIRE_ACC_LOG_MIN_SIZE = "fire.acc.log.min.size"
   // 日志记录器保留最多的记录数
@@ -129,6 +130,8 @@ private[fire] object FireFrameworkConf {
   lazy val threadPoolSchedulerSize = PropUtils.getInt(this.FIRE_THREAD_POOL_SCHEDULE_SIZE, 5)
   // 自适应前缀，调用getOriginalProperty避免栈溢出
   lazy val adaptivePrefix = PropUtils.getOriginalProperty(this.FIRE_CONF_ADAPTIVE_PREFIX).toBoolean
+  // 用户公共配置文件列表
+  lazy val userCommonConf = PropUtils.getString(this.FIRE_USER_COMMON_CONF, "").split(",").map(conf => conf.trim).toList
   // fire接口认证秘钥
   lazy val restServerSecret = PropUtils.getString(this.FIRE_REST_SERVER_SECRET)
 

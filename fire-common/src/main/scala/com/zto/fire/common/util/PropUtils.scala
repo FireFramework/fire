@@ -1,16 +1,16 @@
 package com.zto.fire.common.util
 
-import java.io.{FileInputStream, InputStream}
-import java.util.Properties
-import java.util.concurrent.atomic.AtomicBoolean
-
 import com.zto.fire.common.conf._
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
+import java.io.{FileInputStream, InputStream}
+import java.util.Properties
+import java.util.concurrent.atomic.AtomicBoolean
 import scala.collection.mutable.Map
 import scala.collection.{immutable, mutable}
+import scala.reflect.ClassTag
 
 /**
  * 读取配置文件工具类
@@ -21,7 +21,7 @@ object PropUtils {
   private val engines = Array[String]("fire", "spark", "flink")
   // 用于判断是否merge过
   private[fire] val isMerge = new AtomicBoolean(false)
-  // 引擎类型判断，当前阶段紧支持spark与flink，未来若支持新的引擎，则需在此处做支持
+  // 引擎类型判断，当前阶段仅支持spark与flink，未来若支持新的引擎，则需在此处做支持
   private[fire] val engine = if (this.isExists("spark")) "spark" else "flink"
   // 加载默认配置文件
   this.load(this.engines: _*)
@@ -121,7 +121,6 @@ object PropUtils {
    */
   def load(fileNames: String*): this.type = {
     if (noEmpty(fileNames)) fileNames.foreach(this.loadFile)
-
     this
   }
 
@@ -157,6 +156,14 @@ object PropUtils {
   def getString(key: String): String = this.getProperty(key)
 
   /**
+   * 获取字符串，为空则取默认值
+   */
+  def getString(key: String, default: String): String = {
+    val value = this.getProperty(key)
+    if (StringUtils.isNotBlank(value)) value else default
+  }
+
+  /**
    * 获取拼接后数值的配置字符串
    *
    * @param key    配置的前缀
@@ -164,8 +171,8 @@ object PropUtils {
    * @return
    * 对应的配置信息
    */
-  def getString(key: String, keyNum: Int = 0, default: String = ""): String = {
-    if (keyNum == null || keyNum <= 1) {
+  def getString(key: String, default: String, keyNum: Int = 0): String = {
+    if (keyNum <= 1) {
       var value = this.getProperty(key)
       if (StringUtils.isBlank(value)) {
         value = this.getString(key + "1", default)
@@ -177,30 +184,6 @@ object PropUtils {
   }
 
   /**
-   * 获取字符串，为空则取默认值
-   */
-  def getString(key: String, default: String): String = {
-    val value = this.getProperty(key)
-    if (StringUtils.isNotBlank(value)) value else default
-  }
-
-  /**
-   * 获取整型数据
-   */
-  def getInt(key: String): Int = {
-    val value = this.getProperty(key)
-    if (StringUtils.isNotBlank(value)) value.toInt else -1
-  }
-
-  /**
-   * 获取整型数据
-   */
-  def getInt(key: String, default: Int): Int = {
-    val value = this.getProperty(key)
-    if (StringUtils.isNotBlank(value)) value.toInt else default
-  }
-
-  /**
    * 获取拼接后数值的配置整数
    *
    * @param key    配置的前缀
@@ -208,58 +191,11 @@ object PropUtils {
    * @return
    * 对应的配置信息
    */
-  def getInt(key: String, keyNum: Int = 0, default: Int): Int = {
-    val value = this.getString(key, keyNum, default + "")
+  def getInt(key: String, default: Int, keyNum: Int = 0): Int = {
+    val value = this.getString(key, default + "", keyNum)
     if (StringUtils.isNotBlank(value)) value.toInt else default
   }
 
-  /**
-   * 获取长整型数据
-   */
-  def getLong(key: String): Long = {
-    val value = this.getProperty(key)
-    if (StringUtils.isNotBlank(value)) value.toLong else -1L
-  }
-
-  /**
-   * 获取长整型数据
-   */
-  def getLong(key: String, default: Long): Long = {
-    val value = this.getProperty(key)
-    if (StringUtils.isNotBlank(value)) value.toLong else default
-  }
-
-  /**
-   * 获取float型数据
-   */
-  def getFloat(key: String): Float = {
-    val value = this.getProperty(key)
-    if (StringUtils.isNotBlank(value)) value.toFloat else -1
-  }
-
-  /**
-   * 获取float型数据
-   */
-  def getFloat(key: String, default: Float): Float = {
-    val value = this.getProperty(key)
-    if (StringUtils.isNotBlank(value)) value.toFloat else default
-  }
-
-  /**
-   * 获取float型数据
-   */
-  def getDouble(key: String): Double = {
-    val value = this.getProperty(key)
-    if (StringUtils.isNotBlank(value)) value.toDouble else -1.0
-  }
-
-  /**
-   * 获取float型数据
-   */
-  def getDouble(key: String, default: Double): Double = {
-    val value = this.getProperty(key)
-    if (StringUtils.isNotBlank(value)) value.toDouble else default
-  }
 
   /**
    * 获取拼接后数值的配置长整数
@@ -269,26 +205,24 @@ object PropUtils {
    * @return
    * 对应的配置信息
    */
-  def getLong(key: String, keyNum: Int = 0, default: Long): Long = {
-    val value = this.getString(key, keyNum, default + "")
-    if (StringUtils.isNotBlank(value)) value.toLong else default
+  def getLong(key: String, default: Long, keyNum: Int = 0): Long = {
+    this.get[Long](key, Some(default), keyNum)
   }
 
   /**
-   * 获取布尔值数据
+   * 获取float型数据
    */
-  def getBoolean(key: String): Boolean = {
-    val value = this.getProperty(key)
-    if (StringUtils.isNotBlank(value)) value.toBoolean else false
+  def getFloat(key: String, default: Float, keyNum: Int = 0): Float = {
+    this.get[Float](key, Some(default), keyNum)
   }
 
   /**
-   * 获取布尔值数据
+   * 获取Double型数据
    */
-  def getBoolean(key: String, default: Boolean): Boolean = {
-    val value = this.getBoolean(key)
-    if (value != null) value else default
+  def getDouble(key: String, default: Double, keyNum: Int = 0): Double = {
+    this.get[Double](key, Some(default), keyNum)
   }
+
 
   /**
    * 获取拼接后数值的配置布尔值
@@ -298,9 +232,39 @@ object PropUtils {
    * @return
    * 对应的配置信息
    */
-  def getBoolean(key: String, keyNum: Int = 0, default: Boolean): Boolean = {
-    val value = this.getString(key, keyNum, default + "")
-    if (StringUtils.isNotBlank(value)) value.toBoolean else default
+  def getBoolean(key: String, default: Boolean, keyNum: Int = 0): Boolean = {
+    this.get[Boolean](key, Some(default), keyNum)
+  }
+
+  /**
+   * 根据指定的key与key的num，获取对应的配置信息
+   * 1. 如果配置存在，则进行类型转换，返回T类型数据
+   * 2. 如果配置不存在，则取default参数作为默认值返回
+   *
+   * @param key
+   * 配置的key
+   * @param default
+   * 如果配置不存在，则取default只
+   * @param keyNum
+   * 配置key的后缀编号
+   * @tparam T
+   * 返回配置的类型
+   * @return
+   */
+  def get[T: ClassTag](key: String, default: Option[T] = Option.empty, keyNum: Int = 0): T = {
+    val value = this.getString(key, if (default.isDefined) default.get.toString else "", keyNum = keyNum)
+    val paramType = getParamType[T]
+    val property = tryWithReturn {
+      paramType match {
+        case _ if paramType eq classOf[Int] => value.toInt
+        case _ if paramType eq classOf[Long] => value.toLong
+        case _ if paramType eq classOf[Float] => value.toFloat
+        case _ if paramType eq classOf[Double] => value.toDouble
+        case _ if paramType eq classOf[Boolean] => value.toBoolean
+        case _ => value
+      }
+    } (this.logger, catchLog = s"为找到配置信息：${key}，请检查！")
+    property.asInstanceOf[T]
   }
 
   /**
@@ -310,9 +274,7 @@ object PropUtils {
    * java map，存放多个配置信息
    */
   def setProperties(map: mutable.Map[String, String]): Unit = this.synchronized {
-    if (map != null) {
-      map.foreach(kv => this.setProperty(kv._1, kv._2))
-    }
+    if (map != null) map.foreach(kv => this.setProperty(kv._1, kv._2))
   }
 
   /**
@@ -378,7 +340,7 @@ object PropUtils {
    * confMap
    */
   def settings: Map[String, String] = {
-    val map = Map[String, String] ()
+    val map = Map[String, String]()
     map.putAll(this.settingsMap)
     map
   }

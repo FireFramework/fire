@@ -1,6 +1,5 @@
 package com.zto.fire.examples.flink.stream
 
-import com.alibaba.fastjson.JSON
 import com.zto.fire._
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
@@ -72,7 +71,7 @@ object ClickhouseTest extends BaseFlinkStreaming {
   }
 
   override def process: Unit = {
-    // val stream = this.fire.createKafkaDirectStream().filter(JSONUtils.checkJson _).map(json => JSON.parseObject(json, classOf[Student]))
+    val stream = this.fire.createKafkaDirectStream().filter(t => JSONUtils.isLegal(t)).map(json => JSONUtils.parseObject[Student](json))
     // this.testTableJdbcSink(stream)
     // this.testStreamJdbcSink(stream)
     this.testJdbc

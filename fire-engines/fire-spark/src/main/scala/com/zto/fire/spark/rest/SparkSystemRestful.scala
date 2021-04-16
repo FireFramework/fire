@@ -1,8 +1,5 @@
 package com.zto.fire.spark.rest
 
-import java.util
-
-import com.alibaba.fastjson.JSON
 import com.google.common.collect.Table
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
@@ -15,6 +12,8 @@ import com.zto.fire.spark.BaseSpark
 import org.apache.commons.lang3.StringUtils
 import spark._
 import com.zto.fire._
+
+import java.util
 
 
 /**
@@ -58,7 +57,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
     val json = request.body
     try {
       this.logger.info(s"请求fire更新配置信息：$json")
-      val confMap = JSON.parseObject(json, classOf[java.util.HashMap[String, String]])
+      val confMap = JSONUtils.parseObject[java.util.HashMap[String, String]](json)
       if (ValueUtils.noEmpty(confMap)) {
         PropUtils.setProperties(confMap)
         this.baseSpark._conf.setAll(PropUtils.settings)

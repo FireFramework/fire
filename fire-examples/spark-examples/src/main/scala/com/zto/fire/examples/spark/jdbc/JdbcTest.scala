@@ -1,11 +1,7 @@
 package com.zto.fire.examples.spark.jdbc
 
-import java.sql.ResultSet
-
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire._
-import com.zto.fire.common.util.DateFormatUtils
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.spark.BaseSparkCore
@@ -27,7 +23,7 @@ object JdbcTest extends BaseSparkCore {
   def testJdbcUpdate: Unit = {
     // 执行insert操作
     val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-    this.fire.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1))
+    this.fire.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1), keyNum = 2)
     // 更新配置文件中指定的第二个关系型数据库
     this.fire.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1), keyNum = 2)
 
@@ -77,7 +73,7 @@ object JdbcTest extends BaseSparkCore {
     // 将查询结果集以List[JavaBean]方式返回
     val list = this.fire.jdbcQuery(sql, Seq(1, 2, 3), classOf[Student])
     // 方式二：使用JdbcConnector
-    list.foreach(x => println(JSON.toJSONString(x, SerializerFeature.NotWriteRootClassName)))
+    list.foreach(x => println(JSONUtils.toJSONString(x)))
 
     // 将结果集封装到RDD中
     val rdd = this.fire.jdbcQueryRDD(sql, Seq(1, 2, 3), classOf[Student])

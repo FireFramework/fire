@@ -1,22 +1,14 @@
 package com.zto.fire.hbase
 
-import java.lang.reflect.Field
-import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInt, Long => JLong, Short => JShort, String => JString}
-import java.math.{BigDecimal => JBigDecimal}
-import java.nio.charset.StandardCharsets
-import java.util.concurrent.{ScheduledExecutorService, TimeUnit, ConcurrentHashMap => JConcurrentHashMap}
-import java.util.{HashMap => JHashMap, Map => JMap}
-
-import com.alibaba.fastjson.JSON
 import com.google.common.collect.Maps
 import com.zto.fire.common.anno.{FieldName, Internal}
-import com.zto.fire.hbase.conf.FireHBaseConf.{familyName, _}
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.util.{DatasourceManager, _}
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.hbase.anno.HConfig
 import com.zto.fire.hbase.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.hbase.conf.FireHBaseConf
+import com.zto.fire.hbase.conf.FireHBaseConf.{familyName, _}
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
@@ -26,6 +18,12 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.io.compress.Compression
 import org.apache.hadoop.hbase.util.Bytes
 
+import java.lang.reflect.Field
+import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInt, Long => JLong, Short => JShort, String => JString}
+import java.math.{BigDecimal => JBigDecimal}
+import java.nio.charset.StandardCharsets
+import java.util.concurrent.{ScheduledExecutorService, TimeUnit, ConcurrentHashMap => JConcurrentHashMap}
+import java.util.{Map => JMap}
 import scala.collection.Iterator
 import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
@@ -126,7 +124,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
     requireNonEmpty(tableName, clazz, gets)("参数不合法，无法进行HBase Get操作")
     tryWithReturn {
       val resultList = this.getResult(tableName, gets: _*)
-      if (this.getMultiVersion[T]) this.hbaseMultiRow2Bean(resultList, clazz) else this.hbaseRow2Bean(resultList, clazz)
+      if (this.getMultiVersion[T]) this.hbaseMultiRow2Bean[T](resultList, clazz) else this.hbaseRow2Bean(resultList, clazz)
     }(this.logger, catchLog = s"批量 get ${hbaseCluster(keyNum)}.${tableName}执行失败")
   }
 
@@ -254,7 +252,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
       if (rsScanner != null) {
         rsScanner.foreach(rs => {
           if (this.getMultiVersion[T]) {
-            val objList = this.hbaseMultiRow2Bean(rs, clazz)
+            val objList = this.hbaseMultiRow2Bean[T](rs, clazz)
             if (objList != null && objList.nonEmpty) list ++= objList
           } else {
             val obj = hbaseRow2Bean(rs, clazz)
@@ -363,7 +361,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @param fieldMap 字段映射信息
    */
   @Internal
-  private[this] def multiCell2Field[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T], fieldMap: JMap[String, Field]): ListBuffer[T] = {
+  private[this] def multiCell2Field[T <: HBaseBaseBean[T] : ClassTag](rs: Result, clazz: Class[T], fieldMap: JMap[String, Field]): ListBuffer[T] = {
     val objList = ListBuffer[T]()
     tryWithLog {
       if (rs != null) {
@@ -378,7 +376,7 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
           val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
           requireNonEmpty(idField)(s"${clazz}中必须有名为rowKey的成员变量")
           idField.set(obj, rowKey)
-          if (StringUtils.isNotBlank(obj.getMultiFields)) objList.add(JSON.parseObject(obj.getMultiFields, clazz))
+          if (StringUtils.isNotBlank(obj.getMultiFields)) objList.add(JSONUtils.parseObject[T](obj.getMultiFields))
         })
       }
     }(this.logger, catchLog = s"将多版本json数据转为类型${clazz}过程中发生失败.")
@@ -474,11 +472,11 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @return 目标类型实例
    */
   @Internal
-  private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): ListBuffer[T] = {
+  private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T] : ClassTag](rs: Result, clazz: Class[T]): ListBuffer[T] = {
     requireNonEmpty(rs, clazz)("参数不合法，HBase MultiRow转为JavaBean失败.")
     val fieldMap = this.getFieldNameMap(classOf[MultiVersionsBean])
     requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
-    this.multiCell2Field(rs, clazz, fieldMap)
+    this.multiCell2Field[T](rs, clazz, fieldMap)
   }
 
   /**
@@ -489,12 +487,12 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @return 目标类型实例
    */
   @Internal
-  private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
+  private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T] : ClassTag](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
     requireNonEmpty(rsArr, clazz)("参数不合法，HBase Row转为JavaBean失败.")
     val fieldMap = getFieldNameMap(classOf[MultiVersionsBean])
     requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
-    rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList ++= this.multiCell2Field(rs, clazz, fieldMap))
+    rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList ++= this.multiCell2Field[T](rs, clazz, fieldMap))
     objList
   }
 
@@ -533,12 +531,12 @@ private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: I
    * @return 目标类型实例
    */
   @Internal
-  private[fire] def hbaseMultiVersionRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
+  private[fire] def hbaseMultiVersionRow2BeanList[T <: HBaseBaseBean[T] : ClassTag](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
     requireNonEmpty(it, clazz)
     val beanList = ListBuffer[T]()
     tryWithLog {
       it.foreach(t => {
-        beanList ++= this.hbaseMultiRow2Bean(t._2, clazz)
+        beanList ++= this.hbaseMultiRow2Bean[T](t._2, clazz)
       })
     }(this.logger, catchLog = "将HBase多版本Row转为JavaBean过程中出现异常.")
 

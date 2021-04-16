@@ -1,12 +1,11 @@
 package com.zto.fire.spark
 
 
-import com.alibaba.fastjson.JSON
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.conf.{FireFrameworkConf, FireKafkaConf}
 import com.zto.fire.common.enu.{ErrorCode, JobType, RequestMethod}
-import com.zto.fire.common.util.{KafkaUtils, PropUtils}
+import com.zto.fire.common.util.{JSONUtils, KafkaUtils, PropUtils}
 import com.zto.fire.core.rest.RestCase
 import com.zto.fire.spark.bean.RestartParams
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
@@ -166,7 +165,7 @@ trait BaseSparkStreaming extends BaseSpark {
     val msg = new ResultMsg
     val json = request.body
     try {
-      this.externalConf = JSON.parseObject(json, classOf[RestartParams])
+      this.externalConf = JSONUtils.parseObject[RestartParams](json)
       new Thread(new Runnable {
         override def run(): Unit = {
           ssc.stop(externalConf.isRestartSparkContext, externalConf.isStopGracefully)

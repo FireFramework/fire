@@ -1,7 +1,7 @@
 package com.zto.fire.common.db.bean;
 
-import com.alibaba.fastjson.JSON;
 import com.zto.fire.common.anno.FieldName;
+import com.zto.fire.common.util.JSONUtils;
 import com.zto.fire.hbase.anno.HConfig;
 import com.zto.fire.hbase.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
@@ -113,7 +113,7 @@ public class Student extends HBaseBaseBean<Student> {
 
     @Override
     public String toString() {
-        return JSON.toJSONString(this);
+        return JSONUtils.toJSONString(this);
     }
 
 }

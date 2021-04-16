@@ -1,12 +1,9 @@
 package com.zto.fire.spark.acc
 
-import java.util.concurrent.ConcurrentLinkedQueue
-
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.core.TimeCost
 import org.apache.spark.util.AccumulatorV2
+
+import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
   * fire框架日志累加器

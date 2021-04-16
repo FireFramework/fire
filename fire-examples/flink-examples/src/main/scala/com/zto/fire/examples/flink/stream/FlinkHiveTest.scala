@@ -1,7 +1,7 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
-import com.alibaba.fastjson.JSON
+import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
@@ -16,7 +16,7 @@ object FlinkHiveTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     // 第三个参数需指定hive-site.xml具体的目录路径
-    val dstream = this.fire.createKafkaDirectStream().map(t => JSON.parseObject(t, classOf[Student]))
+    val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t))
     // 调用startNewChain与setParallelism一样，都有会导致使用新的slotGroup，也都是作用于点之前的算子
     // startNewChain后，前面的那个算子会使用default的parallelism
     dstream.filter(s => s != null).startNewChain().map(s => {

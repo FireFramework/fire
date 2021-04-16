@@ -42,34 +42,31 @@ private[fire] object FireHBaseConf {
   lazy val hbaseConfPrefix = "fire.hbase.conf."
 
   // 是否开启HBase表存在判断的缓存
-  def tableExistsCache(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.TABLE_EXISTS_CACHE_ENABLE, true)
+  def tableExistsCache(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.TABLE_EXISTS_CACHE_ENABLE, true, keyNum)
   // 是否开启HBase表存在列表缓存的定时更新任务
-  def tableExistsCacheReload(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.TABLE_EXISTS_CACHE_RELOAD_ENABLE, true)
+  def tableExistsCacheReload(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.TABLE_EXISTS_CACHE_RELOAD_ENABLE, true, keyNum)
   // 定时刷新缓存HBase表任务的初始延迟
-  def tableExistCacheInitialDelay(keyNum: Int = 1): Long = PropUtils.getLong(this.TABLE_EXISTS_CACHE_INITIAL_DELAY, 60)
+  def tableExistCacheInitialDelay(keyNum: Int = 1): Long = PropUtils.getLong(this.TABLE_EXISTS_CACHE_INITIAL_DELAY, 60, keyNum)
   // 定时刷新缓存HBase表任务的执行频率
-  def tableExistCachePeriod(keyNum: Int = 1): Long = PropUtils.getLong(this.TABLE_EXISTS_CACHE_PERIOD, 600)
+  def tableExistCachePeriod(keyNum: Int = 1): Long = PropUtils.getLong(this.TABLE_EXISTS_CACHE_PERIOD, 600, keyNum)
   // HBase操作默认的批次大小
-  def hbaseBatchSize(keyNum: Int = 1): Int = PropUtils.getInt(this.HBASE_BATCH, keyNum, 10000)
-
+  def hbaseBatchSize(keyNum: Int = 1): Int = PropUtils.getInt(this.HBASE_BATCH, 10000, keyNum)
   // hbase默认的列族名称，如果使用FieldName指定，则会被覆盖
-  def familyName(keyNum: Int = 1): String = PropUtils.getString(this.HBBASE_COLUMN_FAMILY_KEY, keyNum, "info")
-
+  def familyName(keyNum: Int = 1): String = PropUtils.getString(this.HBBASE_COLUMN_FAMILY_KEY, "info", keyNum)
   // hbase操作失败最大重试次数
-  def hbaseMaxRetry(keyNum: Int = 1): Long = PropUtils.getLong(this.HBASE_MAX_RETRY, keyNum, 3)
-
+  def hbaseMaxRetry(keyNum: Int = 1): Long = PropUtils.getLong(this.HBASE_MAX_RETRY, 3, keyNum)
   // hbase集群名称
-  def hbaseCluster(keyNum: Int = 1): String = PropUtils.getString(this.HBASE_CLUSTER_URL, keyNum, "")
+  def hbaseCluster(keyNum: Int = 1): String = PropUtils.getString(this.HBASE_CLUSTER_URL, "", keyNum)
 
   /**
    * 根据给定的HBase集群别名获取对应的hbase.zookeeper.quorum地址
    */
   def hbaseClusterUrl(keyNum: Int = 1): String = {
-    val clusterName = FireHBaseConf.hbaseCluster()
-    if (FireHBaseConf.hbaseClusterMap.containsKey(clusterName)) FireHBaseConf.hbaseClusterMap.get(clusterName) else clusterName
+    val clusterName = this.hbaseCluster(keyNum)
+    this.hbaseClusterMap.get(clusterName, clusterName)
   }
 
-  def hbaseDurability(keyNum: Int = 1): String = PropUtils.getString(this.HBASE_DURABILITY, keyNum, "")
+  def hbaseDurability(keyNum: Int = 1): String = PropUtils.getString(this.HBASE_DURABILITY, "", keyNum)
 
   // HBase结果集的缓存策略配置
   def hbaseStorageLevel: String = PropUtils.getString(this.FIRE_HBASE_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase

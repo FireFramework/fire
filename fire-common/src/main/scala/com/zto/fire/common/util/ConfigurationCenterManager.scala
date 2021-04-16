@@ -1,8 +1,5 @@
 package com.zto.fire.common.util
 
-import java.util
-
-import com.alibaba.fastjson.JSON
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
@@ -57,6 +54,16 @@ private[fire] object ConfigurationCenterManager extends Serializable {
     } finally {
       if (StringUtils.isNotBlank(conf)) {
         this.logger.info(s"成功获取配置中心配置信息：${conf}")
+        val map = JSONUtils.parseObject(conf, classOf[JMap[String, Object]])
+        if (map.containsKey("code") && map.get("code").asInstanceOf[Int] == 200) {
+          if (map.containsKey("content")) {
+            val contentMap = map.get("content").asInstanceOf[JMap[String, String]]
+            if (contentMap != null && contentMap.nonEmpty) {
+              PropUtils.setProperties(contentMap)
+            }
+          }
+        }
+        /*
         val msg = JSON.parseObject(conf)
         if (msg != null && msg.get("code") == 200) {
           val content = msg.get("content")
@@ -66,7 +73,7 @@ private[fire] object ConfigurationCenterManager extends Serializable {
               PropUtils.setProperties(confMap)
             }
           }
-        }
+        }*/
       }
     }
   }

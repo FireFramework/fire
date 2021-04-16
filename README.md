@@ -1,16 +1,16 @@
 # Fire框架
-​		Fire框架是由**中通**开源的，专门用于大数据**实时计算**的开发框架。该框架具有易学易用，稳定可靠等诸多优点，陪伴着中通度过了一个又一个双11。Fire框架在赋能开发者的同时，也对实时平台进行了赋能，正因为有了Fire，才真正的连接了**平台**与**任务**，消除了任务孤岛。
+​		Fire框架是由**中通**开源的，专门用于大数据**实时计算**的开发框架。Fire框架具有易学易用，稳定可靠等诸多优点，基于Fire框架可以很简单的进行**Spark&Flink**需求开发。Fire框架在赋能开发者的同时，也对实时平台进行了赋能，正因为有了Fire，才真正的连接了**平台**与**任务**，消除了任务孤岛。
 
 ![](docs/img/Fire.png)
 
-## 现状
-​		基于Fire框架的任务在中通每天处理的数据量高达几千亿以上，覆盖了**Spark任务**（离线&实时）、**Flink任务**等主流大数据计算引擎，使用Fire框架的Spark&Flink任务占比高达99%以上。
-## 赋能开发者
+## 一、现状
+​		基于Fire框架的任务在中通每天处理的数据量高达**几千亿以上**，覆盖了**Spark计算**（离线&实时）、**Flink计算**等众多计算场景。
+## 二、赋能开发者
 ​		Fire框架自研发之日起就以简单高效、稳定可靠为目标。通过屏蔽技术细节、提供简洁通用的API的方式，将开发者从技术的大海中拯救出来，让开发者更专注于业务代码开发。Fire框架支持Spark与Flink两大引擎，并且覆盖离线计算与实时计算两大场景，内部提供了丰富的API，许多复杂操作仅需一行代码，大大提升了生产力。
 
 ​	接下来以HBase、JDBC、Kafka为例进行简单介绍（connector连接信息均在任务同名的配置文件中）：
 
-### HBase 操作：
+### 2.1 HBase 操作
 
 ```scala
 val hTableName = "t_student"
@@ -37,7 +37,7 @@ studentDF.hbaseBulkPutDF(hTableName, classOf[Student])
 studentDF.hbaseBulkPutDF(hTableName, classOf[Student], keyNum = 2)
 ```
 
-### JDBC 操作：
+### 2.2 JDBC 操作
 
 ```scala
 /** 关系型数据库更新API **/
@@ -54,7 +54,7 @@ val df: DataFrame = this.fire.jdbcQueryDF(querySql, Seq(1, 2, 3), classOf[Studen
 /** 多关系型数据库操作 **/
 val df = this.fire.jdbcQueryDF(querySql, Seq(1, 2, 3), classOf[Student], keyNum=2)
 ```
-###Kafka 操作:	
+###2.3 Kafka 操作
 
 ````scala
 // 从指定kafka集群消费，该写法支持spark与flink，kafka相关信息在类同名的配置文件中
@@ -65,14 +65,18 @@ val dstream = this.fire.createKafkaDirectStream(keyNum = 2)
 
 ​	可以看到，Fire框架中的API是以DataFrame、RDD为基础进行了高度抽象，通过引入fire隐式转换，让RDD、DataFrame等对象直接具有了某些能力，进而实现直接调用。目前Fire框架已经覆盖了主流大数据组件的API，基本上都是一行代码搞定。同时，Fire框架让任务具有**多集群的操作能力**，仅需在各API中指定参数**keyNum**，即可同时访问不同集群的不同表。
 
-## 赋能平台
+## 三、赋能平台
 ​		Fire框架可以将**实时任务**与**实时管理平台**进行绑定，实现很多酷炫又实用的功能。比如配置管理、SQL在线调试、任务热重启、配置热更新等，甚至可以直接获取到任务的运行时数据，实现更细粒度的监控管理。
-**配置管理**
+
+### 3.1 配置管理
+
 ​		类似于携程开源的apollo，实时任务管理平台可提供任务配置的管理功能，基于Fire的实时任务在启动时会主动拉取配置信息，并覆盖任务jar包中的配置文件，避免重复打包发布，节约时间。
-**SQL在线调试**
+
+### 3.2 SQL在线调试
+
 ​		基于该技术，可以在实时任务管理平台中提交SQL语句，交由指定的Spark Streaming任务执行，并将结果返回，该功能的好处是支持Spark内存临时表，便于在web端进行Spark SQL的调试，大幅节省SQL开发时间。
 
-**定时任务**
+### 3.3 定时任务
 
 ​		有些实时任务会有定时刷新维表的需求，Fire框架支持这样的功能，类似于Spring的@Scheduled，但Fire框架的定时任务功能更强大，甚至支持指定在driver端运行还是在executor端运行。
 
@@ -88,21 +92,26 @@ val dstream = this.fire.createKafkaDirectStream(keyNum = 2)
  */
 @Scheduled(cron = "0/5 * * * * ?", scope = "driver", concurrent = false, startAt = "2021-01-21 11:30:00", initialDelay = 60000)
 def loadTable: Unit = {
-  this.logger.info("更新维表动作")
+  this.logger.info("周期性执行")
 }
 ```
 
-**任务热重启**
-		该功能是主要用于Spark Streaming任务，通过热重启技术，可以在不重启Spark Streaming的前提下，实现批次时间的热修改。比如在web端将某个任务的批次时间调整为10s，会立即生效。
-**配置热更新**
-		用户仅需在web页面中更新指定的配置信息，就可以让实时任务接收到最新的配置并且立即生效。最典型的应用场景是进行Spark任务的某个算子partition数调整，比如当任务处理的数据量较大时，可以通过该功能将repartition的具体分区数调大，会立即生效。
-**运行时信息**
-		基于Fire框架，可在运行时分析哪些任务读写了HBase，哪些任务操作了MySQL数据库。这就为HBase集群或MySQL维护提供了任务清单。
+### 3.4 任务热重启
 
-## 程序结构
+​		该功能是主要用于Spark Streaming任务，通过热重启技术，可以在不重启Spark Streaming的前提下，实现批次时间的热修改。比如在web端将某个任务的批次时间调整为10s，会立即生效。
+
+### 3.5 配置热更新
+
+​		用户仅需在web页面中更新指定的配置信息，就可以让实时任务接收到最新的配置并且立即生效。最典型的应用场景是进行Spark任务的某个算子partition数调整，比如当任务处理的数据量较大时，可以通过该功能将repartition的具体分区数调大，会立即生效。
+
+### 3.6 运行时信息
+
+​		基于Fire框架，可在运行时分析哪些任务读写了HBase，哪些任务操作了MySQL数据库。这就为HBase集群或MySQL维护提供了任务清单。
+
+## 四、程序结构
 ​		Fire支持Spark与Flink两大热门计算引擎，对常用的初始化操作进行了大幅度的简化，让业务代码更紧凑更突出更具维护性。
 
-###Spark开发
+###4.1 Spark开发
 
 ```scala
 import com.zto.fire._
@@ -132,7 +141,7 @@ object Test extends BaseSparkStreaming {
 }
 ```
 
-###Flink开发
+###4.2 Flink开发
 ```scala
 import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkStreaming
@@ -155,4 +164,10 @@ class Test extends BaseFlinkStreaming {
   }
 }
 ```
+
+## 五、操作手册
+
+### [5.1 依赖管理](docs/dependency.md)
+
+### [5.2 第三方包install](docs/dependency-install.md)
 

@@ -1,7 +1,7 @@
 package com.zto.fire.common.bean.rest;
 
-import com.alibaba.fastjson.JSON;
 import com.zto.fire.common.enu.ErrorCode;
+import com.zto.fire.common.util.JSONUtils;
 
 /**
  * 返回消息
@@ -87,9 +87,6 @@ public class ResultMsg {
 
     /**
      * 构建成功消息
-     *
-     * @param content
-     * @param msg
      */
     public String buildSuccess(Object content, String msg) {
         this.content = content;
@@ -100,8 +97,6 @@ public class ResultMsg {
 
     /**
      * 构建失败消息
-     *
-     * @param msg
      */
     public String buildError(String msg, ErrorCode errorCode) {
         this.content = "";
@@ -112,6 +107,6 @@ public class ResultMsg {
 
     @Override
     public String toString() {
-        return JSON.toJSONString(this);
+        return JSONUtils.toJSONString(this);
     }
 }

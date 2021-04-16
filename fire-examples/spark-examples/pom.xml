@@ -36,11 +36,6 @@
             <version>2.10.0</version>
             <scope>${maven.scope}</scope>
         </dependency>
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>${fastjson.version}</version>
-        </dependency>
 
         <!-- spark相关依赖 -->
         <dependency>

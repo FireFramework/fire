@@ -1,8 +1,6 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.serializer.SerializerFeature
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
@@ -86,16 +84,16 @@ object HBaseSinkTest extends BaseFlinkStreaming {
     // get操作
     val getList = ListBuffer(HBaseConnector.buildGet("1"))
     val student = HBaseConnector.get(this.tableName, classOf[Student], getList, 1)
-    if (student != null) println(JSON.toJSONString(student, SerializerFeature.NotWriteDefaultValue))
+    if (student != null) println(JSONUtils.toJSONString(student))
     // scan操作
     val studentList = HBaseConnector.scan(this.tableName, classOf[Student], HBaseConnector.buildScan("0", "9"), 1)
-    if (studentList != null) println(JSON.toJSONString(studentList, SerializerFeature.NotWriteDefaultValue))
+    if (studentList != null) println(JSONUtils.toJSONString(studentList))
     // delete操作
     HBaseConnector.deleteRows(this.tableName, Seq("1"))
   }
 
   override def process: Unit = {
-    val stream = this.fire.createKafkaDirectStream().filter(JSONUtils.checkJson(_)).map(json => JSON.parseObject(json, classOf[Student])).setParallelism(1)
+    val stream = this.fire.createKafkaDirectStream().filter(t => JSONUtils.isLegal(t)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(1)
     HBaseConnector.truncateTable(this.tableName)
     HBaseConnector.truncateTable(this.tableName2)
     HBaseConnector.truncateTable(this.tableName3)

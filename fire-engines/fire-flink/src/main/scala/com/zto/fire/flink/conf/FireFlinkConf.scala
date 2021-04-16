@@ -56,7 +56,7 @@ private[fire] object FireFlinkConf {
   lazy val forceKryoEnable = PropUtils.getBoolean(this.FLINK_FORCE_KRYO_ENABLE, false)
   lazy val genericTypesEnable = PropUtils.getBoolean(this.FLINK_GENERIC_TYPES_ENABLE, false)
   lazy val objectReuseEnable = PropUtils.getBoolean(this.FLINK_OBJECT_REUSE_ENABLE, false)
-  lazy val autoWatermarkInterval = PropUtils.getLong(this.FLINK_AUTO_WATERMARK_INTERVAL)
+  lazy val autoWatermarkInterval = PropUtils.getLong(this.FLINK_AUTO_WATERMARK_INTERVAL, -1)
   lazy val closureCleanerLevel = PropUtils.getString(this.FLINK_CLOSURE_CLEANER_LEVEL)
   lazy val defaultInputDependencyConstraint = PropUtils.getString(this.FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT)
   lazy val executionMode = PropUtils.getString(this.FLINK_EXECUTION_MODE)

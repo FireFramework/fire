@@ -12,6 +12,7 @@ import com.zto.fire.common.util.PropUtils
 private[fire] object FireJdbcConf {
   // c3p0连接池相关配置
   lazy val JDBC_URL = "db.jdbc.url"
+  lazy val JDBC_URL_PREFIX = "db.jdbc.url.map."
   lazy val JDBC_DRIVER = "db.jdbc.driver"
   lazy val JDBC_USER = "db.jdbc.user"
   lazy val JDBC_PASSWORD = "db.jdbc.password"
@@ -39,29 +40,39 @@ private[fire] object FireJdbcConf {
   lazy val jdbcQueryPartition = PropUtils.getInt(this.FIRE_JDBC_QUERY_REPARTITION, 10)
 
   // db.jdbc.url
-  def url(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_URL, keyNum)
+  def url(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_URL, "", keyNum = keyNum)
+  // jdbc url与别名映射
+  lazy val jdbcUrlMap = PropUtils.sliceKeys(this.JDBC_URL_PREFIX)
   // db.jdbc.driver
-  def driverClass(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_DRIVER, keyNum)
+  def driverClass(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_DRIVER,"", keyNum = keyNum)
   // db.jdbc.user
-  def user(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_USER, keyNum)
+  def user(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_USER, "", keyNum = keyNum)
   // db.jdbc.password
-  def password(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_PASSWORD, keyNum)
+  def password(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_PASSWORD, "", keyNum = keyNum)
   // 事务的隔离级别：NONE, READ_COMMITTED, READ_UNCOMMITTED, REPEATABLE_READ, SERIALIZABLE，默认为READ_UNCOMMITTED
-  def isolationLevel(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_ISOLATION_LEVEL, keyNum, this.jdbcIsolationLevel)
+  def isolationLevel(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_ISOLATION_LEVEL, this.jdbcIsolationLevel, keyNum)
   // 批量操作的记录数
-  def batchSize(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_BATCH_SIZE, keyNum, this.jdbcBatchSize)
+  def batchSize(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_BATCH_SIZE, this.jdbcBatchSize, keyNum)
   // 默认多少毫秒flush一次
-  def jdbcFlushInterval(keyNum: Int = 1): Long = PropUtils.getLong(this.JDBC_FLUSH_INTERVAL, keyNum, 1000)
+  def jdbcFlushInterval(keyNum: Int = 1): Long = PropUtils.getLong(this.JDBC_FLUSH_INTERVAL, 1000, keyNum)
   // jdbc失败最大重试次数
-  def maxRetry(keyNum: Int = 1): Long = PropUtils.getLong(this.JDBC_MAX_RETRY, keyNum, 3)
+  def maxRetry(keyNum: Int = 1): Long = PropUtils.getLong(this.JDBC_MAX_RETRY, 3, keyNum)
   // 连接池最小连接数
-  def minPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_MIN_POOL_SIZE, keyNum, 1)
+  def minPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_MIN_POOL_SIZE, 1, keyNum)
   // 连接池初始化连接数
-  def initialPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_INITIAL_POOL_SIZE, keyNum, 1)
+  def initialPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_INITIAL_POOL_SIZE, 1, keyNum)
   // 连接池最大连接数
-  def maxPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_MAX_POOL_SIZE, keyNum, 5)
+  def maxPoolSize(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_MAX_POOL_SIZE, 5, keyNum)
   // 连接池每次自增连接数
-  def acquireIncrement(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_ACQUIRE_INCREMENT, keyNum, 1)
+  def acquireIncrement(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_ACQUIRE_INCREMENT, 1, keyNum)
   // 多久释放没有用到的连接
-  def maxIdleTime(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_MAX_IDLE_TIME, keyNum, 30)
+  def maxIdleTime(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_MAX_IDLE_TIME, 30, keyNum)
+
+  /**
+   * 根据给定的jdbc url别名获取对应的jdbc地址
+   */
+  def jdbcUrl(keyNum: Int = 1): String = {
+    val url = this.url(keyNum)
+    this.jdbcUrlMap.getOrElse(url, url)
+  }
 }

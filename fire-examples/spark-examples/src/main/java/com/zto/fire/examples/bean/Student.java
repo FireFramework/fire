@@ -1,10 +1,7 @@
 package com.zto.fire.examples.bean;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.zto.fire.common.anno.FieldName;
 import com.zto.fire.common.util.DateFormatUtils;
-import com.zto.fire.hbase.anno.HConfig;
+import com.zto.fire.common.util.JSONUtils;
 import com.zto.fire.hbase.bean.HBaseBaseBean;
 
 import java.math.BigDecimal;
@@ -126,7 +123,7 @@ public class Student extends HBaseBaseBean<Student> {
 
     @Override
     public String toString() {
-        return JSON.toJSONString(this, SerializerFeature.WriteNullListAsEmpty);
+        return JSONUtils.toJSONString(this);
     }
 
     public static List<Student> newStudentList() {
