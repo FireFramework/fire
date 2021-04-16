@@ -1,12 +1,8 @@
 package com.zto.fire.spark.acc
 
-import java.nio.ByteBuffer
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
-
 import com.google.common.collect.HashBasedTable
-import com.zto.fire.common.conf.{FireDateSchemaConf, FireFrameworkConf}
-import com.zto.fire.common.util.{ExceptionBus, FireUtils, OSUtils, PropUtils, StringsUtils}
+import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.common.util._
 import com.zto.fire.predef._
 import com.zto.fire.spark.task.SparkSchedulerManager
 import com.zto.fire.spark.util.SparkUtils
@@ -16,6 +12,9 @@ import org.apache.spark.util.LongAccumulator
 import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
 import org.slf4j.LoggerFactory
 
+import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.collection.mutable
 
 /**
@@ -207,7 +206,7 @@ private[fire] object AccumulatorManager {
    * @param value
    * 累加值的key、value和时间的schema，默认为yyyy-MM-dd HH:mm:00
    */
-  def addMultiTimer(key: String, value: Long, schema: String = FireDateSchemaConf.MIN): Unit = {
+  def addMultiTimer(key: String, value: Long, schema: String = DateFormatUtils.TRUNCATE_MIN): Unit = {
     if (FireUtils.isSparkEngine) {
       if (SparkEnv.get != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
         val timerAccumulator = SparkEnv.get.conf.get(this.multiTimerLabel, "")

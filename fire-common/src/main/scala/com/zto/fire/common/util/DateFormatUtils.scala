@@ -1,13 +1,11 @@
 package com.zto.fire.common.util
 
-import java.text.SimpleDateFormat
-import java.util.{Calendar, Date, TimeZone}
-
-import com.zto.fire.common.conf.{FireCronConf, FireDateSchemaConf}
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.DateUtils
 import org.slf4j.{Logger, LoggerFactory}
 
+import java.text.SimpleDateFormat
+import java.util.{Calendar, Date, TimeZone}
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -15,14 +13,27 @@ import scala.collection.mutable.ArrayBuffer
   * Created by ChengLong on 2016-11-24.
   */
 object DateFormatUtils {
+  lazy val yyyyMMdd = "yyyyMMdd"
+  lazy val yyyy_MM_dd = "yyyy-MM-dd"
+  lazy val yyyyMMddHH = "yyyyMMddHH"
+  lazy val yyyy_MM_ddHHmmss = "yyyy-MM-dd HH:mm:ss"
+  lazy val TRUNCATE_MIN = "yyyy-MM-dd HH:mm:00"
   private val timeZoneShangHai = "Asia/Shanghai"
   private lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
+  lazy val HOUR = "hour"
+  lazy val DAY = "day"
+  lazy val WEEK = "week"
+  lazy val MONTH = "month"
+  lazy val YEAR = "year"
+  lazy val MINUTE = "minute"
+  lazy val SECOND = "second"
+  lazy val enumSet = Set(HOUR, DAY, WEEK, MONTH, YEAR, MINUTE, SECOND)
 
   /**
     * 将日期格式化为 yyyy-MM-dd HH:mm:ss
     */
   def getTimeFormat(): SimpleDateFormat = {
-    val timeFormat: SimpleDateFormat = new SimpleDateFormat(FireDateSchemaConf.yyyy_MM_ddHHmmss)
+    val timeFormat: SimpleDateFormat = new SimpleDateFormat(DateFormatUtils.yyyy_MM_ddHHmmss)
     timeFormat.setTimeZone(TimeZone.getTimeZone(timeZoneShangHai))
     timeFormat
   }
@@ -55,7 +66,7 @@ object DateFormatUtils {
   /**
     * 将日期格式化为 yyyy-MM-dd
     */
-  def getSchemaFormat(schema: String = FireDateSchemaConf.yyyy_MM_dd): SimpleDateFormat = {
+  def getSchemaFormat(schema: String = DateFormatUtils.yyyy_MM_dd): SimpleDateFormat = {
     val dateFormat: SimpleDateFormat = new SimpleDateFormat(schema)
     dateFormat.setTimeZone(TimeZone.getTimeZone(timeZoneShangHai))
     dateFormat
@@ -332,17 +343,17 @@ object DateFormatUtils {
     * 计算后的日期
     */
   def addTimer(field: String, dateTimeStr: String, count: Int): String = {
-    if (FireCronConf.YEAR.equalsIgnoreCase(field)) {
+    if (this.YEAR.equalsIgnoreCase(field)) {
       this.addYears(dateTimeStr, count)
-    } else if (FireCronConf.MONTH.equalsIgnoreCase(field)) {
+    } else if (this.MONTH.equalsIgnoreCase(field)) {
       this.addMons(dateTimeStr, count)
-    } else if (FireCronConf.DAY.equalsIgnoreCase(field)) {
+    } else if (this.DAY.equalsIgnoreCase(field)) {
       this.addDays(dateTimeStr, count)
-    } else if (FireCronConf.HOUR.equalsIgnoreCase(field)) {
+    } else if (this.HOUR.equalsIgnoreCase(field)) {
       this.addHours(dateTimeStr, count)
-    } else if (FireCronConf.MINUTE.equalsIgnoreCase(field)) {
+    } else if (this.MINUTE.equalsIgnoreCase(field)) {
       this.addMins(dateTimeStr, count)
-    } else if (FireCronConf.SECOND.equalsIgnoreCase(field)) {
+    } else if (this.SECOND.equalsIgnoreCase(field)) {
       this.addSecs(dateTimeStr, count)
     } else {
       ""
@@ -612,14 +623,14 @@ object DateFormatUtils {
   /**
     * 根据指定的时间和格式，将时间格式化为hive分区格式
     */
-  def getPartitionTime(dateTime: String = this.formatCurrentDateTime(), schema: String = FireDateSchemaConf.yyyyMMdd): String = {
-    this.dateSchemaFormat(dateTime, FireDateSchemaConf.yyyy_MM_ddHHmmss, schema)
+  def getPartitionTime(dateTime: String = this.formatCurrentDateTime(), schema: String = DateFormatUtils.yyyyMMdd): String = {
+    this.dateSchemaFormat(dateTime, DateFormatUtils.yyyy_MM_ddHHmmss, schema)
   }
 
   /**
     * 将当前系统时间格式化为指定的格式作为分区
     */
-  def getCurrentPartitionTime(schema: String = FireDateSchemaConf.yyyyMMdd): String = {
+  def getCurrentPartitionTime(schema: String = DateFormatUtils.yyyyMMdd): String = {
     getPartitionTime(this.formatCurrentDateTime(), schema)
   }
 
@@ -642,7 +653,7 @@ object DateFormatUtils {
     */
   def truncateMinute(dateTime: String): String = {
     val date = this.formatDateTime(dateTime)
-    val prefix = this.dateSchemaFormat(dateTime, FireDateSchemaConf.yyyy_MM_ddHHmmss, "yyyy-MM-dd HH")
+    val prefix = this.dateSchemaFormat(dateTime, DateFormatUtils.yyyy_MM_ddHHmmss, "yyyy-MM-dd HH")
     val minute = date.getMinutes
     if (minute >= 0 && minute < 10) {
       s"$prefix:00"
@@ -670,7 +681,7 @@ object DateFormatUtils {
     * 获取整点小时
     */
   def truncateHour(dateStr: String): String = {
-    this.dateSchemaFormat(dateStr, FireDateSchemaConf.yyyy_MM_ddHHmmss, FireDateSchemaConf.yyyyMMddHH)
+    this.dateSchemaFormat(dateStr, DateFormatUtils.yyyy_MM_ddHHmmss, DateFormatUtils.yyyyMMddHH)
   }
 
   /**
@@ -684,20 +695,20 @@ object DateFormatUtils {
     * 是否替换掉日期字符串中的特殊字符
     * @return
     */
-  def truncate(date: String, cron: String = FireCronConf.DAY, replace: Boolean = true): String = {
+  def truncate(date: String, cron: String = this.DAY, replace: Boolean = true): String = {
     if (StringUtils.isBlank(date) || StringUtils.isBlank(cron) || date.length != 19) {
       throw new IllegalArgumentException("日期不能为空，格式为yyyy-MM-dd HH:mm:ss")
     }
-    if (!FireCronConf.enumSet.contains(cron)) {
+    if (!this.enumSet.contains(cron)) {
       throw new IllegalArgumentException("where参数必须是hour/day/week/month/year中的一个")
     }
-    val index: Int = if (FireCronConf.HOUR.equals(cron)) {
+    val index: Int = if (this.HOUR.equals(cron)) {
       13
-    } else if (FireCronConf.DAY.equals(cron)) {
+    } else if (this.DAY.equals(cron)) {
       10
-    } else if (FireCronConf.MONTH.equals(cron)) {
+    } else if (this.MONTH.equals(cron)) {
       7
-    } else if (FireCronConf.MINUTE.equals(cron)) {
+    } else if (this.MINUTE.equals(cron)) {
       15
     } else {
       4

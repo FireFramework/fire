@@ -1,10 +1,8 @@
 package com.zto.fire.spark.util
 
-import java.lang.reflect.Field
-
 import com.zto.fire._
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf, FireStringConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
 import com.zto.fire.common.util._
 import com.zto.fire.spark.conf.FireSparkConf
 import org.apache.commons.lang3.StringUtils
@@ -16,6 +14,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.LoggerFactory
 
+import java.lang.reflect.Field
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.Try
 
@@ -254,18 +253,14 @@ object SparkUtils {
 
   /**
    * 获取webui地址
-   *
-   * @param spark
-   * @return
    */
   def getWebUI(spark: SparkSession): String = {
     val optConf = spark.conf.getOption("spark.org.apache.hadoop.yarn.server.webproxy.amfilter.AmIpFilter.param.PROXY_URI_BASES")
 
-    if (optConf.isDefined && StringUtils.isNotBlank(optConf.get)) {
-      optConf.get.replace("\\", "")
-        .replace(FireStringConf.hostNamePrefix, FireStringConf.ipPrefxi)
+    if (optConf.isDefined) {
+      optConf.get
     } else {
-      spark.sparkContext.uiWebUrl.get.replace(FireStringConf.hostNamePrefix, FireStringConf.ipPrefxi)
+      ""
     }
   }
 

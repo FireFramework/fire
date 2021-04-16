@@ -20,26 +20,10 @@ private[fire] class FireConf {
   val rocketMQConf = FireRocketMQConf
   // impala相关配置
   val kuduConf = FireKuduConf
-  // 周期相关字符串
-  val cronConf = FireCronConf
   // 颜色预定义
   val ps1Conf = FirePS1Conf
-  // 日期模式类型
-  val dateSchemaConf = FireDateSchemaConf
-  // 打印模块枚举
-  val printModuleConf = FirePrintModuleConf
-  // 常量字符串
-  val stringConf = FireStringConf
-  // log相关常量
-  val logValConf = FireLogValConf
-  // 预定义的一些正则表达式
-  val regularsConf = FireRegularConf
-  // 日志的级别
-  val logLevelConf = FireLogLevelConf
   // hive相关配置
   val hiveConf = FireHiveConf
-  // 预设状态
-  val statusConf = FireStatusConf
 }
 
 object FireConf extends FireConf

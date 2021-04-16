@@ -177,7 +177,7 @@ private[fire] object FireFrameworkConf {
   // 用于限定fire框架中sql日志的字符串长度
   lazy val logSqlLength = PropUtils.getInt(this.FIRE_LOG_SQL_LENGTH, 50)
   // 配置中心生产环境注册地址
-  lazy val configCenterProdAddress = PropUtils.getString(this.FIRE_CONFIG_CENTER_REGISTER_CONF_PROD_ADDRESS, "http://192.168.33.199:8080/zrcToExternal/zrcConfCallBack")
+  lazy val configCenterProdAddress = PropUtils.getString(this.FIRE_CONFIG_CENTER_REGISTER_CONF_PROD_ADDRESS, "")
   // 配置中心测试环境注册地址
   lazy val configCenterTestAddress = PropUtils.getString(this.FIRE_CONFIG_CENTER_REGISTER_CONF_TEST_ADDRESS)
 
@@ -189,7 +189,7 @@ private[fire] object FireFrameworkConf {
   // 本地运行环境下（Windows、Mac）是否调用配置中心接口获取配置信息
   lazy val configCenterLocalEnable = PropUtils.getBoolean(this.FIRE_CONFIG_CENTER_LOCAL_ENABLE, false)
   // 配置中心接口调用秘钥
-  lazy val configCenterSecret = PropUtils.getString(this.FIRE_CONFIG_CENTER_SECRET, "21fa30b7f2082b1b12dfbc7c8c6d70b9")
+  lazy val configCenterSecret = PropUtils.getString(this.FIRE_CONFIG_CENTER_SECRET, "")
   // fire框架restful端口冲突重试次数
   lazy val restfulPortRetryNum = PropUtils.getInt(this.FIRE_RESTFUL_PORT_RETRY_NUM, 3)
   // fire框架restful端口冲突重试时间（ms）

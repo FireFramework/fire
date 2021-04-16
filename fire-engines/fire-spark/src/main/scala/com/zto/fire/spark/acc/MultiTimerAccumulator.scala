@@ -1,14 +1,13 @@
 package com.zto.fire.spark.acc
 
-import java.util.Date
-
 import com.google.common.collect.HashBasedTable
-import com.zto.fire.common.conf.{FireDateSchemaConf, FireFrameworkConf}
+import com.zto.fire._
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.util.DateFormatUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.util.AccumulatorV2
 
-import com.zto.fire._
+import java.util.Date
 import scala.collection.mutable
 
 /**
@@ -57,7 +56,7 @@ private[fire] class MultiTimerAccumulator extends AccumulatorV2[(String, Long, S
   override def add(kv: (String, Long, String)): Unit = {
     if (!isEnable || kv == null) return
     val schema = if (StringUtils.isBlank(kv._3)) {
-      FireDateSchemaConf.MIN
+      DateFormatUtils.TRUNCATE_MIN
     } else kv._3
     if (StringUtils.isNotBlank(kv._1) && kv._2 != null) {
       this.mergeTable(kv._1, DateFormatUtils.formatCurrentBySchema(schema), kv._2)

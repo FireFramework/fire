@@ -54,7 +54,7 @@ private[fire] object FireKafkaConf {
   def kafkaEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.KAFKA_ENABLE_AUTO_COMMIT, false, keyNum)
 
   // 获取topic列表
-  def kafkaTopics(keyNum: Int = 1): String = PropUtils.getString(this.KAFKA_TOPICS, null, keyNum)
+  def kafkaTopics(keyNum: Int = 1): String = PropUtils.getString(this.KAFKA_TOPICS, "", keyNum)
 
   // kafka session超时时间，默认5分钟
   def kafkaSessionTimeOut(keyNum: Int = 1): java.lang.Integer = PropUtils.getInt(this.KAFKA_SESSION_TIMEOUT_MS, 300000, keyNum)

@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
 
 import com.zto.fire.predef._
-import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf, FirePrintModuleConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.enu.{JobType, ThreadPoolType}
 import com.zto.fire.common.util.{FireUtils, _}
 import com.zto.fire.core.rest.{RestServerManager, SystemRestful}
@@ -134,7 +134,7 @@ trait BaseFire {
       Spark.stop()
       SchedulerManager.shutdown(stopGracefully)
       this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成fire资源回收 <---${FirePS1Conf.DEFAULT}")
-      FirePrintModuleConf.endTimeCost(this.startTime)
+      this.logger.info(s"总耗时：${FirePS1Conf.RED}${timecost(startTime)}${FirePS1Conf.DEFAULT} The end...${FirePS1Conf.DEFAULT}")
     }
   }
 

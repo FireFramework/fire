@@ -40,11 +40,11 @@ private[fire] object FireJdbcConf {
   lazy val jdbcQueryPartition = PropUtils.getInt(this.FIRE_JDBC_QUERY_REPARTITION, 10)
 
   // db.jdbc.url
-  def url(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_URL, "", keyNum = keyNum)
+  def url(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_URL, "", keyNum)
   // jdbc url与别名映射
   lazy val jdbcUrlMap = PropUtils.sliceKeys(this.JDBC_URL_PREFIX)
   // db.jdbc.driver
-  def driverClass(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_DRIVER,"", keyNum = keyNum)
+  def driverClass(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_DRIVER,"", keyNum)
   // db.jdbc.user
   def user(keyNum: Int = 1): String = PropUtils.getString(this.JDBC_USER, "", keyNum = keyNum)
   // db.jdbc.password
