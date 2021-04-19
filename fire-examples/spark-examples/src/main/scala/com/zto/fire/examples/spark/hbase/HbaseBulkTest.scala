@@ -14,6 +14,7 @@ import org.apache.spark.sql.{Encoders, Row}
   * @author ChengLong 2019-5-18 09:20:52
   */
 object HBaseBulkTest extends BaseSparkCore {
+  private val tableName1 = "fire_test_1"
   private val tableName2 = "fire_test_2"
 
   /**
@@ -47,7 +48,7 @@ object HBaseBulkTest extends BaseSparkCore {
     val rdd = this.fire.createRDD(Student.newStudentList(), 2)
     val studentDF = this.fire.createDataFrame(rdd, classOf[Student])
     // insertEmpty=false表示为空的字段不插入
-    studentDF.hbaseBulkPutDF(this.tableName2, classOf[Student])
+    studentDF.hbaseBulkPutDF(this.tableName1, classOf[Student], keyNum = 2)
     // 方式二：
     // this.fire.hbaseBulkPutDF(this.tableName2, studentDF, classOf[Student])
   }
@@ -86,7 +87,7 @@ object HBaseBulkTest extends BaseSparkCore {
     println("===========testHBaseBulkGetRDD===========")
     // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
     val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString), 2)
-    val studentRDD = rowKeyRdd.hbaseBulkGetRDD(this.tableName2, classOf[Student])
+    val studentRDD = rowKeyRdd.hbaseBulkGetRDD(this.tableName1, classOf[Student], keyNum = 2)
     studentRDD.foreach(println)
     // 方式二：使用this.fire.hbaseBulkGetRDD
     // val studentRDD2 = this.fire.hbaseBulkGetRDD(this.tableName2, rowKeyRdd, classOf[Student])
@@ -184,11 +185,12 @@ object HBaseBulkTest extends BaseSparkCore {
     */
   override def process: Unit = {
     this.testHBaseBulkDeleteRDD
+    HBaseConnector.truncateTable(this.tableName1, keyNum = 2)
     HBaseConnector.truncateTable(this.tableName2)
     // this.testHBaseBulkDeleteDS
 
     // this.testHbaseBulkPutRDD
-    // this.testHbaseBulkPutDF
+    this.testHbaseBulkPutDF
     this.testHbaseBulkPutDS
 
     println("=========get========")
@@ -205,6 +207,7 @@ object HBaseBulkTest extends BaseSparkCore {
 
   def main(args: Array[String]): Unit = {
     this.init()
+    this.stop
   }
 
 }

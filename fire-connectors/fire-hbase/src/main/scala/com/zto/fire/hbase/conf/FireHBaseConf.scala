@@ -37,7 +37,7 @@ private[fire] object FireHBaseConf {
   lazy val TABLE_EXISTS_CACHE_PERIOD = "fire.hbase.table.exists.cache.period"
 
   // hbase集群映射地址
-  lazy val hbaseClusterMap: util.Map[String, String] = PropUtils.sliceKeys(hbaseClusterMapPrefix)
+  lazy val hbaseClusterMap: util.Map[String, String] = PropUtils.sliceKeys(this.hbaseClusterMapPrefix)
   // hbase java api 配置前缀
   lazy val hbaseConfPrefix = "fire.hbase.conf."
 
@@ -63,7 +63,7 @@ private[fire] object FireHBaseConf {
    */
   def hbaseClusterUrl(keyNum: Int = 1): String = {
     val clusterName = this.hbaseCluster(keyNum)
-    this.hbaseClusterMap.get(clusterName, clusterName)
+    this.hbaseClusterMap.getOrElse(clusterName, clusterName)
   }
 
   def hbaseDurability(keyNum: Int = 1): String = PropUtils.getString(this.HBASE_DURABILITY, "", keyNum)

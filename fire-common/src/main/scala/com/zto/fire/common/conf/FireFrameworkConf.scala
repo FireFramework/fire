@@ -73,7 +73,8 @@ private[fire] object FireFrameworkConf {
   // quartz最大线程池大小
   lazy val FIRE_QUARTZ_MAX_THREAD = "fire.quartz.max.thread"
   // fire框架restful地址
-  lazy val FIRE_REST_URL: String = s"fire.rest.url"
+  lazy val FIRE_REST_URL = "fire.rest.url"
+  lazy val FIRE_SHUTDOWN_EXIT = "fire.shutdown.auto.exit"
   // 配置中心生产环境注册地址
   lazy val FIRE_CONFIG_CENTER_REGISTER_CONF_PROD_ADDRESS = "fire.config_center.register.conf.prod.address"
   // 配置中心测试环境注册地址
@@ -134,6 +135,8 @@ private[fire] object FireFrameworkConf {
   lazy val userCommonConf = PropUtils.getString(this.FIRE_USER_COMMON_CONF, "").split(",").map(conf => conf.trim).toList
   // fire接口认证秘钥
   lazy val restServerSecret = PropUtils.getString(this.FIRE_REST_SERVER_SECRET)
+  // 用于配置是否在调用shutdown后主动退出jvm进程
+  lazy val shutdownExit = PropUtils.getBoolean(this.FIRE_SHUTDOWN_EXIT, false)
 
   // fire日志打印黑名单
   lazy val fireConfBlackList: Set[String] = {

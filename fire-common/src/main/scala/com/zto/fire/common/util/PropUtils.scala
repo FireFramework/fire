@@ -171,7 +171,7 @@ object PropUtils {
    * @return
    * 对应的配置信息
    */
-  def getString(key: String, default: String, keyNum: Int = 0): String = {
+  def getString(key: String, default: String, keyNum: Int = 1): String = {
     if (keyNum <= 1) {
       var value = this.getProperty(key)
       if (StringUtils.isBlank(value)) {
@@ -191,7 +191,7 @@ object PropUtils {
    * @return
    * 对应的配置信息
    */
-  def getInt(key: String, default: Int, keyNum: Int = 0): Int = {
+  def getInt(key: String, default: Int, keyNum: Int = 1): Int = {
     val value = this.getString(key, default + "", keyNum)
     if (StringUtils.isNotBlank(value)) value.toInt else default
   }
@@ -205,21 +205,21 @@ object PropUtils {
    * @return
    * 对应的配置信息
    */
-  def getLong(key: String, default: Long, keyNum: Int = 0): Long = {
+  def getLong(key: String, default: Long, keyNum: Int = 1): Long = {
     this.get[Long](key, Some(default), keyNum)
   }
 
   /**
    * 获取float型数据
    */
-  def getFloat(key: String, default: Float, keyNum: Int = 0): Float = {
+  def getFloat(key: String, default: Float, keyNum: Int = 1): Float = {
     this.get[Float](key, Some(default), keyNum)
   }
 
   /**
    * 获取Double型数据
    */
-  def getDouble(key: String, default: Double, keyNum: Int = 0): Double = {
+  def getDouble(key: String, default: Double, keyNum: Int = 1): Double = {
     this.get[Double](key, Some(default), keyNum)
   }
 
@@ -232,7 +232,7 @@ object PropUtils {
    * @return
    * 对应的配置信息
    */
-  def getBoolean(key: String, default: Boolean, keyNum: Int = 0): Boolean = {
+  def getBoolean(key: String, default: Boolean, keyNum: Int = 1): Boolean = {
     this.get[Boolean](key, Some(default), keyNum)
   }
 
@@ -251,7 +251,7 @@ object PropUtils {
    * 返回配置的类型
    * @return
    */
-  def get[T: ClassTag](key: String, default: Option[T] = Option.empty, keyNum: Int = 0): T = {
+  def get[T: ClassTag](key: String, default: Option[T] = Option.empty, keyNum: Int = 1): T = {
     val value = this.getString(key, if (default.isDefined) default.get.toString else "", keyNum = keyNum)
     val paramType = getParamType[T]
     val property = tryWithReturn {

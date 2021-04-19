@@ -135,6 +135,7 @@ trait BaseFire {
       SchedulerManager.shutdown(stopGracefully)
       this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成fire资源回收 <---${FirePS1Conf.DEFAULT}")
       this.logger.info(s"总耗时：${FirePS1Conf.RED}${timecost(startTime)}${FirePS1Conf.DEFAULT} The end...${FirePS1Conf.DEFAULT}")
+      if (FireFrameworkConf.shutdownExit) System.exit(0)
     }
   }
 

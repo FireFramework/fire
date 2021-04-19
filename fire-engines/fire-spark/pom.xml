@@ -80,15 +80,43 @@
         <!-- hbase相关依赖 -->
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client_${spark.reference}</artifactId>
+            <artifactId>hbase-common</artifactId>
             <version>${hbase.version}</version>
             <scope>${maven.scope}</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-server</artifactId>
+            <version>${hbase.version}</version>
+            <scope>${maven.scope}</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client_${spark.reference}</artifactId>
+            <version>${hbase.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-spark_${spark.reference}</artifactId>
             <version>${hbase.version}</version>
-            <scope>${maven.scope}</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- kudu相关依赖 -->

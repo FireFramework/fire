@@ -182,15 +182,17 @@ object HBaseConnectorTest extends BaseSparkCore {
   override def process: Unit = {
     // 指定是否以多版本的形式读写
     // this.testHBaseDeleteRDD
+
     this.testHbaseDeleteDS
     HBaseConnector.truncateTable(this.tableName1)
+    HBaseConnector.truncateTable(this.tableName2, keyNum = 2)
 
     // this.testHbasePutRDD
     // this.testHbasePutList
     this.testHBasePutDF
     this.testHBasePutDS
 
-    println("=========get========")
+    /*println("=========get========")
     this.testHbaseGetList
     this.testHbaseGetRDD
     this.testHbaseGetDF
@@ -199,10 +201,11 @@ object HBaseConnectorTest extends BaseSparkCore {
     println("=========scan========")
     this.testHbaseScanList
     this.testHbaseScanRDD
-    this.testHbaseScanDF
+    this.testHbaseScanDF*/
   }
 
   def main(args: Array[String]): Unit = {
     this.init()
+    this.stop
   }
 }

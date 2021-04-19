@@ -15,6 +15,7 @@ import org.apache.spark.sql.{Encoders, Row}
   * @author ChengLong 2019-5-9 09:37:25
   */
 object HBaseHadoopTest extends BaseSparkCore {
+  private val tableName2 = "fire_test_2"
   private val tableName3 = "fire_test_3"
 
   /**
@@ -22,7 +23,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     */
   def testHbaseHadoopPutRDD: Unit = {
     val studentRDD = this.fire.createRDD(Student.newStudentList(), 2)
-    this.fire.hbaseHadoopPutRDD(this.tableName3, studentRDD)
+    this.fire.hbaseHadoopPutRDD(this.tableName2, studentRDD, keyNum = 2)
     // 方式二：直接基于rdd进行方法调用
     // studentRDD.hbaseHadoopPutRDD(this.tableName1)
   }
@@ -74,7 +75,7 @@ object HBaseHadoopTest extends BaseSparkCore {
     */
   def testHBaseHadoopScanRDD: Unit = {
     println("===========testHBaseHadoopScanRDD===========")
-    val studentRDD = this.fire.hbaseHadoopScanRDD2(this.tableName3, classOf[Student], "1", "6")
+    val studentRDD = this.fire.hbaseHadoopScanRDD2(this.tableName2, classOf[Student], "1", "6", keyNum = 2)
     studentRDD.printEachPartition
   }
 
@@ -101,8 +102,9 @@ object HBaseHadoopTest extends BaseSparkCore {
     * 注：此方法会被自动调用
     */
   override def process: Unit = {
+    HBaseConnector.truncateTable(this.tableName2, keyNum = 2)
     HBaseConnector.truncateTable(this.tableName3)
-    // this.testHbaseHadoopPutRDD
+    this.testHbaseHadoopPutRDD
     // this.testHbaseHadoopPutDF
     // this.testHbaseHadoopPutDS
     this.testHbaseHadoopPutDFRow
