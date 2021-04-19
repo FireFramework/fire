@@ -39,7 +39,7 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
       this.logger.info(s"[DataSource] 获取数据源列表成功：counter=$dataSource")
       msg.buildSuccess(dataSource, "获取数据源列表成功")
     } catch {
-      case e => {
+      case e: Exception => {
         this.logger.error(s"[log] 获取数据源列表失败", e)
         msg.buildError("获取数据源列表失败", ErrorCode.ERROR)
       }
@@ -55,7 +55,7 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
       if (datasource.nonEmpty) this.datasourceMap.putAll(datasource)
       msg.buildSuccess(datasource, "添加数据源列表成功")
     }catch {
-      case e => {
+      case e: Exception => {
         this.logger.error(s"[log] 添加数据源列表失败", e)
         msg.buildError("添加数据源列表失败", ErrorCode.ERROR)
       }

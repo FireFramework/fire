@@ -98,7 +98,7 @@ object ApolloConfigUtil {
    * 对应的配置信息
    */
   def getString(key: String, keyNum: Int = 0, default: String = ""): String = {
-    if (keyNum == null || keyNum <= 1) {
+    if (keyNum <= 1) {
       var value = this.getProperty(key)
       if (StringUtils.isBlank(value)) {
         value = this.getString(key + "1", default)

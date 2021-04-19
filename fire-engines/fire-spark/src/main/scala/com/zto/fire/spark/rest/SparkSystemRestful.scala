@@ -372,7 +372,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
     try {
       // 参数校验与参数获取
       val jobId = JSONUtils.getValue(json, "id", -1)
-      if (jobId == null || jobId <= 0) {
+      if (jobId <= 0) {
         this.logger.warn(s"[cancelJob] 参数不合法：json=$json")
         return msg.buildError(s"参数不合法：json=$json", ErrorCode.ERROR)
       }
@@ -398,7 +398,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
     try {
       // 参数校验与参数获取
       val stageId = JSONUtils.getValue(json, "id", -1)
-      if (stageId == null || stageId <= 0) {
+      if (stageId <= 0) {
         this.logger.warn(s"[cancelStage] 参数不合法：json=$json")
         return msg.buildError(s"参数不合法：json=$json", ErrorCode.ERROR)
       }

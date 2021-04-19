@@ -105,7 +105,7 @@ abstract class BaseSink[IN, OUT](batch: Int, flushInterval: Long) extends RichSi
       this.logger.info(s"执行flushInternal操作 sink.size=${this.buffer.size()} batch=${this.batch} flushInterval=${this.flushInterval}")
       val loop = new Breaks
       loop.breakable {
-        if (this.maxRetry == null || this.maxRetry < 1) this.maxRetry = 1
+        if (this.maxRetry < 1) this.maxRetry = 1
         for (i <- 1L to this.maxRetry) {
           try {
             this.sink

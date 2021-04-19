@@ -58,7 +58,7 @@ private[fire] class MultiTimerAccumulator extends AccumulatorV2[(String, Long, S
     val schema = if (StringUtils.isBlank(kv._3)) {
       DateFormatUtils.TRUNCATE_MIN
     } else kv._3
-    if (StringUtils.isNotBlank(kv._1) && kv._2 != null) {
+    if (StringUtils.isNotBlank(kv._1)) {
       this.mergeTable(kv._1, DateFormatUtils.formatCurrentBySchema(schema), kv._2)
     }
   }
@@ -71,7 +71,7 @@ private[fire] class MultiTimerAccumulator extends AccumulatorV2[(String, Long, S
    * 累加值的key和value
    */
   private[this] def mergeTable(kv: (String, String, Long)): Unit = {
-    if (kv != null && StringUtils.isNotBlank(kv._1) && kv._2 != null && kv._3 != null) {
+    if (kv != null && StringUtils.isNotBlank(kv._1) && kv._2 != null) {
       val value = if (this.timerCountTable.contains(kv._1, kv._2)) this.timerCountTable.get(kv._1, kv._2) else 0L
       this.timerCountTable.put(kv._1, kv._2, kv._3 + value)
       this.clear

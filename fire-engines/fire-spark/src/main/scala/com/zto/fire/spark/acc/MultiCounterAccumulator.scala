@@ -59,7 +59,7 @@ private[fire] class MultiCounterAccumulator extends AccumulatorV2[(String, Long)
     * 累加值的key和value
     */
   private[this] def mergeMap(kv: (String, Long)): Unit = {
-    if (this.isEnable && kv != null && StringUtils.isNotBlank(kv._1) && kv._2 != null) {
+    if (this.isEnable && kv != null && StringUtils.isNotBlank(kv._1)) {
       this.multiCounter.put(kv._1, this.multiCounter.getOrDefault(kv._1, 0) + kv._2)
     }
   }

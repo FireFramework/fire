@@ -136,7 +136,7 @@ private[fire] class RestServerManager {
         msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
       }
     } catch {
-      case e => {
+      case e: Exception => {
         this.logger.error(s"非法请求：请检查请求参数！ip=${request.ip()} auth=$auth", e)
         msg.buildError(s"非法请求：请检查请求参数！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
       }

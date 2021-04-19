@@ -124,7 +124,7 @@ trait BaseFlink extends BaseFire {
         // flink.stream.checkpoint.mode  EXACTLY_ONCE/AT_LEAST_ONCE 默认：EXACTLY_ONCE
         if (StringUtils.isNotBlank(FireFlinkConf.streamCheckpointMode)) ckConfig.setCheckpointingMode(CheckpointingMode.valueOf(FireFlinkConf.streamCheckpointMode.trim.toUpperCase))
         // flink.stream.checkpoint.timeout 单位：毫秒 默认：10 * 60 * 1000
-        if (FireFlinkConf.streamCheckpointTimeout != null) ckConfig.setCheckpointTimeout(FireFlinkConf.streamCheckpointTimeout)
+        if (FireFlinkConf.streamCheckpointTimeout > 0) ckConfig.setCheckpointTimeout(FireFlinkConf.streamCheckpointTimeout)
         // flink.stream.checkpoint.max.concurrent 默认：1
         if (FireFlinkConf.streamCheckpointMaxConcurrent > 0) ckConfig.setMaxConcurrentCheckpoints(FireFlinkConf.streamCheckpointMaxConcurrent)
         // flink.stream.checkpoint.min.pause.between  默认：0

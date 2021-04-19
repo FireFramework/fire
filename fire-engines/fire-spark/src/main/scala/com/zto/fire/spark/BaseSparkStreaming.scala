@@ -69,7 +69,7 @@ trait BaseSparkStreaming extends BaseSpark {
         .startRestServer
     }
     // 判断是否为热重启，batchDuration优先级分别为 [ 代码<配置文件<热重启 ]
-    this.batchDuration = SparkUtils.overrideBatchDuration(batchDuration, this.externalConf != null && this.externalConf.getBatchDuration != null)
+    this.batchDuration = SparkUtils.overrideBatchDuration(batchDuration, this.externalConf != null)
     if (!isCheckPoint) {
       if (this.externalConf != null && this.externalConf.isRestartSparkContext) {
         // 重启SparkContext对象
