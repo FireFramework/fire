@@ -23,7 +23,7 @@ object JdbcTest extends BaseSparkCore {
   def testJdbcUpdate: Unit = {
     // 执行insert操作
     val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-    this.fire.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1), keyNum = 2)
+    this.fire.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1))
     // 更新配置文件中指定的第二个关系型数据库
     this.fire.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1), keyNum = 2)
 
@@ -171,13 +171,13 @@ object JdbcTest extends BaseSparkCore {
 
   override def process: Unit = {
     // 测试环境测试
-    this.testJdbcUpdate
+    /*this.testJdbcUpdate
     this.testJdbcQuery
     this.testTableLoad
     this.testTableSave
-    this.testDataFrameSave
+    this.testDataFrameSave*/
     // 生产环境测试
-    // this.testExecutor
+    this.testExecutor
   }
 
   def main(args: Array[String]): Unit = {

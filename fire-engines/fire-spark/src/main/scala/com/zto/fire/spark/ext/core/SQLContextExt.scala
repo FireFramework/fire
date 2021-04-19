@@ -411,7 +411,7 @@ class SQLContextExt(sqlContext: SQLContext) {
    * DataFrame
    */
   def jdbcTableLoadAll(tableName: String, jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
-    sqlContext.read.jdbc(FireJdbcConf.url(keyNum), tableName, DBUtils.getJdbcProps(jdbcProps, keyNum))
+    sqlContext.read.jdbc(FireJdbcConf.jdbcUrl(keyNum), tableName, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
   /**
@@ -429,7 +429,7 @@ class SQLContextExt(sqlContext: SQLContext) {
    * 查询结果集
    */
   def jdbcTableLoad(tableName: String, predicates: Array[String], jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
-    sqlContext.read.jdbc(FireJdbcConf.url(keyNum), tableName, predicates, DBUtils.getJdbcProps(jdbcProps, keyNum))
+    sqlContext.read.jdbc(FireJdbcConf.jdbcUrl(keyNum), tableName, predicates, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
   /**
@@ -453,7 +453,7 @@ class SQLContextExt(sqlContext: SQLContext) {
    * @return
    */
   def jdbcTableLoadBound(tableName: String, columnName: String, lowerBound: Long, upperBound: Long, numPartitions: Int = 10, jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
-    sqlContext.read.jdbc(FireJdbcConf.url(keyNum), tableName, columnName, lowerBound, upperBound, numPartitions, DBUtils.getJdbcProps(jdbcProps, keyNum))
+    sqlContext.read.jdbc(FireJdbcConf.jdbcUrl(keyNum), tableName, columnName, lowerBound, upperBound, numPartitions, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
 }

@@ -81,7 +81,7 @@ class DataFrameExt(dataFrame: DataFrame) {
    * @return
    */
   def jdbcTableSave(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, keyNum: Int = 1): Unit = {
-    dataFrame.write.mode(saveMode).jdbc(FireJdbcConf.url(keyNum), tableName, DBUtils.getJdbcProps(jdbcProps, keyNum))
+    dataFrame.write.mode(saveMode).jdbc(FireJdbcConf.jdbcUrl(keyNum), tableName, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
   /**
