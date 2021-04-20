@@ -43,14 +43,14 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.jdbcUrl(keyNum)} ]")
       // 支持url和别名两种配置方式
       this.url = if (StringUtils.isBlank(FireJdbcConf.jdbcUrl(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.url)) this.conf.url else FireJdbcConf.jdbcUrl(keyNum)
-      require(StringUtils.isNotBlank(this.url), "数据库url不能为空")
+      require(StringUtils.isNotBlank(this.url), s"数据库url不能为空，keyNum=${this.keyNum}")
       val driverClass = if (StringUtils.isBlank(FireJdbcConf.driverClass(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
-      require(StringUtils.isNotBlank(driverClass), "数据库driverClass不能为空")
+      require(StringUtils.isNotBlank(driverClass), s"数据库driverClass不能为空，keyNum=${this.keyNum}")
       this.username = if (StringUtils.isBlank(FireJdbcConf.user(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.username)) this.conf.username else FireJdbcConf.user(keyNum)
       val password = if (StringUtils.isBlank(FireJdbcConf.password(keyNum)) && this.conf != null && StringUtils.isNotBlank(this.conf.password)) this.conf.password else FireJdbcConf.password(keyNum)
       // 识别数据源类型是oracle、mysql等
       this.dbType = DBUtils.dbTypeParser(driverClass, this.url)
-      logger.info(s"Fire框架识别到当前jdbc数据源标识为：${this.dbType}")
+      logger.info(s"Fire框架识别到当前jdbc数据源标识为：${this.dbType}，keyNum=${this.keyNum}")
 
       // 创建c3p0数据库连接池实例
       val pool = new ComboPooledDataSource(true)

@@ -4,6 +4,7 @@ import com.zto.fire._
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.util.FlinkUtils
 import com.zto.fire.hbase.HBaseConnector
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.DataStream
@@ -17,11 +18,18 @@ import scala.collection.mutable.ListBuffer
  * @since 1.1.0
  * @create 2020-5-25 16:32:50
  */
-object HBaseSinkTest extends BaseFlinkStreaming {
+object HBaseTest extends BaseFlinkStreaming {
   lazy val tableName = "fire_test_1"
   lazy val tableName2 = "fire_test_2"
   lazy val tableName3 = "fire_test_3"
   lazy val tableName5 = "fire_test_5"
+  lazy val tableName6 = "fire_test_6"
+  lazy val tableName7 = "fire_test_7"
+  lazy val tableName8 = "fire_test_8"
+  lazy val tableName9 = "fire_test_9"
+  lazy val tableName10 = "fire_test_10"
+  lazy val tableName11 = "fire_test_11"
+  lazy val tableName12 = "fire_test_12"
 
   /**
    * table的hbase sink
@@ -44,13 +52,12 @@ object HBaseSinkTest extends BaseFlinkStreaming {
    * table的hbase sink
    */
   def testTableHBaseSink2(stream: DataStream[Student]): Unit = {
-    stream.createOrReplaceTempView("student")
     val table = this.fire.sqlQuery("select id, name, age from student group by id, name, age")
 
     // 方式二、用户自定义取数规则，从row中创建HBaseBaseBean的子类
-    table.hbasePutTable2(this.tableName)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+    table.hbasePutTable2(this.tableName6)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
     // 或者
-    this.flink.hbasePutTable2(table, this.tableName2, keyNum = 2)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
+    this.flink.hbasePutTable2(table, this.tableName7, keyNum = 2)(row => new Student(1L, row.getField(1).toString, row.getField(2).toString.toInt))
   }
 
   /**
@@ -59,12 +66,12 @@ object HBaseSinkTest extends BaseFlinkStreaming {
   def testStreamHBaseSink(stream: DataStream[Student]): Unit = {
     // 方式一、DataStream中的数据类型为HBaseBaseBean的子类
     // stream.hbasePutDS(this.tableName)
-    this.fire.hbasePutDS[Student](stream, this.tableName)
+    this.fire.hbasePutDS[Student](stream, this.tableName8)
 
     // 方式二、将value组装为HBaseBaseBean的子类，逻辑用户自定义
-    stream.hbasePutDS2(this.tableName2, keyNum = 2)(value => value)
+    stream.hbasePutDS2(this.tableName9, keyNum = 2)(value => value)
     // 或者
-    this.fire.hbasePutDS2(stream, this.tableName3)(value => value)
+    this.fire.hbasePutDS2(stream, this.tableName10)(value => value)
   }
 
   /**
@@ -72,9 +79,9 @@ object HBaseSinkTest extends BaseFlinkStreaming {
    */
   def testStreamHBaseSink2(stream: DataStream[Student]): Unit = {
     // 方式二、将value组装为HBaseBaseBean的子类，逻辑用户自定义
-    stream.hbasePutDS2(this.tableName)(value => value)
+    stream.hbasePutDS2(this.tableName11)(value => value)
     // 或者
-    this.fire.hbasePutDS2(stream, this.tableName2, keyNum = 2)(value => value)
+    this.fire.hbasePutDS2(stream, this.tableName12, keyNum = 2)(value => value)
   }
 
   /**
@@ -92,6 +99,7 @@ object HBaseSinkTest extends BaseFlinkStreaming {
     HBaseConnector.deleteRows(this.tableName, Seq("1"))
   }
 
+
   override def process: Unit = {
     val stream = this.fire.createKafkaDirectStream().filter(t => JSONUtils.isLegal(t)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(1)
     HBaseConnector.truncateTable(this.tableName)
@@ -99,9 +107,9 @@ object HBaseSinkTest extends BaseFlinkStreaming {
     HBaseConnector.truncateTable(this.tableName3)
     HBaseConnector.truncateTable(this.tableName5)
     this.testTableHBaseSink(stream)
-    // this.testStreamHBaseSink(stream)
+    this.testStreamHBaseSink(stream)
     this.testStreamHBaseSink2(stream)
-    // this.testTableHBaseSink2(stream)
+    this.testTableHBaseSink2(stream)
     this.testHBase
 
     this.fire.start

@@ -136,13 +136,13 @@ object JdbcTest extends BaseSparkCore {
    * 在executor中执行jdbc操作
    */
   def testExecutor: Unit = {
-    JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = _ => {
+    JdbcConnector.executeQueryCall(s"select id from $tableName limit 1", null, callback = _ => {
       // this.mark()
       Thread.sleep(1000)
       // this.log(s"=============driver123 $tableName2=============")
       1
     })
-    JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = _ => {
+    JdbcConnector.executeQueryCall(s"select id from $tableName limit 1", null, callback = _ => {
       // this.log(s"=============driver $tableName2=============")
       1
     }, keyNum = 2)
@@ -150,7 +150,7 @@ object JdbcTest extends BaseSparkCore {
     val rdd = this.fire.createRDD(1 to 3, 3)
     rdd.foreachPartition(it => {
       it.foreach(i => {
-        JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = _ => {
+        JdbcConnector.executeQueryCall(s"select id from $tableName limit 1", null, callback = _ => {
           // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
           1
         })
@@ -162,7 +162,7 @@ object JdbcTest extends BaseSparkCore {
     val rdd2 = this.fire.createRDD(1 to 3, 3)
     rdd2.foreachPartition(it => {
       it.foreach(i => {
-        JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = _ => {
+        JdbcConnector.executeQueryCall(s"select id from $tableName limit 1", null, callback = _ => {
           this.logConf
           1
         }, keyNum = 2)
@@ -175,9 +175,9 @@ object JdbcTest extends BaseSparkCore {
    * 用于测试分布式配置
    */
   def logConf: Unit = {
-    this.logger.warn(s"executorId=${SparkUtils.getExecutorId} hello.world=" + this.conf.getString("hello.world", "not_found"))
-    this.logger.warn(s"executorId=${SparkUtils.getExecutorId} hello.world.flag=" + this.conf.getBoolean("hello.world.flag", false))
-    this.logger.warn(s"executorId=${SparkUtils.getExecutorId} hello.world.flag2=" + this.conf.getBoolean("hello.world.flag", false, keyNum = 2))
+    println(s"executorId=${SparkUtils.getExecutorId} hello.world=" + this.conf.getString("hello.world", "not_found"))
+    println(s"executorId=${SparkUtils.getExecutorId} hello.world.flag=" + this.conf.getBoolean("hello.world.flag", false))
+    println(s"executorId=${SparkUtils.getExecutorId} hello.world.flag2=" + this.conf.getBoolean("hello.world.flag", false, keyNum = 2))
   }
 
   override def process: Unit = {

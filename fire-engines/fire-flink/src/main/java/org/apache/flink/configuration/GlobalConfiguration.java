@@ -284,12 +284,13 @@ public final class GlobalConfiguration {
         if (isJobManager && className != null && className.contains(".")) {
             String simpleClassName = className.substring(className.lastIndexOf('.') + 1);
             if (simpleClassName.length() > 0) {
-                System.out.println("-------------------------》加载配置信息");
                 // TODO: 判断批处理模式，并加载对应配置文件
                 // PropUtils.load(FireFrameworkConf.FLINK_BATCH_CONF_FILE)
                 PropUtils.loadFile(FireFrameworkConf.FLINK_STREAMING_CONF_FILE());
                 // 将所有configuration信息同步到PropUtils中
                 PropUtils.setProperties(config.confData);
+                // 加载用户公共配置文件
+                PropUtils.load(FireFrameworkConf.userCommonConf());
                 // 加载任务同名的配置文件
                 PropUtils.loadFile(simpleClassName);
                 // 构建fire rest接口地址

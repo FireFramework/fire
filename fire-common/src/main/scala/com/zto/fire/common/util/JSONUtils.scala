@@ -140,6 +140,17 @@ object JSONUtils {
   def isLegal(json: String, strictMode: Boolean = true): Boolean = this.isJson(json, strictMode) || this.isJsonArray(json, strictMode)
 
   /**
+   * 用于快速判断给定的字符串是否为合法的JsonArray或json
+   * 注：不会验证每个field的合法性，仅做简单校验
+   *
+   * @param json
+   * 待校验的字符串
+   * @return
+   * true: 合法的字符串 false：非法的json字符串
+   */
+  def checkJson(json: String, strictMode: Boolean = true): Boolean = this.isLegal(json, strictMode)
+
+  /**
    * 解析JSON，并获取指定key对应的值
    *
    * @param json json字符串

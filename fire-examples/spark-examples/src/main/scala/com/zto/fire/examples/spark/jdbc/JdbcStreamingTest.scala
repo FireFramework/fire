@@ -19,7 +19,7 @@ object JdbcStreamingTest extends BaseSparkStreaming {
     dstream.repartition(5).foreachRDD(rdd => {
       rdd.foreachPartition(it => {
         val sql = s"select id from $tableName limit 1"
-        JdbcConnector.executeQueryCall(sql, callback = _ => 1)
+        JdbcConnector.executeQueryCall(sql, callback = _ => 1, keyNum = 3)
       })
     })
 

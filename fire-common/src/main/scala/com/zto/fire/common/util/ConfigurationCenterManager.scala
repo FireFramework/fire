@@ -63,17 +63,6 @@ private[fire] object ConfigurationCenterManager extends Serializable {
             }
           }
         }
-        /*
-        val msg = JSON.parseObject(conf)
-        if (msg != null && msg.get("code") == 200) {
-          val content = msg.get("content")
-          if (content != null) {
-            val confMap = JSON.parseObject(content.toString, classOf[util.HashMap[String, String]])
-            if (confMap != null && !confMap.isEmpty) {
-              PropUtils.setProperties(confMap)
-            }
-          }
-        }*/
       }
     }
   }
