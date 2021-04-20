@@ -5,6 +5,7 @@ import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.spark.BaseSparkCore
+import com.zto.fire.spark.util.SparkUtils
 import org.apache.spark.sql.SaveMode
 
 /**
@@ -140,11 +141,11 @@ object JdbcTest extends BaseSparkCore {
       Thread.sleep(1000)
       // this.log(s"=============driver123 $tableName2=============")
       1
-    }, keyNum = 3)
+    })
     JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = _ => {
       // this.log(s"=============driver $tableName2=============")
       1
-    }, keyNum = 5)
+    }, keyNum = 2)
     this.logger.info("driver sql执行成功")
     val rdd = this.fire.createRDD(1 to 3, 3)
     rdd.foreachPartition(it => {
@@ -152,21 +153,31 @@ object JdbcTest extends BaseSparkCore {
         JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = _ => {
           // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
           1
-        }, keyNum = 3)
+        })
       })
       this.logger.info("sql执行成功")
     })
 
+    this.logConf
     val rdd2 = this.fire.createRDD(1 to 3, 3)
     rdd2.foreachPartition(it => {
       it.foreach(i => {
         JdbcConnector.executeQueryCall(s"select id from $tableName2 limit 1", null, callback = _ => {
-          // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
+          this.logConf
           1
-        }, keyNum = 5)
+        }, keyNum = 2)
         this.logger.info("sql执行成功")
       })
     })
+  }
+
+  /**
+   * 用于测试分布式配置
+   */
+  def logConf: Unit = {
+    this.logger.warn(s"executorId=${SparkUtils.getExecutorId} hello.world=" + this.conf.getString("hello.world", "not_found"))
+    this.logger.warn(s"executorId=${SparkUtils.getExecutorId} hello.world.flag=" + this.conf.getBoolean("hello.world.flag", false))
+    this.logger.warn(s"executorId=${SparkUtils.getExecutorId} hello.world.flag2=" + this.conf.getBoolean("hello.world.flag", false, keyNum = 2))
   }
 
   override def process: Unit = {
