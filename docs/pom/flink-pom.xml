@@ -1,9 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.zto.bigdata.flink</groupId>
+  <artifactId>flink-demo</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <name>${project.artifactId}</name>
 
   <properties>
     <fire.version>2.0.0-SNAPSHOT</fire.version>
-    <flink.version>1.12.1</flink.version>
-    <scala.binary.version>2.11</scala.binary.version>
+    <flink.version>1.12.2</flink.version>
+    <scala.binary.version>2.12</scala.binary.version>
     <scala.minor.version>12</scala.minor.version>
     <kafka.version>0.11.0.2</kafka.version>
     <maven.scope>provided</maven.scope>
@@ -14,26 +19,25 @@
   </properties>
 
   <dependencies>
-    <!-- fire框架相关依赖项 -->
     <dependency>
       <groupId>com.zto.fire</groupId>
       <artifactId>fire-common_${scala.binary.version}</artifactId>
-      <version>${project.version}</version>
+      <version>${fire.version}</version>
     </dependency>
     <dependency>
       <groupId>com.zto.fire</groupId>
       <artifactId>fire-core_${scala.binary.version}</artifactId>
-      <version>${project.version}</version>
+      <version>${fire.version}</version>
     </dependency>
     <dependency>
       <groupId>com.zto.fire</groupId>
       <artifactId>fire-jdbc_${scala.binary.version}</artifactId>
-      <version>${project.version}</version>
+      <version>${fire.version}</version>
     </dependency>
     <dependency>
       <groupId>com.zto.fire</groupId>
       <artifactId>fire-hbase_${scala.binary.version}</artifactId>
-      <version>${project.version}</version>
+      <version>${fire.version}</version>
     </dependency>
     <dependency>
       <groupId>com.zto.fire</groupId>
@@ -183,31 +187,9 @@
     </dependency>
   </dependencies>
 
-  <repositories>
-    <repository>
-      <id>aliyun</id>
-      <url>https://maven.aliyun.com/repository/central</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>huaweicloud</id>
-      <url>https://mirrors.huaweicloud.com/repository/maven/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-
   <build>
     <plugins>
+      <!-- ensure that we use JDK 1.6 -->
       <plugin>
         <inherited>true</inherited>
         <groupId>org.apache.maven.plugins</groupId>
@@ -223,6 +205,8 @@
         <artifactId>maven-scala-plugin</artifactId>
         <version>2.15.2</version>
         <executions>
+          <!-- Run scala compiler in the process-resources phase, so that dependencies
+              on scala classes can be resolved later in the (Java) compile phase -->
           <execution>
             <id>scala-compile-first</id>
             <phase>process-resources</phase>
@@ -230,6 +214,10 @@
               <goal>compile</goal>
             </goals>
           </execution>
+
+          <!-- Run scala compiler in the process-test-resources phase, so that
+              dependencies on scala classes can be resolved later in the (Java) test-compile
+              phase -->
           <execution>
             <id>scala-test-compile</id>
             <phase>process-test-resources</phase>
@@ -239,10 +227,12 @@
           </execution>
         </executions>
       </plugin>
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <executions>
+          <!-- Add src/main/scala to source path of Eclipse -->
           <execution>
             <id>add-source</id>
             <phase>generate-sources</phase>
@@ -255,6 +245,8 @@
               </sources>
             </configuration>
           </execution>
+
+          <!-- Add src/test/scala to test source path of Eclipse -->
           <execution>
             <id>add-test-source</id>
             <phase>generate-test-sources</phase>
@@ -269,6 +261,8 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- to generate Eclipse artifacts for projects mixing Scala and Java -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-eclipse-plugin</artifactId>
@@ -288,6 +282,8 @@
             <classpathContainer>org.eclipse.jdt.launching.JRE_CONTAINER</classpathContainer>
           </classpathContainers>
           <excludes>
+            <!-- in Eclipse, use scala-library, scala-compiler from the SCALA_CONTAINER
+                rather than POM <dependency> -->
             <exclude>org.scala-lang:scala-library</exclude>
             <exclude>org.scala-lang:scala-compiler</exclude>
           </excludes>
@@ -297,6 +293,9 @@
           </sourceIncludes>
         </configuration>
       </plugin>
+
+      <!-- When run tests in the test phase, include .java and .scala source
+          files -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -308,6 +307,7 @@
           </includes>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>

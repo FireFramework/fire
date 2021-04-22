@@ -149,7 +149,7 @@ import com.zto.fire.flink.BaseFlinkStreaming
 /**
  * Flink流式计算任务模板
  */
-class Test extends BaseFlinkStreaming {
+object Test extends BaseFlinkStreaming {
 
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream()
@@ -170,4 +170,10 @@ class Test extends BaseFlinkStreaming {
 ### [5.1 依赖管理](docs/dependency.md)
 
 ### [5.2 第三方包install](docs/dependency-install.md)
+
+### [5.3 Fire集成](docs/outline.md)
+
+### [5.4 配置文件](config.md)
+
+### [配置手册](docs/properties.md)
 
