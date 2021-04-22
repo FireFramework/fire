@@ -173,7 +173,7 @@ object Test extends BaseFlinkStreaming {
 
 ### [5.3 Fire集成](docs/outline.md)
 
-### [5.4 配置文件](config.md)
+### [5.4 配置文件](docs/config.md)
 
 ### [配置手册](docs/properties.md)
 
