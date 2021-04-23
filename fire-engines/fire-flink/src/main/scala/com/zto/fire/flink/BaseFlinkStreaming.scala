@@ -1,7 +1,7 @@
 package com.zto.fire.flink
 
 import com.zto.fire._
-import com.zto.fire.common.conf.FireHiveConf
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{OSUtils, PropUtils}
 import com.zto.fire.flink.conf.FireFlinkConf
@@ -96,6 +96,14 @@ trait BaseFlinkStreaming extends BaseFlink {
         logger.info(s"execute sql: $createFunction")
       })
     }
+  }
+
+  /**
+   * 在加载任务配置文件前将被加载
+   */
+  override private[fire] def loadConf(): Unit = {
+    // 加载配置文件
+    PropUtils.load(FireFrameworkConf.FLINK_STREAMING_CONF_FILE)
   }
 
   /**
