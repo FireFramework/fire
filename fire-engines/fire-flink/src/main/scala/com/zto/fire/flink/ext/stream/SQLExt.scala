@@ -11,9 +11,12 @@ import org.slf4j.LoggerFactory
  * @author ChengLong 2021-4-23 10:36:49
  * @since 2.0.0
  */
-class SQLExt[K, V](sql: String) {
-  // 用于Flink SQL中的with表达式
-  private[this] lazy val withPattern = """(with|WITH)\s*\(([\s\S]*)""".r
+class SQLExt(sql: String) {
+  // 用于匹配Flink SQL中的with表达式
+  private[this] lazy val withPattern = """(with|WITH)\s*\(([\s\S]*)(\)|;)$""".r
+  // 用于匹配Flink SQL中的create语句
+  private[this] lazy val createTablePattern = """^\s*(create|CREATE)\s+(table|TABLE)""".r
+
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
@@ -26,21 +29,27 @@ class SQLExt[K, V](sql: String) {
    */
   def with$(keyNum: Int = 1): String = {
     requireNonEmpty(sql, "sql语句不能为空！")
+
     if (keyNum < 1) return sql
-    val matcher = withPattern.findFirstIn(sql)
+    val withMatcher = withPattern.findFirstIn(sql)
 
     // 如果SQL中已有with表达式，并且未开启with替换功能，则直接返回传入的sql
-    if (matcher.isDefined && !FireFlinkConf.sqlWithReplaceModeEnable) {
-      logger.warn(s"sql中已经包含with表达式，请移除后再使用动态with替换功能：\n${matcher.get}")
+    if (withMatcher.isDefined && !FireFlinkConf.sqlWithReplaceModeEnable) {
+      logger.warn(s"sql中已经包含with表达式，请移除后再使用动态with替换功能，或将[${FireFlinkConf.FLINK_SQL_WITH_REPLACE_MODE_ENABLE}]置为true进行强制覆盖，当前with表达式：\n${withMatcher.get}")
       if (FireFlinkConf.sqlLogEnable) logger.info(s"完整SQL语句：$sql")
       return sql
     }
 
+    // 仅匹配create table语句，进行with表达式处理
+    val createTableMatcher = this.createTablePattern.findFirstIn(sql)
+    if (createTableMatcher.isEmpty) return sql
+
+    // 从配置文件中获取指定keyNum的with参数
     val withMap = PropUtils.sliceKeysByNum(FireFlinkConf.FLINK_SQL_WITH_PREFIX, keyNum)
     if (withMap.isEmpty) throw new IllegalArgumentException(s"配置文件中未找到以${FireFlinkConf.FLINK_SQL_WITH_PREFIX}开头以${keyNum}结尾的配置信息！")
 
     // 如果开启with表达式强制替换功能，则将sql中with表达式移除
-    val fixSql = if (matcher.isDefined && FireFlinkConf.sqlWithReplaceModeEnable) withPattern.replaceAllIn(sql, "") else sql
+    val fixSql = if (withMatcher.isDefined && FireFlinkConf.sqlWithReplaceModeEnable) withPattern.replaceAllIn(sql, "") else sql
     val finalSQL = buildWith(fixSql, withMap)
     if (FireFlinkConf.sqlLogEnable) logger.info(s"完整SQL语句：$finalSQL")
     finalSQL
