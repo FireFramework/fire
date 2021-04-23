@@ -119,20 +119,25 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
    *
    * @param sql
    * sql语句
+   * @param keyNum
+   * 指定sql的with列表对应的配置文件中key的值，如果为<0则表示不从配置文件中读取with表达式
    * @return
    * table对象
    */
-  def sqlQuery(sql: String): Table = {
-    this.tableEnv.sqlQuery(sql)
+  def sqlQuery(sql: String, keyNum: Int = 1): Table = {
+    require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
+    this.tableEnv.sqlQuery(sql.with$(keyNum))
   }
 
   /**
    * 执行sql语句
    * 支持DDL、DML
+   * @param keyNum
+   * 指定sql的with列表对应的配置文件中key的值，如果为<0则表示不从配置文件中读取with表达式
    */
-  def sql(sql: String): TableResult = {
+  def sql(sql: String, keyNum: Int = 1): TableResult = {
     require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
-    this.tableEnv.executeSql(sql)
+    this.tableEnv.executeSql(sql.with$(keyNum))
   }
 
   /**

@@ -3,6 +3,8 @@ package com.zto.fire.common.util;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 字符串工具类
@@ -225,6 +227,19 @@ public class StringsUtils {
         } else {
             return str;
         }
+    }
+
+    /**
+     * 用于判断给定的字符串是否为数值类型
+     * @param str
+     * 字符串
+     * @return
+     * true：数值类型 false：非数值类型
+     */
+    public static boolean isNumeric(String str) {
+        Pattern pattern = Pattern.compile("(^[1-9]\\d*\\.?\\d*$)|(^0\\.\\d*[1-9]$)");
+        Matcher matcher = pattern.matcher(str);
+        return matcher.matches();
     }
 
 }

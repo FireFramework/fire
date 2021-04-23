@@ -95,34 +95,37 @@
 
 # 三、Flink引擎参数
 
-| 参数                                             | 默认值                 | 含义                                                         | 生效版本 | 是否废弃 |
-| ------------------------------------------------ | ---------------------- | ------------------------------------------------------------ | -------- | -------- |
-| flink.appName                                    |                        | flink的应用名称，为空则取类名                                | 1.0.0    | 否       |
-| flink.kafka.group.id                             |                        | kafka的groupid，为空则取类名                                 | 1.0.0    | 否       |
-| flink.kafka.brokers.name                         |                        | 用于配置任务消费的kafka broker地址，如果通过fire.kafka.cluster.map.xxx指定了broker别名，则此处也可以填写别名。 | 1.0.0    | 否       |
-| flink.kafka.topics                               |                        | 消费的kafka topic列表，多个以逗号分隔                        | 1.0.0    | 否       |
-| flink.kafka.starting.offsets                     |                        | 用于配置启动时的消费位点，默认取最新                         | 1.0.0    | 否       |
-| flink.kafka.failOnDataLoss                       | true                   | 数据丢失时执行失败                                           | 1.0.0    | 否       |
-| flink.kafka.enable.auto.commit                   | false                  | 是否启用自动提交kafka offset                                 | 1.0.0    | 否       |
-| flink.kafka.CommitOffsetsOnCheckpoints           | true                   | 是否在checkpoint时记录offset值                               | 1.0.0    | 否       |
-| flink.kafka.StartFromTimestamp                   | 0                      | 设置从指定时间戳位置开始消费kafka                            | 1.0.0    | 否       |
-| flink.kafka.StartFromGroupOffsets                | false                  | 从topic中指定的group上次消费的位置开始消费，必须配置group.id参数 | 1.0.0    | 否       |
-| flink.log.level                                  | WARN                   | 默认的日志级别                                               | 1.0.0    | 否       |
-| flink.hive.cluster                               |                        | 用于配置flink读写的hive集群别名                              | 1.0.0    | 否       |
-| flink.hive.version                               |                        | 指定hive版本号                                               | 1.0.0    | 否       |
-| flink.default.database.name                      | tmp                    | 默认的hive数据库                                             | 1.0.0    | 否       |
-| flink.default.table.partition.name               | ds                     | 默认的hive分区字段名称                                       | 1.0.0    | 否       |
-| flink.hive.catalog.name                          | hive                   | hive的catalog名称                                            | 1.0.0    | 否       |
-| flink.fire.hive.site.path.map.别名               | test                   | /path/to/hive-site-path/                                     | 1.0.0    | 否       |
-| flink.hbase.cluster                              | test                   | 读写的hbase集群zk地址                                        | 1.0.0    | 否       |
-| flink.max.parallelism                            |                        | 用于配置flink的max parallelism                               | 1.0.0    | 否       |
-| flink.default.parallelism                        |                        | 用于配置任务默认的parallelism                                | 1.0.0    | 否       |
-| flink.stream.checkpoint.interval                 | -1                     | checkpoint频率，-1表示关闭                                   | 1.0.0    | 否       |
-| flink.stream.checkpoint.mode                     | EXACTLY_ONCE           | checkpoint的模式：EXACTLY_ONCE/AT_LEAST_ONCE                 | 1.0.0    | 否       |
-| flink.stream.checkpoint.timeout                  | 600000                 | checkpoint超时时间，单位：毫秒                               | 1.0.0    | 否       |
-| flink.stream.checkpoint.max.concurrent           | 1                      | 同时checkpoint操作的并发数                                   | 1.0.0    | 否       |
-| flink.stream.checkpoint.min.pause.between        | 0                      | 两次checkpoint的最小停顿时间                                 | 1.0.0    | 否       |
-| flink.stream.checkpoint.prefer.recovery          | false                  | 如果有更近的checkpoint时，是否将作业回退到该检查点           | 1.0.0    | 否       |
-| flink.stream.checkpoint.tolerable.failure.number | 0                      | 可容忍checkpoint失败的次数，默认不允许失败                   | 1.0.0    | 否       |
-| flink.stream.checkpoint.externalized             | RETAIN_ON_CANCELLATION | 当cancel job时保留checkpoint                                 | 1.0.0    | 否       |
+| 参数                                             | 默认值                                                       | 含义                                                         | 生效版本 | 是否废弃 |
+| ------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | -------- | -------- |
+| flink.appName                                    |                                                              | flink的应用名称，为空则取类名                                | 1.0.0    | 否       |
+| flink.kafka.group.id                             |                                                              | kafka的groupid，为空则取类名                                 | 1.0.0    | 否       |
+| flink.kafka.brokers.name                         |                                                              | 用于配置任务消费的kafka broker地址，如果通过fire.kafka.cluster.map.xxx指定了broker别名，则此处也可以填写别名。 | 1.0.0    | 否       |
+| flink.kafka.topics                               |                                                              | 消费的kafka topic列表，多个以逗号分隔                        | 1.0.0    | 否       |
+| flink.kafka.starting.offsets                     |                                                              | 用于配置启动时的消费位点，默认取最新                         | 1.0.0    | 否       |
+| flink.kafka.failOnDataLoss                       | true                                                         | 数据丢失时执行失败                                           | 1.0.0    | 否       |
+| flink.kafka.enable.auto.commit                   | false                                                        | 是否启用自动提交kafka offset                                 | 1.0.0    | 否       |
+| flink.kafka.CommitOffsetsOnCheckpoints           | true                                                         | 是否在checkpoint时记录offset值                               | 1.0.0    | 否       |
+| flink.kafka.StartFromTimestamp                   | 0                                                            | 设置从指定时间戳位置开始消费kafka                            | 1.0.0    | 否       |
+| flink.kafka.StartFromGroupOffsets                | false                                                        | 从topic中指定的group上次消费的位置开始消费，必须配置group.id参数 | 1.0.0    | 否       |
+| flink.log.level                                  | WARN                                                         | 默认的日志级别                                               | 1.0.0    | 否       |
+| flink.hive.cluster                               |                                                              | 用于配置flink读写的hive集群别名                              | 1.0.0    | 否       |
+| flink.hive.version                               |                                                              | 指定hive版本号                                               | 1.0.0    | 否       |
+| flink.default.database.name                      | tmp                                                          | 默认的hive数据库                                             | 1.0.0    | 否       |
+| flink.default.table.partition.name               | ds                                                           | 默认的hive分区字段名称                                       | 1.0.0    | 否       |
+| flink.hive.catalog.name                          | hive                                                         | hive的catalog名称                                            | 1.0.0    | 否       |
+| flink.fire.hive.site.path.map.别名               | test                                                         | /path/to/hive-site-path/                                     | 1.0.0    | 否       |
+| flink.hbase.cluster                              | test                                                         | 读写的hbase集群zk地址                                        | 1.0.0    | 否       |
+| flink.max.parallelism                            |                                                              | 用于配置flink的max parallelism                               | 1.0.0    | 否       |
+| flink.default.parallelism                        |                                                              | 用于配置任务默认的parallelism                                | 1.0.0    | 否       |
+| flink.stream.checkpoint.interval                 | -1                                                           | checkpoint频率，-1表示关闭                                   | 1.0.0    | 否       |
+| flink.stream.checkpoint.mode                     | EXACTLY_ONCE                                                 | checkpoint的模式：EXACTLY_ONCE/AT_LEAST_ONCE                 | 1.0.0    | 否       |
+| flink.stream.checkpoint.timeout                  | 600000                                                       | checkpoint超时时间，单位：毫秒                               | 1.0.0    | 否       |
+| flink.stream.checkpoint.max.concurrent           | 1                                                            | 同时checkpoint操作的并发数                                   | 1.0.0    | 否       |
+| flink.stream.checkpoint.min.pause.between        | 0                                                            | 两次checkpoint的最小停顿时间                                 | 1.0.0    | 否       |
+| flink.stream.checkpoint.prefer.recovery          | false                                                        | 如果有更近的checkpoint时，是否将作业回退到该检查点           | 1.0.0    | 否       |
+| flink.stream.checkpoint.tolerable.failure.number | 0                                                            | 可容忍checkpoint失败的次数，默认不允许失败                   | 1.0.0    | 否       |
+| flink.stream.checkpoint.externalized             | RETAIN_ON_CANCELLATION                                       | 当cancel job时保留checkpoint                                 | 1.0.0    | 否       |
+| flink.sql.log.enable                             | false                                                        | 是否打印组装with语句后的flink sql，由于with表达式中可能含有敏感信息，默认为关闭 | 2.0.0    | 否       |
+| flink.sql.with.xxx                               | flink.sql.with.connector=jdbc flink.sql.with.url=jdbc:mysql://ip:3306/db | 以flink.sql.with.开头的配置，用于sql语句的with表达式。通过this.fire.sql(sql, keyNum)即可自动读取并映射成with表达式的sql。避免sql中的with表达式硬编码到代码中，提高灵活性。 | 2.0.0    | 否       |
+| flink.sql_with.replaceMode.enable                | false                                                        | 是否启用配置文件中with强制替换sql中已有的with表达式，如果启用，则会强制替换掉代码中sql的with列表，达到最大的灵活性。 | 2.0.0    | 否       |
 
