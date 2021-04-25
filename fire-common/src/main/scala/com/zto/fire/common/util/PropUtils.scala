@@ -18,13 +18,13 @@ import scala.reflect.ClassTag
  */
 object PropUtils {
   private val props = new Properties()
-  private val engines = Array[String]("fire", "spark", "flink")
+  private val configurationFiles = Array[String]("fire", "cluster", "spark", "flink")
   // 用于判断是否merge过
   private[fire] val isMerge = new AtomicBoolean(false)
   // 引擎类型判断，当前阶段仅支持spark与flink，未来若支持新的引擎，则需在此处做支持
   private[fire] val engine = if (this.isExists("spark")) "spark" else "flink"
   // 加载默认配置文件
-  this.load(this.engines: _*)
+  this.load(this.configurationFiles: _*)
   // 避免已被加载的配置文件被重复加载
   private[this] lazy val alreadyLoadMap = new mutable.HashMap[String, String]()
   // 用于存放所有的配置信息
@@ -94,7 +94,7 @@ object PropUtils {
       var resource: InputStream = null
       try {
         resource = this.getInputStream(fullName)
-        if (resource == null && !this.engines.contains(fileName)) this.logger.warn(s"未找到配置文件[ $fullName ]，请核实！")
+        if (resource == null && !this.configurationFiles.contains(fileName)) this.logger.warn(s"未找到配置文件[ $fullName ]，请核实！")
         if (resource != null) {
           this.logger.warn(s"${FirePS1Conf.YELLOW} -------------> loaded ${fullName} <------------- ${FirePS1Conf.DEFAULT}")
           props.load(resource)
