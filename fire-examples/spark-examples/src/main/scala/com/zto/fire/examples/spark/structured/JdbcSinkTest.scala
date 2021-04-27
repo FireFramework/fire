@@ -20,9 +20,9 @@ object JdbcSinkTest extends BaseStructuredStreaming {
     val insertSql = "insert into spark_test(name, age, createTime, length, sex, rowKey) values(?,?,?,?,?,?)"
 
     // 将流数据持续写入到关系型数据库中（插入部分列）
-    // kafkaDataset.select("data.name", "data.age", "data.createTime", "data.length", "data.sex", "data.rowKey").jdbcBatchUpdate(insertSql)
+    kafkaDataset.select("data.name", "data.age", "data.createTime", "data.length", "data.sex", "data.rowKey").jdbcBatchUpdate(insertSql, keyNum = 6)
     // 插入所有列并在Seq中列举DataFrame指定顺序，该顺序必须与insertSql中的问号占位符存在绑定关系
-    // kafkaDataset.select("data.*").jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex", "rowKey"))
+    kafkaDataset.select("data.*").jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex", "rowKey"), keyNum = 6)
 
     this.fire.createDataFrame(Student.newStudentList(), classOf[Student]).createOrReplaceTempViewCache("student")
     this.fire.sql(

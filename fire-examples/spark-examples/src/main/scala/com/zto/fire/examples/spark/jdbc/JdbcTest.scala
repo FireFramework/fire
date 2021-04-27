@@ -22,11 +22,12 @@ object JdbcTest extends BaseSparkCore {
    * 使用jdbc方式对关系型数据库进行增删改操作
    */
   def testJdbcUpdate: Unit = {
+    val timestamp = DateFormatUtils.formatCurrentDateTime()
     // 执行insert操作
     val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-    this.fire.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1))
+    this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
     // 更新配置文件中指定的第二个关系型数据库
-    this.fire.jdbcUpdate(insertSql, Seq("admin", 12, DateFormatUtils.formatCurrentDateTime(), 10.0, 1), keyNum = 2)
+    this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1), keyNum = 2)
 
     // 执行更新操作
     val updateSql = s"UPDATE $tableName SET name=? WHERE id=?"
@@ -34,11 +35,12 @@ object JdbcTest extends BaseSparkCore {
 
     // 执行批量操作
     val batchSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-    this.fire.jdbcBatchUpdate(batchSql, Seq(Seq("spark1", 21, DateFormatUtils.formatCurrentDateTime(), 100.123, 1),
-      Seq("flink2", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
-      Seq("flink3", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
-      Seq("flink4", 22, DateFormatUtils.formatCurrentDateTime(), 12.236, 0),
-      Seq("flink5", 27, DateFormatUtils.formatCurrentDateTime(), 17.236, 0)))
+
+    this.fire.jdbcBatchUpdate(batchSql, Seq(Seq("spark1", 21, timestamp, 100.123, 1),
+      Seq("flink2", 22, timestamp, 12.236, 0),
+      Seq("flink3", 22, timestamp, 12.236, 0),
+      Seq("flink4", 22, timestamp, 12.236, 0),
+      Seq("flink5", 27, timestamp, 17.236, 0)))
 
     // 执行批量更新
     this.fire.jdbcBatchUpdate(s"update $tableName set sex=? where id=?", Seq(Seq(1, 1), Seq(2, 2), Seq(3, 3), Seq(4, 4), Seq(5, 5), Seq(6, 6)))

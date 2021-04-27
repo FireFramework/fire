@@ -1,6 +1,6 @@
 # 第三方库jar包install
 
-​		fire框架引用了众多第三方包，由于很多库已经很久没有更新了，甚至在maven的全球中央仓库中也没有，因此，为了使用方便，特地将基于scala2.12+spark3.0.2编译的jar包提供出来，放在fire框架的/docs/lib目录下。用户可以通过maven的命令将这些库install到本地或deploy到公司的私服。
+fire框架引用了众多第三方包，由于很多库已经很久没有更新了，甚至在maven的全球中央仓库中也没有，因此，为了使用方便，特地将基于scala2.12+spark3.0.2编译的jar包提供出来，放在fire框架的/docs/lib目录下。用户可以通过maven的命令将这些库install到本地或deploy到公司的私服。
 
 ## 一、本地maven install
 
@@ -30,7 +30,7 @@ mvn install:install-file -Dfile=/path/to/kudu-spark_3.0.2_2.12-1.4.0.jar -Dgroup
 
 ## 二、deploy到私服
 
-​		以下命令以hbase-client包为例，将该包推送到公司自己的私服中。推送私服，首先需要在settings.xml中配置私服账号、密码等信息，可自行查阅资料。
+以下命令以hbase-client包为例，将该包推送到公司自己的私服中。推送私服，首先需要在settings.xml中配置私服账号、密码等信息，可自行查阅资料。
 
 ```shell
 mvn deploy:deploy-file -Dfile=/path/to/hbase-client_3.0.2_2.12-1.2.0-cdh5.12.1.jar -DgroupId=org.apache.hbase -DartifactId=hbase-client_3.0.2_2.12 -Dversion=1.2.0-cdh5.12.1 -Dpackaging=jar -DrepositoryId=releases -Durl=http://ip:port/nexus/content/repositories/releases/
