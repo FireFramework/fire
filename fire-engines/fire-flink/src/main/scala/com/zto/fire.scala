@@ -107,4 +107,10 @@ package object fire extends BaseFireExt {
 
   }
 
+  /**
+   * Flink SQL扩展
+   */
+  implicit class SQLExtBridge(sql: String) extends SQLExt(sql) {
+
+  }
 }

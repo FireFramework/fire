@@ -1,5 +1,5 @@
 # Fire框架
-​		Fire框架是由**中通**开源的，专门用于大数据**实时计算**的开发框架。Fire框架具有易学易用，稳定可靠等诸多优点，基于Fire框架可以很简单的进行**Spark&Flink**需求开发。Fire框架在赋能开发者的同时，也对实时平台进行了赋能，正因为有了Fire，才真正的连接了**平台**与**任务**，消除了任务孤岛。
+Fire框架是由**中通**开源的，专门用于大数据**实时计算**的开发框架。Fire框架具有易学易用，稳定可靠等诸多优点，基于Fire框架可以很简单的进行**Spark&Flink**需求开发。Fire框架在赋能开发者的同时，也对实时平台进行了赋能，正因为有了Fire，才真正的连接了**平台**与**任务**，消除了任务孤岛。
 
 ![](docs/img/Fire.png)
 
@@ -149,7 +149,7 @@ import com.zto.fire.flink.BaseFlinkStreaming
 /**
  * Flink流式计算任务模板
  */
-class Test extends BaseFlinkStreaming {
+object Test extends BaseFlinkStreaming {
 
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream()
@@ -171,3 +171,28 @@ class Test extends BaseFlinkStreaming {
 
 ### [5.2 第三方包install](docs/dependency-install.md)
 
+### [5.3 Fire集成](docs/outline.md)
+
+### [5.4 配置文件](docs/config.md)
+
+### [5.5 消费Kafka](/docs/kafka.md)
+
+### [5.6 消费RocketMQ](docs/rocketmq.md)
+
+### [5.7 集成Hive](docs/hive.md)
+
+### [5.8 HBase API手册](docs/hbase.md)
+
+### [5.9 JDBC API手册](docs/jdbc.md)
+
+### [5.10 累加器](docs/accumulator.md)
+
+### [5.11 定时任务](docs/schedule.md)
+
+### [5.12 线程池与并发计算](docs/threadpool.md)
+
+### [5.13 实时平台集成方案](docs/platform.md)
+
+### [5.14 内置接口](docs/restful.md)
+
+### [5.15 Fire配置手册](docs/properties.md)

@@ -32,6 +32,7 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_DRIVER_CLASS_NAME = "flink.driver.class.name"
   lazy val FLINK_CLIENT_SIMPLE_CLASS_NAME = "flink.client.simple.class.name"
   lazy val FLINK_SQL_CONF_UDF_JARS = "flink.sql.conf.pipeline.jars"
+  lazy val FLINK_SQL_LOG_ENABLE = "flink.sql.log.enable"
 
   // checkpoint相关配置项
   lazy val FLINK_STREAM_CHECKPOINT_INTERVAL = "flink.stream.checkpoint.interval"
@@ -42,14 +43,16 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_STREAM_CHECKPOINT_PREFER_RECOVERY = "flink.stream.checkpoint.prefer.recovery"
   lazy val FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER = "flink.stream.checkpoint.tolerable.failure.number"
   lazy val FLINK_STREAM_CHECKPOINT_EXTERNALIZED = "flink.stream.checkpoint.externalized"
+  lazy val FLINK_SQL_WITH_REPLACE_MODE_ENABLE = "flink.sql_with.replaceMode.enable"
 
   // flink sql相关配置
   lazy val FLINK_SQL_CONF_PREFIX = "flink.sql.conf."
   // udf自动注册
   lazy val FLINK_SQL_UDF = "flink.sql.udf."
   lazy val FLINK_SQL_UDF_ENABLE = "flink.sql.udf.fireUdf.enable"
+  lazy val FLINK_SQL_WITH_PREFIX = "flink.sql.with."
 
-
+  lazy val sqlWithReplaceModeEnable = PropUtils.getBoolean(this.FLINK_SQL_WITH_REPLACE_MODE_ENABLE, false)
   lazy val autoGenerateUidEnable = PropUtils.getBoolean(this.FLINK_AUTO_GENERATE_UID_ENABLE, true)
   lazy val autoTypeRegistrationEnable = PropUtils.getBoolean(this.FLINK_AUTO_TYPE_REGISTRATION_ENABLE, true)
   lazy val forceAvroEnable = PropUtils.getBoolean(this.FLINK_FORCE_AVRO_ENABLE, false)
@@ -69,6 +72,7 @@ private[fire] object FireFlinkConf {
   lazy val streamBufferTimeoutMillis = PropUtils.getLong(this.FLINK_STREAM_BUFFER_TIMEOUT_MILLIS, -1)
   lazy val streamNumberExecutionRetries = PropUtils.getInt(this.FLINK_STREAM_NUMBER_EXECUTION_RETRIES, -1)
   lazy val streamTimeCharacteristic = PropUtils.getString(this.FLINK_STREAM_TIME_CHARACTERISTIC, "")
+  lazy val sqlLogEnable = PropUtils.getBoolean(this.FLINK_SQL_LOG_ENABLE, false)
 
   // checkpoint相关配置项
   lazy val streamCheckpointInterval = PropUtils.getLong(this.FLINK_STREAM_CHECKPOINT_INTERVAL, -1)

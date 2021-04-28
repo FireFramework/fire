@@ -134,6 +134,12 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
+            <artifactId>flink-json</artifactId>
+            <version>${flink.version}</version>
+            <scope>${maven.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-elasticsearch-base_${scala.binary.version}</artifactId>
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
@@ -164,6 +170,15 @@
             <version>${hive.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
+
+        <!-- hudi相关依赖 -->
+        <dependency>
+            <groupId>org.apache.hudi</groupId>
+            <artifactId>hudi-flink-bundle_${scala.binary.version}</artifactId>
+            <version>${hudi.version}</version>
+            <scope>${maven.scope}</scope>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
