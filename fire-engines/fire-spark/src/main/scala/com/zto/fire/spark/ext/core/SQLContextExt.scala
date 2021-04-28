@@ -167,6 +167,18 @@ class SQLContextExt(sqlContext: SQLContext) {
   }
 
   /**
+   * refresh给定的表
+   *
+   * @param tables
+   * 表名
+   */
+  def refreshTables(tables: String*): Unit = {
+    if (tables != null) {
+      tables.filter(noEmpty(_)).foreach(table => sqlContext.refreshTables(tables: _*))
+    }
+  }
+
+  /**
    * 删除指定的hive表
    *
    * @param tableNames

@@ -159,6 +159,18 @@ trait SqlProvider extends SparkProvider {
   }
 
   /**
+   * refresh给定的表
+   *
+   * @param tables
+   * 表名
+   */
+  def refreshTables(tables: String*): Unit = {
+    if (tables != null) {
+      tables.filter(noEmpty(_)).foreach(table => SparkSingletonFactory.getSparkSession.catalog.refreshTable(table))
+    }
+  }
+
+  /**
    * 删除指定的hive表
    *
    * @param tableNames
