@@ -179,6 +179,11 @@
             <scope>${maven.scope}</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-flink_${flink.reference}</artifactId>
+            <version>${rocketmq.external.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

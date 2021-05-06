@@ -1,24 +1,27 @@
 package com.zto.fire.flink.ext.stream
 
 import java.util.Properties
-
 import com.zto.fire._
-import com.zto.fire.common.conf.FireKafkaConf
+import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.util.{KafkaUtils, ValueUtils}
 import com.zto.fire.core.Api
 import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvider}
-import com.zto.fire.flink.util.FlinkSingletonFactory
+import com.zto.fire.flink.util.{FlinkSingletonFactory, RocketMQUtils}
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.JobExecutionResult
 import org.apache.flink.api.common.functions.RuntimeContext
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.api.java.tuple.Tuple2
 import org.apache.flink.api.scala._
+import org.apache.flink.streaming.api.datastream.DataStreamSource
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
 import org.apache.flink.table.api.{Table, TableResult}
+import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource}
+import org.apache.rocketmq.flink.common.serialization.{KeyValueDeserializationSchema, SimpleTupleDeserializationSchema}
 
 import scala.collection.JavaConversions
 
@@ -112,6 +115,45 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
                               runtimeContext: RuntimeContext = null,
                               keyNum: Int = 1): DataStream[String] = {
     this.createDirectStream(kafkaParams, topics, specificStartupOffsets, runtimeContext, keyNum)
+  }
+
+  /**
+   * 构建RocketMQ拉取消息的DStream流
+   *
+   * @param rocketParam
+   * rocketMQ相关消费参数
+   * @param groupId
+   * groupId
+   * @param topics
+   * topic列表
+   * @return
+   * rocketMQ DStream
+   */
+  def createRocketMqPullStream(rocketParam: Map[String, String] = null,
+                               groupId: String = null,
+                               topics: String = null,
+                               tag: String = null,
+                               keyNum: Int = 1): DataStream[String] = {
+    // 获取topic信息，配置文件优先级高于代码中指定的
+    val confTopics = FireRocketMQConf.rocketTopics(keyNum)
+    val finalTopics = if (StringUtils.isNotBlank(confTopics)) confTopics else topics
+    require(StringUtils.isNotBlank(finalTopics), s"RocketMQ的Topics不能为空，请在配置文件中指定：rocket.topics$keyNum")
+
+    // groupId信息
+    val confGroupId = FireRocketMQConf.rocketGroupId(keyNum)
+    val finalGroupId = if (StringUtils.isNotBlank(confGroupId)) confGroupId else groupId
+    require(StringUtils.isNotBlank(finalGroupId), s"RocketMQ的groupId不能为空，请在配置文件中指定：rocket.group.id$keyNum")
+
+    // 详细的RocketMQ配置信息
+    val finalRocketParam = RocketMQUtils.rocketParams(rocketParam, finalGroupId, rocketNameServer = null, tag = tag, keyNum)
+    require(!finalRocketParam.isEmpty, "RocketMQ相关配置不能为空！")
+    require(finalRocketParam.containsKey(RocketMQConfig.NAME_SERVER_ADDR), s"RocketMQ nameserver.address不能为空，请在配置文件中指定：rocket.brokers.name$keyNum")
+    require(finalRocketParam.containsKey(RocketMQConfig.CONSUMER_TAG), s"RocketMQ tag不能为空，请在配置文件中指定：rocket.consumer.tag$keyNum")
+
+    val props = new Properties()
+    props.putAll(finalRocketParam)
+
+    this.env.addSource(new RocketMQSource[Tuple2[String, String]](new SimpleTupleDeserializationSchema, props)).map(t => t.f1).name("RocketMQ Source")
   }
 
   /**
