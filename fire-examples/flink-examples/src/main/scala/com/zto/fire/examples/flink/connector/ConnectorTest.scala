@@ -1,11 +1,7 @@
-package com.zto.fire.examples.flink
+package com.zto.fire.examples.flink.connector
 
 import com.zto.fire._
-import com.zto.fire.common.util.{JSONUtils, PropUtils, StringsUtils}
-import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
-import org.apache.commons.lang3.StringUtils
-import org.apache.flink.api.scala._
 
 /**
  * Flink流式计算任务模板
@@ -14,7 +10,7 @@ import org.apache.flink.api.scala._
  * @since 1.0.0
  * @create 2021-01-18 17:24
  */
-object Test extends BaseFlinkStreaming {
+object ConnectorTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream()

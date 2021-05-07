@@ -10,6 +10,9 @@ import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
+import org.apache.flink.table.data.binary.BinaryStringData
+import org.apache.flink.table.data.{DecimalData, GenericRowData, RowData}
+import org.apache.flink.table.types.logical.RowType
 import org.apache.flink.types.Row
 import org.slf4j.LoggerFactory
 
@@ -208,4 +211,86 @@ object FlinkUtils extends Serializable {
    * 判断当前运行模式是否为yarn-per-job模式
    */
   def isYarnPerJobMode: Boolean = "yarn-per-job".equalsIgnoreCase(this.runMode)
+
+  /**
+   * 将Javabean中匹配的field值转为RowData
+   *
+   * @param bean
+   * 任意符合JavaBean规范的实体对象
+   * @return
+   * RowData实例
+   */
+  def bean2RowData(bean: Object, rowType: RowType): RowData = {
+    requireNonEmpty(bean, rowType)
+
+    val genericRowData = new GenericRowData(rowType.getFieldCount)
+    val fieldNames = rowType.getFieldNames
+    val clazz = bean.getClass
+
+    // 以建表语句中声明的字段列表为标准进行循环
+    for (pos <- 0 until rowType.getFieldCount) {
+      // 根据临时表的字段名称获取JavaBean中对应的同名的field的值
+      val field = ReflectionUtils.getFieldByName(clazz, fieldNames.get(pos))
+      requireNonEmpty(field, s"JavaBean中未找到名为${fieldNames.get(pos)}的field，请检查sql建表语句或JavaBean的声明！")
+
+      val value = field.get(bean).toString
+      // 进行类型匹配，将获取到的JavaBean中的字段值映射为SQL建表语句中所指定的类型，并设置到对应的field中
+      rowType.getTypeAt(pos).toString match {
+        case "INT" | "TINYINT" | "SMALLINT" | "INTEGER" => genericRowData.setField(pos, value.toInt)
+        case "BIGINT" => genericRowData.setField(pos, value.toLong)
+        case "DOUBLE" => genericRowData.setField(pos, value.toDouble)
+        case "FLOAT" => genericRowData.setField(pos, value.toFloat)
+        case "BOOLEAN" => genericRowData.setField(pos, value.toBoolean)
+        case "BYTE" => genericRowData.setField(pos, value.toByte)
+        case "SHORT" => genericRowData.setField(pos, value.toShort)
+        case fieldType if fieldType.contains("DECIMAL") => {
+          // 获取SQL建表语句中的DECIMAL字段的精度
+          val accuracy = rowType.getTypeAt(pos).toString.replace("DECIMAL(", "").replace(")", "").split(",")
+          genericRowData.setField(pos, DecimalData.fromBigDecimal(new JBigDecimal(value), accuracy(0).trim.toInt, accuracy(1).trim.toInt))
+        }
+        case _ => genericRowData.setField(pos, new BinaryStringData(value))
+      }
+    }
+    genericRowData
+  }
+
+  /**
+   * 将RowData中匹配的field值转为Javabean
+   *
+   * @param clazz
+   * 任意符合JavaBean规范的Class类型
+   * @return
+   * JavaBean实例
+   */
+  def rowData2Bean[T](clazz: Class[T], rowType: RowType, rowData: RowData): T = {
+    requireNonEmpty(clazz, rowData)
+    val bean = clazz.newInstance()
+
+    val fieldNames = rowType.getFieldNames
+
+    // 以建表语句中声明的字段列表为标准进行循环
+    for (pos <- 0 until rowType.getFieldCount) {
+      // 根据临时表的字段名称获取JavaBean中对应的同名的field的值
+      val field = ReflectionUtils.getFieldByName(clazz, fieldNames.get(pos))
+      requireNonEmpty(field, s"JavaBean中未找到名为${fieldNames.get(pos)}的field，请检查sql建表语句或JavaBean的声明！")
+
+      // 进行类型匹配，将获取到的JavaBean中的字段值映射为SQL建表语句中所指定的类型，并设置到对应的field中
+      rowType.getTypeAt(pos).toString match {
+        case "INT" | "TINYINT" | "SMALLINT" | "INTEGER" => field.setInt(bean, rowData.getInt(pos))
+        case "BIGINT" => field.setLong(bean, rowData.getLong(pos))
+        case "DOUBLE" => field.setDouble(bean, rowData.getDouble(pos))
+        case "FLOAT" => field.setFloat(bean, rowData.getFloat(pos))
+        case "BOOLEAN" => field.setBoolean(bean, rowData.getBoolean(pos))
+        case "BYTE" => field.setByte(bean, rowData.getByte(pos))
+        case "SHORT" => field.setShort(bean, rowData.getShort(pos))
+        case fieldType if fieldType.contains("DECIMAL") => {
+          // 获取SQL建表语句中的DECIMAL字段的精度
+          val accuracy = rowType.getTypeAt(pos).toString.replace("DECIMAL(", "").replace(")", "").split(",")
+          field.set(bean, rowData.getDecimal(pos, accuracy(0).trim.toInt, accuracy(1).trim.toInt))
+        }
+        case _ => field.set(bean, rowData.getString(pos).toString)
+      }
+    }
+    bean
+  }
 }
