@@ -1,11 +1,7 @@
-package com.zto.fire.examples.flink
+package com.zto.fire.examples.flink.connector.rocketmq
 
 import com.zto.fire._
-import com.zto.fire.common.util.{JSONUtils, PropUtils, StringsUtils}
-import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
-import org.apache.commons.lang3.StringUtils
-import org.apache.flink.api.scala._
 
 /**
  * Flink流式计算任务模板
@@ -14,23 +10,24 @@ import org.apache.flink.api.scala._
  * @since 1.0.0
  * @create 2021-01-18 17:24
  */
-object Test extends BaseFlinkStreaming {
+object RocketMQTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     this.fire.sql("""
                     |CREATE table source (
                     |  id bigint,
                     |  name string,
-                    |  age int
+                    |  age int,
+                    |  length double,
+                    |  data DECIMAL(10, 5)
                     |)
                     |WITH
                     |   (
-                    |   'connector' = 'kafka',
-                    |   'topic' = 'fire',
-                    |   'properties.bootstrap.servers' = '10.9.46.111:9092',
-                    |   'properties.group.id' = 'fire',
+                    |   'connector' = 'rocketmq',
                     |   'format' = 'json',
-                    |   'scan.startup.mode' = 'earliest-offset'
+                    |   'topic' = 'fire',
+                    |   'properties.bootstrap.servers' = 'localhost:9876',
+                    |   'properties.group.id' = 'fire'
                     |   )
                     |""".stripMargin)
 

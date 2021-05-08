@@ -24,7 +24,7 @@
         <hbase.version>1.2.0-cdh5.12.1</hbase.version>
         <impala.jdbc.version>2.5.30</impala.jdbc.version>
         <jackson.version>2.10.5</jackson.version>
-        <rocketmq.version>4.0.0-incubating</rocketmq.version>
+        <rocketmq.version>4.3.0</rocketmq.version>
         <rocketmq.external.version>0.0.2</rocketmq.external.version>
         <mysql.version>5.1.30</mysql.version>
         <guava.version>18.0</guava.version>
