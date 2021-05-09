@@ -14,6 +14,8 @@ import org.apache.rocketmq.client.consumer.listener.{ConsumeConcurrentlyContext,
 import org.apache.rocketmq.client.consumer.{DefaultMQPullConsumer, DefaultMQPushConsumer, PullStatus}
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere
 import org.apache.rocketmq.common.message.{MessageExt, MessageQueue}
+import org.apache.rocketmq.flink.common.serialization.JsonDeserializationSchema
+import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource}
 
 import java.util
 import java.util.Properties
@@ -27,12 +29,12 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
                                  valueDecodingFormat: DecodingFormat[DeserializationSchema[RowData]],
                                  keyProjection: Array[Int],
                                  valueProjection: Array[Int],
-                                 topics: util.List[String],
+                                 topic: String,
                                  properties: Properties) extends ScanTableSource {
 
   override def getChangelogMode: ChangelogMode = ChangelogMode.insertOnly()
 
-  override def copy(): DynamicTableSource = new RocketMQDynamicTableSource(physicalDataType, valueDecodingFormat, keyProjection, valueProjection, topics, properties)
+  override def copy(): DynamicTableSource = new RocketMQDynamicTableSource(physicalDataType, valueDecodingFormat, keyProjection, valueProjection, topic, properties)
 
   override def asSummaryString(): String = "rocketmq"
 
@@ -52,10 +54,9 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
    * 核心逻辑，定义如何产生source表的数据
    */
   override def getScanRuntimeProvider(context: ScanTableSource.ScanContext): ScanTableSource.ScanRuntimeProvider = {
-    // val keyDeserialization = createDeserialization(context, keyDecodingFormat, keyProjection, keyPrefix);
-    val valueDeserialization = createDeserialization(context, valueDecodingFormat, valueProjection, null);
-    val producedTypeInfo: TypeInformation[RowData] = context.createTypeInformation(physicalDataType)
-    SourceFunctionProvider.of(new RocketMQSourceFunction(physicalDataType, producedTypeInfo, valueDeserialization, topics, properties), false)
+    val valueDeserialization = createDeserialization(context, valueDecodingFormat, valueProjection, null)
+    properties.setProperty(RocketMQConfig.CONSUMER_TOPIC, topic)
+    SourceFunctionProvider.of(new RocketMQSource(new JsonDeserializationSchema(valueDeserialization), properties), false)
   }
 
 }

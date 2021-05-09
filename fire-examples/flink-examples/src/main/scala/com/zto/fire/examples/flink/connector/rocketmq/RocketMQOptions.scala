@@ -12,11 +12,10 @@ import org.apache.flink.streaming.connectors.kafka.table.KafkaOptions.ValueField
 object RocketMQOptions {
   val PROPERTIES_PREFIX = "properties."
 
-  val TOPIC: ConfigOption[JList[String]] = ConfigOptions
+  val TOPIC: ConfigOption[String] = ConfigOptions
     .key("topic")
     .stringType
-    .asList.
-    noDefaultValue
+    .noDefaultValue
     .withDescription("Topic names from which the table is read. Either 'topic' or 'topic-pattern' must be set for source. " + "Option 'topic' is required for sink.")
 
   val TOPIC_PATTERN: ConfigOption[String] = ConfigOptions

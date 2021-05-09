@@ -26,8 +26,8 @@ object RocketMQTest extends BaseFlinkStreaming {
                     |   'connector' = 'rocketmq',
                     |   'format' = 'json',
                     |   'topic' = 'fire',
-                    |   'properties.bootstrap.servers' = 'localhost:9876',
-                    |   'properties.group.id' = 'fire'
+                    |   'properties.nameserver.address' = 'localhost:9876',
+                    |   'properties.consumer.group' = 'fire'
                     |   )
                     |""".stripMargin)
 

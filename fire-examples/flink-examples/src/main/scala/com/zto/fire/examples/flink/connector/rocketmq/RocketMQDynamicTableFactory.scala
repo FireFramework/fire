@@ -123,28 +123,17 @@ class RocketMQDynamicTableFactory extends DynamicTableSourceFactory {
 
     val properties = getRocketMQProperties(context.getCatalogTable.getOptions)
 
-    // add topic-partition discovery
-    /*properties.setProperty(
-      FlinkKafkaConsumerBase.KEY_PARTITION_DISCOVERY_INTERVAL_MILLIS,
-      String.valueOf(
-        tableOptions
-          .getOptional(SCAN_TOPIC_PARTITION_DISCOVERY)
-          .map(Duration::toMillis)
-          .orElse(FlinkKafkaConsumerBase.PARTITION_DISCOVERY_DISABLED)));*/
-
     val physicalDataType = context.getCatalogTable.getSchema.toPhysicalRowDataType
 
     val keyProjection = createKeyFormatProjection(tableOptions, physicalDataType);
 
     val valueProjection = createValueFormatProjection(tableOptions, physicalDataType);
 
-    val keyPrefix = tableOptions.getOptional(KEY_FIELDS_PREFIX).orElse(null);
-
     new RocketMQDynamicTableSource(physicalDataType,
       valueDecodingFormat,
       keyProjection,
       valueProjection,
-      tableOptions.getOptional(RocketMQOptions.TOPIC).orElse(null),
+      tableOptions.getOptional(RocketMQOptions.TOPIC).orElse(""),
       properties)
   }
 
