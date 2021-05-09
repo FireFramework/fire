@@ -10,7 +10,7 @@ import com.zto.fire.flink.BaseFlinkStreaming
  * @since 1.0.0
  * @create 2021-01-18 17:24
  */
-object RocketMQTest extends BaseFlinkStreaming {
+object RocketMQConnectorTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     this.fire.sql("""
@@ -23,7 +23,7 @@ object RocketMQTest extends BaseFlinkStreaming {
                     |)
                     |WITH
                     |   (
-                    |   'connector' = 'rocketmq',
+                    |   'connector' = 'fire-rocketmq',
                     |   'format' = 'json',
                     |   'topic' = 'fire',
                     |   'properties.nameserver.address' = 'localhost:9876',

@@ -17,7 +17,7 @@ import org.apache.flink.api.scala._
 object Test extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    this.fire.sql("""
+    /*this.fire.sql("""
                     |CREATE table source (
                     |  id bigint,
                     |  name string,
@@ -37,7 +37,11 @@ object Test extends BaseFlinkStreaming {
     this.fire.sql(
       """
         |select * from source
-        |""".stripMargin).print()
+        |""".stripMargin).print()*/
+
+    val dstream = this.fire.createRocketMqPullStream()
+    dstream.print()
+    this.fire.start
   }
 
 

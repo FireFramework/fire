@@ -1,11 +1,10 @@
 package com.zto.fire.examples.bean;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
 
-public class People implements BeanFactory {
+public class People {
     private Long id;
     private String name;
     private Integer age;
@@ -25,15 +24,6 @@ public class People implements BeanFactory {
 
     public static List<People> createList() {
         List<People> list = new LinkedList<>();
-        for (int i=0; i<10; i++) {
-            list.add(new People((long) i, "admin_" + i, i, i * 0.1, new BigDecimal(i * 10.1012)));
-        }
-        return list;
-    }
-
-    @Override
-    public List<BeanFactory> generateList() {
-        List<BeanFactory> list = new LinkedList<>();
         for (int i=0; i<10; i++) {
             list.add(new People((long) i, "admin_" + i, i, i * 0.1, new BigDecimal(i * 10.1012)));
         }

@@ -13,10 +13,12 @@ import java.nio.charset.StandardCharsets;
  * @author ChengLong 2021-5-9 13:40:17
  */
 public class JsonDeserializationSchema implements KeyValueDeserializationSchema<RowData> {
-    private DeserializationSchema<RowData> schema;
+    private DeserializationSchema<RowData> key;
+    private DeserializationSchema<RowData> value;
 
-    public JsonDeserializationSchema(DeserializationSchema<RowData> schema) {
-        this.schema = schema;
+    public JsonDeserializationSchema(DeserializationSchema<RowData> key, DeserializationSchema<RowData> value) {
+        this.key = key;
+        this.value = value;
     }
 
     @Override
@@ -26,7 +28,7 @@ public class JsonDeserializationSchema implements KeyValueDeserializationSchema<
         if (value != null) {
             try {
                 // 调用sql connector的format进行反序列化
-                return schema.deserialize(value);
+                return this.value.deserialize(value);
             } catch (IOException e) {
                 e.printStackTrace();
             }

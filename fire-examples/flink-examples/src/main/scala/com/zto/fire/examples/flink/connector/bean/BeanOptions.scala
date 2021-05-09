@@ -1,6 +1,6 @@
-package com.zto.fire.examples.flink.connector
+package com.zto.fire.examples.flink.connector.bean
 
-import com.zto.fire._
+import com.zto.fire.{JInt, JLong}
 import org.apache.flink.configuration.{ConfigOption, ConfigOptions}
 
 /**

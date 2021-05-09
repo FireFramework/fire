@@ -26,12 +26,14 @@ object RocketMQUtils {
    * rocketMQ相关配置
    */
   def rocketParams(rocketParam: JMap[String, String] = null,
+                   topics: String = null,
                    groupId: String = null,
                    rocketNameServer: String = null,
                    tag: String = null,
                    keyNum: Int = 1): JMap[String, String] = {
 
     val optionParams = if (rocketParam != null) rocketParam else new JHashMap[String, String]()
+    if (StringUtils.isNotBlank(topics)) optionParams.put(RocketMQConfig.CONSUMER_TOPIC, topics)
     if (StringUtils.isNotBlank(groupId)) optionParams.put(RocketMQConfig.CONSUMER_GROUP, groupId)
 
     // rocket name server 配置
@@ -44,7 +46,7 @@ object RocketMQUtils {
     val finalTag = if (StringUtils.isNotBlank(confTag)) confTag else tag
     if (StringUtils.isNotBlank(finalTag)) optionParams.put(RocketMQConfig.CONSUMER_TAG, finalTag)
 
-    // 以spark.rocket.conf.开头的配置优先级最高
+    // 以rocket.conf.开头的配置优先级最高
     val confMap = FireRocketMQConf.rocketConfMap(keyNum)
     if (confMap.nonEmpty) optionParams.putAll(confMap)
 

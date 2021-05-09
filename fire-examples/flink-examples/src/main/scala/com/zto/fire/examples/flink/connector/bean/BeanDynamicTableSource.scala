@@ -1,10 +1,10 @@
-package com.zto.fire.examples.flink.connector
+package com.zto.fire.examples.flink.connector.bean
 
 import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.examples.bean.People
 import com.zto.fire.flink.util.FlinkUtils
 import com.zto.fire.predef._
-import org.apache.flink.configuration.{ConfigOption, ConfigOptions, ReadableConfig}
+import org.apache.flink.configuration.ReadableConfig
 import org.apache.flink.streaming.api.functions.source.{RichSourceFunction, SourceFunction}
 import org.apache.flink.table.api.TableSchema
 import org.apache.flink.table.connector.ChangelogMode

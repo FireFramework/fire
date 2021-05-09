@@ -1,4 +1,4 @@
-package com.zto.fire.examples.flink.connector
+package com.zto.fire.examples.flink.connector.bean
 
 import com.zto.fire._
 import org.apache.flink.configuration.ConfigOption
