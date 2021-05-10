@@ -38,9 +38,9 @@ object Test extends BaseFlinkStreaming {
       """
         |select * from source
         |""".stripMargin).print()*/
-
-    val dstream = this.fire.createRocketMqPullStream()
-    dstream.print()
+    this.fire.createRocketMqPullStreamWithTag().printToErr("包含所有")
+    this.fire.createRocketMqPullStreamWithKey().printToErr("包含key")
+    this.fire.createRocketMqPullStream().printToErr("仅value")
     this.fire.start
   }
 

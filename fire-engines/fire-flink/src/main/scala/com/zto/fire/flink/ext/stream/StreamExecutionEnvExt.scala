@@ -22,6 +22,7 @@ import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
 import org.apache.flink.table.api.{Table, TableResult}
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource}
 import org.apache.rocketmq.flink.common.serialization.{KeyValueDeserializationSchema, SimpleTupleDeserializationSchema}
+import org.apache.rocketmq.flink.serialization.SimpleTagKeyValueDeserializationSchema
 
 import scala.collection.JavaConversions
 
@@ -118,7 +119,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
   }
 
   /**
-   * 构建RocketMQ拉取消息的DStream流
+   * 构建RocketMQ拉取消息的DStream流，获取消息中的tag、key以及value
    *
    * @param rocketParam
    * rocketMQ相关消费参数
@@ -129,11 +130,11 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
    * @return
    * rocketMQ DStream
    */
-  def createRocketMqPullStream(rocketParam: Map[String, String] = null,
+  def createRocketMqPullStreamWithTag(rocketParam: Map[String, String] = null,
                                groupId: String = null,
                                topics: String = null,
                                tag: String = null,
-                               keyNum: Int = 1): DataStream[String] = {
+                               keyNum: Int = 1): DataStream[(String, String, String)] = {
     // 获取topic信息，配置文件优先级高于代码中指定的
     val confTopics = FireRocketMQConf.rocketTopics(keyNum)
     val finalTopics = if (StringUtils.isNotBlank(confTopics)) confTopics else topics
@@ -153,7 +154,47 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
     val props = new Properties()
     props.putAll(finalRocketParam)
 
-    this.env.addSource(new RocketMQSource[Tuple2[String, String]](new SimpleTupleDeserializationSchema, props)).map(t => t.f1).name("RocketMQ Source")
+    this.env.addSource(new RocketMQSource[(String, String, String)](new SimpleTagKeyValueDeserializationSchema, props)).name("RocketMQ Source")
+  }
+
+  /**
+   * 构建RocketMQ拉取消息的DStream流，仅获取消息体中的key和value
+   *
+   * @param rocketParam
+   * rocketMQ相关消费参数
+   * @param groupId
+   * groupId
+   * @param topics
+   * topic列表
+   * @return
+   * rocketMQ DStream
+   */
+  def createRocketMqPullStreamWithKey(rocketParam: Map[String, String] = null,
+                               groupId: String = null,
+                               topics: String = null,
+                               tag: String = null,
+                               keyNum: Int = 1): DataStream[(String, String)] = {
+    this.createRocketMqPullStreamWithTag(rocketParam, groupId, topics, tag, keyNum).map(t => (t._2, t._3))
+  }
+
+  /**
+   * 构建RocketMQ拉取消息的DStream流，仅获取消息体中的value
+   *
+   * @param rocketParam
+   * rocketMQ相关消费参数
+   * @param groupId
+   * groupId
+   * @param topics
+   * topic列表
+   * @return
+   * rocketMQ DStream
+   */
+  def createRocketMqPullStream(rocketParam: Map[String, String] = null,
+                               groupId: String = null,
+                               topics: String = null,
+                               tag: String = null,
+                               keyNum: Int = 1): DataStream[String] = {
+    this.createRocketMqPullStreamWithTag(rocketParam, groupId, topics, tag, keyNum).map(t => t._3)
   }
 
   /**

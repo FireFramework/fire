@@ -1,4 +1,4 @@
-package org.apache.rocketmq.flink.common.serialization;
+package org.apache.rocketmq.flink.serialization;
 
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeHint;
@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
  * 将rocketmq消息反序列化成RowData
  * @author ChengLong 2021-5-9 13:40:17
  */
-public class JsonDeserializationSchema implements KeyValueDeserializationSchema<RowData> {
+public class JsonDeserializationSchema implements TagKeyValueDeserializationSchema<RowData> {
     private DeserializationSchema<RowData> key;
     private DeserializationSchema<RowData> value;
 
@@ -22,7 +22,7 @@ public class JsonDeserializationSchema implements KeyValueDeserializationSchema<
     }
 
     @Override
-    public RowData deserializeKeyAndValue(byte[] key, byte[] value) {
+    public RowData deserializeTagKeyAndValue(byte[] tag, byte[] key, byte[] value) {
         String keyString = key != null ? new String(key, StandardCharsets.UTF_8) : null;
         String valueString = value != null ? new String(value, StandardCharsets.UTF_8) : null;
         if (value != null) {

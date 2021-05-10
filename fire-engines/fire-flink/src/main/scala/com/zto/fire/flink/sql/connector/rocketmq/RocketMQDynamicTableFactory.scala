@@ -1,7 +1,7 @@
-package com.zto.fire.examples.flink.connector.rocketmq
+package com.zto.fire.flink.sql.connector.rocketmq
 
 import com.zto.fire._
-import com.zto.fire.examples.flink.connector.rocketmq.RocketMQOptions._
+import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions._
 import org.apache.flink.api.common.serialization.DeserializationSchema
 import org.apache.flink.configuration.ConfigOption
 import org.apache.flink.table.connector.format.DecodingFormat

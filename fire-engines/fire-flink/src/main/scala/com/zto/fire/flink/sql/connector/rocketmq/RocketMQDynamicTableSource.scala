@@ -1,4 +1,4 @@
-package com.zto.fire.examples.flink.connector.rocketmq
+package com.zto.fire.flink.sql.connector.rocketmq
 
 import com.zto.fire.predef._
 import org.apache.flink.api.common.serialization.DeserializationSchema
@@ -8,7 +8,7 @@ import org.apache.flink.table.connector.source.{DynamicTableSource, ScanTableSou
 import org.apache.flink.table.data.RowData
 import org.apache.flink.table.types.DataType
 import org.apache.flink.table.types.utils.DataTypeUtils
-import org.apache.rocketmq.flink.common.serialization.JsonDeserializationSchema
+import org.apache.rocketmq.flink.serialization.JsonDeserializationSchema
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource}
 
 import java.util.Properties

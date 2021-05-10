@@ -1,7 +1,7 @@
-package com.zto.fire.examples.flink.connector.rocketmq
+package com.zto.fire.flink.sql.connector.rocketmq
 
 import com.zto.fire._
-import com.zto.fire.examples.flink.connector.rocketmq.RocketMQOptions.ValueFieldsStrategy.ValueFieldsStrategy
+import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.ValueFieldsStrategy.ValueFieldsStrategy
 import org.apache.flink.configuration.{ConfigOption, ConfigOptions, ReadableConfig}
 import org.apache.flink.table.api.{TableException, ValidationException}
 import org.apache.flink.table.types.DataType
