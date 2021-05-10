@@ -1,5 +1,8 @@
 package com.zto.fire.flink.sql.connector.rocketmq
 
+import com.zto.fire.common.conf.FireRocketMQConf
+import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.{TOPIC, getRocketMQProperties}
+import com.zto.fire.noEmpty
 import com.zto.fire.predef._
 import org.apache.flink.api.common.serialization.DeserializationSchema
 import org.apache.flink.table.connector.ChangelogMode
@@ -24,12 +27,11 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
                                  keyProjection: Array[Int],
                                  valueProjection: Array[Int],
                                  keyPrefix: String,
-                                 topic: String,
-                                 properties: Properties) extends ScanTableSource {
+                                 tableOptions: JMap[String, String]) extends ScanTableSource {
 
   override def getChangelogMode: ChangelogMode = ChangelogMode.insertOnly()
 
-  override def copy(): DynamicTableSource = new RocketMQDynamicTableSource(physicalDataType, keyDecodingFormat, valueDecodingFormat, keyProjection, valueProjection, keyPrefix, topic, properties)
+  override def copy(): DynamicTableSource = new RocketMQDynamicTableSource(physicalDataType, keyDecodingFormat, valueDecodingFormat, keyProjection, valueProjection, keyPrefix, tableOptions)
 
   override def asSummaryString(): String = "fire-rocketmq"
 
@@ -50,9 +52,32 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
    * 消费rocketmq中的数据，并反序列化为RowData对象实例
    */
   override def getScanRuntimeProvider(context: ScanTableSource.ScanContext): ScanTableSource.ScanRuntimeProvider = {
+    // 获取以rocket.conf.为前缀的配置
+    val properties = getRocketMQProperties(this.tableOptions)
+
+    // 获取rocket.brokers.name对应的nameserver地址
+    val brokerName = tableOptions.get(FireRocketMQConf.ROCKET_BROKERS_NAME)
+    val nameserver = FireRocketMQConf.rocketClusterMap.getOrElse(brokerName, brokerName)
+    if (noEmpty(nameserver)) properties.setProperty(RocketMQConfig.NAME_SERVER_ADDR, nameserver)
+    assert(noEmpty(properties.getProperty(RocketMQConfig.NAME_SERVER_ADDR)), s"""nameserver不能为空，请在with中使用 '${FireRocketMQConf.ROCKET_BROKERS_NAME}'='ip:port' 指定""")
+
+    // 获取topic信息
+    val topic = tableOptions.get(FireRocketMQConf.ROCKET_TOPICS)
+    if (noEmpty(topic)) properties.setProperty(RocketMQConfig.CONSUMER_TOPIC, topic)
+    assert(noEmpty(properties.getProperty(RocketMQConfig.CONSUMER_TOPIC)), s"""topic不能为空，请在with中使用 '${FireRocketMQConf.ROCKET_TOPICS}'='topicName' 指定""")
+
+    // 获取groupId信息
+    val groupId = tableOptions.get(FireRocketMQConf.ROCKET_GROUP_ID)
+    if (noEmpty(groupId)) properties.setProperty(RocketMQConfig.CONSUMER_GROUP, groupId)
+    assert(noEmpty(properties.getProperty(RocketMQConfig.CONSUMER_GROUP)), s"""group.id不能为空，请在with中使用 '${FireRocketMQConf.ROCKET_GROUP_ID}'='groupId' 指定""")
+
+    // 获取tag信息
+    val tag = tableOptions.get(FireRocketMQConf.ROCKET_CONSUMER_TAG)
+    if (noEmpty(tag)) properties.setProperty(RocketMQConfig.CONSUMER_TAG, tag) else properties.setProperty(RocketMQConfig.CONSUMER_TAG, "*")
+
     val keyDeserialization = createDeserialization(context, keyDecodingFormat, keyProjection, keyPrefix)
     val valueDeserialization = createDeserialization(context, valueDecodingFormat, valueProjection, null)
-    properties.setProperty(RocketMQConfig.CONSUMER_TOPIC, topic)
+
     SourceFunctionProvider.of(new RocketMQSource(new JsonDeserializationSchema(keyDeserialization, valueDeserialization), properties), false)
   }
 

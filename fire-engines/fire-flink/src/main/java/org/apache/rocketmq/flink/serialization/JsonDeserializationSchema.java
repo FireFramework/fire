@@ -23,8 +23,8 @@ public class JsonDeserializationSchema implements TagKeyValueDeserializationSche
 
     @Override
     public RowData deserializeTagKeyAndValue(byte[] tag, byte[] key, byte[] value) {
-        String keyString = key != null ? new String(key, StandardCharsets.UTF_8) : null;
-        String valueString = value != null ? new String(value, StandardCharsets.UTF_8) : null;
+        /*String keyString = key != null ? new String(key, StandardCharsets.UTF_8) : null;
+        String valueString = value != null ? new String(value, StandardCharsets.UTF_8) : null;*/
         if (value != null) {
             try {
                 // 调用sql connector的format进行反序列化

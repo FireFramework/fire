@@ -1,6 +1,7 @@
 package com.zto.fire.flink.sql.connector.rocketmq
 
 import com.zto.fire._
+import com.zto.fire.common.conf.FireRocketMQConf
 import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions._
 import org.apache.flink.api.common.serialization.DeserializationSchema
 import org.apache.flink.configuration.ConfigOption
@@ -28,31 +29,6 @@ class RocketMQDynamicTableFactory extends DynamicTableSourceFactory {
 
   private def getKeyDecodingFormat(helper: FactoryUtil.TableFactoryHelper): DecodingFormat[DeserializationSchema[RowData]] = {
     helper.discoverDecodingFormat(classOf[DeserializationFormatFactory], FactoryUtil.FORMAT)
-  }
-
-  /**
-   * 是否存在以properties.开头的参数
-   */
-  private def hasRocketMQClientProperties(tableOptions: util.Map[String, String]) = tableOptions
-    .keySet
-    .stream
-    .anyMatch((k: String) => k.startsWith(PROPERTIES_PREFIX))
-
-  /**
-   * 获取以properties.开头的所有的参数
-   */
-  def getRocketMQProperties(tableOptions: util.Map[String, String]): Properties = {
-    val rocketMQProperties = new Properties
-    if (hasRocketMQClientProperties(tableOptions)) tableOptions.keySet.stream.filter((key: String) => key.startsWith(PROPERTIES_PREFIX)).forEach((key: String) => {
-      def foo(key: String): Unit = {
-        val value = tableOptions.get(key)
-        val subKey = key.substring(PROPERTIES_PREFIX.length)
-        rocketMQProperties.put(subKey, value)
-      }
-
-      foo(key)
-    })
-    rocketMQProperties
   }
 
   /**
@@ -84,11 +60,12 @@ class RocketMQDynamicTableFactory extends DynamicTableSourceFactory {
     val tableOptions = helper.getOptions
     val keyDecodingFormat = this.getKeyDecodingFormat(helper)
     val valueDecodingFormat = this.getValueDecodingFormat(helper)
-    val properties = getRocketMQProperties(context.getCatalogTable.getOptions)
+    val withOptions = context.getCatalogTable.getOptions
     val physicalDataType = context.getCatalogTable.getSchema.toPhysicalRowDataType
     val keyProjection = createKeyFormatProjection(tableOptions, physicalDataType)
     val valueProjection = createValueFormatProjection(tableOptions, physicalDataType)
     val keyPrefix = tableOptions.getOptional(KEY_FIELDS_PREFIX).orElse(null)
+
 
     new RocketMQDynamicTableSource(physicalDataType,
       keyDecodingFormat,
@@ -96,7 +73,6 @@ class RocketMQDynamicTableFactory extends DynamicTableSourceFactory {
       keyProjection,
       valueProjection,
       keyPrefix,
-      tableOptions.getOptional(TOPIC).orElse(""),
-      properties)
+      withOptions)
   }
 }

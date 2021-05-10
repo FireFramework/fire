@@ -7,6 +7,8 @@ import org.apache.flink.table.api.{TableException, ValidationException}
 import org.apache.flink.table.types.DataType
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks
 
+import java.util
+import java.util.Properties
 import java.util.stream.IntStream
 
 /**
@@ -15,7 +17,7 @@ import java.util.stream.IntStream
  * @author ChengLong 2021-5-7 15:48:03
  */
 object RocketMQOptions {
-  val PROPERTIES_PREFIX = "properties."
+  val PROPERTIES_PREFIX = "rocket.conf."
 
   val TOPIC: ConfigOption[String] = ConfigOptions
     .key("topic")
@@ -138,5 +140,30 @@ object RocketMQOptions {
         .toArray
     }
     throw new TableException(s"Unknown value fields strategy:$strategy");
+  }
+
+  /**
+   * 是否存在以properties.开头的参数
+   */
+  private def hasRocketMQClientProperties(tableOptions: util.Map[String, String]) = tableOptions
+    .keySet
+    .stream
+    .anyMatch((k: String) => k.startsWith(PROPERTIES_PREFIX))
+
+  /**
+   * 获取以rocket.conf.开头的所有的参数
+   */
+  def getRocketMQProperties(tableOptions: util.Map[String, String]): Properties = {
+    val rocketMQProperties = new Properties
+    if (hasRocketMQClientProperties(tableOptions)) tableOptions.keySet.stream.filter((key: String) => key.startsWith(PROPERTIES_PREFIX)).forEach((key: String) => {
+      def foo(key: String): Unit = {
+        val value = tableOptions.get(key)
+        val subKey = key.substring(PROPERTIES_PREFIX.length)
+        rocketMQProperties.put(subKey, value)
+      }
+
+      foo(key)
+    })
+    rocketMQProperties
   }
 }

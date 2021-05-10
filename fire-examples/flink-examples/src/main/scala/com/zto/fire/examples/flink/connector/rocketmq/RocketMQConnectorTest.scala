@@ -20,14 +20,14 @@ object RocketMQConnectorTest extends BaseFlinkStreaming {
                     |  age int,
                     |  length double,
                     |  data DECIMAL(10, 5)
-                    |)
-                    |WITH
+                    |) WITH
                     |   (
                     |   'connector' = 'fire-rocketmq',
                     |   'format' = 'json',
-                    |   'topic' = 'fire',
-                    |   'properties.nameserver.address' = 'localhost:9876',
-                    |   'properties.consumer.group' = 'fire'
+                    |   'rocket.brokers.name' = 'ZmsClusterX',
+                    |   'rocket.topics'       = 'fire',
+                    |   'rocket.group.id'     = 'fire',
+                    |   'rocket.consumer.tag' = '*'
                     |   )
                     |""".stripMargin)
 
