@@ -22,7 +22,13 @@ mvn install:install-file -Dfile=/path/to/hbase-client_3.0.2_2.12-1.2.0-cdh5.12.1
 mvn install:install-file -Dfile=/path/to/rocketmq-spark_3.0.2_2.12.jar -DgroupId=org.apache.rocketmq -DartifactId=rocketmq-spark_3.0.2_2.12 -Dversion=0.0.2 -Dpackaging=jar
 ```
 
-### 1.4 kudu-spark包
+### 1.4 rocketmq-flink包
+
+```shell
+mvn install:install-file -Dfile=/path/to/rocketmq-flink_1.12.2_2.12.jar -DgroupId=org.apache.rocketmq -DartifactId=rocketmq-flink_1.12.2_2.12 -Dversion=0.0.2 -Dpackaging=jar
+```
+
+### 1.5 kudu-spark包
 
 ```shell
 mvn install:install-file -Dfile=/path/to/kudu-spark_3.0.2_2.12-1.4.0.jar -DgroupId=org.apache.kudu -DartifactId=kudu-spark_3.0.2_2.12 -Dversion=1.4.0 -Dpackaging=jar
@@ -38,7 +44,7 @@ mvn deploy:deploy-file -Dfile=/path/to/hbase-client_3.0.2_2.12-1.2.0-cdh5.12.1.j
 
 ## 三、自行编译
 
-为了满足差异化、不同版本的编译需求，用户可以到github上找到相应库官方源码，进行编译，github地址如下：
+为了满足差异化、不同版本的编译需求，用户可以到github上找到相应库官方源码（需要进行定制化开发，比如适配scala2.12以及spark或flink版本差异带来的编译错误），进行编译，github地址如下：
 
 [hbase-spark库源码地址](https://github.com/cloudera/hbase/tree/cdh5-1.2.0_5.12.2/hbase-spark)
 
