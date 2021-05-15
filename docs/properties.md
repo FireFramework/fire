@@ -92,6 +92,12 @@ fire框架提供了很多参数，这些参数为程序带来了很大的灵活�
 | spark.hdfs.ha.conf.test.dfs.client.failover.proxy.provider.nameservice1 | org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider | 对应dfs.client.failover.proxy.provider.nameservice1          | 1.0.0    | 否       |
 | spark.impala.connection.url                                  | jdbc:hive2://ip:21050/;auth=noSasl                           | impala jdbc地址                                              | 0.1.0    | 否       |
 | spark.impala.jdbc.driver.class.name                          | org.apache.hive.jdbc.HiveDriver                              | impala jdbc驱动                                              | 0.1.0    | 否       |
+| spark.datasource.options.                                    |                                                              | 以此开头的配置将被加载到datasource api的options中            | 2.0.0    | 否       |
+| spark.datasource.format                                      |                                                              | datasource api的format                                       | 2.0.0    | 否       |
+| spark.datasource.saveMode                                    | Append                                                       | datasource api的saveMode                                     | 2.0.0    | 否       |
+| spark.datasource.saveParam                                   |                                                              | 用于dataFrame.write.format.save()参数                        | 2.0.0    | 否       |
+| spark.datasource.isSaveTable                                 | false                                                        | 用于决定调用save(path)还是saveAsTable                        | 2.0.0    | 否       |
+| spark.datasource.loadParam                                   |                                                              | 用于spark.read.format.load()参数                             | 2.0.0    | 否       |
 
 # 三、Flink引擎参数
 

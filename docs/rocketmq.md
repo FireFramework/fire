@@ -5,11 +5,37 @@
 使用fire框架可以很方便的消费rocketmq中的数据，并且支持在同一任务中消费多个rocketmq集群的多个topic。核心代码仅一行：
 
 ```scala
-// Spark Streaming任务
+// Spark Streaming或flink streaming任务
 val dstream = this.fire.createRocketMqPullStream()
 ```
 
 以上的api均支持rocketmq相关参数的传入，但fire推荐将这些集群信息放到配置文件中，增强代码可读性，提高代码简洁性与灵活性。
+
+### 二、flink sql connector
+
+```scala
+this.fire.sql("""
+                    |CREATE table source (
+                    |  id bigint,
+                    |  name string,
+                    |  age int,
+                    |  length double,
+                    |  data DECIMAL(10, 5)
+                    |) WITH
+                    |   (
+                    |   'connector' = 'fire-rocketmq',
+                    |   'format' = 'json',
+                    |   'rocket.brokers.name' = 'zms',
+                    |   'rocket.topics'       = 'fire',
+                    |   'rocket.group.id'     = 'fire',
+                    |   'rocket.consumer.tag' = '*'
+                    |   )
+                    |""".stripMargin)
+```
+
+**with参数的使用：**
+
+rocketmq sql connector中的with参数复用了api中的配置参数，如果需要进行rocketmq-client相关参数设置，可以以rocket.conf.为前缀，后面跟上rocketmq调优参数即可。
 
 ### 二、RocketMQ配置
 
@@ -61,5 +87,9 @@ spark.rocket.conf.pull.max.speed.per.partition		=   5000
 
 ### 五、代码示例
 
-[示例代码]()
+[1. spark示例代码](../fire-examples/spark-examples/src/main/scala/com/zto/fire/examples/spark/streaming/RocketTest.scala)
+
+[2. flink streaming示例代码](../fire-examples/flink-examples/src/main/scala/com/zto/fire/examples/flink/connector/rocketmq/RocketTest.scala)
+
+[3. flink sql connector示例代码](../fire-examples/flink-examples/src/main/scala/com/zto/fire/examples/flink/connector/rocketmq/RocketMQConnectorTest.scala)
 

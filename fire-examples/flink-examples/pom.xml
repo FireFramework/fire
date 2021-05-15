@@ -150,6 +150,19 @@
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
+
+        <!-- RocketMQ相关依赖 -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-client</artifactId>
+            <version>${rocketmq.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-acl</artifactId>
+            <version>${rocketmq.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-shaded-hadoop-2-uber</artifactId>
@@ -179,6 +192,11 @@
             <scope>${maven.scope}</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-flink_${flink.reference}</artifactId>
+            <version>${rocketmq.external.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

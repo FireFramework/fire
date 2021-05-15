@@ -1,12 +1,12 @@
 package com.zto.fire.spark.ext.core
 
 import java.io.InputStream
-
 import com.zto.fire._
 import com.zto.fire.core.Api
 import com.zto.fire.jdbc.JdbcConnectorBridge
+import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.ext.provider._
-import com.zto.fire.spark.util.SparkSingletonFactory
+import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.common.message.MessageExt
 import org.apache.rocketmq.spark.{ConsumerStrategy, LocationStrategy}
@@ -129,4 +129,28 @@ class SparkSessionExt(spark: SparkSession) extends Api with JdbcConnectorBridge 
     }
   }
 
+  /**
+   * spark datasource read api增强，提供配置文件进行覆盖配置
+   *
+   * @param format
+   * DataSource中的format
+   * @param loadParams
+   * load方法的参数，多个路径以逗号分隔
+   * @param options
+   * DataSource中的options，支持参数传入和配置文件读取，相同的选项配置文件优先级更高
+   * @param keyNum
+   * 用于标识不同DataSource api所对应的配置文件中key的后缀
+   */
+  def readEnhance(format: String = "",
+                  loadParams: Seq[String] = null,
+                  options: Map[String, String] = Map.empty,
+                  keyNum: Int = 1): Unit = {
+    val finalFormat = if (noEmpty(FireSparkConf.datasourceFormat(keyNum))) FireSparkConf.datasourceFormat(keyNum) else format
+    val finalLoadParam = if (noEmpty(FireSparkConf.datasourceLoadParam(keyNum))) FireSparkConf.datasourceLoadParam(keyNum).split(",").toSeq else loadParams
+    this.logger.info(s"--> Spark DataSource read api参数信息（keyNum=$keyNum）<--")
+    this.logger.info(s"format=${finalFormat} loadParams=${finalLoadParam}")
+
+    requireNonEmpty(finalFormat, finalLoadParam)
+    SparkSingletonFactory.getSparkSession.read.format(format).options(SparkUtils.optionsEnhance(options, keyNum)).load(finalLoadParam: _*)
+  }
 }

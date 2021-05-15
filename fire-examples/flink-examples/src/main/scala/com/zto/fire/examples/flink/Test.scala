@@ -17,24 +17,31 @@ import org.apache.flink.api.scala._
 object Test extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    val sql =
+    /*this.fire.sql("""
+                    |CREATE table source (
+                    |  id bigint,
+                    |  name string,
+                    |  age int
+                    |)
+                    |WITH
+                    |   (
+                    |   'connector' = 'kafka',
+                    |   'topic' = 'fire',
+                    |   'properties.bootstrap.servers' = '10.9.46.111:9092',
+                    |   'properties.group.id' = 'fire',
+                    |   'format' = 'json',
+                    |   'scan.startup.mode' = 'earliest-offset'
+                    |   )
+                    |""".stripMargin)
+
+    this.fire.sql(
       """
-        |     CREATE
-        |     table    MyUserTable (
-        |  id BIGINT,
-        |  name STRING,
-        |  age INT,
-        |  status BOOLEAN,
-        |  PRIMARY KEY (id) NOT ENFORCED
-        |)
-        |  WITH
-        |   (
-        |   'connector' = 'jdbc111',
-        |   'url' = 'jdbc111:mysql://localhost:3306/mydatabase',
-        |   'table-name' = 'users111'
-        |   )   ;
-        |""".stripMargin
-    this.fire.sql(sql, 2)
+        |select * from source
+        |""".stripMargin).print()*/
+    this.fire.createRocketMqPullStreamWithTag().printToErr("包含所有")
+    this.fire.createRocketMqPullStreamWithKey().printToErr("包含key")
+    this.fire.createRocketMqPullStream().printToErr("仅value")
+    this.fire.start
   }
 
 
