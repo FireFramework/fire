@@ -195,9 +195,15 @@ object Test extends BaseFlinkStreaming {
 
 ### [5.12 线程池与并发计算](docs/threadpool.md)
 
-### [5.13 实时平台集成方案](docs/platform.md)
+### [5.13 Spark DataSource增强](docs/datasource.md)
 
-### [5.14 内置接口](docs/restful.md)
+## 六、平台建设
 
-### [5.15 Fire配置手册](docs/properties.md)
+### [6.1 实时平台集成方案](docs/platform.md)
+
+### [6.2 内置接口](docs/restful.md)
+
+## 七、配置与调优
+
+### [7.1 Fire配置手册](docs/properties.md)
 

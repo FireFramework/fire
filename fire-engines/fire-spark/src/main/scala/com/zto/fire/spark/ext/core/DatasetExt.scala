@@ -1,10 +1,13 @@
 package com.zto.fire.spark.ext.core
 
+import com.zto.fire._
 import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.spark.sql._
 import org.apache.spark.sql.streaming.Trigger
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect._
@@ -17,6 +20,7 @@ import scala.reflect._
  * @author ChengLong 2019-5-18 11:02:56
  */
 class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 用于检查当前Dataset是否为空
@@ -129,14 +133,51 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) {
    * 分配次执行指定的业务逻辑
    *
    * @param batch
-   *            多大批次执行一次sinkFun中定义的操作
+   * 多大批次执行一次sinkFun中定义的操作
    * @param mapFun
-   *            将Row类型映射为E类型的逻辑，并将处理后的数据放到listBuffer中
+   * 将Row类型映射为E类型的逻辑，并将处理后的数据放到listBuffer中
    * @param sinkFun
    * 具体处理逻辑，将数据sink到目标源
    */
   def foreachPartitionBatch[E](mapFun: T => E, sinkFun: ListBuffer[E] => Unit, batch: Int = 1000): Unit = {
     SparkUtils.datasetForeachPartitionBatch(this.dataset, mapFun, sinkFun, batch)
+  }
+
+  /**
+   * spark datasource write api增强，提供配置文件进行覆盖配置
+   *
+   * @param format
+   * DataSource中的format
+   * @param saveMode
+   * DataSource中的saveMode
+   * @param saveParam
+   * save方法的参数，可以是路径或表名：save(path)、saveAsTable(tableName)
+   * @param isSaveTable
+   * true：调用saveAsTable(saveParam)方法 false：调用save(saveParam)方法
+   * @param options
+   * DataSource中的options，支持参数传入和配置文件读取，相同的选项配置文件优先级更高
+   * @param keyNum
+   * 用于标识不同DataSource api所对应的配置文件中key的后缀
+   */
+  def writeEnhance(format: String = "",
+                   saveMode: SaveMode = SaveMode.Append,
+                   saveParam: String = "",
+                   isSaveTable: Boolean = false,
+                   options: Map[String, String] = Map.empty,
+                   keyNum: Int = 1): Unit = {
+    val finalFormat = if (noEmpty(FireSparkConf.datasourceFormat(keyNum))) FireSparkConf.datasourceFormat(keyNum) else format
+    val finalSaveMode = if (noEmpty(FireSparkConf.datasourceSaveMode(keyNum))) SaveMode.valueOf(FireSparkConf.datasourceSaveMode(keyNum)) else saveMode
+    val finalSaveParam = if (noEmpty(FireSparkConf.datasourceSaveParam(keyNum))) FireSparkConf.datasourceSaveParam(keyNum) else saveParam
+    val finalIsSaveTable = if (noEmpty(FireSparkConf.datasourceIsSaveTable(keyNum))) FireSparkConf.datasourceIsSaveTable(keyNum).toBoolean else isSaveTable
+    requireNonEmpty(dataset, finalFormat, finalSaveMode, finalSaveParam, finalIsSaveTable)
+
+    this.logger.info(s"--> Spark DataSource write api参数信息（keyNum=$keyNum）<--")
+    this.logger.info(s"format=${finalFormat} saveMode=${finalSaveMode} save参数=${finalSaveParam} saveToTable=${finalIsSaveTable}")
+
+    val writer = dataset.write.format(finalFormat).options(SparkUtils.optionsEnhance(options, keyNum)).mode(finalSaveMode)
+    if (!isSaveTable) {
+      if (com.zto.fire.isEmpty(finalSaveMode)) writer.save() else writer.save(finalSaveParam)
+    } else writer.saveAsTable(finalSaveParam)
   }
 
 }

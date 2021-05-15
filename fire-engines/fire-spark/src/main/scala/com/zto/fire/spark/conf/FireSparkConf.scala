@@ -16,6 +16,17 @@ private[fire] object FireSparkConf {
   lazy val SPARK_SAVE_MODE = "spark.saveMode"
   lazy val SPARK_PARALLELISM = "spark.parallelism"
   lazy val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
+
+  // spark datasource v2 api中的options配置key前缀
+  lazy val SPARK_DATASOURCE_OPTIONS_PREFIX = "spark.datasource.options."
+  lazy val SPARK_DATASOURCE_FORMAT = "spark.datasource.format"
+  lazy val SPARK_DATSOURCE_SAVE_MODE = "spark.datasource.saveMode"
+  // 用于dataFrame.write.format.save()参数
+  lazy val SPARK_DATASOURCE_SAVE_PARAM = "spark.datasource.saveParam"
+  lazy val SPARK_DATASOURCE_IS_SAVE_TABLE = "spark.datasource.isSaveTable"
+  // 用于spark.read.format.load()参数
+  lazy val SPARK_DATASOURCE_LOAD_PARAM = "spark.datasource.loadParam"
+
   // spark 默认的checkpoint地址
   lazy val sparkChkPointDir = "hdfs://nameservice1/user/spark/ckpoint/"
   // spark streaming批次时间
@@ -32,4 +43,29 @@ private[fire] object FireSparkConf {
   lazy val parallelism = PropUtils.getInt(this.SPARK_PARALLELISM, 200)
   lazy val chkPointDirPrefix = PropUtils.getString(this.SPARK_CHK_POINT_DIR, this.sparkChkPointDir)
   lazy val confBathDuration = PropUtils.getInt(this.SPARK_STREAMING_BATCH_DURATION, -1)
+
+  /**
+   * spark datasource api中的format参数
+   */
+  def datasourceFormat(keyNum: Int = 1): String = PropUtils.getString(this.SPARK_DATASOURCE_FORMAT, "", keyNum)
+
+  /**
+   * spark datasource api中的saveMode参数
+   */
+  def datasourceSaveMode(keyNum: Int = 1): String = PropUtils.getString(this.SPARK_DATSOURCE_SAVE_MODE, "Append", keyNum)
+
+  /**
+   * spark datasource api中的save方法参数
+   */
+  def datasourceSaveParam(keyNum: Int = 1): String = PropUtils.getString(this.SPARK_DATASOURCE_SAVE_PARAM, "", keyNum)
+
+  /**
+   * spark datasource api中的isSaveTable方法
+   */
+  def datasourceIsSaveTable(keyNum: Int = 1): String = PropUtils.getString(this.SPARK_DATASOURCE_IS_SAVE_TABLE, "", keyNum)
+
+  /**
+   * spark datasource api中的load方法参数
+   */
+  def datasourceLoadParam(keyNum: Int = 1): String = PropUtils.getString(this.SPARK_DATASOURCE_LOAD_PARAM, "", keyNum)
 }

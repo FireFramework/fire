@@ -5,7 +5,7 @@ import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.spark.BaseSparkStreaming
 
 object JdbcStreamingTest extends BaseSparkStreaming {
-  val tableName = "t_hosts"
+  val tableName = "spark_test"
 
   /**
     * Streaming的处理过程强烈建议放到process中，保持风格统一
@@ -19,7 +19,7 @@ object JdbcStreamingTest extends BaseSparkStreaming {
     dstream.repartition(5).foreachRDD(rdd => {
       rdd.foreachPartition(it => {
         val sql = s"select id from $tableName limit 1"
-        JdbcConnector.executeQueryCall(sql, callback = _ => 1, keyNum = 3)
+        JdbcConnector.executeQueryCall(sql, callback = _ => 1)
       })
     })
 
