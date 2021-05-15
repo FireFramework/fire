@@ -143,7 +143,7 @@
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-spark_${spark.version}_${scala.binary.version}</artifactId>
-            <version>0.0.2</version>
+            <version>${rocketmq.external.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
     </dependencies>

@@ -2,7 +2,7 @@ package com.zto.fire.flink
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
-import com.zto.fire.common.util.PropUtils
+import com.zto.fire.common.util.{OSUtils, PropUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.flink.conf.FireFlinkConf
@@ -35,8 +35,10 @@ trait BaseFlink extends BaseFire {
   override private[fire] def boot: Unit = {
     PropUtils.load(FireFrameworkConf.FLINK_CONF_FILE)
     // flink引擎无需主动在父类中主动加载配置信息，配置加载在GlobalConfiguration中完成
-    /*this.loadConf
-    PropUtils.load(FireFrameworkConf.userCommonConf: _*).load(this.appName)*/
+    if (OSUtils.isLocal) {
+      this.loadConf
+      PropUtils.load(FireFrameworkConf.userCommonConf: _*).load(this.appName)
+    }
     PropUtils.setProperty(FireFlinkConf.FLINK_DRIVER_CLASS_NAME, this.className)
     PropUtils.setProperty(FireFlinkConf.FLINK_CLIENT_SIMPLE_CLASS_NAME, this.driverClass)
     FlinkSingletonFactory.setAppName(this.appName)

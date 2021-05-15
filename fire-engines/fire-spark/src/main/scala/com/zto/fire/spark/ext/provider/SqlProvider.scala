@@ -159,6 +159,43 @@ trait SqlProvider extends SparkProvider {
   }
 
   /**
+   * 判断表是否未被缓存
+   *
+   * @param tableName
+   * 表名
+   * @return
+   */
+  def isNotCached(tableName: String): Boolean = !this.isCached(tableName)
+
+  /**
+   * refresh给定的表
+   *
+   * @param tables
+   * 表名
+   */
+  def refreshTables(tables: String*): Unit = {
+    if (tables != null) {
+      tables.filter(noEmpty(_)).foreach(table => SparkSingletonFactory.getSparkSession.catalog.refreshTable(table))
+    }
+  }
+
+  /**
+   * 缓存或刷新给定的表
+   * 1. 当表未被cache时会首先进行cache
+   * 2. 当表已被cache，再次调用会进行refresh操作
+   *
+   * @param tables
+   * 待cache或refresh的表名集合
+   */
+  def cacheOrRefreshTables(tables: String*): Unit = {
+    if (tables != null) {
+      tables.filter(noEmpty(_)).foreach(table => {
+        if (this.isNotCached(table)) this.cacheTables(table) else this.refreshTables(table)
+      })
+    }
+  }
+
+  /**
    * 删除指定的hive表
    *
    * @param tableNames

@@ -192,7 +192,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     this.testHBasePutDF
     this.testHBasePutDS
 
-    /*println("=========get========")
+    println("=========get========")
     this.testHbaseGetList
     this.testHbaseGetRDD
     this.testHbaseGetDF
@@ -201,7 +201,7 @@ object HBaseConnectorTest extends BaseSparkCore {
     println("=========scan========")
     this.testHbaseScanList
     this.testHbaseScanRDD
-    this.testHbaseScanDF*/
+    this.testHbaseScanDF
   }
 
   def main(args: Array[String]): Unit = {

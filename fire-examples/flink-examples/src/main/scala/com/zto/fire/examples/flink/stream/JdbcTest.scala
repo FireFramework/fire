@@ -33,14 +33,14 @@ object JdbcTest extends BaseFlinkStreaming {
     // 方式一、table中的列顺序和类型需与jdbc sql中的占位符顺序保持一致
     table.jdbcBatchUpdate(sql(this.tableName)).setParallelism(1)
     // 或者
-    this.fire.jdbcBatchUpdateTable(table, sql(this.tableName), keyNum = 6).setParallelism(1)
+    this.fire.jdbcBatchUpdateTable(table, sql(this.tableName2)).setParallelism(1)
 
     // 方式二、自定义row取数规则，适用于row中的列个数和顺序与sql占位符不一致的情况
-    table.jdbcBatchUpdate2(sql(this.tableName), flushInterval = 10000, keyNum = 7)(row => {
+    table.jdbcBatchUpdate2(sql(this.tableName), flushInterval = 10000, keyNum = 2)(row => {
       Seq(row.getField(0), row.getField(1), row.getField(2), row.getField(3), row.getField(4))
     })
     // 或者
-    this.flink.jdbcBatchUpdateTable2(table, sql(this.tableName), keyNum = 8)(row => {
+    this.flink.jdbcBatchUpdateTable2(table, sql(this.tableName2), keyNum = 2)(row => {
       Seq(row.getField(0), row.getField(1), row.getField(2), row.getField(3), row.getField(4))
     }).setParallelism(1)
   }
@@ -52,18 +52,18 @@ object JdbcTest extends BaseFlinkStreaming {
     // 方式一、指定字段列表，内部根据反射，自动获取DataStream中的数据并填充到sql中的占位符
     // 此处fields有两层含义：1. sql中的字段顺序（对应表） 2. DataStream中的JavaBean字段数据（对应JavaBean）
     // 注：要保证DataStream中字段名称是JavaBean的名称，非表中字段名称 顺序要与占位符顺序一致，个数也要一致
-    stream.jdbcBatchUpdate(sql(this.tableName2), fields).setParallelism(3)
+    stream.jdbcBatchUpdate(sql(this.tableName), fields, keyNum = 6).setParallelism(3)
     // 或者
     this.fire.jdbcBatchUpdateStream(stream, sql(this.tableName2), fields, keyNum = 6).setParallelism(1)
 
     // 方式二、通过用户指定的匿名函数方式进行数据的组装，适用于上面方法无法反射获取值的情况，适用面更广
-    stream.jdbcBatchUpdate2(sql(this.tableName2), 3, 30000, keyNum = 7) {
+    stream.jdbcBatchUpdate2(sql(this.tableName), 3, 30000, keyNum = 7) {
       // 在此处指定取数逻辑，定义如何将dstream中每列数据映射到sql中的占位符
       value => Seq(value.getName, value.getAge, DateFormatUtils.formatCurrentDateTime(), value.getLength, value.getSex)
     }.setParallelism(1)
 
     // 或者
-    this.flink.jdbcBatchUpdateStream2(stream, sql(this.tableName2), keyNum = 8) {
+    this.flink.jdbcBatchUpdateStream2(stream, sql(this.tableName2), keyNum = 7) {
       value => Seq(value.getName, value.getAge, DateFormatUtils.formatCurrentDateTime(), value.getLength, value.getSex)
     }.setParallelism(2)
   }

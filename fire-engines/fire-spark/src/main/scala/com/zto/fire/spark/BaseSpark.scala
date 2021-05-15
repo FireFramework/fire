@@ -152,7 +152,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
   }
 
   /**
-   * 用于fire框架初始化，传递累加器与配置信息到taskManager端
+   * 用于fire框架初始化，传递累加器与配置信息到executor端
    */
   override protected def deployConf: Unit = {
     if (!FireFrameworkConf.deployConf) return

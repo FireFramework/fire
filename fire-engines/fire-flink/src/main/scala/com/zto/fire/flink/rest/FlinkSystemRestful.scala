@@ -22,7 +22,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
   override protected def register: Unit = {
     this.restfulRegister
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/kill", kill))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/dataSource", datasource))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/datasource", datasource))
   }
 
   /**

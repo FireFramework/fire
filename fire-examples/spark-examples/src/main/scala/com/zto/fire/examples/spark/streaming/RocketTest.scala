@@ -1,8 +1,11 @@
-package com.zto.fire.examples.spark
+package com.zto.fire.examples.spark.streaming
 
 import com.zto.fire._
 import com.zto.fire.spark.BaseSparkStreaming
 
+/**
+ * 消费rocketmq中的数据
+ */
 object RocketTest extends BaseSparkStreaming {
   override def process: Unit = {
     //读取RocketMQ消息流

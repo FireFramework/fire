@@ -16,7 +16,7 @@ private[fire] object FireRocketMQConf {
   lazy val rocketConsumerTag = "*"
   lazy val rocketClusterMapConfStart = "rocket.cluster.map."
   // 初始化kafka集群名称与地址映射
-  private lazy val rocketClusterMap = PropUtils.sliceKeys(rocketClusterMapConfStart)
+  private[fire] lazy val rocketClusterMap = PropUtils.sliceKeys(rocketClusterMapConfStart)
   lazy val rocketConfStart = "rocket.conf."
   // rocketMQ name server
   lazy val ROCKET_BROKERS_NAME = "rocket.brokers.name"

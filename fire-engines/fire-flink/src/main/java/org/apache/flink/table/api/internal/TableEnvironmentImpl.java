@@ -658,7 +658,6 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
 
     @Override
     public TableResult executeSql(String statement) {
-        System.out.println("executeSql->\n" + statement);
         List<Operation> operations = parser.parse(statement);
 
         if (operations.size() != 1) {

@@ -134,6 +134,12 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
+            <artifactId>flink-json</artifactId>
+            <version>${flink.version}</version>
+            <scope>${maven.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-elasticsearch-base_${scala.binary.version}</artifactId>
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
@@ -144,6 +150,19 @@
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
+
+        <!-- RocketMQ相关依赖 -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-client</artifactId>
+            <version>${rocketmq.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-acl</artifactId>
+            <version>${rocketmq.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-shaded-hadoop-2-uber</artifactId>
@@ -163,6 +182,20 @@
             <artifactId>hive-exec</artifactId>
             <version>${hive.version}</version>
             <scope>${maven.scope}</scope>
+        </dependency>
+
+        <!-- hudi相关依赖 -->
+        <dependency>
+            <groupId>org.apache.hudi</groupId>
+            <artifactId>hudi-flink-bundle_${scala.binary.version}</artifactId>
+            <version>${hudi.version}</version>
+            <scope>${maven.scope}</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-flink_${flink.reference}</artifactId>
+            <version>${rocketmq.external.version}</version>
         </dependency>
     </dependencies>
     <build>

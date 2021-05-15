@@ -542,4 +542,24 @@ object SparkUtils {
       })
     }
   }
+
+  /**
+   * 配置化spark DataSource api中的options选项，可通过配置文件方式读取并覆盖代码中指定相同的配置项
+   *
+   * @param options
+   * 可为空，如果为空，则必须在配置文件中指定
+   * @param keyNum
+   * 用于区分多个数据源
+   */
+  def optionsEnhance(options: Map[String, String] = Map.empty, keyNum: Int = 1): Map[String, String] = {
+    val map = collection.mutable.Map[String, String]()
+    map ++= options
+    map ++= PropUtils.sliceKeysByNum(FireSparkConf.SPARK_DATASOURCE_OPTIONS_PREFIX, keyNum)
+    if (map.isEmpty) {
+      throw new IllegalArgumentException(s"spark datasource options不能为空，请通过配置文件指定，以${FireSparkConf.SPARK_DATASOURCE_OPTIONS_PREFIX}为前缀，以${keyNum}为后缀.")
+    }
+    this.logger.info(s"--> Spark DataSource options信息（keyNum=$keyNum）<--")
+    map.foreach(option => this.logger.info(s"${option._1} = ${option._2}"))
+    map.toMap
+  }
 }
