@@ -26,44 +26,44 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
   var sqlFile: String = null
   var useHive: Boolean = false;
 
-  /**
-   * 生命周期方法：具体的用户开发的业务逻辑代码
-   * 注：此方法会被自动调用，不需要在main中手动调用
-   */
-  override def process: Unit = {
-
-    val settings = EnvironmentSettings.newInstance().inStreamingMode().useBlinkPlanner().build()
-    env.enableCheckpointing(60000)
-
-    this.tableEnv = StreamTableEnvironment.create(env,settings)
-
-    logger.info("sql file path: " + sqlFile)
-
-//    val localPath = "/tmp/" + sqlFile.substring(sqlFile.lastIndexOf("/") + 1)
-//    logger.info("localPath:" + localPath)
-//    //run-application模式下，需要从hdfs复制到本地
-//    SqlCommandParser.copyHdfsFileToLocal(localPath, localPath)
-
-    val listSql = Files.readAllLines(Paths.get(sqlFile));
-
-    logger.info("execute sql: " + listSql.mkString("\n"))
-
-    parseInsertInto(listSql)
-
-    val calls = SqlCommandParser.parse(listSql);
-
-    for (call <- calls) {
-      callCommand(call)
-    }
-
-  }
-
   def main(args: Array[String]): Unit = {
 
     println("参数：" + args.mkString(","))
     sqlFile = args(0)
     //sqlFile = "C:\\Users\\enter58xuan\\Desktop\\temp file\\flink sql\\scripts\\oracle.sql"
     this.init()
+  }
+
+  /**
+   * 生命周期方法：具体的用户开发的业务逻辑代码
+   * 注：此方法会被自动调用，不需要在main中手动调用
+   */
+  override def process: Unit = {
+
+//    val settings = EnvironmentSettings.newInstance().inStreamingMode().useBlinkPlanner().build()
+//    env.enableCheckpointing(60000)
+//    this.tableEnv = StreamTableEnvironment.create(env,settings)
+
+
+    logger.info("sql file path: " + sqlFile)
+
+
+    //run-application模式下，需要从hdfs复制到本地
+    val localPath = "/tmp/" + sqlFile.substring(sqlFile.lastIndexOf("/") + 1)
+    logger.info("localPath:" + localPath)
+    SqlCommandParser.copyHdfsFileToLocal(localPath, localPath)
+    sqlFile = localPath
+
+
+    val listSql = Files.readAllLines(Paths.get(sqlFile));
+    logger.info("execute sql: " + listSql.mkString("\n"))
+    parseInsertInto(listSql)
+
+    val calls = SqlCommandParser.parse(listSql);
+    for (call <- calls) {
+      callCommand(call)
+    }
+
   }
 
   //判断插入语句中是否有库名，如果有库名，则判断是Hive，并注册Catlog
