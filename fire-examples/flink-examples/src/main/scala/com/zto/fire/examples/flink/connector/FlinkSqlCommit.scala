@@ -42,6 +42,12 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
    */
   override def process: Unit = {
 
+    hiveMetaStoreUrl = PropUtils.getString("flink.sql.submit.hive.metastore.url","thrift://SHTL009046107:9083")
+    hiveVersion = PropUtils.getString("flink.sql.submit.hive.version","1.1.1")
+    println("hiveMetaStoreUrl：" + hiveMetaStoreUrl)
+    println("hiveVersion：" + hiveVersion)
+    println("sql file path: " + sqlFile)
+
     /**
      * run-cluster模式下需要手动开启checkpoint
      * run-application模式checkpoint可以通过配置开启
@@ -49,14 +55,6 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
     val settings = EnvironmentSettings.newInstance().inStreamingMode().useBlinkPlanner().build()
     env.enableCheckpointing(60000)
     this.tableEnv = StreamTableEnvironment.create(env,settings)
-
-    hiveMetaStoreUrl = PropUtils.getString("flink.sql.submit.hive.metastore.url","thrift://SHTL009046107:9083")
-    hiveVersion = PropUtils.getString("flink.sql.submit.hive.version","1.1.1")
-    println("hiveMetaStoreUrl：" + hiveMetaStoreUrl)
-    println("hiveVersion：" + hiveVersion)
-
-    println("sql file path: " + sqlFile)
-
 
     /**
      *  run-application模式下，需要从hdfs复制到本地
