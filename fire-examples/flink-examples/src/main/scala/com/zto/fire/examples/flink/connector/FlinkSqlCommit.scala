@@ -80,10 +80,9 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
   /***
    *
    * @param listSql
-   * 判断插入语句中是否有库名，如果有库名，则判断是Hive，并注册Catlog，可能会生成bug
+   * 判断插入语句中是否有库名，如果有库名，则判断是Hive，并注册Catalog，可能会生成bug
    * 需要协调前端传入对应的sink引擎
    */
-
   private def parseInsertInto(listSql:java.util.List[String]): Unit ={
 
     val insertSql = "insert into"
