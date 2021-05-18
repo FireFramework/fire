@@ -25,6 +25,7 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
 
   var sqlFile: String = null
   var useHive: Boolean = false;
+  var hiveTableName: String = null;
 
   def main(args: Array[String]): Unit = {
 
@@ -54,7 +55,6 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
     SqlCommandParser.copyHdfsFileToLocal(localPath, localPath)
     sqlFile = localPath
 
-
     val listSql = Files.readAllLines(Paths.get(sqlFile));
     logger.info("execute sql: " + listSql.mkString("\n"))
     parseInsertInto(listSql)
@@ -78,7 +78,9 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
           val names =  sqlSelect.getTargetTable.asInstanceOf[SqlIdentifier].names
           if(names.size() > 1){
             useHive = true
-            hiveDatabaseName = names.get(0)
+            hiveDatabaseName = names.get(0).toLowerCase()
+            hiveTableName = names.get(0) + "." + names.get(1)
+            hiveTableName = hiveTableName.toLowerCase()
           }
       }
     }
@@ -146,13 +148,18 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
   }
 
   private def callInsertInto(cmdCall: SqlCommandParser.SqlCommandCall): Unit = {
-    val dml = cmdCall.operands(0)
+    var dml = cmdCall.operands(0)
     try {
 
       if (useHive) {
-        this.tableEnv.getConfig.setSqlDialect(SqlDialect.HIVE)
-        this.tableEnv.useCatalog(HIVE_CATALOG_NAME)
+//        this.tableEnv.getConfig.setSqlDialect(SqlDialect.HIVE)
+//        this.tableEnv.useCatalog(HIVE_CATALOG_NAME)
+        dml = dml.replace(hiveTableName,HIVE_CATALOG_NAME + "." + hiveTableName);
       }
+
+      //dml = dml.replace("from ", "from default_catalog.default_database.")
+
+      println("dml:" + dml)
 
       this.tableEnv.executeSql(dml)
     } catch {
