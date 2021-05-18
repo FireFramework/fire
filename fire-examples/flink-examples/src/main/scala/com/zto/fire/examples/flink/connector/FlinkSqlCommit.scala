@@ -2,6 +2,7 @@ package com.zto.fire.examples.flink.connector
 
 import java.nio.file.{Files, Paths}
 
+import com.zto.fire.common.util.PropUtils
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.sql.SqlCommandParser
 import org.apache.calcite.avatica.util.{Casing, Quoting}
@@ -14,24 +15,24 @@ import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import org.apache.flink.table.api.{EnvironmentSettings, SqlDialect, SqlParserException}
 import org.apache.flink.table.catalog.hive.HiveCatalog
 import org.apache.hadoop.hive.conf.HiveConf
+
 import scala.collection.JavaConversions._
 
 object FlinkSqlCommit extends BaseFlinkStreaming {
 
-  val HIVE_VERSION = "1.1.1"
   val HIVE_CATALOG_NAME = "hive_catalog"
   val HIVE_WAREHOUSE_DEFAULT_PATH = "hdfs:///user/hive/warehouse"
-  var hiveMetaStoreUrl = "thrift://SHTL009046107:9083"
+  var hiveMetaStoreUrl = ""
+  var hiveVersion = ""
 
   var sqlFile: String = null
-  var useHive: Boolean = false;
-  var hiveTableName: String = null;
+  var useHive: Boolean = false
+  var hiveTableName: String = null
 
   def main(args: Array[String]): Unit = {
 
     println("参数：" + args.mkString(","))
     sqlFile = args(0)
-    //sqlFile = "C:\\Users\\enter58xuan\\Desktop\\temp file\\flink sql\\scripts\\oracle.sql"
     this.init()
   }
 
@@ -41,22 +42,32 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
    */
   override def process: Unit = {
 
-//    val settings = EnvironmentSettings.newInstance().inStreamingMode().useBlinkPlanner().build()
-//    env.enableCheckpointing(60000)
-//    this.tableEnv = StreamTableEnvironment.create(env,settings)
+    /**
+     * run-cluster模式下需要手动开启checkpoint
+     * run-application模式checkpoint可以通过配置开启
+     */
+    val settings = EnvironmentSettings.newInstance().inStreamingMode().useBlinkPlanner().build()
+    env.enableCheckpointing(60000)
+    this.tableEnv = StreamTableEnvironment.create(env,settings)
+
+    hiveMetaStoreUrl = PropUtils.getString("flink.sql.submit.hive.metastore.url","thrift://SHTL009046107:9083")
+    hiveVersion = PropUtils.getString("flink.sql.submit.hive.version","1.1.1")
+    println("hiveMetaStoreUrl：" + hiveMetaStoreUrl)
+    println("hiveVersion：" + hiveVersion)
+
+    println("sql file path: " + sqlFile)
 
 
-    logger.info("sql file path: " + sqlFile)
-
-
-    //run-application模式下，需要从hdfs复制到本地
-    val localPath = "/tmp/" + sqlFile.substring(sqlFile.lastIndexOf("/") + 1)
-    logger.info("localPath:" + localPath)
-    SqlCommandParser.copyHdfsFileToLocal(localPath, localPath)
-    sqlFile = localPath
+    /**
+     *  run-application模式下，需要从hdfs复制到本地
+     */
+//    val localPath = "/tmp/" + sqlFile.substring(sqlFile.lastIndexOf("/") + 1)
+//    logger.info("localPath:" + localPath)
+//    SqlCommandParser.copyHdfsFileToLocal(localPath, localPath)
+//    sqlFile = localPath
 
     val listSql = Files.readAllLines(Paths.get(sqlFile));
-    logger.info("execute sql: " + listSql.mkString("\n"))
+    logger.info("execute sql: \n" + listSql.mkString("\n"))
     parseInsertInto(listSql)
 
     val calls = SqlCommandParser.parse(listSql);
@@ -66,7 +77,13 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
 
   }
 
-  //判断插入语句中是否有库名，如果有库名，则判断是Hive，并注册Catlog
+  /***
+   *
+   * @param listSql
+   * 判断插入语句中是否有库名，如果有库名，则判断是Hive，并注册Catlog，可能会生成bug
+   * 需要协调前端传入对应的sink引擎
+   */
+
   private def parseInsertInto(listSql:java.util.List[String]): Unit ={
 
     val insertSql = "insert into"
@@ -85,15 +102,23 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
       }
     }
 
+    /**
+     * 注册hive catalog
+     */
     if(useHive) {
       val hiveConf = new HiveConf()
       hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, hiveMetaStoreUrl)
       hiveConf.setVar(HiveConf.ConfVars.METASTOREWAREHOUSE, HIVE_WAREHOUSE_DEFAULT_PATH)
-      val hiveCatalog = new HiveCatalog(HIVE_CATALOG_NAME, hiveDatabaseName, hiveConf, HIVE_VERSION)
+      val hiveCatalog = new HiveCatalog(HIVE_CATALOG_NAME, hiveDatabaseName, hiveConf, hiveVersion)
       tableEnv.registerCatalog(HIVE_CATALOG_NAME, hiveCatalog)
     }
   }
 
+  /***
+   * 根据sql语句，获取SqlParse
+   * @param sql
+   * @return
+   */
    def getSqlParse(sql:String): SqlParser={
     val parser = SqlParser.create(sql,
       SqlParser.configBuilder.setParserFactory(
@@ -151,6 +176,9 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
     var dml = cmdCall.operands(0)
     try {
 
+      /**
+       * 如果是Hive则需要切换对应的catalog,或者写catalog全路径：hive_catalog.dw.table_name
+       */
       if (useHive) {
 //        this.tableEnv.getConfig.setSqlDialect(SqlDialect.HIVE)
 //        this.tableEnv.useCatalog(HIVE_CATALOG_NAME)
@@ -158,9 +186,7 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
       }
 
       //dml = dml.replace("from ", "from default_catalog.default_database.")
-
       println("dml:" + dml)
-
       this.tableEnv.executeSql(dml)
     } catch {
       case e: SqlParserException =>
