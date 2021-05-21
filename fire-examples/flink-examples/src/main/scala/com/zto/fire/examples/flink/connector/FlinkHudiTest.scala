@@ -1,5 +1,23 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.zto.fire.examples.flink.connector
 
+import com.zto.fire.common.conf.FireKafkaConf
 import com.zto.fire.flink.BaseFlinkStreaming
 
 object FlinkHudiTest extends BaseFlinkStreaming {
@@ -33,7 +51,7 @@ object FlinkHudiTest extends BaseFlinkStreaming {
     this.tableEnv.executeSql(sql)
 
     sql =
-      """
+      s"""
         |CREATE TABLE kafka_source_table (
         |  uuid VARCHAR(20),
         |  action VARCHAR(10),
@@ -43,7 +61,7 @@ object FlinkHudiTest extends BaseFlinkStreaming {
         |) WITH (
         |  'connector' = 'kafka',
         |  'topic' = 'kafka_hudi_test',
-        |  'properties.bootstrap.servers' = '10.9.46.111:9092',
+        |  'properties.bootstrap.servers' = '${FireKafkaConf.kafkaBrokers()}',
         |  'properties.group.id' = 'testGroup',
         |  'scan.startup.mode' = 'earliest-offset',
         |  'format' = 'json'
