@@ -18,7 +18,7 @@
 package com.zto.fire.spark
 
 import com.zto.fire._
-import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
 import com.zto.fire.common.util.{OSUtils, PropUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
@@ -151,7 +151,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     this._spark.registerUDF()
     this.sc = this._spark.sparkContext
     // 关联所连接的hive集群，根据预制方案启用HDFS HA
-    SparkUtils.linkHiveCluster(this.sc.hadoopConfiguration)
+    FireHDFSConf.hdfsHAConf.foreach(t => this.sc.hadoopConfiguration.set(t._1, t._2))
     this.catalog = this._spark.catalog
     this.sc.setLogLevel(FireSparkConf.logLevel)
     this.listener = new BaseSparkListener(this)

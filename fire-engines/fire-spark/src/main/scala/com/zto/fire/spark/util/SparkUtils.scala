@@ -548,19 +548,6 @@ object SparkUtils {
   }
 
   /**
-   * hdfs高可用关联hive集群
-   */
-  def linkHiveCluster(hadoopConf: Configuration): Unit = {
-    if (hadoopConf != null && FireHDFSConf.hdfsHAEnable) {
-      val hdfsHAConf = PropUtils.sliceKeys(s"${FireHDFSConf.HDFS_HA_PREFIX}${FireHiveConf.hiveCluster}.")
-      hdfsHAConf.foreach(kv => {
-        if (StringUtils.isBlank(kv._2)) throw new IllegalArgumentException(s"hdfs HA参数不合法，请检查配置项：${kv._1}")
-        hadoopConf.set(kv._1, kv._2)
-      })
-    }
-  }
-
-  /**
    * 配置化spark DataSource api中的options选项，可通过配置文件方式读取并覆盖代码中指定相同的配置项
    *
    * @param options

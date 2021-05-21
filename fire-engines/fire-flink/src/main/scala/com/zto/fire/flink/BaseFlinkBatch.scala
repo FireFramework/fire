@@ -91,8 +91,7 @@ trait BaseFlinkBatch extends BaseFlink {
     this.configParse(this.env)
     this.tableEnv = BatchTableEnvironment.create(this.env)
     if (StringUtils.isNotBlank(FireHiveConf.getHiveConfDir)) {
-      this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hive)
-      this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
+      this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hiveCatalog)
     }
     this.flink = this.env
     this.fire = this.flink

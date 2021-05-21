@@ -18,7 +18,6 @@
 package com.zto.fire.common.conf
 
 import com.zto.fire.common.util.PropUtils
-import org.apache.commons.lang3.StringUtils
 
 /**
  * HDFS配置
@@ -35,4 +34,13 @@ private[fire] object FireHDFSConf {
 
   // 配置是否启用hdfs HA
   lazy val hdfsHAEnable = PropUtils.getBoolean(this.HDFS_HA, true)
+
+  /**
+   * 读取HDFS高可用相关配置信息
+   */
+  def hdfsHAConf: Map[String, String] = {
+    if (FireHDFSConf.hdfsHAEnable) {
+      PropUtils.sliceKeys(s"${this.HDFS_HA_PREFIX}${FireHiveConf.hiveCluster}.")
+    } else Map.empty
+  }
 }
