@@ -238,6 +238,12 @@
             <artifactId>hbase-client_${scala.binary.version}</artifactId>
             <version>${hbase.version}</version>
             <scope>${maven.scope}</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>calcite-core</artifactId>
+                    <groupId>org.apache.calcite</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- hudi相关依赖 -->
@@ -252,6 +258,13 @@
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-flink_${flink.major.version}_${scala.binary.version}</artifactId>
             <version>${rocketmq.external.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc6</artifactId>
+            <version>11.2.0.3</version>
+            <scope>${maven.scope}</scope>
         </dependency>
     </dependencies>
     <build>
