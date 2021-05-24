@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 # hive集成与配置
 
 fire框架针对hive提供了更友好的支持方式，程序中可以通过配置文件指定读写的hive集群信息。通过fire框架，可以屏蔽spark或flink任务连接hive的具体细节，只需要通过hive.cluster=xxx即可指定任务如何去连hive。

@@ -1,7 +1,24 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.zto.fire.flink
 
 import com.zto.fire._
-import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
 import com.zto.fire.common.util.{OSUtils, PropUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
@@ -17,6 +34,7 @@ import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedC
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.table.catalog.hive.HiveCatalog
+import org.apache.hadoop.hive.conf.HiveConf
 
 
 /**
@@ -26,7 +44,7 @@ import org.apache.flink.table.catalog.hive.HiveCatalog
  */
 trait BaseFlink extends BaseFire {
   protected[fire] var _conf: Configuration = _
-  protected var hive: HiveCatalog = _
+  protected var hiveCatalog: HiveCatalog = _
 
   /**
    * 生命周期方法：初始化fire框架必要的信息
@@ -57,11 +75,14 @@ trait BaseFlink extends BaseFire {
     PropUtils.show()
     FlinkSchedulerManager.getInstance().registerTasks(this)
     // 创建HiveCatalog
-    val hiveConfDir = FireHiveConf.getHiveConfDir
-    if (StringUtils.isNotBlank(hiveConfDir)) {
+    val metastore = FireHiveConf.getMetastoreUrl
+    if (StringUtils.isNotBlank(metastore)) {
+      val hiveConf = new HiveConf()
+      hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, metastore)
+      // 根据所选的hive，进行对应hdfs的HA参数设置
+      FireHDFSConf.hdfsHAConf.foreach(prop => hiveConf.set(prop._1, prop._2))
+      this.hiveCatalog = new HiveCatalog(FireHiveConf.hiveCatalogName, FireHiveConf.defaultDB, hiveConf, FireHiveConf.hiveVersion)
       this.logger.info("enabled flink-hive support.")
-      this.logger.info(s"hive-site.xml path is $hiveConfDir")
-      this.hive = new HiveCatalog(FireHiveConf.hiveCatalogName, FireHiveConf.defaultDB, hiveConfDir, FireHiveConf.hiveVersion)
     }
   }
 

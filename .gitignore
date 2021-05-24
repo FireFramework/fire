@@ -2,3 +2,4 @@
 fire-parent.iml
 *.iml
 target/
+*.log
