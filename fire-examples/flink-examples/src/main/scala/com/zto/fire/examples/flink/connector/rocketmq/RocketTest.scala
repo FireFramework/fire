@@ -30,12 +30,12 @@ import com.zto.fire.flink.BaseFlinkStreaming
 object RocketTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    this.fire.createRocketMqPullStreamWithTag()
-    this.fire.createRocketMqPullStreamWithKey()
-    this.fire.createRocketMqPullStream()
+    this.fire.createRocketMqPullStreamWithTag().print()
+    // this.fire.createRocketMqPullStreamWithKey()
+    // this.fire.createRocketMqPullStream()
 
     // 从另一个rocketmq中消费数据
-    this.fire.createRocketMqPullStream(keyNum = 2)
+    this.fire.createRocketMqPullStream(keyNum = 2).print()
     this.fire.start
   }
 

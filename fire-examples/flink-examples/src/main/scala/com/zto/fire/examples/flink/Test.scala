@@ -37,11 +37,8 @@ import org.apache.flink.table.catalog.ObjectPath
 object Test extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    /*this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
-    this.tableEnv.getConfig.setSqlDialect(SqlDialect.HIVE)*/
     this.tableEnv.useCatalog(FireHiveConf.hiveCatalogName)
-    val table = this.hiveCatalog.getTable(new ObjectPath("tmp", "fire"))
-    val db = this.hiveCatalog.getDatabase("tmp")
+    this.tableEnv.getConfig.setSqlDialect(SqlDialect.HIVE)
     this.fire.sql(
       """
         |insert into hive.tmp.fire select * from tmp.account
