@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 # fire内置的restful接口
 
 fire框架在提供丰富好用的api给开发者的同时，也提供了大量的restful接口给大数据实时计算平台。通过对外暴露的restful接口，可以将每个任务与实时平台进行深入绑定，为平台建设提供了更大的想象空间。其中包括：**实时热重启接口、动态批次时间调整接口、sql在线调试接口**等。

@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.zto.fire.examples.spark
 
 import java.util.Date
@@ -68,9 +85,9 @@ object HudiTest extends BaseSparkCore {
       // 设置要同步的分区列名
       .option(HIVE_PARTITION_FIELDS_OPT_KEY, "ds")
       // 设置jdbc 连接同步
-      .option(HIVE_URL_OPT_KEY, "jdbc:hive2://10.9.46.107:10000")
+      .option(HIVE_URL_OPT_KEY, this.conf.getString("hive.jdbc.url"))
       .option(HIVE_USER_OPT_KEY, "admin")
-      .option(HIVE_PASS_OPT_KEY, "zto!@#$%^21232f297a57a5a743894a0e4a801fc3")
+      .option(HIVE_PASS_OPT_KEY, this.conf.getString("hive.jdbc.password"))
       // hudi表名称设置
       // 用于将分区字段值提取到Hive分区列中的类,这里我选择使用当前分区的值同步
       .option(HIVE_PARTITION_EXTRACTOR_CLASS_OPT_KEY, "org.apache.hudi.hive.MultiPartKeysValueExtractor")
