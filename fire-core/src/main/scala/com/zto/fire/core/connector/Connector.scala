@@ -17,8 +17,9 @@
 
 package com.zto.fire.core.connector
 
-import java.util.concurrent.ConcurrentHashMap
+import com.zto.fire.common.conf.FireFrameworkConf
 
+import java.util.concurrent.ConcurrentHashMap
 import com.zto.fire.predef._
 import com.zto.fire.common.util.ShutdownHookManager
 import org.slf4j.{Logger, LoggerFactory}
@@ -39,10 +40,12 @@ private[fire] trait Connector extends Serializable {
    * 用于注册释放资源
    */
   private[this] def hook(): Unit = {
-    ShutdownHookManager.addShutdownHook() { () => {
-      this.close()
-      logger.info("release connector successfully.")
-    }
+    if (FireFrameworkConf.connectorShutdownHookEnable) {
+      ShutdownHookManager.addShutdownHook() { () => {
+        this.close()
+        logger.info("release connector successfully.")
+      }
+      }
     }
   }
 

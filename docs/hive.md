@@ -54,8 +54,8 @@ spark.hdfs.ha.enable=true
 spark.hdfs.ha.conf.batch.fs.defaultFS=hdfs://nameservice1
 spark.hdfs.ha.conf.batch.dfs.nameservices=nameservice1
 spark.hdfs.ha.conf.batch.dfs.ha.namenodes.nameservice1=namenode5231,namenode5229
-spark.hdfs.ha.conf.batch.dfs.namenode.rpc-address.nameservice1.namenode5231=       hzpl004133168-hadoop-zh.ztosys.com:8020
-spark.hdfs.ha.conf.batch.dfs.namenode.rpc-address.nameservice1.namenode5229=       hzpl004132188-hadoop-zh.ztosys.com:8020
+spark.hdfs.ha.conf.batch.dfs.namenode.rpc-address.nameservice1.namenode5231=       192.168.1.1:8020
+spark.hdfs.ha.conf.batch.dfs.namenode.rpc-address.nameservice1.namenode5229=       192.168.1.2:8020
 spark.hdfs.ha.conf.batch.dfs.client.failover.proxy.provider.nameservice1=       org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider
 ```
 

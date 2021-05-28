@@ -58,6 +58,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_LOG_SQL_LENGTH = "fire.log.sql.length"
   // fire框架rest接口服务最大线程数
   lazy val FIRE_RESTFUL_MAX_THREAD = "fire.restful.max.thread"
+  lazy val FIRE_CONNECTOR_SHUTDOWN_HOOK_ENABLE = "fire.connector.shutdown_hook.enable"
   // 用于配置是否抛弃配置中心独立运行
   lazy val FIRE_CONFIG_CENTER_ENABLE = "fire.config_center.enable"
   // 本地运行环境下（Windows、Mac）是否调用配置中心接口获取配置信息
@@ -154,6 +155,8 @@ private[fire] object FireFrameworkConf {
   lazy val restServerSecret = PropUtils.getString(this.FIRE_REST_SERVER_SECRET)
   // 用于配置是否在调用shutdown后主动退出jvm进程
   lazy val shutdownExit = PropUtils.getBoolean(this.FIRE_SHUTDOWN_EXIT, false)
+  // 是否启用为connector注册shutdown hook，当jvm退出前close
+  lazy val connectorShutdownHookEnable = PropUtils.getBoolean(this.FIRE_CONNECTOR_SHUTDOWN_HOOK_ENABLE, false)
 
   // fire日志打印黑名单
   lazy val fireConfBlackList: Set[String] = {
