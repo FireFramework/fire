@@ -168,6 +168,22 @@ object PropUtils {
   private[fire] def getOriginalProperty(key: String): String = this.settingsMap.getOrElse(key, "")
 
   /**
+   * 将给定的配置中的值与计量单位拆分开
+   *
+   * @param value
+   * 配置的值，形如：10.3min
+   * @return
+   * 拆分单位后的tuple，形如：(10.3, min)
+   */
+  def splitUnit(value: String): (String, String) = {
+    val numericPrefix = RegularUtils.numericPrefix.findFirstIn(value)
+    val unitSuffix = RegularUtils.unitSuffix.findFirstIn(value)
+    if (numericPrefix.isEmpty || unitSuffix.isEmpty) throw new IllegalArgumentException("配置中不包含数值或计量单位，请检查配置")
+
+    (numericPrefix.get.trim, unitSuffix.get.trim)
+  }
+
+  /**
    * 获取字符串
    */
   def getString(key: String): String = this.getProperty(key)
@@ -280,7 +296,7 @@ object PropUtils {
         case _ if paramType eq classOf[Boolean] => value.toBoolean
         case _ => value
       }
-    } (this.logger, catchLog = s"为找到配置信息：${key}，请检查！")
+    }(this.logger, catchLog = s"为找到配置信息：${key}，请检查！")
     property.asInstanceOf[T]
   }
 
