@@ -37,8 +37,4 @@ object Test extends BaseSparkCore {
     this.fire.sql("select * from dim.baseorganize_addzero limit 10").show()
     this.fire.stop
   }
-
-  def main(args: Array[String]): Unit = {
-    this.init()
-  }
 }

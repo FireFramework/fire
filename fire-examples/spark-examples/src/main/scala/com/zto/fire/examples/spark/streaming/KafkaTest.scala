@@ -90,10 +90,4 @@ object KafkaTest extends BaseSparkStreaming {
   def loadTable3: Unit = {
     println(s"${DateFormatUtils.formatCurrentDateTime()}=================== 每天9点执行loadTable3 ===================")
   }
-
-
-  def main(args: Array[String]): Unit = {
-    this.init(10, false)
-    this.stop
-  }
 }
