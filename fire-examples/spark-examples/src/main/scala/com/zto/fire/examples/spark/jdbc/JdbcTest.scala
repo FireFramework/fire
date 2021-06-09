@@ -209,10 +209,4 @@ object JdbcTest extends BaseSparkCore {
     // 测试配置分发
     this.testExecutor
   }
-
-  def main(args: Array[String]): Unit = {
-    this.init(args = args)
-
-    Thread.currentThread().join()
-  }
 }
