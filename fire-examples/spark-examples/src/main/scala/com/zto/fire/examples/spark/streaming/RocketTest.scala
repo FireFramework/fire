@@ -44,7 +44,7 @@ object RocketTest extends BaseSparkStreaming {
     this.fire.start()
   }
 
-  def main(args: Array[String]): Unit = {
+  override def main(args: Array[String]): Unit = {
     this.init(10, false)
   }
 }

@@ -48,8 +48,4 @@ object Test extends BaseFlinkStreaming {
         |select * from tmp.fire
         |""".stripMargin).print()
   }
-
-  def main(args: Array[String]): Unit = {
-    this.init()
-  }
 }

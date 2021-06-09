@@ -46,7 +46,7 @@ object FlinkSqlCommit extends BaseFlinkStreaming {
   var useHive: Boolean = false
   var hiveTableName: String = null
 
-  def main(args: Array[String]): Unit = {
+  override def main(args: Array[String]): Unit = {
 
     println("参数：" + args.mkString(","))
     sqlFile = args(0)
