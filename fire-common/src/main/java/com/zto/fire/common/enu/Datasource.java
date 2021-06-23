@@ -24,12 +24,12 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author ChengLong
  * @create 2020-07-07 16:36
- * @since 1.0.0
+ * @since 2.0.0
  */
-public enum Datasource {
+public enum Datasource  {
     HIVE(1), HBASE(2), KAFKA(3), ROCKETMQ(4), REDIS(5),
     ES(6), MYSQL(7), TIDB(8), ORACLE(9), SQLSERVER(10),
-    DB2(11), CLICKHOUSE(12), PRESTO(13), KYLIN(14), DERBY(15), UNKNOWN(20);
+    DB2(11), CLICKHOUSE(12), PRESTO(13), KYLIN(14), DERBY(15), VIEW(16), UNKNOWN(404);
 
     Datasource(int type) {
     }

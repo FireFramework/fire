@@ -20,7 +20,7 @@ package com.zto.fire.flink.ext.stream
 import java.util.Properties
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
-import com.zto.fire.common.util.{KafkaUtils, ValueUtils}
+import com.zto.fire.common.util.{DatasourceManager, KafkaUtils, ValueUtils}
 import com.zto.fire.core.Api
 import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvider}
 import com.zto.fire.flink.util.{FlinkSingletonFactory, RocketMQUtils}
@@ -73,13 +73,19 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
                           keyNum: Int = 1): FlinkKafkaConsumer[String] = {
     val confTopics = FireKafkaConf.kafkaTopics(keyNum)
     val topicList = if (StringUtils.isNotBlank(confTopics)) confTopics.split(",") else topics.toArray
-    require(topicList != null && topicList.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：flink.kafka.topics$keyNum")
+    require(topicList != null && topicList.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：kafka.topics$keyNum")
 
     val confKafkaParams = KafkaUtils.kafkaParams(kafkaParams, FlinkSingletonFactory.getAppName, keyNum = keyNum)
     // 配置文件中相同的key优先级高于代码中的
     require(confKafkaParams.nonEmpty, "kafka相关配置不能为空！")
+    require(confKafkaParams.contains("bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：kafka.brokers.name$keyNum")
+    require(confKafkaParams.contains("group.id"), s"kafka group.id不能为空，请在配置文件中指定：kafka.group.id$keyNum")
+
     val properties = new Properties()
     confKafkaParams.foreach(t => properties.setProperty(t._1, t._2.toString))
+
+    // 消费kafka埋点信息
+    DatasourceManager.addMQDatasource("kafka", confKafkaParams("bootstrap.servers").toString, topicList.mkString("", ", ", ""), confKafkaParams("group.id").toString)
 
     val kafkaConsumer = new FlinkKafkaConsumer[String](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
       new SimpleStringSchema(), properties)
@@ -148,10 +154,10 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
    * rocketMQ DStream
    */
   def createRocketMqPullStreamWithTag(rocketParam: Map[String, String] = null,
-                               groupId: String = null,
-                               topics: String = null,
-                               tag: String = null,
-                               keyNum: Int = 1): DataStream[(String, String, String)] = {
+                                      groupId: String = null,
+                                      topics: String = null,
+                                      tag: String = null,
+                                      keyNum: Int = 1): DataStream[(String, String, String)] = {
     // 获取topic信息，配置文件优先级高于代码中指定的
     val confTopics = FireRocketMQConf.rocketTopics(keyNum)
     val finalTopics = if (StringUtils.isNotBlank(confTopics)) confTopics else topics
@@ -166,7 +172,9 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
     val finalRocketParam = RocketMQUtils.rocketParams(rocketParam, finalTopics, finalGroupId, rocketNameServer = null, tag = tag, keyNum)
     require(!finalRocketParam.isEmpty, "RocketMQ相关配置不能为空！")
     require(finalRocketParam.containsKey(RocketMQConfig.NAME_SERVER_ADDR), s"RocketMQ nameserver.address不能为空，请在配置文件中指定：rocket.brokers.name$keyNum")
-    // require(finalRocketParam.containsKey(RocketMQConfig.CONSUMER_TAG), s"RocketMQ tag不能为空，请在配置文件中指定：rocket.consumer.tag$keyNum")
+
+    // 消费rocketmq埋点信息
+    DatasourceManager.addMQDatasource("rocketmq", finalRocketParam(RocketMQConfig.NAME_SERVER_ADDR), finalTopics, finalGroupId)
 
     val props = new Properties()
     props.putAll(finalRocketParam)
@@ -187,10 +195,10 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
    * rocketMQ DStream
    */
   def createRocketMqPullStreamWithKey(rocketParam: Map[String, String] = null,
-                               groupId: String = null,
-                               topics: String = null,
-                               tag: String = null,
-                               keyNum: Int = 1): DataStream[(String, String)] = {
+                                      groupId: String = null,
+                                      topics: String = null,
+                                      tag: String = null,
+                                      keyNum: Int = 1): DataStream[(String, String)] = {
     this.createRocketMqPullStreamWithTag(rocketParam, groupId, topics, tag, keyNum).map(t => (t._2, t._3))
   }
 

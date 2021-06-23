@@ -42,7 +42,7 @@ import scala.reflect.ClassTag
  * 用于区分连接不同的数据源，不同配置源对应不同的Connector实例
  * @author ChengLong 2020-11-27 10:31:03
  */
-private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
+class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
   private[this] var connPool: ComboPooledDataSource = _
   // 日志中sql截取的长度
   private lazy val logSqlLength = FireFrameworkConf.logSqlLength
@@ -150,8 +150,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
-    }(this.logger, s"${this.sqlBuriedPoint(sql)}",
-      s"executeUpdate failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
+    }(this.logger, s"${this.sqlBuriedPoint(sql)}", s"executeUpdate failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
   }
 
   /**
@@ -202,8 +201,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
-    }(this.logger, s"${this.sqlBuriedPoint(sql)}",
-      s"executeBatch failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
+    }(this.logger, s"${this.sqlBuriedPoint(sql)}", s"executeBatch failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
   }
 
   /**
@@ -222,7 +220,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
     val listBuffer = ListBuffer[T]()
 
     this.executeQueryCall(sql, params, rs => {
-      listBuffer ++= DBUtils.dbResultSet2Bean(rs, clazz)
+      listBuffer ++= DBUtils.resultSet2BeanList(rs, clazz)
       listBuffer.size
     }, connection)
 
@@ -264,8 +262,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       this.logger.info(s"executeQueryCall success. keyNum: ${keyNum} count: $count")
     } {
       this.release(sql, conn, stat, rs)
-    }(this.logger, s"${this.sqlBuriedPoint(sql, false)}",
-      s"executeQueryCall failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, false)}", finallyCatchLog)
+    }(this.logger, s"${this.sqlBuriedPoint(sql, false)}", s"executeQueryCall failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, false)}", finallyCatchLog)
   }
 
   /**

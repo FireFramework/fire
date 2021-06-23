@@ -28,10 +28,10 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 /**
- * 用于统计当前任务使用到的数据源信息，包括MQ、DB等连接信息等
+ * 用于统计当前任务使用到的数据源信息，包括MQ、DB、hive等连接信息等
  *
  * @author ChengLong
- * @since 1.0.0
+ * @since 2.0.0
  * @create 2020-11-26 15:30
  */
 private[fire] class DatasourceManager {
@@ -48,23 +48,21 @@ private[fire] class DatasourceManager {
    */
   private[this] def sqlParse(): Unit = {
     if (buriedPointDatasourceEnable && threadPool != null) {
-      threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(new Runnable {
-        override def run(): Unit = {
-          val start = currentTime
-          if (sqlQueue != null) {
-            for (i <- 1 until sqlQueue.size()) {
-              val sqlSource = sqlQueue.poll()
-              if (sqlSource != null) {
-                val tableNames = SQLUtils.tableParse(sqlSource.sql)
-                if (tableNames != null && tableNames.nonEmpty) {
-                  tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
-                    add(Datasource.parse(sqlSource.datasource), DBDatasource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, sqlSource.sink))
-                  })
-                }
+      threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(() => {
+        val start = currentTime
+        if (sqlQueue != null) {
+          for (i <- 1 until sqlQueue.size()) {
+            val sqlSource = sqlQueue.poll()
+            if (sqlSource != null) {
+              val tableNames = SQLUtils.tableParse(sqlSource.sql)
+              if (tableNames != null && tableNames.nonEmpty) {
+                tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
+                  add(Datasource.parse(sqlSource.datasource), DBDatasource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, sqlSource.sink))
+                })
               }
             }
-            logger.debug(s"异步解析SQL埋点中的表信息,耗时：${timecost(start)}")
           }
+          logger.debug(s"异步解析SQL埋点中的表信息,耗时：${timecost(start)}")
         }
       }, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod, TimeUnit.SECONDS)
     }
@@ -74,6 +72,7 @@ private[fire] class DatasourceManager {
    * 添加一个数据源描述信息
    */
   private[fire] def add(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = {
+    if (!buriedPointDatasourceEnable) return
     var set = this.datasourceMap.get(sourceType)
     if (set == null) {
       set = new util.HashSet[DatasourceDesc]()

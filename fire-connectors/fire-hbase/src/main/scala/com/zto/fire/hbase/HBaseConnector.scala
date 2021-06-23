@@ -61,7 +61,7 @@ import scala.reflect.{ClassTag, classTag}
  * @since 2.0.0
  * @author ChengLong 2020-11-11
  */
-private[fire] class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
+class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
   // --------------------------------------- 反射缓存 --------------------------------------- //
   private[this] var configuration: Configuration = _
   private[this] lazy val cacheFieldMap = new JConcurrentHashMap[Class[_], JMap[String, Field]]()

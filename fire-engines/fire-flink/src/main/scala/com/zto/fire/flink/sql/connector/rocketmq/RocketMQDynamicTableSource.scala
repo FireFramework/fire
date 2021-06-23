@@ -18,6 +18,7 @@
 package com.zto.fire.flink.sql.connector.rocketmq
 
 import com.zto.fire.common.conf.FireRocketMQConf
+import com.zto.fire.common.util.DatasourceManager
 import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.{TOPIC, getRocketMQProperties}
 import com.zto.fire.noEmpty
 import com.zto.fire.predef._
@@ -91,6 +92,9 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
     // 获取tag信息
     val tag = tableOptions.get(FireRocketMQConf.ROCKET_CONSUMER_TAG)
     if (noEmpty(tag)) properties.setProperty(RocketMQConfig.CONSUMER_TAG, tag) else properties.setProperty(RocketMQConfig.CONSUMER_TAG, "*")
+
+    // 消费rocketmq埋点信息
+    DatasourceManager.addMQDatasource("rocketmq", nameserver, topic, groupId)
 
     val keyDeserialization = createDeserialization(context, keyDecodingFormat, keyProjection, keyPrefix)
     val valueDeserialization = createDeserialization(context, valueDecodingFormat, valueProjection, null)

@@ -82,7 +82,7 @@ trait BaseFlink extends BaseFire {
       // 根据所选的hive，进行对应hdfs的HA参数设置
       FireHDFSConf.hdfsHAConf.foreach(prop => hiveConf.set(prop._1, prop._2))
       this.hiveCatalog = new HiveCatalog(FireHiveConf.hiveCatalogName, FireHiveConf.defaultDB, hiveConf, FireHiveConf.hiveVersion)
-      this.logger.info("enabled flink-hive support.")
+      this.logger.info(s"enabled flink-hive support. catalogName is ${FireHiveConf.hiveCatalogName}")
     }
   }
 
@@ -159,6 +159,8 @@ trait BaseFlink extends BaseFire {
         if (FireFlinkConf.streamCheckpointTolerableTailureNumber >= 0) ckConfig.setTolerableCheckpointFailureNumber(FireFlinkConf.streamCheckpointTolerableTailureNumber)
         // flink.stream.checkpoint.externalized
         if (StringUtils.isNotBlank(FireFlinkConf.streamCheckpointExternalized)) ckConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.valueOf(FireFlinkConf.streamCheckpointExternalized.trim))
+        // flink.stream.checkpoint.unaligned.enable
+        ckConfig.enableUnalignedCheckpoints(FireFlinkConf.unalignedCheckpointEnable)
       }
 
       streamEnv.getConfig
