@@ -3,8 +3,6 @@ package com.zto.fire.examples.flink
 import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.sql.FlinkSqlParser
-import org.apache.flink.table.api.SqlDialect
-import org.apache.flink.table.catalog.ObjectPath
 
 object FlinkSQLParseTest extends BaseFlinkStreaming {
 
@@ -41,7 +39,7 @@ object FlinkSQLParseTest extends BaseFlinkStreaming {
     // this.tableEnv.getConfig.setSqlDialect(SqlDialect.HIVE)
     // FlinkSqlParser.tableSet.foreach(println)
     // this.fire.sql("select * from hive.dim.baseorganize limit 10").print()
-    FlinkSqlParser.sqlParser(
+    this.fire.sql(
       """
         |CREATE TABLE t_student (
         |  `table` STRING,
@@ -55,9 +53,9 @@ object FlinkSQLParseTest extends BaseFlinkStreaming {
         |  'scan.startup.mode' = 'earliest-offset',
         |  'format' = 'json'
         |)
-        |""".stripMargin)
-    FlinkSqlParser.sqlParser("select * from tmp.baseorganize")
-    FlinkSqlParser.tableMap.foreach(println)
+        |""".stripMargin).print()
+    // this.fire.sql("select * from hive.tmp.baseorganize limit 10").print()
+    this.fire.sql("select after.id,count(1) from t_student group by after.id").print()
   }
 
 }

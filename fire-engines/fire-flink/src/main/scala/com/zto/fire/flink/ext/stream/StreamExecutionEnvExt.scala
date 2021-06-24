@@ -245,6 +245,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
    */
   def sql(sql: String, keyNum: Int = 0): TableResult = {
     require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
+    DatasourceManager.addSql(sql)
     this.tableEnv.executeSql(sql.with$(keyNum))
   }
 

@@ -39,7 +39,9 @@ private[fire] class DatasourceManager {
   // 用于存放当前任务用到的数据源信息
   private[this] lazy val datasourceMap = new ConcurrentHashMap[Datasource, util.HashSet[DatasourceDesc]]()
   // 用于收集来自不同数据源的sql语句，后续会异步进行SQL解析，考虑到分布式场景下会有很多重复的SQL执行，因此使用了线程不安全的队列即可满足需求
-  private lazy val sqlQueue = EvictingQueue.create[DBSqlSource](buriedPointDatasourceMaxSize)
+  private lazy val dbSqlQueue = EvictingQueue.create[DBSqlSource](buriedPointDatasourceMaxSize)
+  // 用于收集各实时引擎执行的sql语句
+  private lazy val sqlQueue = EvictingQueue.create[String](buriedPointDatasourceMaxSize)
   private[this] lazy val threadPool = ThreadUtils.createThreadPool("DatasourceManager", ThreadPoolType.SCHEDULED)
   this.sqlParse()
 
@@ -50,9 +52,9 @@ private[fire] class DatasourceManager {
     if (buriedPointDatasourceEnable && threadPool != null) {
       threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(() => {
         val start = currentTime
-        if (sqlQueue != null) {
-          for (i <- 1 until sqlQueue.size()) {
-            val sqlSource = sqlQueue.poll()
+        if (dbSqlQueue != null) {
+          for (i <- 1 until dbSqlQueue.size()) {
+            val sqlSource = dbSqlQueue.poll()
             if (sqlSource != null) {
               val tableNames = SQLUtils.tableParse(sqlSource.sql)
               if (tableNames != null && tableNames.nonEmpty) {
@@ -84,7 +86,12 @@ private[fire] class DatasourceManager {
   /**
    * 向队列中添加一条sql类型的数据源，用于后续异步解析
    */
-  private[fire] def addSql(source: DBSqlSource): Unit = if (buriedPointDatasourceEnable) this.sqlQueue.offer(source)
+  private[fire] def addDBSql(source: DBSqlSource): Unit = if (buriedPointDatasourceEnable) this.dbSqlQueue.offer(source)
+
+  /**
+   * 收集执行的sql语句
+   */
+  private[fire] def addSql(sql: String): Unit = if (buriedPointDatasourceEnable) this.sqlQueue.offer(sql)
 
   /**
    * 获取所有使用到的数据源
@@ -93,10 +100,26 @@ private[fire] class DatasourceManager {
 }
 
 /**
+ * 反射工具类，用于反射调用
+ */
+object ReflectionHelper {
+
+  /**
+   * 添加一条sql记录到队列中
+   *
+   * @param sql 待解析的sql语句
+   */
+  def addSql(sql: String): Unit = {
+    DatasourceManager.addSql(sql)
+  }
+}
+
+/**
  * 对外暴露API，用于收集并处理各种埋点信息
  */
 private[fire] object DatasourceManager {
-  private lazy val manager = new DatasourceManager
+  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
+  private[fire] lazy val manager = new DatasourceManager
 
   /**
    * 添加一条sql记录到队列中
@@ -111,8 +134,18 @@ private[fire] object DatasourceManager {
    * @param sql
    *             待解析的sql语句
    */
-  private[fire] def addSql(datasource: String, cluster: String, username: String, sql: String, sink: Boolean = true): Unit = {
-    this.manager.addSql(DBSqlSource(datasource, cluster, username, sql, sink))
+  private[fire] def addDBSql(datasource: String, cluster: String, username: String, sql: String, sink: Boolean = true): Unit = {
+    this.manager.addDBSql(DBSqlSource(datasource, cluster, username, sql, sink))
+  }
+
+  /**
+   * 添加一条sql记录到队列中
+   *
+   * @param sql 待解析的sql语句
+   */
+  def addSql(sql: String): Unit = {
+    DatasourceManager.manager.addSql(sql)
+    this.logger.info(s"执行sql语句：${sql}")
   }
 
   /**

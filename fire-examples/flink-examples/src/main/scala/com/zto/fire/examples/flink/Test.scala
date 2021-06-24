@@ -19,12 +19,13 @@ package com.zto.fire.examples.flink
 
 import com.zto.fire._
 import com.zto.fire.common.conf.FireHiveConf
-import com.zto.fire.common.util.{JSONUtils, PropUtils, StringsUtils}
+import com.zto.fire.common.util.{DatasourceManager, JSONUtils, PropUtils, ReflectionUtils, StringsUtils}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.SqlDialect
+import org.apache.flink.table.api.internal.TableEnvironmentImpl
 import org.apache.flink.table.catalog.ObjectPath
 
 /**
