@@ -20,7 +20,7 @@ trait SqlParser {
   /**
    * sql解析后的库表信息包装类
    */
-  case class Table(db: String = "", name: String = "", var partition: mutable.Map[String, String] = mutable.Map.empty, var catalog: Datasource = Datasource.VIEW, operation: Operation = Operation.SELECT, var properties: mutable.Map[String, String] = mutable.Map.empty)
+  case class Table(db: String = "", name: String = "", var partition: mutable.Map[String, String] = mutable.Map.empty, var catalog: Datasource = Datasource.VIEW, operation: Operation = Operation.SELECT, properties: mutable.Map[String, String] = mutable.Map.empty)
 
   /**
    * 用于解析给定的SQL语句

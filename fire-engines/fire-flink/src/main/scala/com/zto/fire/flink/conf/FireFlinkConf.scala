@@ -50,6 +50,7 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_CLIENT_SIMPLE_CLASS_NAME = "flink.client.simple.class.name"
   lazy val FLINK_SQL_CONF_UDF_JARS = "flink.sql.conf.pipeline.jars"
   lazy val FLINK_SQL_LOG_ENABLE = "flink.sql.log.enable"
+  lazy val FLINK_SQL_DEFAULT_CATALOG_NAME = "flink.sql.default.catalog.name"
 
   // checkpoint相关配置项
   lazy val FLINK_STREAM_CHECKPOINT_INTERVAL = "flink.stream.checkpoint.interval"
@@ -70,6 +71,7 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_SQL_UDF_ENABLE = "flink.sql.udf.fireUdf.enable"
   lazy val FLINK_SQL_WITH_PREFIX = "flink.sql.with."
 
+  lazy val defaultCatalogName = PropUtils.getString(this.FLINK_SQL_DEFAULT_CATALOG_NAME, "default_catalog")
   lazy val sqlWithReplaceModeEnable = PropUtils.getBoolean(this.FLINK_SQL_WITH_REPLACE_MODE_ENABLE, false)
   lazy val autoGenerateUidEnable = PropUtils.getBoolean(this.FLINK_AUTO_GENERATE_UID_ENABLE, true)
   lazy val autoTypeRegistrationEnable = PropUtils.getBoolean(this.FLINK_AUTO_TYPE_REGISTRATION_ENABLE, true)
