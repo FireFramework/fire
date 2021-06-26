@@ -2,6 +2,7 @@ package com.zto.fire.spark.sql
 
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.util.TableMeta
 import com.zto.fire.core.sql.SqlParser
 import com.zto.fire.spark.util.SparkSingletonFactory
 import com.zto.fire.{isEmpty, tryWithLog}
@@ -92,7 +93,7 @@ object SparkSqlParser extends SqlParser {
           case unresolvedRelation: UnresolvedRelation =>
             val identifier = unresolvedRelation.multipartIdentifier
             val dbTable = this.tableName(identifier)
-            this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> Table(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.SELECT))
+            this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> TableMeta(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.SELECT))
           case _ => this.logger.debug(s"Parse query SQL异常，无法匹配该Statement. sql->$sql")
         }
       })
@@ -119,23 +120,23 @@ object SparkSqlParser extends SqlParser {
         case insertInto: InsertIntoStatement => {
           val identifier = insertInto.table.asInstanceOf[UnresolvedRelation].multipartIdentifier
           val dbTable = this.tableName(identifier)
-          val table = Table(dbTable._1, dbTable._2, mutable.Map(insertInto.partitionSpec.map(t => (t._1, t._2.getOrElse(""))).toSeq: _*), this.isHiveTableDatasource(dbTable), Operation.INSERT_INTO)
+          val table = TableMeta(dbTable._1, dbTable._2, mutable.Map(insertInto.partitionSpec.map(t => (t._1, t._2.getOrElse(""))).toSeq: _*), this.isHiveTableDatasource(dbTable), Operation.INSERT_INTO)
           this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> table)
         }
         // drop table语句解析
         case dropTable: DropTableStatement => {
           val dbTable = this.tableName(dropTable.tableName)
-          val table = Table(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.DROP_TABLE)
+          val table = TableMeta(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.DROP_TABLE)
           this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> table)
         }
         // rename table语句解析
         case renameTable: RenameTableStatement => {
           val oldDBTableTuple = this.tableName(renameTable.oldName)
-          val oldTable = Table(oldDBTableTuple._1, oldDBTableTuple._2, catalog = this.isHiveTableDatasource(oldDBTableTuple), operation = Operation.RENAME_TABLE_OLD)
+          val oldTable = TableMeta(oldDBTableTuple._1, oldDBTableTuple._2, catalog = this.isHiveTableDatasource(oldDBTableTuple), operation = Operation.RENAME_TABLE_OLD)
           this.tableMap += (this.tableIdentifier(oldDBTableTuple._1, oldDBTableTuple._2) -> oldTable)
 
           val newDBTableTuple = this.tableName(renameTable.newName)
-          val newTable = Table(newDBTableTuple._1, newDBTableTuple._2, catalog = this.isHiveTableDatasource(newDBTableTuple), operation = Operation.RENAME_TABLE_NEW)
+          val newTable = TableMeta(newDBTableTuple._1, newDBTableTuple._2, catalog = this.isHiveTableDatasource(newDBTableTuple), operation = Operation.RENAME_TABLE_NEW)
           this.tableMap += (this.tableIdentifier(newDBTableTuple._1, newDBTableTuple._2) -> newTable)
         }
         // create table语句解析
@@ -144,64 +145,64 @@ object SparkSqlParser extends SqlParser {
           val dbTable = this.tableName(table)
           val map = mutable.Map[String, String]()
           createTable.tableDesc.partitionColumnNames.foreach(partition => map.put(partition, ""))
-          val tableObj =  Table(dbTable._1, dbTable._2, map, this.isHiveTableDatasource(dbTable), Operation.CREATE_TABLE)
+          val tableObj =  TableMeta(dbTable._1, dbTable._2, map, this.isHiveTableDatasource(dbTable), Operation.CREATE_TABLE)
           this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> tableObj)
         }
         // create table as select语句解析
         case createTableAsSelect: CreateTableAsSelectStatement => {
           val dbTable = this.tableName(createTableAsSelect.tableName)
-          val table = Table(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.CREATE_TABLE_AS_SELECT)
+          val table = TableMeta(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.CREATE_TABLE_AS_SELECT)
           this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> table)
         }
         // rename partition语句解析
         case renamePartition: AlterTableRenamePartitionStatement => {
           val dbTable = this.tableName(renamePartition.tableName)
           val catalog = this.isHiveTableDatasource(dbTable)
-          val oldTable = Table(dbTable._1, dbTable._2, mutable.Map(renamePartition.from.toSeq: _*), catalog, Operation.ALTER_TABLE_RENAME_PARTITION_OLD)
-          val newTable = Table(dbTable._1, dbTable._2, mutable.Map(renamePartition.to.toSeq: _*), catalog, Operation.ALTER_TABLE_RENAME_PARTITION_NEW)
+          val oldTable = TableMeta(dbTable._1, dbTable._2, mutable.Map(renamePartition.from.toSeq: _*), catalog, Operation.ALTER_TABLE_RENAME_PARTITION_OLD)
+          val newTable = TableMeta(dbTable._1, dbTable._2, mutable.Map(renamePartition.to.toSeq: _*), catalog, Operation.ALTER_TABLE_RENAME_PARTITION_NEW)
           this.tableMap += (this.tableIdentifier("old_" + dbTable._1, dbTable._2) -> oldTable)
           this.tableMap += (this.tableIdentifier("new_" + dbTable._1, dbTable._2) -> newTable)
         }
         // drop partition语句解析
         case dropPartition: AlterTableDropPartitionStatement => {
           val dbTable = this.tableName(dropPartition.tableName)
-          val table = Table(dbTable._1, dbTable._2, mutable.Map(dropPartition.specs.head.toSeq: _*), this.isHiveTableDatasource(dbTable), Operation.ALTER_TABLE_DROP_PARTITION)
+          val table = TableMeta(dbTable._1, dbTable._2, mutable.Map(dropPartition.specs.head.toSeq: _*), this.isHiveTableDatasource(dbTable), Operation.ALTER_TABLE_DROP_PARTITION)
           this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> table)
         }
         // add partition语句解析
         case addPartition: AlterTableAddPartitionStatement => {
           val dbTable = this.tableName(addPartition.tableName)
-          val table = Table(dbTable._1, dbTable._2, mutable.Map(addPartition.partitionSpecsAndLocs.head._1.toSeq: _*), this.isHiveTableDatasource(dbTable), Operation.ALTER_TABLE_ADD_PARTITION)
+          val table = TableMeta(dbTable._1, dbTable._2, mutable.Map(addPartition.partitionSpecsAndLocs.head._1.toSeq: _*), this.isHiveTableDatasource(dbTable), Operation.ALTER_TABLE_ADD_PARTITION)
           this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> table)
         }
         // truncate table语句解析
         case truncateTable: TruncateTableStatement => {
           val dbTable = this.tableName(truncateTable.tableName)
-          val table = Table(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.TRUNCATE)
+          val table = TableMeta(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.TRUNCATE)
           this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> table)
         }
         case cacheTable: CacheTableStatement => {
           val dbTable = this.tableName(cacheTable.tableName)
-          val table = Table(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.CACHE)
+          val table = TableMeta(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.CACHE)
           this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> table)
         }
         case uncacheTable: UncacheTableStatement => {
           val dbTable = this.tableName(uncacheTable.tableName)
-          val table = Table(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.UNCACHE)
+          val table = TableMeta(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.UNCACHE)
           this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> table)
         }
         case refreshTable: RefreshTableStatement => {
           val dbTable = this.tableName(refreshTable.tableName)
-          val table = Table(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.REFRESH)
+          val table = TableMeta(dbTable._1, dbTable._2, catalog = this.isHiveTableDatasource(dbTable), operation = Operation.REFRESH)
           this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> table)
         }
         case createDatabase: CreateNamespaceStatement => {
-          val table = Table(createDatabase.namespace.head, "", catalog = Datasource.HIVE, operation = Operation.CREATE_DATABASE)
+          val table = TableMeta(createDatabase.namespace.head, "", catalog = Datasource.HIVE, operation = Operation.CREATE_DATABASE)
           this.tableMap += (createDatabase.namespace.head -> table)
         }
         case dropDatabase: DropNamespace => {
           val dbName = dropDatabase.namespace.asInstanceOf[UnresolvedNamespace].multipartIdentifier.head
-          val table = Table(dbName, catalog = Datasource.HIVE, operation = Operation.DROP_DATABASE)
+          val table = TableMeta(dbName, catalog = Datasource.HIVE, operation = Operation.DROP_DATABASE)
           this.tableMap += (dbName -> table)
         }
         case _ => this.logger.debug(s"Parse ddl SQL异常，无法匹配该Statement. sql->$sql")

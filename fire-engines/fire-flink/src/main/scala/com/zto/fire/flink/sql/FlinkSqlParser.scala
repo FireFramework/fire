@@ -4,6 +4,7 @@ import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.util.TableMeta
 import com.zto.fire.core.sql.SqlParser
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.FlinkSingletonFactory
@@ -91,10 +92,10 @@ object FlinkSqlParser extends SqlParser {
   private def setTableName(seq: Seq[String], operation: Operation): Unit = {
     val datasource = if (this.isHiveTable(null, seq.head)) Datasource.HIVE else Datasource.VIEW
     if (seq.size == 1) {
-      val table = Table("", seq.head, catalog = datasource, operation = operation)
+      val table = TableMeta("", seq.head, catalog = datasource, operation = operation)
       this.tableMap += (this.tableIdentifier("", seq.head) -> table)
     } else {
-      val table = Table(seq.head, seq(1), catalog = datasource, operation = operation)
+      val table = TableMeta(seq.head, seq(1), catalog = datasource, operation = operation)
       this.tableMap += (this.tableIdentifier(seq.head, seq(1)) -> table)
     }
   }

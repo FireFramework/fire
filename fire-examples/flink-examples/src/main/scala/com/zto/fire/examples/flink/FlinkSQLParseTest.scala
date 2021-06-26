@@ -2,6 +2,7 @@ package com.zto.fire.examples.flink
 
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.sql.FlinkSqlParser
+import com.zto.fire._
 
 object FlinkSQLParseTest extends BaseFlinkStreaming {
 
@@ -46,9 +47,9 @@ object FlinkSQLParseTest extends BaseFlinkStreaming {
         |ALTER TABLE tmp.food DROP PARTITION (ds='20151219', city = 'beijing')
         |""".stripMargin
     val dropDB = "drop database tmp"
-
-    FlinkSqlParser.sqlParser(renameTable)
-    FlinkSqlParser.tableMap.foreach(println)
+    this.fire.sql("create database tmp")
+    this.fire.sql(createKafkaTable)
+    this.fire.sql("select * from tmp.t_student").print()
   }
 
 }

@@ -1,6 +1,6 @@
 package com.zto.fire.core.sql
 
-import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.util.TableMeta
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
@@ -13,14 +13,9 @@ import scala.collection.mutable
  */
 trait SqlParser {
   // 用于存放解析后的库表类
-  protected[fire] lazy val tableMap = new mutable.LinkedHashMap[String, Table]()
+  lazy val tableMap = new mutable.LinkedHashMap[String, TableMeta]()
   protected[fire] lazy val hiveTableMap = new mutable.HashMap[String, Boolean]()
   protected lazy val logger = LoggerFactory.getLogger(this.getClass)
-
-  /**
-   * sql解析后的库表信息包装类
-   */
-  case class Table(db: String = "", name: String = "", var partition: mutable.Map[String, String] = mutable.Map.empty, var catalog: Datasource = Datasource.VIEW, operation: Operation = Operation.SELECT, properties: mutable.Map[String, String] = mutable.Map.empty)
 
   /**
    * 用于解析给定的SQL语句

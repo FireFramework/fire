@@ -23,6 +23,7 @@ import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.util.{DatasourceManager, KafkaUtils, ValueUtils}
 import com.zto.fire.core.Api
 import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvider}
+import com.zto.fire.flink.sql.FlinkSqlParser
 import com.zto.fire.flink.util.{FlinkSingletonFactory, RocketMQUtils}
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import org.apache.commons.lang3.StringUtils
@@ -245,7 +246,10 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
    */
   def sql(sql: String, keyNum: Int = 0): TableResult = {
     require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
-    DatasourceManager.addSql(sql)
+    try {
+      FlinkSqlParser.sqlParser(sql)
+      DatasourceManager.addTableMeta(FlinkSqlParser.tableMap)
+    }
     this.tableEnv.executeSql(sql.with$(keyNum))
   }
 

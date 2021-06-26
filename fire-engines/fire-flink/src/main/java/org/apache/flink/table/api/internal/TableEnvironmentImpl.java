@@ -57,6 +57,7 @@ import org.apache.flink.table.utils.PrintUtils;
 import org.apache.flink.table.utils.TableSchemaUtils;
 import org.apache.flink.types.Row;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -78,6 +79,8 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
     private final OperationTreeBuilder operationTreeBuilder;
     private final List<ModifyOperation> bufferedModifyOperations = new ArrayList<>();
     private static Method addSqlMethod = null;
+    private static Method sqlParserMethod = null;
+    private static Field tableMapField = null;
 
     protected final TableConfig tableConfig;
     protected final Executor execEnv;
@@ -574,16 +577,26 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
 
     @Override
     public TableResult executeSql(String statement) {
-        try {
+        /*try {
             if (addSqlMethod == null) {
                 Class clazz = Class.forName("com.zto.fire.common.util.ReflectionHelper");
-                addSqlMethod = clazz.getMethod("addSql", String.class);
+                addSqlMethod = clazz.getMethod("addTableMeta", Map.class);
                 addSqlMethod.setAccessible(true);
+                Class sqlParserClass = Class.forName("com.zto.fire.flink.sql.FlinkSqlParser");
+                sqlParserMethod = sqlParserClass.getMethod("sqlParser", String.class);
+                sqlParserMethod.setAccessible(true);
+                Field[] fields = sqlParserClass.getFields();
+                tableMapField = sqlParserClass.getField("tableMap");
+                tableMapField.setAccessible(true);
             }
-            addSqlMethod.invoke(null, statement);
+            sqlParserMethod.invoke(null, statement);
+            Object tableMetaMap = tableMapField.get(null);
+            if (tableMetaMap != null) {
+                addSqlMethod.invoke(null, tableMetaMap);
+            }
         } catch (Exception e) {
             throw new RuntimeException("sql收集报错：" + e.getMessage());
-        }
+        }*/
 
         List<Operation> operations = parser.parse(statement);
 

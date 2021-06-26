@@ -31,5 +31,6 @@ object Test extends BaseSparkCore {
     this.spark.sql("use tmp")
     this.spark.sql("show tables").show()
     this.spark.sql("select * from account").show()
+    Thread.sleep(1000000)
   }
 }
