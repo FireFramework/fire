@@ -1,5 +1,6 @@
 package com.zto.fire.spark.sql
 
+import com.zto.fire.predef._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.util.TableMeta
@@ -76,7 +77,7 @@ object SparkSqlParser extends SqlParser {
    */
   override def sqlParser(sql: String): Unit = {
     if (isEmpty(sql)) return
-    this.logger.info(s"开始解析sql语句：$sql")
+    this.logger.debug(s"开始解析sql语句：$sql")
     val logicalPlan = this.spark.sessionState.sqlParser.parsePlan(sql)
     this.sqlQueryParser(logicalPlan, sql)
     this.ddlParser(logicalPlan, sql)
@@ -97,7 +98,7 @@ object SparkSqlParser extends SqlParser {
           case _ => this.logger.debug(s"Parse query SQL异常，无法匹配该Statement. sql->$sql")
         }
       })
-    }(this.logger, "Parser query SQL.", isThrow = false)
+    }(this.logger, isThrow = false)
   }
 
   /**
@@ -145,7 +146,7 @@ object SparkSqlParser extends SqlParser {
           val dbTable = this.tableName(table)
           val map = mutable.Map[String, String]()
           createTable.tableDesc.partitionColumnNames.foreach(partition => map.put(partition, ""))
-          val tableObj =  TableMeta(dbTable._1, dbTable._2, map, this.isHiveTableDatasource(dbTable), Operation.CREATE_TABLE)
+          val tableObj = TableMeta(dbTable._1, dbTable._2, map, this.isHiveTableDatasource(dbTable), Operation.CREATE_TABLE)
           this.tableMap += (this.tableIdentifier(dbTable._1, dbTable._2) -> tableObj)
         }
         // create table as select语句解析
@@ -207,6 +208,6 @@ object SparkSqlParser extends SqlParser {
         }
         case _ => this.logger.debug(s"Parse ddl SQL异常，无法匹配该Statement. sql->$sql")
       }
-    }(this.logger, "Parse ddl SQL", isThrow = false)
+    }(this.logger, isThrow = false)
   }
 }

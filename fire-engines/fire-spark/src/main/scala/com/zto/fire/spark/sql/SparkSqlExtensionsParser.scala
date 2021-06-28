@@ -1,17 +1,10 @@
 package com.zto.fire.spark.sql
 
-import com.zto.fire._
-import com.zto.fire.common.conf.FireFrameworkConf.{buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod}
-import com.zto.fire.common.enu.ThreadPoolType
-import com.zto.fire.common.util.{DatasourceManager, ThreadUtils}
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.parser.ParserInterface
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.{FunctionIdentifier, TableIdentifier}
 import org.apache.spark.sql.types.{DataType, StructType}
-
-import java.util.concurrent.{ScheduledExecutorService, TimeUnit}
-import scala.collection.mutable
 
 
 /**
@@ -21,26 +14,12 @@ import scala.collection.mutable
  * @since 2.0.0
  */
 class SparkSqlExtensionsParser(parser: ParserInterface) extends ParserInterface {
-  private[this] lazy val sqls = mutable.HashSet[String]()
-  private[this] lazy val threadPool = ThreadUtils.createThreadPool("SparkSqlExtensionsParser", ThreadPoolType.SCHEDULED)
-  this.sqlParse
-
-  /**
-   * 周期性的解析SQL语句
-   */
-  private def sqlParse: Unit = {
-    this.threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(() => {
-      sqls.foreach(sql => SparkSqlParser.sqlParser(sql))
-      DatasourceManager.addTableMeta(SparkSqlParser.tableMap)
-    }, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod, TimeUnit.SECONDS)
-  }
-
 
   /**
    * Parse a string to a [[LogicalPlan]].
    */
   override def parsePlan(sqlText: String): LogicalPlan = {
-    this.sqls += sqlText
+    SparkSqlParser.sqlParse(sqlText)
     parser.parsePlan(sqlText)
   }
 

@@ -1,6 +1,5 @@
 package com.zto.fire.flink.sql
 
-import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.common.enu.{Datasource, Operation}
@@ -18,6 +17,7 @@ import org.apache.flink.sql.parser.hive.impl.FlinkHiveSqlParserImpl
 import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance
 import org.apache.flink.table.catalog.{Catalog, ObjectPath}
+import com.zto.fire._
 
 import java.util.Optional
 
@@ -120,9 +120,8 @@ object FlinkSqlParser extends SqlParser {
   def getPartitions(sqlIdentifier: SqlIdentifier, partitionsNode: Seq[SqlNodeList]): Unit = {
     val tableIdentifier = this.getTableIdentifier(sqlIdentifier)
     val partitions = partitionsNode.flatMap(sqlNodeList => sqlNodeList.getList.map(sqlNode => sqlNode.asInstanceOf[SqlProperty])).map(partitionNode => partitionNode.getKeyString -> partitionNode.getValueString).toMap
-    val tableOption = this.tableMap.get(tableIdentifier)
-    if (tableOption.nonEmpty) {
-      val table = tableOption.get
+    val table = this.tableMap.get(tableIdentifier)
+    if (table != null) {
       table.partition ++= partitions
       this.tableMap += (tableIdentifier -> table)
     }
@@ -190,9 +189,8 @@ object FlinkSqlParser extends SqlParser {
             }).toMap
 
             // 绑定with参数与表对象
-            val tableOption = this.tableMap.get(tableIdentifier)
-            if (tableOption.nonEmpty) {
-              val table = tableOption.get
+            val table = this.tableMap.get(tableIdentifier)
+            if (table != null) {
               table.properties ++= properties
               this.tableMap += (tableIdentifier -> table)
             }
