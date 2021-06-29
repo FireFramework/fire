@@ -19,13 +19,14 @@ package com.zto.fire.common.util
 
 import com.google.common.collect.EvictingQueue
 import com.zto.fire.common.conf.FireFrameworkConf._
+import com.zto.fire.common.conf.FireRocketMQConf
 import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 import java.util
-import java.util.concurrent.{ConcurrentHashMap, ScheduledExecutorService, TimeUnit}
+import java.util.concurrent.{ConcurrentHashMap, CopyOnWriteArraySet, ScheduledExecutorService, TimeUnit}
 import scala.collection.mutable
 
 /**
@@ -38,11 +39,11 @@ import scala.collection.mutable
 private[fire] class DatasourceManager {
   private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
   // 用于存放当前任务用到的数据源信息
-  private[this] lazy val datasourceMap = new ConcurrentHashMap[Datasource, util.HashSet[DatasourceDesc]]()
+  private[fire] lazy val datasourceMap = new ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
+  private[fire] lazy val tableMetaSet = new CopyOnWriteArraySet[TableMeta]()
   // 用于收集来自不同数据源的sql语句，后续会异步进行SQL解析，考虑到分布式场景下会有很多重复的SQL执行，因此使用了线程不安全的队列即可满足需求
   private lazy val dbSqlQueue = EvictingQueue.create[DBSqlSource](buriedPointDatasourceMaxSize)
   // 用于收集各实时引擎执行的sql语句
-  private lazy val tableMetaMap = new ConcurrentHashMap[String, TableMeta]()
   private[this] lazy val threadPool = ThreadUtils.createThreadPool("DatasourceManager", ThreadPoolType.SCHEDULED)
   this.sqlParse()
 
@@ -50,12 +51,12 @@ private[fire] class DatasourceManager {
    * 用于异步解析sql中使用到的表，并放到datasourceMap中
    */
   private[this] def sqlParse(): Unit = {
-    if (buriedPointDatasourceEnable && threadPool != null) {
-      threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(() => {
+    if (buriedPointDatasourceEnable && this.threadPool != null) {
+      this.threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(() => {
         // 1. 解析jdbc sql语句
         val start = currentTime
-        for (_ <- 1 until dbSqlQueue.size()) {
-          val sqlSource = dbSqlQueue.poll()
+        for (_ <- 1 until this.dbSqlQueue.size()) {
+          val sqlSource = this.dbSqlQueue.poll()
           if (sqlSource != null) {
             val tableNames = SQLUtils.tableParse(sqlSource.sql)
             if (tableNames != null && tableNames.nonEmpty) {
@@ -65,12 +66,35 @@ private[fire] class DatasourceManager {
             }
           }
         }
-        logger.debug(s"异步解析SQL埋点中的表信息,耗时：${timecost(start)}")
-        // 2. 解析引擎的sql语句
-        this.tableMetaMap.map(t => t._2).foreach(tableMeta => {
-          println("解析：" -> tableMeta)
+
+        // 2. 将解析好的引擎SQL血缘按Datasource进行分类
+        this.tableMetaSet.foreach(tableMeta => {
+          val prop = tableMeta.properties
+          val isSink = if (tableMeta.operation == Operation.SELECT) false else true
+
+          tableMeta.datasource match {
+            case Datasource.KAFKA => {
+              val dataSource = MQDatasource(Datasource.KAFKA.toString, prop.getOrDefault("properties.bootstrap.servers", ""), prop.getOrDefault("topic", ""), prop.getOrDefault("properties.group.id", ""), isSink)
+              add(Datasource.KAFKA, dataSource)
+            }
+            case Datasource.FIRE_ROCKETMQ => {
+              val datasource = MQDatasource(Datasource.ROCKETMQ.toString, PropUtils.getString(prop.getOrDefault("rocket.brokers.name", "")), prop.getOrDefault("rocket.topics", ""), prop.getOrDefault("rocket.group.id", ""), isSink)
+              add(Datasource.FIRE_ROCKETMQ, datasource)
+            }
+            case Datasource.JDBC => {
+              val driver = prop.getOrDefault("driver", "")
+              val url = prop.getOrDefault("url", "")
+              val user = prop.getOrDefault("username", "")
+              val datasource = DBDatasourceDetail(Datasource.JDBC.toString, url, tableMeta.tableName, user, isSink, tableMeta.operation)
+              add(Datasource.JDBC, datasource)
+            }
+            case _ => add(tableMeta.datasource, tableMeta)
+          }
         })
 
+        this.datasourceMap.foreach(println)
+
+        this.logger.debug(s"异步解析SQL埋点中的表信息,耗时：${timecost(start)}")
       }, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod, TimeUnit.SECONDS)
     }
   }
@@ -96,27 +120,12 @@ private[fire] class DatasourceManager {
   /**
    * 收集执行的sql语句
    */
-  private[fire] def addTableMeta(tableMeta: JMap[String, TableMeta]): Unit = if (buriedPointDatasourceEnable) this.tableMetaMap.putAll(tableMeta)
+  private[fire] def addTableMeta(tableMetaSet: JSet[TableMeta]): Unit = if (buriedPointDatasourceEnable) this.tableMetaSet.addAll(tableMetaSet)
 
   /**
    * 获取所有使用到的数据源
    */
   private[fire] def get: util.Map[Datasource, util.HashSet[DatasourceDesc]] = this.datasourceMap
-}
-
-/**
- * 反射工具类，用于反射调用
- */
-object ReflectionHelper {
-
-  /**
-   * 添加一条table记录到队列中
-   *
-   * @param table 解析后的table对象
-   */
-  def addTableMeta(tableMeta: JMap[String, TableMeta]): Unit = {
-    DatasourceManager.addTableMeta(tableMeta)
-  }
 }
 
 /**
@@ -148,9 +157,7 @@ private[fire] object DatasourceManager {
    *
    * @param tableMeta 待解析的sql语句
    */
-  def addTableMeta(tableMeta: JMap[String, TableMeta]): Unit = {
-    DatasourceManager.manager.addTableMeta(tableMeta)
-  }
+  def addTableMeta(tableMeta: JSet[TableMeta]): Unit = DatasourceManager.manager.addTableMeta(tableMeta)
 
   /**
    * 添加一条DB的埋点信息
@@ -216,6 +223,11 @@ trait DatasourceDesc
 case class DBDatasource(datasource: String, cluster: String, tableName: String, username: String = "", sink: Boolean = true) extends DatasourceDesc
 
 /**
+ * @param operation 针对表的具体操作类型
+ */
+case class DBDatasourceDetail(datasource: String, cluster: String, tableName: String, username: String = "", sink: Boolean = true, operation: Operation) extends DatasourceDesc
+
+/**
  * 面向数据库类型的数据源，需将SQL中的tableName主动解析
  *
  * @param datasource
@@ -252,8 +264,17 @@ case class MQDatasource(datasource: String, cluster: String, topics: String, gro
  * @param dbName     数据库名称
  * @param tableName  表名
  * @param partition  分区信息
- * @param catalog    所属的catalog（default、hive等）
+ * @param datasource 所属的catalog（default、hive等）
  * @param operation  针对该表的操作类型：SELECT、INSERT、DROP等
  * @param properties 标的属性，如with列表属性等
  */
-case class TableMeta(dbName: String = "", tableName: String = "", partition: mutable.Map[String, String] = mutable.Map.empty, catalog: Datasource = Datasource.VIEW, operation: Operation = Operation.SELECT, properties: mutable.Map[String, String] = mutable.Map.empty)
+case class TableMeta(dbName: String = "", tableName: String = "", partition: mutable.Map[String, String] = mutable.Map.empty, var datasource: Datasource = Datasource.VIEW, operation: Operation = Operation.SELECT, properties: mutable.Map[String, String] = mutable.Map.empty) extends DatasourceDesc {
+  override def equals(obj: Any): Boolean = {
+    if (obj == null || !obj.isInstanceOf[TableMeta]) return false
+    val target = obj.asInstanceOf[TableMeta]
+    if (noEmpty(dbName, target.dbName, tableName, target.tableName, datasource, target.datasource, operation, target.operation)) {
+      if (dbName.equals(target.dbName) && tableName.equals(target.tableName) && datasource.equals(target.datasource) && operation.equals(target.operation)) return true
+    }
+    false
+  }
+}

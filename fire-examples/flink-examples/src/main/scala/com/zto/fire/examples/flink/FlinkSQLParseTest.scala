@@ -1,8 +1,7 @@
 package com.zto.fire.examples.flink
 
-import com.zto.fire.flink.BaseFlinkStreaming
-import com.zto.fire.flink.sql.FlinkSqlParser
 import com.zto.fire._
+import com.zto.fire.flink.BaseFlinkStreaming
 
 object FlinkSQLParseTest extends BaseFlinkStreaming {
 
@@ -17,7 +16,7 @@ object FlinkSQLParseTest extends BaseFlinkStreaming {
     val createTableAsSelect = s"CREATE TABLE t_baseuser like tmp.test"
     val createKafkaTable =
       """
-        |CREATE TABLE tmp.t_student (
+        |CREATE TABLE tmp.test (
         |  `table` STRING,
         |  `before` ROW(`id` bigint, `age` int, `name` string, `length` double, `createTime` string),	-- 嵌套json的声明方式，使用ROW()，这么写很麻烦，但没办法
         |  `after` ROW(id bigint, age int, name string, length double, createTime string)
@@ -46,10 +45,17 @@ object FlinkSQLParseTest extends BaseFlinkStreaming {
       """
         |ALTER TABLE tmp.food DROP PARTITION (ds='20151219', city = 'beijing')
         |""".stripMargin
-    val dropDB = "drop database tmp"
+
+    /*val dropDB = "drop database tmp"
     this.fire.sql("create database tmp")
     this.fire.sql(createKafkaTable)
-    this.fire.sql("select * from tmp.t_student").print()
+    this.fire.sql("select * from tmp.t_student").print()*/
+    // this.fire.sql(alterTableAddPartitionStatement)
+    this.fire.sql("create database tmp")
+    this.fire.sql("create database dim")
+    this.fire.sql("create database ods")
+    this.fire.sql(createKafkaTable)
+    this.fire.sql(selectJoin)
   }
 
 }

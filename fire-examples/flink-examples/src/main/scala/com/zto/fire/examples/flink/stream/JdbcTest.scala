@@ -57,7 +57,7 @@ object JdbcTest extends BaseFlinkStreaming {
       Seq(row.getField(0), row.getField(1), row.getField(2), row.getField(3), row.getField(4))
     })
     // 或者
-    this.flink.jdbcBatchUpdateTable2(table, sql(this.tableName2), keyNum = 2)(row => {
+    this.fire.jdbcBatchUpdateTable2(table, sql(this.tableName2), keyNum = 2)(row => {
       Seq(row.getField(0), row.getField(1), row.getField(2), row.getField(3), row.getField(4))
     }).setParallelism(1)
   }
@@ -80,19 +80,25 @@ object JdbcTest extends BaseFlinkStreaming {
     }.setParallelism(1)
 
     // 或者
-    this.flink.jdbcBatchUpdateStream2(stream, sql(this.tableName2), keyNum = 7) {
+    this.fire.jdbcBatchUpdateStream2(stream, sql(this.tableName2), keyNum = 7) {
       value => Seq(value.getName, value.getAge, DateFormatUtils.formatCurrentDateTime(), value.getLength, value.getSex)
     }.setParallelism(2)
   }
 
   def testJdbc: Unit = {
     // 执行查询操作
-    val studentList = this.flink.jdbcQuery(s"select * from $tableName", clazz = classOf[Student])
+    val studentList = this.fire.jdbcQuery(s"select * from $tableName", clazz = classOf[Student])
     val dataStream = this.env.fromCollection(studentList)
+    dataStream.toTable.createOrReplaceTempView("test")
+    this.fire.sql(
+      """
+        |select * from test
+        |""".stripMargin)
+
     dataStream.print()
 
     // 执行增删改操作
-    this.flink.jdbcUpdate(s"delete from $tableName")
+    this.fire.jdbcUpdate(s"delete from $tableName")
   }
 
   /**

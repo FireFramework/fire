@@ -474,5 +474,16 @@ object PropUtils {
   /**
    * 调用外部配置中心接口获取配合信息
    */
-  def invokeConfigCenter(className: String): Unit = ConfigurationCenterManager.invokeConfigCenter(className)
+  def invokeConfigCenter(className: String): Unit = {
+    val fireEnvConf = System.getenv().getOrDefault("fire_env_conf", "")
+    if (noEmpty(fireEnvConf) && JSONUtils.isJson(fireEnvConf)) {
+      this.logger.info(s"系统环境变量列表：$fireEnvConf")
+      val envMap = JSONUtils.parseObject[JHashMap[String, String]](fireEnvConf)
+      PropUtils.setProperties(envMap)
+    }
+    val javaProperties = System.getProperties.filter(_._1.startsWith("fire.system.")).map(prop => (prop._1.substring("fire.system.".length), prop._2))
+    PropUtils.setProperties(javaProperties)
+    // 调用配置中心接口获取优先级最高的配置信息
+    ConfigurationCenterManager.invokeConfigCenter(className)
+  }
 }

@@ -67,6 +67,5 @@ object SparkSqlParseTest extends BaseSparkCore {
     SparkSqlParser.sqlParser(createTable)
     SparkSqlParser.sqlParser(dropDB)
     SparkSqlParser.sqlParser(renameTable)*/
-    SparkSqlParser.tableMap.foreach(println)
   }
 }

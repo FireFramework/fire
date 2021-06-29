@@ -17,7 +17,6 @@
 
 package com.zto.fire.flink.ext.stream
 
-import java.util.Properties
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.util.{DatasourceManager, KafkaUtils, ValueUtils}
@@ -31,17 +30,15 @@ import org.apache.flink.api.common.JobExecutionResult
 import org.apache.flink.api.common.functions.RuntimeContext
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.common.typeinfo.TypeInformation
-import org.apache.flink.api.java.tuple.Tuple2
 import org.apache.flink.api.scala._
-import org.apache.flink.streaming.api.datastream.DataStreamSource
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
 import org.apache.flink.table.api.{Table, TableResult}
-import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource}
-import org.apache.rocketmq.flink.common.serialization.{KeyValueDeserializationSchema, SimpleTupleDeserializationSchema}
 import org.apache.rocketmq.flink.serialization.SimpleTagKeyValueDeserializationSchema
+import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource}
 
+import java.util.Properties
 import scala.collection.JavaConversions
 
 /**
@@ -235,6 +232,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
    */
   def sqlQuery(sql: String, keyNum: Int = 0): Table = {
     require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
+    FlinkSqlParser.sqlParse(sql)
     this.tableEnv.sqlQuery(sql.with$(keyNum))
   }
 
@@ -246,10 +244,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
    */
   def sql(sql: String, keyNum: Int = 0): TableResult = {
     require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
-    try {
-      FlinkSqlParser.sqlParser(sql)
-      DatasourceManager.addTableMeta(FlinkSqlParser.tableMap)
-    }
+    FlinkSqlParser.sqlParse(sql)
     this.tableEnv.executeSql(sql.with$(keyNum))
   }
 

@@ -1,11 +1,10 @@
 package com.zto.fire.flink.sql
 
+import com.zto.fire._
 import com.zto.fire.common.anno.Internal
-import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.util.TableMeta
 import com.zto.fire.core.sql.SqlParser
-import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import org.apache.calcite.avatica.util.{Casing, Quoting}
 import org.apache.calcite.sql._
@@ -16,10 +15,7 @@ import org.apache.flink.sql.parser.dml._
 import org.apache.flink.sql.parser.hive.impl.FlinkHiveSqlParserImpl
 import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance
-import org.apache.flink.table.catalog.{Catalog, ObjectPath}
-import com.zto.fire._
-
-import java.util.Optional
+import org.apache.flink.table.catalog.ObjectPath
 
 /**
  * Flink SQL解析器，用于解析Flink SQL语句中的库、表、分区、操作类型等信息
@@ -32,23 +28,6 @@ object FlinkSqlParser extends SqlParser {
   private lazy val config = createParserConfig
   private lazy val hiveConfig = createHiveParserConfig
   private lazy val tableEnv = FlinkSingletonFactory.getStreamTableEnv
-  // 获取默认的catalog
-  private lazy val defaultCatalog = this.tableEnv.getCatalog(FireFlinkConf.defaultCatalogName)
-  // 获取hive catalog
-  private lazy val hiveCatalog = this.getHiveCatalog
-
-  /**
-   * 尝试获取注册的hive catalog对象
-   */
-  private def getHiveCatalog: Optional[Catalog] = {
-    // 如果使用fire框架，则通过指定的hive catalog名称获取catalog实例
-    val catalog = this.tableEnv.getCatalog(FireHiveConf.hiveCatalogName)
-    if (catalog.isPresent) catalog else {
-      // 如果fire未使用fire框架，尝试获取名称包含hive的catalog
-      val hiveCatalogName = this.tableEnv.listCatalogs().filter(_.contains("hive"))
-      if (noEmpty(hiveCatalogName)) this.tableEnv.getCatalog(hiveCatalogName(0)) else Optional.empty()
-    }
-  }
 
   /**
    * 构建flink default的SqlParser config
@@ -90,13 +69,27 @@ object FlinkSqlParser extends SqlParser {
    */
   @Internal
   private def setTableName(seq: Seq[String], operation: Operation): Unit = {
-    val datasource = if (this.isHiveTable(null, seq.head)) Datasource.HIVE else Datasource.VIEW
+    val datasource = operation match {
+      case Operation.CREATE_VIEW => Datasource.VIEW
+      case Operation.CREATE_TABLE => if (this.tableEnv.isHiveCatalog) Datasource.HIVE else Datasource.VIEW
+      case Operation.CREATE_TABLE_AS_SELECT => if (this.tableEnv.isHiveCatalog) Datasource.HIVE else Datasource.VIEW
+      case Operation.CREATE_DATABASE => if (this.tableEnv.isHiveCatalog) Datasource.HIVE else Datasource.VIEW
+      case Operation.DROP_TABLE => if (this.tableEnv.isHiveCatalog) Datasource.HIVE else Datasource.VIEW
+      case Operation.DROP_DATABASE => if (this.tableEnv.isHiveCatalog) Datasource.HIVE else Datasource.VIEW
+      case _ => {
+        if (seq.size == 1) {
+          if (this.isHiveTable(null, seq.head)) Datasource.HIVE else Datasource.VIEW
+        } else {
+          if (this.isHiveTable(seq.head, seq(1))) Datasource.HIVE else Datasource.VIEW
+        }
+      }
+    }
     if (seq.size == 1) {
-      val table = TableMeta("", seq.head, catalog = datasource, operation = operation)
-      this.tableMap += (this.tableIdentifier("", seq.head) -> table)
+      val table = TableMeta("", seq.head, datasource = datasource, operation = operation)
+      this.addTmpTableMeta(this.tableIdentifier("", seq.head), table)
     } else {
-      val table = TableMeta(seq.head, seq(1), catalog = datasource, operation = operation)
-      this.tableMap += (this.tableIdentifier(seq.head, seq(1)) -> table)
+      val table = TableMeta(seq.head, seq(1), datasource = datasource, operation = operation)
+      this.addTmpTableMeta(this.tableIdentifier(seq.head, seq(1)), table)
     }
   }
 
@@ -120,10 +113,10 @@ object FlinkSqlParser extends SqlParser {
   def getPartitions(sqlIdentifier: SqlIdentifier, partitionsNode: Seq[SqlNodeList]): Unit = {
     val tableIdentifier = this.getTableIdentifier(sqlIdentifier)
     val partitions = partitionsNode.flatMap(sqlNodeList => sqlNodeList.getList.map(sqlNode => sqlNode.asInstanceOf[SqlProperty])).map(partitionNode => partitionNode.getKeyString -> partitionNode.getValueString).toMap
-    val table = this.tableMap.get(tableIdentifier)
+    val table = this.tmpTableMap.get(tableIdentifier)
     if (table != null) {
       table.partition ++= partitions
-      this.tableMap += (tableIdentifier -> table)
+      this.addTmpTableMeta(tableIdentifier, table)
     }
   }
 
@@ -189,10 +182,12 @@ object FlinkSqlParser extends SqlParser {
             }).toMap
 
             // 绑定with参数与表对象
-            val table = this.tableMap.get(tableIdentifier)
+            val table = this.tmpTableMap.get(tableIdentifier)
             if (table != null) {
               table.properties ++= properties
-              this.tableMap += (tableIdentifier -> table)
+              val connector = properties.get("connector")
+              if (connector.nonEmpty) table.datasource = Datasource.parse(connector.get)
+              this.addTmpTableMeta(tableIdentifier, table)
             }
           }
         }
@@ -241,8 +236,8 @@ object FlinkSqlParser extends SqlParser {
    */
   override def isTempView(dbName: String, tableName: String): Boolean = {
     try {
-      if (this.defaultCatalog.isPresent) {
-        val catalog = this.defaultCatalog.get()
+      if (this.tableEnv.defaultCatalog.isPresent) {
+        val catalog = this.tableEnv.defaultCatalog.get()
         val db = if (isEmpty(dbName)) catalog.getDefaultDatabase else dbName
         catalog.tableExists(new ObjectPath(db, tableName))
       } else {
@@ -269,10 +264,10 @@ object FlinkSqlParser extends SqlParser {
         this.hiveTableMap.put(tableIdentifier, false)
       } else {
         // 非临时表基于hive catalog进行判断
-        if (!this.hiveCatalog.isPresent) {
+        if (!this.tableEnv.hiveCatalog.isPresent) {
           this.hiveTableMap.put(tableIdentifier, false)
         } else {
-          val catalog = hiveCatalog.get()
+          val catalog = this.tableEnv.hiveCatalog.get()
           val db = if (isEmpty(dbName)) catalog.getDefaultDatabase else dbName
           try {
             if (catalog.tableExists(new ObjectPath(db, tableName))) {

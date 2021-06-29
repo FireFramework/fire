@@ -18,8 +18,6 @@
 package com.zto.fire.examples.spark
 
 import com.zto.fire.spark.BaseSparkCore
-import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
-import org.apache.spark.sql.catalyst.plans.logical.{InsertIntoStatement, LogicalPlan}
 
 
 /**

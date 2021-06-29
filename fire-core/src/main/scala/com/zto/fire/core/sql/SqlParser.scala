@@ -1,7 +1,7 @@
 package com.zto.fire.core.sql
 
 import com.zto.fire.common.conf.FireFrameworkConf.{buriedPointDatasourceEnable, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod}
-import com.zto.fire.common.enu.ThreadPoolType
+import com.zto.fire.common.enu.{Datasource, ThreadPoolType}
 import com.zto.fire.common.util.{DatasourceManager, TableMeta, ThreadUtils}
 import org.slf4j.LoggerFactory
 import com.zto.fire.predef._
@@ -16,8 +16,10 @@ import scala.collection.mutable
  * @since 2.0.0
  */
 trait SqlParser {
-  // 用于存放解析后的库表类
-  lazy val tableMap = new JConcurrentHashMap[String, TableMeta]()
+  // 用于临时存放解析后的库表类
+  protected lazy val tmpTableMap = new JHashMap[String, TableMeta]()
+  // 用于存放按数据源归类后的所有血缘信息
+  protected lazy val tableMetaSet = new CopyOnWriteArraySet[TableMeta]()
   protected[fire] lazy val hiveTableMap = new JConcurrentHashMap[String, Boolean]()
   protected lazy val buffer = new CopyOnWriteArraySet[String]()
   protected lazy val logger = LoggerFactory.getLogger(this.getClass)
@@ -27,30 +29,49 @@ trait SqlParser {
   /**
    * 周期性的解析SQL语句
    */
-  private def sqlParse: Unit = {
+  protected def sqlParse: Unit = {
     if (buriedPointDatasourceEnable) {
       this.threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(() => {
         this.buffer.foreach(sql => this.sqlParser(sql))
-        DatasourceManager.addTableMeta(this.tableMap)
+        DatasourceManager.addTableMeta(this.tableMetaSet)
         this.clear
       }, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod, TimeUnit.SECONDS)
     }
   }
 
   /**
+   * 将解析后的血缘信息临时存放，并通过catalog进行归类后统一收集
+   *
+   * @param tableIdentifier
+   * 库表名
+   */
+  protected def addTmpTableMeta(tableIdentifier: String, tmpTableMap: TableMeta): Unit = {
+    this.tmpTableMap += (tableIdentifier -> tmpTableMap)
+    this.collectTableMeta(tmpTableMap)
+  }
+
+  /**
+   * 用于收集并按catalog归类数据源信息
+   *
+   * @param tableMeta 数据源
+   */
+  private def collectTableMeta(tableMeta: TableMeta): Unit = this.tableMetaSet += tableMeta
+
+  /**
    * 清理解析后的SQL数据
    */
   private[this] def clear: Unit = {
     this.buffer.clear()
-    this.tableMap.clear()
+    this.tmpTableMap.clear()
+    this.tableMetaSet.clear()
   }
 
   /**
    * 将待解析的SQL添加到buffer中
    */
-  def sqlParse(sqls: String *): Unit = {
-    if (buriedPointDatasourceEnable && noEmpty(sqls)) {
-      this.buffer ++= sqls.toSet
+  def sqlParse(sql: String): Unit = {
+    if (buriedPointDatasourceEnable && noEmpty(sql)) {
+      this.buffer += sql
     }
   }
 
