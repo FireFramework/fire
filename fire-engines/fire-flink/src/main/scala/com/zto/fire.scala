@@ -22,7 +22,7 @@ import com.zto.fire.flink.ext.batch.{BatchExecutionEnvExt, BatchTableEnvExt, Dat
 import com.zto.fire.flink.ext.stream._
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.streaming.api.scala.{DataStream, KeyedStream, StreamExecutionEnvironment}
-import org.apache.flink.table.api.Table
+import org.apache.flink.table.api.{Table, TableEnvironment, TableResult}
 import org.apache.flink.table.api.bridge.scala.{BatchTableEnvironment, StreamTableEnvironment}
 import org.apache.flink.types.Row
 
@@ -51,7 +51,7 @@ package object fire extends BaseFireExt {
    * @param tableEnv
    * StreamTableEnvironment对象
    */
-  implicit class StreamTableEnvExtBridge(tableEnv: StreamTableEnvironment) extends StreamTableEnvExt(tableEnv) {
+  implicit class TableEnvExtBridge(tableEnv: TableEnvironment) extends TableEnvExt(tableEnv) {
 
   }
 
@@ -73,6 +73,13 @@ package object fire extends BaseFireExt {
    * KeyedStream对象
    */
   implicit class KeyedStreamExtBridge[T, K](keyedStream: KeyedStream[T, K]) extends KeyedStreamExt[T, K](keyedStream) {
+
+  }
+
+  /**
+   * TableResult扩展
+   */
+  implicit class TableResultImplBridge(tableResult: TableResult) extends TableResultImplExt(tableResult) {
 
   }
 

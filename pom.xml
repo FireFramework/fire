@@ -116,6 +116,16 @@
 
     <repositories>
         <repository>
+            <id>cloudera</id>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
             <id>aliyun</id>
             <url>https://maven.aliyun.com/repository/central</url>
             <releases>
@@ -138,6 +148,16 @@
     </repositories>
 
     <pluginRepositories>
+        <pluginRepository>
+            <id>cloudera</id>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
         <pluginRepository>
             <id>aliyun</id>
             <url>https://maven.aliyun.com/repository/central</url>

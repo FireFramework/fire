@@ -177,7 +177,7 @@ trait FireFunctions extends Serializable {
   def timecost[T](msg: String, logger: Logger = this.logger)(block: => T): T = {
     val startTime = this.currentTime
     val retVal = block
-    if (StringUtils.isNotBlank(msg)) logger.info(s"${msg}, 耗时：${timecost(startTime)}")
+    if (StringUtils.isNotBlank(msg)) logger.info(s"${msg}, Elapsed：${timecost(startTime)}")
     retVal
   }
 }

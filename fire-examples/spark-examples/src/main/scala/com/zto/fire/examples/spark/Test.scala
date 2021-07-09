@@ -27,8 +27,10 @@ object Test extends BaseSparkCore {
 
   override def process: Unit = {
     this.spark.sql("use tmp")
-    this.spark.sql("show tables").show()
-    this.spark.sql("select * from account").show()
-    Thread.sleep(1000000)
+    this.spark.sql(
+      """
+        |alter table tmp.flink_hive_sink add if not exists partition(ds='202106228') location '/user/hive/warehouse/tmp.db/flink_hive_sink/ds=20210628'
+        |""".stripMargin)
+    this.spark.sql("select * from flink_hive_sink").show(100000, false)
   }
 }

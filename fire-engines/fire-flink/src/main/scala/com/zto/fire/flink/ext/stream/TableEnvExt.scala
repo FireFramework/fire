@@ -20,8 +20,7 @@ package com.zto.fire.flink.ext.stream
 import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.noEmpty
-import org.apache.flink.table.api.SqlDialect
-import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
+import org.apache.flink.table.api.{SqlDialect, TableEnvironment}
 import org.apache.flink.table.catalog.Catalog
 import org.apache.flink.table.functions.ScalarFunction
 
@@ -33,7 +32,7 @@ import java.util.Optional
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class StreamTableEnvExt(tableEnv: StreamTableEnvironment) {
+class TableEnvExt(tableEnv: TableEnvironment) {
   // 获取默认的catalog
   lazy val defaultCatalog = this.tableEnv.getCatalog(FireFlinkConf.defaultCatalogName)
   // 获取hive catalog
@@ -64,7 +63,7 @@ class StreamTableEnvExt(tableEnv: StreamTableEnvironment) {
   /**
    * 使用hive catalog
    */
-  def useHiveCatalog(hiveCatalog: String = FireFlinkConf.defaultCatalogName): Unit = {
+  def useHiveCatalog(hiveCatalog: String = FireHiveConf.hiveCatalogName): Unit = {
     this.tableEnv.useCatalog(hiveCatalog)
     this.tableEnv.getConfig.setSqlDialect(SqlDialect.HIVE)
   }
@@ -73,7 +72,7 @@ class StreamTableEnvExt(tableEnv: StreamTableEnvironment) {
    * 使用默认的catalog
    */
   def useDefaultCatalog: Unit = {
-    this.tableEnv.useCatalog("default_catalog")
+    this.tableEnv.useCatalog(FireFlinkConf.defaultCatalogName)
     this.tableEnv.getConfig.setSqlDialect(SqlDialect.DEFAULT)
   }
 

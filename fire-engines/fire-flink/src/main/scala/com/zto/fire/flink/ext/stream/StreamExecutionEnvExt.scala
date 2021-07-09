@@ -49,7 +49,7 @@ import scala.collection.JavaConversions
  */
 class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with JdbcConnectorBridge
   with HBaseConnectorProvider with JdbcFlinkProvider {
-  private[fire] lazy val tableEnv = FlinkSingletonFactory.getStreamTableEnv
+  private[fire] lazy val tableEnv = FlinkSingletonFactory.getTableEnv
 
   /**
    * 创建Socket流

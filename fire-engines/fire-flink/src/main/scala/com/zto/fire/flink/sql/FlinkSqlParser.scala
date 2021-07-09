@@ -15,6 +15,7 @@ import org.apache.flink.sql.parser.dml._
 import org.apache.flink.sql.parser.hive.impl.FlinkHiveSqlParserImpl
 import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance
+import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import org.apache.flink.table.catalog.ObjectPath
 
 /**
@@ -27,7 +28,7 @@ object FlinkSqlParser extends SqlParser {
   // calcite parser config
   private lazy val config = createParserConfig
   private lazy val hiveConfig = createHiveParserConfig
-  private lazy val tableEnv = FlinkSingletonFactory.getStreamTableEnv
+  private lazy val tableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[StreamTableEnvironment]
 
   /**
    * 构建flink default的SqlParser config
@@ -69,6 +70,7 @@ object FlinkSqlParser extends SqlParser {
    */
   @Internal
   private def setTableName(seq: Seq[String], operation: Operation): Unit = {
+    // 获取数据源类型（根据with参数列表中的connector）
     val datasource = operation match {
       case Operation.CREATE_VIEW => Datasource.VIEW
       case Operation.CREATE_TABLE => if (this.tableEnv.isHiveCatalog) Datasource.HIVE else Datasource.VIEW
@@ -84,6 +86,7 @@ object FlinkSqlParser extends SqlParser {
         }
       }
     }
+
     if (seq.size == 1) {
       val table = TableMeta("", seq.head, datasource = datasource, operation = operation)
       this.addTmpTableMeta(this.tableIdentifier("", seq.head), table)

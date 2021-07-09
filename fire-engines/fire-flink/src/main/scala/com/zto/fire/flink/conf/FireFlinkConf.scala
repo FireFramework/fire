@@ -37,6 +37,7 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_CLOSURE_CLEANER_LEVEL = "flink.closure.cleaner.level"
   lazy val FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT = "flink.default.input.dependency.constraint"
   lazy val FLINK_EXECUTION_MODE = "flink.execution.mode"
+  lazy val FLINK_RUNTIME_MODE = "flink.runtime.mode"
   lazy val FLINK_LATENCY_TRACKING_INTERVAL = "flink.latency.tracking.interval"
   lazy val FLINK_MAX_PARALLELISM = "flink.max.parallelism"
   lazy val FLINK_DEFAULT_PARALLELISM = "flink.default.parallelism"
@@ -111,4 +112,6 @@ private[fire] object FireFlinkConf {
   lazy val flinkUdfList = PropUtils.sliceKeys(this.FLINK_SQL_UDF_CONF_PREFIX)
   // 是否启用fire udf注册功能
   lazy val flinkUdfEnable = PropUtils.getBoolean(this.FLINK_SQL_UDF_ENABLE, true)
+  // 运行模式
+  lazy val flinkRuntimeMode = PropUtils.getString(this.FLINK_RUNTIME_MODE, PropUtils.getString("execution.runtime-mode", "STREAMING"))
 }
