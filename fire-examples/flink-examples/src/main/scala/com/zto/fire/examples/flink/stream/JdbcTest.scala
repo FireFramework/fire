@@ -87,7 +87,7 @@ object JdbcTest extends BaseFlinkStreaming {
 
   def testJdbc: Unit = {
     // 执行查询操作
-    val studentList = this.fire.jdbcQuery(s"select * from $tableName", clazz = classOf[Student])
+    val studentList = this.fire.jdbcQueryList(s"select * from $tableName", clazz = classOf[Student])
     val dataStream = this.env.fromCollection(studentList)
     dataStream.toTable.createOrReplaceTempView("test")
     this.fire.sql(

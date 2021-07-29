@@ -182,7 +182,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
     val getList = for (rowKey <- rowKeyList) yield HBaseConnector.buildGet(rowKey)
     val starTime = currentTime
     val resultList = this.getResult(tableName, getList: _*)
-    logger.info(s"HBase 批量get ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${resultList.size}条, 耗时：${timecost(starTime)}")
+    logger.info(s"HBase 批量get ${hbaseCluster(keyNum)}.${tableName}执行成功, 总计${resultList.size}条, 耗时：${elapsed(starTime)}")
     resultList
   }
 
@@ -989,7 +989,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
             // 将用到的表信息加入到数据源管理器中
             logger.debug(s"定时reload HBase表：${kv._1} 信息成功.")
           })
-          logger.debug(s"定时reload HBase耗时：${timecost(start)}")
+          logger.debug(s"定时reload HBase耗时：${elapsed(start)}")
         }
       }, tableExistCacheInitialDelay(this.keyNum), tableExistCachePeriod(this.keyNum), TimeUnit.SECONDS)
     }

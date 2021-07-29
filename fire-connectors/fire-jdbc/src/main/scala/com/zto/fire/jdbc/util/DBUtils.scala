@@ -98,8 +98,24 @@ object DBUtils {
         rs.findColumn(columnName)
       }
     }
-    if (retVal.isFailure) this.logger.warn(s"ResultSet结果集中未找到列名：${columnName}，请保证ResultSet与JavaBean中的字段一一对应，耗时：${timecost(start)}")
+    if (retVal.isFailure) this.logger.warn(s"ResultSet结果集中未找到列名：${columnName}，请保证ResultSet与JavaBean中的字段一一对应，耗时：${elapsed(start)}")
     retVal.isSuccess
+  }
+
+  /**
+   * 获取ResultSet返回的记录数
+   *
+   * @param rs
+   * 查询结果集
+   * @return
+   * 结果集行数
+   */
+  def rowCount(rs: ResultSet): Int = {
+    if (rs == null) return 0
+    rs.last()
+    val count = rs.getRow
+    rs.beforeFirst()
+    count
   }
 
   /**

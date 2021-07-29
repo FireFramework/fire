@@ -151,8 +151,13 @@ trait BaseFlink extends BaseFire {
         if (FireFlinkConf.streamCheckpointTimeout > 0) ckConfig.setCheckpointTimeout(FireFlinkConf.streamCheckpointTimeout)
         // flink.stream.checkpoint.max.concurrent 默认：1
         if (FireFlinkConf.streamCheckpointMaxConcurrent > 0) ckConfig.setMaxConcurrentCheckpoints(FireFlinkConf.streamCheckpointMaxConcurrent)
-        // flink.stream.checkpoint.min.pause.between  默认：0
-        if (FireFlinkConf.streamCheckpointMinPauseBetween >= 0) ckConfig.setMinPauseBetweenCheckpoints(FireFlinkConf.streamCheckpointMinPauseBetween)
+        // flink.stream.checkpoint.min.pause.between  默认：-1
+        if (FireFlinkConf.streamCheckpointMinPauseBetween >= 0) {
+          ckConfig.setMinPauseBetweenCheckpoints(FireFlinkConf.streamCheckpointMinPauseBetween)
+        } else {
+          // 如果flink.stream.checkpoint.min.pause.between=-1，则默认的checkpoint间隔时间是checkpoint的频率
+          ckConfig.setMinPauseBetweenCheckpoints(FireFlinkConf.streamCheckpointInterval)
+        }
         // flink.stream.checkpoint.prefer.recovery  默认：false
         ckConfig.setPreferCheckpointForRecovery(FireFlinkConf.streamCheckpointPreferRecovery)
         // flink.stream.checkpoint.tolerable.failure.number 默认：0

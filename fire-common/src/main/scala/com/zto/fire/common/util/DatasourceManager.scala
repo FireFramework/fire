@@ -94,7 +94,7 @@ private[fire] class DatasourceManager {
 
         this.datasourceMap.foreach(println)
 
-        this.logger.debug(s"异步解析SQL埋点中的表信息,耗时：${timecost(start)}")
+        this.logger.debug(s"异步解析SQL埋点中的表信息,耗时：${elapsed(start)}")
       }, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod, TimeUnit.SECONDS)
     }
   }

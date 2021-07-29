@@ -101,7 +101,7 @@ private[fire] object FireFlinkConf {
   lazy val streamCheckpointMode = PropUtils.getString(this.FLINK_STREAM_CHECKPOINT_MODE, "EXACTLY_ONCE")
   lazy val streamCheckpointTimeout = PropUtils.getLong(this.FLINK_STREAM_CHECKPOINT_TIMEOUT, 600000L)
   lazy val streamCheckpointMaxConcurrent = PropUtils.getInt(this.FLINK_STREAM_CHECKPOINT_MAX_CONCURRENT, 1)
-  lazy val streamCheckpointMinPauseBetween = PropUtils.getInt(this.FLINK_STREAM_CHECKPOINT_MIN_PAUSE_BETWEEN, 0)
+  lazy val streamCheckpointMinPauseBetween = PropUtils.getInt(this.FLINK_STREAM_CHECKPOINT_MIN_PAUSE_BETWEEN, -1)
   lazy val streamCheckpointPreferRecovery = PropUtils.getBoolean(this.FLINK_STREAM_CHECKPOINT_PREFER_RECOVERY, false)
   lazy val streamCheckpointTolerableTailureNumber = PropUtils.getInt(this.FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER, 0)
   lazy val streamCheckpointExternalized = PropUtils.getString(this.FLINK_STREAM_CHECKPOINT_EXTERNALIZED, "RETAIN_ON_CANCELLATION")
