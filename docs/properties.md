@@ -153,4 +153,7 @@ fire框架提供了很多参数，这些参数为程序带来了很大的灵活�
 | flink.sql.log.enable                             | false                                                        | 是否打印组装with语句后的flink sql，由于with表达式中可能含有敏感信息，默认为关闭 | 2.0.0    | 否       |
 | flink.sql.with.xxx                               | flink.sql.with.connector=jdbc flink.sql.with.url=jdbc:mysql://ip:3306/db | 以flink.sql.with.开头的配置，用于sql语句的with表达式。通过this.fire.sql(sql, keyNum)即可自动读取并映射成with表达式的sql。避免sql中的with表达式硬编码到代码中，提高灵活性。 | 2.0.0    | 否       |
 | flink.sql_with.replaceMode.enable                | false                                                        | 是否启用配置文件中with强制替换sql中已有的with表达式，如果启用，则会强制替换掉代码中sql的with列表，达到最大的灵活性。 | 2.0.0    | 否       |
+| flink.sql.udf.fireUdf.enable                     | false                                                        | 是否启用fire注册外部udf jar包中的类为发flink sql的udf函数    | 2.0.0    | 否       |
+| flink.sql.conf.pipeline.jars                     | /path/to/udf/jar/                                            | 用于指定udf jar包路径                                        | 2.0.0    | 否       |
+| flink.sql.udf.conf.xxx                           | 包名+类名                                                    | 用于指定udf函数名称与类名的对应关系，比如函数名为test，包名为com.udf.Udf，则配置为：flink.sql.udf.conf.test=com.udf.Udf | 2.0.0    | 否       |
 

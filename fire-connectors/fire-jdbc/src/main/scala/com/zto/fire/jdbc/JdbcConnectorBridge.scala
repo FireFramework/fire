@@ -91,8 +91,8 @@ private[fire] trait JdbcConnectorBridge {
    * @return
    * 查询结果集
    */
-  def jdbcQuery[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): List[T] = {
-    JdbcConnector.executeQuery[T](sql, params, clazz, connection, keyNum)
+  def jdbcQueryList[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], keyNum: Int = 1): List[T] = {
+    JdbcConnector.executeQueryList[T](sql, params, clazz, keyNum)
   }
 
   /**
@@ -108,7 +108,8 @@ private[fire] trait JdbcConnectorBridge {
    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    */
-  def jdbcQueryCall(sql: String, params: Seq[Any] = null, callback: ResultSet => Int = null, connection: Connection = null, keyNum: Int = 1): Unit = {
-    JdbcConnector.executeQueryCall(sql, params, callback, connection, keyNum)
+  def jdbcQuery[T](sql: String, params: Seq[Any] = null, callback: ResultSet => T, keyNum: Int = 1): T = {
+    JdbcConnector.executeQuery(sql, params, callback, keyNum)
   }
+
 }

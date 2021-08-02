@@ -502,7 +502,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
  * 用于单例构建伴生类HBaseContextExt的实例对象
  * 每个HBaseContextExt实例使用keyNum作为标识，并且与每个HBase集群一一对应
  */
-private[fire] object HBaseBulkConnector extends ConnectorFactory[HBaseBulkConnector] with HBaseBulkFunctions {
+object HBaseBulkConnector extends ConnectorFactory[HBaseBulkConnector] with HBaseBulkFunctions {
 
   /**
    * 创建指定集群标识的HBaseContextExt对象实例

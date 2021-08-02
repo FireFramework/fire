@@ -82,7 +82,7 @@ object JdbcTest extends BaseSparkCore {
     val sql = s"select * from $tableName where id in (?, ?, ?)"
 
     // 执行sql查询，并对查询结果集进行处理
-    this.fire.jdbcQueryCall(sql, Seq(1, 2, 3), callback = rs => {
+    this.fire.jdbcQuery(sql, Seq(1, 2, 3), callback = rs => {
       while (rs.next()) {
         // 对每条记录进行处理
         println("driver=> id=" + rs.getLong(1))
@@ -91,21 +91,17 @@ object JdbcTest extends BaseSparkCore {
     })
 
     // 将查询结果集以List[JavaBean]方式返回
-    val list = this.fire.jdbcQuery(sql, Seq(1, 2, 3), classOf[Student])
+    val list = this.fire.jdbcQueryList(sql, Seq(1, 2, 3), classOf[Student])
     // 方式二：使用JdbcConnector
     list.foreach(x => println(JSONUtils.toJSONString(x)))
 
     // 将结果集封装到RDD中
-    val rdd = this.fire.jdbcQueryRDD(sql, Seq(1, 2, 3), classOf[Student])
+    val rdd = this.fire.jdbcQueryRDD(sql, Seq(1, 2, 3))
     rdd.printEachPartition
 
     // 将结果集封装到DataFrame中
-    val df = this.fire.jdbcQueryDF(sql, Seq(1, 2, 3), classOf[Student])
+    val df = this.fire.jdbcQueryDF(sql, Seq(1, 2, 3))
     df.show(10, false)
-
-    // 将jdbc查询结果集封装到Dataset中
-    val ds = this.fire.jdbcQueryDS(sql, Seq(1, 2, 3), classOf[Student])
-    ds.show(10, false)
   }
 
   /**
@@ -155,23 +151,16 @@ object JdbcTest extends BaseSparkCore {
    * 在executor中执行jdbc操作
    */
   def testExecutor: Unit = {
-    JdbcConnector.executeQueryCall(s"select id from $tableName limit 1", null, callback = _ => {
-      // this.mark()
+    JdbcConnector.executeQuery(s"select id from $tableName limit 1", null, callback = _ => {
       Thread.sleep(1000)
-      // this.log(s"=============driver123 $tableName2=============")
-      1
     })
-    JdbcConnector.executeQueryCall(s"select id from $tableName limit 1", null, callback = _ => {
-      // this.log(s"=============driver $tableName2=============")
-      1
+    JdbcConnector.executeQuery(s"select id from $tableName limit 1", null, callback = _ => {
     }, keyNum = 2)
     this.logger.info("driver sql执行成功")
     val rdd = this.fire.createRDD(1 to 3, 3)
     rdd.foreachPartition(it => {
       it.foreach(i => {
-        JdbcConnector.executeQueryCall(s"select id from $tableName limit 1", null, callback = _ => {
-          // this.log("------------------------- executorId: " + SparkUtils.getExecutorId + " date:" + DateFormatUtils.formatCurrentDate())
-          1
+        JdbcConnector.executeQuery(s"select id from $tableName limit 1", null, callback = _ => {
         })
       })
       this.logger.info("sql执行成功")
@@ -181,7 +170,7 @@ object JdbcTest extends BaseSparkCore {
     val rdd2 = this.fire.createRDD(1 to 3, 3)
     rdd2.foreachPartition(it => {
       it.foreach(i => {
-        JdbcConnector.executeQueryCall(s"select id from $tableName limit 1", null, callback = _ => {
+        JdbcConnector.executeQuery(s"select id from $tableName limit 1", null, callback = _ => {
           this.logConf
           1
         }, keyNum = 2)
@@ -201,12 +190,13 @@ object JdbcTest extends BaseSparkCore {
 
   override def process: Unit = {
     // 测试环境测试
-    this.testJdbcUpdate
+    /*this.testJdbcUpdate
     this.testJdbcQuery
     this.testTableLoad
     this.testTableSave
-    this.testDataFrameSave
+    this.testDataFrameSave*/
     // 测试配置分发
     this.testExecutor
+    Thread.sleep(100000)
   }
 }

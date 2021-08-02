@@ -42,7 +42,7 @@ import scala.reflect.ClassTag
  * 用于区分连接不同的数据源，不同配置源对应不同的Connector实例
  * @author ChengLong 2020-11-27 10:31:03
  */
-private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
+class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
   private[this] var connPool: ComboPooledDataSource = _
   // 日志中sql截取的长度
   private lazy val logSqlLength = FireFrameworkConf.logSqlLength
@@ -150,8 +150,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
-    }(this.logger, s"${this.sqlBuriedPoint(sql)}",
-      s"executeUpdate failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
+    }(this.logger, s"${this.sqlBuriedPoint(sql)}", s"executeUpdate failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
   }
 
   /**
@@ -202,8 +201,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
-    }(this.logger, s"${this.sqlBuriedPoint(sql)}",
-      s"executeBatch failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
+    }(this.logger, s"${this.sqlBuriedPoint(sql)}", s"executeBatch failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
   }
 
   /**
@@ -215,18 +213,11 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
    * sql执行参数
    * @param clazz
    * JavaBean类型
-   * @param connection
-   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
    */
-  def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null): List[T] = {
-    val listBuffer = ListBuffer[T]()
-
-    this.executeQueryCall(sql, params, rs => {
-      listBuffer ++= DBUtils.dbResultSet2Bean(rs, clazz)
-      listBuffer.size
-    }, connection)
-
-    listBuffer.toList
+  def executeQueryList[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T]): List[T] = {
+    this.executeQuery[List[T]](sql, params, rs => {
+      DBUtils.resultSet2BeanList(rs, clazz).toList
+    })
   }
 
   /**
@@ -238,14 +229,11 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
    * sql执行参数
    * @param callback
    * 查询回调
-   * @param connection
-   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
    */
-  def executeQueryCall(sql: String, params: Seq[Any] = null, callback: ResultSet => Int = null, connection: Connection = null): Unit = {
-    val conn = if (connection == null) this.getConnection else connection
+  def executeQuery[T](sql: String, params: Seq[Any] = null, callback: ResultSet => T): T = {
+    val conn = this.getConnection
     var stat: PreparedStatement = null
     var rs: ResultSet = null
-    var count: Long = 0
 
     tryWithFinally {
       stat = conn.prepareStatement(sql)
@@ -257,15 +245,11 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
         })
       }
       rs = stat.executeQuery
-
-      if (rs != null && callback != null) {
-        count = callback(rs)
-      }
-      this.logger.info(s"executeQueryCall success. keyNum: ${keyNum} count: $count")
+      this.logger.info(s"executeQuery success. keyNum: ${keyNum} count: ${DBUtils.rowCount(rs)}")
+      callback(rs)
     } {
       this.release(sql, conn, stat, rs)
-    }(this.logger, s"${this.sqlBuriedPoint(sql, false)}",
-      s"executeQueryCall failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, false)}", finallyCatchLog)
+    }(this.logger, s"${this.sqlBuriedPoint(sql, false)}", s"executeQuery failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, false)}", finallyCatchLog)
   }
 
   /**
@@ -314,7 +298,7 @@ private[fire] class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extend
    */
   @Internal
   private[this] def sqlBuriedPoint(sql: String, sink: Boolean = true): String = {
-    DatasourceManager.addSql(this.dbType, this.url, this.username, sql, sink)
+    DatasourceManager.addDBSql(this.dbType, this.url, this.username, sql, sink)
     StringsUtils.substring(sql, 0, this.logSqlLength)
   }
 

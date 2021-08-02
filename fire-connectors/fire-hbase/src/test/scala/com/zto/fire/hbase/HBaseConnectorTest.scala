@@ -65,13 +65,13 @@ class HBaseConnectorTest {
     (1 to 10).foreach(i => {
       this.hbase.tableExists(this.tableName)
     })
-    println("未开启缓存总耗时：" + (timecost(starTime)))
+    println("未开启缓存总耗时：" + (elapsed(starTime)))
 
     val starTime2 = currentTime
     (1 to 10).foreach(i => {
       this.hbase.isExists(this.tableName)
     })
-    println("开启缓存总耗时：" + (timecost(starTime2)))
+    println("开启缓存总耗时：" + (elapsed(starTime2)))
   }
 
   /**

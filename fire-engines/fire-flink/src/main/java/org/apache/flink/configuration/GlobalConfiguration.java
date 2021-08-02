@@ -49,6 +49,7 @@ public final class GlobalConfiguration {
 
     // the hidden content to be displayed
     public static final String HIDDEN_CONTENT = "******";
+    // ------------ start：二次开发代码 --------------- //
     // 用于判断是JobManager还是TaskManager
     private static boolean isJobManager = false;
     // fire rest服务占用端口
@@ -93,6 +94,7 @@ public final class GlobalConfiguration {
         }
         return port;
     }
+    // ------------ end：二次开发代码 ----------------- //
 
     // --------------------------------------------------------------------------------------------
 
@@ -245,6 +247,8 @@ public final class GlobalConfiguration {
         return config;
     }
 
+    // ------------ start：二次开发代码 --------------- //
+
     /**
      * fire框架相关初始化动作
      */
@@ -328,4 +332,5 @@ public final class GlobalConfiguration {
         }
         return false;
     }
+    // ------------ end：二次开发代码 ----------------- //
 }

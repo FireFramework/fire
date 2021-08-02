@@ -19,10 +19,9 @@ package com.zto.fire.core.rest
 
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
-import com.zto.fire.common.enu.{Datasource, ErrorCode}
-import com.zto.fire.common.util.{DatasourceDesc, JSONUtils}
+import com.zto.fire.common.enu.ErrorCode
+import com.zto.fire.common.util.{DatasourceManager, JSONUtils}
 import com.zto.fire.core.BaseFire
-import com.zto.fire.predef.{JHashMap, JHashSet, _}
 import org.slf4j.{Logger, LoggerFactory}
 import spark.{Request, Response}
 
@@ -33,8 +32,6 @@ import spark.{Request, Response}
  */
 protected[fire] abstract class SystemRestful(engine: BaseFire) {
   protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
-  // 用于记录当前任务所访问的数据源
-  private lazy val datasourceMap = new JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
   this.register
 
   /**
@@ -52,29 +49,13 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
   protected def datasource(request: Request, response: Response): AnyRef = {
     val msg = new ResultMsg
     try {
-      val dataSource = JSONUtils.toJSONString(this.datasourceMap)
+      val dataSource = JSONUtils.toJSONString(DatasourceManager.manager.datasourceMap)
       this.logger.info(s"[DataSource] 获取数据源列表成功：counter=$dataSource")
       msg.buildSuccess(dataSource, "获取数据源列表成功")
     } catch {
       case e: Exception => {
         this.logger.error(s"[log] 获取数据源列表失败", e)
         msg.buildError("获取数据源列表失败", ErrorCode.ERROR)
-      }
-    }
-  }
-
-  @Rest("/system/collectDatasource")
-  def collectDatasource(request: Request, response: Response): AnyRef = {
-    val msg = new ResultMsg
-    try {
-      val json = request.body()
-      val datasource = JSONUtils.parseObject[JHashMap[Datasource, JHashSet[DatasourceDesc]]](json)
-      if (datasource.nonEmpty) this.datasourceMap.putAll(datasource)
-      msg.buildSuccess(datasource, "添加数据源列表成功")
-    }catch {
-      case e: Exception => {
-        this.logger.error(s"[log] 添加数据源列表失败", e)
-        msg.buildError("添加数据源列表失败", ErrorCode.ERROR)
       }
     }
   }

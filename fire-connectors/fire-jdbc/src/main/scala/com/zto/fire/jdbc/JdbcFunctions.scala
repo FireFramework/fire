@@ -18,7 +18,6 @@
 package com.zto.fire.jdbc
 
 import java.sql.{Connection, ResultSet}
-
 import scala.reflect.ClassTag
 
 /**
@@ -90,14 +89,12 @@ private[fire] trait JdbcFunctions {
    * sql执行参数
    * @param clazz
    * JavaBean类型
-   * @param connection
-   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
    * @param keyNum
    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    */
-  def executeQuery[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], connection: Connection = null, keyNum: Int = 1): List[T] = {
-    JdbcConnector(keyNum = keyNum).executeQuery(sql, params, clazz, connection)
+  def executeQueryList[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], keyNum: Int = 1): List[T] = {
+    JdbcConnector(keyNum = keyNum).executeQueryList(sql, params, clazz)
   }
 
   /**
@@ -109,13 +106,12 @@ private[fire] trait JdbcFunctions {
    * sql执行参数
    * @param callback
    * 查询回调
-   * @param connection
-   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
    * @param keyNum
    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    */
-  def executeQueryCall(sql: String, params: Seq[Any] = null, callback: ResultSet => Int = null, connection: Connection = null, keyNum: Int = 1): Unit = {
-    JdbcConnector(keyNum = keyNum).executeQueryCall(sql, params, callback, connection)
+  def executeQuery[T](sql: String, params: Seq[Any] = null, callback: ResultSet => T, keyNum: Int = 1): T = {
+    JdbcConnector(keyNum = keyNum).executeQuery(sql, params, callback)
   }
+
 }

@@ -19,19 +19,22 @@ package com.zto.fire.spark.util
 
 import com.zto.fire._
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.util._
+import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.spark.conf.FireSparkConf
 import org.apache.commons.lang3.StringUtils
-import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkEnv
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.CatalystTypeConverters
+import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils
+import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.LoggerFactory
 
 import java.lang.reflect.Field
+import java.sql.ResultSet
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.Try
 
@@ -42,6 +45,7 @@ import scala.util.Try
  */
 object SparkUtils {
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
+  private lazy val spark = SparkSingletonFactory.getSparkSession
 
   /**
    * 将Row转为自定义bean，以JavaBean中的Field为基准
@@ -166,6 +170,43 @@ object SparkUtils {
       }
     }.isSuccess
   }
+
+  /**
+   * 将jdbc查询结果集转为DataFrame
+   *
+   * @param rs
+   * jdbc查询的结果集
+   * @return
+   */
+  def resultSet2DataFrame(rs: ResultSet, keyNum: Int = 1): DataFrame = {
+    val rows = this.resultSet2Rows(rs)
+    val structFields = JdbcUtils.getSchema(rs, JdbcDialects.get(FireJdbcConf.jdbcUrl(keyNum)), true)
+    this.spark.createDataFrame(rows, structFields)
+  }
+
+  /**
+   * 将ResultSet集合转为Row集合
+   *
+   * @param rs
+   * jdbc查询结果集
+   * @return
+   * Spark Row
+   */
+  def resultSet2Rows(rs: ResultSet): List[Row] = {
+    val fieldCount = rs.getMetaData.getColumnCount
+    val rows = ListBuffer[Row]()
+    while (rs.next()) {
+      val row = ArrayBuffer[Any]()
+      (1 to fieldCount).foreach(index => {
+        val value = rs.getObject(index)
+        row += value
+      })
+      val tmpRow = Row(row: _*)
+      rows += tmpRow
+    }
+    rows.toList
+  }
+
 
   /**
    * 根据实体bean构建schema信息
@@ -475,13 +516,13 @@ object SparkUtils {
    * 分配次执行指定的业务逻辑
    *
    * @param rdd
-   *            rdd.foreachPartition
+   * rdd.foreachPartition
    * @param batch
-   *            多大批次执行一次sinkFun中定义的操作
+   * 多大批次执行一次sinkFun中定义的操作
    * @param mapFun
-   *            将Row类型映射为E类型的逻辑，并将处理后的数据放到listBuffer中
+   * 将Row类型映射为E类型的逻辑，并将处理后的数据放到listBuffer中
    * @param sinkFun
-   *            具体处理逻辑，将数据sink到目标源
+   * 具体处理逻辑，将数据sink到目标源
    */
   def rddForeachPartitionBatch[T, E](rdd: RDD[T], mapFun: T => E, sinkFun: ListBuffer[E] => Unit, batch: Int = 1000): Unit = {
     rdd.foreachPartition(it => {
@@ -513,13 +554,13 @@ object SparkUtils {
    * 分配次执行指定的业务逻辑
    *
    * @param df
-   *            df.foreachPartition
+   * df.foreachPartition
    * @param batch
-   *            多大批次执行一次sinkFun中定义的操作
+   * 多大批次执行一次sinkFun中定义的操作
    * @param mapFun
-   *            将Row类型映射为E类型的逻辑，并将处理后的数据放到listBuffer中
+   * 将Row类型映射为E类型的逻辑，并将处理后的数据放到listBuffer中
    * @param sinkFun
-   *            具体处理逻辑，将数据sink到目标源
+   * 具体处理逻辑，将数据sink到目标源
    */
   def datasetForeachPartitionBatch[T, E](df: Dataset[T], mapFun: T => E, sinkFun: ListBuffer[E] => Unit, batch: Int = 1000): Unit = {
     df.foreachPartition((it: Iterator[T]) => {
