@@ -17,16 +17,17 @@
 
 package com.zto.fire.jdbc.util
 
-import java.sql.ResultSet
-import java.util.{Date, Properties}
-
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.jdbc.conf.FireJdbcConf
+import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.{Logger, LoggerFactory}
 
+import java.sql.ResultSet
+import java.util.Properties
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
@@ -36,51 +37,21 @@ import scala.util.Try
  * @author ChengLong 2019-6-23 11:16:18
  */
 object DBUtils {
+  protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
-   * 将row结果转为javabean
+   * 将ResultSet结果转为JavaBean集合
    *
-   * @param row 数据库中的一条记录
-   * @param clazz
-   * @tparam T
-   * @return
+   * @param rs    数据库中的查询结果集
+   * @param clazz 目标JavaBean类型
+   * @return 将ResultSet转换为JavaBean集合返回
    */
-  def dbRow2Bean[T](row: ResultSet, clazz: Class[T]): T = {
-    val obj = clazz.newInstance()
-    clazz.getDeclaredFields.foreach(field => {
-      ReflectionUtils.setAccessible(field)
-      val fieldType = field.getType
-      val anno = field.getAnnotation(classOf[FieldName])
-      val fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
-      if (this.containsColumn(row, fieldName)) {
-        if (fieldType eq classOf[String]) field.set(obj, row.getString(fieldName))
-        else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getInt(fieldName))
-        else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getDouble(fieldName))
-        else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getLong(fieldName))
-        else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getBigDecimal(fieldName))
-        else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getFloat(fieldName))
-        else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getBoolean(fieldName))
-        else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getShort(fieldName))
-        else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getDate(fieldName))
-      }
-    })
-    obj
-  }
-
-  /**
-   * 将ResultSet结果转为javabean
-   *
-   * @param rs 数据库中的查询结果集
-   * @param clazz
-   * @tparam T
-   * @return
-   */
-  def dbResultSet2Bean[T](rs: ResultSet, clazz: Class[T]): ListBuffer[T] = {
+  def resultSet2BeanList[T](rs: ResultSet, clazz: Class[T]): ListBuffer[T] = {
     val list = ListBuffer[T]()
     val fields = clazz.getDeclaredFields
     try {
       while (rs.next()) {
-        var obj = clazz.newInstance()
+        val obj = clazz.newInstance()
         fields.foreach(field => {
           ReflectionUtils.setAccessible(field)
           val fieldType = field.getType
@@ -88,15 +59,17 @@ object DBUtils {
           if (!(anno != null && anno.disuse())) {
             val fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
             if (this.containsColumn(rs, fieldName)) {
-              if (fieldType eq classOf[String]) field.set(obj, rs.getString(fieldName))
-              else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, rs.getInt(fieldName))
-              else if (fieldType eq classOf[java.lang.Double]) field.set(obj, rs.getDouble(fieldName))
-              else if (fieldType eq classOf[java.lang.Long]) field.set(obj, rs.getLong(fieldName))
-              else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, rs.getBigDecimal(fieldName))
-              else if (fieldType eq classOf[java.lang.Float]) field.set(obj, rs.getFloat(fieldName))
-              else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, rs.getBoolean(fieldName))
-              else if (fieldType eq classOf[java.lang.Short]) field.set(obj, rs.getShort(fieldName))
-              else if (fieldType eq classOf[Date]) field.set(obj, rs.getDate(fieldName))
+              if (fieldType eq classOf[JString]) field.set(obj, rs.getString(fieldName))
+              else if (fieldType eq classOf[JInt]) field.set(obj, rs.getInt(fieldName))
+              else if (fieldType eq classOf[JDouble]) field.set(obj, rs.getDouble(fieldName))
+              else if (fieldType eq classOf[JLong]) field.set(obj, rs.getLong(fieldName))
+              else if (fieldType eq classOf[JBigDecimal]) field.set(obj, rs.getBigDecimal(fieldName))
+              else if (fieldType eq classOf[JFloat]) field.set(obj, rs.getFloat(fieldName))
+              else if (fieldType eq classOf[JBoolean]) field.set(obj, rs.getBoolean(fieldName))
+              else if (fieldType eq classOf[JShort]) field.set(obj, rs.getShort(fieldName))
+              else if (fieldType eq classOf[java.sql.Date]) field.set(obj, rs.getDate(fieldName))
+              else if (fieldType eq classOf[java.sql.Time]) field.set(obj, rs.getTime(fieldName))
+              else if (fieldType eq classOf[java.sql.Timestamp]) field.set(obj, rs.getTimestamp(fieldName))
             }
           }
         })
@@ -119,11 +92,30 @@ object DBUtils {
    * true: 存在 false：不存在
    */
   def containsColumn(rs: ResultSet, columnName: String): Boolean = {
-    Try {
+    val start = currentTime
+    val retVal = Try {
       try {
         rs.findColumn(columnName)
       }
-    }.isSuccess
+    }
+    if (retVal.isFailure) this.logger.warn(s"ResultSet结果集中未找到列名：${columnName}，请保证ResultSet与JavaBean中的字段一一对应，耗时：${elapsed(start)}")
+    retVal.isSuccess
+  }
+
+  /**
+   * 获取ResultSet返回的记录数
+   *
+   * @param rs
+   * 查询结果集
+   * @return
+   * 结果集行数
+   */
+  def rowCount(rs: ResultSet): Int = {
+    if (rs == null) return 0
+    rs.last()
+    val count = rs.getRow
+    rs.beforeFirst()
+    count
   }
 
   /**

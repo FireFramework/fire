@@ -969,7 +969,7 @@ object KuduContextExt {
       println(con.getCatalog)
       stmt = con.createStatement()
       rs = stmt.executeQuery(sql)
-      list ++= DBUtils.dbResultSet2Bean(rs, clazz)
+      list ++= DBUtils.resultSet2BeanList(rs, clazz)
     } catch {
       case e: Exception => e.printStackTrace()
     } finally {

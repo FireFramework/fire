@@ -40,8 +40,8 @@ import scala.reflect.ClassTag
  * @since 0.4.1
  */
 class TableExt(table: Table) {
-  lazy val streamTableEnv = FlinkSingletonFactory.getStreamTableEnv
-  lazy val batchTableEnv = FlinkSingletonFactory.getBatchTableEnv
+  lazy val streamTableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[StreamTableEnvironment]
+  lazy val batchTableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[BatchTableEnvironment]
 
   /**
    * 逐条打印每行记录

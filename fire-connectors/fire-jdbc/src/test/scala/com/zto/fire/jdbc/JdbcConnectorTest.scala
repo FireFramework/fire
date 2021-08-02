@@ -69,8 +69,8 @@ class JdbcConnectorTest {
     this.jdbc3.executeUpdate(deleteSql, Seq(studentName))
 
     val selectSql = s"select * from $tableName where name=?"
-    val studentList1 = this.jdbc.executeQuery(selectSql, Seq(studentName), classOf[Student])
-    val studentList3 = this.jdbc3.executeQuery(selectSql, Seq(studentName), classOf[Student])
+    val studentList1 = this.jdbc.executeQueryList(selectSql, Seq(studentName), classOf[Student])
+    val studentList3 = this.jdbc3.executeQueryList(selectSql, Seq(studentName), classOf[Student])
     assertEquals(studentList1.size, 0)
     studentList1.foreach(println)
     assertEquals(studentList3.size, 0)
@@ -80,8 +80,8 @@ class JdbcConnectorTest {
     this.jdbc.executeUpdate(insertSql, Seq(studentName, 10, 10.3))
     this.jdbc3.executeUpdate(insertSql, Seq(studentName, 10, 10.3))
 
-    val studentList11 = this.jdbc.executeQuery(selectSql, Seq(studentName), classOf[Student])
-    val studentList33 = this.jdbc3.executeQuery(selectSql, Seq(studentName), classOf[Student])
+    val studentList11 = this.jdbc.executeQueryList(selectSql, Seq(studentName), classOf[Student])
+    val studentList33 = this.jdbc3.executeQueryList(selectSql, Seq(studentName), classOf[Student])
     assertEquals(studentList11.size, 1)
     studentList11.foreach(println)
     assertEquals(studentList33.size, 1)

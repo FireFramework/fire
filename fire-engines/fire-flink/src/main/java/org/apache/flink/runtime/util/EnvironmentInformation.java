@@ -46,6 +46,7 @@ public class EnvironmentInformation {
 
     public static final String UNKNOWN = "<unknown>";
 
+    // ------------ start：二次开发代码 --------------- //
     // 用于判断是否为JobManager
     private static Boolean IS_JOBMANAGER = true;
     private static final Map<String, String> settings = new ConcurrentHashMap<>();
@@ -56,6 +57,7 @@ public class EnvironmentInformation {
     public static boolean isJobManager() {
         return IS_JOBMANAGER;
     }
+    // ------------ end：二次开发代码 ----------------- //
 
     /**
      * 获取配置信息
@@ -398,6 +400,7 @@ public class EnvironmentInformation {
         }
     }
 
+    // ------------ start：二次开发代码 ---------------- //
     /**
      * 解析命令并判断是否为JobManager
      */
@@ -418,6 +421,7 @@ public class EnvironmentInformation {
             }
         }
     }
+    // ------------ end：二次开发代码 ----------------- //
 
     /**
      * Logs information about the environment, like code revision, current user, Java version, and
@@ -429,7 +433,9 @@ public class EnvironmentInformation {
      */
     public static void logEnvironmentInfo(
             Logger log, String componentName, String[] commandLineArgs) {
+        // ------------ start：二次开发代码 --------------- //
         parseCommand(commandLineArgs);
+        // ------------ end：二次开发代码 ---------------- //
         if (log.isInfoEnabled()) {
             RevisionInformation rev = getRevisionInformation();
             String version = getVersion();

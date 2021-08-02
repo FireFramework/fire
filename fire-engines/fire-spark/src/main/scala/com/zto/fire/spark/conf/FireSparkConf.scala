@@ -33,6 +33,7 @@ private[fire] object FireSparkConf {
   lazy val SPARK_SAVE_MODE = "spark.saveMode"
   lazy val SPARK_PARALLELISM = "spark.parallelism"
   lazy val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
+  lazy val SPARK_SQL_EXTENSIONS_ENABLE = "spark.fire.sql.extensions.enable"
 
   // spark datasource v2 api中的options配置key前缀
   lazy val SPARK_DATASOURCE_OPTIONS_PREFIX = "spark.datasource.options."
@@ -60,6 +61,8 @@ private[fire] object FireSparkConf {
   lazy val parallelism = PropUtils.getInt(this.SPARK_PARALLELISM, 200)
   lazy val chkPointDirPrefix = PropUtils.getString(this.SPARK_CHK_POINT_DIR, this.sparkChkPointDir)
   lazy val confBathDuration = PropUtils.getInt(this.SPARK_STREAMING_BATCH_DURATION, -1)
+  // 是否启用spark sql解析器扩展
+  lazy val sqlExtensionsEnable = PropUtils.getBoolean(this.SPARK_SQL_EXTENSIONS_ENABLE, true)
 
   /**
    * spark datasource api中的format参数

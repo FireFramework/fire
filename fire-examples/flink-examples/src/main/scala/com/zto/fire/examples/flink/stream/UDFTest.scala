@@ -18,9 +18,11 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
+import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
+import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import org.apache.flink.table.functions.ScalarFunction
 
 /**
@@ -31,16 +33,12 @@ import org.apache.flink.table.functions.ScalarFunction
  */
 object UDFTest extends BaseFlinkStreaming {
   override def process: Unit = {
-    this.flink.setParallelism(10)
-    val dataset = this.flink.createCollectionStream(Student.newStudentList()).map(t => t).setParallelism(5)
-    this.tableEnv.registerDataStream("test", dataset)
-    // 注册udf
-    this.tableEnv.createTemporarySystemFunction("appendFire", classOf[Udf])
+    val stream = this.fire.createKafkaDirectStream().filter(t => JSONUtils.isLegal(t)).map(JSONUtils.parseObject[Student](_)).setParallelism(3)
+    this.tableEnv.asInstanceOf[StreamTableEnvironment].registerDataStream("test", stream)
     // 在sql中使用自定义的udf
-    this.flink.sql("select fireUdf(name), fireUdf(age) from test").print()
-    dataset.print("dataset")
+    this.flink.sql("select appendFire(name), fire(age) from test").print()
 
-    this.flink.execute()
+    this.fire.start
   }
 }
 

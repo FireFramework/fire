@@ -72,13 +72,11 @@ object ThreadUtils {
     require(threadPool != null, paramErrorMsg)
 
     (1 to threadCount).foreach(_ => {
-      threadPool.execute(new Runnable {
-        override def run(): Unit = {
-          while (true) {
-            fun
-            logger.debug(s"Loop invoke runAsThreadLoop as ${Thread.currentThread().getName}. Delay is ${delay}s.")
-            Thread.sleep(delay * 1000)
-          }
+      threadPool.execute(() => {
+        while (true) {
+          fun
+          logger.debug(s"Loop invoke runAsThreadLoop as ${Thread.currentThread().getName}. Delay is ${delay}s.")
+          Thread.sleep(delay * 1000)
         }
       })
     })

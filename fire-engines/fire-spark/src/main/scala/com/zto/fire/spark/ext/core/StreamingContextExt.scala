@@ -27,8 +27,8 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.KafkaUtils
 import org.slf4j.LoggerFactory
-
 import com.zto.fire._
+import com.zto.fire.common.util.DatasourceManager
 
 /**
  * StreamingContext扩展
@@ -66,6 +66,9 @@ class StreamingContextExt(ssc: StreamingContext) {
     require(confKafkaParams.nonEmpty, "kafka相关配置不能为空！")
     require(confKafkaParams.contains("bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：spark.kafka.brokers.name$keyNum")
     require(confKafkaParams.contains("group.id"), s"kafka group.id不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum")
+
+    // kafka消费信息埋点
+    DatasourceManager.addMQDatasource("kafka", confKafkaParams("bootstrap.servers").toString, finalKafkaTopic.mkString("", ", ", ""), confKafkaParams("group.id").toString)
 
     KafkaUtils.createDirectStream[String, String](
       ssc, PreferConsistent, Subscribe[String, String](finalKafkaTopic, confKafkaParams))
@@ -120,6 +123,9 @@ class StreamingContextExt(ssc: StreamingContext) {
     val instanceId = FireRocketMQConf.rocketInstanceId(keyNum)
     val finalInstanceId = if (StringUtils.isNotBlank(instanceId)) instanceId else instance
     if (StringUtils.isNotBlank(finalInstanceId)) finalRocketParam.put("consumer.instance", finalInstanceId)
+
+    // 消费rocketmq埋点信息
+    DatasourceManager.addMQDatasource("rocketmq", finalRocketParam(RocketMQConfig.NAME_SERVER_ADDR), finalTopics, finalGroupId)
 
     RocketMqUtils.createMQPullStream(this.ssc,
       finalGroupId,

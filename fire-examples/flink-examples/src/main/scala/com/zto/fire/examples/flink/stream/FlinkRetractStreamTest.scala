@@ -22,6 +22,7 @@ import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
+import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import org.apache.flink.types.Row
 
 object FlinkRetractStreamTest extends BaseFlinkStreaming {
@@ -47,7 +48,7 @@ object FlinkRetractStreamTest extends BaseFlinkStreaming {
     // toRetractStream支持状态更新、删除操作，比例sql中含有group by 等聚合操作，后进来的记录会导致已有的聚合结果不正确
     // 使用toRetractStream后会将之前的旧的聚合结果重新发送一次，并且tuple中的flag标记为false，然后再发送一条正确的结果
     // 类似于structured streaming中自动维护结果表，并进行update操作
-    this.tableEnv.toRetractStream[Row](table).print()
+    this.tableEnv.asInstanceOf[StreamTableEnvironment].toRetractStream[Row](table).print()
 
     this.fire.start
   }

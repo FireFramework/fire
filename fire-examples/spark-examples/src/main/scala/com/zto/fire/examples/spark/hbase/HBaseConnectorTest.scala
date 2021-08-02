@@ -193,6 +193,34 @@ object HBaseConnectorTest extends BaseSparkCore {
   }
 
   /**
+   * 多版本get与scan
+   */
+  def testMutiVersion: Unit = {
+    this.testHBasePutDF
+    this.testHBasePutDF
+    this.testHBasePutDF
+    this.testHBasePutDF
+    print("======testHbaseGetList=======")
+    this.testHbaseGetList
+    print("======testHbaseGetRDD=======")
+    this.testHbaseGetRDD
+    print("======testHbaseGetDF=======")
+    this.testHbaseGetDF
+    print("======testHBaseGetDS=======")
+    this.testHBaseGetDS
+
+    println("==========scan============")
+    print("======testHbaseScanList=======")
+    this.testHbaseScanList
+    print("======testHbaseScanRDD=======")
+    this.testHbaseScanRDD
+    print("======testHbaseScanDF=======")
+    this.testHbaseScanDF
+    print("======testHbaseScanDS=======")
+    this.testHbaseScanDS
+  }
+
+  /**
     * Spark处理过程
     * 注：此方法会被自动调用
     */
@@ -206,10 +234,11 @@ object HBaseConnectorTest extends BaseSparkCore {
 
     // this.testHbasePutRDD
     // this.testHbasePutList
-    this.testHBasePutDF
-    this.testHBasePutDS
-
-    println("=========get========")
+    // HBaseConnector.truncateTable(this.tableName1)
+    // this.testHbaseGetDF
+    //this.testHBasePutDS
+    this.testMutiVersion
+    /*println("=========get========")
     this.testHbaseGetList
     this.testHbaseGetRDD
     this.testHbaseGetDF
@@ -218,6 +247,6 @@ object HBaseConnectorTest extends BaseSparkCore {
     println("=========scan========")
     this.testHbaseScanList
     this.testHbaseScanRDD
-    this.testHbaseScanDF
+    this.testHbaseScanDF*/
   }
 }

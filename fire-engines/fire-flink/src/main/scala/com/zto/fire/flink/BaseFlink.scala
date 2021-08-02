@@ -82,7 +82,7 @@ trait BaseFlink extends BaseFire {
       // 根据所选的hive，进行对应hdfs的HA参数设置
       FireHDFSConf.hdfsHAConf.foreach(prop => hiveConf.set(prop._1, prop._2))
       this.hiveCatalog = new HiveCatalog(FireHiveConf.hiveCatalogName, FireHiveConf.defaultDB, hiveConf, FireHiveConf.hiveVersion)
-      this.logger.info("enabled flink-hive support.")
+      this.logger.info(s"enabled flink-hive support. catalogName is ${FireHiveConf.hiveCatalogName}")
     }
   }
 
@@ -151,14 +151,21 @@ trait BaseFlink extends BaseFire {
         if (FireFlinkConf.streamCheckpointTimeout > 0) ckConfig.setCheckpointTimeout(FireFlinkConf.streamCheckpointTimeout)
         // flink.stream.checkpoint.max.concurrent 默认：1
         if (FireFlinkConf.streamCheckpointMaxConcurrent > 0) ckConfig.setMaxConcurrentCheckpoints(FireFlinkConf.streamCheckpointMaxConcurrent)
-        // flink.stream.checkpoint.min.pause.between  默认：0
-        if (FireFlinkConf.streamCheckpointMinPauseBetween >= 0) ckConfig.setMinPauseBetweenCheckpoints(FireFlinkConf.streamCheckpointMinPauseBetween)
+        // flink.stream.checkpoint.min.pause.between  默认：-1
+        if (FireFlinkConf.streamCheckpointMinPauseBetween >= 0) {
+          ckConfig.setMinPauseBetweenCheckpoints(FireFlinkConf.streamCheckpointMinPauseBetween)
+        } else {
+          // 如果flink.stream.checkpoint.min.pause.between=-1，则默认的checkpoint间隔时间是checkpoint的频率
+          ckConfig.setMinPauseBetweenCheckpoints(FireFlinkConf.streamCheckpointInterval)
+        }
         // flink.stream.checkpoint.prefer.recovery  默认：false
         ckConfig.setPreferCheckpointForRecovery(FireFlinkConf.streamCheckpointPreferRecovery)
         // flink.stream.checkpoint.tolerable.failure.number 默认：0
         if (FireFlinkConf.streamCheckpointTolerableTailureNumber >= 0) ckConfig.setTolerableCheckpointFailureNumber(FireFlinkConf.streamCheckpointTolerableTailureNumber)
         // flink.stream.checkpoint.externalized
         if (StringUtils.isNotBlank(FireFlinkConf.streamCheckpointExternalized)) ckConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.valueOf(FireFlinkConf.streamCheckpointExternalized.trim))
+        // flink.stream.checkpoint.unaligned.enable
+        ckConfig.enableUnalignedCheckpoints(FireFlinkConf.unalignedCheckpointEnable)
       }
 
       streamEnv.getConfig

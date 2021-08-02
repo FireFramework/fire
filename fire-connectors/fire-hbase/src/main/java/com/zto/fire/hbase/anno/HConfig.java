@@ -40,4 +40,9 @@ public @interface HConfig {
      * 注：fire中将数据转为json后以多版本方式插入，因此多列数据最终存放到HBase中只是一列json数据
      */
     boolean multiVersion() default false;
+
+    /**
+     * 默认获取的版本数
+     */
+    int versions() default 1;
 }

@@ -86,7 +86,7 @@ trait FireFunctions extends Serializable {
    */
   def tryWithLog(block: => Unit)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog, isThrow: Boolean = true): Unit = {
     try {
-      timecost(tryLog, logger)(block)
+      elapsed(tryLog, logger)(block)
     } catch {
       case t: Throwable => {
         ExceptionBus.offAndLogError(logger, catchLog, t)
@@ -107,7 +107,7 @@ trait FireFunctions extends Serializable {
    */
   def tryWithReturn[T](block: => T)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog): T = {
     try {
-      timecost[T](tryLog, logger)(block)
+      elapsed[T](tryLog, logger)(block)
     } catch {
       case t: Throwable => {
         ExceptionBus.offAndLogError(logger, catchLog, t)
@@ -132,7 +132,7 @@ trait FireFunctions extends Serializable {
    */
   def tryWithFinally[T](block: => T)(finallyBlock: => Unit)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog, finallyCatchLog: String = finallyCatchLog): T = {
     try {
-      timecost[T](tryLog, logger)(block)
+      elapsed[T](tryLog, logger)(block)
     } catch {
       case t: Throwable =>
         ExceptionBus.offAndLogError(logger, catchLog, t)
@@ -162,7 +162,7 @@ trait FireFunctions extends Serializable {
    * @return
    * 耗时
    */
-  def timecost(beginTime: Long): String = readable(currentTime - beginTime, TimeUnitEnum.MS)
+  def elapsed(beginTime: Long): String = readable(currentTime - beginTime, TimeUnitEnum.MS)
 
   /**
    * 用于统计指定代码块执行的耗时时间
@@ -174,10 +174,10 @@ trait FireFunctions extends Serializable {
    * @param block
    * try的具体逻辑
    */
-  def timecost[T](msg: String, logger: Logger = this.logger)(block: => T): T = {
+  def elapsed[T](msg: String, logger: Logger = this.logger)(block: => T): T = {
     val startTime = this.currentTime
     val retVal = block
-    if (StringUtils.isNotBlank(msg)) logger.info(s"${msg}, 耗时：${timecost(startTime)}")
+    if (StringUtils.isNotBlank(msg)) logger.info(s"${msg}, Elapsed：${elapsed(startTime)}")
     retVal
   }
 }
