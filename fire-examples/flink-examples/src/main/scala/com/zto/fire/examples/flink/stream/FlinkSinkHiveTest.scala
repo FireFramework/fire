@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.flink
+package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkStreaming
@@ -29,7 +29,7 @@ import com.zto.fire.flink.BaseFlinkStreaming
  * @since 2.0.0
  * @create 2021-01-18 17:24
  */
-object Test extends BaseFlinkStreaming {
+object FlinkSinkHiveTest extends BaseFlinkStreaming {
 
   // 具体的业务逻辑放到process方法中
   override def process: Unit = {

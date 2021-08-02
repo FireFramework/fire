@@ -20,6 +20,7 @@ package com.zto.fire.examples.bean;
 import com.zto.fire.common.anno.FieldName;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.JSONUtils;
+import com.zto.fire.hbase.anno.HConfig;
 import com.zto.fire.hbase.bean.HBaseBaseBean;
 
 import java.math.BigDecimal;
@@ -33,6 +34,7 @@ import java.util.Objects;
  * @author ChengLong 2019-6-20 16:06:16
  */
 // @HConfig(multiVersion = true)
+// @HConfig(nullable = true, multiVersion = true, versions = 3)
 public class Student extends HBaseBaseBean<Student> {
     private Long id;
     private String name;
@@ -41,7 +43,7 @@ public class Student extends HBaseBaseBean<Student> {
     private String createTime;
     // 若JavaBean的字段名称与HBase中的字段名称不一致，需使用value单独指定
     // 此时hbase中的列名为length1，而不是length
-    @FieldName(family = "data", value = "length1")
+    //@FieldName(family = "data", value = "length1")
     private BigDecimal length;
     private Boolean sex;
 

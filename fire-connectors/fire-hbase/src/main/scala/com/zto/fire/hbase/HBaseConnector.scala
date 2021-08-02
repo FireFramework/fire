@@ -140,6 +140,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
   def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], gets: Get*)(implicit canOverload: Boolean = true): ListBuffer[T] = {
     requireNonEmpty(tableName, clazz, gets)("参数不合法，无法进行HBase Get操作")
     tryWithReturn {
+      this.getMaxVersions[T](gets: _*)
       val resultList = this.getResult(tableName, gets: _*)
       if (this.getMultiVersion[T]) this.hbaseMultiRow2Bean[T](resultList, clazz) else this.hbaseRow2Bean(resultList, clazz)
     }(this.logger, catchLog = s"批量 get ${hbaseCluster(keyNum)}.${tableName}执行失败")
@@ -265,6 +266,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
     val list = ListBuffer[T]()
     var rsScanner: ResultScanner = null
     tryWithFinally {
+      this.setScanMaxVersions[T](scan)
       rsScanner = this.scanResultScanner(tableName, scan)
       if (rsScanner != null) {
         rsScanner.foreach(rs => {
@@ -1023,6 +1025,35 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
       this.connection.close()
       logger.debug(s"释放HBase connection成功. keyNum=$keyNum")
     }
+  }
+
+  /**
+   * 获取HBaseBaseBean子类@HConfig中的versions的值
+   */
+  @Internal
+  private[this] def getVersions[T <: HBaseBaseBean[T] : ClassTag]: Int = {
+    val clazz = getParamType[T]
+    val hConfig = ReflectionUtils.getClassAnnotation(clazz, classOf[HConfig])
+    // 仅当开启多版本的情况下versions的值才有效
+    if (hConfig == null || !this.getMultiVersion[T]) 1 else hConfig.asInstanceOf[HConfig].versions
+  }
+
+  /**
+   * 为Get对象设置获取最大的版本数
+   */
+  @Internal
+  private[fire] def getMaxVersions[T <: HBaseBaseBean[T] : ClassTag](gets: Get*): Unit = {
+    val versions = this.getVersions[T]
+    if (this.getMultiVersion[T] && versions > 1) gets.foreach(get => get.setMaxVersions(versions))
+  }
+
+  /**
+   * 为Scan对象设置获取最大的版本数
+   */
+  @Internal
+  private[fire] def setScanMaxVersions[T <: HBaseBaseBean[T] : ClassTag](scan: Scan): Unit = {
+    val versions = this.getVersions[T]
+    if (this.getMultiVersion[T] && versions > 1) scan.setMaxVersions(versions)
   }
 }
 

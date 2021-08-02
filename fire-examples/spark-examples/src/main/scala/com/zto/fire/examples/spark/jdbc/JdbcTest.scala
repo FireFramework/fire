@@ -194,15 +194,9 @@ object JdbcTest extends BaseSparkCore {
     this.testJdbcQuery
     this.testTableLoad
     this.testTableSave
-    this.testDataFrameSave
+    this.testDataFrameSave*/
     // 测试配置分发
-    this.testExecutor*/
-
-    val sql = s"select * from $tableName where id in (?, ?, ?, ?, ?, ?)"
-    val df = this.fire.jdbcQueryDF(sql, Seq(1, 2, 3, 4, 5, 6))
-    val rdd = this.fire.jdbcQueryRDD(sql, Seq(1, 2, 3, 4, 5, 6))
-    // 方式二：使用JdbcConnector
-    df.show(1000, false)
-    rdd.foreach(row => println(row))
+    this.testExecutor
+    Thread.sleep(100000)
   }
 }
