@@ -33,7 +33,12 @@ import org.apache.flink.streaming.api.scala.DataStream
  * @since 1.1.0
  * @create 2020-05-22 11:10
  */
+// 1. 以代码的方式进行配置，支持不单独定义配置文件，如果同时定义了配置文件，则配置文件优先级更高
 @Config(props = Array("flink.hello = test11", "flink.world = zms11") , value = Array("test1.properties", "JdbcTest.properties"))
+// 2. 指定从test.properties加载配置文件
+// @Config(Array("test.properties"))
+// 3. 指定从以下两个配置文件中加载配置信息
+// @Config(Array("test.properties", "test2.properties"))
 object JdbcTest extends BaseFlinkStreaming {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "spark_test2"

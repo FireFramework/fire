@@ -17,23 +17,20 @@
 
 package com.zto.fire.examples.spark
 
+import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.spark.BaseSparkCore
+import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.anno.StreamingDuration
 
 /**
  * 基于Fire进行Spark Streaming开发
  */
-
-// 1. 以代码的方式进行配置，支持不单独定义配置文件，如果同时定义了配置文件，则配置文件优先级更高
-@Config(props = Array("spark.kafka.topics = test11", "spark.kafka.brokers.name = zms11") , value = Array("test1.properties", "test2.properties"))
-// 2. 指定从test.properties加载配置文件
-// @Config(Array("test.properties"))
-// 3. 指定从以下两个配置文件中加载配置信息
-// @Config(Array("test.properties", "test2.properties"))
-object Test extends BaseSparkCore {
-
+@StreamingDuration(20)  // spark streaming的批次时间
+@Config(props = Array("kafka.brokers.name = bigdata_test", "kafka.topics = fire", "kafka.group.id=fire")) // 基于注解方式进行配置
+object Test extends BaseSparkStreaming {
   override def process: Unit = {
-    println("spark.kafka.topics-> " + this.conf.getString("spark.kafka.topics"))
-    println("spark.kafka.brokers.name->" + this.conf.getString("spark.kafka.brokers.name"))
+    val dstream = this.ssc.createDirectStream()
+    dstream.print
+    this.fire.start()
   }
 }
