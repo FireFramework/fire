@@ -17,20 +17,20 @@
 
 package com.zto.fire.examples.spark
 
-import com.zto.fire.spark.BaseSparkCore
-
+import com.zto.fire._
+import com.zto.fire.common.anno.Config
+import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.anno.StreamingDuration
 
 /**
  * 基于Fire进行Spark Streaming开发
  */
-object Test extends BaseSparkCore {
-
+@StreamingDuration(20)  // spark streaming的批次时间
+@Config(props = Array("kafka.brokers.name = bigdata_test", "kafka.topics = fire", "kafka.group.id=fire")) // 基于注解方式进行配置
+object Test extends BaseSparkStreaming {
   override def process: Unit = {
-    this.spark.sql("use tmp")
-    this.spark.sql(
-      """
-        |alter table tmp.flink_hive_sink add if not exists partition(ds='202106228') location '/user/hive/warehouse/tmp.db/flink_hive_sink/ds=20210628'
-        |""".stripMargin)
-    this.spark.sql("select * from flink_hive_sink").show(100000, false)
+    val dstream = this.ssc.createDirectStream()
+    dstream.print
+    this.fire.start()
   }
 }

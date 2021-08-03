@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.util
 
+import com.zto.fire.common.anno.Config
 import com.zto.fire.common.conf._
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
@@ -144,6 +145,32 @@ object PropUtils {
   def load(fileNames: String*): this.type = {
     if (noEmpty(fileNames)) fileNames.foreach(this.loadFile)
     this
+  }
+
+  /**
+   * 加载注解配置信息
+   *
+   * @param clazz
+   * 任务入口类
+   */
+  def loadJobConf(clazz: Class[_]): this.type = {
+    if (clazz == null) return this
+    val option = this.getAnnoConfig(clazz)
+    if (option.nonEmpty) {
+      val (files, props) = option.get
+      props.foreach(kv => this.setProperty(kv._1, kv._2))
+      if (noEmpty(files)) this.load(files: _*) else this.load(clazz.getSimpleName.replace("$", ""))
+    }
+    this
+  }
+
+  /**
+   * 根据类的全名称获取注解配置信息
+   * @param className
+   * 入口类的包名+类名
+   */
+  def loadJobConf(className: String): this.type = {
+    this.loadJobConf(Class.forName(className))
   }
 
   /**
@@ -470,6 +497,29 @@ object PropUtils {
       map.foreach(k => logger.debug("合并：k=" + k._1 + " v=" + k._2))
     }
   }
+
+  /**
+   * 获取指定类的配置注解信息
+   *
+   * @param clazz
+   * flink或spark任务的具体入口类
+   * @return
+   * 配置文件名称 & 配置列表
+   */
+  private[this] def getAnnoConfig(clazz: Class[_]): Option[(Array[String], Array[(String, String)])] = {
+    val anno = ReflectionUtils.getClassAnnotation(clazz, classOf[Config])
+    if (anno == null) return None
+    val confAnno = anno.asInstanceOf[Config]
+    val files = confAnno.value().filter(StringUtils.isNotBlank).map(_.trim)
+    val props = confAnno.props().filter(StringUtils.isNotBlank)
+      .map(_.split("=", 2))
+      .filter(prop => noEmpty(prop) && prop.length == 2 && noEmpty(prop(0), prop(1)))
+      .map(prop => {
+        (prop(0).trim, prop(1).trim)
+      })
+    Some(files, props)
+  }
+
 
   /**
    * 调用外部配置中心接口获取配合信息

@@ -55,7 +55,7 @@ trait BaseFlink extends BaseFire {
     // flink引擎无需主动在父类中主动加载配置信息，配置加载在GlobalConfiguration中完成
     if (OSUtils.isLocal) {
       this.loadConf
-      PropUtils.load(FireFrameworkConf.userCommonConf: _*).load(this.appName)
+      PropUtils.load(FireFrameworkConf.userCommonConf: _*).loadJobConf(this.getClass.getName)
     }
     PropUtils.setProperty(FireFlinkConf.FLINK_DRIVER_CLASS_NAME, this.className)
     PropUtils.setProperty(FireFlinkConf.FLINK_CLIENT_SIMPLE_CLASS_NAME, this.driverClass)

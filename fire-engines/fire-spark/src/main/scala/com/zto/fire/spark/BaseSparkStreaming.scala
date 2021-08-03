@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.conf.{FireFrameworkConf, FireKafkaConf}
 import com.zto.fire.common.enu.{ErrorCode, JobType, RequestMethod}
-import com.zto.fire.common.util.{JSONUtils, KafkaUtils, PropUtils}
+import com.zto.fire.common.util.{JSONUtils, KafkaUtils, PropUtils, ReflectionUtils}
 import com.zto.fire.core.rest.RestCase
 import com.zto.fire.spark.bean.RestartParams
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
@@ -30,6 +30,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import spark.{Request, Response}
 import com.zto.fire._
+import com.zto.fire.spark.anno.StreamingDuration
 import com.zto.fire.spark.conf.FireSparkConf
 
 
@@ -150,7 +151,15 @@ trait BaseSparkStreaming extends BaseSpark {
    * 批次时间可通过子类复写main方法实现或通过在配置文件中指定：spark.streaming.batch.duration=30
    */
   override def main(args: Array[String]): Unit = {
-    this.init(30, false)
+    this.init(this.getDuration, false)
+  }
+
+  /**
+   * 获取注解中的批次间隔时间
+   */
+  private[this] def getDuration: Int = {
+    val anno = ReflectionUtils.getClassAnnotation(this.getClass, classOf[StreamingDuration])
+    if (anno != null) anno.asInstanceOf[StreamingDuration].value() else 10
   }
 
   /**

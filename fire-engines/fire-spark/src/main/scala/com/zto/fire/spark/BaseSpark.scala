@@ -63,7 +63,7 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     // 进Driver端进行引擎配置与用户配置的加载，executor端会通过fire进行分发，应避免在executor端加载引擎和用户配置文件
     if (SparkUtils.isDriver) {
       this.loadConf
-      PropUtils.load(FireFrameworkConf.userCommonConf: _*).load(this.appName)
+      PropUtils.load(FireFrameworkConf.userCommonConf: _*).loadJobConf(this.getClass.getName)
     }
     PropUtils.setProperty(FireFrameworkConf.DRIVER_CLASS_NAME, this.className)
     if (StringUtils.isNotBlank(FireSparkConf.appName)) {
