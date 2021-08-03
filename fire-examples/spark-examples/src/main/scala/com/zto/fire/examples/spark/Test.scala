@@ -17,20 +17,23 @@
 
 package com.zto.fire.examples.spark
 
+import com.zto.fire.common.anno.Config
 import com.zto.fire.spark.BaseSparkCore
-
 
 /**
  * 基于Fire进行Spark Streaming开发
  */
+
+// 1. 以代码的方式进行配置，支持不单独定义配置文件，如果同时定义了配置文件，则配置文件优先级更高
+@Config(props = Array("spark.kafka.topics = test11", "spark.kafka.brokers.name = zms11") , value = Array("test1.properties", "test2.properties"))
+// 2. 指定从test.properties加载配置文件
+// @Config(Array("test.properties"))
+// 3. 指定从以下两个配置文件中加载配置信息
+// @Config(Array("test.properties", "test2.properties"))
 object Test extends BaseSparkCore {
 
   override def process: Unit = {
-    this.spark.sql("use tmp")
-    this.spark.sql(
-      """
-        |alter table tmp.flink_hive_sink add if not exists partition(ds='202106228') location '/user/hive/warehouse/tmp.db/flink_hive_sink/ds=20210628'
-        |""".stripMargin)
-    this.spark.sql("select * from flink_hive_sink").show(100000, false)
+    println("spark.kafka.topics-> " + this.conf.getString("spark.kafka.topics"))
+    println("spark.kafka.brokers.name->" + this.conf.getString("spark.kafka.brokers.name"))
   }
 }

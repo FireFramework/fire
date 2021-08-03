@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, PropUtils}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
@@ -32,6 +33,7 @@ import org.apache.flink.streaming.api.scala.DataStream
  * @since 1.1.0
  * @create 2020-05-22 11:10
  */
+@Config(props = Array("flink.hello = test11", "flink.world = zms11") , value = Array("test1.properties", "JdbcTest.properties"))
 object JdbcTest extends BaseFlinkStreaming {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "spark_test2"
@@ -106,6 +108,8 @@ object JdbcTest extends BaseFlinkStreaming {
    */
   def logConf: Unit = {
     println(s"isJobManager=${FlinkUtils.isJobManager} isTaskManager=${FlinkUtils.isTaskManager} hello.world=" + PropUtils.getString("hello.world", "not_found"))
+    println(s"isJobManager=${FlinkUtils.isJobManager} isTaskManager=${FlinkUtils.isTaskManager} flink.hello=" + PropUtils.getString("flink.hello", "not_found"))
+    println(s"isJobManager=${FlinkUtils.isJobManager} isTaskManager=${FlinkUtils.isTaskManager} flink.world=" + PropUtils.getString("flink.world", "not_found"))
     println(s"isJobManager=${FlinkUtils.isJobManager} isTaskManager=${FlinkUtils.isTaskManager} hello.world.flag=" + PropUtils.getBoolean("hello.world.flag", false))
     println(s"isJobManager=${FlinkUtils.isJobManager} isTaskManager=${FlinkUtils.isTaskManager} hello.world.flag2=" + PropUtils.getBoolean("hello.world.flag", false, keyNum = 2))
   }
