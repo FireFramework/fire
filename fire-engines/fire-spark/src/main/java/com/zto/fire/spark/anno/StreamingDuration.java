@@ -18,4 +18,9 @@ public @interface StreamingDuration {
      * 批次时间，单位秒
      */
     int value() default 10;
+
+    /**
+     * 是否开启spark streaming的checkpoint
+     */
+    boolean checkpoint() default false;
 }
