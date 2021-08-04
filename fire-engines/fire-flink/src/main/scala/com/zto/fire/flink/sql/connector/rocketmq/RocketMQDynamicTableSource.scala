@@ -93,6 +93,10 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
     val tag = tableOptions.get(FireRocketMQConf.ROCKET_CONSUMER_TAG)
     if (noEmpty(tag)) properties.setProperty(RocketMQConfig.CONSUMER_TAG, tag) else properties.setProperty(RocketMQConfig.CONSUMER_TAG, "*")
 
+    // 获取起始消费位点
+    val startOffset = tableOptions.get(FireRocketMQConf.ROCKET_STARTING_OFFSET)
+    if (noEmpty(startOffset)) properties.setProperty(RocketMQConfig.CONSUMER_OFFSET_RESET_TO, startOffset)
+
     // 消费rocketmq埋点信息
     DatasourceManager.addMQDatasource("rocketmq", nameserver, topic, groupId)
 
