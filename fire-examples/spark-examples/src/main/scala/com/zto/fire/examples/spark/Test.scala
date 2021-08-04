@@ -25,12 +25,15 @@ import com.zto.fire.spark.anno.StreamingDuration
 /**
  * 基于Fire进行Spark Streaming开发
  */
-@StreamingDuration(20)  // spark streaming的批次时间
+@StreamingDuration(20) // spark streaming的批次时间
 @Config(props = Array("kafka.brokers.name = bigdata_test", "kafka.topics = fire", "kafka.group.id=fire")) // 基于注解方式进行配置
 object Test extends BaseSparkStreaming {
+  /**
+   * fire2.1不再需要main方法，逻辑直接放到process中
+   */
   override def process: Unit = {
-    val dstream = this.ssc.createDirectStream()
+    val dstream = this.fire.createKafkaDirectStream()
     dstream.print
-    this.fire.start()
+    this.fire.start
   }
 }
