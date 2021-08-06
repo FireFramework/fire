@@ -85,7 +85,7 @@ private[fire] object FireFlinkConf {
   lazy val defaultInputDependencyConstraint = PropUtils.getString(this.FLINK_DEFAULT_INPUT_DEPENDENCY_CONSTRAINT)
   lazy val executionMode = PropUtils.getString(this.FLINK_EXECUTION_MODE)
   lazy val latencyTrackingInterval = PropUtils.getLong(this.FLINK_LATENCY_TRACKING_INTERVAL, -1)
-  lazy val maxParallelism = PropUtils.getInt(this.FLINK_MAX_PARALLELISM, 8)
+  lazy val maxParallelism = PropUtils.getInt(this.FLINK_MAX_PARALLELISM, 1024)
   lazy val defaultParallelism = PropUtils.getInt(this.FLINK_DEFAULT_PARALLELISM, -1)
   lazy val taskCancellationInterval = PropUtils.getLong(this.FLINK_TASK_CANCELLATION_INTERVAL, -1)
   lazy val taskCancellationTimeoutMillis = PropUtils.getLong(this.FLINK_TASK_CANCELLATION_TIMEOUT_MILLIS, -1)
