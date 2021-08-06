@@ -32,10 +32,8 @@ object Test extends BaseSparkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
-    val df = this.spark.sql("explain select max(id), sum(1) as all from tmp.baseorg_zero group by id")
-    df.printSchema()
-    df.show(100, false)
     println("-------->" + this.conf.getString("spark.hello"))
+    this.args.foreach(println)
     val dstream = this.fire.createKafkaDirectStream()
     dstream.print
     this.fire.start

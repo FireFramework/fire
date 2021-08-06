@@ -31,6 +31,8 @@ object Test extends BaseFlinkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
+    println("-----------> " + this.conf.getString("kafka.group.id"))
+    this.args.foreach(println)
     val dstream = this.fire.createKafkaDirectStream()
     dstream.print
     this.fire.start
