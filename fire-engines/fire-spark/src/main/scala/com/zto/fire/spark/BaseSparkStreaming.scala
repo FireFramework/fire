@@ -152,7 +152,7 @@ trait BaseSparkStreaming extends BaseSpark {
    */
   override def main(args: Array[String]): Unit = {
     val (duration, checkpoint) = this.getStreamingAnnotation
-    this.init(duration, checkpoint)
+    this.init(duration, checkpoint, args)
   }
 
   /**

@@ -26,12 +26,16 @@ import com.zto.fire.spark.anno.StreamingDuration
  * 基于Fire进行Spark Streaming开发
  */
 @StreamingDuration(20) // spark streaming的批次时间
-@Config(props = Array("kafka.brokers.name = bigdata_test", "kafka.topics = fire", "kafka.group.id=fire")) // 基于注解方式进行配置
+@Config(props = Array("kafka.brokers.name = bigdata_test", "kafka.topics = fire", "kafka.group.id=fire", "hive.cluster=test")) // 基于注解方式进行配置
 object Test extends BaseSparkStreaming {
   /**
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
+    val df = this.spark.sql("explain select max(id), sum(1) as all from tmp.baseorg_zero group by id")
+    df.printSchema()
+    df.show(100, false)
+    println("-------->" + this.conf.getString("spark.hello"))
     val dstream = this.fire.createKafkaDirectStream()
     dstream.print
     this.fire.start

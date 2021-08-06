@@ -161,7 +161,7 @@ trait BaseFire {
    * 可根据实际情况，将配置参数放到同名的配置文件中进行差异化的初始化
    */
   def main(args: Array[String]): Unit = {
-    this.init()
+    this.init(args)
   }
 
   /**
