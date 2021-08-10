@@ -36,7 +36,7 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
 import org.apache.flink.table.api.{Table, TableResult}
 import org.apache.rocketmq.flink.serialization.SimpleTagKeyValueDeserializationSchema
-import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource}
+import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource, RocketMQSourceWithTag}
 
 import java.util.Properties
 import scala.collection.JavaConversions
@@ -166,10 +166,6 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
     val finalGroupId = if (StringUtils.isNotBlank(confGroupId)) confGroupId else groupId
     require(StringUtils.isNotBlank(finalGroupId), s"RocketMQ的groupId不能为空，请在配置文件中指定：rocket.group.id$keyNum")
 
-    // 起始消费位点
-    val confOffset = FireRocketMQConf.rocketStartingOffset(keyNum)
-    if (StringUtils.isNotBlank(confOffset)) rocketParam.put(RocketMQConfig.CONSUMER_OFFSET_RESET_TO, confOffset)
-
     // 详细的RocketMQ配置信息
     val finalRocketParam = RocketMQUtils.rocketParams(rocketParam, finalTopics, finalGroupId, rocketNameServer = null, tag = tag, keyNum)
     require(!finalRocketParam.isEmpty, "RocketMQ相关配置不能为空！")
@@ -181,7 +177,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
     val props = new Properties()
     props.putAll(finalRocketParam)
 
-    this.env.addSource(new RocketMQSource[(String, String, String)](new SimpleTagKeyValueDeserializationSchema, props)).name("RocketMQ Source")
+    this.env.addSource(new RocketMQSourceWithTag[(String, String, String)](new SimpleTagKeyValueDeserializationSchema, props)).name("RocketMQ Source")
   }
 
   /**

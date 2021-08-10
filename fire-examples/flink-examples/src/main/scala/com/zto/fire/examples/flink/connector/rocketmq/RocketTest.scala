@@ -19,6 +19,7 @@ package com.zto.fire.examples.flink.connector.rocketmq
 
 import com.zto.fire._
 import com.zto.fire.flink.BaseFlinkStreaming
+import org.apache.flink.api.scala._
 
 /**
  * Flink流式计算任务消费rocketmq
@@ -30,12 +31,16 @@ import com.zto.fire.flink.BaseFlinkStreaming
 object RocketTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
-    this.fire.createRocketMqPullStreamWithTag().print()
-    // this.fire.createRocketMqPullStreamWithKey()
+    // 1. createRocketMqPullStreamWithTag()返回的是三元组，分别是：(tag, key, value)
+    this.fire.createRocketMqPullStreamWithTag().map(t => t._3).print()
+
+    // 2. createRocketMqPullStreamWithKey()返回的是二元组，分别是：(key, value)
+    // this.fire.createRocketMqPullStreamWithKey().map(t => t._2).print()
+
+    // 3. createRocketMqPullStream()返回的是消息体
     // this.fire.createRocketMqPullStream()
 
     // 从另一个rocketmq中消费数据
-    this.fire.createRocketMqPullStream(keyNum = 2).print()
     this.fire.start
   }
 }

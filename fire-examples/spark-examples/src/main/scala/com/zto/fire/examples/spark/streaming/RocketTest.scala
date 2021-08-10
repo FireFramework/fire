@@ -27,7 +27,8 @@ object RocketTest extends BaseSparkStreaming {
   override def process: Unit = {
     //读取RocketMQ消息流
     val dStream = this.fire.createRocketMqPullStream()
-    dStream.foreachRDD(rdd => {
+    dStream.map(t => new String(t.getBody)).print()
+    /*dStream.foreachRDD(rdd => {
       if (!rdd.isEmpty()) {
         val source = rdd.map(msgExt =>  new String(msgExt.getBody).replace("messageBody", ""))
         import fire.implicits._
@@ -38,7 +39,7 @@ object RocketTest extends BaseSparkStreaming {
             |from tmp_scanrecord
             |""".stripMargin).show(10,false)
       }
-    })
+    })*/
 
     dStream.rocketCommitOffsets
     this.fire.start()

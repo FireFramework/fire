@@ -30,7 +30,7 @@ import org.apache.flink.table.data.RowData
 import org.apache.flink.table.types.DataType
 import org.apache.flink.table.types.utils.DataTypeUtils
 import org.apache.rocketmq.flink.serialization.JsonDeserializationSchema
-import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource}
+import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource, RocketMQSourceWithTag}
 
 import java.util.Properties
 
@@ -103,7 +103,7 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
     val keyDeserialization = createDeserialization(context, keyDecodingFormat, keyProjection, keyPrefix)
     val valueDeserialization = createDeserialization(context, valueDecodingFormat, valueProjection, null)
 
-    SourceFunctionProvider.of(new RocketMQSource(new JsonDeserializationSchema(keyDeserialization, valueDeserialization), properties), false)
+    SourceFunctionProvider.of(new RocketMQSourceWithTag(new JsonDeserializationSchema(keyDeserialization, valueDeserialization), properties), false)
   }
 
 }
