@@ -37,17 +37,8 @@ object RocketMQConnectorTest extends BaseFlinkStreaming {
                     |  age int,
                     |  length double,
                     |  data DECIMAL(10, 5)
-                    |) WITH
-                    |   (
-                    |   'connector' = 'fire-rocketmq',
-                    |   'format' = 'json',
-                    |   'rocket.brokers.name' = 'ZmsClusterX',
-                    |   'rocket.topics'       = 'fire',
-                    |   'rocket.group.id'     = 'fire',
-                    |   'rocket.consumer.tag' = '*'
-                    |   )
-                    |""".stripMargin)
-
+                    |)
+                    |""".stripMargin, keyNum = 1)
     this.fire.sql(
       """
         |select * from source

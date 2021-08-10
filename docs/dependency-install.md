@@ -38,13 +38,13 @@ mvn install:install-file -Dfile=/path/to/hbase-client_2.12-1.2.0-cdh5.12.1.jar -
 ### 1.3 rocketmq-spark包
 
 ```shell
-mvn install:install-file -Dfile=/path/to/rocketmq-spark3_2.12.jar -DgroupId=org.apache.rocketmq -DartifactId=rocketmq-spark3_2.12 -Dversion=0.0.2 -Dpackaging=jar
+mvn install:install-file -Dfile=/path/to/rocketmq-spark3_2.12.jar -DgroupId=org.apache.rocketmq -DartifactId=rocketmq-spark3_2.12 -Dversion=0.0.3 -Dpackaging=jar
 ```
 
 ### 1.4 rocketmq-flink包
 
 ```shell
-mvn install:install-file -Dfile=/path/to/rocketmq-flink_1.12_2.12.jar -DgroupId=org.apache.rocketmq -DartifactId=rocketmq-flink_1.12_2.12 -Dversion=0.0.2 -Dpackaging=jar
+mvn install:install-file -Dfile=/path/to/rocketmq-flink_1.12_2.12-0.0.3.jar -DgroupId=org.apache.rocketmq -DartifactId=rocketmq-flink_1.12_2.12 -Dversion=0.0.3 -Dpackaging=jar
 ```
 
 ### 1.5 kudu-spark包

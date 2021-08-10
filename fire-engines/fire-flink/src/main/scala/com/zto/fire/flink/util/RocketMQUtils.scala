@@ -63,6 +63,10 @@ object RocketMQUtils {
     val finalTag = if (StringUtils.isNotBlank(confTag)) confTag else tag
     if (StringUtils.isNotBlank(finalTag)) optionParams.put(RocketMQConfig.CONSUMER_TAG, finalTag)
 
+    // 起始消费位点
+    val confOffset = FireRocketMQConf.rocketStartingOffset(keyNum)
+    if (StringUtils.isNotBlank(confOffset)) optionParams.put(RocketMQConfig.CONSUMER_OFFSET_RESET_TO, confOffset)
+
     // 以rocket.conf.开头的配置优先级最高
     val confMap = FireRocketMQConf.rocketConfMap(keyNum)
     if (confMap.nonEmpty) optionParams.putAll(confMap)

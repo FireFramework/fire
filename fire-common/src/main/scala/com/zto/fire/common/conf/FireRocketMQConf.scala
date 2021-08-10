@@ -31,7 +31,7 @@ private[fire] object FireRocketMQConf {
   lazy val rocketOffsetLargest = "latest"
   lazy val rocketOffsetSmallest = "earliest"
   lazy val rocketConsumerTag = "*"
-  lazy val rocketClusterMapConfStart = "rocket.cluster.map."
+  lazy val rocketClusterMapConfStart = "fire.rocket.cluster.map."
   // 初始化kafka集群名称与地址映射
   private[fire] lazy val rocketClusterMap = PropUtils.sliceKeys(rocketClusterMapConfStart)
   lazy val rocketConfStart = "rocket.conf."
