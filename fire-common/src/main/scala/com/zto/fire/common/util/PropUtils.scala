@@ -160,9 +160,8 @@ object PropUtils {
       val (files, props) = option.get
       props.foreach(kv => this.setProperty(kv._1, kv._2))
       if (noEmpty(files)) this.load(files: _*)
-    } else {
-      this.load(clazz.getSimpleName.replace("$", ""))
     }
+    this.load(clazz.getSimpleName.replace("$", ""))
     this
   }
 
