@@ -17,10 +17,15 @@ public @interface Config {
     /**
      * 配置文件名称列表
      */
-    String[] value() default "";
+    String[] files() default "";
 
     /**
      * 配置项列表，key=value的字符串形式
      */
     String[] props() default "";
+
+    /**
+     * 配置的字符串
+     */
+    String value() default "";
 }

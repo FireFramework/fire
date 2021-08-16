@@ -24,14 +24,23 @@ import com.zto.fire.flink.BaseFlinkStreaming
 /**
  * 基于Fire进行Flink Streaming开发
  */
-@Config(props = Array("kafka.brokers.name = bigdata_test", "kafka.topics = fire", "kafka.group.id=fire", "fire.rest.filter.enable=false")) // 基于注解方式进行配置
+// @Config(props = Array("kafka.brokers.name = bigdata_test", "kafka.topics = fire", "kafka.group.id=fire", "fire.rest.filter.enable=false")) // 基于注解方式进行配置
+@Config(
+  """
+    |# 直接从配置文件中拷贝过来即可
+    | #注释信息
+    |kafka.brokers.name = bigdata_test
+    |kafka.topics = fire  # topic名称
+    |kafka.group.id=fire1
+    |fire.rest.filter.enable=false # 不开启rest full的权限控制
+    |""")
 object Test extends BaseFlinkStreaming {
 
   /**
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
-    println("-----------> " + this.conf.getString("kafka.group.id"))
+    println("-----------> " + this.conf.getString("flink.kafka.group.id"))
     this.args.foreach(println)
     val dstream = this.fire.createKafkaDirectStream()
     dstream.print

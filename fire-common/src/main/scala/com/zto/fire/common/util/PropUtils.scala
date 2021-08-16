@@ -23,7 +23,7 @@ import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
-import java.io.{FileInputStream, InputStream}
+import java.io.{FileInputStream, InputStream, StringReader}
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.collection.mutable.Map
@@ -157,7 +157,16 @@ object PropUtils {
     if (clazz == null) return this
     val option = this.getAnnoConfig(clazz)
     if (option.nonEmpty) {
-      val (files, props) = option.get
+      val (files, props, value) = option.get
+      if (noEmpty(value)) {
+        // 移除所有的注释信息
+        val normalValue = RegularUtils.propAnnotation.replaceAllIn(value, "").replaceAll("\\|", "").trim
+        val valueProps = new Properties()
+        val stringReader = new StringReader(normalValue)
+        valueProps.load(stringReader)
+        stringReader.close()
+        valueProps.foreach(kv => this.setProperty(kv._1, kv._2))
+      }
       props.foreach(kv => this.setProperty(kv._1, kv._2))
       if (noEmpty(files)) this.load(files: _*)
     }
@@ -507,18 +516,18 @@ object PropUtils {
    * @return
    * 配置文件名称 & 配置列表
    */
-  private[this] def getAnnoConfig(clazz: Class[_]): Option[(Array[String], Array[(String, String)])] = {
+  private[this] def getAnnoConfig(clazz: Class[_]): Option[(Array[String], Array[(String, String)], String)] = {
     val anno = ReflectionUtils.getClassAnnotation(clazz, classOf[Config])
     if (anno == null) return None
     val confAnno = anno.asInstanceOf[Config]
-    val files = confAnno.value().filter(StringUtils.isNotBlank).map(_.trim)
+    val files = confAnno.files().filter(StringUtils.isNotBlank).map(_.trim)
     val props = confAnno.props().filter(StringUtils.isNotBlank)
       .map(_.split("=", 2))
       .filter(prop => noEmpty(prop) && prop.length == 2 && noEmpty(prop(0), prop(1)))
       .map(prop => {
         (prop(0).trim, prop(1).trim)
       })
-    Some(files, props)
+    Some(files, props, confAnno.value())
   }
 
 

@@ -25,7 +25,7 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -303,7 +303,8 @@ public final class GlobalConfiguration {
                 PropUtils.invokeConfigCenter(className);
                 PropUtils.setProperty("flink.run.mode", runMode);
 
-                JavaConversions.mapAsJavaMap(PropUtils.settings()).forEach((k, v) -> {
+                Map<String, String> settingMap = (Map<String, String>) JavaConverters.mapAsJavaMap(PropUtils.settings());
+                settingMap.forEach((k, v) -> {
                     config.setString(k, v);
                     settings.put(k, v);
                 });
@@ -320,7 +321,7 @@ public final class GlobalConfiguration {
         Preconditions.checkNotNull(key, "key is null");
         final String keyInLower = key.toLowerCase();
         // 用于隐藏webui中敏感信息
-        String hideKeys = JavaConversions.mapAsJavaMap(PropUtils.settings()).getOrDefault("fire.conf.print.blacklist", "password,secret,fs.azure.account.key");
+        String hideKeys = ((Map<String, String>) JavaConverters.mapAsJavaMap(PropUtils.settings())).getOrDefault("fire.conf.print.blacklist", "password,secret,fs.azure.account.key");
         if (hideKeys != null && hideKeys.length() > 0) {
             String[] hideKeyArr = hideKeys.split(",");
             for (String hideKey : hideKeyArr) {
