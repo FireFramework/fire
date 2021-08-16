@@ -4,7 +4,7 @@
     <groupId>com.zto.fire</groupId>
     <artifactId>fire-parent_2.12</artifactId>
     <packaging>pom</packaging>
-    <version>2.1.4-SNAPSHOT</version>
+    <version>2.2.0-SNAPSHOT</version>
     <name>fire-parent</name>
 
     <properties>
@@ -45,6 +45,7 @@
         <module>fire-external</module>
         <module>fire-connectors</module>
         <module>fire-engines</module>
+        <module>fire-enhance</module>
     </modules>
 
     <dependencies>

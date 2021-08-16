@@ -49,7 +49,7 @@ public final class GlobalConfiguration {
 
     // the hidden content to be displayed
     public static final String HIDDEN_CONTENT = "******";
-    // ------------ start：二次开发代码 --------------- //
+    // TODO: ------------ start：二次开发代码 --------------- //
     // 用于判断是JobManager还是TaskManager
     private static boolean isJobManager = false;
     // fire rest服务占用端口
@@ -94,7 +94,7 @@ public final class GlobalConfiguration {
         }
         return port;
     }
-    // ------------ end：二次开发代码 ----------------- //
+    // TODO: ------------ end：二次开发代码 ----------------- //
 
     // --------------------------------------------------------------------------------------------
 
@@ -247,7 +247,7 @@ public final class GlobalConfiguration {
         return config;
     }
 
-    // ------------ start：二次开发代码 --------------- //
+    // TODO: ------------ start：二次开发代码 --------------- //
 
     /**
      * fire框架相关初始化动作
@@ -270,7 +270,7 @@ public final class GlobalConfiguration {
      * 加载必要的配置文件
      */
     private static void loadTaskConfiguration(Configuration config) {
-        // 二次开发代码，用于加载任务同名配置文件中的flink参数
+        // 用于加载任务同名配置文件中的flink参数
         // 获取当前任务的类名称
         String className = config.getString("$internal.application.main", config.getString("flink.fire.className", ""));
         // 获取当前任务的运行模式：yarn-application或yarn-per-job
@@ -319,7 +319,7 @@ public final class GlobalConfiguration {
     public static boolean isSensitive(String key) {
         Preconditions.checkNotNull(key, "key is null");
         final String keyInLower = key.toLowerCase();
-        // 二次开发代码，用于隐藏webui中敏感信息
+        // 用于隐藏webui中敏感信息
         String hideKeys = JavaConversions.mapAsJavaMap(PropUtils.settings()).getOrDefault("fire.conf.print.blacklist", "password,secret,fs.azure.account.key");
         if (hideKeys != null && hideKeys.length() > 0) {
             String[] hideKeyArr = hideKeys.split(",");
@@ -332,5 +332,5 @@ public final class GlobalConfiguration {
         }
         return false;
     }
-    // ------------ end：二次开发代码 ----------------- //
+    // TODO: ------------ end：二次开发代码 ----------------- //
 }

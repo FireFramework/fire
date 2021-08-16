@@ -79,10 +79,10 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
     private final OperationTreeBuilder operationTreeBuilder;
     private final List<ModifyOperation> bufferedModifyOperations = new ArrayList<>();
 
-    // ------------ start：二次开发代码 --------------- //
+    // TODO: ------------ start：二次开发代码 --------------- //
     private static Method sqlParseMethod = null;
     private static AtomicBoolean canParse = new AtomicBoolean(true);
-    // ------------ end：二次开发代码 ----------------- //
+    // TODO: ------------ end：二次开发代码 ----------------- //
 
     protected final TableConfig tableConfig;
     protected final Executor execEnv;
@@ -579,7 +579,7 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
 
     @Override
     public TableResult executeSql(String statement) {
-        // ------------ start：二次开发代码 --------------- //
+        // TODO: ------------ start：二次开发代码 --------------- //
         // 使用反射获取进行sql收集，避免api找不到的异常
         try {
             if (canParse.get()) {
@@ -596,7 +596,7 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
                 canParse.set(false);
             } catch (Exception e1) {}
         }
-        // ------------ end：二次开发代码 ----------------- //
+        // TODO: ------------ end：二次开发代码 ----------------- //
 
         List<Operation> operations = parser.parse(statement);
 

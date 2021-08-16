@@ -24,7 +24,7 @@ import com.zto.fire.flink.BaseFlinkStreaming
 /**
  * 基于Fire进行Flink Streaming开发
  */
-@Config(props = Array("kafka.brokers.name = bigdata_test", "kafka.topics = fire", "kafka.group.id=fire")) // 基于注解方式进行配置
+@Config(props = Array("kafka.brokers.name = bigdata_test", "kafka.topics = fire", "kafka.group.id=fire", "fire.rest.filter.enable=false")) // 基于注解方式进行配置
 object Test extends BaseFlinkStreaming {
 
   /**

@@ -214,8 +214,8 @@ trait BaseSparkStreaming extends BaseSpark {
       msg.buildSuccess(s"执行热重启成功：duration=${this.externalConf.getBatchDuration}", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[hotRestart] 执行热重启成功失败：json=$json", "rest")
-        msg.buildError("执行热重启成功失败", ErrorCode.ERROR)
+        this.logger.error(s"[hotRestart] 执行热重启失败：json=$json", e)
+        msg.buildError("执行热重启失败", ErrorCode.ERROR)
       }
     }
   }

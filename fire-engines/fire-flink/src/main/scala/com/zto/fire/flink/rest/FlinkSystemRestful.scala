@@ -23,7 +23,9 @@ import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util.{ExceptionBus, _}
 import com.zto.fire.core.rest.{RestCase, RestServerManager, SystemRestful}
 import com.zto.fire.flink.BaseFlink
+import com.zto.fire.flink.bean.CheckpointParams
 import org.apache.commons.lang3.StringUtils
+import org.apache.flink.runtime.checkpoint.CheckpointCoordinator
 import spark._
 
 /**
@@ -40,12 +42,52 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
     this.restfulRegister
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/kill", kill))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/datasource", datasource))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/flink/checkpoint", checkpoint))
   }
 
   /**
    * 设置baseFlink实例
    */
   private[fire] def setBaseFlink(baseFlink: BaseFlink): Unit = this.baseFlink = baseFlink
+
+  /**
+   * 用于运行时热修改checkpoint
+   */
+  @Rest("/system/flink/checkpoint")
+  def checkpoint(request: Request, response: Response): AnyRef = {
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      val checkpointParams = JSONUtils.parseObject[CheckpointParams](json)
+
+      val clazz = classOf[CheckpointCoordinator]
+      // 获取静态方法
+      val getInstance = ReflectionUtils.getMethodByName(clazz, "getInstance")
+      if (getInstance != null) {
+        // 获取CheckpointCoordinator单例对象
+        val coordinator = getInstance.invoke(null)
+        if (coordinator != null) {
+          val target = coordinator.asInstanceOf[CheckpointCoordinator]
+          // 重新设置checkpoint的频率
+          if (checkpointParams.getInterval != null) ReflectionUtils.getMethodByName(clazz, "setBaseInterval").invoke(target, checkpointParams.getInterval)
+          // 重新设置checkpoint的超时时间
+          if (checkpointParams.getTimeout != null) ReflectionUtils.getMethodByName(clazz, "setCheckpointTimeout").invoke(target, checkpointParams.getTimeout)
+          // 重新设置两次相邻checkpoint的最短时间间隔
+          if (checkpointParams.getMinPauseBetween != null) ReflectionUtils.getMethodByName(clazz, "setMinPauseBetweenCheckpoints").invoke(target, checkpointParams.getMinPauseBetween)
+          // 重新调度checkpoint
+          target.startCheckpointScheduler()
+        }
+      }
+
+      this.logger.info(s"[checkpoint] 执行checkpoint热修改成功：interval=${checkpointParams.getInterval} timeout=${checkpointParams.getTimeout} minPauseBetween=${checkpointParams.getMinPauseBetween} json=$json", "rest")
+      msg.buildSuccess(s"执行checkpoint热修改成功：interval=${checkpointParams.getInterval} timeout=${checkpointParams.getTimeout} minPauseBetween=${checkpointParams.getMinPauseBetween}", ErrorCode.SUCCESS.toString)
+    } catch {
+      case e: Exception => {
+        this.logger.error(s"[checkpoint] 执行checkpoint热修改失败：json=$json", e)
+        msg.buildError("执行checkpoint热修改失败", ErrorCode.ERROR)
+      }
+    }
+  }
 
   /**
    * kill 当前 Flink 任务
