@@ -44,7 +44,7 @@ class RocketMQDynamicTableSink(physicalDataType: DataType,
                                keyProjection: Array[Int],
                                valueProjection: Array[Int],
                                keyPrefix: String,
-                               tableOptions: JMap[String, String], parallelism: Int) extends DynamicTableSink {
+                               tableOptions: JMap[String, String]) extends DynamicTableSink {
 
 
   override def getChangelogMode(requestedMode: ChangelogMode): ChangelogMode = ChangelogMode.insertOnly()
@@ -68,16 +68,19 @@ class RocketMQDynamicTableSink(physicalDataType: DataType,
     val tag = tableOptions.get(FireRocketMQConf.ROCKET_CONSUMER_TAG)
     if (noEmpty(tag)) properties.setProperty(RocketMQConfig.CONSUMER_TAG, tag) else properties.setProperty(RocketMQConfig.CONSUMER_TAG, "*")
 
+    // sink的并行度
+    val sinkParallelism = tableOptions.getOrElse(FireRocketMQConf.ROCKET_SINK_PARALLELISM, null)
+
     // 消费rocketmq埋点信息
     DatasourceManager.addMQDatasource("rocketmq", nameserver, topic, "", sink = true)
 
     val keyDeserialization = createSerialization(context, keyDecodingFormat, keyProjection, keyPrefix)
     val valueDeserialization = createSerialization(context, valueDecodingFormat, valueProjection, null)
     val sink = new RocketMQSinkWithTag[RowData](new JsonSerializationSchema(topic, tag, valueDeserialization), new DefaultTopicSelector(topic), properties)
-    SinkFunctionProvider.of(sink, this.parallelism)
+    SinkFunctionProvider.of(sink, if (noEmpty(sinkParallelism)) sinkParallelism.trim.toInt else null)
   }
 
-  override def copy(): DynamicTableSink = new RocketMQDynamicTableSink(physicalDataType, keyDecodingFormat, valueDecodingFormat, keyProjection, valueProjection, keyPrefix, tableOptions, parallelism)
+  override def copy(): DynamicTableSink = new RocketMQDynamicTableSink(physicalDataType, keyDecodingFormat, valueDecodingFormat, keyProjection, valueProjection, keyPrefix, tableOptions)
 
   override def asSummaryString(): String = "fire-rocketmq sink"
 

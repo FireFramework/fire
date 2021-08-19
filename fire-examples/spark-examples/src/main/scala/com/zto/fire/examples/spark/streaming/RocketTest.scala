@@ -32,7 +32,7 @@ import com.zto.fire.spark.anno.StreamingDuration
     |rocket.brokers.name=bigdata_test
     |rocket.topics=fire
     |rocket.group.id=fire   # 指定groupId
-    |rocket.consumer.tag=*
+    |rocket.consumer.tag=fire
     |rocket.starting.offsets=latest
     |""")
 object RocketTest extends BaseSparkStreaming {

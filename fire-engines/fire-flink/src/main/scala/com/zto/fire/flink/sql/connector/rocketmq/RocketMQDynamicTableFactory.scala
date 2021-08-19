@@ -112,6 +112,6 @@ class RocketMQDynamicTableFactory extends DynamicTableSourceFactory with Dynamic
     val parallelism = tableOptions.getOptional(FactoryUtil.SINK_PARALLELISM).orElse(8)
     val withOptions = context.getCatalogTable.getOptions
 
-    new RocketMQDynamicTableSink(physicalDataType, keyDecodingFormat, valueDecodingFormat, keyProjection, valueProjection, keyPrefix, withOptions, parallelism)
+    new RocketMQDynamicTableSink(physicalDataType, keyDecodingFormat, valueDecodingFormat, keyProjection, valueProjection, keyPrefix, withOptions)
   }
 }
