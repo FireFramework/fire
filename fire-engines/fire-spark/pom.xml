@@ -36,6 +36,11 @@
             <artifactId>apache-spark_3.0.2_2.12</artifactId>
             <version>${fire.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>rocketmq-spark_${spark.reference}</artifactId>
+            <version>${fire.version}</version>
+        </dependency>
         <!-- spark相关依赖 -->
         <dependency>
             <groupId>org.apache.spark</groupId>

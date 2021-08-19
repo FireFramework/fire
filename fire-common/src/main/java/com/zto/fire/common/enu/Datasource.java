@@ -17,12 +17,7 @@
 
 package com.zto.fire.common.enu;
 
-import com.zto.fire.common.conf.FireFrameworkConf;
 import org.apache.commons.lang3.StringUtils;
-import scala.collection.JavaConversions;
-
-import java.util.Arrays;
-import java.util.Map;
 
 /**
  * 数据源类型

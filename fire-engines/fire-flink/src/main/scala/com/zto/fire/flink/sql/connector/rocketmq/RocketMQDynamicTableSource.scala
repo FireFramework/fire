@@ -51,7 +51,7 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
 
   override def copy(): DynamicTableSource = new RocketMQDynamicTableSource(physicalDataType, keyDecodingFormat, valueDecodingFormat, keyProjection, valueProjection, keyPrefix, tableOptions)
 
-  override def asSummaryString(): String = "fire-rocketmq"
+  override def asSummaryString(): String = "fire-rocketmq source"
 
   /**
    * 创建反序列化器

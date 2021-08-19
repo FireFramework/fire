@@ -37,6 +37,11 @@
             <version>${fire.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>rocketmq-flink_${flink.reference}</artifactId>
+            <version>${fire.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.sparkjava</groupId>
             <artifactId>spark-core</artifactId>
             <version>${sparkjava.version}</version>

@@ -17,15 +17,11 @@
 
 package com.zto.fire.apollo.util
 
-import com.ctrip.framework.apollo.core.enums.EnvUtils
-import com.ctrip.framework.apollo.model.ConfigChangeEvent
-import com.ctrip.framework.apollo.{ConfigChangeListener, ConfigService}
 import com.zto.fire.common.util.PropUtils
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 import java.util.Properties
-import scala.collection.JavaConversions._
 
 object ApolloConfigUtil {
 

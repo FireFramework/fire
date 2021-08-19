@@ -19,33 +19,19 @@ package com.zto.fire.examples.spark.streaming
 
 import com.zto.fire._
 import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.anno.StreamingDuration
 
 /**
  * 消费rocketmq中的数据
  */
+@StreamingDuration(10)
 object RocketTest extends BaseSparkStreaming {
   override def process: Unit = {
     //读取RocketMQ消息流
     val dStream = this.fire.createRocketMqPullStream()
     dStream.map(t => new String(t.getBody)).print()
-    /*dStream.foreachRDD(rdd => {
-      if (!rdd.isEmpty()) {
-        val source = rdd.map(msgExt =>  new String(msgExt.getBody).replace("messageBody", ""))
-        import fire.implicits._
-        this.fire.read.json(source.toDS()).createOrReplaceTempView("tmp_scanrecord")
-        this.fire.sql(
-          """
-            |select *
-            |from tmp_scanrecord
-            |""".stripMargin).show(10,false)
-      }
-    })*/
 
     dStream.rocketCommitOffsets
     this.fire.start()
-  }
-
-  override def main(args: Array[String]): Unit = {
-    this.init(10, false)
   }
 }

@@ -39,7 +39,7 @@ import org.apache.rocketmq.flink.serialization.SimpleTagKeyValueDeserializationS
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource, RocketMQSourceWithTag}
 
 import java.util.Properties
-import scala.collection.JavaConversions
+import scala.collection.{JavaConversions, JavaConverters}
 
 /**
  * 用于对Flink StreamExecutionEnvironment的API库扩展
@@ -85,7 +85,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
     // 消费kafka埋点信息
     DatasourceManager.addMQDatasource("kafka", confKafkaParams("bootstrap.servers").toString, topicList.mkString("", ", ", ""), confKafkaParams("group.id").toString)
 
-    val kafkaConsumer = new FlinkKafkaConsumer[String](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
+    val kafkaConsumer = new FlinkKafkaConsumer[String](JavaConverters.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
       new SimpleStringSchema(), properties)
     kafkaConsumer
   }

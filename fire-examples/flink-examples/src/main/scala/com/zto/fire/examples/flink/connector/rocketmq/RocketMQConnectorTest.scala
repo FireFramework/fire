@@ -38,7 +38,22 @@ object RocketMQConnectorTest extends BaseFlinkStreaming {
                     |  length double,
                     |  data DECIMAL(10, 5)
                     |)
-                    |""".stripMargin, keyNum = 1)
+                    |""".stripMargin, keyNum = 2)
+
+    this.fire.sql("""
+                    |CREATE table sink (
+                    |  id bigint,
+                    |  name string,
+                    |  age int,
+                    |  length double,
+                    |  data DECIMAL(10, 5)
+                    |)
+                    |""".stripMargin, keyNum = 3)
+    this.fire.sql(
+      """
+        |insert into sink select * from source
+        |""".stripMargin).print()
+
     this.fire.sql(
       """
         |select * from source

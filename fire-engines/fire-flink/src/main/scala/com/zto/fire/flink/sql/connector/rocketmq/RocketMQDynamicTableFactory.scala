@@ -18,34 +18,39 @@
 package com.zto.fire.flink.sql.connector.rocketmq
 
 import com.zto.fire._
-import com.zto.fire.common.conf.FireRocketMQConf
 import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions._
-import org.apache.flink.api.common.serialization.DeserializationSchema
+import org.apache.flink.api.common.serialization.{DeserializationSchema, SerializationSchema}
 import org.apache.flink.configuration.ConfigOption
-import org.apache.flink.table.connector.format.DecodingFormat
+import org.apache.flink.table.connector.format.{DecodingFormat, EncodingFormat}
+import org.apache.flink.table.connector.sink.DynamicTableSink
 import org.apache.flink.table.connector.source.DynamicTableSource
 import org.apache.flink.table.data.RowData
-import org.apache.flink.table.factories.{DeserializationFormatFactory, DynamicTableFactory, DynamicTableSourceFactory, FactoryUtil}
-
-import java.util
-import java.util.Properties
+import org.apache.flink.table.factories._
 
 /**
  * sql connector的source与sink创建工厂
  *
  * @author ChengLong 2021-5-7 15:48:03
  */
-class RocketMQDynamicTableFactory extends DynamicTableSourceFactory {
+class RocketMQDynamicTableFactory extends DynamicTableSourceFactory with DynamicTableSinkFactory {
   val IDENTIFIER = "fire-rocketmq"
 
   override def factoryIdentifier(): String = this.IDENTIFIER
+
+  private def getKeyDecodingFormat(helper: FactoryUtil.TableFactoryHelper): DecodingFormat[DeserializationSchema[RowData]] = {
+    helper.discoverDecodingFormat(classOf[DeserializationFormatFactory], FactoryUtil.FORMAT)
+  }
 
   private def getValueDecodingFormat(helper: FactoryUtil.TableFactoryHelper): DecodingFormat[DeserializationSchema[RowData]] = {
     helper.discoverDecodingFormat(classOf[DeserializationFormatFactory], FactoryUtil.FORMAT)
   }
 
-  private def getKeyDecodingFormat(helper: FactoryUtil.TableFactoryHelper): DecodingFormat[DeserializationSchema[RowData]] = {
-    helper.discoverDecodingFormat(classOf[DeserializationFormatFactory], FactoryUtil.FORMAT)
+  private def getKeyEncodingFormat(helper: FactoryUtil.TableFactoryHelper): EncodingFormat[SerializationSchema[RowData]] = {
+    helper.discoverEncodingFormat(classOf[SerializationFormatFactory], FactoryUtil.FORMAT)
+  }
+
+  private def getValueEncodingFormat(helper: FactoryUtil.TableFactoryHelper): EncodingFormat[SerializationSchema[RowData]] = {
+    helper.discoverEncodingFormat(classOf[SerializationFormatFactory], FactoryUtil.FORMAT)
   }
 
   /**
@@ -83,7 +88,6 @@ class RocketMQDynamicTableFactory extends DynamicTableSourceFactory {
     val valueProjection = createValueFormatProjection(tableOptions, physicalDataType)
     val keyPrefix = tableOptions.getOptional(KEY_FIELDS_PREFIX).orElse(null)
 
-
     new RocketMQDynamicTableSource(physicalDataType,
       keyDecodingFormat,
       valueDecodingFormat,
@@ -91,5 +95,23 @@ class RocketMQDynamicTableFactory extends DynamicTableSourceFactory {
       valueProjection,
       keyPrefix,
       withOptions)
+  }
+
+  /**
+   * 创建rocketmq table sink
+   */
+  override def createDynamicTableSink(context: DynamicTableFactory.Context): DynamicTableSink = {
+    val helper = FactoryUtil.createTableFactoryHelper(this, context)
+    val tableOptions = helper.getOptions()
+    val keyDecodingFormat = this.getKeyEncodingFormat(helper)
+    val valueDecodingFormat = this.getValueEncodingFormat(helper)
+    val physicalDataType = context.getCatalogTable().getSchema().toPhysicalRowDataType()
+    val keyProjection = RocketMQOptions.createKeyFormatProjection(tableOptions, physicalDataType)
+    val valueProjection = RocketMQOptions.createValueFormatProjection(tableOptions, physicalDataType)
+    val keyPrefix = tableOptions.getOptional(RocketMQOptions.KEY_FIELDS_PREFIX).orElse(null)
+    val parallelism = tableOptions.getOptional(FactoryUtil.SINK_PARALLELISM).orElse(8)
+    val withOptions = context.getCatalogTable.getOptions
+
+    new RocketMQDynamicTableSink(physicalDataType, keyDecodingFormat, valueDecodingFormat, keyProjection, valueProjection, keyPrefix, withOptions, parallelism)
   }
 }

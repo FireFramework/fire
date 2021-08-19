@@ -23,7 +23,6 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.data.RowData;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * 将rocketmq消息反序列化成RowData
