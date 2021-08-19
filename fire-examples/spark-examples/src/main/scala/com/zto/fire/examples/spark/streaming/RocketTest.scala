@@ -18,13 +18,23 @@
 package com.zto.fire.examples.spark.streaming
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.StreamingDuration
 
 /**
  * 消费rocketmq中的数据
  */
-@StreamingDuration(10)
+@StreamingDuration(10)  // 定义批次时间为10s，也可通过配置文件指定
+@Config(
+  """
+    |# 非必须配置项：默认是大数据的rocket地址 bigdata_test
+    |rocket.brokers.name=bigdata_test
+    |rocket.topics=fire
+    |rocket.group.id=fire   # 指定groupId
+    |rocket.consumer.tag=*
+    |rocket.starting.offsets=latest
+    |""")
 object RocketTest extends BaseSparkStreaming {
   override def process: Unit = {
     //读取RocketMQ消息流

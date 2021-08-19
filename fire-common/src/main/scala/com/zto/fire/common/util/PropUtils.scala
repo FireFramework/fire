@@ -165,7 +165,7 @@ object PropUtils {
         val stringReader = new StringReader(normalValue)
         valueProps.load(stringReader)
         stringReader.close()
-        valueProps.foreach(kv => this.setProperty(kv._1, kv._2))
+        valueProps.map(kv => (StringUtils.trim(kv._1), StringUtils.trim(kv._2))).filter(kv => noEmpty(kv, kv._1, kv._2)).foreach(kv => this.setProperty(kv._1, kv._2))
       }
       props.foreach(kv => this.setProperty(kv._1, kv._2))
       if (noEmpty(files)) this.load(files: _*)
