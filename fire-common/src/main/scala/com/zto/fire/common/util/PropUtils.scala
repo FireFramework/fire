@@ -17,8 +17,9 @@
 
 package com.zto.fire.common.util
 
-import com.zto.fire.common.anno.Config
+import com.zto.fire.common.anno.{Config, Internal}
 import com.zto.fire.common.conf._
+import com.zto.fire.common.enu.ConfigureLevel
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
@@ -175,12 +176,25 @@ object PropUtils {
   }
 
   /**
-   * 根据类的全名称获取注解配置信息
+   * 获取配置中心配置信息并加载用户配置以及注解配置
+   * 配置的优先级：fire公共配置 < 配置中心公共配置 < 用户任务配置 < 配置中心任务级别配置 < 配置中心紧急配置
+   *
    * @param className
    * 入口类的包名+类名
    */
   def loadJobConf(className: String): this.type = {
+    // 通过接口调用获取配置中心配置各等级的参数信息
+    val centerConfig = this.invokeConfigCenter(className)
+    // 配置中心的默认配置优先级高于框架（fire.properties）以及引擎（spark.properties/flink.properties）等配置
+    this.setProperties(centerConfig.get(ConfigureLevel.FRAMEWORK))
+    // 加载用户配置文件以及@Config注解配置
     this.loadJobConf(Class.forName(className))
+    // 配置中心任务级别配置优先级高于用户本地配置文件中的配置，做到重启任务即可生效
+    this.setProperties(centerConfig.get(ConfigureLevel.TASK))
+    // 配置中心紧急配置优先级最高，用于对所有任务生效的紧急参数调优
+    this.setProperties(centerConfig.get(ConfigureLevel.URGENT))
+
+    this
   }
 
   /**
@@ -497,6 +511,7 @@ object PropUtils {
   /**
    * 合并Conf中的配置信息
    */
+  @Internal
   private[this] def mergeEngineConf: Unit = {
     val clazz = Class.forName(FireFrameworkConf.FIRE_ENGINE_CONF_HELPER)
     val method = clazz.getDeclaredMethod("getEngineConf")
@@ -516,6 +531,7 @@ object PropUtils {
    * @return
    * 配置文件名称 & 配置列表
    */
+  @Internal
   private[this] def getAnnoConfig(clazz: Class[_]): Option[(Array[String], Array[(String, String)], String)] = {
     val anno = ReflectionUtils.getClassAnnotation(clazz, classOf[Config])
     if (anno == null) return None
@@ -534,7 +550,8 @@ object PropUtils {
   /**
    * 调用外部配置中心接口获取配合信息
    */
-  def invokeConfigCenter(className: String): Unit = {
+  @Internal
+  private[this] def invokeConfigCenter(className: String): JMap[ConfigureLevel, JMap[String, String]] = {
     val fireEnvConf = System.getenv().getOrDefault("fire_env_conf", "")
     if (noEmpty(fireEnvConf) && JSONUtils.isJson(fireEnvConf)) {
       this.logger.info(s"系统环境变量列表：$fireEnvConf")

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.bean.rest.spark;
+package com.zto.fire.spark.bean;
 
 /**
  * 用于封装表的元数据

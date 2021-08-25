@@ -296,11 +296,11 @@ public final class GlobalConfiguration {
                 // 加载用户公共配置文件
                 PropUtils.load(FireFrameworkConf.userCommonConf());
                 // 加载任务同名的配置文件
-                PropUtils.loadJobConf(className);
+                // PropUtils.loadJobConf(className);
                 // 构建fire rest接口地址
                 PropUtils.setProperty(FireFrameworkConf.FIRE_REST_URL(), "http://" + OSUtils.getIp() + ":" + getRestPort());
                 // 加载外部系统配置信息，覆盖同名配置文件中的配置，实现动态替换
-                PropUtils.invokeConfigCenter(className);
+                PropUtils.loadJobConf(className);
                 PropUtils.setProperty("flink.run.mode", runMode);
 
                 Map<String, String> settingMap = (Map<String, String>) JavaConverters.mapAsJavaMap(PropUtils.settings());

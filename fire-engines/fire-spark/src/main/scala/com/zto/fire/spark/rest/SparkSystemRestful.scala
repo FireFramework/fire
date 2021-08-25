@@ -20,15 +20,15 @@ package com.zto.fire.spark.rest
 import com.google.common.collect.Table
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
-import com.zto.fire.common.bean.rest.spark.{ColumnMeta, FunctionMeta, SparkInfo, TableMeta}
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util.{ExceptionBus, _}
 import com.zto.fire.core.rest.{RestCase, SystemRestful}
-import com.zto.fire.spark.BaseSpark
+import com.zto.fire.spark.{BaseSpark, bean}
 import org.apache.commons.lang3.StringUtils
 import spark._
 import com.zto.fire._
+import com.zto.fire.spark.bean.{ColumnMeta, FunctionMeta, SparkInfo}
 
 import java.util
 
@@ -180,19 +180,19 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         return msg.buildError("获取表元数据信息失败，库名不能为空", ErrorCode.PARAM_ILLEGAL)
       }
 
-      val tableList = new util.LinkedList[TableMeta]
+      val tableList = new util.LinkedList[bean.TableMeta]
       if ("memory".equals(dbName)) {
         // 内存临时表元数据信息
         this.baseSpark.catalog.listTables().collect().foreach(table => {
           if (StringUtils.isBlank(table.database)) {
-            tableList.add(new TableMeta(table.description, "memory", table.name, table.tableType, table.isTemporary))
+            tableList.add(new bean.TableMeta(table.description, "memory", table.name, table.tableType, table.isTemporary))
           }
         })
       } else {
         // 获取hive表元数据信息
         this.baseSpark.catalog.listTables(dbName).collect().foreach(table => {
           if (StringUtils.isNotBlank(table.database)) {
-            tableList.add(new TableMeta(table.description, table.database, table.name, table.tableType, table.isTemporary))
+            tableList.add(new bean.TableMeta(table.description, table.database, table.name, table.tableType, table.isTemporary))
           }
         })
       }

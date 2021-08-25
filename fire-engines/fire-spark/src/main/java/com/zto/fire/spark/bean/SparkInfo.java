@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.bean.rest.spark;
+package com.zto.fire.spark.bean;
 
 import com.zto.fire.common.util.DateFormatUtils;
 
