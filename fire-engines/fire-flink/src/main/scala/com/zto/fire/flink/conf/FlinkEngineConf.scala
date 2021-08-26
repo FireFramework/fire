@@ -26,7 +26,7 @@ import com.zto.fire.predef._
  * 获取Spark引擎的所有配置信息
  *
  * @author ChengLong
- * @since 1.0.0
+ * @since 2.0.0
  * @create 2021-03-02 11:12
  */
 private[fire] class FlinkEngineConf extends EngineConf  {

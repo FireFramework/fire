@@ -58,7 +58,6 @@ public class EnvironmentInformation {
     public static boolean isJobManager() {
         return IS_JOBMANAGER;
     }
-    // TODO: ------------ end：二次开发代码 ----------------- //
 
     /**
      * 获取配置信息
@@ -66,6 +65,15 @@ public class EnvironmentInformation {
     public static Map<String, String> getSettings() {
         return settings;
     }
+
+    /**
+     * 设置配置信息
+     */
+    public static void setSetting(String key, String value) {
+        if (!settings.containsKey(key)) settings.put(key, value);
+    }
+
+    // TODO: ------------ end：二次开发代码 ----------------- //
 
     /**
      * Returns the version of the code as String.

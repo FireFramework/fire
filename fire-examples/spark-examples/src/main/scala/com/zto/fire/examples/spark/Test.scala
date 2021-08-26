@@ -42,31 +42,12 @@ import com.zto.fire.spark.util.SparkUtils
     |""")
 object Test extends BaseSparkStreaming {
 
-  """
-    |{
-    |	"code": 200,
-    |	"content": {
-    |		"FRAMEWORK": {
-    |			"fire.thread.pool.size": "8",
-    |     "fire.restful.max.thread": "11",
-    |     "fire.jdbc.query.partitions": 13,
-    |     "fire.hbase.batch.size": 100
-    |		},
-    |		"TASK": {
-    |			"fire.thread.pool.size": "9",
-    |     "fire.restful.max.thread": "12"
-    |		},
-    |		"URGENT": {
-    |			"fire.thread.pool.size": "10"
-    |		}
-    |	}
-    |}
-    |""".stripMargin
 
   /**
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
+    println("------------>" + this.conf.getString("spark.clickhouse.cluster") + " -> " + this.spark.conf.get("spark.clickhouse.cluster"))
     println(SparkUtils.getExecutorId + " fire.thread.pool.size-------->" + this.conf.getString("fire.thread.pool.size"))  // 10
     println(SparkUtils.getExecutorId + " fire.restful.max.thread-------->" + this.conf.getString("fire.restful.max.thread"))  // 12
     println(SparkUtils.getExecutorId + " fire.jdbc.query.partitions-------->" + this.conf.getString("fire.jdbc.query.partitions"))  // 11
@@ -78,6 +59,7 @@ object Test extends BaseSparkStreaming {
     val dstream = this.fire.createKafkaDirectStream()
     dstream.foreachRDD(rdd => {
       rdd.repartition(5).foreachPartition(it => {
+        println("------------>" + this.conf.getString("spark.clickhouse.cluster") + " -> ")
         println(SparkUtils.getExecutorId + " fire.thread.pool.size-------->" + this.conf.getString("fire.thread.pool.size"))  // 10
         println(SparkUtils.getExecutorId + " fire.restful.max.thread-------->" + this.conf.getString("fire.restful.max.thread"))  // 12
         println(SparkUtils.getExecutorId + " fire.jdbc.query.partitions-------->" + this.conf.getString("fire.jdbc.query.partitions"))  // 11

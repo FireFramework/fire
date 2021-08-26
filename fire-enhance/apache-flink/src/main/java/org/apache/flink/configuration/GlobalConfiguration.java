@@ -28,7 +28,10 @@ import org.slf4j.LoggerFactory;
 import scala.collection.JavaConverters;
 
 import javax.annotation.Nullable;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.util.HashMap;
@@ -205,6 +208,14 @@ public final class GlobalConfiguration {
     private static Configuration loadYAMLResource(File file) {
         final Configuration config = new Configuration();
 
+        Method setSetting = null;
+        try {
+            Class env = Class.forName("org.apache.flink.runtime.util.EnvironmentInformation");
+            setSetting = env.getMethod("setSetting", String.class, String.class);
+        } catch (Exception e) {
+            LOG.error("获取EnvironmentInformation.setSetting()失败", e);
+        }
+
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
 
             String line;
@@ -236,9 +247,12 @@ public final class GlobalConfiguration {
 
                     LOG.info("Loading configuration property: {}, {}", key, isSensitive(key) ? HIDDEN_CONTENT : value);
                     config.setString(key, value);
+                    // TODO: ------------ start：二次开发代码 --------------- //
+                    setSetting.invoke(null, key, value);
+                    // TODO: ------------ end：二次开发代码 --------------- //
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Error parsing YAML configuration.", e);
         }
 

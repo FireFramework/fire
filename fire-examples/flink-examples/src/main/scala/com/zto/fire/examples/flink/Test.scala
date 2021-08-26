@@ -47,6 +47,7 @@ object Test extends BaseFlinkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
+    println("------------>" + this.conf.getString("flink.clickhouse.cluster"))
     println(FlinkUtils.isJobManager + " fire.thread.pool.size-------->" + this.conf.getString("fire.thread.pool.size"))  // 10
     println(FlinkUtils.isJobManager + " fire.restful.max.thread-------->" + this.conf.getString("fire.restful.max.thread"))  // 12
     println(FlinkUtils.isJobManager + " fire.jdbc.query.partitions-------->" + this.conf.getString("fire.jdbc.query.partitions"))  // 11
@@ -56,6 +57,7 @@ object Test extends BaseFlinkStreaming {
     println(FlinkUtils.isJobManager + " fire.hbase.table.exists.cache.period-------->" + this.conf.getInt("fire.hbase.table.exists.cache.period", 500))  // 600
     val dstream = this.fire.createKafkaDirectStream()
     dstream.map(t => {
+      println("------------>" + this.conf.getString("flink.clickhouse.cluster"))
       println(FlinkUtils.isTaskManager + " fire.thread.pool.size-------->" + this.conf.getString("fire.thread.pool.size"))  // 10
       println(FlinkUtils.isTaskManager + " fire.restful.max.thread-------->" + this.conf.getString("fire.restful.max.thread"))  // 12
       println(FlinkUtils.isTaskManager + " fire.jdbc.query.partitions-------->" + this.conf.getString("fire.jdbc.query.partitions"))  // 11
