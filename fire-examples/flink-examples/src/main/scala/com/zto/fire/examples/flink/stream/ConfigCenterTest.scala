@@ -57,6 +57,8 @@ object ConfigCenterTest extends BaseFlinkStreaming {
   }
 
   def printConf: Unit = {
+    println(FlinkUtils.isTaskManager + " flink.clickhouse.cluster-------->" + this.conf.getString("flink.clickhouse.cluster"))
+    println(FlinkUtils.isTaskManager + " flink.dorisdb.cluster-------->" + this.conf.getString("flink.dorisdb.cluster"))
     println(FlinkUtils.isTaskManager + " fire.thread.pool.size-------->" + this.conf.getString("fire.thread.pool.size")) // 10
     println(FlinkUtils.isTaskManager + " fire.restful.max.thread-------->" + this.conf.getString("fire.restful.max.thread")) // 12
     println(FlinkUtils.isTaskManager + " fire.jdbc.query.partitions-------->" + this.conf.getString("fire.jdbc.query.partitions")) // 11

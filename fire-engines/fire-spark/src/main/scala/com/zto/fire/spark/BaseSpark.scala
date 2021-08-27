@@ -19,7 +19,7 @@ package com.zto.fire.spark
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
-import com.zto.fire.common.util.{OSUtils, PropUtils}
+import com.zto.fire.common.util.{JSONUtils, OSUtils, PropUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.spark.acc.AccumulatorManager
@@ -131,7 +131,6 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     this.systemRestful = new SparkSystemRestful(this)
     // 注册到实时平台，并覆盖配置信息
     PropUtils.loadJobConf(this.getClass.getName)
-    PropUtils.show()
 
     // 构建SparkConf信息
     val tmpConf = if (conf == null) this.buildConf(null) else conf.asInstanceOf[SparkConf]
@@ -159,6 +158,10 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     // 在mac或windows环境下执行local模式，cpu数通过spark.local.cores指定，默认local[*]
     if (OSUtils.isLocal) sessionBuilder.master(s"local[${FireSparkConf.localCores}]")
     this._spark = sessionBuilder.getOrCreate()
+    // 将当前spark conf中所有的配置信息同步给PropUtils
+    PropUtils.setProperties(this._spark.conf.getAll)
+    PropUtils.show()
+
     SparkSingletonFactory.setSparkSession(this._spark)
     this._spark.registerUDF()
     this.sc = this._spark.sparkContext

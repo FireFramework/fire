@@ -59,6 +59,8 @@ object ConfigCenterTest extends BaseSparkStreaming {
   }
 
   def printConf: Unit = {
+    println(SparkUtils.getExecutorId + " spark.clickhouse.cluster-------->" + this.conf.getString("spark.clickhouse.cluster"))
+    println(SparkUtils.getExecutorId + " spark.dorisdb.cluster-------->" + this.conf.getString("spark.dorisdb.cluster"))
     println(SparkUtils.getExecutorId + " fire.thread.pool.size-------->" + this.conf.getString("fire.thread.pool.size"))  // 10
     println(SparkUtils.getExecutorId + " fire.restful.max.thread-------->" + this.conf.getString("fire.restful.max.thread"))  // 12
     println(SparkUtils.getExecutorId + " fire.jdbc.query.partitions-------->" + this.conf.getString("fire.jdbc.query.partitions"))  // 11
