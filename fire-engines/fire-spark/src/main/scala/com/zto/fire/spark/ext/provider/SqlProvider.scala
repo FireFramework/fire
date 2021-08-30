@@ -24,6 +24,7 @@ import com.zto.fire.spark.udf.UDFs
 import com.zto.fire.spark.util.SparkSingletonFactory
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.DStream
 
 /**
@@ -169,6 +170,18 @@ trait SqlProvider extends SparkProvider {
    */
   def cacheTables(tables: String*): Unit = {
     this.sqlContext.cacheTables(tables: _*)
+  }
+
+  /**
+   * 缓存指定的表
+   *
+   * @param table
+   * 表名
+   * @param storageLevel
+   * 缓存级别
+   */
+  def cacheTable(table: String, storageLevel: StorageLevel): Unit = {
+    this.catalog.cacheTable(table, storageLevel)
   }
 
   /**
