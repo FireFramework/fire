@@ -31,15 +31,18 @@ import org.apache.flink.api.common.functions.RuntimeContext
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
+import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema
 import org.apache.flink.table.api.{Table, TableResult}
 import org.apache.rocketmq.flink.serialization.SimpleTagKeyValueDeserializationSchema
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource, RocketMQSourceWithTag}
 
 import java.util.Properties
-import scala.collection.JavaConversions
+import scala.collection.{JavaConversions, JavaConverters}
+import scala.reflect.ClassTag
 
 /**
  * 用于对Flink StreamExecutionEnvironment的API库扩展
@@ -66,9 +69,10 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
    * @return
    * FlinkKafkaConsumer011
    */
-  def createKafkaConsumer(kafkaParams: Map[String, Object] = null,
-                          topics: Set[String] = null,
-                          keyNum: Int = 1): FlinkKafkaConsumer[String] = {
+  def createKafkaConsumer[T](kafkaParams: Map[String, Object] = null,
+                             topics: Set[String] = null,
+                             deserializer: Any = new SimpleStringSchema,
+                             keyNum: Int = 1): FlinkKafkaConsumer[T] = {
     val confTopics = FireKafkaConf.kafkaTopics(keyNum)
     val topicList = if (StringUtils.isNotBlank(confTopics)) confTopics.split(",") else topics.toArray
     require(topicList != null && topicList.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：kafka.topics$keyNum")
@@ -78,6 +82,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
     require(confKafkaParams.nonEmpty, "kafka相关配置不能为空！")
     require(confKafkaParams.contains("bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：kafka.brokers.name$keyNum")
     require(confKafkaParams.contains("group.id"), s"kafka group.id不能为空，请在配置文件中指定：kafka.group.id$keyNum")
+    require(deserializer != null, "deserializer不能为空，默认SimpleStringSchema")
 
     val properties = new Properties()
     confKafkaParams.foreach(t => properties.setProperty(t._1, t._2.toString))
@@ -85,9 +90,47 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
     // 消费kafka埋点信息
     DatasourceManager.addMQDatasource("kafka", confKafkaParams("bootstrap.servers").toString, topicList.mkString("", ", ", ""), confKafkaParams("group.id").toString)
 
-    val kafkaConsumer = new FlinkKafkaConsumer[String](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
-      new SimpleStringSchema(), properties)
-    kafkaConsumer
+    deserializer match {
+      case schema: JSONKeyValueDeserializationSchema =>
+        new FlinkKafkaConsumer[ObjectNode](JavaConverters.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
+          schema, properties).asInstanceOf[FlinkKafkaConsumer[T]]
+      case _ =>
+        new FlinkKafkaConsumer[String](JavaConverters.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
+          new SimpleStringSchema, properties).asInstanceOf[FlinkKafkaConsumer[T]]
+    }
+  }
+
+  /**
+   * 可指定支持的deserializer创建DStream流
+   *
+   * @param kafkaParams
+   * kafka相关的配置参数
+   * @return
+   * DStream
+   */
+  def createDirectStreamBySchema[T: TypeInformation : ClassTag](kafkaParams: Map[String, Object] = null,
+                                                                topics: Set[String] = null,
+                                                                specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
+                                                                runtimeContext: RuntimeContext = null,
+                                                                deserializer: Any = new SimpleStringSchema,
+                                                                keyNum: Int = 1): DataStream[T] = {
+
+    val kafkaConsumer = this.createKafkaConsumer[T](kafkaParams, topics, deserializer, keyNum)
+
+    if (runtimeContext != null) kafkaConsumer.setRuntimeContext(runtimeContext)
+    if (specificStartupOffsets != null) kafkaConsumer.setStartFromSpecificOffsets(specificStartupOffsets)
+    // 设置从指定时间戳位置开始消费kafka
+    val startFromTimeStamp = FireKafkaConf.kafkaStartFromTimeStamp(keyNum)
+    if (startFromTimeStamp > 0) kafkaConsumer.setStartFromTimestamp(FireKafkaConf.kafkaStartFromTimeStamp(keyNum))
+    // 是否在checkpoint时记录offset值
+    kafkaConsumer.setCommitOffsetsOnCheckpoints(FireKafkaConf.kafkaCommitOnCheckpoint(keyNum))
+    // 设置从最早的位置开始消费
+    if (FireKafkaConf.offsetSmallest.equalsIgnoreCase(FireKafkaConf.kafkaStartingOffset(keyNum))) kafkaConsumer.setStartFromEarliest()
+    // 设置从最新位置开始消费
+    if (FireKafkaConf.offsetLargest.equalsIgnoreCase(FireKafkaConf.kafkaStartingOffset(keyNum))) kafkaConsumer.setStartFromLatest()
+    // 从topic中指定的group上次消费的位置开始消费，必须配置group.id参数
+    if (FireKafkaConf.kafkaStartFromGroupOffsets(keyNum)) kafkaConsumer.setStartFromGroupOffsets()
+    this.env.addSource(kafkaConsumer)
   }
 
   /**
@@ -104,27 +147,28 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
                          runtimeContext: RuntimeContext = null,
                          keyNum: Int = 1): DataStream[String] = {
 
-    val kafkaConsumer = this.createKafkaConsumer(kafkaParams, topics, keyNum)
-
-    if (runtimeContext != null) kafkaConsumer.setRuntimeContext(runtimeContext)
-    if (specificStartupOffsets != null) kafkaConsumer.setStartFromSpecificOffsets(specificStartupOffsets)
-    // 设置从指定时间戳位置开始消费kafka
-    val startFromTimeStamp = FireKafkaConf.kafkaStartFromTimeStamp(keyNum)
-    if (startFromTimeStamp > 0) kafkaConsumer.setStartFromTimestamp(FireKafkaConf.kafkaStartFromTimeStamp(keyNum))
-    // 是否在checkpoint时记录offset值
-    kafkaConsumer.setCommitOffsetsOnCheckpoints(FireKafkaConf.kafkaCommitOnCheckpoint(keyNum))
-    // 设置从最早的位置开始消费
-    if (FireKafkaConf.offsetSmallest.equalsIgnoreCase(FireKafkaConf.kafkaStartingOffset(keyNum))) kafkaConsumer.setStartFromEarliest()
-    // 设置从最新位置开始消费
-    if (FireKafkaConf.offsetLargest.equalsIgnoreCase(FireKafkaConf.kafkaStartingOffset(keyNum))) kafkaConsumer.setStartFromLatest()
-    // 从topic中指定的group上次消费的位置开始消费，必须配置group.id参数
-    if (FireKafkaConf.kafkaStartFromGroupOffsets(keyNum)) kafkaConsumer.setStartFromGroupOffsets()
-
-    this.env.addSource(kafkaConsumer)
+    this.createDirectStreamBySchema[String](kafkaParams, topics, specificStartupOffsets, runtimeContext, keyNum = keyNum)
   }
 
   /**
-   * 创建DStream流
+   * 基于指定的schema创建DStream流
+   *
+   * @param kafkaParams
+   * kafka相关的配置参数
+   * @return
+   * DStream
+   */
+  def createDirectStreamByJsonKeyValue(kafkaParams: Map[String, Object] = null,
+                                       topics: Set[String] = null,
+                                       specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
+                                       runtimeContext: RuntimeContext = null,
+                                       keyNum: Int = 1): DataStream[ObjectNode] = {
+
+    this.createDirectStreamBySchema[ObjectNode](kafkaParams, topics, specificStartupOffsets, runtimeContext, new JSONKeyValueDeserializationSchema(true), keyNum)
+  }
+
+  /**
+   * 创建DStream流，以SimpleStringSchema进行反序列化
    *
    * @param kafkaParams
    * kafka相关的配置参数
@@ -137,6 +181,22 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
                               runtimeContext: RuntimeContext = null,
                               keyNum: Int = 1): DataStream[String] = {
     this.createDirectStream(kafkaParams, topics, specificStartupOffsets, runtimeContext, keyNum)
+  }
+
+  /**
+   * 创建DStream流，以JSONKeyValueDeserializationSchema进行反序列化
+   *
+   * @param kafkaParams
+   * kafka相关的配置参数
+   * @return
+   * DStream
+   */
+  def createKafkaDirectStreamByJsonKeyValue(kafkaParams: Map[String, Object] = null,
+                                            topics: Set[String] = null,
+                                            specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
+                                            runtimeContext: RuntimeContext = null,
+                                            keyNum: Int = 1): DataStream[ObjectNode] = {
+    this.createDirectStreamByJsonKeyValue(kafkaParams, topics, specificStartupOffsets, runtimeContext, keyNum)
   }
 
   /**
@@ -239,6 +299,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
   /**
    * 执行sql语句
    * 支持DDL、DML
+   *
    * @param keyNum
    * 指定sql的with列表对应的配置文件中key的值，如果为<0则表示不从配置文件中读取with表达式
    */
