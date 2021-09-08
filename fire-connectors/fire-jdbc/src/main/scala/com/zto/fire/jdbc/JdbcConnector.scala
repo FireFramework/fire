@@ -18,18 +18,18 @@
 package com.zto.fire.jdbc
 
 import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Statement}
-
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{DatasourceManager, StringsUtils}
+import com.zto.fire.common.util.{DatasourceManager, LogUtils, ReflectionUtils, StringsUtils}
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 
-import scala.collection.mutable.ListBuffer
+import java.lang.reflect.Method
+import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
@@ -46,6 +46,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
   private[this] var connPool: ComboPooledDataSource = _
   // 日志中sql截取的长度
   private lazy val logSqlLength = FireFrameworkConf.logSqlLength
+  private[this] var poolMethodMap: mutable.Map[JString, Method] = _
   private[this] var username: String = _
   private[this] var url: String = _
   private[this] var dbType: String = "unknown"
@@ -82,9 +83,51 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
       pool.setMaxStatements(0)
       pool.setMaxStatementsPerConnection(0)
       pool.setMaxIdleTime(FireJdbcConf.maxIdleTime(keyNum))
+      // 以db.c3p0.conf.开头的配置项
+      this.installDBPoolProperties(pool, this.keyNum)
       this.connPool = pool
       this.logger.info(s"创建数据库连接池[ $keyNum ] driver: ${this.dbType}")
     }(this.logger, s"数据库连接池创建成功", s"初始化数据库连接池[ $keyNum ]失败")
+  }
+
+  /**
+   * 设置数据库连接池相关的参数
+   *
+   * @param pool
+   * 连接池实例
+   * @param keyNum
+   * 配置的数字后缀
+   */
+  @Internal
+  private[this] def installDBPoolProperties(pool: ComboPooledDataSource, keyNum: Int): Unit = {
+    if (noEmpty(pool, keyNum)) {
+      try {
+        // 获取以db.c3p0.conf.开头以keyNum结尾的所有配置项
+        val confMap = FireJdbcConf.c3p0ConfMap(keyNum)
+        // 获取pool所有的防范
+        if (isEmpty(this.poolMethodMap)) this.poolMethodMap = ReflectionUtils.getAllMethods(classOf[ComboPooledDataSource]).map(t => (t._1.toUpperCase, t._2))
+        LogUtils.logMap(this.logger, confMap, s"c3p0 configuration. keyNum=$keyNum.")
+        // 匹配配置文件中指定的c3p0参数
+        confMap.foreach(prop => {
+          val upperConf = s"set${prop._1}".toUpperCase
+          if (noEmpty(prop._2) && this.poolMethodMap.containsKey(upperConf)) {
+            val method = this.poolMethodMap(upperConf)
+            // 获取pool对象中所有set方法的参数类型，如：setMaxPoolSize( int maxPoolSize )
+            method.getParameterTypes.map(t => t.getName).foreach {
+              // 根据方法参数的类型将参数的值转为对应的类型
+              case "int" => method.invoke(pool, new JInt(prop._2))
+              case "boolean" => method.invoke(pool, new JBoolean(prop._2))
+              case "java.lang.String" => method.invoke(pool, prop._2)
+              case _ => this.logger.error(s"暂不支持的c3p0配置参数类型：${upperConf} 当前仅支持int、boolean、String")
+            }
+          } else {
+            this.logger.warn(s"数据库连接池不支持的配置：${FireJdbcConf.JDBC_C3P0_CONF_PREFIX + prop._1}=${prop._2}，请核实！")
+          }
+        })
+      } catch {
+        case exception: Exception => this.logger.error("设置c3p0参数过程中出现异常，请检查以db.c3p0.conf.开头的配置项！", exception)
+      }
+    }
   }
 
   /**

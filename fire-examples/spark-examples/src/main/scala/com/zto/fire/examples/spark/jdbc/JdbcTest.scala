@@ -190,11 +190,11 @@ object JdbcTest extends BaseSparkCore {
 
   override def process: Unit = {
     // 测试环境测试
-    /*this.testJdbcUpdate
+    this.testJdbcUpdate
     this.testJdbcQuery
     this.testTableLoad
     this.testTableSave
-    this.testDataFrameSave*/
+    this.testDataFrameSave
     // 测试配置分发
     this.testExecutor
     Thread.sleep(100000)

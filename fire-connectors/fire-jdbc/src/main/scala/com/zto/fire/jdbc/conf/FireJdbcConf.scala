@@ -42,6 +42,8 @@ private[fire] object FireJdbcConf {
   lazy val JDBC_BATCH_SIZE = "db.jdbc.batch.size"
   lazy val JDBC_FLUSH_INTERVAL = "db.jdbc.flushInterval"
   lazy val JDBC_MAX_RETRY = "db.jdbc.max.retry"
+  // c3p0数据库连接池相关配置
+  lazy val JDBC_C3P0_CONF_PREFIX = "db.c3p0.conf."
   // fire框架针对jdbc操作后数据集的缓存策略
   lazy val FIRE_JDBC_STORAGE_LEVEL = "fire.jdbc.storage.level"
   // 通过JdbcConnector查询后将数据集放到多少个分区中，需根据实际的结果集做配置
@@ -84,6 +86,8 @@ private[fire] object FireJdbcConf {
   def acquireIncrement(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_ACQUIRE_INCREMENT, 1, keyNum)
   // 多久释放没有用到的连接
   def maxIdleTime(keyNum: Int = 1): Int = PropUtils.getInt(this.JDBC_MAX_IDLE_TIME, 30, keyNum)
+  // c3p0相关配置
+  def c3p0ConfMap(keyNum: Int = 1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(this.JDBC_C3P0_CONF_PREFIX, keyNum)
 
   /**
    * 根据给定的jdbc url别名获取对应的jdbc地址
