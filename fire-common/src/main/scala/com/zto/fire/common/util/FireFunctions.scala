@@ -84,7 +84,7 @@ trait FireFunctions extends Serializable {
    * @param catchLog
    * 日志内容
    */
-  def tryWithLog(block: => Unit)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog, isThrow: Boolean = true): Unit = {
+  def tryWithLog(block: => Unit)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog, isThrow: Boolean = false): Unit = {
     try {
       elapsed(tryLog, logger)(block)
     } catch {
@@ -130,7 +130,7 @@ trait FireFunctions extends Serializable {
    * @param finallyCatchLog
    * 当执行finally代码块过程中发生异常时打印的日志内容
    */
-  def tryWithFinally[T](block: => T)(finallyBlock: => Unit)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog, finallyCatchLog: String = finallyCatchLog): T = {
+  def tryFinallyWithReturn[T](block: => T)(finallyBlock: => Unit)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog, finallyCatchLog: String = finallyCatchLog): T = {
     try {
       elapsed[T](tryLog, logger)(block)
     } catch {
@@ -141,10 +141,37 @@ trait FireFunctions extends Serializable {
       try {
         finallyBlock
       } catch {
-        case t: Throwable => {
+        case t: Throwable =>
           ExceptionBus.offAndLogError(logger, catchLog, t)
           throw t
-        }
+      }
+    }
+  }
+
+  /**
+   * 执行用户指定的try/catch/finally逻辑
+   *
+   * @param block
+   * try 代码块
+   * @param finallyBlock
+   * finally 代码块
+   * @param logger
+   * 日志记录器
+   * @param catchLog
+   * 当执行try过程中发生异常时打印的日志内容
+   * @param finallyCatchLog
+   * 当执行finally代码块过程中发生异常时打印的日志内容
+   */
+  def tryFinally(block: => Unit)(finallyBlock: => Unit)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog, finallyCatchLog: String = finallyCatchLog): Unit = {
+    try {
+      elapsed[Unit](tryLog, logger)(block)
+    } catch {
+      case t: Throwable => ExceptionBus.offAndLogError(logger, catchLog, t)
+    } finally {
+      try {
+        finallyBlock
+      } catch {
+        case t: Throwable => ExceptionBus.offAndLogError(logger, catchLog, t)
       }
     }
   }

@@ -175,7 +175,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
     val conn = if (connection == null) this.getConnection else connection
     var retVal: Long = 0L
     var stat: PreparedStatement = null
-    tryWithFinally {
+    tryFinallyWithReturn {
       conn.setAutoCommit(false)
       stat = conn.prepareStatement(sql)
 
@@ -218,7 +218,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
 
     var batch = 0
     var count = 0
-    tryWithFinally {
+    tryFinallyWithReturn {
       conn.setAutoCommit(false)
       stat = conn.prepareStatement(sql)
       if (paramsList != null && paramsList.nonEmpty) {
@@ -278,7 +278,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
     var stat: PreparedStatement = null
     var rs: ResultSet = null
 
-    tryWithFinally {
+    tryFinallyWithReturn {
       stat = conn.prepareStatement(sql)
       if (params != null && params.nonEmpty) {
         var i = 1

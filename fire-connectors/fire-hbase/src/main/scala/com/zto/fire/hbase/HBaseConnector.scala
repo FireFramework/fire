@@ -84,7 +84,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
   def insert[T <: HBaseBaseBean[T] : ClassTag](tableName: String, beans: T*): Unit = {
     requireNonEmpty(tableName, beans)("参数不合法，批量HBase insert失败")
     var table: Table = null
-    tryWithFinally {
+    tryFinallyWithReturn {
       table = this.getTable(tableName)
       val beanList = if (this.getMultiVersion[T]) beans.filter(_ != null).map((bean: T) => new MultiVersionsBean(bean)) else beans
       val putList = beanList.map(bean => convert2Put(bean.asInstanceOf[T], this.getNullable[T]))
@@ -104,7 +104,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
     requireNonEmpty(tableName, puts)("参数不合法，批量HBase insert失败")
 
     var table: Table = null
-    tryWithFinally {
+    tryFinallyWithReturn {
       table = this.getTable(tableName)
       table.put(puts)
       DatasourceManager.addDBDatasource("HBase", hbaseCluster(keyNum), tableName)
@@ -159,7 +159,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
 
     var table: Table = null
     val list = ListBuffer[Result]()
-    tryWithFinally {
+    tryFinallyWithReturn {
       DatasourceManager.addDBDatasource("HBase", hbaseCluster(keyNum), tableName, sink = false)
       table = this.getTable(tableName)
       list ++= table.get(getList)
@@ -265,7 +265,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
 
     val list = ListBuffer[T]()
     var rsScanner: ResultScanner = null
-    tryWithFinally {
+    tryFinallyWithReturn {
       this.setScanMaxVersions[T](scan)
       rsScanner = this.scanResultScanner(tableName, scan)
       if (rsScanner != null) {
@@ -705,7 +705,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
   private[fire] def createTable(tableName: String, families: String*): Unit = {
     requireNonEmpty(tableName, families)("执行createTable失败")
     var admin: Admin = null
-    tryWithFinally {
+    tryFinallyWithReturn {
       admin = this.getConnection.getAdmin
       val tbName = TableName.valueOf(tableName)
       if (!admin.tableExists(tbName)) {
@@ -736,7 +736,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
   private[fire] def dropTable(tableName: String): Unit = {
     requireNonEmpty(tableName)("执行dropTable失败")
     var admin: Admin = null
-    tryWithFinally {
+    tryFinallyWithReturn {
       admin = this.getConnection.getAdmin
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName)) {
@@ -760,7 +760,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
   private[fire] def enableTable(tableName: String): Unit = {
     requireNonEmpty(tableName)("执行enableTable失败")
     var admin: Admin = null
-    tryWithFinally {
+    tryFinallyWithReturn {
       admin = this.getConnection.getAdmin
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName) && !admin.isTableEnabled(tbName)) {
@@ -781,7 +781,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
   private[fire] def disableTable(tableName: String): Unit = {
     requireNonEmpty(tableName)("执行disableTable失败")
     var admin: Admin = null
-    tryWithFinally {
+    tryFinallyWithReturn {
       admin = this.getConnection.getAdmin
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName) && admin.isTableEnabled(tbName)) {
@@ -803,7 +803,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
   private[fire] def truncateTable(tableName: String, preserveSplits: Boolean = true): Unit = {
     requireNonEmpty(tableName, preserveSplits)("执行truncateTable失败")
     var admin: Admin = null
-    tryWithFinally {
+    tryFinallyWithReturn {
       admin = this.getConnection.getAdmin
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName)) {
@@ -889,7 +889,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
   private[fire] def tableExists(tableName: String): Boolean = {
     if (StringUtils.isBlank(tableName)) return false
     var admin: Admin = null
-    tryWithFinally {
+    tryFinallyWithReturn {
       admin = this.getConnection.getAdmin
       val isExists = admin.tableExists(TableName.valueOf(tableName))
       this.logger.debug(s"HBase tableExists ${hbaseCluster(keyNum)}.${tableName}获取成功")
@@ -908,7 +908,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
   def deleteRows(tableName: String, rowKeys: String*): Unit = {
     if (noEmpty(tableName, rowKeys)) {
       var table: Table = null
-      tryWithFinally {
+      tryFinallyWithReturn {
         table = this.getTable(tableName)
 
         val deletes = ListBuffer[Delete]()
@@ -939,7 +939,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
       families.filter(StringUtils.isNotBlank).foreach(family => delete.addFamily(family.getBytes(StandardCharsets.UTF_8)))
 
       var table: Table = null
-      tryWithFinally {
+      tryFinallyWithReturn {
         table = this.getTable(tableName)
         table.delete(delete)
         DatasourceManager.addDBDatasource("HBase", hbaseCluster(keyNum), tableName)
@@ -966,7 +966,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
       qualifiers.foreach(qualifier => delete.addColumns(family.getBytes(StandardCharsets.UTF_8), qualifier.getBytes(StandardCharsets.UTF_8)))
       var table: Table = null
 
-      tryWithFinally {
+      tryFinallyWithReturn {
         table = this.getTable(tableName)
         table.delete(delete)
         DatasourceManager.addDBDatasource("HBase", hbaseCluster(keyNum), tableName)
