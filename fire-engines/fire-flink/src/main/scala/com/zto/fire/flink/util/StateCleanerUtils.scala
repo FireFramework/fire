@@ -309,15 +309,15 @@ protected[fire] class StateCleanerUtils {
   protected def run(): Unit = {
     elapsed[Unit]("step 5. 清理完毕，执行结束", this.logger) {
       this.logger.info("开始执行checkpoint与savepoint清理程序...")
-      this.logger.warn("step 1. 开始分析增量checkpoint文件直接的血缘关系.")
+      this.logger.warn(s"step 1. 开始解析${checkpointTTL}天内增量checkpoint metadata文件并分析直接的血缘关系.")
       this.recursionCheckpointDir()
       this.logger.warn("step 2. 开始归档历史的checkpoint文件.")
       this.cleanCheckpoint()
-      this.logger.warn("step 3. 开始清理过期的checkpoint归档文件.")
+      this.logger.warn(s"step 3. 开始清理${archiveTTL}天前过期的checkpoint归档文件.")
       this.deleteArchive()
       this.logger.warn("step 3. 开始清理checkpoint空文件夹.")
       this.deleteEmptyDir()
-      this.logger.warn("step 4. 开始清理过期的savepoint文件.")
+      this.logger.warn(s"step 4. 开始清理${savepointTTL}天前过期的savepoint文件.")
       this.deleteSavepoint()
     }
   }
