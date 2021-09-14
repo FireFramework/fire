@@ -19,11 +19,13 @@ package com.zto
 
 import com.zto.fire.core.ext.BaseFireExt
 import com.zto.fire.flink.ext.batch.{BatchExecutionEnvExt, BatchTableEnvExt, DataSetExt}
+import com.zto.fire.flink.ext.function.{RichFunctionExt, RuntimeContextExt}
 import com.zto.fire.flink.ext.stream._
+import org.apache.flink.api.common.functions.{RichFunction, RuntimeContext}
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.streaming.api.scala.{DataStream, KeyedStream, StreamExecutionEnvironment}
+import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
 import org.apache.flink.table.api.{Table, TableEnvironment, TableResult}
-import org.apache.flink.table.api.bridge.scala.{BatchTableEnvironment, StreamTableEnvironment}
 import org.apache.flink.types.Row
 
 /**
@@ -135,6 +137,20 @@ package object fire extends BaseFireExt {
    * Flink SQL扩展
    */
   implicit class SQLExtBridge(sql: String) extends SQLExt(sql) {
+
+  }
+
+  /**
+   * Flink RuntimeContext扩展
+   */
+  implicit class RuntimeContextExtBridge(runtimeContext: RuntimeContext) extends RuntimeContextExt(runtimeContext) {
+
+  }
+
+  /**
+   * Flink RichFunction扩展
+   */
+  implicit class RichFunctionExtBridge(richFunction: RichFunction) extends RichFunctionExt(richFunction) {
 
   }
 }

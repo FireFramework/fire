@@ -17,10 +17,21 @@
 
 package com.zto.fire.examples.flink
 
+
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.ext.function.RuntimeContextExt
+import org.apache.flink.api.common.functions.RuntimeContext
+import org.apache.flink.api.common.state.StateTtlConfig
+import org.apache.flink.api.common.time.Time
 import org.apache.flink.api.scala._
+import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction
+import org.apache.flink.streaming.api.scala.KeyedStream
+import org.apache.flink.util.Collector
 
 /**
  * 基于Fire进行Flink Streaming开发
@@ -48,17 +59,29 @@ object Test extends BaseFlinkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
-    val dstream = this.fire.createDirectStream()
-    dstream.map(t => {
-      println("message 1->" + t)
-      t
-    }).printToErr("kafka1->")
+    // val dstream = this.fire.createCollectionStream(Student.newStudentList())
+    val dstream = this.fire.createKafkaDirectStream().map(json => JSONUtils.parseObject[Student](json)).setParallelism(2)
+    val value: KeyedStream[Student, JLong] = dstream.keyBy(t => t.getId)
 
-    val dstream2 = this.fire.createDirectStreamByJsonKeyValue(keyNum = 2)
-    dstream2.map(t => {
-      println("message 2->" + t)
-      t
-    }).printToErr("kafka2->")
+
+    value.process(new KeyedProcessFunction[JLong, Student, String]() {
+
+      override def processElement(value: Student, ctx: KeyedProcessFunction[_root_.com.zto.fire.JLong, Student, String]#Context, out: Collector[String]): Unit = {
+        // 直接通过conf获取配置信息，无需复写open方法
+        val broker = conf.getString("kafka.brokers.name")
+        println("broker-->" + broker)
+        val partitions = conf.getInt("fire.jdbc.query.partitions", 10)
+        println("partitions-->" + partitions)
+        // 直接获取runtimeContext变量
+        println(this.runtimeContext.toString)
+        // 直接通过this.getState获取状态，无需事先声明，fire框架会根据name值保证状态变量的单例
+        val state = this.getState[Int]("sum")
+        state.update(state.value() + value.getAge)
+        println("当前累加值：" + state.value())
+        out.collect(value.getName)
+      }
+
+    }).print("name")
     this.fire.start
   }
 }
