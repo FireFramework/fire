@@ -31,7 +31,7 @@
         <spark.major.version>3</spark.major.version>
         <flink.version>1.12.2</flink.version>
         <flink.major.version>1.12</flink.major.version>
-        <hudi.version>0.9.0-SNAPSHOT</hudi.version>
+        <hudi.version>0.9.0</hudi.version>
         <scala.binary.version>2.12</scala.binary.version>
         <scala.minor.version>12</scala.minor.version>
         <maven.scope>provided</maven.scope>

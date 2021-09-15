@@ -259,7 +259,7 @@
 
   <build>
     <plugins>
-      <!-- ensure that we use JDK 1.6 -->
+      <!-- ensure that we use JDK 1.8 -->
       <plugin>
         <inherited>true</inherited>
         <groupId>org.apache.maven.plugins</groupId>

@@ -25,6 +25,7 @@ import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges}
 
+import scala.collection.JavaConversions
 import scala.reflect._
 
 /**
@@ -54,8 +55,10 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) {
   }
 
   /**
-   * 维护kafka的offset
+   * 维护kafka的offset，生产下可能会导致丢数据的风险
+   * use rdd.kafkaCommitOffsets(dStream)
    */
+  @deprecated("rdd.kafkaCommitOffsets", since = "2.2.0")
   def kafkaCommitOffsets[T <: ConsumerRecord[String, String]]: Unit = {
     stream.asInstanceOf[DStream[T]].foreachRDD { rdd =>
       try {
@@ -68,8 +71,10 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) {
   }
 
   /**
-   * 维护RocketMQ的offset
+   * 维护RocketMQ的offset，生产下可能会导致丢数据的风险
+   * use rdd.rocketCommitOffsets(dStream)
    */
+  @deprecated("rdd.rocketCommitOffsets", since = "2.2.0")
   def rocketCommitOffsets[T <: MessageExt]: Unit = {
     stream.asInstanceOf[DStream[T]].foreachRDD { rdd =>
       if (!rdd.isEmpty()) {
