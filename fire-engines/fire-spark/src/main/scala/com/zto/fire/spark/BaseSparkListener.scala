@@ -17,11 +17,11 @@
 
 package com.zto.fire.spark
 
-import java.util.concurrent.atomic.AtomicBoolean
-
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.spark.acc.AccumulatorManager
+import com.zto.fire.spark.conf.FireSparkConf
 import org.apache.spark.internal.Logging
 import org.apache.spark.scheduler._
 import org.slf4j.LoggerFactory
@@ -34,6 +34,8 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
   private[this] val module = "listener"
   private[this] val needRegister = new AtomicBoolean(false)
   private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
+  // 用于统计stage失败的次数
+  private[this] lazy val stageFailedCount = new AtomicLong(0)
 
   /**
    * 当SparkContext启动时触发
@@ -44,14 +46,21 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
   }
 
   /**
-   * 当Spark运行结束时执行
+   * fire 框架退出
    */
-  override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
+  private[this] def exit: Unit = {
     try {
       this.baseSpark.after()
     } finally {
       this.baseSpark.shutdown()
     }
+  }
+
+  /**
+   * 当Spark运行结束时执行
+   */
+  override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
+    this.exit
     super.onApplicationEnd(applicationEnd)
   }
 
@@ -130,6 +139,10 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
     } else {
       AccumulatorManager.addMultiTimer(module, "onStageCompleted", "onStageCompleted", "", "ERROR", "", 1)
       this.logger.error(s"stage failed. reason: " + stageCompleted.stageInfo.failureReason, this.module)
+
+      // spark.fire.stage.maxFailures参数用于控制stage允许的最大失败次数，小于等于零表示不开启，默认-1
+      // 当配置为2时表示最多允许失败2个stage，当第三个stage失败时SparkSession退出
+      if (this.stageFailedCount.addAndGet(1) > FireSparkConf.stageMaxFailures && FireSparkConf.stageMaxFailures > 0) this.exit
     }
   }
 

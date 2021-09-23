@@ -52,6 +52,7 @@ import org.apache.flink.util.Collector
     |fire.jdbc.query.partitions=12
     |fire.hbase.scan.repartitions=100
     |fire.hbase.table.exists.cache.enable=false
+    |fire.print.limit=100
     |""")
 object Test extends BaseFlinkStreaming {
 
@@ -63,10 +64,15 @@ object Test extends BaseFlinkStreaming {
     val dstream = this.fire.createKafkaDirectStream().map(json => JSONUtils.parseObject[Student](json)).setParallelism(2)
     val value: KeyedStream[Student, JLong] = dstream.keyBy(t => t.getId)
 
-
+    for (i <- 1 to 10000) {
+      println("hello")
+    }
     value.process(new KeyedProcessFunction[JLong, Student, String]() {
 
       override def processElement(value: Student, ctx: KeyedProcessFunction[_root_.com.zto.fire.JLong, Student, String]#Context, out: Collector[String]): Unit = {
+        for (i <- 1 to 10000) {
+          println("hello")
+        }
         // 直接通过conf获取配置信息，无需复写open方法
         val broker = conf.getString("kafka.brokers.name")
         println("broker-->" + broker)
@@ -78,6 +84,7 @@ object Test extends BaseFlinkStreaming {
         val state = this.getState[Int]("sum")
         state.update(state.value() + value.getAge)
         println("当前累加值：" + state.value())
+
         out.collect(value.getName)
       }
 

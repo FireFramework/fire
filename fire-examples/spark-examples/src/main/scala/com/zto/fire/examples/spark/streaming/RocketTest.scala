@@ -19,13 +19,15 @@ package com.zto.fire.examples.spark.streaming
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.StreamingDuration
 
 /**
  * 消费rocketmq中的数据
  */
-@StreamingDuration(10)  // 定义批次时间为10s，也可通过配置文件指定
+@StreamingDuration(10) // 定义批次时间为10s，也可通过配置文件指定
 @Config(
   """
     |# 非必须配置项：默认是大数据的rocket地址 bigdata_test
@@ -39,9 +41,12 @@ object RocketTest extends BaseSparkStreaming {
   override def process: Unit = {
     //读取RocketMQ消息流
     val dStream = this.fire.createRocketMqPullStream()
-    dStream.map(t => new String(t.getBody)).print()
-
-    dStream.rocketCommitOffsets
+    dStream.foreachRDDAtLeastOnce(rdd => {
+      val studentRDD = rdd.map(message => new String(message.getBody)).map(t => JSONUtils.parseObject[Student](t)).repartition(2)
+      val insertSql = s"INSERT INTO spark_test2(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
+      println("rocket.brokers.name=>" + this.conf.getString("rocket.brokers.name"))
+      studentRDD.toDF().jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
+    })(reTry = 5, exitOnFailure = true)
     this.fire.start()
   }
 }

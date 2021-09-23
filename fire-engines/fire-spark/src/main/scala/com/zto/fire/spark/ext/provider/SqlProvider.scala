@@ -22,6 +22,7 @@ import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.udf.UDFs
 import com.zto.fire.spark.util.SparkSingletonFactory
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 import org.apache.spark.storage.StorageLevel
@@ -168,8 +169,8 @@ trait SqlProvider extends SparkProvider {
    * @param tables
    * 多个表名
    */
-  def cacheTables(tables: String*): Unit = {
-    this.sqlContext.cacheTables(tables: _*)
+  def cacheTables(tables: String*)(implicit storageLevel: StorageLevel = StorageLevel.MEMORY_AND_DISK_SER): Unit = {
+    tables.filter(noEmpty(_)).foreach(tableName => this.cacheTable(tableName, storageLevel))
   }
 
   /**
@@ -180,7 +181,7 @@ trait SqlProvider extends SparkProvider {
    * @param storageLevel
    * 缓存级别
    */
-  def cacheTable(table: String, storageLevel: StorageLevel): Unit = {
+  def cacheTable(table: String, storageLevel: StorageLevel = StorageLevel.MEMORY_AND_DISK_SER): Unit = {
     this.catalog.cacheTable(table, storageLevel)
   }
 
@@ -191,8 +192,7 @@ trait SqlProvider extends SparkProvider {
    * 待缓存的多个表名
    */
   def recacheTables(tables: String*): Unit = {
-    noEmpty(tables, "表名不能为空")
-    tables.foreach(table => {
+    tables.filter(noEmpty(_)).foreach(table => {
       if (this.isCached(table)) this.uncache(table)
       this.cacheTables(table)
     })
@@ -225,9 +225,7 @@ trait SqlProvider extends SparkProvider {
    * 表名
    */
   def refreshTables(tables: String*): Unit = {
-    if (tables != null) {
-      tables.filter(noEmpty(_)).foreach(table => this.catalog.refreshTable(table))
-    }
+    tables.filter(noEmpty(_)).foreach(table => this.catalog.refreshTable(table))
   }
 
   /**
@@ -238,12 +236,10 @@ trait SqlProvider extends SparkProvider {
    * @param tables
    * 待cache或refresh的表名集合
    */
-  def cacheOrRefreshTables(tables: String*): Unit = {
-    if (tables != null) {
-      tables.filter(noEmpty(_)).foreach(table => {
-        if (this.isNotCached(table)) this.cacheTables(table) else this.refreshTables(table)
-      })
-    }
+  def cacheOrRefreshTables(tables: String*)(implicit storageLevel: StorageLevel = StorageLevel.MEMORY_AND_DISK_SER): Unit = {
+    tables.filter(noEmpty(_)).foreach(table => {
+      if (this.isNotCached(table)) this.cacheTable(table, storageLevel) else this.refreshTables(table)
+    })
   }
 
   /**
