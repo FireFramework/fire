@@ -43,7 +43,8 @@ object KafkaTest extends BaseSparkStreaming {
 
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream()
-    dstream.foreachRDD(rdd => {
+    // 使用至少一次的算子语义，支持在rdd处理失败时自动重试，并且在处理成功后会主动提交offset
+    dstream.foreachRDDAtLeastOnce(rdd => {
       // 更新并缓存维表动作，具体要根据锁的标记判断是否执行
       this.cacheTable
 
