@@ -52,6 +52,7 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_SQL_CONF_UDF_JARS = "flink.sql.conf.pipeline.jars"
   lazy val FLINK_SQL_LOG_ENABLE = "flink.sql.log.enable"
   lazy val FLINK_SQL_DEFAULT_CATALOG_NAME = "flink.sql.default.catalog.name"
+  lazy val FLINK_STATE_TTL_DAYS = "flink.state.ttl.days"
 
   // checkpoint相关配置项
   lazy val FLINK_STREAM_CHECKPOINT_INTERVAL = "flink.stream.checkpoint.interval"
@@ -114,4 +115,6 @@ private[fire] object FireFlinkConf {
   lazy val flinkUdfEnable = PropUtils.getBoolean(this.FLINK_SQL_UDF_ENABLE, true)
   // 运行模式
   lazy val flinkRuntimeMode = PropUtils.getString(this.FLINK_RUNTIME_MODE, PropUtils.getString("execution.runtime-mode", "STREAMING"))
+  // 默认的Keyed State的TTL时间
+  lazy val flinkStateTTL = PropUtils.getInt(this.FLINK_STATE_TTL_DAYS, 31)
 }

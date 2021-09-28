@@ -34,13 +34,7 @@ import com.zto.fire.spark.anno.StreamingDuration
     |kafka.topics = fire
     |kafka.group.id=fire2
     |hive.cluster=test
-    |fire.thread.pool.size=7
-    |fire.restful.max.thread=10
-    |fire.jdbc.query.partitions=12
-    |fire.hbase.scan.repartitions=100
-    |fire.hbase.table.exists.cache.enable=false
     |# spark.fire.stage.maxFailures=1
-    |spark.stage.maxConsecutiveAttempts=1
     |spark.task.maxFailures=1
     |""")
 @StreamingDuration(20) // spark streaming的批次时间
@@ -52,6 +46,7 @@ object Test extends BaseSparkStreaming {
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream()
 
+    // 至少一次的语义保证，处理成功自动提交offset，处理失败会重试指定次数，如果仍失败则任务退出
     dstream.foreachRDDAtLeastOnce(rdd => {
       val studentRDD = rdd.map(t => JSONUtils.parseObject[Student](t.value())).repartition(2)
       val insertSql = s"INSERT INTO spark_test(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"

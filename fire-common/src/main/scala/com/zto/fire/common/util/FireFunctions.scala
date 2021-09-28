@@ -198,13 +198,15 @@ trait FireFunctions extends Serializable {
    * 用于描述当前代码块的用户
    * @param logger
    * 日志记录器
+   * @param threshold
+   * 执行代码块耗时超过给定的阈值时才记录日志
    * @param block
    * try的具体逻辑
    */
-  def elapsed[T](msg: String, logger: Logger = this.logger)(block: => T): T = {
+  def elapsed[T](msg: String, logger: Logger = this.logger, threshold: Long = 0)(block: => T): T = {
     val startTime = this.currentTime
     val retVal = block
-    if (StringUtils.isNotBlank(msg)) logger.info(s"${msg}, Elapsed：${elapsed(startTime)}")
+    if (StringUtils.isNotBlank(msg) && (System.currentTimeMillis() - startTime) >= threshold) logger.info(s"${msg}, Elapsed：${elapsed(startTime)}")
     retVal
   }
 }
