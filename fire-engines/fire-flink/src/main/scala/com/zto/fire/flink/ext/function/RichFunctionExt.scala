@@ -1,8 +1,10 @@
 package com.zto.fire.flink.ext.function
 
 import com.zto.fire._
+import com.zto.fire.flink.conf.FireFlinkConf
 import org.apache.flink.api.common.functions.{AggregateFunction, ReduceFunction, RichFunction}
 import org.apache.flink.api.common.state.{AggregatingState, AggregatingStateDescriptor, ListState, ListStateDescriptor, MapState, MapStateDescriptor, ReducingState, ReducingStateDescriptor, State, StateTtlConfig, ValueState, ValueStateDescriptor}
+import org.apache.flink.api.common.time.Time
 
 import scala.reflect.ClassTag
 
@@ -15,12 +17,17 @@ import scala.reflect.ClassTag
 class RichFunctionExt(richFunction: RichFunction) {
   lazy val runtimeContext = richFunction.getRuntimeContext
   private[this] lazy val stateMap = new JConcurrentHashMap[String, State]()
-
+  // 默认的状态TTL配置（flink.state.ttl.days）
+  private[this] lazy val defaultTTLConfig = StateTtlConfig
+    .newBuilder(Time.days(FireFlinkConf.flinkStateTTL))
+    .setUpdateType(StateTtlConfig.UpdateType.OnReadAndWrite)
+    .setStateVisibility(StateTtlConfig.StateVisibility.NeverReturnExpired)
+    .build()
 
   /**
    * 根据name获取ValueState
    */
-  def getState[T: ClassTag](name: String, ttlConfig: StateTtlConfig = null): ValueState[T] = {
+  def getState[T: ClassTag](name: String, ttlConfig: StateTtlConfig = this.defaultTTLConfig): ValueState[T] = {
     this.stateMap.mergeGet(name) {
       val desc = new ValueStateDescriptor[T](name, getParamType[T])
       if (ttlConfig != null) desc.enableTimeToLive(ttlConfig)
@@ -31,7 +38,7 @@ class RichFunctionExt(richFunction: RichFunction) {
   /**
    * 根据name获取ListState
    */
-  def getListState[T: ClassTag](name: String, ttlConfig: StateTtlConfig = null): ListState[T] = {
+  def getListState[T: ClassTag](name: String, ttlConfig: StateTtlConfig = this.defaultTTLConfig): ListState[T] = {
     this.stateMap.mergeGet(name) {
       val desc = new ListStateDescriptor[T](name, getParamType[T])
       if (ttlConfig != null) desc.enableTimeToLive(ttlConfig)
@@ -42,7 +49,7 @@ class RichFunctionExt(richFunction: RichFunction) {
   /**
    * 根据name获取MapState
    */
-  def getMapState[K: ClassTag, V: ClassTag](name: String, ttlConfig: StateTtlConfig = null): MapState[K, V] = {
+  def getMapState[K: ClassTag, V: ClassTag](name: String, ttlConfig: StateTtlConfig = this.defaultTTLConfig): MapState[K, V] = {
     this.stateMap.mergeGet(name) {
       val desc = new MapStateDescriptor[K, V](name, getParamType[K], getParamType[V])
       if (ttlConfig != null) desc.enableTimeToLive(ttlConfig)
@@ -53,7 +60,7 @@ class RichFunctionExt(richFunction: RichFunction) {
   /**
    * 根据name获取ReducingState
    */
-  def getReducingState[T: ClassTag](name: String, reduceFun: (T, T) => T, ttlConfig: StateTtlConfig = null): ReducingState[T] = {
+  def getReducingState[T: ClassTag](name: String, reduceFun: (T, T) => T, ttlConfig: StateTtlConfig = this.defaultTTLConfig): ReducingState[T] = {
     this.stateMap.mergeGet(name) {
       val desc = new ReducingStateDescriptor[T](name, new ReduceFunction[T] {
         override def reduce(value1: T, value2: T): T = reduceFun(value1, value2)
@@ -66,7 +73,7 @@ class RichFunctionExt(richFunction: RichFunction) {
   /**
    * 根据name获取AggregatingState
    */
-  def getAggregatingState[I, T: ClassTag, O](name: String, aggFunction: AggregateFunction[I, T, O], ttlConfig: StateTtlConfig = null): AggregatingState[I, O] = {
+  def getAggregatingState[I, T: ClassTag, O](name: String, aggFunction: AggregateFunction[I, T, O], ttlConfig: StateTtlConfig = this.defaultTTLConfig): AggregatingState[I, O] = {
     this.stateMap.mergeGet(name) {
       val desc = new AggregatingStateDescriptor[I, T, O](name, aggFunction, getParamType[T])
       if (ttlConfig != null) desc.enableTimeToLive(ttlConfig)
