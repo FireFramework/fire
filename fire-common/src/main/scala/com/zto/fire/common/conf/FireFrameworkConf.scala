@@ -155,6 +155,8 @@ private[fire] object FireFrameworkConf {
   lazy val restServerSecret = PropUtils.getString(this.FIRE_REST_SERVER_SECRET)
   // 用于配置是否在调用shutdown后主动退出jvm进程
   lazy val shutdownExit = PropUtils.getBoolean(this.FIRE_SHUTDOWN_EXIT, false)
+  // print记录数限制
+  lazy val FIRE_PRINT_LIMIT = "fire.print.limit"
   // 是否启用为connector注册shutdown hook，当jvm退出前close
   lazy val connectorShutdownHookEnable = PropUtils.getBoolean(this.FIRE_CONNECTOR_SHUTDOWN_HOOK_ENABLE, false)
 
@@ -229,4 +231,6 @@ private[fire] object FireFrameworkConf {
   lazy val maxTimerSize = PropUtils.getInt(this.FIRE_ACC_TIMER_MAX_SIZE, 1000).abs
   // 用于指定清理指定小时数之前的记录
   lazy val maxTimerHour = PropUtils.getInt(this.FIRE_ACC_TIMER_MAX_HOUR, 12).abs
+  // print记录数限制
+  lazy val printLimit = PropUtils.getLong(this.FIRE_PRINT_LIMIT, 1000000)
 }
