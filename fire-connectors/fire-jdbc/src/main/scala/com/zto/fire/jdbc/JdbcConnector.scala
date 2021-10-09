@@ -236,7 +236,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
     var rs: ResultSet = null
 
     tryWithFinally {
-      stat = conn.prepareStatement(sql)
+      stat = conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
       if (params != null && params.nonEmpty) {
         var i = 1
         params.foreach(param => {
