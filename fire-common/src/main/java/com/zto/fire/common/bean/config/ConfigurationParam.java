@@ -18,9 +18,7 @@
 package com.zto.fire.common.bean.config;
 
 import com.zto.fire.common.enu.ConfigureLevel;
-import com.zto.fire.common.util.JSONUtils;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -51,28 +49,4 @@ public class ConfigurationParam {
         this.content = content;
     }
 
-    public static void main(String[] args) {
-        Map<String, String> freamworkMap = new HashMap<>();
-        freamworkMap.put("hive.cluster", "batch");
-        freamworkMap.put("fire.thread.pool.size", "5");
-
-        Map<String, String> userMap = new HashMap<>();
-        userMap.put("fire.conf.show.enable", "false");
-        userMap.put("fire.user.conf", "test");
-
-        Map<String, String> priorityMap = new HashMap<>();
-        priorityMap.put("hdfs.ha.conf.test.fs.defaultFS", "hdfs://ns1");
-        priorityMap.put("hdfs.ha.conf.test.dfs.nameservices", "ns1");
-
-        Map<ConfigureLevel, Map<String, String>> properties = new HashMap<>();
-        properties.put(ConfigureLevel.FRAMEWORK, freamworkMap);
-        properties.put(ConfigureLevel.TASK, userMap);
-        properties.put(ConfigureLevel.URGENT, priorityMap);
-
-        ConfigurationParam param = new ConfigurationParam();
-        param.setCode(200);
-        param.setContent(properties);
-
-        System.out.println(JSONUtils.toJSONString(param));
-    }
 }

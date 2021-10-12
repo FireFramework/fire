@@ -34,8 +34,8 @@ import com.zto.fire.spark.anno.StreamingDuration
     |kafka.topics = fire
     |kafka.group.id=fire2
     |hive.cluster=test
-    |# spark.fire.stage.maxFailures=1
-    |spark.task.maxFailures=1
+    |fire.acc.timer.max.size=30
+    |fire.acc.log.max.size=20
     |""")
 @StreamingDuration(20) // spark streaming的批次时间
 object Test extends BaseSparkStreaming {
@@ -45,15 +45,29 @@ object Test extends BaseSparkStreaming {
    */
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream()
+    this.printConf
 
     // 至少一次的语义保证，处理成功自动提交offset，处理失败会重试指定次数，如果仍失败则任务退出
     dstream.foreachRDDAtLeastOnce(rdd => {
-      val studentRDD = rdd.map(t => JSONUtils.parseObject[Student](t.value())).repartition(2)
+      val studentRDD = rdd.map(t => {
+        printConf
+        JSONUtils.parseObject[Student](t.value())
+      }).repartition(2)
       val insertSql = s"INSERT INTO spark_test(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
       println("kafka.brokers.name=>" + this.conf.getString("kafka.brokers.name"))
       studentRDD.toDF().jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
     })(reTry = 5, exitOnFailure = true)
 
     this.fire.start
+  }
+
+  def printConf: Unit = {
+    println("================================")
+    println("fire.thread.pool.size=" + this.conf.getInt("fire.thread.pool.size", -1))
+    println("fire.thread.pool.schedule.size=" + this.conf.getInt("fire.thread.pool.schedule.size", -1))
+    println("fire.acc.timer.max.size=" + this.conf.getInt("fire.acc.timer.max.size", -1))
+    println("fire.acc.log.max.size=" + this.conf.getInt("fire.acc.log.max.size", -1))
+    println("fire.jdbc.query.partitions=" + this.conf.getInt("fire.jdbc.query.partitions", -1))
+    println("================================")
   }
 }
