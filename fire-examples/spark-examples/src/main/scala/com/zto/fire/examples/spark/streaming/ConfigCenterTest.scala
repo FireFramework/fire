@@ -19,6 +19,8 @@ package com.zto.fire.examples.spark.streaming
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.StreamingDuration
 import com.zto.fire.spark.util.SparkUtils
@@ -26,47 +28,46 @@ import com.zto.fire.spark.util.SparkUtils
 /**
  * 基于Fire进行Spark Streaming开发
  */
-@StreamingDuration(20) // spark streaming的批次时间
 @Config(
   """
     |# 直接从配置文件中拷贝过来即可
     |kafka.brokers.name = bigdata_test
     |kafka.topics = fire
-    |kafka.group.id=fire
+    |kafka.group.id=fire2
     |hive.cluster=test
-    |fire.thread.pool.size=7
-    |fire.restful.max.thread=10
-    |fire.jdbc.query.partitions=12
-    |fire.hbase.scan.repartitions=100
-    |fire.hbase.table.exists.cache.enable=false
+    |fire.acc.timer.max.size=30
+    |fire.acc.log.max.size=20
     |""")
+@StreamingDuration(20) // spark streaming的批次时间
 object ConfigCenterTest extends BaseSparkStreaming {
-
 
   /**
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
+    val dstream = this.fire.createKafkaDirectStream()
     this.printConf
 
-    val dstream = this.fire.createKafkaDirectStream()
     dstream.foreachRDD(rdd => {
-      rdd.repartition(5).foreachPartition(it => {
-        this.printConf
-      })
+      rdd.map(t => {
+        printConf
+        JSONUtils.parseObject[Student](t.value())
+      }).repartition(2)
     })
+
     this.fire.start
   }
 
+  /**
+   * 配置信息打印
+   */
   def printConf: Unit = {
-    println(SparkUtils.getExecutorId + " spark.clickhouse.cluster-------->" + this.conf.getString("spark.clickhouse.cluster"))
-    println(SparkUtils.getExecutorId + " spark.dorisdb.cluster-------->" + this.conf.getString("spark.dorisdb.cluster"))
-    println(SparkUtils.getExecutorId + " fire.thread.pool.size-------->" + this.conf.getString("fire.thread.pool.size"))  // 10
-    println(SparkUtils.getExecutorId + " fire.restful.max.thread-------->" + this.conf.getString("fire.restful.max.thread"))  // 12
-    println(SparkUtils.getExecutorId + " fire.jdbc.query.partitions-------->" + this.conf.getString("fire.jdbc.query.partitions"))  // 11
-    println(SparkUtils.getExecutorId + " fire.hbase.batch.size-------->" + this.conf.getString("fire.hbase.batch.size"))  // 100
-    println(SparkUtils.getExecutorId + " fire.hbase.scan.repartitions-------->" + this.conf.getString("fire.hbase.scan.repartitions"))  // 110
-    println(SparkUtils.getExecutorId + " fire.hbase.table.exists.cache.enable-------->" + this.conf.getBoolean("fire.hbase.table.exists.cache.enable", true))  // false
-    println(SparkUtils.getExecutorId + " fire.hbase.table.exists.cache.period-------->" + this.conf.getInt("fire.hbase.table.exists.cache.period", 500))  // 600
+    println("================================")
+    println("fire.thread.pool.size=" + this.conf.getInt("fire.thread.pool.size", -1))
+    println("fire.thread.pool.schedule.size=" + this.conf.getInt("fire.thread.pool.schedule.size", -1))
+    println("fire.acc.timer.max.size=" + this.conf.getInt("fire.acc.timer.max.size", -1))
+    println("fire.acc.log.max.size=" + this.conf.getInt("fire.acc.log.max.size", -1))
+    println("fire.jdbc.query.partitions=" + this.conf.getInt("fire.jdbc.query.partitions", -1))
+    println("================================")
   }
 }

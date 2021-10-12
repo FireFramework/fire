@@ -19,14 +19,18 @@ package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.util.FlinkUtils
 import org.apache.flink.api.scala._
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction
+import org.apache.flink.streaming.api.scala.KeyedStream
+import org.apache.flink.util.Collector
 
 /**
  * 基于Fire进行Flink Streaming开发
  */
-// @Config(props = Array("kafka.brokers.name = bigdata_test", "kafka.topics = fire", "kafka.group.id=fire", "fire.rest.filter.enable=false")) // 基于注解方式进行配置
 @Config(
   """
     |# 直接从配置文件中拷贝过来即可
@@ -34,12 +38,8 @@ import org.apache.flink.api.scala._
     |kafka.brokers.name = bigdata_test
     |kafka.topics = fire
     |kafka.group.id=fire
-    |hive.cluster=test
-    |fire.thread.pool.size=7
-    |fire.restful.max.thread=10
-    |fire.jdbc.query.partitions=12
-    |fire.hbase.scan.repartitions=100
-    |fire.hbase.table.exists.cache.enable=false
+    |fire.acc.timer.max.size=30
+    |fire.acc.log.max.size=20
     |""")
 object ConfigCenterTest extends BaseFlinkStreaming {
 
@@ -47,24 +47,34 @@ object ConfigCenterTest extends BaseFlinkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
+    val dstream = this.fire.createKafkaDirectStream().filter(json => JSONUtils.isJson(json)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(2)
+    val value: KeyedStream[Student, JLong] = dstream.keyBy(t => t.getId)
     this.printConf
-    val dstream = this.fire.createKafkaDirectStream()
-    dstream.map(t => {
-      this.printConf
-      t
-    }).printToErr("kafka->")
+
+    value.process(new KeyedProcessFunction[JLong, Student, String]() {
+
+      override def processElement(value: Student, ctx: KeyedProcessFunction[_root_.com.zto.fire.JLong, Student, String]#Context, out: Collector[String]): Unit = {
+        printConf
+        val state = this.getState[String]("sum")
+        state.update(state.value() + JSONUtils.toJSONString(value))
+
+        out.collect(value.getName)
+      }
+
+    }).print("name")
     this.fire.start
   }
 
+  /**
+   * 配置信息打印
+   */
   def printConf: Unit = {
-    println(FlinkUtils.isTaskManager + " flink.clickhouse.cluster-------->" + this.conf.getString("flink.clickhouse.cluster"))
-    println(FlinkUtils.isTaskManager + " flink.dorisdb.cluster-------->" + this.conf.getString("flink.dorisdb.cluster"))
-    println(FlinkUtils.isTaskManager + " fire.thread.pool.size-------->" + this.conf.getString("fire.thread.pool.size")) // 10
-    println(FlinkUtils.isTaskManager + " fire.restful.max.thread-------->" + this.conf.getString("fire.restful.max.thread")) // 12
-    println(FlinkUtils.isTaskManager + " fire.jdbc.query.partitions-------->" + this.conf.getString("fire.jdbc.query.partitions")) // 11
-    println(FlinkUtils.isTaskManager + " fire.hbase.batch.size-------->" + this.conf.getString("fire.hbase.batch.size")) // 100
-    println(FlinkUtils.isTaskManager + " fire.hbase.scan.repartitions-------->" + this.conf.getString("fire.hbase.scan.repartitions")) // 110
-    println(FlinkUtils.isTaskManager + " fire.hbase.table.exists.cache.enable-------->" + this.conf.getBoolean("fire.hbase.table.exists.cache.enable", true)) // false
-    println(FlinkUtils.isTaskManager + " fire.hbase.table.exists.cache.period-------->" + this.conf.getInt("fire.hbase.table.exists.cache.period", 500)) // 600
+    println("================================")
+    println("fire.thread.pool.size=" + this.conf.getInt("fire.thread.pool.size", -1))
+    println("fire.thread.pool.schedule.size=" + this.conf.getInt("fire.thread.pool.schedule.size", -1))
+    println("fire.acc.timer.max.size=" + this.conf.getInt("fire.acc.timer.max.size", -1))
+    println("fire.acc.log.max.size=" + this.conf.getInt("fire.acc.log.max.size", -1))
+    println("fire.jdbc.query.partitions=" + this.conf.getInt("fire.jdbc.query.partitions", -1))
+    println("================================")
   }
 }
