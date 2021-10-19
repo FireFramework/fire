@@ -213,7 +213,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
             offset = restoredOffsets.get(mq);
         }
         if (offset == null) {
-            offset = consumer.fetchConsumeOffset(mq, false);
+            offset = consumer.fetchConsumeOffset(mq, true);
             if (offset < 0) {
                 String initialOffset = props.getProperty(RocketMQConfig.CONSUMER_OFFSET_RESET_TO, CONSUMER_OFFSET_LATEST);
                 switch (initialOffset) {
