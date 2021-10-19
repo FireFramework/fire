@@ -212,7 +212,7 @@ public class RocksDBFullRestoreOperation<K> extends AbstractRocksDBRestoreOperat
             currentStateHandleKVStateColumnFamilies.add(registeredStateCFHandle.columnFamilyHandle);
             // TODO: ------------ start：二次开发代码 --------------- //
             BigDecimal progress = new BigDecimal(((index / restoredMetaInfos.size()) * 100)).setScale(2, BigDecimal.ROUND_HALF_UP);
-            logger.info("Restore KV state metadata progress: {}%, Elapsed：{}ms.", progress, System.currentTimeMillis() - start);
+            logger.info("Restore KV state metadata progress: {}/{}({}%), Elapsed：{}ms.", (int) index, restoredMetaInfos.size(), progress, System.currentTimeMillis() - start);
             // TODO: ------------ end：二次开发代码 --------------- //
         }
         // TODO: ------------ start：二次开发代码 --------------- //
@@ -303,7 +303,7 @@ public class RocksDBFullRestoreOperation<K> extends AbstractRocksDBRestoreOperat
                 }
                 BigDecimal progress = new BigDecimal((index / listSize) * 100).setScale(2, BigDecimal.ROUND_HALF_UP);
                 // TODO: ------------ start：二次开发代码 --------------- //
-                logger.info("Restore KV state data progress: {}%, Elapsed：{}ms.", progress, System.currentTimeMillis() - start);
+                logger.info("Restore KV state data progress: {}/{}({}%), Elapsed：{}ms.", (int) index, listSize, progress, System.currentTimeMillis() - start);
                 // TODO: ------------ end：二次开发代码 --------------- //
             }
         }

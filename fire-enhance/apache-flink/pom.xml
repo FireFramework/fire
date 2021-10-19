@@ -234,6 +234,7 @@
       <scope>${maven.scope}</scope>
     </dependency>
   </dependencies>
+
   <build>
     <plugins>
       <plugin>
