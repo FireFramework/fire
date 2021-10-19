@@ -49,6 +49,7 @@
         <rocketmq.external.version>0.0.3</rocketmq.external.version>
         <mysql.version>5.1.30</mysql.version>
         <guava.version>18.0</guava.version>
+        <curator.verrsion>2.6.0</curator.verrsion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>${scala.binary.version}.${scala.minor.version}</scala.version>
         <spark.reference>${spark.version}_${scala.binary.version}</spark.reference>

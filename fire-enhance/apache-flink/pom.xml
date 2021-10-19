@@ -233,12 +233,6 @@
       <version>${rocketmq.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>
-    <!-- 使用 curator 管理zk -->
-    <dependency>
-      <groupId>org.apache.curator</groupId>
-      <artifactId>curator-recipes</artifactId>
-      <version>2.6.0</version>
-    </dependency>
   </dependencies>
 
   <build>

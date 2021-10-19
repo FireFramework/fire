@@ -565,7 +565,6 @@ public class RocksDBStateBackend extends AbstractManagedMemoryStateBackend
                 this.dir_index.initialize(0);
                 AtomicValue<Integer> value = this.dir_index.increment();
                 if (value.succeeded()) {
-                    Log.info("当前主机名称：{}, 磁盘编号：{}", this.currentHostName, value.postValue());
                     ni = value.postValue() % initializedDbBasePaths.length;
                 } else {
                     ni = new Random().nextInt(initializedDbBasePaths.length);

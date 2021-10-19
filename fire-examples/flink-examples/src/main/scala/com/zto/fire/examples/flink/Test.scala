@@ -41,7 +41,8 @@ import org.apache.flink.util.Collector
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
     |flink.stream.checkpoint.interval=10
-    |#flink.state.choose.disk.policy=round_robin
+    |flink.state.choose.disk.policy=round_robin
+    |state.external.zookeeper.url=10.7.69.238:2181
     |""")
 object Test extends BaseFlinkStreaming {
 
@@ -58,9 +59,9 @@ object Test extends BaseFlinkStreaming {
 
       override def processElement(value: Student, ctx: KeyedProcessFunction[_root_.com.zto.fire.JLong, Student, String]#Context, out: Collector[String]): Unit = {
         printConf
-        val state = this.getState[String]("sum")
-        state.update(state.value() + JSONUtils.toJSONString(value))
-
+        val state = this.getState[Long]("sum")
+        state.update(state.value() + 1)
+        println(s"当前key=${value.getId} sum=${state.value()}")
         out.collect(value.getName)
       }
 

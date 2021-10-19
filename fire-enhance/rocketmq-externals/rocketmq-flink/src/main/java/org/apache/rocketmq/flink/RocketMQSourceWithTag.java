@@ -215,6 +215,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
             offset = restoredOffsets.get(mq);
         }
         if (offset == null) {
+            LOG.warn("从状态中获取Offset列表为空，将从server端获取offset列表");
             offset = consumer.fetchConsumeOffset(mq, true);
             if (offset < 0) {
                 String initialOffset = props.getProperty(RocketMQConfig.CONSUMER_OFFSET_RESET_TO, CONSUMER_OFFSET_LATEST);
