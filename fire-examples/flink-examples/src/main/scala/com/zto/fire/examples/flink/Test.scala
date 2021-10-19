@@ -40,6 +40,8 @@ import org.apache.flink.util.Collector
     |kafka.group.id=fire
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
+    |flink.stream.checkpoint.interval=10
+    |#flink.state.choose.disk.policy=round_robin
     |""")
 object Test extends BaseFlinkStreaming {
 
