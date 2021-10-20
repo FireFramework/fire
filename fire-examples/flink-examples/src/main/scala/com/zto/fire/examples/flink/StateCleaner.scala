@@ -57,6 +57,12 @@ object StateCleaner extends StateCleanerUtils {
   // 用于指定是否清理过期savepoint
   override protected val deleteSavepointEnabled = true
 
+  // ------------------------------ savepoint 选项 ------------------------------- //
+  override protected val completedDir = "/user/flink/completed-jobs"
+  override protected val completedTTL = 31
+  override protected val completedTTLStamp = DateUtils.addDays(new Date, -this.completedTTL).getTime
+  override protected val deleteCompleteJobEnable = true
+
   def main(args: Array[String]): Unit = {
     this.run()
   }
