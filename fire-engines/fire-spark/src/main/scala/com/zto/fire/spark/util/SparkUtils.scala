@@ -54,31 +54,31 @@ object SparkUtils {
   def sparkRowToBean[T](row: Row, clazz: Class[T]): T = {
     val obj = clazz.newInstance()
     if (row != null && clazz != null) {
-      try {
+      tryWithLog {
         clazz.getDeclaredFields.foreach(field => {
           ReflectionUtils.setAccessible(field)
           val anno = field.getAnnotation(classOf[FieldName])
           // 如果没有加注解，或者加了注解但没有打disuse=true
           if (anno == null || (anno != null && !anno.disuse())) {
             val fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
-            if (this.containsColumn(row, fieldName.trim)) {
-              val index = row.fieldIndex(fieldName.trim)
-              val fieldType = field.getType
-              if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
-              else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getAs[IntegerType](index))
-              else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getAs[DoubleType](index))
-              else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getAs[LongType](index))
-              else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getAs[DecimalType](index))
-              else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getAs[FloatType](index))
-              else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getAs[BooleanType](index))
-              else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getAs[ShortType](index))
-              else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getAs[DateType](index))
-            }
+            tryWithLog {
+              if (this.containsColumn(row, fieldName.trim)) {
+                val index = row.fieldIndex(fieldName.trim)
+                val fieldType = field.getType
+                if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
+                else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getAs[IntegerType](index))
+                else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getAs[DoubleType](index))
+                else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getAs[LongType](index))
+                else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getAs[DecimalType](index))
+                else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getAs[FloatType](index))
+                else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getAs[BooleanType](index))
+                else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getAs[ShortType](index))
+                else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getAs[DateType](index))
+              }
+            }(this.logger, catchLog = s"sparkRowToBean转换失败，${fieldName}字段类型不匹配，请检查")
           }
         })
-      } catch {
-        case e: Exception => e.printStackTrace()
-      }
+      }(this.logger, catchLog = s"sparkRowToBean转换失败，请确定JavaBean中的字段是否与Row保持一致")
     }
     obj
   }
@@ -119,36 +119,40 @@ object SparkUtils {
 
     val list = ListBuffer[T]()
     if (it != null && clazz != null) {
-      val fields = clazz.getDeclaredFields
-      it.foreach(row => {
-        val obj = clazz.newInstance()
-        fields.foreach(field => {
-          ReflectionUtils.setAccessible(field)
-          val anno = field.getAnnotation(classOf[FieldName])
-          // 如果没有加注解，或者加了注解但没有打disuse=true
-          if (anno == null || (anno != null && !anno.disuse())) {
-            var fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
-            fieldName = if (toUppercase) fieldName.toUpperCase else fieldName
-            // 兼容标注了@FieldName的字段
-            if (this.containsColumn(row, fieldName) || this.containsColumn(row, field.getName)) {
-              val index = fieldIndex(row, field.getName, fieldName.trim)
-              if (index >= 0) {
-                val fieldType = field.getType
-                if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
-                else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getAs[IntegerType](index))
-                else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getAs[LongType](index))
-                else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getAs[DecimalType](index))
-                else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getAs[BooleanType](index))
-                else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getAs[DoubleType](index))
-                else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getAs[FloatType](index))
-                else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getAs[ShortType](index))
-                else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getAs[DateType](index))
+      tryWithLog {
+        val fields = clazz.getDeclaredFields
+        it.foreach(row => {
+          val obj = clazz.newInstance()
+          fields.foreach(field => {
+            ReflectionUtils.setAccessible(field)
+            val anno = field.getAnnotation(classOf[FieldName])
+            // 如果没有加注解，或者加了注解但没有打disuse=true
+            if (anno == null || (anno != null && !anno.disuse())) {
+              var fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
+              fieldName = if (toUppercase) fieldName.toUpperCase else fieldName
+              // 兼容标注了@FieldName的字段
+              if (this.containsColumn(row, fieldName) || this.containsColumn(row, field.getName)) {
+                val index = fieldIndex(row, field.getName, fieldName.trim)
+                if (index >= 0) {
+                  val fieldType = field.getType
+                  tryWithLog {
+                    if (fieldType eq classOf[String]) field.set(obj, row.getString(index))
+                    else if (fieldType eq classOf[java.lang.Integer]) field.set(obj, row.getAs[IntegerType](index))
+                    else if (fieldType eq classOf[java.lang.Long]) field.set(obj, row.getAs[LongType](index))
+                    else if (fieldType eq classOf[java.math.BigDecimal]) field.set(obj, row.getAs[DecimalType](index))
+                    else if (fieldType eq classOf[java.lang.Boolean]) field.set(obj, row.getAs[BooleanType](index))
+                    else if (fieldType eq classOf[java.lang.Double]) field.set(obj, row.getAs[DoubleType](index))
+                    else if (fieldType eq classOf[java.lang.Float]) field.set(obj, row.getAs[FloatType](index))
+                    else if (fieldType eq classOf[java.lang.Short]) field.set(obj, row.getAs[ShortType](index))
+                    else if (fieldType eq classOf[java.util.Date]) field.set(obj, row.getAs[DateType](index))
+                  }(this.logger, catchLog = s"sparkRowToBean转换失败，${fieldName}字段类型不匹配，请检查")
+                }
               }
             }
-          }
+          })
+          list += obj
         })
-        list += obj
-      })
+      }(this.logger, catchLog = "sparkRowToBean转换失败，请确定JavaBean中的字段是否与Row保持一致")
     }
     list.iterator
   }
@@ -233,15 +237,17 @@ object SparkUtils {
       }
       if (!disuse) {
         if (upper) fieldName = fieldName.toUpperCase
-        if (fieldType eq classOf[String]) strutFields += DataTypes.createStructField(fieldName, DataTypes.StringType, nullable)
-        else if (fieldType eq classOf[java.lang.Integer]) strutFields += DataTypes.createStructField(fieldName, DataTypes.IntegerType, nullable)
-        else if (fieldType eq classOf[java.lang.Double]) strutFields += DataTypes.createStructField(fieldName, DataTypes.DoubleType, nullable)
-        else if (fieldType eq classOf[java.lang.Long]) strutFields += DataTypes.createStructField(fieldName, DataTypes.LongType, nullable)
-        else if (fieldType eq classOf[java.math.BigDecimal]) strutFields += DataTypes.createStructField(fieldName, DataTypes.DoubleType, nullable)
-        else if (fieldType eq classOf[java.lang.Float]) strutFields += DataTypes.createStructField(fieldName, DataTypes.FloatType, nullable)
-        else if (fieldType eq classOf[java.lang.Boolean]) strutFields += DataTypes.createStructField(fieldName, DataTypes.BooleanType, nullable)
-        else if (fieldType eq classOf[java.lang.Short]) strutFields += DataTypes.createStructField(fieldName, DataTypes.ShortType, nullable)
-        else if (fieldType eq classOf[java.util.Date]) strutFields += DataTypes.createStructField(fieldName, DataTypes.DateType, nullable)
+        tryWithLog {
+          if (fieldType eq classOf[String]) strutFields += DataTypes.createStructField(fieldName, DataTypes.StringType, nullable)
+          else if (fieldType eq classOf[java.lang.Integer]) strutFields += DataTypes.createStructField(fieldName, DataTypes.IntegerType, nullable)
+          else if (fieldType eq classOf[java.lang.Double]) strutFields += DataTypes.createStructField(fieldName, DataTypes.DoubleType, nullable)
+          else if (fieldType eq classOf[java.lang.Long]) strutFields += DataTypes.createStructField(fieldName, DataTypes.LongType, nullable)
+          else if (fieldType eq classOf[java.math.BigDecimal]) strutFields += DataTypes.createStructField(fieldName, DataTypes.DoubleType, nullable)
+          else if (fieldType eq classOf[java.lang.Float]) strutFields += DataTypes.createStructField(fieldName, DataTypes.FloatType, nullable)
+          else if (fieldType eq classOf[java.lang.Boolean]) strutFields += DataTypes.createStructField(fieldName, DataTypes.BooleanType, nullable)
+          else if (fieldType eq classOf[java.lang.Short]) strutFields += DataTypes.createStructField(fieldName, DataTypes.ShortType, nullable)
+          else if (fieldType eq classOf[java.util.Date]) strutFields += DataTypes.createStructField(fieldName, DataTypes.DateType, nullable)
+        }(this.logger, catchLog = s"buildSchemaFromBean失败，异常字段名：${fieldName}")
       }
     }
     strutFields.toList
