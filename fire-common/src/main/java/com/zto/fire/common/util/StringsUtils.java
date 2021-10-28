@@ -20,6 +20,7 @@ package com.zto.fire.common.util;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -259,4 +260,21 @@ public class StringsUtils {
         return matcher.matches();
     }
 
+    /**
+     * 基于时间戳的随机算法从字符串列表中获取随机的字符串
+     *
+     * @param strs
+     * 被随机分隔的一组字符串
+     * @param delimiter
+     * 分隔符
+     * @return
+     * 随机的字符串
+     */
+    public static String randomSplit(String strs, String delimiter) {
+        if (StringUtils.isBlank(strs)) throw new IllegalArgumentException("Hive Thrift Server url不能为空!");
+        if (StringUtils.isBlank(delimiter)) delimiter = ",";
+        String[] metastores = strs.split(delimiter);
+        if (metastores.length == 0) throw new IllegalArgumentException("未能根据指定的分隔符[" + delimiter + "]分隔字符串：" + strs);
+        return StringUtils.trim(metastores[(int) (System.currentTimeMillis() % metastores.length)]);
+    }
 }
