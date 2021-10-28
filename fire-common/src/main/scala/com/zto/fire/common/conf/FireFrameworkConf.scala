@@ -95,6 +95,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_SHUTDOWN_EXIT = "fire.shutdown.auto.exit"
   // print记录数限制
   lazy val FIRE_PRINT_LIMIT = "fire.print.limit"
+  lazy val FIRE_HIVE_METASTORE_URL_RANDOM_ENABLE = "fire.hive.metastore.url.random.enable"
   // 配置中心生产环境注册地址
   lazy val FIRE_CONFIG_CENTER_REGISTER_CONF_PROD_ADDRESS = "fire.config_center.register.conf.prod.address"
   // 配置中心测试环境注册地址
@@ -233,4 +234,6 @@ private[fire] object FireFrameworkConf {
   lazy val maxTimerHour = PropUtils.getInt(this.FIRE_ACC_TIMER_MAX_HOUR, 12).abs
   // print记录数限制
   lazy val printLimit = PropUtils.getLong(this.FIRE_PRINT_LIMIT, 1000000)
+  // 是否启用hive metastore url的随机选择
+  lazy val hiveMetastoreUrlRandomEnable = PropUtils.getBoolean(this.FIRE_HIVE_METASTORE_URL_RANDOM_ENABLE, true)
 }

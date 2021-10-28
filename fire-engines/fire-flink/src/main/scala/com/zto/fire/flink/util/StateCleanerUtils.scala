@@ -70,6 +70,11 @@ protected[fire] class StateCleanerUtils {
   // 用于指定是否清理过期savepoint
   protected val deleteSavepointEnabled = true
 
+  // ------------------------------ savepoint 选项 ------------------------------- //
+  protected val completedDir = "/user/flink/completed-jobs"
+  protected val completedTTL = 31
+  protected val completedTTLStamp = DateUtils.addDays(new Date, -this.completedTTL).getTime
+  protected val deleteCompleteJobEnable = true
 
   /**
    * 获取HDFS的FileSystem对象
@@ -300,7 +305,30 @@ protected[fire] class StateCleanerUtils {
         }
       })
       this.logger.info(s"本次清理savepoint共计：${count}个")
-    }(if (fs != null) fs.close())(this.logger, catchLog = "清理空文件过程中出现异常", finallyCatchLog = "FileSystem.close()失败")
+    }(if (fs != null) fs.close())(this.logger, catchLog = "清理savepoint文件过程中出现异常", finallyCatchLog = "FileSystem.close()失败")
+  }
+
+  /**
+   * 定期清理过期的complete job文件
+   */
+  protected def deleteCompleteJobs(): Unit = {
+    if (!this.deleteCompleteJobEnable) return
+    var fs: FileSystem = null
+    var count = 0
+    tryFinally {
+      fs = this.getFileSystem
+      val path = new Path(this.completedDir)
+      val files = fs.listStatus(path)
+      files.foreach(file => {
+        val timeFlag = if (this.useAccessTime) file.getAccessTime else file.getModificationTime
+        if (timeFlag < this.completedTTLStamp) {
+          fs.delete(file.getPath, true)
+          count += 1
+          this.logger.info(s"清理completed job目录成功：${file.getPath}，completed job时间：${DateFormatUtils.formatDateTime(new Date(timeFlag))}")
+        }
+      })
+      this.logger.info(s"本次清理completed job共计：${count}个")
+    }(if (fs != null) fs.close())(this.logger, catchLog = "清理清理completed job文件过程中出现异常", finallyCatchLog = "FileSystem.close()失败")
   }
 
   /**
@@ -319,6 +347,8 @@ protected[fire] class StateCleanerUtils {
       this.deleteEmptyDir()
       this.logger.warn(s"step 4. 开始清理${savepointTTL}天前过期的savepoint文件.")
       this.deleteSavepoint()
+      this.logger.warn(s"step 5. 开始清理${completedTTL}天前过期的completed job文件.")
+      this.deleteCompleteJobs()
     }
   }
 }
