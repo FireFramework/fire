@@ -174,4 +174,12 @@ trait BaseFlink extends BaseFire {
 
     config
   }
+
+  /**
+   * 获取任务的resourceId
+   *
+   * @return
+   * spark任务：driver/id  flink任务：JobManager/container_xxx
+   */
+  override protected def resourceId: String = FlinkUtils.getResourceId
 }

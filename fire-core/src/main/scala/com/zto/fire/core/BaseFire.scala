@@ -17,19 +17,20 @@
 
 package com.zto.fire.core
 
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
-
-import com.zto.fire.predef._
+import com.taobao.arthas.agent.attach.ArthasAgent
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.enu.{JobType, ThreadPoolType}
 import com.zto.fire.common.util.{FireUtils, _}
 import com.zto.fire.core.rest.{RestServerManager, SystemRestful}
 import com.zto.fire.core.task.SchedulerManager
+import com.zto.fire.predef._
 import org.apache.log4j.{Level, Logger}
 import org.slf4j
 import org.slf4j.LoggerFactory
 import spark.Spark
+
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
 
 /**
  * 通用的父接口，提供通用的生命周期方法约束
@@ -74,8 +75,31 @@ trait BaseFire {
    */
   private[fire] def boot(): Unit = {
     FireUtils.splash
+    if (FireFrameworkConf.arthasEnable) this.runAsThread(this.startArthas)
     PropUtils.sliceKeys(FireFrameworkConf.FIRE_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
   }
+
+  /**
+   * 启动arthas
+   */
+  protected[fire] def startArthas: Unit = {
+    if (this.resourceId.contains("container") && !FireFrameworkConf.arthasContainerEnable) return
+    val configMap = new JHashMap[String, String]()
+    configMap.put("arthas.appName", s"${FireUtils.engine}@${this.className}")
+    configMap.put("arthas.telnetPort", "0")
+    configMap.put("arthas.httpPort", "0")
+    configMap.put("arthas.agentId", s"${FireUtils.engine}@${this.className}_$resourceId")
+    configMap.put("arthas.tunnelServer", FireFrameworkConf.arthasTunnelServerUrl)
+    ArthasAgent.attach(configMap)
+    this.logger.warn("<-- Arthas服务已启动 -->")
+  }
+
+  /**
+   * 获取任务的resourceId
+   * @return
+   * spark任务：driver/id  flink任务：JobManager/container_xxx
+   */
+  protected def resourceId: String
 
   /**
    * 在加载任务配置文件前将被加载
@@ -211,5 +235,4 @@ trait BaseFire {
   def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, threadPoolSchedule: ScheduledExecutorService = this.threadPoolSchedule): Unit = {
     ThreadUtils.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount)
   }
-
 }

@@ -122,6 +122,9 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_BURIED_POINT_DATASOURCE_PERIOD = "fire.buried_point.datasource.period"
   lazy val FIRE_BURIED_POINT_DATASOURCE_MAP = "fire.buried_point.datasource.map."
   lazy val FIRE_CONF_ADAPTIVE_PREFIX = "fire.conf.adaptive.prefix"
+  lazy val FIRE_ANALYSIS_ARTHAS_ENABLE = "fire.analysis.arthas.enable"
+  lazy val FIRE_ANALYSIS_ARTHAS_CONTAINER_ENABLE = "fire.analysis.arthas.container.enable"
+  lazy val FIRE_ANALYSIS_ARTHAS_TUNNEL_SERVER_URL = "fire.analysis.arthas.tunnel_server.url"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -236,4 +239,10 @@ private[fire] object FireFrameworkConf {
   lazy val printLimit = PropUtils.getLong(this.FIRE_PRINT_LIMIT, 1000000)
   // 是否启用hive metastore url的随机选择
   lazy val hiveMetastoreUrlRandomEnable = PropUtils.getBoolean(this.FIRE_HIVE_METASTORE_URL_RANDOM_ENABLE, true)
+  // 是否启用arthas用于分析实时任务的性能
+  lazy val arthasEnable = PropUtils.getBoolean(this.FIRE_ANALYSIS_ARTHAS_ENABLE, false) && StringUtils.isNotBlank(this.arthasTunnelServerUrl)
+  // 是否在container端启动arthas
+  lazy val arthasContainerEnable = PropUtils.getBoolean(this.FIRE_ANALYSIS_ARTHAS_CONTAINER_ENABLE, false)
+  // arthas tunnel服务的地址
+  lazy val arthasTunnelServerUrl = PropUtils.getString(this.FIRE_ANALYSIS_ARTHAS_TUNNEL_SERVER_URL)
 }

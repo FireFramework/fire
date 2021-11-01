@@ -36,6 +36,10 @@ import com.zto.fire.spark.anno.StreamingDuration
     |hive.cluster=test
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
+    |fire.analysis.arthas.enable=true
+    |fire.log.level.conf.org.apache.spark=warn
+    |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
+    |fire.analysis.arthas.container.enable=true
     |""")
 @StreamingDuration(20) // spark streaming的批次时间
 object Test extends BaseSparkStreaming {

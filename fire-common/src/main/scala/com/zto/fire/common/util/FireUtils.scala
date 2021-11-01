@@ -35,12 +35,19 @@ private[fire] object FireUtils extends Serializable {
   /**
    * 判断是否为spark引擎
    */
-  def isSparkEngine: Boolean = "spark".equals(PropUtils.engine)
+  def isSparkEngine: Boolean = "spark".equals(this.engine)
 
   /**
    * 判断是否为flink引擎
    */
-  def isFlinkEngine: Boolean = "flink".equals(PropUtils.engine)
+  def isFlinkEngine: Boolean = "flink".equals(this.engine)
+
+  /**
+   * 获取当前实时任务所使用的计算引擎
+   * @return
+   * spark / flink
+   */
+  def engine: String = PropUtils.engine
 
   /**
    * 获取fire版本号

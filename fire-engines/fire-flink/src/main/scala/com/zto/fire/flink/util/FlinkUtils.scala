@@ -19,7 +19,7 @@ package com.zto.fire.flink.util
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.util.{PropUtils, ReflectionUtils, ValueUtils}
+import com.zto.fire.common.util.{OSUtils, PropUtils, ReflectionUtils, ValueUtils}
 import com.zto.fire.flink.bean.FlinkTableSchema
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.hbase.bean.HBaseBaseBean
@@ -309,5 +309,14 @@ object FlinkUtils extends Serializable {
       }
     }
     bean
+  }
+
+  /**
+   * 获取JobManager或TaskManager的标识
+   * @return
+   * JobManager/container_xxx_xxx_xx_xxxx
+   */
+  def getResourceId: String = {
+    if (isJobManager) "JobManager" else PropUtils.getString("taskmanager.resource-id", OSUtils.getHostName)
   }
 }

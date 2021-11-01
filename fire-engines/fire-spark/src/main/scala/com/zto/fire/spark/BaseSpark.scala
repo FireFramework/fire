@@ -64,6 +64,10 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     if (SparkUtils.isDriver) {
       this.loadConf
       PropUtils.load(FireFrameworkConf.userCommonConf: _*)//.loadJobConf(this.getClass.getName)
+      this.restfulRegister = new RestServerManager().startRestPort()
+      this.systemRestful = new SparkSystemRestful(this)
+      // 注册到实时平台，并覆盖配置信息
+      PropUtils.loadJobConf(this.getClass.getName)
     }
     PropUtils.setProperty(FireFrameworkConf.DRIVER_CLASS_NAME, this.className)
     if (StringUtils.isNotBlank(FireSparkConf.appName)) {
@@ -127,11 +131,6 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
    * 构建一系列context对象
    */
   override private[fire] final def createContext(conf: Any): Unit = {
-    this.restfulRegister = new RestServerManager().startRestPort()
-    this.systemRestful = new SparkSystemRestful(this)
-    // 注册到实时平台，并覆盖配置信息
-    PropUtils.loadJobConf(this.getClass.getName)
-
     // 构建SparkConf信息
     val tmpConf = if (conf == null) this.buildConf(null) else conf.asInstanceOf[SparkConf]
     tmpConf.setAll(PropUtils.settings)
@@ -216,5 +215,16 @@ trait BaseSpark extends SparkListener with BaseFire with Logging with Serializab
     } catch {
       case e: Throwable => this.logger.error("定时任务注册失败.", e)
     }
+  }
+
+  /**
+   * 获取任务的resourceId
+   *
+   * @return
+   * spark任务：driver/id  flink任务：JobManager/container_xxx
+   */
+  override protected def resourceId: String = {
+    val resourceId = SparkUtils.getExecutorId
+    if (StringUtils.isBlank(resourceId) || "driver".equals(resourceId)) "driver" else s"container_${resourceId}"
   }
 }
