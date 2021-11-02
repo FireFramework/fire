@@ -69,7 +69,6 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
   private[this] lazy val cacheTableExistsMap = new JConcurrentHashMap[String, Boolean]()
   private[this] lazy val connection: Connection = this.initConnection
   private[this] lazy val durability = this.initDurability
-  private[this] lazy val threadPool = ThreadUtils.createThreadPool("HBaseConnectorPool", ThreadPoolType.SCHEDULED)
   // ------------------------------------ 表存在判断缓存 ------------------------------------ //
   private[this] lazy val tableExistsCacheEnable = tableExistsCache(this.keyNum)
   private[this] lazy val closeAdminError = "close admin执行失败"
@@ -983,16 +982,14 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = 1) extend
   @Internal
   private[this] def registerReload(): Unit = {
     if (tableExistsCacheReload(this.keyNum)) {
-      threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(new Runnable {
-        override def run(): Unit = {
-          val start = currentTime
-          cacheTableExistsMap.foreach(kv => {
-            cacheTableExistsMap.update(kv._1, tableExists(kv._1))
-            // 将用到的表信息加入到数据源管理器中
-            logger.debug(s"定时reload HBase表：${kv._1} 信息成功.")
-          })
-          logger.debug(s"定时reload HBase耗时：${elapsed(start)}")
-        }
+      ThreadUtils.scheduleWithFixedDelay({
+        val start = currentTime
+        cacheTableExistsMap.foreach(kv => {
+          cacheTableExistsMap.update(kv._1, tableExists(kv._1))
+          // 将用到的表信息加入到数据源管理器中
+          logger.debug(s"定时reload HBase表：${kv._1} 信息成功.")
+        })
+        logger.debug(s"定时reload HBase耗时：${elapsed(start)}")
       }, tableExistCacheInitialDelay(this.keyNum), tableExistCachePeriod(this.keyNum), TimeUnit.SECONDS)
     }
   }

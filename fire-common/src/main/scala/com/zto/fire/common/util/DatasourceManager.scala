@@ -44,15 +44,14 @@ private[fire] class DatasourceManager {
   // 用于收集来自不同数据源的sql语句，后续会异步进行SQL解析，考虑到分布式场景下会有很多重复的SQL执行，因此使用了线程不安全的队列即可满足需求
   private lazy val dbSqlQueue = EvictingQueue.create[DBSqlSource](buriedPointDatasourceMaxSize)
   // 用于收集各实时引擎执行的sql语句
-  private[this] lazy val threadPool = ThreadUtils.createThreadPool("DatasourceManager", ThreadPoolType.SCHEDULED)
   this.sqlParse()
 
   /**
    * 用于异步解析sql中使用到的表，并放到datasourceMap中
    */
   private[this] def sqlParse(): Unit = {
-    if (buriedPointDatasourceEnable && this.threadPool != null) {
-      this.threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(() => {
+    if (buriedPointDatasourceEnable) {
+      ThreadUtils.scheduleWithFixedDelay({
         // 1. 解析jdbc sql语句
         val start = currentTime
         for (_ <- 1 until this.dbSqlQueue.size()) {

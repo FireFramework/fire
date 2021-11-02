@@ -50,6 +50,7 @@
         <mysql.version>5.1.30</mysql.version>
         <guava.version>18.0</guava.version>
         <curator.verrsion>2.6.0</curator.verrsion>
+        <arthas.version>3.5.4</arthas.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>${scala.binary.version}.${scala.minor.version}</scala.version>
         <spark.reference>${spark.version}_${scala.binary.version}</spark.reference>

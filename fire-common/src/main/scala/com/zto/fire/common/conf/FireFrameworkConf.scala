@@ -71,6 +71,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_RESTFUL_PORT_RETRY_DURATION = "fire.restful.port.retry_duration"
   lazy val FIRE_REST_SERVER_SECRET = "fire.rest.server.secret"
   lazy val FIRE_LOG_LEVEL_CONF_PREFIX = "fire.log.level.conf."
+  lazy val FIRE_ARTHAS_CONF_PREFIX = "fire.analysis.arthas.conf."
   lazy val FIRE_USER_COMMON_CONF = "fire.user.common.conf"
   // 日志记录器保留最少的记录数
   lazy val FIRE_ACC_LOG_MIN_SIZE = "fire.acc.log.min.size"
@@ -122,6 +123,9 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_BURIED_POINT_DATASOURCE_PERIOD = "fire.buried_point.datasource.period"
   lazy val FIRE_BURIED_POINT_DATASOURCE_MAP = "fire.buried_point.datasource.map."
   lazy val FIRE_CONF_ADAPTIVE_PREFIX = "fire.conf.adaptive.prefix"
+  lazy val FIRE_ANALYSIS_ARTHAS_ENABLE = "fire.analysis.arthas.enable"
+  lazy val FIRE_ANALYSIS_ARTHAS_CONTAINER_ENABLE = "fire.analysis.arthas.container.enable"
+  lazy val FIRE_ANALYSIS_ARTHAS_TUNNEL_SERVER_URL = "fire.analysis.arthas.tunnel_server.url"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -209,7 +213,7 @@ private[fire] object FireFrameworkConf {
 
 
   // fire框架rest接口服务最大线程数
-  lazy val restfulMaxThread = PropUtils.getInt(this.FIRE_RESTFUL_MAX_THREAD, 8)
+  lazy val restfulMaxThread = PropUtils.getInt(this.FIRE_RESTFUL_MAX_THREAD, 5)
   // 用于配置是否抛弃配置中心独立运行
   lazy val configCenterEnable = PropUtils.getBoolean(this.FIRE_CONFIG_CENTER_ENABLE, true)
   // 本地运行环境下（Windows、Mac）是否调用配置中心接口获取配置信息
@@ -236,4 +240,12 @@ private[fire] object FireFrameworkConf {
   lazy val printLimit = PropUtils.getLong(this.FIRE_PRINT_LIMIT, 1000000)
   // 是否启用hive metastore url的随机选择
   lazy val hiveMetastoreUrlRandomEnable = PropUtils.getBoolean(this.FIRE_HIVE_METASTORE_URL_RANDOM_ENABLE, true)
+  // 是否启用arthas用于分析实时任务的性能
+  lazy val arthasEnable = PropUtils.getBoolean(this.FIRE_ANALYSIS_ARTHAS_ENABLE, false) && StringUtils.isNotBlank(this.arthasTunnelServerUrl)
+  // 是否在container端启动arthas
+  lazy val arthasContainerEnable = PropUtils.getBoolean(this.FIRE_ANALYSIS_ARTHAS_CONTAINER_ENABLE, false)
+  // arthas tunnel服务的地址
+  lazy val arthasTunnelServerUrl = PropUtils.getString(this.FIRE_ANALYSIS_ARTHAS_TUNNEL_SERVER_URL)
+  // arthas的参数
+  def arthasConfMap: Map[String, String] = PropUtils.sliceKeys(this.FIRE_ARTHAS_CONF_PREFIX)
 }

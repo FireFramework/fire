@@ -18,11 +18,12 @@
 package com.zto.fire.examples.spark
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Config
-import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.common.anno.{Config, Scheduled}
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.StreamingDuration
+import com.zto.fire.spark.util.SparkUtils
 
 /**
  * 基于Fire进行Spark Streaming开发
@@ -36,6 +37,10 @@ import com.zto.fire.spark.anno.StreamingDuration
     |hive.cluster=test
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
+    |fire.analysis.arthas.enable=true
+    |fire.log.level.conf.org.apache.spark=warn
+    |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
+    |fire.analysis.arthas.container.enable=true
     |""")
 @StreamingDuration(20) // spark streaming的批次时间
 object Test extends BaseSparkStreaming {
@@ -44,6 +49,7 @@ object Test extends BaseSparkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
+    this.spark.sql("show databases").show()
     val dstream = this.fire.createKafkaDirectStream()
     this.printConf
 

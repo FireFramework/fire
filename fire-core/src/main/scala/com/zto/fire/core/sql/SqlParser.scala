@@ -23,7 +23,6 @@ trait SqlParser {
   protected[fire] lazy val hiveTableMap = new JConcurrentHashMap[String, Boolean]()
   protected lazy val buffer = new CopyOnWriteArraySet[String]()
   protected lazy val logger = LoggerFactory.getLogger(this.getClass)
-  protected lazy val threadPool = ThreadUtils.createThreadPool("FireSqlParser", ThreadPoolType.SCHEDULED)
   this.sqlParse
 
   /**
@@ -31,7 +30,7 @@ trait SqlParser {
    */
   protected def sqlParse: Unit = {
     if (buriedPointDatasourceEnable) {
-      this.threadPool.asInstanceOf[ScheduledExecutorService].scheduleWithFixedDelay(() => {
+      ThreadUtils.scheduleWithFixedDelay({
         this.buffer.foreach(sql => this.sqlParser(sql))
         DatasourceManager.addTableMeta(this.tableMetaSet)
         this.clear

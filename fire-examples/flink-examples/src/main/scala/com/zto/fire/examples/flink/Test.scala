@@ -43,6 +43,10 @@ import org.apache.flink.util.Collector
     |flink.stream.checkpoint.interval=10
     |flink.state.choose.disk.policy=round_robin
     |state.external.zookeeper.url=10.7.69.238:2181
+    |fire.analysis.arthas.enable=true
+    |fire.log.level.conf.org.apache.flink=warn
+    |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
+    |fire.analysis.arthas.container.enable=true
     |""")
 object Test extends BaseFlinkStreaming {
 
