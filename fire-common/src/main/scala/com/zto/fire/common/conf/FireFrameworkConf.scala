@@ -71,6 +71,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_RESTFUL_PORT_RETRY_DURATION = "fire.restful.port.retry_duration"
   lazy val FIRE_REST_SERVER_SECRET = "fire.rest.server.secret"
   lazy val FIRE_LOG_LEVEL_CONF_PREFIX = "fire.log.level.conf."
+  lazy val FIRE_ARTHAS_CONF_PREFIX = "fire.analysis.arthas.conf."
   lazy val FIRE_USER_COMMON_CONF = "fire.user.common.conf"
   // 日志记录器保留最少的记录数
   lazy val FIRE_ACC_LOG_MIN_SIZE = "fire.acc.log.min.size"
@@ -212,7 +213,7 @@ private[fire] object FireFrameworkConf {
 
 
   // fire框架rest接口服务最大线程数
-  lazy val restfulMaxThread = PropUtils.getInt(this.FIRE_RESTFUL_MAX_THREAD, 8)
+  lazy val restfulMaxThread = PropUtils.getInt(this.FIRE_RESTFUL_MAX_THREAD, 5)
   // 用于配置是否抛弃配置中心独立运行
   lazy val configCenterEnable = PropUtils.getBoolean(this.FIRE_CONFIG_CENTER_ENABLE, true)
   // 本地运行环境下（Windows、Mac）是否调用配置中心接口获取配置信息
@@ -245,4 +246,6 @@ private[fire] object FireFrameworkConf {
   lazy val arthasContainerEnable = PropUtils.getBoolean(this.FIRE_ANALYSIS_ARTHAS_CONTAINER_ENABLE, false)
   // arthas tunnel服务的地址
   lazy val arthasTunnelServerUrl = PropUtils.getString(this.FIRE_ANALYSIS_ARTHAS_TUNNEL_SERVER_URL)
+  // arthas的参数
+  def arthasConfMap: Map[String, String] = PropUtils.sliceKeys(this.FIRE_ARTHAS_CONF_PREFIX)
 }

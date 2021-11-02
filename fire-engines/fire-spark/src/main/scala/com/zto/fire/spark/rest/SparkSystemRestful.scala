@@ -364,7 +364,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
     try {
       // 参数校验与参数获取
       val stopGracefully = JSONUtils.getValue(json, "stopGracefully", true)
-      this.baseSpark.after(this.baseSpark.args)
+      this.baseSpark.after()
       this.baseSpark.shutdown(stopGracefully)
       ProcessUtil.executeCmds(s"yarn application -kill ${this.baseSpark.applicationId}", s"kill -9 ${OSUtils.getPid}")
       this.logger.info(s"[kill] kill任务成功：json=$json")

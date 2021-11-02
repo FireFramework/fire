@@ -18,7 +18,7 @@
 package com.zto.fire.examples.spark.thread
 
 import com.zto.fire._
-import com.zto.fire.common.util.DateFormatUtils
+import com.zto.fire.common.util.{DateFormatUtils, ThreadUtils}
 import com.zto.fire.spark.BaseSparkStreaming
 
 /**
@@ -41,9 +41,9 @@ object ThreadTest extends BaseSparkStreaming {
     */
   override def process: Unit = {
     // 第一次执行时延迟两分钟，每隔1分钟执行一次showSchema函数
-    this.runAsSchedule(this.showSchema, 1, 1)
+    ThreadUtils.schedule(this.showSchema, 1, 1)
     // 以子线程方式执行print方法中的逻辑
-    this.runAsThread(this.print)
+    ThreadUtils.run(this.print)
 
     val dstream = this.fire.createKafkaDirectStream()
     dstream.foreachRDD(rdd => {

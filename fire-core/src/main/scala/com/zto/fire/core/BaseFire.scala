@@ -17,20 +17,18 @@
 
 package com.zto.fire.core
 
-import com.taobao.arthas.agent.attach.ArthasAgent
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
-import com.zto.fire.common.enu.{JobType, ThreadPoolType}
+import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{FireUtils, _}
+import com.zto.fire.core.plugin.ArthasManager
 import com.zto.fire.core.rest.{RestServerManager, SystemRestful}
 import com.zto.fire.core.task.SchedulerManager
 import com.zto.fire.predef._
 import org.apache.log4j.{Level, Logger}
-import org.slf4j
 import org.slf4j.LoggerFactory
 import spark.Spark
 
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.{ExecutorService, ScheduledExecutorService, TimeUnit}
 
 /**
  * 通用的父接口，提供通用的生命周期方法约束
@@ -59,14 +57,11 @@ trait BaseFire {
   protected[fire] lazy val className: JString = this.getClass.getName.replace("$", "")
   // 当前任务的类名
   protected[fire] lazy val driverClass: JString = this.getClass.getSimpleName.replace("$", "")
-  protected[fire] lazy val logger: slf4j.Logger = LoggerFactory.getLogger(this.getClass)
+  protected[fire] lazy val logger = LoggerFactory.getLogger(this.getClass)
   // 默认的任务名称为类名
   protected[fire] var appName: JString = this.driverClass
   // 配置信息
   protected lazy val conf = PropUtils
-  // fire内置线程池
-  protected[fire] lazy val threadPool: ExecutorService = ThreadUtils.createThreadPool("FireThreadPool", ThreadPoolType.FIXED, FireFrameworkConf.threadPoolSize)
-  protected[fire] lazy val threadPoolSchedule: ScheduledExecutorService = ThreadUtils.createThreadPool("FireThreadPoolSchedule", ThreadPoolType.SCHEDULED, FireFrameworkConf.threadPoolSchedulerSize).asInstanceOf[ScheduledExecutorService]
   this.boot()
 
   /**
@@ -75,24 +70,10 @@ trait BaseFire {
    */
   private[fire] def boot(): Unit = {
     FireUtils.splash
-    if (FireFrameworkConf.arthasEnable) this.runAsThread(this.startArthas)
+    if (FireFrameworkConf.arthasEnable) ArthasManager.startArthas(this.className, this.resourceId, FireFrameworkConf.arthasContainerEnable)
     PropUtils.sliceKeys(FireFrameworkConf.FIRE_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
   }
 
-  /**
-   * 启动arthas
-   */
-  protected[fire] def startArthas: Unit = {
-    if (this.resourceId.contains("container") && !FireFrameworkConf.arthasContainerEnable) return
-    val configMap = new JHashMap[String, String]()
-    configMap.put("arthas.appName", s"${FireUtils.engine}@${this.className}")
-    configMap.put("arthas.telnetPort", "0")
-    configMap.put("arthas.httpPort", "0")
-    configMap.put("arthas.agentId", s"${FireUtils.engine}@${this.className}_$resourceId")
-    configMap.put("arthas.tunnelServer", FireFrameworkConf.arthasTunnelServerUrl)
-    ArthasAgent.attach(configMap)
-    this.logger.warn("<-- Arthas服务已启动 -->")
-  }
 
   /**
    * 获取任务的resourceId
@@ -157,7 +138,7 @@ trait BaseFire {
    * 生命周期方法：用于资源回收与清理，子类复写实现具体逻辑
    * 注：该方法会在进行destroy之前自动被系统调用
    */
-  def after(args: Array[String] = null): Unit = {
+  def after(): Unit = {
     // 子类复写该方法，在destroy之前被调用
   }
 
@@ -186,53 +167,5 @@ trait BaseFire {
    */
   def main(args: Array[String]): Unit = {
     this.init(null, args)
-  }
-
-  /**
-   * 以子线程方式执行函数调用
-   *
-   * @param fun
-   * 用于指定以多线程方式执行的函数
-   * @param threadCount
-   * 表示开启多少个线程执行该fun任务
-   */
-  @deprecated
-  def runAsThread(fun: => Unit, threadCount: Int = 1, threadPool: ExecutorService = this.threadPool): Unit = {
-    ThreadUtils.runAsThread(threadPool, fun, threadCount)
-  }
-
-  /**
-   * 以子线程while循环方式循环执行函数调用
-   *
-   * @param fun
-   * 用于指定以多线程方式执行的函数
-   * @param delay
-   * 循环调用间隔时间（单位s）
-   */
-  @deprecated
-  def runAsThreadLoop(fun: => Unit, delay: Long = 10, threadCount: Int = 1, threadPool: ExecutorService = this.threadPool): Unit = {
-    ThreadUtils.runAsThreadLoop(threadPool, fun, delay, threadCount)
-  }
-
-  /**
-   * 定时调度给定的函数
-   *
-   * @param fun
-   * 定时执行的任务函数引用
-   * @param initialDelay
-   * 第一次延迟执行的时长
-   * @param period
-   * 每隔指定的时长执行一次
-   * @param rate
-   * true：表示周期性的执行，不受上一个定时任务的约束
-   * false：表示当上一次周期性任务执行成功后，period后开始执行
-   * @param timeUnit
-   * 时间单位，默认分钟
-   * @param threadCount
-   * 表示开启多少个线程执行该fun任务
-   */
-  @deprecated
-  def runAsSchedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES, threadCount: Int = 1, threadPoolSchedule: ScheduledExecutorService = this.threadPoolSchedule): Unit = {
-    ThreadUtils.runAsSchedule(threadPoolSchedule, fun, initialDelay, period, rate, timeUnit, threadCount)
   }
 }

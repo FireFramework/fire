@@ -18,10 +18,9 @@
 package com.zto.fire.examples.spark.acc
 
 import java.util.concurrent.TimeUnit
-
 import com.zto.fire._
 import com.zto.fire.common.anno.Scheduled
-import com.zto.fire.common.util.{DateFormatUtils, PropUtils}
+import com.zto.fire.common.util.{DateFormatUtils, PropUtils, ThreadUtils}
 import com.zto.fire.spark.BaseSparkStreaming
 
 
@@ -52,7 +51,7 @@ object FireAccTest extends BaseSparkStreaming {
     })
 
     // 定时打印fire内置累加器中的值
-    this.runAsSchedule(this.printAcc, 0, 10, true, TimeUnit.MINUTES)
+    ThreadUtils.schedule(this.printAcc, 0, 10, true, TimeUnit.MINUTES)
 
     this.fire.start
   }
