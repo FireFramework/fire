@@ -21,7 +21,6 @@ import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.LoggerFactory
 
 import java.util.concurrent._
 
@@ -31,8 +30,7 @@ import java.util.concurrent._
  *
  * @author ChengLong 2019-4-25 15:17:55
  */
-object ThreadUtils {
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
+object ThreadUtils extends Logging {
   // 用于维护使用ThreadUtils创建的线程池对象，并进行统一的关闭
   private lazy val poolMap = new JConcurrentHashMap[String, ExecutorService]()
   private lazy val singlePool = this.createThreadPool("FireSinglePool", ThreadPoolType.SINGLE)

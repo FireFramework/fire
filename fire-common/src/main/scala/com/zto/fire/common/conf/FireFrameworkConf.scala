@@ -39,7 +39,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_REST_ENABLE = "fire.rest.enable"
   lazy val FIRE_REST_URL_HOSTNAME = "fire.rest.url.hostname"
   lazy val FIRE_CONF_DEPLOY_ENGINE = "fire.conf.deploy.engine"
-  lazy val FIRE_ENGINE_CONF_HELPER = "com.zto.fire.core.conf.EngineConfHelper"
+  lazy val FIRE_ENGINE_CONF_HELPER = "com.zto.fire.core.sync.SyncEngineConfHelper"
   // rest接口权限认证
   lazy val FIRE_REST_FILTER_ENABLE = "fire.rest.filter.enable"
   // 用于配置是否关闭fire内置的所有累加器

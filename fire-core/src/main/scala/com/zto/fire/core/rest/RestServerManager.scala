@@ -17,16 +17,14 @@
 
 package com.zto.fire.core.rest
 
-import java.net.ServerSocket
-
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.enu.ErrorCode
-import com.zto.fire.common.util.{EncryptUtils, OSUtils, PropUtils, ThreadUtils}
+import com.zto.fire.common.util._
 import com.zto.fire.predef._
-import org.slf4j.LoggerFactory
 import spark._
 
+import java.net.ServerSocket
 import scala.collection.mutable._
 
 /**
@@ -34,12 +32,11 @@ import scala.collection.mutable._
  *
  * @author ChengLong 2019-3-16 09:56:56
  */
-private[fire] class RestServerManager {
+private[fire] class RestServerManager extends Logging {
   private[this] var port: JInt = null
   private[this] var restPrefix: String = _
   private[this] var socket: ServerSocket = _
   private[this] lazy val restList = ListBuffer[RestCase]()
-  private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
   private[this] lazy val mainClassName: String = FireFrameworkConf.driverClassName
 
   /**

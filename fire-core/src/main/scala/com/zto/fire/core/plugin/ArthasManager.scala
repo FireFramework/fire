@@ -17,12 +17,12 @@
 
 package com.zto.fire.core.plugin
 
-import com.zto.fire.predef._
 import com.taobao.arthas.agent.attach.ArthasAgent
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{FireUtils, ThreadUtils}
-import com.zto.fire.predef.JHashMap
-import org.slf4j.LoggerFactory
+import com.zto.fire.common.util.{FireUtils, Logging, ThreadUtils}
+import com.zto.fire.predef.{JHashMap, _}
+
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Arthas插件管理
@@ -30,16 +30,32 @@ import org.slf4j.LoggerFactory
  * @author ChengLong 2021-11-2 14:45:43
  * @since 2.2.0
  */
-private[fire] object ArthasManager {
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
+private[fire] object ArthasManager extends Logging {
+  private lazy val start = new AtomicBoolean(false)
 
   /**
    * 启动Arthas服务
+   *
+   * @param appName        用于标识任务的名称
+   * @param resourceId     用于标识分布式任务的master与slave
+   * @param startContainer 是否在分布式环境下启用Arthas
    */
-  def startArthas(appName: String, resourceId: String, startContainer: Boolean = false): Unit = {
+  def startArthas(appName: String, resourceId: String, startContainer: Boolean): Unit = {
     requireNonEmpty(appName, resourceId)("appName或resourceId不能为空，arthas所监控的程序必须有标识！")
 
     if (resourceId.contains("container") && !startContainer) return
+    this.startArthas(appName, resourceId)
+  }
+
+  /**
+   * 启动Arthas服务
+   *
+   * @param appName    用于标识任务的名称
+   * @param resourceId 用于标识分布式任务的master与slave
+   */
+  def startArthas(appName: String, resourceId: String): Unit = {
+    if (this.start.get()) return
+
     ThreadUtils.run {
       tryWithLog {
         val configMap = new JHashMap[String, String]()
@@ -50,8 +66,8 @@ private[fire] object ArthasManager {
         configMap.put("arthas.tunnelServer", FireFrameworkConf.arthasTunnelServerUrl)
         configMap.putAll(FireFrameworkConf.arthasConfMap)
         ArthasAgent.attach(configMap)
+        this.start.compareAndSet(false, true)
       }(this.logger, tryLog = "<-- Arthas服务已启动 -->")
     }
   }
-
 }

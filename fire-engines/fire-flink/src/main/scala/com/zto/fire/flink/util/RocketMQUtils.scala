@@ -19,10 +19,9 @@ package com.zto.fire.flink.util
 
 import com.zto.fire._
 import com.zto.fire.common.conf.FireRocketMQConf
-import com.zto.fire.common.util.{LogUtils, StringsUtils}
+import com.zto.fire.common.util.{LogUtils, Logging}
 import org.apache.commons.lang3.StringUtils
 import org.apache.rocketmq.flink.RocketMQConfig
-import org.slf4j.LoggerFactory
 
 /**
  * RocketMQ相关工具类
@@ -31,8 +30,7 @@ import org.slf4j.LoggerFactory
  * @since 2.0.0
  * @create 2021-5-6 14:04:53
  */
-object RocketMQUtils {
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
+object RocketMQUtils extends Logging {
 
   /**
    * rocketMQ配置信息

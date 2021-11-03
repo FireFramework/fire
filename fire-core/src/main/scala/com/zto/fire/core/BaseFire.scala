@@ -25,7 +25,6 @@ import com.zto.fire.core.rest.{RestServerManager, SystemRestful}
 import com.zto.fire.core.task.SchedulerManager
 import com.zto.fire.predef._
 import org.apache.log4j.{Level, Logger}
-import org.slf4j.LoggerFactory
 import spark.Spark
 
 import java.util.concurrent.atomic.AtomicBoolean
@@ -36,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @author ChengLong 2020年1月7日 09:20:02
  * @since 0.4.1
  */
-trait BaseFire {
+trait BaseFire extends Logging {
   // 任务启动时间戳
   protected[fire] val startTime: Long = currentTime
   // web ui地址
@@ -57,7 +56,6 @@ trait BaseFire {
   protected[fire] lazy val className: JString = this.getClass.getName.replace("$", "")
   // 当前任务的类名
   protected[fire] lazy val driverClass: JString = this.getClass.getSimpleName.replace("$", "")
-  protected[fire] lazy val logger = LoggerFactory.getLogger(this.getClass)
   // 默认的任务名称为类名
   protected[fire] var appName: JString = this.driverClass
   // 配置信息

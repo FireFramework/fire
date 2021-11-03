@@ -17,14 +17,15 @@
 
 package com.zto.fire.spark
 
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.enu.JobType
+import com.zto.fire.common.util.Logging
 import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.conf.FireSparkConf
-import org.apache.spark.internal.Logging
+import com.zto.fire.spark.sync.{DistributeSyncManager, SyncSparkEngineConf}
 import org.apache.spark.scheduler._
-import org.slf4j.LoggerFactory
+
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 /**
   * Spark事件监听器桥
@@ -33,7 +34,6 @@ import org.slf4j.LoggerFactory
 class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging {
   private[this] val module = "listener"
   private[this] val needRegister = new AtomicBoolean(false)
-  private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
   // 用于统计stage失败的次数
   private[this] lazy val stageFailedCount = new AtomicLong(0)
 
@@ -181,7 +181,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
   private[fire] def registerAcc: Unit = {
     if (this.needRegister.compareAndSet(true, false)) {
       AccumulatorManager.registerAccumulators(this.baseSpark.sc)
-      AccumulatorManager.broadcastNewConf(this.baseSpark.sc, this.baseSpark._conf)
+      SyncSparkEngineConf.syncDynamicConf(this.baseSpark.sc, this.baseSpark._conf)
       this.logger.info(s"完成系统累加器注册.", this.module)
     }
   }

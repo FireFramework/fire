@@ -36,8 +36,7 @@ import scala.collection.mutable
  * @since 2.0.0
  * @create 2020-11-26 15:30
  */
-private[fire] class DatasourceManager {
-  private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
+private[fire] class DatasourceManager extends Logging {
   // 用于存放当前任务用到的数据源信息
   private[fire] lazy val datasourceMap = new ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
   private[fire] lazy val tableMetaSet = new CopyOnWriteArraySet[TableMeta]()
@@ -130,8 +129,7 @@ private[fire] class DatasourceManager {
 /**
  * 对外暴露API，用于收集并处理各种埋点信息
  */
-private[fire] object DatasourceManager {
-  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
+private[fire] object DatasourceManager extends Logging {
   private[fire] lazy val manager = new DatasourceManager
 
   /**

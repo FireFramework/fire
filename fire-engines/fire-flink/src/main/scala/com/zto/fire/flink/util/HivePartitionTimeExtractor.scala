@@ -10,12 +10,12 @@ import java.util
 
 /**
  * hive分区时间提取器，分区格式为yyyyMMdd
+ *
  * @author ChengLong 2021年7月30日13:56:16
  */
 private[fire] class HivePartitionTimeExtractor(pattern: String = "$ds") extends PartitionTimeExtractor {
   private val DEFAULT_PARTITION_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd")
   private val HOUR_PARTITION_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd HH")
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   def this() {
     this("$ds")

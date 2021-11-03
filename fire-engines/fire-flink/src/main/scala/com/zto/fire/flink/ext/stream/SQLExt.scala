@@ -17,10 +17,9 @@
 
 package com.zto.fire.flink.ext.stream
 
-import com.zto.fire.common.util.PropUtils
+import com.zto.fire.common.util.{Logging, PropUtils}
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.{noEmpty, requireNonEmpty}
-import org.slf4j.LoggerFactory
 
 /**
  * Flink SQL扩展类
@@ -28,13 +27,11 @@ import org.slf4j.LoggerFactory
  * @author ChengLong 2021-4-23 10:36:49
  * @since 2.0.0
  */
-class SQLExt(sql: String) {
+class SQLExt(sql: String) extends Logging {
   // 用于匹配Flink SQL中的with表达式
   private[this] lazy val withPattern = """(with|WITH)\s*\(([\s\S]*)(\)|;)$""".r
   // 用于匹配Flink SQL中的create语句
   private[this] lazy val createTablePattern = """^\s*(create|CREATE)\s+(table|TABLE)""".r
-
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 将给定的不包含with表达式的Flink SQL添加with表达式

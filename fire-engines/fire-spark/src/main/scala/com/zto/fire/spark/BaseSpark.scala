@@ -19,7 +19,7 @@ package com.zto.fire.spark
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
-import com.zto.fire.common.util.{JSONUtils, OSUtils, PropUtils}
+import com.zto.fire.common.util.{OSUtils, PropUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.spark.acc.AccumulatorManager
@@ -32,17 +32,16 @@ import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.sql.catalog.Catalog
+import org.apache.spark.sql.catalyst.parser.ParserInterface
 import org.apache.spark.sql.{SQLContext, SparkSession, SparkSessionExtensions}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.internal.Logging
-import org.apache.spark.sql.catalyst.parser.ParserInterface
 
 /**
  * Spark通用父类
  * Created by ChengLong on 2018-03-06.
  */
-trait BaseSpark extends SparkListener with BaseFire with Logging with Serializable {
+trait BaseSpark extends SparkListener with BaseFire with Serializable {
   private[fire] var _conf: SparkConf = _
   protected[fire] var _spark: SparkSession = _
   protected lazy val spark, fire: SparkSession = _spark

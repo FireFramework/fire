@@ -35,7 +35,7 @@ import scala.reflect.ClassTag
  * 读取配置文件工具类
  * Created by ChengLong on 2016-11-22.
  */
-object PropUtils {
+object PropUtils extends Logging {
   private val props = new Properties()
   private val configurationFiles = Array[String]("fire", "cluster", "spark", "flink")
   // 用于判断是否merge过
@@ -52,7 +52,6 @@ object PropUtils {
   private[fire] lazy val originalSettingsMap = new mutable.HashMap[String, String]()
   // 用于存放固定前缀，而后缀不同的配置信息
   private[this] lazy val cachedConfMap = new mutable.HashMap[String, collection.immutable.Map[String, String]]()
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 判断指定的配置文件是否存在
@@ -514,7 +513,7 @@ object PropUtils {
   @Internal
   private[this] def mergeEngineConf: Unit = {
     val clazz = Class.forName(FireFrameworkConf.FIRE_ENGINE_CONF_HELPER)
-    val method = clazz.getDeclaredMethod("getEngineConf")
+    val method = clazz.getDeclaredMethod("syncEngineConf")
     val map = method.invoke(null).asInstanceOf[immutable.Map[String, String]]
     if (map.nonEmpty) {
       this.setProperties(map)

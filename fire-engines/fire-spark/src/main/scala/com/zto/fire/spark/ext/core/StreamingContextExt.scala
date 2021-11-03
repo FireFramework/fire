@@ -17,7 +17,9 @@
 
 package com.zto.fire.spark.ext.core
 
+import com.zto.fire._
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
+import com.zto.fire.common.util.{DatasourceManager, Logging}
 import com.zto.fire.spark.util.{RocketMQUtils, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -26,9 +28,6 @@ import org.apache.rocketmq.spark.{ConsumerStrategy, LocationStrategy, RocketMQCo
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.KafkaUtils
-import org.slf4j.LoggerFactory
-import com.zto.fire._
-import com.zto.fire.common.util.DatasourceManager
 
 /**
  * StreamingContext扩展
@@ -37,12 +36,11 @@ import com.zto.fire.common.util.DatasourceManager
  * StreamingContext对象
  * @author ChengLong 2019-5-18 11:03:59
  */
-class StreamingContextExt(ssc: StreamingContext) {
+class StreamingContextExt(ssc: StreamingContext) extends Logging {
 
   import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
   import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
   private[this] lazy val appName = ssc.sparkContext.appName
 
   /**

@@ -3,7 +3,7 @@ package com.zto.fire.flink.util
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.util.UnitFormatUtils.DateUnitEnum
-import com.zto.fire.common.util.{DateFormatUtils, UnitFormatUtils}
+import com.zto.fire.common.util.{DateFormatUtils, Logging, UnitFormatUtils}
 import org.apache.commons.lang3.time.DateUtils
 import org.apache.flink.runtime.checkpoint.{Checkpoints, OperatorSubtaskState}
 import org.apache.flink.runtime.state.IncrementalRemoteKeyedStateHandle
@@ -11,7 +11,6 @@ import org.apache.flink.runtime.state.filesystem.FileStateHandle
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, LocatedFileStatus, Path}
 import org.apache.log4j.{Level, Logger}
-import org.slf4j.LoggerFactory
 
 import java.io.{BufferedInputStream, DataInputStream, File, FileInputStream}
 import java.net.URI
@@ -26,8 +25,7 @@ import scala.collection.mutable.ListBuffer
  *
  * @author ChengLong 2021-9-6 15:06:21
  */
-protected[fire] class StateCleanerUtils {
-  protected val logger = LoggerFactory.getLogger(this.getClass)
+protected[fire] class StateCleanerUtils extends Logging {
   Logger.getLogger(this.getClass).setLevel(Level.toLevel("info"))
 
   // ------------------------------ hdfs 选项 ----------------------------------- //

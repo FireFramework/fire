@@ -18,7 +18,6 @@
 package com.zto.fire.common.util
 
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
-import org.slf4j.LoggerFactory
 
 /**
  * fire框架通用的工具方法
@@ -28,9 +27,8 @@ import org.slf4j.LoggerFactory
  * @since 1.0.0
  * @create: 2020-05-17 10:17
  */
-private[fire] object FireUtils extends Serializable {
+private[fire] object FireUtils extends Serializable with Logging {
   private var isSplash = false
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 判断是否为spark引擎
