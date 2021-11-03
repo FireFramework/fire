@@ -54,20 +54,19 @@ private[fire] object ArthasManager extends Logging {
    * @param resourceId 用于标识分布式任务的master与slave
    */
   def startArthas(appName: String, resourceId: String): Unit = {
-    if (this.start.get()) return
-
-    ThreadUtils.run {
-      tryWithLog {
-        val configMap = new JHashMap[String, String]()
-        configMap.put("arthas.appName", s"${FireUtils.engine}@${appName}")
-        configMap.put("arthas.telnetPort", "0")
-        configMap.put("arthas.httpPort", "0")
-        configMap.put("arthas.agentId", s"${FireUtils.engine}@${appName}_$resourceId")
-        configMap.put("arthas.tunnelServer", FireFrameworkConf.arthasTunnelServerUrl)
-        configMap.putAll(FireFrameworkConf.arthasConfMap)
-        ArthasAgent.attach(configMap)
-        this.start.compareAndSet(false, true)
-      }(this.logger, tryLog = "<-- Arthas服务已启动 -->")
+    if (this.start.compareAndSet(false, true)) {
+      ThreadUtils.run {
+        tryWithLog {
+          val configMap = new JHashMap[String, String]()
+          configMap.put("arthas.appName", s"${FireUtils.engine}@${appName}")
+          configMap.put("arthas.telnetPort", "0")
+          configMap.put("arthas.httpPort", "0")
+          configMap.put("arthas.agentId", s"${FireUtils.engine}@${appName}_$resourceId")
+          configMap.put("arthas.tunnelServer", FireFrameworkConf.arthasTunnelServerUrl)
+          configMap.putAll(FireFrameworkConf.arthasConfMap)
+          ArthasAgent.attach(configMap)
+        }(this.logger, tryLog = "<-- Arthas服务已启动 -->")
+      }
     }
   }
 }
