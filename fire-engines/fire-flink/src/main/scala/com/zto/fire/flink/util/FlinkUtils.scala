@@ -19,7 +19,7 @@ package com.zto.fire.flink.util
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.util.{OSUtils, PropUtils, ReflectionUtils, ValueUtils}
+import com.zto.fire.common.util._
 import com.zto.fire.flink.bean.FlinkTableSchema
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.hbase.bean.HBaseBaseBean
@@ -41,10 +41,9 @@ import java.net.{URL, URLClassLoader}
  * @author ChengLong 2020年1月16日 16:28:23
  * @since 0.4.1
  */
-object FlinkUtils extends Serializable {
+object FlinkUtils extends Serializable with Logging {
   // 维护schema、fieldName与fieldIndex关系
   private[this] val schemaTable = HashBasedTable.create[FlinkTableSchema, String, Int]
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
   private var jobManager: Option[Boolean] = None
   private var mode: Option[String] = None
 

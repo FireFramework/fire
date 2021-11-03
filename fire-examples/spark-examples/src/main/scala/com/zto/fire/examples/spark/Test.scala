@@ -23,6 +23,7 @@ import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.StreamingDuration
+import com.zto.fire.spark.sync.DistributeSyncManager
 import com.zto.fire.spark.util.SparkUtils
 
 /**
@@ -37,10 +38,10 @@ import com.zto.fire.spark.util.SparkUtils
     |hive.cluster=test
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
-    |fire.analysis.arthas.enable=true
+    |fire.analysis.arthas.enable=false
     |fire.log.level.conf.org.apache.spark=warn
     |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
-    |fire.analysis.arthas.container.enable=true
+    |fire.analysis.arthas.container.enable=false
     |""")
 @StreamingDuration(20) // spark streaming的批次时间
 object Test extends BaseSparkStreaming {
@@ -49,7 +50,7 @@ object Test extends BaseSparkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
-    this.spark.sql("show databases").show()
+    /*this.spark.sql("show databases").show()
     val dstream = this.fire.createKafkaDirectStream()
     this.printConf
 
@@ -64,7 +65,10 @@ object Test extends BaseSparkStreaming {
       studentRDD.toDF().jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
     })(reTry = 5, exitOnFailure = true)
 
-    this.fire.start
+    this.fire.start*/
+    this.spark.sql("show databases").show()
+    DistributeSyncManager.sync(this.printConf)
+    Thread.currentThread().join()
   }
 
   def printConf: Unit = {

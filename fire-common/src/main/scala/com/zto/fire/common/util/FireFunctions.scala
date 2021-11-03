@@ -20,7 +20,7 @@ package com.zto.fire.common.util
 import com.zto.fire.common.conf.FirePS1Conf
 import com.zto.fire.common.util.UnitFormatUtils.{TimeUnitEnum, readable}
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.Logger
 
 import scala.util.Try
 
@@ -31,8 +31,7 @@ import scala.util.Try
  * @since 1.0.0
  * @create 2020-12-16 15:45
  */
-trait FireFunctions extends Serializable {
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
+trait FireFunctions extends Serializable with Logging  {
   private[this] lazy val tryLog = ""
   private[this] lazy val catchLog = "执行try的过程中发生异常"
   private[this] lazy val finallyCatchLog = "执行finally过程中发生异常"

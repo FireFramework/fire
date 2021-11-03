@@ -31,8 +31,7 @@ import org.slf4j.LoggerFactory
  * @since 2.0.0
  * @create 2021-03-12 13:35
  */
-private[fire] object ConfigurationCenterManager extends Serializable {
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
+private[fire] object ConfigurationCenterManager extends Serializable with Logging {
   private lazy val configCenterProperties: JMap[ConfigureLevel, JMap[String, String]] = new JHashMap[ConfigureLevel, JMap[String, String]]
 
   /**

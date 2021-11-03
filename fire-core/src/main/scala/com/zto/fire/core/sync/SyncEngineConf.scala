@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.zto.fire.core.conf
+package com.zto.fire.core.sync
 
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.util.ReflectionUtils
@@ -30,24 +30,23 @@ import scala.collection.immutable
  * @since 2.0.0
  * @create 2021-03-02 10:48
  */
-private[fire] trait EngineConf {
-  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
+private[fire] trait SyncEngineConf extends SyncManager {
 
   /**
    * 获取引擎的所有配置信息
    */
-  def getEngineConf: Map[String, String]
+  def syncEngineConf: Map[String, String]
 }
 
 /**
  * 用于获取不同引擎的配置信息
  */
-private[fire] object EngineConfHelper extends EngineConf {
+private[fire] object SyncEngineConfHelper extends SyncEngineConf {
 
   /**
    * 通过反射获取不同引擎的配置信息
    */
-  override def getEngineConf: Map[String, String] = {
+  override def syncEngineConf: Map[String, String] = {
     var clazz: Class[_] = null
     try {
       clazz = Class.forName(FireFrameworkConf.confDeployEngine)
@@ -56,7 +55,7 @@ private[fire] object EngineConfHelper extends EngineConf {
     }
 
     if (clazz != null) {
-      val method = clazz.getDeclaredMethod("getEngineConf")
+      val method = clazz.getDeclaredMethod("syncEngineConf")
       ReflectionUtils.setAccessible(method)
       method.invoke(clazz.newInstance()).asInstanceOf[immutable.Map[String, String]]
     } else Map.empty

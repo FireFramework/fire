@@ -18,6 +18,7 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
+import com.zto.fire.common.util.Logging
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.HBaseBulkConnector
 import com.zto.fire.spark.util.SparkSingletonFactory
@@ -28,8 +29,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges}
-import org.slf4j
-import org.slf4j.LoggerFactory
 
 import scala.reflect._
 import scala.util.Try
@@ -41,9 +40,8 @@ import scala.util.Try
  * stream对象
  * @author ChengLong 2019-5-18 11:06:56
  */
-class DStreamExt[T: ClassTag](stream: DStream[T]) {
+class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
   private[this] lazy val spark = SparkSingletonFactory.getSparkSession
-  private[this] lazy val logger: slf4j.Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * DStrea数据实时写入

@@ -20,11 +20,10 @@ package com.zto.fire.jdbc.util
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.util.ReflectionUtils
+import com.zto.fire.common.util.{Logging, ReflectionUtils}
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.{Logger, LoggerFactory}
 
 import java.sql.ResultSet
 import java.util.Properties
@@ -36,8 +35,7 @@ import scala.util.Try
  *
  * @author ChengLong 2019-6-23 11:16:18
  */
-object DBUtils {
-  protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
+object DBUtils extends Logging {
 
   /**
    * 将ResultSet结果转为JavaBean集合

@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package com.zto.fire.flink.conf
+package com.zto.fire.flink.sync
 
 import com.zto.fire.common.util.ReflectionUtils
-import com.zto.fire.core.conf.EngineConf
+import com.zto.fire.core.sync.SyncEngineConf
 import com.zto.fire.flink.util.FlinkUtils
 import com.zto.fire.predef._
 
@@ -29,12 +29,12 @@ import com.zto.fire.predef._
  * @since 2.0.0
  * @create 2021-03-02 11:12
  */
-private[fire] class FlinkEngineConf extends EngineConf  {
+private[fire] class SyncFlinkEngineConf extends SyncEngineConf  {
 
   /**
    * 获取Flink引擎的所有配置信息
    */
-  override def getEngineConf: Map[String, String] = {
+  override def syncEngineConf: Map[String, String] = {
     if (FlinkUtils.isJobManager) {
       // 如果是JobManager端，则需将flink参数和用户参数进行合并，并从合并后的settings中获取
       val clazz = Class.forName("org.apache.flink.configuration.GlobalConfiguration")

@@ -15,29 +15,16 @@
  * limitations under the License.
  */
 
-package com.zto.fire.spark.conf
+package com.zto.fire.core.sync
 
-import com.zto.fire.core.conf.EngineConf
-import com.zto.fire.spark.util.SparkUtils
-import org.apache.spark.SparkEnv
+import com.zto.fire.common.util.Logging
 
 /**
- * 获取Spark引擎的所有配置信息
+ * 同步管理器，用于Diver或JobManager端向Executor或TaskManager端同步数据
  *
- * @author ChengLong
- * @since 2.0.0
- * @create 2021-03-02 10:57
+ * @author ChengLong 2021-11-2 15:41:30
+ * @since 2.2.0
  */
-private[fire] class SparkEngineConf extends EngineConf {
+trait SyncManager extends Logging {
 
-  /**
-   * 获取引擎的所有配置信息
-   */
-  override def getEngineConf: Map[String, String] = {
-    if (SparkUtils.isExecutor) {
-      SparkEnv.get.conf.getAll.toMap
-    } else {
-      Map.empty[String, String]
-    }
-  }
 }

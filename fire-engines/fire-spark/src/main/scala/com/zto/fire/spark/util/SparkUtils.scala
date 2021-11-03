@@ -31,7 +31,6 @@ import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
-import org.slf4j.LoggerFactory
 
 import java.lang.reflect.Field
 import java.sql.ResultSet
@@ -43,8 +42,7 @@ import scala.util.Try
  * Spark 相关的工具类
  * Created by ChengLong on 2016-11-24.
  */
-object SparkUtils {
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
+object SparkUtils extends Logging {
   private lazy val spark = SparkSingletonFactory.getSparkSession
 
   /**

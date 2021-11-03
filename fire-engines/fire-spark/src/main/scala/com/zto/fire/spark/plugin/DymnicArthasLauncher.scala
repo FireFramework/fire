@@ -15,32 +15,33 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.conf
+package com.zto.fire.spark.plugin
 
-import com.zto.fire.common.util.PropUtils
+import com.zto.fire.common.util.{Logging, PropUtils}
+import com.zto.fire.core.plugin.ArthasManager
+import com.zto.fire.spark.sync.DistributeSyncManager
+import com.zto.fire.spark.util.SparkUtils
 
 /**
- * HDFS配置
+ * Arthas启动器
  *
- * @author ChengLong
- * @since 1.1.0
- * @create 2020-07-13 15:07
+ * @author ChengLong 2021-11-3 15:38:20
+ * @since 2.2.0
  */
-private[fire] object FireHDFSConf {
-  // 是否启用高可用
-  lazy val HDFS_HA = "hdfs.ha.enable"
-  lazy val HDFS_HA_PREFIX = "hdfs.ha.conf."
-
-
-  // 配置是否启用hdfs HA
-  lazy val hdfsHAEnable = PropUtils.getBoolean(this.HDFS_HA, true)
+object DymnicArthasLauncher extends Logging {
 
   /**
-   * 读取HDFS高可用相关配置信息
+   * 热启动Arthas
+   *
+   * @param isDistribute
+   * 是否在每个container端启动arthas
    */
-  def hdfsHAConf: Map[String, String] = {
-    if (this.hdfsHAEnable) {
-      PropUtils.sliceKeys(s"${this.HDFS_HA_PREFIX}${FireHiveConf.hiveCluster}.")
-    } else Map.empty
+  def hotStartArthas(isDistribute: Boolean): Unit = {
+    ArthasManager.startArthas(PropUtils.getString("driver.class.name"), SparkUtils.getExecutorId)
+    if (isDistribute) {
+      DistributeSyncManager.sync({
+        ArthasManager.startArthas(PropUtils.getString("driver.class.name"), s"container_${SparkUtils.getExecutorId}")
+      })
+    }
   }
 }

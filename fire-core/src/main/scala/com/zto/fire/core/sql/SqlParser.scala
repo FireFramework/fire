@@ -1,13 +1,10 @@
 package com.zto.fire.core.sql
 
 import com.zto.fire.common.conf.FireFrameworkConf.{buriedPointDatasourceEnable, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod}
-import com.zto.fire.common.enu.{Datasource, ThreadPoolType}
-import com.zto.fire.common.util.{DatasourceManager, TableMeta, ThreadUtils}
-import org.slf4j.LoggerFactory
+import com.zto.fire.common.util.{DatasourceManager, Logging, TableMeta, ThreadUtils}
 import com.zto.fire.predef._
 
-import java.util.concurrent.{CopyOnWriteArraySet, ScheduledExecutorService, TimeUnit}
-import scala.collection.mutable
+import java.util.concurrent.{CopyOnWriteArraySet, TimeUnit}
 
 /**
  * 用于各引擎的SQL解析
@@ -15,14 +12,13 @@ import scala.collection.mutable
  * @author ChengLong 2021-6-18 16:28:50
  * @since 2.0.0
  */
-trait SqlParser {
+trait SqlParser extends Logging {
   // 用于临时存放解析后的库表类
   protected lazy val tmpTableMap = new JHashMap[String, TableMeta]()
   // 用于存放按数据源归类后的所有血缘信息
   protected lazy val tableMetaSet = new CopyOnWriteArraySet[TableMeta]()
   protected[fire] lazy val hiveTableMap = new JConcurrentHashMap[String, Boolean]()
   protected lazy val buffer = new CopyOnWriteArraySet[String]()
-  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
   this.sqlParse
 
   /**

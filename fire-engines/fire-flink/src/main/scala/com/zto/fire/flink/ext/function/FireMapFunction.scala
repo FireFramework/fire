@@ -18,9 +18,9 @@
 package com.zto.fire.flink.ext.function
 
 import com.zto.fire._
+import com.zto.fire.common.util.Logging
 import org.apache.flink.api.common.functions._
 import org.apache.flink.util.Collector
-import org.slf4j.LoggerFactory
 
 import java.io.File
 import java.lang
@@ -34,8 +34,7 @@ import scala.reflect.ClassTag
  * @author ChengLong 2021-01-04 09:39:55
  */
 @deprecated("use this.getRuntimeContext.getXX", "2.2.0")
-abstract class FireMapFunction[I, O] extends AbstractRichFunction with MapFunction[I, O] with MapPartitionFunction[I, O] with FlatMapFunction[I, O] {
-  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
+abstract class FireMapFunction[I, O] extends AbstractRichFunction with MapFunction[I, O] with MapPartitionFunction[I, O] with FlatMapFunction[I, O] with Logging {
   protected lazy val runtimeContext = this.getRuntimeContext()
 
   /**

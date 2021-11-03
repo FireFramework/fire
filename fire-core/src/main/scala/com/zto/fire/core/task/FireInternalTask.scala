@@ -24,7 +24,6 @@ import com.zto.fire.common.util._
 import com.zto.fire.core.BaseFire
 import com.zto.fire.predef._
 import org.apache.commons.httpclient.Header
-import org.slf4j.LoggerFactory
 
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -35,8 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @since 1.0.0
  * @create 2020-07-14 11:02
  */
-private[fire] class FireInternalTask(baseFire: BaseFire) extends Serializable {
-  protected lazy val logger = LoggerFactory.getLogger(this.getClass)
+private[fire] class FireInternalTask(baseFire: BaseFire) extends Serializable with Logging {
   private[this] lazy val doJvmMonitor = new AtomicBoolean(true)
 
   /**
