@@ -17,10 +17,11 @@
 
 package com.zto.fire.spark.plugin
 
-import com.zto.fire.common.util.{Logging, PropUtils}
+import com.zto.fire.common.util.{Logging, OSUtils, PropUtils}
 import com.zto.fire.core.plugin.ArthasManager
 import com.zto.fire.spark.sync.DistributeSyncManager
 import com.zto.fire.spark.util.SparkUtils
+import com.zto.fire.predef._
 
 /**
  * Arthas启动器
@@ -35,12 +36,14 @@ object DymnicArthasLauncher extends Logging {
    *
    * @param isDistribute
    * 是否在每个container端启动arthas
+   * @param ip
+   * 仅在某些主机上启动
    */
-  def hotStartArthas(isDistribute: Boolean): Unit = {
+  def hotStartArthas(isDistribute: Boolean, ip: String): Unit = {
     ArthasManager.startArthas(PropUtils.getString("driver.class.name"), SparkUtils.getExecutorId)
     if (isDistribute) {
       DistributeSyncManager.sync({
-        ArthasManager.startArthas(PropUtils.getString("driver.class.name"), s"container_${SparkUtils.getExecutorId}")
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp))  ArthasManager.startArthas(PropUtils.getString("driver.class.name"), s"container_${SparkUtils.getExecutorId}")
       })
     }
   }
@@ -50,12 +53,14 @@ object DymnicArthasLauncher extends Logging {
    *
    * @param isDistribute
    * 是否在每个container端停止arthas
+   * @param ip
+   * 仅在某些主机上启动
    */
-  def hotStopArthas(isDistribute: Boolean): Unit = {
+  def hotStopArthas(isDistribute: Boolean, ip: String): Unit = {
     ArthasManager.stopArthas
     if (isDistribute) {
       DistributeSyncManager.sync({
-        ArthasManager.stopArthas
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) ArthasManager.stopArthas
       })
     }
   }
@@ -65,12 +70,14 @@ object DymnicArthasLauncher extends Logging {
    *
    * @param isDistribute
    * 是否在每个container端停止arthas
+   * @param ip
+   * 仅在某些主机上启动
    */
-  def hotRestartArthas(isDistribute: Boolean): Unit = {
+  def hotRestartArthas(isDistribute: Boolean, ip: String): Unit = {
     ArthasManager.restartArthas(PropUtils.getString("driver.class.name"), SparkUtils.getExecutorId)
     if (isDistribute) {
       DistributeSyncManager.sync({
-        ArthasManager.restartArthas(PropUtils.getString("driver.class.name"), SparkUtils.getExecutorId)
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) ArthasManager.restartArthas(PropUtils.getString("driver.class.name"), SparkUtils.getExecutorId)
       })
     }
   }

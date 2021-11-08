@@ -79,12 +79,13 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       this.logger.info(s"请求执行Arthas命令：$json")
       val command = JSONUtils.getValue[String](json, "command", "start")
       val isDistribute = JSONUtils.getValue[Boolean](json, "distribute", false)
+      val ip = JSONUtils.getValue[String](json, "ip", "")
       command match {
-        case "start" => DymnicArthasLauncher.hotStartArthas(isDistribute)
-        case "stop" => DymnicArthasLauncher.hotStopArthas(isDistribute)
-        case "restart" => DymnicArthasLauncher.hotRestartArthas(isDistribute)
+        case "start" => DymnicArthasLauncher.hotStartArthas(isDistribute, ip)
+        case "stop" => DymnicArthasLauncher.hotStopArthas(isDistribute, ip)
+        case "restart" => DymnicArthasLauncher.hotRestartArthas(isDistribute, ip)
       }
-      this.logger.info(s"[startArthas] Arthas命令执行成功！")
+      this.logger.info(s"[startArthas] Arthas命令${command}执行成功！")
       msg.buildSuccess("操作成功", "调用arthas接口成功！")
     } catch {
       case e: Exception => {

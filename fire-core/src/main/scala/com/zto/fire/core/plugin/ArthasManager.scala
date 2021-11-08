@@ -103,7 +103,6 @@ private[fire] object ArthasManager extends Logging {
    * @param resourceId 用于标识分布式任务的master与slave
    */
   def restartArthas(appName: String, resourceId: String): Unit = {
-    this.logger.info("开始重启Arthas相关服务")
     this.stopArthas
     this.startArthas(appName, resourceId)
   }
