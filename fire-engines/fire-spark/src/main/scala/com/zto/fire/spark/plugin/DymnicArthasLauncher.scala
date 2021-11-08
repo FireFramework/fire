@@ -44,4 +44,34 @@ object DymnicArthasLauncher extends Logging {
       })
     }
   }
+
+  /**
+   * 分布式热关闭Arthas相关服务
+   *
+   * @param isDistribute
+   * 是否在每个container端停止arthas
+   */
+  def hotStopArthas(isDistribute: Boolean): Unit = {
+    ArthasManager.stopArthas
+    if (isDistribute) {
+      DistributeSyncManager.sync({
+        ArthasManager.stopArthas
+      })
+    }
+  }
+
+  /**
+   * 分布式热重启rthas相关服务
+   *
+   * @param isDistribute
+   * 是否在每个container端停止arthas
+   */
+  def hotRestartArthas(isDistribute: Boolean): Unit = {
+    ArthasManager.restartArthas(PropUtils.getString("driver.class.name"), SparkUtils.getExecutorId)
+    if (isDistribute) {
+      DistributeSyncManager.sync({
+        ArthasManager.restartArthas(PropUtils.getString("driver.class.name"), SparkUtils.getExecutorId)
+      })
+    }
+  }
 }

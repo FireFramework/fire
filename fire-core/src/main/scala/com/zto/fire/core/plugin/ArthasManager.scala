@@ -19,7 +19,7 @@ package com.zto.fire.core.plugin
 
 import com.taobao.arthas.agent.attach.ArthasAgent
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{FireUtils, Logging, ThreadUtils}
+import com.zto.fire.common.util.{FireUtils, Logging, ReflectionUtils, ThreadUtils}
 import com.zto.fire.predef.{JHashMap, _}
 
 import java.util.concurrent.atomic.AtomicBoolean
@@ -31,7 +31,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @since 2.2.0
  */
 private[fire] object ArthasManager extends Logging {
-  private lazy val start = new AtomicBoolean(false)
+  private lazy val isStarted = new AtomicBoolean(false)
+  private lazy val isStopped = new AtomicBoolean(true)
+  // arthas启动需要消耗较长时间，使用inProcessing可避免在启动过程中执行stop/restart等命令
+  private lazy val inProcessing = new AtomicBoolean(false)
 
   /**
    * 启动Arthas服务
@@ -48,13 +51,34 @@ private[fire] object ArthasManager extends Logging {
   }
 
   /**
+   * 关闭Arthas相关服务
+   */
+  def stopArthas: Unit = {
+    if (this.isStopped.compareAndSet(false, true) && this.inProcessing.compareAndSet(false, true)) {
+      this.logger.info("开始关闭Arthas相关服务")
+      tryFinallyWithReturn {
+        val bootstrap = ReflectionUtils.getFieldByName(classOf[ArthasAgent], "bootstrap").get(null)
+        if (bootstrap != null) {
+          val bootstrapClass = bootstrap.getClass
+          ReflectionUtils.getMethodByName(bootstrapClass, "reset").invoke(bootstrap)
+          ReflectionUtils.getMethodByName(bootstrapClass, "destroy").invoke(bootstrap)
+        }
+      } {
+        this.isStarted.compareAndSet(true, false)
+        this.inProcessing.compareAndSet(true, false)
+      }(this.logger, "Arthas相关服务已关闭", "Arthas服务关闭失败！")
+    }
+  }
+
+  /**
    * 启动Arthas服务
    *
    * @param appName    用于标识任务的名称
    * @param resourceId 用于标识分布式任务的master与slave
    */
   def startArthas(appName: String, resourceId: String): Unit = {
-    if (this.start.compareAndSet(false, true)) {
+    if (this.isStarted.compareAndSet(false, true) && this.inProcessing.compareAndSet(false, true)) {
+      this.logger.info("开始启动Arthas相关服务")
       ThreadUtils.run {
         tryWithLog {
           val configMap = new JHashMap[String, String]()
@@ -65,8 +89,22 @@ private[fire] object ArthasManager extends Logging {
           configMap.put("arthas.tunnelServer", FireFrameworkConf.arthasTunnelServerUrl)
           configMap.putAll(FireFrameworkConf.arthasConfMap)
           ArthasAgent.attach(configMap)
+          this.isStopped.compareAndSet(true, false)
+          this.inProcessing.compareAndSet(true, false)
         }(this.logger, tryLog = "<-- Arthas服务已启动 -->")
       }
     }
+  }
+
+  /**
+   * 重启Arthas相关服务
+   *
+   * @param appName    用于标识任务的名称
+   * @param resourceId 用于标识分布式任务的master与slave
+   */
+  def restartArthas(appName: String, resourceId: String): Unit = {
+    this.logger.info("开始重启Arthas相关服务")
+    this.stopArthas
+    this.startArthas(appName, resourceId)
   }
 }
