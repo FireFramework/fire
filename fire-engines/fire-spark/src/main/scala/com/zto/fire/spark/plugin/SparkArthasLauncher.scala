@@ -17,19 +17,19 @@
 
 package com.zto.fire.spark.plugin
 
-import com.zto.fire.common.util.{Logging, OSUtils, PropUtils}
-import com.zto.fire.core.plugin.ArthasManager
+import com.zto.fire.common.util.OSUtils
+import com.zto.fire.core.plugin.{ArthasLauncher, ArthasManager}
+import com.zto.fire.predef._
 import com.zto.fire.spark.sync.DistributeSyncManager
 import com.zto.fire.spark.util.SparkUtils
-import com.zto.fire.predef._
 
 /**
- * Arthas启动器
+ * Spark Arthas分布式启动器
  *
  * @author ChengLong 2021-11-3 15:38:20
  * @since 2.2.0
  */
-object DymnicArthasLauncher extends Logging {
+private[fire] class SparkArthasLauncher extends ArthasLauncher {
 
   /**
    * 热启动Arthas
@@ -39,11 +39,11 @@ object DymnicArthasLauncher extends Logging {
    * @param ip
    * 仅在某些主机上启动
    */
-  def hotStartArthas(isDistribute: Boolean, ip: String): Unit = {
-    ArthasManager.startArthas(PropUtils.getString("driver.class.name"), SparkUtils.getExecutorId)
+  override def hotStart(isDistribute: Boolean, ip: String): Unit = {
+    ArthasManager.startArthas(SparkUtils.getExecutorId)
     if (isDistribute) {
       DistributeSyncManager.sync({
-        if (isEmpty(ip) || ip.contains(OSUtils.getIp))  ArthasManager.startArthas(PropUtils.getString("driver.class.name"), s"container_${SparkUtils.getExecutorId}")
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) ArthasManager.startArthas(s"container_${SparkUtils.getExecutorId}")
       })
     }
   }
@@ -56,7 +56,7 @@ object DymnicArthasLauncher extends Logging {
    * @param ip
    * 仅在某些主机上启动
    */
-  def hotStopArthas(isDistribute: Boolean, ip: String): Unit = {
+  override def hotStop(isDistribute: Boolean, ip: String): Unit = {
     ArthasManager.stopArthas
     if (isDistribute) {
       DistributeSyncManager.sync({
@@ -73,11 +73,11 @@ object DymnicArthasLauncher extends Logging {
    * @param ip
    * 仅在某些主机上启动
    */
-  def hotRestartArthas(isDistribute: Boolean, ip: String): Unit = {
-    ArthasManager.restartArthas(PropUtils.getString("driver.class.name"), SparkUtils.getExecutorId)
+  override def hotRestart(isDistribute: Boolean, ip: String): Unit = {
+    ArthasManager.restartArthas(SparkUtils.getExecutorId)
     if (isDistribute) {
       DistributeSyncManager.sync({
-        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) ArthasManager.restartArthas(PropUtils.getString("driver.class.name"), SparkUtils.getExecutorId)
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) ArthasManager.restartArthas(SparkUtils.getExecutorId)
       })
     }
   }

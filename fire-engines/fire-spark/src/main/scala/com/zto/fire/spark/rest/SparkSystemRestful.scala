@@ -28,8 +28,9 @@ import com.zto.fire.spark.{BaseSpark, bean}
 import org.apache.commons.lang3.StringUtils
 import spark._
 import com.zto.fire._
+import com.zto.fire.core.bean.ArthasParam
 import com.zto.fire.spark.bean.{ColumnMeta, FunctionMeta, SparkInfo}
-import com.zto.fire.spark.plugin.DymnicArthasLauncher
+import com.zto.fire.spark.plugin.SparkArthasLauncher
 import com.zto.fire.spark.sync.SyncSparkEngineConf
 
 import java.util
@@ -65,34 +66,6 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/setConf", setConf))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/datasource", datasource))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/arthas", arthas))
-  }
-
-  /**
-   * 启用Arthas进行性能诊断
-   *
-   */
-  @Rest("/system/arthas")
-  def arthas(request: Request, response: Response): AnyRef = {
-    val msg = new ResultMsg
-    try {
-      val json = request.body
-      this.logger.info(s"请求执行Arthas命令：$json")
-      val command = JSONUtils.getValue[String](json, "command", "start")
-      val isDistribute = JSONUtils.getValue[Boolean](json, "distribute", false)
-      val ip = JSONUtils.getValue[String](json, "ip", "")
-      command match {
-        case "start" => DymnicArthasLauncher.hotStartArthas(isDistribute, ip)
-        case "stop" => DymnicArthasLauncher.hotStopArthas(isDistribute, ip)
-        case "restart" => DymnicArthasLauncher.hotRestartArthas(isDistribute, ip)
-      }
-      this.logger.info(s"[startArthas] Arthas命令${command}执行成功！")
-      msg.buildSuccess("操作成功", "调用arthas接口成功！")
-    } catch {
-      case e: Exception => {
-        this.logger.error(s"[arthas] 调用arthas接口失败", e)
-        msg.buildError("调用arthas接口失败", ErrorCode.ERROR)
-      }
-    }
   }
 
   /**

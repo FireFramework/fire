@@ -43,10 +43,11 @@ import org.apache.flink.util.Collector
     |flink.stream.checkpoint.interval=10
     |flink.state.choose.disk.policy=round_robin
     |state.external.zookeeper.url=10.7.69.238:2181
-    |fire.analysis.arthas.enable=true
+    |fire.analysis.arthas.enable=false
     |fire.log.level.conf.org.apache.flink=warn
     |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
-    |fire.analysis.arthas.container.enable=true
+    |fire.analysis.arthas.container.enable=false
+    |fire.rest.filter.enable=true
     |""")
 object Test extends BaseFlinkStreaming {
 
@@ -77,9 +78,6 @@ object Test extends BaseFlinkStreaming {
     println("================================")
     println("fire.thread.pool.size=" + this.conf.getInt("fire.thread.pool.size", -1))
     println("fire.thread.pool.schedule.size=" + this.conf.getInt("fire.thread.pool.schedule.size", -1))
-    println("fire.acc.timer.max.size=" + this.conf.getInt("fire.acc.timer.max.size", -1))
-    println("fire.acc.log.max.size=" + this.conf.getInt("fire.acc.log.max.size", -1))
-    println("fire.jdbc.query.partitions=" + this.conf.getInt("fire.jdbc.query.partitions", -1))
     println("================================")
   }
 }

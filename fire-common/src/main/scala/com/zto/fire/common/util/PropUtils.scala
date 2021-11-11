@@ -516,7 +516,7 @@ object PropUtils extends Logging {
     val method = clazz.getDeclaredMethod("syncEngineConf")
     val map = method.invoke(null).asInstanceOf[immutable.Map[String, String]]
     if (map.nonEmpty) {
-      this.setProperties(map)
+      this.setProperties(map.filter(kv => !kv._1.contains(FireFrameworkConf.FIRE_REST_SERVER_SECRET)))
       logger.info(s"完成计算引擎配置信息的同步，总计：${map.size}条")
       map.foreach(k => logger.debug("合并：k=" + k._1 + " v=" + k._2))
     }

@@ -39,15 +39,14 @@ private[fire] object ArthasManager extends Logging {
   /**
    * 启动Arthas服务
    *
-   * @param appName        用于标识任务的名称
    * @param resourceId     用于标识分布式任务的master与slave
    * @param startContainer 是否在分布式环境下启用Arthas
    */
-  def startArthas(appName: String, resourceId: String, startContainer: Boolean): Unit = {
-    requireNonEmpty(appName, resourceId)("appName或resourceId不能为空，arthas所监控的程序必须有标识！")
+  def startArthas(resourceId: String, startContainer: Boolean): Unit = {
+    requireNonEmpty(resourceId)("resourceId不能为空，arthas所监控的程序必须有标识！")
 
     if (resourceId.contains("container") && !startContainer) return
-    this.startArthas(appName, resourceId)
+    this.startArthas(resourceId)
   }
 
   /**
@@ -73,19 +72,18 @@ private[fire] object ArthasManager extends Logging {
   /**
    * 启动Arthas服务
    *
-   * @param appName    用于标识任务的名称
    * @param resourceId 用于标识分布式任务的master与slave
    */
-  def startArthas(appName: String, resourceId: String): Unit = {
+  def startArthas(resourceId: String): Unit = {
     if (this.isStarted.compareAndSet(false, true) && this.inProcessing.compareAndSet(false, true)) {
       this.logger.info("开始启动Arthas相关服务")
       ThreadUtils.run {
         tryWithLog {
           val configMap = new JHashMap[String, String]()
-          configMap.put("arthas.appName", s"${FireUtils.engine}@${appName}")
+          configMap.put("arthas.appName", s"${FireUtils.engine}@${FireFrameworkConf.driverClassName}")
           configMap.put("arthas.telnetPort", "0")
           configMap.put("arthas.httpPort", "0")
-          configMap.put("arthas.agentId", s"${FireUtils.engine}@${appName}_$resourceId")
+          configMap.put("arthas.agentId", s"${FireUtils.engine}@${FireFrameworkConf.driverClassName}_$resourceId")
           configMap.put("arthas.tunnelServer", FireFrameworkConf.arthasTunnelServerUrl)
           configMap.putAll(FireFrameworkConf.arthasConfMap)
           ArthasAgent.attach(configMap)
@@ -99,11 +97,10 @@ private[fire] object ArthasManager extends Logging {
   /**
    * 重启Arthas相关服务
    *
-   * @param appName    用于标识任务的名称
    * @param resourceId 用于标识分布式任务的master与slave
    */
-  def restartArthas(appName: String, resourceId: String): Unit = {
+  def restartArthas(resourceId: String): Unit = {
     this.stopArthas
-    this.startArthas(appName, resourceId)
+    this.startArthas(resourceId)
   }
 }

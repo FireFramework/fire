@@ -38,34 +38,6 @@ private[fire] class FireInternalTask(baseFire: BaseFire) extends Serializable wi
   private[this] lazy val doJvmMonitor = new AtomicBoolean(true)
 
   /**
-   * fire框架内部接口调用工具
-   *
-   * @param urlSuffix
-   * 接口后缀
-   * @param json
-   * 请求参数
-   * @return
-   * 接口响应结果
-   */
-  protected def restInvoke(urlSuffix: String, json: String): String = {
-    var response: String = ""
-    if (FireFrameworkConf.restEnable && noEmpty(FireFrameworkConf.fireRestUrl, urlSuffix)) {
-      val restful = FireFrameworkConf.fireRestUrl + urlSuffix
-      try {
-        val secret = EncryptUtils.md5Encrypt(FireFrameworkConf.restServerSecret + this.baseFire.className + DateFormatUtils.formatCurrentDate)
-        response = if (noEmpty(json)) {
-          HttpClientUtils.doPost(restful, json, new Header("Content-Type", "application/json"), new Header("Authorization", secret))
-        } else {
-          HttpClientUtils.doGet(restful, new Header("Content-Type", "application/json"), new Header("Authorization", secret))
-        }
-      } catch {
-        case e: Exception => logger.warn(s"fire内部接口自调用失败，对用户任务无影响，可忽略。异常描述：${e.getMessage}")
-      }
-    }
-    response
-  }
-
-  /**
    * 定时采集运行时的jvm、gc、thread、cpu、memory、disk等信息
    * 并将采集到的数据存放到EnvironmentAccumulator中
    */
