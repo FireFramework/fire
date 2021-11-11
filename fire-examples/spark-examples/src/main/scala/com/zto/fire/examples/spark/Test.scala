@@ -19,7 +19,7 @@ package com.zto.fire.examples.spark
 
 import com.zto.fire._
 import com.zto.fire.common.anno.{Config, Scheduled}
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ReflectionUtils, ThreadUtils}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.StreamingDuration

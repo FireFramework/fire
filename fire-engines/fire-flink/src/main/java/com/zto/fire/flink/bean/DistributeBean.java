@@ -15,33 +15,43 @@
  * limitations under the License.
  */
 
-package com.zto.fire.spark.plugin
+package com.zto.fire.flink.bean;
 
-import com.zto.fire.common.util.{Logging, PropUtils}
-import com.zto.fire.core.plugin.ArthasManager
-import com.zto.fire.spark.sync.DistributeSyncManager
-import com.zto.fire.spark.util.SparkUtils
+import com.zto.fire.flink.enu.DistributeModule;
 
 /**
- * Arthas启动器
+ * 用于解析restful中的参数
  *
- * @author ChengLong 2021-11-3 15:38:20
+ * @author ChengLong 2021-11-11 09:32:00
  * @since 2.2.0
  */
-object DymnicArthasLauncher extends Logging {
+public class DistributeBean {
+    private DistributeModule module;
+    private String json;
 
-  /**
-   * 热启动Arthas
-   *
-   * @param isDistribute
-   * 是否在每个container端启动arthas
-   */
-  def hotStartArthas(isDistribute: Boolean): Unit = {
-    ArthasManager.startArthas(PropUtils.getString("driver.class.name"), SparkUtils.getExecutorId)
-    if (isDistribute) {
-      DistributeSyncManager.sync({
-        ArthasManager.startArthas(PropUtils.getString("driver.class.name"), s"container_${SparkUtils.getExecutorId}")
-      })
+    public DistributeBean() {
     }
-  }
+
+
+    public DistributeBean(DistributeModule module, String json) {
+        this.module = module;
+        this.json = json;
+    }
+
+    public DistributeModule getModule() {
+        return module;
+    }
+
+    public void setModule(DistributeModule module) {
+        this.module = module;
+    }
+
+    public String getJson() {
+        return json;
+    }
+
+    public void setJson(String json) {
+        this.json = json;
+    }
+
 }

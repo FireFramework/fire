@@ -17,7 +17,7 @@
 
 package com.zto.fire.common.conf
 
-import com.zto.fire.common.util.PropUtils
+import com.zto.fire.common.util.{DateFormatUtils, PropUtils}
 import org.apache.commons.lang3.StringUtils
 
 /**
@@ -126,6 +126,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_ANALYSIS_ARTHAS_ENABLE = "fire.analysis.arthas.enable"
   lazy val FIRE_ANALYSIS_ARTHAS_CONTAINER_ENABLE = "fire.analysis.arthas.container.enable"
   lazy val FIRE_ANALYSIS_ARTHAS_TUNNEL_SERVER_URL = "fire.analysis.arthas.tunnel_server.url"
+  lazy val FIRE_ARTHAS_LAUNCHER = "fire.analysis.arthas.launcher"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -248,4 +249,8 @@ private[fire] object FireFrameworkConf {
   lazy val arthasTunnelServerUrl = PropUtils.getString(this.FIRE_ANALYSIS_ARTHAS_TUNNEL_SERVER_URL)
   // arthas的参数
   def arthasConfMap: Map[String, String] = PropUtils.sliceKeys(this.FIRE_ARTHAS_CONF_PREFIX)
+  // 动态获取最新的secret
+  def dynamicKey: String = this.restServerSecret + this.driverClassName + DateFormatUtils.formatCurrentDate
+  // arthas启动器
+  lazy val arthasLauncher = PropUtils.getString(this.FIRE_ARTHAS_LAUNCHER)
 }

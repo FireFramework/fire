@@ -33,6 +33,7 @@
     <module>apache-spark</module>
     <module>apache-flink</module>
     <module>rocketmq-externals</module>
+      <module>arthas</module>
   </modules>
 
   <build>

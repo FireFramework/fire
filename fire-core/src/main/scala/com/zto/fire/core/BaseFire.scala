@@ -68,7 +68,7 @@ trait BaseFire extends Logging {
    */
   private[fire] def boot(): Unit = {
     FireUtils.splash
-    if (FireFrameworkConf.arthasEnable) ArthasManager.startArthas(this.className, this.resourceId, FireFrameworkConf.arthasContainerEnable)
+    if (FireFrameworkConf.arthasEnable) ArthasManager.startArthas(this.resourceId, FireFrameworkConf.arthasContainerEnable)
     PropUtils.sliceKeys(FireFrameworkConf.FIRE_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
   }
 

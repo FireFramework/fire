@@ -53,6 +53,7 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_SQL_LOG_ENABLE = "flink.sql.log.enable"
   lazy val FLINK_SQL_DEFAULT_CATALOG_NAME = "flink.sql.default.catalog.name"
   lazy val FLINK_STATE_TTL_DAYS = "flink.state.ttl.days"
+  lazy val DISTRIBUTE_SYNC_ENABLE = "fire.distribute.sync.enable"
 
   // checkpoint相关配置项
   lazy val FLINK_STREAM_CHECKPOINT_INTERVAL = "flink.stream.checkpoint.interval"
@@ -96,6 +97,7 @@ private[fire] object FireFlinkConf {
   lazy val streamTimeCharacteristic = PropUtils.getString(this.FLINK_STREAM_TIME_CHARACTERISTIC, "")
   lazy val sqlLogEnable = PropUtils.getBoolean(this.FLINK_SQL_LOG_ENABLE, false)
   lazy val unalignedCheckpointEnable = PropUtils.getBoolean(this.FLINK_STREAM_CHECKPOINT_UNALIGNED, true)
+  lazy val distributeSyncEnabled = PropUtils.getBoolean(this.DISTRIBUTE_SYNC_ENABLE, true)
 
   // checkpoint相关配置项
   lazy val streamCheckpointInterval = PropUtils.getLong(this.FLINK_STREAM_CHECKPOINT_INTERVAL, -1)

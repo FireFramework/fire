@@ -28,8 +28,9 @@ import com.zto.fire.spark.{BaseSpark, bean}
 import org.apache.commons.lang3.StringUtils
 import spark._
 import com.zto.fire._
+import com.zto.fire.core.bean.ArthasParam
 import com.zto.fire.spark.bean.{ColumnMeta, FunctionMeta, SparkInfo}
-import com.zto.fire.spark.plugin.DymnicArthasLauncher
+import com.zto.fire.spark.plugin.SparkArthasLauncher
 import com.zto.fire.spark.sync.SyncSparkEngineConf
 
 import java.util
@@ -64,28 +65,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/listFunctions", listFunctions))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/setConf", setConf))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/datasource", datasource))
-      .addRest(RestCase(RequestMethod.POST.toString, s"/system/startArthas", startArthas))
-  }
-
-  /**
-   * 启用Arthas进行性能诊断
-   *
-   */
-  @Rest("/system/startArthas")
-  def startArthas(request: Request, response: Response): AnyRef = {
-    val msg = new ResultMsg
-    try {
-      val json = request.body
-      val isDistribute = JSONUtils.getValue[Boolean](json, "distribute", false)
-      DymnicArthasLauncher.hotStartArthas(isDistribute)
-      this.logger.info(s"[startArthas] 启动Arthas成功！")
-      msg.buildSuccess("启动Arthas成功", "启动Arthas成功")
-    } catch {
-      case e: Exception => {
-        this.logger.error(s"[startArthas] 启动Arthas失败", e)
-        msg.buildError("启动Arthas失败", ErrorCode.ERROR)
-      }
-    }
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/arthas", arthas))
   }
 
   /**

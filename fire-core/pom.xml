@@ -37,14 +37,21 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>fire-arthas</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.taobao.arthas</groupId>
             <artifactId>arthas-agent-attach</artifactId>
             <version>${arthas.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.taobao.arthas</groupId>
             <artifactId>arthas-packaging</artifactId>
             <version>${arthas.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

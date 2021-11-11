@@ -17,13 +17,17 @@
 
 package com.zto.fire.flink.rest
 
+import com.zto.fire.predef._
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
 import com.zto.fire.common.util.{ExceptionBus, _}
+import com.zto.fire.core.bean.ArthasParam
 import com.zto.fire.core.rest.{RestCase, RestServerManager, SystemRestful}
 import com.zto.fire.flink.BaseFlink
-import com.zto.fire.flink.bean.CheckpointParams
+import com.zto.fire.flink.bean.{CheckpointParams, DistributeBean}
+import com.zto.fire.flink.enu.DistributeModule
+import com.zto.fire.flink.plugin.FlinkArthasLauncher
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.runtime.checkpoint.CheckpointCoordinator
 import spark._
@@ -34,15 +38,19 @@ import spark._
  * @author ChengLong 2020年4月2日 13:50:01
  */
 private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegister: RestServerManager) extends SystemRestful(baseFlink) {
+  private var distributeJson = ""
 
   /**
    * 注册Flink引擎restful接口
    */
   override protected def register: Unit = {
     this.restfulRegister
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/kill", kill))
-      .addRest(RestCase(RequestMethod.GET.toString, s"/system/flink/datasource", datasource))
-      .addRest(RestCase(RequestMethod.POST.toString, s"/system/flink/checkpoint", checkpoint))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/kill", kill))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/datasource", datasource))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/checkpoint", checkpoint))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/distributeSync", distributeSync))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/setConf", setConf))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/arthas", arthas))
   }
 
   /**
@@ -51,9 +59,57 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
   private[fire] def setBaseFlink(baseFlink: BaseFlink): Unit = this.baseFlink = baseFlink
 
   /**
+   * 启用Arthas进行性能诊断
+   *
+   */
+  @Rest("/system/arthas")
+  override def arthas(request: Request, response: Response): AnyRef = {
+    val retVal = super.arthas(request, response)
+    val json = request.body()
+    if (JSONUtils.getValue[Boolean](json, "distribute", false)) {
+      this.distributeJson = JSONUtils.toJSONString(new DistributeBean(DistributeModule.ARTHAS, request.body))
+      this.logger.info("开始分布式分发：" + this.distributeJson)
+    }
+    retVal
+  }
+
+  /**
+   * 用于引擎内部分布式同步信息
+   */
+  @Rest("/system/distributeSync")
+  def distributeSync(request: Request, response: Response): AnyRef = {
+    this.logger.info(s"内部请求分布式更新信息，ip：${request.ip()}")
+    this.distributeJson
+  }
+
+  /**
+   * 用于更新配置信息
+   */
+  @Rest("/system/setConf")
+  def setConf(request: Request, response: Response): AnyRef = {
+    val msg = new ResultMsg
+    val json = request.body
+    try {
+      this.logger.info(s"请求fire更新配置信息：$json")
+      val confMap = JSONUtils.parseObject[JHashMap[String, String]](json)
+      if (ValueUtils.noEmpty(confMap)) {
+        PropUtils.setProperties(confMap)
+        this.distributeJson = JSONUtils.toJSONString(new DistributeBean(DistributeModule.CONF, json))
+      }
+      msg.buildSuccess("配置信息已更新", ErrorCode.SUCCESS.toString)
+    } catch {
+      case e: Exception => {
+        this.logger.error(s"[setConf] 设置配置信息失败：json=$json", e)
+        msg.buildError("设置配置信息失败", ErrorCode.ERROR)
+      }
+    }
+  }
+
+
+  /**
    * 用于运行时热修改checkpoint
    */
-  @Rest("/system/flink/checkpoint")
+  @Rest("/system/checkpoint")
   def checkpoint(request: Request, response: Response): AnyRef = {
     val msg = new ResultMsg
     val json = request.body
@@ -92,7 +148,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
   /**
    * kill 当前 Flink 任务
    */
-  @Rest("/system/flink/kill")
+  @Rest("/system/kill")
   def kill(request: Request, response: Response): AnyRef = {
     val msg = new ResultMsg
     val json = request.body
