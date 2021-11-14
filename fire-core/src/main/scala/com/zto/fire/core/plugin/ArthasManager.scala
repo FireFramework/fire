@@ -85,6 +85,8 @@ private[fire] object ArthasManager extends Logging {
           configMap.put("arthas.httpPort", "0")
           configMap.put("arthas.agentId", s"${FireUtils.engine}@${FireFrameworkConf.driverClassName}_$resourceId")
           configMap.put("arthas.tunnelServer", FireFrameworkConf.arthasTunnelServerUrl)
+          configMap.put("arthas.username", "fire")
+          configMap.put("arthas.password", FireFrameworkConf.driverClassName)
           configMap.putAll(FireFrameworkConf.arthasConfMap)
           ArthasAgent.attach(configMap)
           this.isStopped.compareAndSet(true, false)

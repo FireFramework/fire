@@ -38,10 +38,11 @@ import com.zto.fire.spark.util.SparkUtils
     |hive.cluster=test
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
-    |fire.analysis.arthas.enable=false
+    |fire.analysis.arthas.enable=true
     |fire.log.level.conf.org.apache.spark=warn
     |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
-    |fire.analysis.arthas.container.enable=false
+    |fire.analysis.arthas.container.enable=true
+    |fire.analysis.arthas.conf.arthas.username=spark
     |""")
 @StreamingDuration(20) // spark streaming的批次时间
 object Test extends BaseSparkStreaming {
@@ -50,9 +51,12 @@ object Test extends BaseSparkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
-    /*this.spark.sql("show databases").show()
     val dstream = this.fire.createKafkaDirectStream()
-    this.printConf
+    new Thread(() => {
+      while (true) {
+        printConf
+      }
+    }).start()
 
     // 至少一次的语义保证，处理成功自动提交offset，处理失败会重试指定次数，如果仍失败则任务退出
     dstream.foreachRDDAtLeastOnce(rdd => {
@@ -65,13 +69,11 @@ object Test extends BaseSparkStreaming {
       studentRDD.toDF().jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
     })(reTry = 5, exitOnFailure = true)
 
-    this.fire.start*/
-    this.spark.sql("show databases").show()
-    DistributeSyncManager.sync(this.printConf)
-    Thread.currentThread().join()
+    this.fire.start
   }
 
   def printConf: Unit = {
+    Thread.sleep(10000)
     println("================================")
     println("fire.thread.pool.size=" + this.conf.getInt("fire.thread.pool.size", -1))
     println("fire.thread.pool.schedule.size=" + this.conf.getInt("fire.thread.pool.schedule.size", -1))
