@@ -43,8 +43,6 @@ private[fire] class SyncSparkEngineConf extends SyncEngineConf {
       Map.empty[String, String]
     }
   }
-
-
 }
 
 object SyncSparkEngineConf extends Logging {

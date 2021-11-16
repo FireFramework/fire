@@ -222,25 +222,27 @@ public class RocksDBStateBackend extends AbstractManagedMemoryStateBackend
      * 初始化round_robin策略下的zookeeper连接
      */
     private void initZKClient() {
-        final String zkUrl = PropUtils.getString(STATE_ZOOKEEPER_URL, "");
-        this.stateDiskPolicy = PropUtils.getString(STATE_CHOOSE_DISK_POLICY, FLINK_STATE_DISK_CHOOSE_POLICY_DEFAULT).toUpperCase();
+        synchronized (RocksDBStateBackend.class) {
+            final String zkUrl = PropUtils.getString(STATE_ZOOKEEPER_URL, "");
+            this.stateDiskPolicy = PropUtils.getString(STATE_CHOOSE_DISK_POLICY, FLINK_STATE_DISK_CHOOSE_POLICY_DEFAULT).toUpperCase();
 
-        // 如果zk地址不为空，并且开启了ROUND_ROBIN磁盘路径选择策略，则建立zookeeper的连接，避免太多任务建立太多的连接
-        if (StringUtils.isNotBlank(zkUrl) && isRoundRobin()) {
-            try {
-                LOG.info("开启基于zookeeper的本地磁盘状态路径选择策略");
-                this.client = CuratorFrameworkFactory.builder().connectString(zkUrl)
-                        .connectionTimeoutMs(5000).retryPolicy(new RetryOneTime(5000)).build();
-                this.client.start();
+            // 如果zk地址不为空，并且开启了ROUND_ROBIN磁盘路径选择策略，则建立zookeeper的连接，避免太多任务建立太多的连接
+            if (StringUtils.isNotBlank(zkUrl) && isRoundRobin()) {
+                try {
+                    LOG.info("开启基于zookeeper的本地磁盘状态路径选择策略");
+                    this.client = CuratorFrameworkFactory.builder().connectString(zkUrl)
+                            .connectionTimeoutMs(5000).retryPolicy(new RetryOneTime(5000)).build();
+                    this.client.start();
 
-                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                    if (client != null) {
-                        client.close();
-                        LOG.info("释放基于zookeeper的本地磁盘状态路径选择策略的连接");
-                    }
-                }));
-            } catch (Exception e) {
-                LOG.error("初始化CuratorFrameworkFactory失败", e);
+                    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                        if (client != null) {
+                            client.close();
+                            LOG.info("释放基于zookeeper的本地磁盘状态路径选择策略的连接");
+                        }
+                    }));
+                } catch (Exception e) {
+                    LOG.error("初始化CuratorFrameworkFactory失败", e);
+                }
             }
         }
     }
