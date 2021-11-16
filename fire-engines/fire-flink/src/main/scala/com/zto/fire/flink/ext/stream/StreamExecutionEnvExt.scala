@@ -74,7 +74,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Jd
                              deserializer: Any = new SimpleStringSchema,
                              keyNum: Int = 1): FlinkKafkaConsumer[T] = {
     val confTopics = FireKafkaConf.kafkaTopics(keyNum)
-    val topicList = if (StringUtils.isNotBlank(confTopics)) confTopics.split(",") else topics.toArray
+    val topicList = if (StringUtils.isNotBlank(confTopics)) confTopics.split(",") else if (topics != null) topics.toArray else null
     require(topicList != null && topicList.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：kafka.topics$keyNum")
 
     val confKafkaParams = KafkaUtils.kafkaParams(kafkaParams, FlinkSingletonFactory.getAppName, keyNum = keyNum)
