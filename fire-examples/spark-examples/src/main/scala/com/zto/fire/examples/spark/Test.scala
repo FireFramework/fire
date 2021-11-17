@@ -68,7 +68,15 @@ object Test extends BaseSparkStreaming {
       println("kafka.brokers.name=>" + this.conf.getString("kafka.brokers.name"))
       studentRDD.toDF().jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
     })(reTry = 5, exitOnFailure = true)
-
+    this.spark.sql(
+      """
+        |SELECT
+        |  *
+        |FROM rtdb.zto_ssmx_bill_detail
+        |WHERE
+        |  order_create_date>= cast( date_add(current_date,-10) as timestamp )
+        |  AND order_create_date< cast( date_add(current_date,1) as timestamp )
+        |""".stripMargin).show(100000, false)
     this.fire.start
   }
 
