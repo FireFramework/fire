@@ -38,10 +38,10 @@ import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema
 import org.apache.flink.table.api.{Table, TableResult}
 import org.apache.rocketmq.flink.serialization.SimpleTagKeyValueDeserializationSchema
-import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource, RocketMQSourceWithTag}
+import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSourceWithTag}
 
 import java.util.Properties
-import scala.collection.{JavaConversions, JavaConverters}
+import scala.collection.JavaConverters
 import scala.reflect.ClassTag
 
 /**
@@ -50,7 +50,7 @@ import scala.reflect.ClassTag
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with JdbcConnectorBridge
+class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with TableApi with JdbcConnectorBridge
   with HBaseConnectorProvider with JdbcFlinkProvider {
   private[fire] lazy val tableEnv = FlinkSingletonFactory.getTableEnv
 

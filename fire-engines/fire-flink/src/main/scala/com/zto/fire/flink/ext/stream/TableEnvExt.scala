@@ -19,6 +19,7 @@ package com.zto.fire.flink.ext.stream
 
 import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.flink.conf.FireFlinkConf
+import com.zto.fire.flink.util.FlinkSingletonFactory
 import com.zto.fire.noEmpty
 import org.apache.flink.table.api.{SqlDialect, TableEnvironment}
 import org.apache.flink.table.catalog.Catalog
@@ -32,11 +33,28 @@ import java.util.Optional
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class TableEnvExt(tableEnv: TableEnvironment) {
-  // 获取默认的catalog
-  lazy val defaultCatalog = this.tableEnv.getCatalog(FireFlinkConf.defaultCatalogName)
+class TableEnvExt(tableEnv: TableEnvironment) extends TableApi {
   // 获取hive catalog
   lazy val hiveCatalog = this.getHiveCatalog
+
+  /**
+   * 尝试获取注册的hive catalog对象
+   */
+  private def getHiveCatalog: Optional[Catalog] = {
+    // 如果使用fire框架，则通过指定的hive catalog名称获取catalog实例
+    val catalog = this.tableEnv.getCatalog(FireHiveConf.hiveCatalogName)
+    if (catalog.isPresent) catalog else {
+      // 如果fire未使用fire框架，尝试获取名称包含hive的catalog
+      val hiveCatalogName = this.tableEnv.listCatalogs().filter(_.contains("hive"))
+      if (noEmpty(hiveCatalogName)) this.tableEnv.getCatalog(hiveCatalogName(0)) else Optional.empty()
+    }
+  }
+}
+
+trait TableApi {
+  private lazy val tableEnv = FlinkSingletonFactory.getTableEnv
+  // 获取默认的catalog
+  lazy val defaultCatalog = this.tableEnv.getCatalog(FireFlinkConf.defaultCatalogName)
 
   /**
    * 注册自定义udf函数
@@ -74,18 +92,5 @@ class TableEnvExt(tableEnv: TableEnvironment) {
   def useDefaultCatalog: Unit = {
     this.tableEnv.useCatalog(FireFlinkConf.defaultCatalogName)
     this.tableEnv.getConfig.setSqlDialect(SqlDialect.DEFAULT)
-  }
-
-  /**
-   * 尝试获取注册的hive catalog对象
-   */
-  private def getHiveCatalog: Optional[Catalog] = {
-    // 如果使用fire框架，则通过指定的hive catalog名称获取catalog实例
-    val catalog = this.tableEnv.getCatalog(FireHiveConf.hiveCatalogName)
-    if (catalog.isPresent) catalog else {
-      // 如果fire未使用fire框架，尝试获取名称包含hive的catalog
-      val hiveCatalogName = this.tableEnv.listCatalogs().filter(_.contains("hive"))
-      if (noEmpty(hiveCatalogName)) this.tableEnv.getCatalog(hiveCatalogName(0)) else Optional.empty()
-    }
   }
 }
