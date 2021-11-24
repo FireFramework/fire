@@ -50,7 +50,7 @@ import scala.reflect.ClassTag
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with JdbcConnectorBridge
+class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with TableApi with JdbcConnectorBridge
   with HBaseConnectorProvider with JdbcFlinkProvider {
   private[fire] lazy val tableEnv = FlinkSingletonFactory.getTableEnv
 
