@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
@@ -33,6 +34,17 @@ import org.apache.flink.streaming.api.windowing.time.Time
  *
  * @author ChengLong 2020-4-18 14:34:58
  */
+@Config(
+  """
+    |flink.kafka.brokers.name            =       bigdata_test
+    |# 必须配置项：kafka的topic列表，以逗号分隔
+    |flink.kafka.topics                  =       fire
+    |flink.kafka.group.id                =       fire
+    |flink.kafka.enable.auto.commit      =       true
+    |flink.fire.rest.filter.enable       =       false
+    |flink.default.parallelism           =       8
+    |flink.max.parallelism               =       8
+    |""")
 object WindowTest extends BaseFlinkStreaming {
 
   override def process: Unit = {

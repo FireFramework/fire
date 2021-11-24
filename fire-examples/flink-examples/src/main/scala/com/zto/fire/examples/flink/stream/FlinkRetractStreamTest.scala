@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
@@ -25,6 +26,20 @@ import org.apache.flink.api.scala._
 import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import org.apache.flink.types.Row
 
+@Config(
+  """
+    |flink.hive.cluster                  =       test
+    |flink.kafka.brokers.name            =       test
+    |# 必须配置项：kafka的topic列表，以逗号分隔
+    |flink.kafka.topics                  =       flink
+    |flink.kafka.group.id                =       fire
+    |flink.kafka.enable.auto.commit      =       true
+    |flink.fire.rest.filter.enable       =       false
+    |flink.default.parallelism           =       8
+    |flink.max.parallelism               =       8
+    |
+    |# 关系型数据库连接信息（jdbc信息统一配置在common.properties中）
+    |""")
 object FlinkRetractStreamTest extends BaseFlinkStreaming {
 
   val tableName = "spark_test"

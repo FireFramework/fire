@@ -34,7 +34,29 @@ import org.apache.flink.streaming.api.scala.DataStream
  * @create 2020-05-22 11:10
  */
 // 1. 以代码的方式进行配置，支持不单独定义配置文件，如果同时定义了配置文件，则配置文件优先级更高
-@Config(props = Array("flink.hello = test11", "flink.world = zms11") , files = Array("test1.properties", "JdbcTest.properties"))
+@Config(
+  """
+    |#########################################################################################
+    |#  JDBC数据源配置信息详见：common.properties，公共数据源配置可放到common.properties中，便于维护    #
+    |#########################################################################################
+    |
+    |flink.kafka.brokers.name            =       bigdata_test
+    |# 必须配置项：kafka的topic列表，以逗号分隔
+    |flink.kafka.topics                  =       fire
+    |flink.kafka.group.id                =       fire
+    |flink.fire.rest.filter.enable       =       false
+    |flink.fire.config_center.enable     =       true
+    |flink.fire.rest.url.show.enable     =       true
+    |
+    |# flink所支持的参数
+    |state.checkpoints.num-retained      =       3
+    |state.backend.incremental           =       true
+    |state.backend.rocksdb.files.open    =       5000
+    |
+    |hello.world                         =       2020
+    |hello.world.flag                    =       false
+    |hello.world.flag2                   =       false
+    |""")
 // 2. 指定从test.properties加载配置文件
 // @Config(Array("test.properties"))
 // 3. 指定从以下两个配置文件中加载配置信息

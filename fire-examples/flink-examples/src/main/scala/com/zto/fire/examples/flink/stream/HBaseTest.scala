@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
@@ -35,6 +36,21 @@ import scala.collection.mutable.ListBuffer
  * @since 1.1.0
  * @create 2020-5-25 16:32:50
  */
+@Config(
+  """
+    |flink.kafka.brokers.name            =       bigdata_test
+    |# 必须配置项：kafka的topic列表，以逗号分隔
+    |flink.kafka.topics                  =       fire
+    |flink.kafka.group.id                =       fire
+    |flink.kafka.enable.auto.commit      =       true
+    |flink.fire.rest.filter.enable       =       false
+    |flink.stream.checkpoint.interval    =       30
+    |
+    |# 关系型数据库连接信息
+    |flink.hbase.cluster                 =       test
+    |flink.hbase.cluster2                =       test
+    |flink.hbase.cluster3                =       test
+    |""")
 object HBaseTest extends BaseFlinkStreaming {
   lazy val tableName = "fire_test_1"
   lazy val tableName2 = "fire_test_2"

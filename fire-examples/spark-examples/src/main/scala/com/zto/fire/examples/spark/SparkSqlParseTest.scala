@@ -1,5 +1,6 @@
 package com.zto.fire.examples.spark
 
+import com.zto.fire.common.anno.Config
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkCore
 import com.zto.fire.spark.sql.SparkSqlParser
@@ -7,6 +8,7 @@ import com.zto.fire.spark.sql.SparkSqlParser
 /**
  * Spark SQL血缘解析工具
  */
+@Config("hive.cluster=test")
 object SparkSqlParseTest extends BaseSparkCore {
 
 

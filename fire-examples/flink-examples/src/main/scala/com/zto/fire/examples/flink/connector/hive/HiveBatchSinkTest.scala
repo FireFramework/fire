@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.connector.hive
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkStreaming
 
 /**
@@ -29,11 +30,15 @@ import com.zto.fire.flink.BaseFlinkStreaming
  * @since 2.0.0
  * @create 2021-01-18 17:24
  */
+@Config(
+  """
+    |hive.cluster=test
+    |""")
 object HiveBatchSinkTest extends BaseFlinkStreaming {
 
   // 具体的业务逻辑放到process方法中
   override def process: Unit = {
-    this.tableEnv.useHiveCatalog()
+    this.fire.useHiveCatalog()
     this.fire.sql("drop table if exists tmp.flink_hive_sink4")
     this.fire.sql(
       """

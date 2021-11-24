@@ -30,13 +30,19 @@ import com.zto.fire.spark.util.SparkUtils
  */
 @Config(
   """
-    |# 直接从配置文件中拷贝过来即可
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire2
     |hive.cluster=test
-    |fire.acc.timer.max.size=30
-    |fire.acc.log.max.size=20
+    |fire.rest.filter.enable=false
+    |fire.streaming.remember=10000
+    |fire.rest.enable=true
+    |fire.config_center.local.enable=false
+    |fire.task.schedule.enable=true
+    |local.cores=6
+    |fire.scheduler.blacklist=jvmMonitor
+    |fire.hello=fire2020
+    |fire.thread.pool.size=6
+    |fire.restful.max.thread=9
+    |fire.jdbc.query.partitions=11
+    |fire.hbase.scan.repartitions=110
     |""")
 @StreamingDuration(20) // spark streaming的批次时间
 object ConfigCenterTest extends BaseSparkStreaming {

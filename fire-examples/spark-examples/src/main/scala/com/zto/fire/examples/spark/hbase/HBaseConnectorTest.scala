@@ -19,6 +19,7 @@ package com.zto.fire.examples.spark.hbase
 
 import java.nio.charset.StandardCharsets
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.BaseSparkCore
@@ -33,6 +34,15 @@ import scala.collection.mutable.ListBuffer
   *
   * @author ChengLong 2019-5-9 09:37:25
   */
+@Config(
+  """
+    |# 用于区分不同的hbase集群: batch/streaming/old
+    |spark.hbase.cluster                =       test
+    |spark.hbase.cluster2               =       test
+    |spark.fire.hbase.scan.repartitions =       3
+    |spark.fire.hbase.storage.level     =       DISK_ONLY
+    |fire.shutdown.auto.exit            =       true
+    |""")
 object HBaseConnectorTest extends BaseSparkCore {
   private val tableName1 = "fire_test_1"
   private val tableName2 = "fire_test_2"

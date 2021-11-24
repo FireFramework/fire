@@ -18,10 +18,15 @@
 package com.zto.fire.examples.flink.connector.kafka
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkStreaming
 
 import java.time.Duration
 
+@Config(
+  """
+    |flink.sql.conf.table.exec.state.ttl   =       1 ms
+    |""")
 object KafkaConsumer extends BaseFlinkStreaming {
 
   override def process: Unit = {

@@ -78,7 +78,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
    */
   @Rest("/system/distributeSync")
   def distributeSync(request: Request, response: Response): AnyRef = {
-    this.logger.info(s"内部请求分布式更新信息，ip：${request.ip()}")
+    this.logger.debug(s"内部请求分布式更新信息，ip：${request.ip()}")
     this.distributeJson
   }
 

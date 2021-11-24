@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.connector.rocketmq
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkStreaming
 
 /**
@@ -27,6 +28,40 @@ import com.zto.fire.flink.BaseFlinkStreaming
  * @since 1.0.0
  * @create 2021-01-18 17:24
  */
+@Config(
+  """
+    |# flink所支持的参数
+    |state.checkpoints.num-retained      =       3
+    |state.backend.incremental           =       true
+    |state.backend.rocksdb.files.open    =       5000
+    |
+    |# sql中with表达，配置方法是以flink.sql.with开头，跟上connector的key，以数字结尾，用于区分不同的connector
+    |flink.sql.with.connector=fire-rocketmq
+    |flink.sql.with.format=json
+    |flink.sql.with.rocket.brokers.name=ZmsClusterA
+    |flink.sql.with.rocket.topics=zto_vas_queue
+    |flink.sql.with.rocket.group.id=owl_monitor_vas2_consumer
+    |flink.sql.with.rocket.consumer.tag=*
+    |
+    |flink.sql.log.enable=true
+    |flink.default.parallelism=2
+    |flink.stream.checkpoint.interval=60000
+    |
+    |flink.sql.with.connector2=fire-rocketmq
+    |flink.sql.with.format2=json
+    |flink.sql.with.rocket.brokers.name2=bigdata_test
+    |flink.sql.with.rocket.topics2=fire
+    |flink.sql.with.rocket.group.id2=fire
+    |flink.sql.with.rocket.starting.offsets=latest
+    |flink.sql.with.rocket.consumer.tag2=*
+    |
+    |flink.sql.with.connector3=fire-rocketmq
+    |flink.sql.with.format3=json
+    |flink.sql.with.rocket.brokers.name3=bigdata_test
+    |flink.sql.with.rocket.topics3=fire2
+    |flink.sql.with.rocket.consumer.tag3=*
+    |flink.sql.with.rocket.sink.parallelism3=1
+    |""")
 object RocketMQConnectorTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
