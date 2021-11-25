@@ -43,7 +43,6 @@ import org.apache.flink.runtime.state.*;
 import org.apache.flink.runtime.state.filesystem.FsStateBackend;
 import org.apache.flink.runtime.state.ttl.TtlTimeProvider;
 import org.apache.flink.util.*;
-import org.mortbay.log.Log;
 import org.rocksdb.NativeLibraryLoader;
 import org.rocksdb.RocksDB;
 import org.slf4j.Logger;
@@ -202,7 +201,7 @@ public class RocksDBStateBackend extends AbstractManagedMemoryStateBackend
     /**
      * distributed dir on each taskManager
      */
-    private DistributedAtomicInteger dir_index;
+    private DistributedAtomicInteger dirIndex;
 
     /**
      * state choose disk policy
@@ -212,6 +211,9 @@ public class RocksDBStateBackend extends AbstractManagedMemoryStateBackend
     private transient CuratorFramework client;
 
     private String currentHostName;
+
+    // 初始化标识，避免多次初始化
+    private boolean isInitZKClient = false;
 
     // 用于统计磁盘负载的zk地址
     private final static String STATE_ZOOKEEPER_URL = "flink.state.external.zookeeper.url";
@@ -223,11 +225,14 @@ public class RocksDBStateBackend extends AbstractManagedMemoryStateBackend
      */
     private void initZKClient() {
         synchronized (RocksDBStateBackend.class) {
+            if (isInitZKClient) return;
+            this.isInitZKClient = true;
             final String zkUrl = PropUtils.getString(STATE_ZOOKEEPER_URL, "");
             this.stateDiskPolicy = PropUtils.getString(STATE_CHOOSE_DISK_POLICY, FLINK_STATE_DISK_CHOOSE_POLICY_DEFAULT).toUpperCase();
+            LOG.info("当前磁盘路径选择策略：" + this.stateDiskPolicy);
 
             // 如果zk地址不为空，并且开启了ROUND_ROBIN磁盘路径选择策略，则建立zookeeper的连接，避免太多任务建立太多的连接
-            if (StringUtils.isNotBlank(zkUrl) && isRoundRobin()) {
+            if (StringUtils.isNotBlank(zkUrl) && this.isRoundRobin()) {
                 try {
                     LOG.info("开启基于zookeeper的本地磁盘状态路径选择策略");
                     this.client = CuratorFrameworkFactory.builder().connectString(zkUrl)
@@ -251,6 +256,7 @@ public class RocksDBStateBackend extends AbstractManagedMemoryStateBackend
      * 判断是否为ROUND_ROBIN模式
      */
     private boolean isRoundRobin() {
+        if (!this.isInitZKClient) this.initZKClient();
         return FLINK_STATE_DISK_CHOOSE_POLICY_ROUND_ROBIN.equalsIgnoreCase(this.stateDiskPolicy);
     }
     // TODO: ------------ end：二次开发代码 --------------- //
@@ -360,6 +366,10 @@ public class RocksDBStateBackend extends AbstractManagedMemoryStateBackend
         this.defaultMetricOptions = new RocksDBNativeMetricOptions();
         this.memoryConfiguration = new RocksDBMemoryConfiguration();
         this.writeBatchSize = UNDEFINED_WRITE_BATCH_SIZE;
+
+        // TODO: ------------ start：二次开发代码 --------------- //
+        this.initZKClient();
+        // TODO: ------------ end：二次开发代码 --------------- //
     }
 
     /**
@@ -563,9 +573,9 @@ public class RocksDBStateBackend extends AbstractManagedMemoryStateBackend
             try {
                 String counterPath = "/rocksDB/" + this.currentHostName;
                 ExponentialBackoffRetry retryPolicy = new ExponentialBackoffRetry(1000, 10);
-                this.dir_index = new DistributedAtomicInteger(this.client, counterPath, retryPolicy);
-                this.dir_index.initialize(0);
-                AtomicValue<Integer> value = this.dir_index.increment();
+                this.dirIndex = new DistributedAtomicInteger(this.client, counterPath, retryPolicy);
+                this.dirIndex.initialize(0);
+                AtomicValue<Integer> value = this.dirIndex.increment();
                 if (value.succeeded()) {
                     ni = value.postValue() % initializedDbBasePaths.length;
                 } else {
