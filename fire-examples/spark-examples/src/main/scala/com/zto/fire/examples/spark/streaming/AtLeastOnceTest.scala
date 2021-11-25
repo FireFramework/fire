@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.spark
+package com.zto.fire.examples.spark.streaming
 
+import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.spark.BaseSparkCore
+import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.examples.bean.Student
+import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.StreamingDuration
 
 /**
@@ -35,11 +38,19 @@ import com.zto.fire.spark.anno.StreamingDuration
     |fire.acc.log.max.size=20
     |""")
 @StreamingDuration(20) // spark streaming的批次时间
-object Test extends BaseSparkCore {
+object AtLeastOnceTest extends BaseSparkStreaming {
 
   override def process: Unit = {
-    this.fire.sql("use tmp")
-    this.fire.sql("show tables").show(100, false)
-    this.stop
+    val dstream = this.fire.createKafkaDirectStream()
+
+    // 至少一次的语义保证，处理成功自动提交offset，处理失败会重试指定次数，如果仍失败则任务退出
+    dstream.foreachRDDAtLeastOnce(rdd => {
+      val studentRDD = rdd.map(t => JSONUtils.parseObject[Student](t.value())).repartition(2)
+      val insertSql = s"INSERT INTO spark_test(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
+      println("kafka.brokers.name=>" + this.conf.getString("kafka.brokers.name"))
+      studentRDD.toDF().jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 1)
+    })
+
+    this.fire.start
   }
 }

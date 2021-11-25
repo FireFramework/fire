@@ -148,7 +148,7 @@ trait BaseFire extends Logging {
   /**
    * 生命周期方法：进行fire框架的资源回收
    */
-  protected[fire] def shutdown(stopGracefully: Boolean = true): Unit = {
+  protected[fire] def shutdown(stopGracefully: Boolean = true, inListener: Boolean = false): Unit = {
     if (this.isStoped.compareAndSet(false, true)) {
       ThreadUtils.shutdown
       Spark.stop()

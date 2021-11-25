@@ -136,7 +136,7 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
         }
       } else if (exitOnFailure) {
         this.logger.error(s"批次[${batchTime}]执行失败，offset未提交，任务将退出")
-        this.spark.stop()
+        SparkSingletonFactory.getStreamingContext.stop(true, false)
       } else throw retValue.failed.get
     })
 

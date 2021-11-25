@@ -34,7 +34,7 @@ import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.catalyst.parser.ParserInterface
 import org.apache.spark.sql.{SQLContext, SparkSession, SparkSessionExtensions}
-import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.{StreamingContext, StreamingContextState}
 import org.apache.spark.{SparkConf, SparkContext}
 
 /**
@@ -62,7 +62,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     // 进Driver端进行引擎配置与用户配置的加载，executor端会通过fire进行分发，应避免在executor端加载引擎和用户配置文件
     if (SparkUtils.isDriver) {
       this.loadConf
-      PropUtils.load(FireFrameworkConf.userCommonConf: _*)//.loadJobConf(this.getClass.getName)
+      PropUtils.load(FireFrameworkConf.userCommonConf: _*) //.loadJobConf(this.getClass.getName)
       this.restfulRegister = new RestServerManager().startRestPort()
       this.systemRestful = new SparkSystemRestful(this)
       // 注册到实时平台，并覆盖配置信息
@@ -90,13 +90,14 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
    * 生命周期方法：进行fire框架的资源回收
    * 注：不允许子类覆盖
    */
-  override protected[fire] final def shutdown(stopGracefully: Boolean = true): Unit = {
+  override protected[fire] final def shutdown(stopGracefully: Boolean = true, inListener: Boolean = false): Unit = {
     try {
       this.logger.info("<-- 完成用户资源回收 -->")
 
-      if (stopGracefully) {
+      if (!inListener) {
+        // 事件监听器中无法进行上下文的关闭
         if (this.sqlContext != null) this.sqlContext.clearCache
-        if (this.ssc != null) {
+        if (this.ssc != null && this.ssc.getState() == StreamingContextState.ACTIVE) {
           this.ssc.stop(true, stopGracefully)
           this.ssc = null
           this.sc = null
@@ -149,7 +150,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
       type ParserBuilder = (SparkSession, ParserInterface) => ParserInterface
       type ExtensionsBuilder = SparkSessionExtensions => Unit
       val parserBuilder: ParserBuilder = (_, parser) => new SparkSqlExtensionsParser(parser)
-      val extBuilder: ExtensionsBuilder = { e => e.injectParser(parserBuilder)}
+      val extBuilder: ExtensionsBuilder = { e => e.injectParser(parserBuilder) }
       sessionBuilder.withExtensions(extBuilder)
     }
 

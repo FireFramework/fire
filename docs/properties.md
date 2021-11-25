@@ -64,7 +64,7 @@ fire框架提供了很多参数，这些参数为程序带来了很大的灵活�
 | fire.buried_point.datasource.map.tidb               | 4000                | 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分，不同数据配置使用统一的前缀：fire.buried_point.datasource.map. | 2.0.0    | 否       |
 | fire.conf.adaptive.prefix                           | true                | 是否开启配置自适应前缀，自动为配置加上引擎前缀（spark.\|flink.） | 2.0.0    | 否       |
 | fire.user.common.conf                               | common.properties   | 用户统一配置文件，允许用户在该配置文件中存放公共的配置信息，优先级低于任务配置文件（多个以逗号分隔） | 2.0.0    | 否       |
-| fire.shutdown.auto.exit                             | false               | 是否在调用shutdown方法时主动退出jvm进程，如果为true，则执行到this.stop方法，关闭上下文信息，回收线程池后将调用System.exit(0)强制退出进程。 | 2.0.0    | 否       |
+| fire.shutdown.auto.exit                             | true                | 是否在调用shutdown方法时主动退出jvm进程，如果为true，则执行到this.stop方法，关闭上下文信息，回收线程池后将调用System.exit(0)强制退出进程。 | 2.0.0    | 否       |
 | fire.kafka.cluster.map.test                         | ip1:9092,ip2:9092   | kafka集群名称与集群地址映射，便于用户配置中通过别名即可消费指定的kafka。比如：kafka.brokers.name=test则表明消费ip1:9092,ip2:9092这个kafka集群。当然，也支持直接配置url：kafka.brokers.name=ip1:9092,ip2:9092。 | 0.1.0    | 否       |
 | fire.hive.default.database.name                     | tmp                 | 默认的hive数据库                                             | 0.1.0    | 否       |
 | fire.hive.table.default.partition.name              | ds                  | 默认的hive分区字段名称                                       | 0.1.0    | 否       |
