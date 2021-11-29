@@ -28,6 +28,7 @@ import com.zto.fire.flink.task.FlinkSchedulerManager
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig
+import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.{Configuration, GlobalConfiguration}
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
@@ -45,6 +46,7 @@ import org.apache.hadoop.hive.conf.HiveConf
 trait BaseFlink extends BaseFire {
   protected[fire] var _conf: Configuration = _
   protected var hiveCatalog: HiveCatalog = _
+  protected var parameter: ParameterTool = _
 
   /**
    * 生命周期方法：初始化fire框架必要的信息
@@ -182,4 +184,13 @@ trait BaseFlink extends BaseFire {
    * spark任务：driver/id  flink任务：JobManager/container_xxx
    */
   override protected def resourceId: String = FlinkUtils.getResourceId
+
+  /**
+   * 初始化引擎上下文，如SparkSession、StreamExecutionEnvironment等
+   * 可根据实际情况，将配置参数放到同名的配置文件中进行差异化的初始化
+   */
+  override def main(args: Array[String]): Unit = {
+    this.parameter = ParameterTool.fromArgs(args)
+    this.init(null, args)
+  }
 }
