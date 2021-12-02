@@ -190,7 +190,12 @@ trait BaseFlink extends BaseFire {
    * 可根据实际情况，将配置参数放到同名的配置文件中进行差异化的初始化
    */
   override def main(args: Array[String]): Unit = {
-    this.parameter = ParameterTool.fromArgs(args)
-    this.init(null, args)
+    try {
+      if (args != null && args.nonEmpty) this.parameter = ParameterTool.fromArgs(args)
+    } catch {
+      case _: Throwable => this.logger.error("ParameterTool 解析main方法参数失败，请注意参数的key必须以-或--开头")
+    } finally {
+      this.init(null, args)
+    }
   }
 }
