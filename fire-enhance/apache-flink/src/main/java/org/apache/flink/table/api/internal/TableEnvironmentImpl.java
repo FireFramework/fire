@@ -558,7 +558,6 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
 
     @Override
     public Table sqlQuery(String query) {
-        System.out.println("sqlQuery->\n" + query);
         List<Operation> operations = parser.parse(query);
 
         if (operations.size() != 1) {
