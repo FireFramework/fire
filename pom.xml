@@ -23,7 +23,7 @@
     <artifactId>fire-parent_2.12</artifactId>
     <packaging>pom</packaging>
     <version>2.2.0-SNAPSHOT</version>
-    <name>fire-parent</name>
+    <name>fire</name>
 
     <properties>
         <fire.version>${project.version}</fire.version>
@@ -47,7 +47,7 @@
         <jackson.version>2.10.5</jackson.version>
         <rocketmq.version>4.8.0</rocketmq.version>
         <rocketmq.external.version>0.0.3</rocketmq.external.version>
-        <mysql.version>5.1.30</mysql.version>
+        <mysql.version>5.1.49</mysql.version>
         <guava.version>18.0</guava.version>
         <curator.verrsion>2.6.0</curator.verrsion>
         <arthas.version>3.5.4</arthas.version>

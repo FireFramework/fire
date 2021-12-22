@@ -58,7 +58,7 @@ object Test extends BaseFlinkStreaming {
     val dstream = this.fire.createKafkaDirectStream().filter(json => JSONUtils.isJson(json)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(2)
     val value: KeyedStream[Student, JLong] = dstream.keyBy(t => t.getId)
 
-    value.process(new KeyedProcessFunction[JLong, Student, String]() {
+    value.process(new KeyedProcessFunction[JLong, Student, String]() {¬
 
       override def processElement(value: Student, ctx: KeyedProcessFunction[_root_.com.zto.fire.JLong, Student, String]#Context, out: Collector[String]): Unit = {
         val state = this.getState[Long]("sum")

@@ -30,7 +30,7 @@ import com.codahale.metrics.{ConsoleReporter, MetricRegistry, Slf4jReporter}
  * @since 2.0.0
  * @create 2020-12-17 10:11
  */
-class MetricsTest {
+class MetricsDemo {
   val metrics = new MetricRegistry()
 
   // @Test
@@ -54,7 +54,7 @@ class MetricsTest {
     val reporter2 = Slf4jReporter.forRegistry(metrics).convertDurationsTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).withLoggingLevel(Slf4jReporter.LoggingLevel.ERROR).build
     reporter2.start(1, TimeUnit.SECONDS)
 
-    val resultCounts = metrics.histogram(MetricRegistry.name(classOf[MetricsTest], "result-counts"))
+    val resultCounts = metrics.histogram(MetricRegistry.name(classOf[MetricsDemo], "result-counts"))
     val random = new Random()
     (1 to 1000).foreach(i => {
       resultCounts.update(random.nextInt(100))
