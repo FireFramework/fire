@@ -32,7 +32,6 @@
     <hadoop.version>2.6.0-cdh5.12.1</hadoop.version>
     <hive.version>1.1.0-cdh5.12.1</hive.version>
     <hbase.version>1.2.0-cdh5.12.1</hbase.version>
-    <kudu.version>1.4.0</kudu.version>
     <impala.jdbc.version>2.5.30</impala.jdbc.version>
     <jackson.version>2.8.10</jackson.version>
     <guava.version>18.0</guava.version>
@@ -195,20 +194,6 @@
           <artifactId>hbase-client</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-
-    <!-- kudu相关依赖 -->
-    <dependency>
-      <groupId>org.apache.kudu</groupId>
-      <artifactId>kudu-spark${spark.major.version}_${scala.binary.version}</artifactId>
-      <version>${kudu.version}</version>
-      <scope>${maven.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kudu</groupId>
-      <artifactId>kudu-client</artifactId>
-      <version>${kudu.version}</version>
-      <scope>${maven.scope}</scope>
     </dependency>
 
     <!-- rocketmq相关依赖 -->

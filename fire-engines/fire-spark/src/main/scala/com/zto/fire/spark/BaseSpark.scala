@@ -24,7 +24,6 @@ import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.conf.FireSparkConf
-import com.zto.fire.spark.ext.module.KuduContextExt
 import com.zto.fire.spark.rest.SparkSystemRestful
 import com.zto.fire.spark.sql.SparkSqlExtensionsParser
 import com.zto.fire.spark.task.{SparkInternalTask, SparkSchedulerManager}
@@ -49,7 +48,6 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
   protected[fire] var catalog: Catalog = _
   protected[fire] var ssc: StreamingContext = _
   protected[fire] var hiveContext, sqlContext: SQLContext = _
-  protected[fire] var kuduContext: KuduContextExt = _
   protected[fire] val acc = AccumulatorManager
   protected[fire] var batchDuration: Long = _
   protected[fire] var listener: SparkListener = _
@@ -173,7 +171,6 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     // this.initLogging(this.className)
     this.hiveContext = this._spark.sqlContext
     this.sqlContext = this.hiveContext
-    this.kuduContext = SparkSingletonFactory.getKuduContextInstance(this.sc)
     this.applicationId = SparkUtils.getApplicationId(this._spark)
     this.webUI = SparkUtils.getWebUI(this._spark)
     this._conf = tmpConf

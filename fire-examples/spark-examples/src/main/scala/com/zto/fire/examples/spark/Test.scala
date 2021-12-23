@@ -18,6 +18,7 @@
 package com.zto.fire.examples.spark
 
 import com.zto.fire.common.anno.Config
+import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkCore
 import com.zto.fire.spark.anno.StreamingDuration
 
@@ -38,8 +39,10 @@ import com.zto.fire.spark.anno.StreamingDuration
 object Test extends BaseSparkCore {
 
   override def process: Unit = {
-    this.fire.sql("use tmp")
-    this.fire.sql("show tables").show(100, false)
-    this.stop
+    println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
+    this.sc.parallelize(1 to 10).foreachPartition(it => {
+      println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
+    })
+    Thread.currentThread().join()
   }
 }

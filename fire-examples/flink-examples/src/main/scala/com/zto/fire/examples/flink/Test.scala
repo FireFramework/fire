@@ -55,15 +55,17 @@ object Test extends BaseFlinkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
+    println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
     val dstream = this.fire.createKafkaDirectStream().filter(json => JSONUtils.isJson(json)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(2)
     val value: KeyedStream[Student, JLong] = dstream.keyBy(t => t.getId)
 
-    value.process(new KeyedProcessFunction[JLong, Student, String]() {¬
+    value.process(new KeyedProcessFunction[JLong, Student, String]() {
 
       override def processElement(value: Student, ctx: KeyedProcessFunction[_root_.com.zto.fire.JLong, Student, String]#Context, out: Collector[String]): Unit = {
         val state = this.getState[Long]("sum")
         state.update(state.value() + 1)
         println(s"当前key=${value.getId} sum=${state.value()}")
+        println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
         out.collect(value.getName)
       }
 
