@@ -33,7 +33,7 @@
         <flink.major.version>1.12</flink.major.version>
         <hudi.version>0.9.0</hudi.version>
         <scala.binary.version>2.12</scala.binary.version>
-        <scala.minor.version>14</scala.minor.version>
+        <scala.minor.version>13</scala.minor.version>
         <maven.scope>provided</maven.scope>
         <kafka.version>0.11.0.2</kafka.version>
         <sparkjava.version>2.8.0</sparkjava.version>
@@ -64,6 +64,7 @@
         <module>fire-connectors</module>
         <module>fire-engines</module>
         <module>fire-enhance</module>
+        <module>fire-repl</module>
     </modules>
 
     <dependencies>

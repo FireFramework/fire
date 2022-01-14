@@ -21,6 +21,7 @@ import com.zto.fire.common.anno.Config
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkCore
 import com.zto.fire.spark.anno.StreamingDuration
+import com.zto.fire._
 
 /**
  * 基于Fire进行Spark Streaming开发
@@ -44,5 +45,8 @@ object Test extends BaseSparkCore {
       println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
     })
     Thread.currentThread().join()
+    val dstream = this.fire.createKafkaDirectStream()
+    dstream.print()
+    this.fire.start()
   }
 }
