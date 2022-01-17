@@ -64,7 +64,7 @@
         <module>fire-connectors</module>
         <module>fire-engines</module>
         <module>fire-enhance</module>
-        <module>fire-repl</module>
+        <module>fire-shell</module>
     </modules>
 
     <dependencies>
