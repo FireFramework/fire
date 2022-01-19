@@ -127,6 +127,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_ANALYSIS_ARTHAS_CONTAINER_ENABLE = "fire.analysis.arthas.container.enable"
   lazy val FIRE_ANALYSIS_ARTHAS_TUNNEL_SERVER_URL = "fire.analysis.arthas.tunnel_server.url"
   lazy val FIRE_ARTHAS_LAUNCHER = "fire.analysis.arthas.launcher"
+  lazy val FIRE_ENV_LOCAL = "fire.env.local"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -165,6 +166,8 @@ private[fire] object FireFrameworkConf {
   lazy val shutdownExit = PropUtils.getBoolean(this.FIRE_SHUTDOWN_EXIT, false)
   // 是否启用为connector注册shutdown hook，当jvm退出前close
   lazy val connectorShutdownHookEnable = PropUtils.getBoolean(this.FIRE_CONNECTOR_SHUTDOWN_HOOK_ENABLE, false)
+  // 用于指定当前运行环境是否为local模式（主要用于flink-shell的本地配置文件加载）
+  lazy val localEnv = PropUtils.getBoolean(this.FIRE_ENV_LOCAL, false)
 
   // fire日志打印黑名单
   lazy val fireConfBlackList: Set[String] = {

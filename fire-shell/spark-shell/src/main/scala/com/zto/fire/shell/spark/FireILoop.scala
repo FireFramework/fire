@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.zto.fire.repl.spark
+package com.zto.fire.shell.spark
 
 import com.zto.fire.common.util.FireUtils
 
@@ -51,7 +51,7 @@ class FireILoop(in0: Option[BufferedReader], out: JPrintWriter)
     "import com.zto.fire.spark.BaseSparkCore",
     "import com.zto.fire._",
     "import com.zto.fire.spark.util.SparkSingletonFactory",
-    "import com.zto.fire.repl.spark.Test",
+    "import com.zto.fire.shell.spark.Test",
     """
     Test.main(null)
     @transient val spark = Test.getSparkSession

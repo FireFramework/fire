@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.zto.fire.repl.spark
+package com.zto.fire.shell.spark
 
 import java.io.File
 import java.net.URI
@@ -59,7 +59,7 @@ object Main extends Logging {
   }
 
   // Visible for testing
-  private[repl] def doMain(args: Array[String], _interp: FireILoop): Unit = {
+  private[shell] def doMain(args: Array[String], _interp: FireILoop): Unit = {
     interp = _interp
 
     val jars = utils.getMethod("getLocalUserJarsForShell", classOf[SparkConf]).invoke(null, conf).asInstanceOf[Seq[String]]

@@ -1,4 +1,4 @@
-package com.zto.fire.repl.spark
+package com.zto.fire.shell.spark
 
 import com.zto.fire.common.anno.Config
 import com.zto.fire.spark.{BaseSparkCore, BaseSparkStreaming}
