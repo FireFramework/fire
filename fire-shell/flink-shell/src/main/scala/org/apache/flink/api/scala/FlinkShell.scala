@@ -19,16 +19,15 @@
 package org.apache.flink.api.scala
 
 import com.zto.fire.shell.flink.FireILoop
-
-import java.io._
 import org.apache.flink.annotation.Internal
 import org.apache.flink.client.cli.{CliFrontend, CliFrontendParser}
-import org.apache.flink.client.deployment.executors.RemoteExecutor
 import org.apache.flink.client.deployment.DefaultClusterClientServiceLoader
+import org.apache.flink.client.deployment.executors.RemoteExecutor
 import org.apache.flink.client.program.{ClusterClient, MiniClusterClient}
-import org.apache.flink.configuration.{ConfigConstants, Configuration, DeploymentOptions, GlobalConfiguration, JobManagerOptions, RestOptions, TaskManagerOptions}
+import org.apache.flink.configuration._
 import org.apache.flink.runtime.minicluster.{MiniCluster, MiniClusterConfiguration}
 
+import java.io._
 import scala.collection.mutable.ArrayBuffer
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter._
@@ -41,22 +40,22 @@ object FlinkShell {
 
   /** Configuration object */
   case class Config(
-                     host: Option[String] = None,
-                     port: Option[Int] = None,
-                     externalJars: Option[Array[String]] = None,
-                     executionMode: ExecutionMode.Value = ExecutionMode.UNDEFINED,
-                     yarnConfig: Option[YarnConfig] = None,
-                     configDir: Option[String] = None
-                   )
+    host: Option[String] = None,
+    port: Option[Int] = None,
+    externalJars: Option[Array[String]] = None,
+    executionMode: ExecutionMode.Value = ExecutionMode.UNDEFINED,
+    yarnConfig: Option[YarnConfig] = None,
+    configDir: Option[String] = None
+  )
 
   /** YARN configuration object */
   case class YarnConfig(
-                         jobManagerMemory: Option[String] = None,
-                         name: Option[String] = None,
-                         queue: Option[String] = None,
-                         slots: Option[Int] = None,
-                         taskManagerMemory: Option[String] = None
-                       )
+    jobManagerMemory: Option[String] = None,
+    name: Option[String] = None,
+    queue: Option[String] = None,
+    slots: Option[Int] = None,
+    taskManagerMemory: Option[String] = None
+  )
 
   /** Buffered reader to substitute input in test */
   var bufferedReader: Option[BufferedReader] = None
@@ -72,7 +71,7 @@ object FlinkShell {
           case (x, c) =>
             val xArray = x.split(":")
             c.copy(externalJars = Option(xArray))
-        } text "Specifies additional jars to be used in Flink"
+          } text "Specifies additional jars to be used in Flink"
         )
 
       cmd("remote") action { (_, c) =>
@@ -197,8 +196,8 @@ object FlinkShell {
   }
 
   @Internal def fetchConnectionInfo(
-                                     config: Config,
-                                     flinkConfig: Configuration): (Configuration, Option[ClusterClient[_]]) = {
+      config: Config,
+      flinkConfig: Configuration): (Configuration, Option[ClusterClient[_]]) = {
 
     config.executionMode match {
       case ExecutionMode.LOCAL => createLocalClusterAndConfig(flinkConfig)
@@ -264,9 +263,9 @@ object FlinkShell {
   }
 
   private def fetchDeployedYarnClusterInfo(
-                                            config: Config,
-                                            flinkConfig: Configuration,
-                                            mode: String) = {
+      config: Config,
+      flinkConfig: Configuration,
+      mode: String) = {
 
     val effectiveConfig = new Configuration(flinkConfig)
     val args = parseArgList(config, mode)
@@ -308,8 +307,8 @@ object FlinkShell {
   }
 
   private def createRemoteConfig(
-                                  config: Config,
-                                  flinkConfig: Configuration): (Configuration, None.type) = {
+      config: Config,
+      flinkConfig: Configuration): (Configuration, None.type) = {
 
     if (config.host.isEmpty || config.port.isEmpty) {
       throw new IllegalArgumentException("<host> or <port> is not specified!")
@@ -358,8 +357,8 @@ object FlinkShell {
   }
 
   private def setJobManagerInfoToConfig(
-                                         config: Configuration,
-                                         host: String, port: Integer): Unit = {
+      config: Configuration,
+      host: String, port: Integer): Unit = {
 
     config.setString(JobManagerOptions.ADDRESS, host)
     config.setInteger(JobManagerOptions.PORT, port)

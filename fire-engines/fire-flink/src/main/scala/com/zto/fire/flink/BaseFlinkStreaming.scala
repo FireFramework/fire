@@ -98,7 +98,7 @@ trait BaseFlinkStreaming extends BaseFlink {
     this.env.getConfig.setGlobalJobParameters(ParameterTool.fromMap(finalConf.toMap))
     this.configParse(this.env)
     this.senv = this.env
-    val builder = EnvironmentSettings.newInstance.useBlinkPlanner
+    val builder = EnvironmentSettings.newInstance
     this.tableEnv = if (runtimeExecutionMode == RuntimeExecutionMode.BATCH) {
       TableEnvironment.create(builder.inBatchMode().build())
     } else {

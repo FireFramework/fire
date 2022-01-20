@@ -38,7 +38,7 @@ import static org.apache.flink.util.Preconditions.checkState;
 
 /**
  * Special version of {@link ExecutionEnvironment} that has a reference to
- * a {@link FireILoop}. When execute is called this will use the
+ * a {@link com.zto.fire.shell.flink.FireILoop}. When execute is called this will use the
  * reference of the ILoop to write the compiled classes of the current session to a Jar file and
  * submit these with the program.
  */
@@ -49,7 +49,7 @@ public class ScalaShellEnvironment extends ExecutionEnvironment {
     private final List<URL> jarFiles;
 
     /** reference to Scala Shell, for access to virtual directory. */
-    private final FireILoop flinkILoop;
+    private final FireILoop fireILoop;
 
     public ScalaShellEnvironment(
             final Configuration configuration,
@@ -57,7 +57,7 @@ public class ScalaShellEnvironment extends ExecutionEnvironment {
             final String... jarFiles) {
 
         super(validateAndGetConfiguration(configuration));
-        this.flinkILoop = checkNotNull(fireILoop);
+        this.fireILoop = checkNotNull(fireILoop);
         this.jarFiles = checkNotNull(JarUtils.getJarFiles(jarFiles));
     }
 
@@ -88,7 +88,7 @@ public class ScalaShellEnvironment extends ExecutionEnvironment {
     }
 
     private List<URL> getUpdatedJarFiles() throws MalformedURLException {
-        final URL jarUrl = flinkILoop.writeFilesToDisk().getAbsoluteFile().toURI().toURL();
+        final URL jarUrl = fireILoop.writeFilesToDisk().getAbsoluteFile().toURI().toURL();
         final List<URL> allJarFiles = new ArrayList<>(jarFiles);
         allJarFiles.add(jarUrl);
         return allJarFiles;

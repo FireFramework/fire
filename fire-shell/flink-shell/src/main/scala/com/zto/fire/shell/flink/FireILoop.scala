@@ -21,11 +21,9 @@ package com.zto.fire.shell.flink
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.util.{FireUtils, PropUtils}
 import org.apache.flink.api.java.{JarHelper, ScalaShellEnvironment, ScalaShellStreamEnvironment}
-import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
-import org.apache.flink.table.api.EnvironmentSettings
-import org.apache.flink.table.api.bridge.scala.{BatchTableEnvironment, StreamTableEnvironment}
+import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import org.apache.flink.util.AbstractID
 
 import java.io.{BufferedReader, File, FileOutputStream}
@@ -140,6 +138,8 @@ class FireILoop(
     "org.apache.flink.streaming.api.windowing.time._",
     "org.apache.flink.table.api._",
     "org.apache.flink.table.api.bridge.scala._",
+    "org.apache.flink.table.connector.ChangelogMode",
+    "org.apache.flink.table.functions._",
     "org.apache.flink.types.Row",
     "com.zto.fire._",
     "com.zto.fire.shell.flink"
@@ -152,7 +152,7 @@ class FireILoop(
       // import dependencies
       intp.interpret("import " + packageImports.mkString(", "))
 
-      // set execution environment
+      // set execution environments
       intp.bind("senv", this.env)
       intp.bind("fire", this.env)
       intp.bind("env", this.env)

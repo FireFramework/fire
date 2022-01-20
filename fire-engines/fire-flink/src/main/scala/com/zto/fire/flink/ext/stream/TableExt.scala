@@ -25,7 +25,7 @@ import com.zto.fire.hbase.bean.HBaseBaseBean
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
-import org.apache.flink.table.api.Table
+import org.apache.flink.table.api.{Table, TableEnvironment}
 import org.apache.flink.table.api.bridge.scala._
 import org.apache.flink.types.Row
 
@@ -41,7 +41,7 @@ import scala.reflect.ClassTag
  */
 class TableExt(table: Table) {
   lazy val streamTableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[StreamTableEnvironment]
-  lazy val batchTableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[BatchTableEnvironment]
+  lazy val batchTableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[TableEnvironment]
 
   /**
    * 逐条打印每行记录
@@ -77,10 +77,10 @@ class TableExt(table: Table) {
   /**
    * 将Table转为DataSet
    */
-  def toDataSet[T]: DataSet[Row] = {
+  /*def toDataSet[T]: DataSet[Row] = {
     require(this.batchTableEnv != null)
     this.batchTableEnv.toDataSet[Row](this.table)
-  }
+  }*/
 
   /**
    * 将流注册为临时表

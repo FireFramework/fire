@@ -23,17 +23,14 @@ import com.zto.fire.common.util.OSUtils;
 import com.zto.fire.common.util.PropUtils;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.util.Preconditions;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.JavaConverters;
 
 import javax.annotation.Nullable;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
@@ -42,34 +39,78 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Global configuration object for Flink. Similar to Java properties configuration objects it
- * includes key-value pairs which represent the framework's configuration.
+ * Global configuration object for Flink. Similar to Java properties configuration
+ * objects it includes key-value pairs which represent the framework's configuration.
  */
 @Internal
 public final class GlobalConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(GlobalConfiguration.class);
+    private static AtomicBoolean isStart = new AtomicBoolean(false);
 
     public static final String FLINK_CONF_FILENAME = "flink-conf.yaml";
 
-    // the keys whose values should be hidden
-    private static final String[] SENSITIVE_KEYS =
-            new String[] {"password", "secret", "fs.azure.account.key", "apikey"};
-
     // the hidden content to be displayed
     public static final String HIDDEN_CONTENT = "******";
+    // TODO: ------------ start：二次开发代码 --------------- //
+    // 用于判断是JobManager还是TaskManager
+    private static boolean isJobManager = false;
+    // fire rest服务占用端口
+    private static ServerSocket restServerSocket;
+    // 任务的运行模式
+    private static String runMode;
+    private static final Map<String, String> settings = new HashMap<>();
+
+    static {
+        try {
+            restServerSocket = new ServerSocket(0);
+        } catch (Exception e) {
+            LOG.error("创建Socket失败", e);
+        }
+    }
+
+    /**
+     * 获取配置信息
+     */
+    public static Map<String, String> getSettings() {
+        return settings;
+    }
+
+    /**
+     * 获取随机分配的Rest端口号
+     */
+    public static int getRestPort() {
+        return restServerSocket.getLocalPort();
+    }
+
+    /**
+     * 获取rest服务端口号，并关闭Socket
+     */
+    public static int getRestPortAndClose() {
+        int port = restServerSocket.getLocalPort();
+        if (restServerSocket != null && !restServerSocket.isClosed()) {
+            try {
+                restServerSocket.close();
+            } catch (Exception e) {
+                LOG.error("关闭Rest Socket失败", e);
+            }
+        }
+        return port;
+    }
+    // TODO: ------------ end：二次开发代码 ----------------- //
 
     // --------------------------------------------------------------------------------------------
 
-    private GlobalConfiguration() {}
+    private GlobalConfiguration() {
+    }
 
     // --------------------------------------------------------------------------------------------
 
     /**
-     * Loads the global configuration from the environment. Fails if an error occurs during loading.
-     * Returns an empty configuration object if the environment variable is not set. In production
-     * this variable is set but tests and local execution/debugging don't have this environment
-     * variable set. That's why we should fail if it is not set.
+     * Loads the global configuration from the environment. Fails if an error occurs during loading. Returns an
+     * empty configuration object if the environment variable is not set. In production this variable is set but
+     * tests and local execution/debugging don't have this environment variable set. That's why we should fail
+     * if it is not set.
      *
      * @return Returns the Configuration
      */
@@ -78,7 +119,8 @@ public final class GlobalConfiguration {
     }
 
     /**
-     * Loads the global configuration and adds the given dynamic properties configuration.
+     * Loads the global configuration and adds the given dynamic properties
+     * configuration.
      *
      * @param dynamicProperties The given dynamic properties
      * @return Returns the loaded global configuration with dynamic properties
@@ -100,6 +142,7 @@ public final class GlobalConfiguration {
      * @param configDir the directory which contains the configuration files
      */
     public static Configuration loadConfiguration(final String configDir) {
+        isJobManager = true;
         return loadConfiguration(configDir, null);
     }
 
@@ -107,26 +150,21 @@ public final class GlobalConfiguration {
      * Loads the configuration files from the specified directory. If the dynamic properties
      * configuration is not null, then it is added to the loaded configuration.
      *
-     * @param configDir directory to load the configuration from
+     * @param configDir         directory to load the configuration from
      * @param dynamicProperties configuration file containing the dynamic properties. Null if none.
      * @return The configuration loaded from the given configuration directory
      */
-    public static Configuration loadConfiguration(
-            final String configDir, @Nullable final Configuration dynamicProperties) {
+    public static Configuration loadConfiguration(final String configDir, @Nullable final Configuration dynamicProperties) {
 
         if (configDir == null) {
-            throw new IllegalArgumentException(
-                    "Given configuration directory is null, cannot load configuration");
+            throw new IllegalArgumentException("Given configuration directory is null, cannot load configuration");
         }
 
         final File confDirFile = new File(configDir);
         if (!(confDirFile.exists())) {
             throw new IllegalConfigurationException(
-                    "The given configuration directory name '"
-                            + configDir
-                            + "' ("
-                            + confDirFile.getAbsolutePath()
-                            + ") does not describe an existing directory.");
+                    "The given configuration directory name '" + configDir +
+                            "' (" + confDirFile.getAbsolutePath() + ") does not describe an existing directory.");
         }
 
         // get Flink yaml configuration file
@@ -134,11 +172,8 @@ public final class GlobalConfiguration {
 
         if (!yamlConfigFile.exists()) {
             throw new IllegalConfigurationException(
-                    "The Flink config file '"
-                            + yamlConfigFile
-                            + "' ("
-                            + yamlConfigFile.getAbsolutePath()
-                            + ") does not exist.");
+                    "The Flink config file '" + yamlConfigFile +
+                            "' (" + confDirFile.getAbsolutePath() + ") does not exist.");
         }
 
         Configuration configuration = loadYAMLResource(yamlConfigFile);
@@ -153,8 +188,7 @@ public final class GlobalConfiguration {
     /**
      * Loads a YAML-file of key-value pairs.
      *
-     * <p>Colon and whitespace ": " separate key and value (one per line). The hash tag "#" starts a
-     * single-line comment.
+     * <p>Colon and whitespace ": " separate key and value (one per line). The hash tag "#" starts a single-line comment.
      *
      * <p>Example:
      *
@@ -164,10 +198,9 @@ public final class GlobalConfiguration {
      * taskmanager.rpc.port  : 6122      # network port the task manager expects incoming IPC connections
      * </pre>
      *
-     * <p>This does not span the whole YAML specification, but only the *syntax* of simple YAML
-     * key-value pairs (see issue #113 on GitHub). If at any point in time, there is a need to go
-     * beyond simple key-value pairs syntax compatibility will allow to introduce a YAML parser
-     * library.
+     * <p>This does not span the whole YAML specification, but only the *syntax* of simple YAML key-value pairs (see issue
+     * #113 on GitHub). If at any point in time, there is a need to go beyond simple key-value pairs syntax
+     * compatibility will allow to introduce a YAML parser library.
      *
      * @param file the YAML file to read from
      * @see <a href="http://www.yaml.org/spec/1.2/spec.html">YAML 1.2 specification</a>
@@ -229,51 +262,6 @@ public final class GlobalConfiguration {
     }
 
     // TODO: ------------ start：二次开发代码 --------------- //
-    private static AtomicBoolean isStart = new AtomicBoolean(false);
-    // 用于判断是JobManager还是TaskManager
-    private static boolean isJobManager = false;
-    // fire rest服务占用端口
-    private static ServerSocket restServerSocket;
-    // 任务的运行模式
-    private static String runMode;
-    private static final Map<String, String> settings = new HashMap<>();
-
-    static {
-        try {
-            restServerSocket = new ServerSocket(0);
-        } catch (Exception e) {
-            LOG.error("创建Socket失败", e);
-        }
-    }
-
-    /**
-     * 获取配置信息
-     */
-    public static Map<String, String> getSettings() {
-        return settings;
-    }
-
-    /**
-     * 获取随机分配的Rest端口号
-     */
-    public static int getRestPort() {
-        return restServerSocket.getLocalPort();
-    }
-
-    /**
-     * 获取rest服务端口号，并关闭Socket
-     */
-    public static int getRestPortAndClose() {
-        int port = restServerSocket.getLocalPort();
-        if (restServerSocket != null && !restServerSocket.isClosed()) {
-            try {
-                restServerSocket.close();
-            } catch (Exception e) {
-                LOG.error("关闭Rest Socket失败", e);
-            }
-        }
-        return port;
-    }
 
     /**
      * fire框架相关初始化动作

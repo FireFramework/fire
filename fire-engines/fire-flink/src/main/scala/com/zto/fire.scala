@@ -24,7 +24,6 @@ import com.zto.fire.flink.ext.stream._
 import org.apache.flink.api.common.functions.{RichFunction, RuntimeContext}
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.streaming.api.scala.{DataStream, KeyedStream, StreamExecutionEnvironment}
-import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
 import org.apache.flink.table.api.{Table, TableEnvironment, TableResult}
 import org.apache.flink.types.Row
 
@@ -101,7 +100,7 @@ package object fire extends BaseFireExt {
    * @param tableEnv
    * BatchTableEnvironment对象
    */
-  implicit class BatchTableEnvExtBridge(tableEnv: BatchTableEnvironment) extends BatchTableEnvExt(tableEnv) {
+  implicit class BatchTableEnvExtBridge(tableEnv: TableEnvironment) extends BatchTableEnvExt(tableEnv) {
 
   }
 

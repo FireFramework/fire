@@ -40,7 +40,7 @@ object FlinkSqlParser extends SqlParser {
       setQuoting(Quoting.BACK_TICK).
       setUnquotedCasing(Casing.TO_UPPER).
       setQuotedCasing(Casing.UNCHANGED).
-      setConformance(FlinkSqlConformance.DEFAULT).
+      // setConformance(FlinkSqlConformance.DEFAULT).
       build
   }
 
@@ -54,7 +54,7 @@ object FlinkSqlParser extends SqlParser {
       setQuoting(Quoting.BACK_TICK).
       setUnquotedCasing(Casing.TO_UPPER).
       setQuotedCasing(Casing.UNCHANGED).
-      setConformance(FlinkSqlConformance.DEFAULT).
+      // setConformance(FlinkSqlConformance.DEFAULT).
       build
   }
 

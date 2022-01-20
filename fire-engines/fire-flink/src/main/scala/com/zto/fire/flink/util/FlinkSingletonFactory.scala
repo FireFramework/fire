@@ -21,7 +21,6 @@ import com.zto.fire.core.util.SingletonFactory
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.table.api.TableEnvironment
-import org.apache.flink.table.api.bridge.scala.{BatchTableEnvironment, StreamTableEnvironment}
 
 /**
   * 单例工厂，用于创建单例的对象
