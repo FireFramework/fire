@@ -423,7 +423,8 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
 
         // TODO: ------------ start：二次开发代码 --------------- //
         if (isRoundRobin()) {
-            this.currentHostName = env.getTaskManagerInfo().getConfiguration().getString(TaskManagerOptions.HOST);
+            this.currentHostName = env.getTaskManagerInfo().getConfiguration().getString(
+                    TaskManagerOptions.HOST);
         }
         // TODO: ------------ end：二次开发代码 --------------- //
 

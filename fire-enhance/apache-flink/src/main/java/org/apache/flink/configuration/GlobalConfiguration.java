@@ -175,6 +175,7 @@ public final class GlobalConfiguration {
     private static Configuration loadYAMLResource(File file) {
         final Configuration config = new Configuration();
 
+        // TODO: ------------ start：二次开发代码 --------------- //
         Method setSetting = null;
         try {
             Class env = Class.forName("org.apache.flink.runtime.util.EnvironmentInformation");
@@ -182,8 +183,10 @@ public final class GlobalConfiguration {
         } catch (Exception e) {
             LOG.error("获取EnvironmentInformation.setSetting()失败", e);
         }
+        // TODO: ------------ end：二次开发代码 --------------- //
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
+        try (BufferedReader reader =
+                     new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
 
             String line;
             int lineNo = 0;
@@ -199,7 +202,14 @@ public final class GlobalConfiguration {
 
                     // skip line with no valid key-value pair
                     if (kv.length == 1) {
-                        LOG.warn("Error while trying to split key and value in configuration file {}:{}: {}", file, lineNo, line);
+                        LOG.warn(
+                                "Error while trying to split key and value in configuration file "
+                                        + file
+                                        + ":"
+                                        + lineNo
+                                        + ": \""
+                                        + line
+                                        + "\"");
                         continue;
                     }
 
@@ -208,22 +218,39 @@ public final class GlobalConfiguration {
 
                     // sanity check
                     if (key.length() == 0 || value.length() == 0) {
-                        LOG.warn("Error after splitting key and value in configuration file {}:{}:{}", file, lineNo, line);
+                        LOG.warn(
+                                "Error after splitting key and value in configuration file "
+                                        + file
+                                        + ":"
+                                        + lineNo
+                                        + ": \""
+                                        + line
+                                        + "\"");
                         continue;
                     }
 
-                    LOG.info("Loading configuration property: {}, {}", key, isSensitive(key) ? HIDDEN_CONTENT : value);
+                    LOG.info(
+                            "Loading configuration property: {}, {}",
+                            key,
+                            isSensitive(key) ? HIDDEN_CONTENT : value);
                     config.setString(key, value);
+
                     // TODO: ------------ start：二次开发代码 --------------- //
-                    setSetting.invoke(null, key, value);
+                    try {
+                        setSetting.invoke(null, key, value);
+                    } catch (Exception e) {
+                        LOG.error("二次开发代码异常，反射调用配置产生失败！", e);
+                    }
                     // TODO: ------------ end：二次开发代码 --------------- //
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new RuntimeException("Error parsing YAML configuration.", e);
         }
 
+        // TODO: ------------ start：二次开发代码 --------------- //
         fireBootstrap(config);
+        // TODO: ------------ end：二次开发代码 --------------- //
 
         return config;
     }

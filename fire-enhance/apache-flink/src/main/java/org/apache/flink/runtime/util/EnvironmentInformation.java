@@ -444,6 +444,7 @@ public class EnvironmentInformation {
         // TODO: ------------ start：二次开发代码 --------------- //
         parseCommand(commandLineArgs);
         // TODO: ------------ end：二次开发代码 ---------------- //
+
         if (log.isInfoEnabled()) {
             RevisionInformation rev = getRevisionInformation();
             String version = getVersion();
