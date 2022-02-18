@@ -38,9 +38,9 @@ import com.zto.fire.flink.BaseFlinkStreaming
     |# sql中with表达，配置方法是以flink.sql.with开头，跟上connector的key，以数字结尾，用于区分不同的connector
     |flink.sql.with.connector=fire-rocketmq
     |flink.sql.with.format=json
-    |flink.sql.with.rocket.brokers.name=ZmsClusterA
-    |flink.sql.with.rocket.topics=zto_vas_queue
-    |flink.sql.with.rocket.group.id=owl_monitor_vas2_consumer
+    |flink.sql.with.rocket.brokers.name=bigdata_test
+    |flink.sql.with.rocket.topics=fire
+    |flink.sql.with.rocket.group.id=fire
     |flink.sql.with.rocket.consumer.tag=*
     |
     |flink.sql.log.enable=true
@@ -50,8 +50,8 @@ import com.zto.fire.flink.BaseFlinkStreaming
     |flink.sql.with.connector2=fire-rocketmq
     |flink.sql.with.format2=json
     |flink.sql.with.rocket.brokers.name2=bigdata_test
-    |flink.sql.with.rocket.topics2=fire
-    |flink.sql.with.rocket.group.id2=fire
+    |flink.sql.with.rocket.topics2=fire2
+    |flink.sql.with.rocket.group.id2=fire2
     |flink.sql.with.rocket.starting.offsets=latest
     |flink.sql.with.rocket.consumer.tag2=*
     |

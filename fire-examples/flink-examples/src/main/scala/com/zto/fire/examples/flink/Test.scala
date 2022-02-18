@@ -48,6 +48,8 @@ import org.apache.flink.util.Collector
     |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
     |fire.analysis.arthas.container.enable=false
     |fire.rest.filter.enable=true
+    |hive.cluster=test
+    |flink.sql.udf.fireUdf.enable=false
     |""")
 object Test extends BaseFlinkStreaming {
 
@@ -55,7 +57,9 @@ object Test extends BaseFlinkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
-    println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
+    this.fire.useHiveCatalog()
+    this.fire.sql("select * from dim.baseorganize limit 10").print()
+    /*println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
     val dstream = this.fire.createKafkaDirectStream().filter(json => JSONUtils.isJson(json)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(2)
     val value: KeyedStream[Student, JLong] = dstream.keyBy(t => t.getId)
 
@@ -70,6 +74,6 @@ object Test extends BaseFlinkStreaming {
       }
 
     }).print("name")
-    this.fire.start
+    this.fire.start*/
   }
 }

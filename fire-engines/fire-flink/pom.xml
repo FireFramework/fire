@@ -26,7 +26,7 @@
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-engines_2.12</artifactId>
-        <version>2.2.0-SNAPSHOT</version>
+        <version>2.2.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -177,7 +177,7 @@
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
-            <version>${hive.apache.version}</version>
+            <version>${hive.flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
 

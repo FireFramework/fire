@@ -146,13 +146,13 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                 if (offset < 0) {
                     return;
                 }
-                Log.info("Current pullBatchSize is: " + pullBatchSize);
+                Log.debug("Current pullBatchSize is: " + pullBatchSize);
                 PullResult pullResult = consumer.pull(mq, tag, offset, pullBatchSize);
                 boolean found = false;
                 switch (pullResult.getPullStatus()) {
                     case FOUND:
                         List<MessageExt> messages = pullResult.getMsgFoundList();
-                        if (pullBatchSize != messages.size()) LOG.warn("Pull from rocketmq records is: {}", messages.size());
+                        if (pullBatchSize != messages.size()) LOG.debug("Pull from rocketmq records is: {}", messages.size());
                         for (MessageExt msg : messages) {
                             byte[] tag1 = msg.getTags() != null ? msg.getTags().getBytes(StandardCharsets.UTF_8) : null;
                             byte[] key = msg.getKeys() != null ? msg.getKeys().getBytes(StandardCharsets.UTF_8) : null;

@@ -37,9 +37,7 @@ import com.zto.fire.spark.BaseSparkStreaming
     |# 非必须配置项：默认为appName
     |spark.kafka.group.id               =       OrderDetailMainCommon
     |
-    |# ------------------- < hbase 配置 > ------------------- #
-    |# 用于区分不同的hbase集群: batch/streaming/old
-    |spark.hbase.cluster                =       streaming
+    |spark.hive.cluster                 =       batch
     |
     |# spark的参数可以直接写在下面，都会被加载，覆盖程序中默认的配置信息
     |spark.speculation                  =       false

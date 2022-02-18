@@ -126,7 +126,7 @@ object JdbcTest extends BaseSparkCore {
     // 第二个参数默认为SaveMode.Append，可以指定SaveMode.Overwrite
     df.jdbcTableSave(this.tableName, SaveMode.Overwrite)
     // 利用sparkSession方式将DataFrame数据保存到配置的第二个数据源中
-    this.fire.jdbcTableSave(df, this.tableName, SaveMode.Overwrite)
+    this.fire.jdbcTableSave(df, this.tableName, SaveMode.Overwrite, keyNum = 2)
   }
 
   /**
@@ -138,11 +138,14 @@ object JdbcTest extends BaseSparkCore {
     val insertSql = s"INSERT INTO spark_test(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
     // 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序，batch用于指定批次大小，默认取spark.db.jdbc.batch.size配置的值
     df.jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
+    this.fire.jdbcTableLoadAll(this.tableName).show(100, false)
+
 
     df.createOrReplaceTempViewCache("student")
     val sqlDF = this.fire.sql("select name, age, createTime from student where id>=1").repartition(1)
     // 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
-    sqlDF.jdbcBatchUpdate("insert into spark_test(name, age, createTime) values(?, ?, ?)")
+    sqlDF.jdbcBatchUpdate("insert into spark_test(name, age, createTime) values(?, ?, ?)", keyNum = 2)
+    this.fire.jdbcTableLoadAll(this.tableName, keyNum = 2).show(100, false)
     // 等同以上方式
     // this.fire.jdbcBatchUpdateDF(sqlDF, "insert into spark_test(name, age, createTime) values(?, ?, ?)")
   }
@@ -190,11 +193,11 @@ object JdbcTest extends BaseSparkCore {
 
   override def process: Unit = {
     // 测试环境测试
-    this.testJdbcUpdate
+    /*this.testJdbcUpdate
     this.testJdbcQuery
     this.testTableLoad
     this.testTableSave
-    this.testDataFrameSave
+    this.testDataFrameSave*/
     // 测试配置分发
     this.testExecutor
     Thread.sleep(100000)
