@@ -30,13 +30,12 @@ import com.zto.fire.spark.util.SparkUtils
  */
 @Config(
   """
-    |# 直接从配置文件中拷贝过来即可
     |kafka.brokers.name = bigdata_test
     |kafka.topics = fire
-    |kafka.group.id=fire2
-    |hive.cluster=test
+    |kafka.group.id=fire
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
+    |fire.conf.test=java
     |""")
 @StreamingDuration(20) // spark streaming的批次时间
 object ConfigCenterTest extends BaseSparkStreaming {
@@ -52,7 +51,7 @@ object ConfigCenterTest extends BaseSparkStreaming {
       rdd.map(t => {
         printConf
         JSONUtils.parseObject[Student](t.value())
-      }).repartition(2)
+      }).repartition(2).count()
     })
 
     this.fire.start
@@ -60,6 +59,15 @@ object ConfigCenterTest extends BaseSparkStreaming {
 
   /**
    * 配置信息打印
+   *
+   *  ================================
+   *  fire.thread.pool.size=6
+   *  fire.thread.pool.schedule.size=5
+   *  fire.acc.timer.max.size=30
+   *  fire.acc.log.max.size=22
+   *  fire.jdbc.query.partitions=13
+   *  fire.conf.test=flink
+   *  ================================
    */
   def printConf: Unit = {
     println("================================")
@@ -68,6 +76,7 @@ object ConfigCenterTest extends BaseSparkStreaming {
     println("fire.acc.timer.max.size=" + this.conf.getInt("fire.acc.timer.max.size", -1))
     println("fire.acc.log.max.size=" + this.conf.getInt("fire.acc.log.max.size", -1))
     println("fire.jdbc.query.partitions=" + this.conf.getInt("fire.jdbc.query.partitions", -1))
+    println("fire.conf.test=" + this.conf.getString("fire.conf.test"))
     println("================================")
   }
 }

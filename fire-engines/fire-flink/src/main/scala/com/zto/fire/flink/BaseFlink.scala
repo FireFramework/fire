@@ -28,6 +28,7 @@ import com.zto.fire.flink.task.FlinkSchedulerManager
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig
+import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.{Configuration, GlobalConfiguration}
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
@@ -45,6 +46,7 @@ import org.apache.hadoop.hive.conf.HiveConf
 trait BaseFlink extends BaseFire {
   protected[fire] var _conf: Configuration = _
   protected var hiveCatalog: HiveCatalog = _
+  protected var parameter: ParameterTool = _
 
   /**
    * 生命周期方法：初始化fire框架必要的信息
@@ -53,7 +55,7 @@ trait BaseFlink extends BaseFire {
   override private[fire] def boot: Unit = {
     PropUtils.load(FireFrameworkConf.FLINK_CONF_FILE)
     // flink引擎无需主动在父类中主动加载配置信息，配置加载在GlobalConfiguration中完成
-    if (OSUtils.isLocal) {
+    if (OSUtils.isLocal || FireFrameworkConf.localEnv) {
       this.loadConf
       PropUtils.load(FireFrameworkConf.userCommonConf: _*).loadJobConf(this.getClass.getName)
     }
@@ -112,9 +114,9 @@ trait BaseFlink extends BaseFire {
    * 生命周期方法：进行fire框架的资源回收
    * 注：不允许子类覆盖
    */
-  override protected[fire] final def shutdown(stopGracefully: Boolean = true): Unit = {
-    super.shutdown(stopGracefully)
-    System.exit(0)
+  override protected[fire] final def shutdown(stopGracefully: Boolean = true, inListener: Boolean = false): Unit = {
+    super.shutdown(stopGracefully, inListener)
+    if (FireFrameworkConf.shutdownExit) System.exit(0)
   }
 
   /**
@@ -159,7 +161,7 @@ trait BaseFlink extends BaseFire {
           ckConfig.setMinPauseBetweenCheckpoints(FireFlinkConf.streamCheckpointInterval)
         }
         // flink.stream.checkpoint.prefer.recovery  默认：false
-        ckConfig.setPreferCheckpointForRecovery(FireFlinkConf.streamCheckpointPreferRecovery)
+        // ckConfig.setPreferCheckpointForRecovery(FireFlinkConf.streamCheckpointPreferRecovery)
         // flink.stream.checkpoint.tolerable.failure.number 默认：0
         if (FireFlinkConf.streamCheckpointTolerableTailureNumber >= 0) ckConfig.setTolerableCheckpointFailureNumber(FireFlinkConf.streamCheckpointTolerableTailureNumber)
         // flink.stream.checkpoint.externalized
@@ -182,4 +184,18 @@ trait BaseFlink extends BaseFire {
    * spark任务：driver/id  flink任务：JobManager/container_xxx
    */
   override protected def resourceId: String = FlinkUtils.getResourceId
+
+  /**
+   * 初始化引擎上下文，如SparkSession、StreamExecutionEnvironment等
+   * 可根据实际情况，将配置参数放到同名的配置文件中进行差异化的初始化
+   */
+  override def main(args: Array[String]): Unit = {
+    try {
+      if (args != null && args.nonEmpty) this.parameter = ParameterTool.fromArgs(args)
+    } catch {
+      case _: Throwable => this.logger.error("ParameterTool 解析main方法参数失败，请注意参数的key必须以-或--开头")
+    } finally {
+      this.init(null, args)
+    }
+  }
 }

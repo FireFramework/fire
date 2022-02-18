@@ -17,14 +17,11 @@
 
 package com.zto.fire.examples.spark
 
-import com.zto.fire._
-import com.zto.fire.common.anno.{Config, Scheduled}
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ReflectionUtils, ThreadUtils}
+import com.zto.fire.common.anno.Config
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.BaseSparkCore
 import com.zto.fire.spark.anno.StreamingDuration
-import com.zto.fire.spark.sync.DistributeSyncManager
-import com.zto.fire.spark.util.SparkUtils
+import com.zto.fire._
 
 /**
  * 基于Fire进行Spark Streaming开发
@@ -38,56 +35,18 @@ import com.zto.fire.spark.util.SparkUtils
     |hive.cluster=test
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
-    |fire.analysis.arthas.enable=true
-    |fire.log.level.conf.org.apache.spark=warn
-    |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
-    |fire.analysis.arthas.container.enable=true
-    |fire.analysis.arthas.conf.arthas.username=spark
     |""")
 @StreamingDuration(20) // spark streaming的批次时间
-object Test extends BaseSparkStreaming {
+object Test extends BaseSparkCore {
 
-  /**
-   * fire2.1不再需要main方法，逻辑直接放到process中
-   */
   override def process: Unit = {
+    println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
+    this.sc.parallelize(1 to 10).foreachPartition(it => {
+      println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
+    })
+    Thread.currentThread().join()
     val dstream = this.fire.createKafkaDirectStream()
-    new Thread(() => {
-      while (true) {
-        printConf
-      }
-    }).start()
-
-    // 至少一次的语义保证，处理成功自动提交offset，处理失败会重试指定次数，如果仍失败则任务退出
-    dstream.foreachRDDAtLeastOnce(rdd => {
-      val studentRDD = rdd.map(t => {
-        printConf
-        JSONUtils.parseObject[Student](t.value())
-      }).repartition(2)
-      val insertSql = s"INSERT INTO spark_test(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-      println("kafka.brokers.name=>" + this.conf.getString("kafka.brokers.name"))
-      studentRDD.toDF().jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
-    })(reTry = 5, exitOnFailure = true)
-    this.spark.sql(
-      """
-        |SELECT
-        |  *
-        |FROM rtdb.zto_ssmx_bill_detail
-        |WHERE
-        |  order_create_date>= cast( date_add(current_date,-10) as timestamp )
-        |  AND order_create_date< cast( date_add(current_date,1) as timestamp )
-        |""".stripMargin).show(100000, false)
-    this.fire.start
-  }
-
-  def printConf: Unit = {
-    Thread.sleep(10000)
-    println("================================")
-    println("fire.thread.pool.size=" + this.conf.getInt("fire.thread.pool.size", -1))
-    println("fire.thread.pool.schedule.size=" + this.conf.getInt("fire.thread.pool.schedule.size", -1))
-    println("fire.acc.timer.max.size=" + this.conf.getInt("fire.acc.timer.max.size", -1))
-    println("fire.acc.log.max.size=" + this.conf.getInt("fire.acc.log.max.size", -1))
-    println("fire.jdbc.query.partitions=" + this.conf.getInt("fire.jdbc.query.partitions", -1))
-    println("================================")
+    dstream.print()
+    this.fire.start()
   }
 }

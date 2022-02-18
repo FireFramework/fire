@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.batch
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkBatch
 import com.zto.fire.flink.ext.function.FireMapFunction
 import org.apache.flink.api.scala._
@@ -27,6 +28,7 @@ import org.apache.flink.api.scala._
  *
  * @author ChengLong 2020年2月18日 13:53:06
  */
+@Config("flink.hive.cluster=test")
 object FlinkBrocastTest extends BaseFlinkBatch {
 
   override def process: Unit = {

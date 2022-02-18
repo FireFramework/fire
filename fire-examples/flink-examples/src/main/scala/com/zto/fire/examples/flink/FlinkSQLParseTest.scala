@@ -1,10 +1,15 @@
 package com.zto.fire.examples.flink
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkStreaming
 
+@Config(
+  """
+    |hive.cluster=test
+    |fire.rest.filter.enable=false
+    |""")
 object FlinkSQLParseTest extends BaseFlinkStreaming {
-
 
   override def process: Unit = {
     val select = "select t1.id,t1.name from ods.test t1 where t1.a > 1"

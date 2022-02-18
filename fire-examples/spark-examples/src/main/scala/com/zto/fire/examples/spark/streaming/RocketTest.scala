@@ -36,11 +36,17 @@ import com.zto.fire.spark.anno.StreamingDuration
     |rocket.group.id=fire   # 指定groupId
     |rocket.consumer.tag=fire
     |rocket.starting.offsets=latest
+    |
+    |rocket.brokers.name2=bigdata_test
+    |rocket.topics2=fire2
+    |rocket.group.id2=fire2   # 指定groupId
+    |rocket.consumer.tag2=fire
     |""")
 object RocketTest extends BaseSparkStreaming {
   override def process: Unit = {
     //读取RocketMQ消息流
     val dStream = this.fire.createRocketMqPullStream()
+    this.fire.createRocketMqPullStream(keyNum = 2).print()
     dStream.foreachRDDAtLeastOnce(rdd => {
       val studentRDD = rdd.map(message => new String(message.getBody)).map(t => JSONUtils.parseObject[Student](t)).repartition(2)
       val insertSql = s"INSERT INTO spark_test2(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"

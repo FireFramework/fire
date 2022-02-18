@@ -52,7 +52,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
     try {
       this.baseSpark.after()
     } finally {
-      this.baseSpark.shutdown()
+      this.baseSpark.shutdown(inListener = true)
     }
   }
 

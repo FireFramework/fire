@@ -40,7 +40,7 @@ import org.apache.flink.util.Collector
     |kafka.group.id=fire
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
-    |flink.stream.checkpoint.interval=10
+    |flink.stream.checkpoint.interval=60000
     |flink.state.choose.disk.policy=round_robin
     |state.external.zookeeper.url=10.7.69.238:2181
     |fire.analysis.arthas.enable=false
@@ -48,6 +48,8 @@ import org.apache.flink.util.Collector
     |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
     |fire.analysis.arthas.container.enable=false
     |fire.rest.filter.enable=true
+    |hive.cluster=test
+    |flink.sql.udf.fireUdf.enable=false
     |""")
 object Test extends BaseFlinkStreaming {
 
@@ -55,29 +57,23 @@ object Test extends BaseFlinkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
-    // val dstream = this.fire.createCollectionStream(Student.newStudentList())
+    this.fire.useHiveCatalog()
+    this.fire.sql("select * from dim.baseorganize limit 10").print()
+    /*println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
     val dstream = this.fire.createKafkaDirectStream().filter(json => JSONUtils.isJson(json)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(2)
     val value: KeyedStream[Student, JLong] = dstream.keyBy(t => t.getId)
-    this.printConf
 
     value.process(new KeyedProcessFunction[JLong, Student, String]() {
 
       override def processElement(value: Student, ctx: KeyedProcessFunction[_root_.com.zto.fire.JLong, Student, String]#Context, out: Collector[String]): Unit = {
-        printConf
         val state = this.getState[Long]("sum")
         state.update(state.value() + 1)
         println(s"当前key=${value.getId} sum=${state.value()}")
+        println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
         out.collect(value.getName)
       }
 
     }).print("name")
-    this.fire.start
-  }
-
-  def printConf: Unit = {
-    println("================================")
-    println("fire.thread.pool.size=" + this.conf.getInt("fire.thread.pool.size", -1))
-    println("fire.thread.pool.schedule.size=" + this.conf.getInt("fire.thread.pool.schedule.size", -1))
-    println("================================")
+    this.fire.start*/
   }
 }

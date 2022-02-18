@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.connector.rocketmq
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
 
@@ -28,11 +29,25 @@ import org.apache.flink.api.scala._
  * @since 2.0.0
  * @create 2021-5-13 14:26:24
  */
+@Config(
+  """
+    |stream.checkpoint.interval=60000
+    |default.parallelism=8
+    |# 消费rocketmq相关配置项
+    |rocket.brokers.name=bigdata_test
+    |rocket.topics=fire
+    |rocket.group.id=fire
+    |rocket.starting.offsets=latest
+    |rocket.consumer.tag=*
+    |""")
 object RocketTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     // 1. createRocketMqPullStreamWithTag()返回的是三元组，分别是：(tag, key, value)
-    this.fire.createRocketMqPullStreamWithTag().map(t => t._3).print()
+    this.fire.createRocketMqPullStreamWithTag().map(t => {
+      println("消息：" + t._3)
+      t._3
+    }).print()
 
     // 2. createRocketMqPullStreamWithKey()返回的是二元组，分别是：(key, value)
     // this.fire.createRocketMqPullStreamWithKey().map(t => t._2).print()

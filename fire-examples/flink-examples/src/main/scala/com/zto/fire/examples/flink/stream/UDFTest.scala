@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
@@ -31,6 +32,21 @@ import org.apache.flink.table.functions.ScalarFunction
  * @author ChengLong 2020年1月13日 10:36:39
  * @since 0.4.1
  */
+@Config(
+  """
+    |flink.kafka.brokers.name            =       bigdata_test
+    |flink.kafka.topics                  =       fire
+    |flink.kafka.group.id                =       fire
+    |flink.fire.rest.filter.enable       =       false
+    |
+    |# 开启fire udf注册功能（默认为关闭）
+    |flink.sql.udf.fireUdf.enable=true
+    |# 指定udf jar包的本地路径
+    |flink.sql.conf.pipeline.jars=file:///home/spark3/flink/udf.jar
+    |# 指定udf函数名为appendFire，对应的udf实现类为com.zto.fire.examples.flink.stream.Udf
+    |flink.sql.udf.conf.appendFire=com.zto.fire.examples.flink.stream.Udf
+    |flink.sql.udf.conf.fire=com.zto.fire.examples.flink.stream.Udf
+    |""")
 object UDFTest extends BaseFlinkStreaming {
   override def process: Unit = {
     val stream = this.fire.createKafkaDirectStream().filter(t => JSONUtils.isLegal(t)).map(JSONUtils.parseObject[Student](_)).setParallelism(3)

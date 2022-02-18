@@ -28,7 +28,7 @@ import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
  * @create: 2020-05-17 10:17
  */
 private[fire] object FireUtils extends Serializable with Logging {
-  private var isSplash = false
+  private[fire] var isSplash = false
 
   /**
    * 判断是否为spark引擎

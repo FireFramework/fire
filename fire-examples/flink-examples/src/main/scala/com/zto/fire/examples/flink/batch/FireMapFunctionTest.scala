@@ -19,8 +19,8 @@ package com.zto.fire.examples.flink.batch
 
 import java.lang
 import java.util.UUID
-
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkBatch
 import com.zto.fire.flink.ext.function.FireMapFunction
 import org.apache.flink.api.common.state.StateTtlConfig
@@ -36,6 +36,10 @@ import org.apache.flink.api.scala._
  *
  * @author ChengLong 2020-4-9 15:59:19
  */
+@Config(
+  """
+    |flink.fire.config_center.enable=false
+    |""")
 object FireMapFunctionTest extends BaseFlinkBatch {
   lazy val dataset = this.fire.createCollectionDataSet(1 to 10)
   lazy val dataset2 = this.fire.createCollectionDataSet(1 to 3)

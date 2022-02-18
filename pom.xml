@@ -22,24 +22,24 @@
     <groupId>com.zto.fire</groupId>
     <artifactId>fire-parent_2.12</artifactId>
     <packaging>pom</packaging>
-    <version>2.2.0-SNAPSHOT</version>
-    <name>fire-parent</name>
+    <version>2.2.1-SNAPSHOT</version>
+    <name>fire</name>
 
     <properties>
         <fire.version>${project.version}</fire.version>
         <spark.version>3.0.2</spark.version>
         <spark.major.version>3</spark.major.version>
-        <flink.version>1.12.2</flink.version>
-        <flink.major.version>1.12</flink.major.version>
+        <flink.version>1.14.3</flink.version>
+        <flink.major.version>1.14</flink.major.version>
         <hudi.version>0.9.0</hudi.version>
         <scala.binary.version>2.12</scala.binary.version>
-        <scala.minor.version>12</scala.minor.version>
+        <scala.minor.version>13</scala.minor.version>
         <maven.scope>provided</maven.scope>
-        <kudu.version>1.4.0</kudu.version>
         <kafka.version>0.11.0.2</kafka.version>
         <sparkjava.version>2.8.0</sparkjava.version>
         <hadoop.version>2.6.0-cdh5.12.1</hadoop.version>
         <hive.apache.version>1.1.0</hive.apache.version>
+        <hive.flink.version>1.2.1</hive.flink.version>
         <hive.version>1.1.0-cdh5.12.1</hive.version>
         <hive.group>org.apache.hive</hive.group>
         <hbase.version>1.2.0-cdh5.12.1</hbase.version>
@@ -47,7 +47,7 @@
         <jackson.version>2.10.5</jackson.version>
         <rocketmq.version>4.8.0</rocketmq.version>
         <rocketmq.external.version>0.0.3</rocketmq.external.version>
-        <mysql.version>5.1.30</mysql.version>
+        <mysql.version>5.1.49</mysql.version>
         <guava.version>18.0</guava.version>
         <curator.verrsion>2.6.0</curator.verrsion>
         <arthas.version>3.5.4</arthas.version>
@@ -65,6 +65,7 @@
         <module>fire-connectors</module>
         <module>fire-engines</module>
         <module>fire-enhance</module>
+        <module>fire-shell</module>
     </modules>
 
     <dependencies>

@@ -18,8 +18,10 @@
 
 package org.apache.flink.runtime.util;
 
+import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.util.OperatingSystem;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,38 +44,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * startup options, or the JVM version.
  */
 public class EnvironmentInformation {
+    @VisibleForTesting public static final String UNKNOWN_COMMIT_ID = "DecafC0ffeeD0d0F00d";
+    @VisibleForTesting public static final String UNKNOWN_COMMIT_ID_ABBREV = "DeadD0d0";
 
     private static final Logger LOG = LoggerFactory.getLogger(EnvironmentInformation.class);
 
     public static final String UNKNOWN = "<unknown>";
-
-    // TODO: ------------ start：二次开发代码 --------------- //
-    // 用于判断是否为JobManager
-    private static Boolean IS_JOBMANAGER = true;
-    private static final Map<String, String> settings = new ConcurrentHashMap<>();
-
-    /**
-     * 用不判断当前组件是否为JobManager
-     */
-    public static boolean isJobManager() {
-        return IS_JOBMANAGER;
-    }
-
-    /**
-     * 获取配置信息
-     */
-    public static Map<String, String> getSettings() {
-        return settings;
-    }
-
-    /**
-     * 设置配置信息
-     */
-    public static void setSetting(String key, String value) {
-        if (!settings.containsKey(key)) settings.put(key, value);
-    }
-
-    // TODO: ------------ end：二次开发代码 ----------------- //
 
     /**
      * Returns the version of the code as String.
@@ -142,8 +118,6 @@ public class EnvironmentInformation {
     private static final class Versions {
         private static final Instant DEFAULT_TIME_INSTANT = Instant.EPOCH;
         private static final String DEFAULT_TIME_STRING = "1970-01-01T00:00:00+0000";
-        private static final String UNKNOWN_COMMIT_ID = "DecafC0ffeeD0d0F00d";
-        private static final String UNKNOWN_COMMIT_ID_ABBREV = "DeadD0d0";
         private String projectVersion = UNKNOWN;
         private String scalaVersion = UNKNOWN;
         private Instant gitBuildTime = DEFAULT_TIME_INSTANT;
@@ -410,6 +384,31 @@ public class EnvironmentInformation {
     }
 
     // TODO: ------------ start：二次开发代码 ---------------- //
+    // 用于判断是否为JobManager
+    private static Boolean IS_JOBMANAGER = true;
+    private static final Map<String, String> settings = new ConcurrentHashMap<>();
+
+    /**
+     * 用不判断当前组件是否为JobManager
+     */
+    public static boolean isJobManager() {
+        return IS_JOBMANAGER;
+    }
+
+    /**
+     * 获取配置信息
+     */
+    public static Map<String, String> getSettings() {
+        return settings;
+    }
+
+    /**
+     * 设置配置信息
+     */
+    public static void setSetting(String key, String value) {
+        if (!settings.containsKey(key)) settings.put(key, value);
+    }
+
     /**
      * 解析命令并判断是否为JobManager
      */
@@ -445,6 +444,7 @@ public class EnvironmentInformation {
         // TODO: ------------ start：二次开发代码 --------------- //
         parseCommand(commandLineArgs);
         // TODO: ------------ end：二次开发代码 ---------------- //
+
         if (log.isInfoEnabled()) {
             RevisionInformation rev = getRevisionInformation();
             String version = getVersion();

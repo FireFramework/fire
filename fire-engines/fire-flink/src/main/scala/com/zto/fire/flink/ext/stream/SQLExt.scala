@@ -50,7 +50,7 @@ class SQLExt(sql: String) extends Logging {
     // 如果SQL中已有with表达式，并且未开启with替换功能，则直接返回传入的sql
     if (withMatcher.isDefined && !FireFlinkConf.sqlWithReplaceModeEnable) {
       logger.warn(s"sql中已经包含with表达式，请移除后再使用动态with替换功能，或将[${FireFlinkConf.FLINK_SQL_WITH_REPLACE_MODE_ENABLE}]置为true进行强制覆盖，当前with表达式：\n${withMatcher.get}")
-      if (FireFlinkConf.sqlLogEnable) logger.info(s"完整SQL语句：$sql")
+      if (FireFlinkConf.sqlLogEnable) logger.debug(s"完整SQL语句：$sql")
       return sql
     }
 

@@ -18,9 +18,17 @@
 package com.zto.fire.examples.spark.jdbc
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.spark.BaseSparkStreaming
 
+@Config(
+  """
+    |spark.kafka.brokers.name           =       bigdata_test
+    |spark.kafka.topics                 =       fire
+    |spark.kafka.group.id               =       fire
+    |spark.fire.rest.filter.enable      =       false
+    |""")
 object JdbcStreamingTest extends BaseSparkStreaming {
   val tableName = "spark_test"
 
@@ -36,7 +44,8 @@ object JdbcStreamingTest extends BaseSparkStreaming {
     dstream.repartition(5).foreachRDD(rdd => {
       rdd.foreachPartition(it => {
         val sql = s"select id from $tableName limit 1"
-        JdbcConnector.executeQuery(sql, callback = _ => 1)
+        val retVal = JdbcConnector.executeQuery(sql, callback = _ => 1)
+        logInfo("查询结果：" + retVal)
       })
     })
 

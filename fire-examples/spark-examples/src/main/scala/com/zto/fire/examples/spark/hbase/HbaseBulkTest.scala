@@ -18,6 +18,7 @@
 package com.zto.fire.examples.spark.hbase
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.BaseSparkCore
@@ -30,6 +31,14 @@ import org.apache.spark.sql.{Encoders, Row}
   *
   * @author ChengLong 2019-5-18 09:20:52
   */
+@Config(
+  """
+    |# 用于区分不同的hbase集群: batch/streaming/old
+    |spark.hbase.cluster                =       test
+    |spark.hbase.cluster2               =       test
+    |spark.fire.hbase.scan.repartitions =       3
+    |spark.fire.hbase.storage.level     =       DISK_ONLY
+    |""")
 object HBaseBulkTest extends BaseSparkCore {
   private val tableName3 = "fire_test_3"
   private val tableName5 = "fire_test_5"

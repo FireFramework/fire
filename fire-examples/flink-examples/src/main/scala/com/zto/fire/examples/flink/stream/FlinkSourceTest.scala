@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
@@ -28,6 +29,7 @@ import org.apache.flink.streaming.api.windowing.time.Time
  * 自定义source
  * @author ChengLong 2020-4-7 14:30:08
  */
+@Config("flink.hive.cluster=test")
 object FlinkSourceTest extends BaseFlinkStreaming {
 
   override def process: Unit = {

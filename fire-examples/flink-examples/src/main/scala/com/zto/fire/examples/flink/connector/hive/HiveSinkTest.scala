@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.connector.hive
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkStreaming
 
 /**
@@ -60,7 +61,7 @@ object HiveSinkTest extends BaseFlinkStreaming {
         |	after.createTime as create_time
         |from t_student t
         |""".stripMargin)
-    this.tableEnv.useHiveCatalog()
+    this.fire.useHiveCatalog()
     println(this.tableEnv.getCurrentCatalog)
     this.fire.sql(
       """

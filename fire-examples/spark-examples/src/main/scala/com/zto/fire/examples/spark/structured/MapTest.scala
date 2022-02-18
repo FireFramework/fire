@@ -18,6 +18,7 @@
 package com.zto.fire.examples.spark.structured
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseStructuredStreaming
 import org.apache.spark.sql.Encoders
@@ -27,6 +28,17 @@ import com.zto.fire.spark.util.SparkUtils
  * 对结构化流执行map、mapPartition操作
  * @author ChengLong 2020年1月3日 18:00:59
  */
+@Config(
+  """
+    |spark.hive.cluster=test
+    |spark.hbase.cluster=test
+    |# 非必须配置项：默认就是这个地址
+    |spark.kafka.brokers.name            =       test
+    |# 必须配置项：kafka的topic列表，以逗号分隔
+    |spark.kafka.topics                  =       fire
+    |# 非必须配置项：默认为appName
+    |spark.kafka.group.id                =       fire
+    |""")
 object MapTest extends BaseStructuredStreaming {
 
   override def process: Unit = {

@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.acc
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.ext.function.FireMapFunction
 import org.apache.flink.api.scala._
@@ -29,6 +30,15 @@ import org.apache.flink.streaming.api.scala.DataStream
  * @author ChengLong 2020年1月11日 14:08:56
  * @since 0.4.1
  */
+@Config(
+  """
+    |flink.kafka.brokers.name            =       test
+    |# 必须配置项：kafka的topic列表，以逗号分隔
+    |flink.kafka.topics                  =       flink
+    |flink.kafka.group.id                =       fire
+    |flink.kafka.enable.auto.commit      =       true
+    |flink.max.parallelism               =       8
+    |""")
 object FlinkAccTest extends BaseFlinkStreaming {
 
   /**

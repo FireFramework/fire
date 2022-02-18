@@ -19,8 +19,7 @@ package com.zto.fire.flink.ext.batch
 
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import org.apache.flink.api.scala.DataSet
-import org.apache.flink.table.api.Table
-import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
+import org.apache.flink.table.api.{Table, TableEnvironment}
 
 /**
  * 用于对Flink DataSet的API库扩展
@@ -29,7 +28,7 @@ import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
  * @since 0.4.1
  */
 class DataSetExt[T](dataSet: DataSet[T]){
-  lazy val tableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[BatchTableEnvironment]
+  lazy val tableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[TableEnvironment]
 
   /**
    * 将DataSet注册为临时表
@@ -38,7 +37,7 @@ class DataSetExt[T](dataSet: DataSet[T]){
    * 临时表的表名
    */
   def createOrReplaceTempView(tableName: String): Table = {
-    val table = this.tableEnv.fromDataSet(this.dataSet)
+    val table = this.tableEnv.fromValues(this.dataSet)
     this.tableEnv.createTemporaryView(tableName, table)
     table
   }
@@ -54,7 +53,7 @@ class DataSetExt[T](dataSet: DataSet[T]){
    * 将DataSet转为Table
    */
   def toTable: Table = {
-    this.tableEnv.fromDataSet(this.dataSet)
+    this.tableEnv.fromValues(this.dataSet)
   }
 
 
