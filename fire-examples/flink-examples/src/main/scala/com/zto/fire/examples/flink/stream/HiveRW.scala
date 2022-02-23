@@ -15,18 +15,11 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.flink
-
+package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.common.util.JSONUtils
-import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
-import org.apache.flink.api.scala._
-import org.apache.flink.streaming.api.functions.KeyedProcessFunction
-import org.apache.flink.streaming.api.scala.KeyedStream
-import org.apache.flink.util.Collector
 
 /**
  * 基于Fire进行Flink Streaming开发
@@ -38,20 +31,9 @@ import org.apache.flink.util.Collector
     |kafka.brokers.name = bigdata_test
     |kafka.topics = fire
     |kafka.group.id=fire
-    |fire.acc.timer.max.size=30
-    |fire.acc.log.max.size=20
-    |flink.stream.checkpoint.interval=60000
-    |flink.state.choose.disk.policy=round_robin
-    |state.external.zookeeper.url=10.7.69.238:2181
-    |fire.analysis.arthas.enable=false
-    |fire.log.level.conf.org.apache.flink=warn
-    |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
-    |fire.analysis.arthas.container.enable=false
-    |fire.rest.filter.enable=true
     |hive.cluster=test
-    |flink.sql.udf.fireUdf.enable=false
     |""")
-object Test extends BaseFlinkStreaming {
+object HiveRW extends BaseFlinkStreaming {
 
   /**
    * fire2.1不再需要main方法，逻辑直接放到process中
