@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>fire-examples_2.12</artifactId>
     <packaging>pom</packaging>
-    <name>fire-examples</name>
+    <name>Fire : Examples : </name>
 
     <modules>
         <module>spark-examples</module>

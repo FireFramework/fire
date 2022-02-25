@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>rocketmq-spark_${spark.reference}</artifactId>
     <packaging>jar</packaging>
-    <name>rocketmq-spark</name>
+    <name>Fire : Enhance : RocketMQ : Spark </name>
 
     <parent>
         <groupId>com.zto.fire</groupId>

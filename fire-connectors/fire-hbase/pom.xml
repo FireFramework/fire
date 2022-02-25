@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>fire-hbase_${scala.binary.version}</artifactId>
     <packaging>jar</packaging>
-    <name>fire-hbase</name>
+    <name>Fire : Connectors : HBase </name>
 
     <parent>
         <groupId>com.zto.fire</groupId>

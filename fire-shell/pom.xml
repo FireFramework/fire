@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>fire-shell_${scala.binary.version}</artifactId>
     <packaging>pom</packaging>
-    <name>fire-shell</name>
+    <name>Fire : Shell : </name>
 
     <modules>
         <module>spark-shell</module>

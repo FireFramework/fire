@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>fire-core_${scala.binary.version}</artifactId>
     <packaging>jar</packaging>
-    <name>fire-core</name>
+    <name>Fire : Core </name>
 
     <parent>
         <groupId>com.zto.fire</groupId>

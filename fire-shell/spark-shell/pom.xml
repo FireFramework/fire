@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>spark-shell_${scala.binary.version}</artifactId>
-    <name>spark-shell</name>
+    <name>Fire : Shell : Spark </name>
 
     <parent>
         <artifactId>fire-shell_${scala.binary.version}</artifactId>

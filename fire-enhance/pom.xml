@@ -20,7 +20,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>fire-enhance_2.12</artifactId>
   <packaging>pom</packaging>
-  <name>fire-enhance</name>
+  <name>Fire : Enhance : </name>
 
   <parent>
     <groupId>com.zto.fire</groupId>

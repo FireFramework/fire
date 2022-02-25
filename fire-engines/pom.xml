@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>fire-engines_2.12</artifactId>
     <packaging>pom</packaging>
-    <name>fire-engines</name>
+    <name>Fire : Engines : </name>
 
     <parent>
         <groupId>com.zto.fire</groupId>

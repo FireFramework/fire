@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flink-examples_${flink.reference}</artifactId>
     <packaging>jar</packaging>
-    <name>flink-examples</name>
+    <name>Fire : Examples : Flink </name>
 
     <parent>
         <groupId>com.zto.fire</groupId>
