@@ -15,14 +15,15 @@
  * limitations under the License.
  */
 
-package com.zto.fire.spark
+package com.zto.fire.spark.listener
 
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.Logging
+import com.zto.fire.spark.BaseSpark
 import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.conf.FireSparkConf
-import com.zto.fire.spark.sync.{DistributeSyncManager, SyncSparkEngineConf}
+import com.zto.fire.spark.sync.SyncSparkEngineConf
 import org.apache.spark.scheduler._
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
@@ -31,7 +32,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
   * Spark事件监听器桥
   * Created by ChengLong on 2018-05-19.
   */
-class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging {
+private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging {
   private[this] val module = "listener"
   private[this] val needRegister = new AtomicBoolean(false)
   // 用于统计stage失败的次数
@@ -139,6 +140,7 @@ class BaseSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging
     } else {
       AccumulatorManager.addMultiTimer(module, "onStageCompleted", "onStageCompleted", "", "ERROR", "", 1)
       this.logger.error(s"stage failed. reason: " + stageCompleted.stageInfo.failureReason, this.module)
+      AccumulatorManager.addLog(stageCompleted.stageInfo.failureReason.getOrElse(""))
 
       // spark.fire.stage.maxFailures参数用于控制stage允许的最大失败次数，小于等于零表示不开启，默认-1
       // 当配置为2时表示最多允许失败2个stage，当第三个stage失败时SparkSession退出

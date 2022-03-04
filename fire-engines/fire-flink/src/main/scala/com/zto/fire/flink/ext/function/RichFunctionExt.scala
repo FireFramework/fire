@@ -6,6 +6,7 @@ import org.apache.flink.api.common.functions.{AggregateFunction, ReduceFunction,
 import org.apache.flink.api.common.state.{AggregatingState, AggregatingStateDescriptor, ListState, ListStateDescriptor, MapState, MapStateDescriptor, ReducingState, ReducingStateDescriptor, State, StateTtlConfig, ValueState, ValueStateDescriptor}
 import org.apache.flink.api.common.time.Time
 
+import java.io.File
 import scala.reflect.ClassTag
 
 /**
@@ -23,6 +24,51 @@ class RichFunctionExt(richFunction: RichFunction) {
     .setUpdateType(StateTtlConfig.UpdateType.OnReadAndWrite)
     .setStateVisibility(StateTtlConfig.StateVisibility.NeverReturnExpired)
     .build()
+
+  /**
+   * 根据name获取广播变量
+   *
+   * @param name 广播变量名称
+   * @tparam T
+   * 广播变量的类型
+   * @return
+   * 广播变量引用
+   */
+  def getBroadcastVariable[T](name: String): Seq[T] = {
+    requireNonEmpty(name)("广播变量名称不能为空")
+    this.runtimeContext.getBroadcastVariable[T](name)
+  }
+
+  /**
+   * 将值添加到指定的累加器中
+   *
+   * @param name
+   * 累加器名称
+   * @param value
+   * 待累加的值
+   * @tparam T
+   * 累加值的类型（Int/Long/Double）
+   */
+  def addCounter[T: ClassTag](name: String, value: T): Unit = {
+    requireNonEmpty(name, value)
+    getParamType[T] match {
+      case valueType if valueType eq classOf[Int] => this.runtimeContext.getIntCounter(name).add(value.asInstanceOf[Int])
+      case valueType if valueType eq classOf[Long] => this.runtimeContext.getLongCounter(name).add(value.asInstanceOf[Long])
+      case valueType if valueType eq classOf[Double] => this.runtimeContext.getDoubleCounter(name).add(value.asInstanceOf[Double])
+    }
+  }
+
+
+  /**
+   * 根据文件名获取分布式缓存文件
+   *
+   * @param fileName 缓存文件名称
+   * @return 被缓存的文件
+   */
+  def DistributedCache(fileName: String): File = {
+    requireNonEmpty(fileName)("分布式缓存文件名称不能为空！")
+    this.runtimeContext.getDistributedCache.getFile(fileName)
+  }
 
   /**
    * 根据name获取ValueState
