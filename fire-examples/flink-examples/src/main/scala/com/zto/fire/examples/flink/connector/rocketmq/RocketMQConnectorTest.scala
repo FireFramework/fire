@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkStreaming
 
 /**
- * Flink流式计算任务模板
+ * RocketMQ connector
  *
  * @author ChengLong
  * @since 1.0.0
