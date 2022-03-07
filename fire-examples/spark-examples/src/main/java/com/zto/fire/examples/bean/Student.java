@@ -22,11 +22,11 @@ import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.JSONUtils;
 import com.zto.fire.hbase.anno.HConfig;
 import com.zto.fire.hbase.bean.HBaseBaseBean;
+import com.zto.fire.spark.bean.GenerateBean;
+import com.zto.fire.spark.connector.DataGenReceiver;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 对应HBase表的JavaBean
@@ -35,7 +35,7 @@ import java.util.Objects;
  */
 // @HConfig(multiVersion = true)
 // @HConfig(nullable = true, multiVersion = true, versions = 3)
-public class Student extends HBaseBaseBean<Student> {
+public class Student extends HBaseBaseBean<Student> implements GenerateBean<Student> {
     private Long id;
     private String name;
     private Integer age;
@@ -144,6 +144,11 @@ public class Student extends HBaseBaseBean<Student> {
     @Override
     public String toString() {
         return JSONUtils.toJSONString(this);
+    }
+
+    @Override
+    public List<Student> generate() {
+        return newStudentList();
     }
 
     public static List<Student> newStudentList() {

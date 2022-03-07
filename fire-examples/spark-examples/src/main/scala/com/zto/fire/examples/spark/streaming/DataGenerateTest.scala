@@ -15,37 +15,33 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.spark
+package com.zto.fire.examples.spark.streaming
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.StreamingDuration
-import com.zto.fire.spark.connector.DataGenReceiver
+import com.zto.fire.spark.connector.{BeanGenReceiver, DataGenReceiver}
 
 /**
- * 基于Fire进行Spark Streaming开发
+ * 基于DataGenReceiver来随机生成测试数据集
+ *
+ * @author ChengLong 2022-03-07 15:35:55
+ * @since 2.2.1
  */
-@Config(
-  """
-    |# 直接从配置文件中拷贝过来即可
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire2
-    |hive.cluster=test
-    |fire.acc.timer.max.size=30
-    |fire.acc.log.max.size=20
-    |""")
-@StreamingDuration(20) // spark streaming的批次时间
-object Test extends BaseSparkStreaming {
+@StreamingDuration(20)
+object DataGenerateTest extends BaseSparkStreaming {
 
   override def process: Unit = {
-    //val dstream = this.ssc.receiverStream(new BeanDataGenReceiver[Student](1000))
-    val dstream = this.ssc.receiverStream(new DataGenReceiver[Student](10, generateFun = {
-      Student.newStudentList()
-    }))
-    dstream.print()
+    // 方式一、在JavaBean中实现generate方法，在该方法中定义对象生成的规则
+    val dstream = this.fire.createBeanGenStream[Student](10)
+    dstream.print(1)
+
+    // 方式二、通过实现generateFun函数来定义数据生成规则
+    val dstream2 = this.fire.createDataGenStream(10, generateFun = Student.newStudentList())
+    dstream2.print(1)
+
     this.fire.start()
   }
 }
