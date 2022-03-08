@@ -21,12 +21,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>spark-examples_${spark.reference}</artifactId>
     <packaging>jar</packaging>
-    <name>spark-examples</name>
+    <name>Fire : Examples : Spark </name>
 
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-examples_2.12</artifactId>
-        <version>2.2.1-SNAPSHOT</version>
+        <version>2.2.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 

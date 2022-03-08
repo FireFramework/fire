@@ -64,6 +64,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
    */
   @Rest("/system/arthas")
   override def arthas(request: Request, response: Response): AnyRef = {
+    this.logger.info(s"Ip address ${request.ip()} request /system/arthas")
     val retVal = super.arthas(request, response)
     val json = request.body()
     if (JSONUtils.getValue[Boolean](json, "distribute", false)) {
@@ -87,20 +88,20 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
    */
   @Rest("/system/setConf")
   def setConf(request: Request, response: Response): AnyRef = {
-    val msg = new ResultMsg
     val json = request.body
     try {
+      this.logger.info(s"Ip address ${request.ip()} request /system/setConf")
       this.logger.info(s"请求fire更新配置信息：$json")
       val confMap = JSONUtils.parseObject[JHashMap[String, String]](json)
       if (ValueUtils.noEmpty(confMap)) {
         PropUtils.setProperties(confMap)
         this.distributeJson = JSONUtils.toJSONString(new DistributeBean(DistributeModule.CONF, json))
       }
-      msg.buildSuccess("配置信息已更新", ErrorCode.SUCCESS.toString)
+      ResultMsg.buildSuccess("配置信息已更新", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
         this.logger.error(s"[setConf] 设置配置信息失败：json=$json", e)
-        msg.buildError("设置配置信息失败", ErrorCode.ERROR)
+        ResultMsg.buildError("设置配置信息失败", ErrorCode.ERROR)
       }
     }
   }
@@ -111,9 +112,9 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
    */
   @Rest("/system/checkpoint")
   def checkpoint(request: Request, response: Response): AnyRef = {
-    val msg = new ResultMsg
     val json = request.body
     try {
+      this.logger.info(s"Ip address ${request.ip()} request /system/checkpoint")
       val checkpointParams = JSONUtils.parseObject[CheckpointParams](json)
 
       val clazz = classOf[CheckpointCoordinator]
@@ -136,11 +137,11 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
       }
 
       this.logger.info(s"[checkpoint] 执行checkpoint热修改成功：interval=${checkpointParams.getInterval} timeout=${checkpointParams.getTimeout} minPauseBetween=${checkpointParams.getMinPauseBetween} json=$json", "rest")
-      msg.buildSuccess(s"执行checkpoint热修改成功：interval=${checkpointParams.getInterval} timeout=${checkpointParams.getTimeout} minPauseBetween=${checkpointParams.getMinPauseBetween}", ErrorCode.SUCCESS.toString)
+      ResultMsg.buildSuccess(s"执行checkpoint热修改成功：interval=${checkpointParams.getInterval} timeout=${checkpointParams.getTimeout} minPauseBetween=${checkpointParams.getMinPauseBetween}", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
         this.logger.error(s"[checkpoint] 执行checkpoint热修改失败：json=$json", e)
-        msg.buildError("执行checkpoint热修改失败", ErrorCode.ERROR)
+        ResultMsg.buildError("执行checkpoint热修改失败", ErrorCode.ERROR)
       }
     }
   }
@@ -150,17 +151,17 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
    */
   @Rest("/system/kill")
   def kill(request: Request, response: Response): AnyRef = {
-    val msg = new ResultMsg
     val json = request.body
     try {
+      this.logger.info(s"Ip address ${request.ip()} request /system/kill")
       // 参数校验与参数获取
       this.baseFlink.shutdown()
       this.logger.info(s"[kill] kill任务成功：json=$json")
-      msg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)
+      ResultMsg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
         this.logger.error(s"[kill] 执行kill任务失败：json=$json", e)
-        msg.buildError("执行kill任务失败", ErrorCode.ERROR)
+        ResultMsg.buildError("执行kill任务失败", ErrorCode.ERROR)
       }
     }
   }
@@ -171,16 +172,16 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
    */
   @Rest(value = "/system/sql", method = "post")
   def sql(request: Request, response: Response): AnyRef = {
-    val msg = new ResultMsg
     val json = request.body
     try {
+      this.logger.info(s"Ip address ${request.ip()} request /system/sql")
       // 参数校验与参数获取
       val sql = JSONUtils.getValue(json, "sql", "")
 
       // sql合法性检查
       if (StringUtils.isBlank(sql) || !sql.toLowerCase.trim.startsWith("select ")) {
         this.logger.warn(s"[sql] sql不合法，在线调试功能只支持查询操作：json=$json")
-        return msg.buildError(s"sql不合法，在线调试功能只支持查询操作", ErrorCode.ERROR)
+        return ResultMsg.buildError(s"sql不合法，在线调试功能只支持查询操作", ErrorCode.ERROR)
       }
 
       if (this.baseFlink == null) {
@@ -192,7 +193,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
     } catch {
       case e: Exception => {
         this.logger.error(s"[sql] 执行用户sql失败：json=$json", e)
-        msg.buildError("执行用户sql失败，异常堆栈：" + ExceptionBus.stackTrace(e), ErrorCode.ERROR)
+        ResultMsg.buildError("执行用户sql失败，异常堆栈：" + ExceptionBus.stackTrace(e), ErrorCode.ERROR)
       }
     }
   }

@@ -20,7 +20,7 @@ package com.zto.fire.examples.flink.batch
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkBatch
-import com.zto.fire.flink.ext.function.FireMapFunction
+import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.scala._
 
 /**
@@ -36,7 +36,7 @@ object FlinkBrocastTest extends BaseFlinkBatch {
     // flink中可以广播的数据必须是Dataset
     val brocastDS = this.fire.createCollectionDataSet(Seq("a", "b", "c", "d", "e"))
 
-    ds.map(new FireMapFunction[Int, String] {
+    ds.map(new RichMapFunction[Int, String] {
       // 获取广播变量中的值给当前成员变量（若不想在open方法中获取值，请使用lazy关键字）
       lazy val broadcastSet: Seq[String] = this.getBroadcastVariable[String]("brocastDS")
 

@@ -24,6 +24,7 @@ import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.conf.FireSparkConf
+import com.zto.fire.spark.listener.FireSparkListener
 import com.zto.fire.spark.rest.SparkSystemRestful
 import com.zto.fire.spark.sql.SparkSqlExtensionsParser
 import com.zto.fire.spark.task.{SparkInternalTask, SparkSchedulerManager}
@@ -166,7 +167,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     FireHDFSConf.hdfsHAConf.foreach(t => this.sc.hadoopConfiguration.set(t._1, t._2))
     this.catalog = this._spark.catalog
     this.sc.setLogLevel(FireSparkConf.logLevel)
-    this.listener = new BaseSparkListener(this)
+    this.listener = new FireSparkListener(this)
     this.sc.addSparkListener(listener)
     // this.initLogging(this.className)
     this.hiveContext = this._spark.sqlContext

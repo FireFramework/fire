@@ -290,7 +290,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * @return
    * table对象
    */
-  def sqlQuery(sql: String, keyNum: Int = 0): Table = {
+  def sqlQuery(sql: String, keyNum: Int = 1): Table = {
     require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
     FlinkSqlParser.sqlParse(sql)
     this.tableEnv.sqlQuery(sql.with$(keyNum))
@@ -303,7 +303,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * @param keyNum
    * 指定sql的with列表对应的配置文件中key的值，如果为<0则表示不从配置文件中读取with表达式
    */
-  def sql(sql: String, keyNum: Int = 0): TableResult = {
+  def sql(sql: String, keyNum: Int = 1): TableResult = {
     require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
     FlinkSqlParser.sqlParse(sql)
     this.tableEnv.executeSql(sql.with$(keyNum))

@@ -117,7 +117,7 @@ private[fire] class RestServerManager extends Logging {
       Spark.before((request: Request, response: Response) => {
         if (FireFrameworkConf.restFilter) {
           val msg = checkAuth(request)
-          if (msg.getCode != null && ErrorCode.UNAUTHORIZED == msg.getCode) {
+          if (msg != null && msg.getCode != null && ErrorCode.UNAUTHORIZED == msg.getCode) {
             Spark.halt(401, msg.toString)
           }
         }
@@ -129,20 +129,19 @@ private[fire] class RestServerManager extends Logging {
    * 通过header进行用户权限校验
    */
   private[fire] def checkAuth(request: Request): ResultMsg = {
-    val msg = new ResultMsg
     val auth = request.headers("Authorization")
     try {
       if (!EncryptUtils.checkAuth(auth, this.mainClassName)) {
         this.logger.warn(s"非法请求：用户身份校验失败！ip=${request.ip()} auth=$auth")
-        msg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
+        ResultMsg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
       }
     } catch {
       case e: Exception => {
         this.logger.error(s"非法请求：请检查请求参数！ip=${request.ip()} auth=$auth", e)
-        msg.buildError(s"非法请求：请检查请求参数！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
+        ResultMsg.buildError(s"非法请求：请检查请求参数！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
       }
     }
-    msg
+    null
   }
 }
 

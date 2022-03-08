@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.zto.fire.spark
+package com.zto.fire.spark.listener
 
 import org.apache.spark.sql.streaming.StreamingQueryListener
 
@@ -25,7 +25,7 @@ import org.apache.spark.sql.streaming.StreamingQueryListener
  * @author ChengLong 2019年12月24日 16:26:33
  * @since 0.4.1
  */
-class BaseStreamingQueryListener extends StreamingQueryListener {
+private[fire] class FireStreamingQueryListener extends StreamingQueryListener {
   @volatile protected var latestBatchId = -1L
 
   override def onQueryStarted(event: StreamingQueryListener.QueryStartedEvent): Unit = {

@@ -21,12 +21,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flink-examples_${flink.reference}</artifactId>
     <packaging>jar</packaging>
-    <name>flink-examples</name>
+    <name>Fire : Examples : Flink </name>
 
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-examples_2.12</artifactId>
-        <version>2.2.1-SNAPSHOT</version>
+        <version>2.2.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 

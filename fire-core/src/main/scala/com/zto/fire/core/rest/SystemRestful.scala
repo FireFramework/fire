@@ -52,15 +52,15 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
    */
   @Rest("/system/datasource")
   protected def datasource(request: Request, response: Response): AnyRef = {
-    val msg = new ResultMsg
     try {
+      this.logger.info(s"Ip address ${request.ip()} request /system/datasource")
       val dataSource = JSONUtils.toJSONString(DatasourceManager.manager.datasourceMap)
       this.logger.info(s"[DataSource] 获取数据源列表成功：counter=$dataSource")
-      msg.buildSuccess(dataSource, "获取数据源列表成功")
+      ResultMsg.buildSuccess(dataSource, "获取数据源列表成功")
     } catch {
       case e: Exception => {
         this.logger.error(s"[log] 获取数据源列表失败", e)
-        msg.buildError("获取数据源列表失败", ErrorCode.ERROR)
+        ResultMsg.buildError("获取数据源列表失败", ErrorCode.ERROR)
       }
     }
   }
@@ -71,18 +71,18 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
    */
   @Rest("/system/arthas")
   protected def arthas(request: Request, response: Response): AnyRef = {
-    val msg = new ResultMsg
+    val json = request.body
     try {
-      val json = request.body
+      this.logger.info(s"Ip address ${request.ip()} request /system/arthas")
       this.logger.info(s"请求执行Arthas命令：$json")
       val arthasParam = JSONUtils.parseObject[ArthasParam](json)
       ArthasDynamicLauncher.command(arthasParam)
       this.logger.info(s"[arthas] Arthas命令${arthasParam.getCommand}执行成功！")
-      msg.buildSuccess("操作成功", "调用arthas接口成功！")
+      ResultMsg.buildSuccess("操作成功", "调用arthas接口成功！")
     } catch {
       case e: Exception => {
         this.logger.error(s"[arthas] 调用arthas接口失败，参数不合法，请检查", e)
-        msg.buildError("调用arthas接口失败，参数不合法，请检查", ErrorCode.ERROR)
+        ResultMsg.buildError("调用arthas接口失败，参数不合法，请检查", ErrorCode.ERROR)
       }
     }
   }

@@ -22,8 +22,8 @@
     <groupId>com.zto.fire</groupId>
     <artifactId>fire-parent_2.12</artifactId>
     <packaging>pom</packaging>
-    <version>2.2.1-SNAPSHOT</version>
-    <name>fire</name>
+    <version>2.2.2-SNAPSHOT</version>
+    <name>Fire : </name>
 
     <properties>
         <fire.version>${project.version}</fire.version>

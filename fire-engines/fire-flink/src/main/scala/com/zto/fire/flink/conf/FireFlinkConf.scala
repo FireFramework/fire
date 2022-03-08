@@ -75,7 +75,7 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_SQL_WITH_PREFIX = "flink.sql.with."
 
   lazy val defaultCatalogName = PropUtils.getString(this.FLINK_SQL_DEFAULT_CATALOG_NAME, "default_catalog")
-  lazy val sqlWithReplaceModeEnable = PropUtils.getBoolean(this.FLINK_SQL_WITH_REPLACE_MODE_ENABLE, false)
+  lazy val sqlWithReplaceModeEnable = PropUtils.getBoolean(this.FLINK_SQL_WITH_REPLACE_MODE_ENABLE, true)
   lazy val autoGenerateUidEnable = PropUtils.getBoolean(this.FLINK_AUTO_GENERATE_UID_ENABLE, true)
   lazy val autoTypeRegistrationEnable = PropUtils.getBoolean(this.FLINK_AUTO_TYPE_REGISTRATION_ENABLE, true)
   lazy val forceAvroEnable = PropUtils.getBoolean(this.FLINK_FORCE_AVRO_ENABLE, false)

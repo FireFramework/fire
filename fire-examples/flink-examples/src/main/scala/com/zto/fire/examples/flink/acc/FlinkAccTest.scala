@@ -20,7 +20,7 @@ package com.zto.fire.examples.flink.acc
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkStreaming
-import com.zto.fire.flink.ext.function.FireMapFunction
+import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.DataStream
 
@@ -58,7 +58,7 @@ object FlinkAccTest extends BaseFlinkStreaming {
     // FireMapFunction功能较RichMapFunction等更为强大，推荐使用
     // 创建FireMapFunction类型的内部类，支持Map、MapPartition、FlatMap等操作
     // 在不同的map函数中进行累加全局有效
-    dstream.map(new FireMapFunction[Int, Int]() {
+    dstream.map(new RichMapFunction[Int, Int]() {
       override def map(value: Int): Int = {
         // 多值计数器根据累加器的值类型区分不同的计数器，比如传参为Double类型，则累加至DoubleCounter中
         this.addCounter("LongCount", value.longValue())
