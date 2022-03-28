@@ -34,7 +34,7 @@ object StateCleaner extends StateCleanerUtils {
   // 用于存放遍历的checkpoint文件，避免二次遍历导致漏分析的文件被标记为删除
   override protected val files = ListBuffer[LocatedFileStatus]()
   // checkpoint元数据的过期时间，AccessTime超过该时间的将会被清理
-  override protected val checkpointTTL = 62
+  override protected val checkpointTTL = 60
   // 计算出checkpointTtl对应的unix时间戳
   override protected val checkpointTTLStamp = DateUtils.addDays(new Date, -this.checkpointTTL).getTime
   // 是否删除空文件夹
@@ -44,7 +44,7 @@ object StateCleaner extends StateCleanerUtils {
 
   // ------------------------------ checkpoint归档选项 ---------------------------- //
   // 默认清理多少天之前的归档checkpoint文件
-  override protected val archiveTTL = 7
+  override protected val archiveTTL = 30
   override protected val archiveTTLStamp = DateUtils.addDays(new Date, -this.archiveTTL).getTime
   // 用于指定是否删除过期的checkpoint归档文件
   override protected val deleteArchiveEnabled = true
