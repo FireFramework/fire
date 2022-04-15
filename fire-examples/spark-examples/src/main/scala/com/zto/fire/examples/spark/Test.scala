@@ -19,10 +19,7 @@ package com.zto.fire.examples.spark
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.examples.bean.Student
-import com.zto.fire.spark.BaseSparkStreaming
-import com.zto.fire.spark.anno.StreamingDuration
-import com.zto.fire.spark.connector.DataGenReceiver
+import com.zto.fire.spark.BaseSparkCore
 
 /**
  * 基于Fire进行Spark Streaming开发
@@ -33,19 +30,24 @@ import com.zto.fire.spark.connector.DataGenReceiver
     |kafka.brokers.name = bigdata_test
     |kafka.topics = fire
     |kafka.group.id=fire2
-    |hive.cluster=test
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
     |""")
-@StreamingDuration(20) // spark streaming的批次时间
-object Test extends BaseSparkStreaming {
+object Test extends BaseSparkCore {
 
   override def process: Unit = {
-    //val dstream = this.ssc.receiverStream(new BeanDataGenReceiver[Student](1000))
-    val dstream = this.ssc.receiverStream(new DataGenReceiver[Student](10, generateFun = {
-      Student.newStudentList()
-    }))
-    dstream.print()
-    this.fire.start()
+    this.fire.sql(
+      """
+        |select
+        | *
+        |from rtdb.zto_ssmx_bill_detail a
+        |where
+        |a.order_create_date >= '2022-03-23 00:00:00'
+        |""".stripMargin).createOrReplaceTempViewCache("t_test")
+    this.fire.sql("select * from t_test limit 10").show()
+    this.fire.sql(
+      """
+        |select count(1) from t_test
+        |""".stripMargin).show()
   }
 }

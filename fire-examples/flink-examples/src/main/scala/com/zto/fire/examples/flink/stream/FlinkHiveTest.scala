@@ -41,7 +41,7 @@ import org.apache.flink.api.scala._
     |kafka.brokers.name = bigdata_test
     |kafka.topics = fire
     |kafka.group.id=fire
-    |flink.stream.checkpoint.interval=10
+    |flink.stream.checkpoint.interval=60000
     |hive.cluster=test
     |# 1. 读取hive维表必须启用该配置
     |sql.conf.table.dynamic-table-options.enabled=true
@@ -62,7 +62,7 @@ object FlinkHiveTest extends BaseFlinkStreaming {
         |from tmp.baseorganize_flink
         |-- 3. 指定以下hit，用于指明flink定时ttl掉维表数据
         |/*+ OPTIONS('streaming-source.enable' = 'true', -- 开启流式读取 Hive 数据
-        |'streaming-source.partition.include' = 'latest', -- 1.latest 属性: 只读取最新分区数据。2.all: 读取全量分区数据 ，默认值为 all，表示读所有分区，latest 只能用在 temporal join 中，用于读取最新分区作为维表，不能直接读取最新分区数据
+        |'streaming-source.partition.include' = 'all', -- 1.latest 属性: 只读取最新分区数据。2.all: 读取全量分区数据 ，默认值为 all，表示读所有分区，latest 只能用在 temporal join 中，用于读取最新分区作为维表，不能直接读取最新分区数据
         |'streaming-source.monitor-interval' = '1 h',  -- 指定ttl的间隔时间，监听新分区生成的时间、不宜过短 、最短是1 个小时，因为目前的实现是每个 task 都会查询 metastore，高频的查可能会对metastore 产生过大的压力。需要注意的是，1.12.1 放开了这个限制，但仍建议按照实际业务不要配个太短的 interval
         |'streaming-source.partition-order'='create-time')*/ -- 非hive分区表，需要指定create-time，如果是分区表：partition-name 使用默认分区名称顺序加载最新分区2.create-time 使用分区文件创建时间顺序, 3. partition-time 使用分区时间顺序
         |""".stripMargin)
@@ -70,14 +70,14 @@ object FlinkHiveTest extends BaseFlinkStreaming {
     // 4. 切换回默认的catalog后再将hive维表数据注册为临时表，避免在default catalog查询不到baseorganize这张临时表
     this.fire.useDefaultCatalog
     // 5. 将hive维表数据注册为临时表
-    dimTable.createOrReplaceTempView("baseorganize")
+    // dimTable.createOrReplaceTempView("baseorganize")
 
     // 5. 关联流表与hive维表，当hive维表更新后flink会自动周期性的刷新维表数据，并体现在关联的结果中
     this.fire.sql(
-      """
+      s"""
         |select s.id,s.name,b.shortname
         |from student s
-        |left join baseorganize b
+        |left join $dimTable b
         |on s.id=b.id
         |""".stripMargin).print()
 

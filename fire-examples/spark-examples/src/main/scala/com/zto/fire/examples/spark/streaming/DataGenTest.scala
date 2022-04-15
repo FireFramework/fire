@@ -31,7 +31,7 @@ import com.zto.fire.spark.connector.{BeanGenReceiver, DataGenReceiver}
  * @since 2.2.1
  */
 @StreamingDuration(20)
-object DataGenerateTest extends BaseSparkStreaming {
+object DataGenTest extends BaseSparkStreaming {
 
   override def process: Unit = {
     // 方式一、在JavaBean中实现generate方法，在该方法中定义对象生成的规则
