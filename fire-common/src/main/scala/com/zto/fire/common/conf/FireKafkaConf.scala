@@ -18,7 +18,6 @@
 package com.zto.fire.common.conf
 
 import com.zto.fire.common.util.{PropUtils, StringsUtils}
-import org.apache.commons.lang3.StringUtils
 
 /**
  * kafka相关配置
@@ -54,6 +53,8 @@ private[fire] object FireKafkaConf {
   lazy val KAFKA_COMMIT_OFFSETS_ON_CHECKPOINTS = "kafka.CommitOffsetsOnCheckpoints"
   lazy val KAFKA_START_FROM_TIMESTAMP = "kafka.StartFromTimestamp"
   lazy val KAFKA_START_FROM_GROUP_OFFSETS = "kafka.StartFromGroupOffsets"
+  // 是否使状态中存放的offset不生效（请谨慎配置，用于kafka集群迁移等不正常状况的运维）
+  lazy val KAFKA_CONF_RESTORED_STATE_SKIP = "kafka.conf.restoredState.skip"
 
   // 初始化kafka集群名称与地址映射
   private[fire] lazy val kafkaMap = PropUtils.sliceKeys(clusterMapConfStart)
@@ -96,6 +97,9 @@ private[fire] object FireKafkaConf {
 
   // kafka-client配置信息
   def kafkaConfMap(keyNum: Int = 1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(kafkaConfStart, keyNum)
+
+  // 是否使状态中存放的offset不生效
+  def kafkaConfRestoredStateSkip(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.KAFKA_CONF_RESTORED_STATE_SKIP, false)
 
   def kafkaConfMapWithType(keyNum: Int = 1): collection.immutable.Map[String, Object] = {
     val map = new collection.mutable.HashMap[String, Object]()

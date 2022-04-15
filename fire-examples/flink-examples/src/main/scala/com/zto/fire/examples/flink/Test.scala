@@ -36,20 +36,23 @@ import org.apache.flink.util.Collector
     |# 直接从配置文件中拷贝过来即可
     | #注释信息
     |kafka.brokers.name = bigdata_test
+    |flink.kafka.conf.restoredState.skip=true
     |kafka.topics = fire
     |kafka.group.id=fire
+    |
+    |kafka.brokers.name2 = bigdata_test
+    |kafka.topics2 = fire2
+    |kafka.group.id2=fire2
+    |
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
-    |flink.stream.checkpoint.interval=60000
+    |flink.stream.checkpoint.interval=10000
     |flink.state.choose.disk.policy=round_robin
     |state.external.zookeeper.url=10.7.69.238:2181
-    |fire.analysis.arthas.enable=false
+    |fire.analysis.arthas.enable=true
     |fire.log.level.conf.org.apache.flink=warn
     |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
     |fire.analysis.arthas.container.enable=false
-    |fire.rest.filter.enable=true
-    |hive.cluster=test
-    |flink.sql.udf.fireUdf.enable=false
     |""")
 object Test extends BaseFlinkStreaming {
 
@@ -57,16 +60,22 @@ object Test extends BaseFlinkStreaming {
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
-    this.fire.useHiveCatalog()
+    println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
+    val dstream = this.fire.createKafkaDirectStream().filter(json => JSONUtils.isJson(json)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(2)
+    this.fire.createKafkaDirectStream(keyNum = 2).print()
+    val value: KeyedStream[Student, JLong] = dstream.keyBy(t => t.getId)
 
-    this.fire.sql(
-      """
-        |insert into table tmp.baseorganize_fire select * from dim.baseorganize limit 10
-        |""".stripMargin)
+    value.process(new KeyedProcessFunction[JLong, Student, String]() {
 
-    this.fire.sql(
-      """
-        |select * from tmp.baseorganize_fire
-        |""".stripMargin).print()
+      override def processElement(value: Student, ctx: KeyedProcessFunction[_root_.com.zto.fire.JLong, Student, String]#Context, out: Collector[String]): Unit = {
+        val state = this.getState[Long]("sum")
+        state.update(state.value() + 1)
+        println(s"当前key=${value.getId} sum=${state.value()}")
+        println("----> " + System.getProperty("sun.net.inetaddr.ttl"))
+        out.collect(value.getName)
+      }
+
+    }).print("name")
+    this.fire.start
   }
 }

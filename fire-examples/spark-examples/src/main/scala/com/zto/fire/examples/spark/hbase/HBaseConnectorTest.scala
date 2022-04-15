@@ -242,12 +242,12 @@ object HBaseConnectorTest extends BaseSparkCore {
     HBaseConnector.truncateTable(this.tableName1)
     HBaseConnector.truncateTable(this.tableName2, keyNum = 2)
 
-    // this.testHbasePutRDD
+    this.testHbasePutRDD
     // this.testHbasePutList
     // HBaseConnector.truncateTable(this.tableName1)
     // this.testHbaseGetDF
     //this.testHBasePutDS
-    this.testMutiVersion
+    // this.testMutiVersion
     /*println("=========get========")
     this.testHbaseGetList
     this.testHbaseGetRDD
@@ -257,6 +257,10 @@ object HBaseConnectorTest extends BaseSparkCore {
     println("=========scan========")
     this.testHbaseScanList
     this.testHbaseScanRDD
+    this.testHbaseScanDF
     this.testHbaseScanDF*/
+    val getList = ListBuffer(HBaseConnector.buildGet("1"))
+    val student = HBaseConnector.get(this.tableName1, classOf[Student], getList, 1)
+    println(student.toString())
   }
 }
