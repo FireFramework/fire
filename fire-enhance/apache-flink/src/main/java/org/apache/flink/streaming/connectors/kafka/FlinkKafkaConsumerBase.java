@@ -201,8 +201,6 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
      */
     protected transient volatile TreeMap<KafkaTopicPartition, Long> restoredState;
 
-    // 标记位，避免两处同时手动提交offset
-    protected final AtomicBoolean isCommiting = new AtomicBoolean(false);
     // 是否启用强制的周期性手动提交（区别于自动提交）
     protected boolean enableForceAutoCommit = false;
     // 主动周期性提交offset的时间周期
