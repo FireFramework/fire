@@ -87,8 +87,16 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
     val properties = new Properties()
     confKafkaParams.foreach(t => properties.setProperty(t._1, t._2.toString))
 
+    // 添加topic列表信息
+    val topicsStr = topicList.mkString("", ", ", "")
+    properties.setProperty("kafka.topics", topicsStr)
+    // 添加二次开发相关配置信息
+    properties.setProperty(FireKafkaConf.KAFKA_OVERWRITE_STATE_OFFSET, FireKafkaConf.kafkaForceOverwriteStateOffset.toString)
+    properties.setProperty(FireKafkaConf.KAFKA_FORCE_AUTO_COMMIT, FireKafkaConf.kafkaForceCommit.toString)
+    properties.setProperty(FireKafkaConf.KAFKA_FORCE_AUTO_COMMIT_INTERVAL, FireKafkaConf.kafkaForceCommitInterval.toString)
+
     // 消费kafka埋点信息
-    DatasourceManager.addMQDatasource("kafka", confKafkaParams("bootstrap.servers").toString, topicList.mkString("", ", ", ""), confKafkaParams("group.id").toString)
+    DatasourceManager.addMQDatasource("kafka", confKafkaParams("bootstrap.servers").toString, topicsStr, confKafkaParams("group.id").toString)
 
     deserializer match {
       case schema: JSONKeyValueDeserializationSchema =>

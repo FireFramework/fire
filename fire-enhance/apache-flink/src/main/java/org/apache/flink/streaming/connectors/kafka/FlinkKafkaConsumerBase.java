@@ -71,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
@@ -148,13 +149,6 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
     /** User-set flag to disable filtering restored partitions with current topics descriptor. */
     private boolean filterRestoredPartitionsWithCurrentTopicsDescriptor = true;
 
-    /**
-     * The offset commit mode for the consumer. The value of this can only be determined in {@link
-     * FlinkKafkaConsumerBase#open(Configuration)} since it depends on whether or not checkpointing
-     * is enabled for the job.
-     */
-    private OffsetCommitMode offsetCommitMode;
-
     /** User configured value for discovery interval, in milliseconds. */
     private final long discoveryIntervalMillis;
 
@@ -180,13 +174,22 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
     /** Data for pending but uncommitted offsets. */
     private final LinkedMap pendingOffsetsToCommit = new LinkedMap();
 
-    /** The fetcher implements the connections to the Kafka brokers. */
-    private transient volatile AbstractFetcher<T, ?> kafkaFetcher;
 
     /** The partition discoverer, used to find new partitions. */
     private transient volatile AbstractPartitionDiscoverer partitionDiscoverer;
 
     // TODO: ------------ start：二次开发代码 ----------------- //
+
+    /** The fetcher implements the connections to the Kafka brokers. */
+    protected transient volatile AbstractFetcher<T, ?> kafkaFetcher;
+
+    /**
+     * The offset commit mode for the consumer. The value of this can only be determined in {@link
+     * FlinkKafkaConsumerBase#open(Configuration)} since it depends on whether or not checkpointing
+     * is enabled for the job.
+     */
+    protected OffsetCommitMode offsetCommitMode;
+
     /**
      * The offsets to restore to, if the consumer restores state from a checkpoint.
      *
@@ -197,6 +200,24 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
      * partition discoverer.
      */
     protected transient volatile TreeMap<KafkaTopicPartition, Long> restoredState;
+
+    // 标记位，避免两处同时手动提交offset
+    protected final AtomicBoolean isCommiting = new AtomicBoolean(false);
+    // 是否启用强制的周期性手动提交（区别于自动提交）
+    protected boolean enableForceAutoCommit = false;
+    // 主动周期性提交offset的时间周期
+    protected long forceAutoCommitIntervalMillis;
+
+    /** Flag indicating whether the consumer is still running. */
+    protected volatile boolean running = true;
+
+    /**
+     * Callback interface that will be invoked upon async Kafka commit completion. Please be aware
+     * that default callback implementation in base class does not provide any guarantees on
+     * thread-safety. This is sufficient for now because current supported Kafka connectors
+     * guarantee no more than 1 concurrent async pending offset commit.
+     */
+    protected transient KafkaCommitCallback offsetCommitCallback;
     // TODO: ------------ end：二次开发代码 ----------------- //
 
     /** Accessor for state in the operator state backend. */
@@ -204,9 +225,6 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
 
     /** Discovery loop, executed in a separate thread. */
     private transient volatile Thread discoveryLoopThread;
-
-    /** Flag indicating whether the consumer is still running. */
-    private volatile boolean running = true;
 
     // ------------------------------------------------------------------------
     //  internal metrics
@@ -223,14 +241,6 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
 
     /** Counter for failed Kafka offset commits. */
     private transient Counter failedCommits;
-
-    /**
-     * Callback interface that will be invoked upon async Kafka commit completion. Please be aware
-     * that default callback implementation in base class does not provide any guarantees on
-     * thread-safety. This is sufficient for now because current supported Kafka connectors
-     * guarantee no more than 1 concurrent async pending offset commit.
-     */
-    private transient KafkaCommitCallback offsetCommitCallback;
 
     // ------------------------------------------------------------------------
 

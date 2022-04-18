@@ -53,8 +53,13 @@ private[fire] object FireKafkaConf {
   lazy val KAFKA_COMMIT_OFFSETS_ON_CHECKPOINTS = "kafka.CommitOffsetsOnCheckpoints"
   lazy val KAFKA_START_FROM_TIMESTAMP = "kafka.StartFromTimestamp"
   lazy val KAFKA_START_FROM_GROUP_OFFSETS = "kafka.StartFromGroupOffsets"
+
   // 是否使状态中存放的offset不生效（请谨慎配置，用于kafka集群迁移等不正常状况的运维）
-  lazy val KAFKA_CONF_RESTORED_STATE_SKIP = "kafka.conf.restoredState.skip"
+  lazy val KAFKA_OVERWRITE_STATE_OFFSET = "kafka.force.overwrite.stateOffset.enable"
+  // 是否在开启checkpoint的情况下强制开启周期性offset提交
+  lazy val KAFKA_FORCE_AUTO_COMMIT = "kafka.force.autoCommit.enable"
+  // 周期性提交offset的时间间隔（ms）
+  lazy val KAFKA_FORCE_AUTO_COMMIT_INTERVAL = "kafka.force.autoCommit.Interval"
 
   // 初始化kafka集群名称与地址映射
   private[fire] lazy val kafkaMap = PropUtils.sliceKeys(clusterMapConfStart)
@@ -99,7 +104,11 @@ private[fire] object FireKafkaConf {
   def kafkaConfMap(keyNum: Int = 1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(kafkaConfStart, keyNum)
 
   // 是否使状态中存放的offset不生效
-  def kafkaConfRestoredStateSkip(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.KAFKA_CONF_RESTORED_STATE_SKIP, false)
+  def kafkaForceOverwriteStateOffset: Boolean = PropUtils.getBoolean(this.KAFKA_OVERWRITE_STATE_OFFSET, false)
+  // 是否在开启checkpoint的情况下强制开启周期性offset提交
+  def kafkaForceCommit: Boolean = PropUtils.getBoolean(this.KAFKA_FORCE_AUTO_COMMIT, false)
+  // 周期性提交offset的时间间隔（ms）
+  def kafkaForceCommitInterval: Long = PropUtils.getLong(this.KAFKA_FORCE_AUTO_COMMIT_INTERVAL, 30000)
 
   def kafkaConfMapWithType(keyNum: Int = 1): collection.immutable.Map[String, Object] = {
     val map = new collection.mutable.HashMap[String, Object]()

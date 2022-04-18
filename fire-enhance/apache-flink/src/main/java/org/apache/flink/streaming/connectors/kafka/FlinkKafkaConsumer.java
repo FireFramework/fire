@@ -48,6 +48,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
@@ -346,25 +348,61 @@ public class FlinkKafkaConsumer<T> extends FlinkKafkaConsumerBase<T> {
     // TODO: ------------ start：二次开发代码 ----------------- //
     @Override
     public void open(Configuration configuration) throws Exception {
-        // 判断是否跳过从状态中读取到的offset信息
-        boolean skipRestoredState = Boolean.parseBoolean(this.properties.getProperty("restoredState.skip", "false"));
+        try {
+            String topics = this.properties.getProperty("kafka.topics", "");
+            String groupId = this.properties.getProperty("group.id", "");
 
-        if (skipRestoredState && this.restoredState != null) {
-            // 获取topic信息，用于区分多topic消费情况下日志的打印
-            String topic = "";
-            for (Map.Entry<KafkaTopicPartition, Long> restoredStateEntry :
-                    restoredState.entrySet()) {
-                topic = restoredStateEntry.getKey().getTopic();
-                if (StringUtils.isNotBlank(topic)) break;
+            // 是否开启周期性的offset提交，仅在开启checkpoint的情况下生效
+            this.enableForceAutoCommit = Boolean.parseBoolean(this.properties.getProperty("kafka.force.autoCommit.enable", "false"));
+            // 自动提交offset的周期
+            this.forceAutoCommitIntervalMillis = Long.parseLong(this.properties.getProperty("kafka.force.autoCommit.Interval", "30000"));
+            if (this.enableForceAutoCommit) {
+                this.executeAutoCommit(topics, groupId);
+                LOG.info("开启异步提交kafka offset功能，topics：{} groupId：{} interval：{}", topics, groupId, this.forceAutoCommitIntervalMillis);
             }
 
-            // 将状态中的offseet置为null以后，将在super.open方法中取消从状态seek offset
-            this.restoredState = null;
-            String groupId = this.properties.getProperty("group.id", "");
-            LOG.warn("将忽略状态中的offset信息，使用默认策略消费kafka消息！topic=" + topic + " groupId=" + groupId);
-        }
+            // 判断是否跳过从状态中读取到的offset信息
+            boolean skipRestoredState = Boolean.parseBoolean(this.properties.getProperty("kafka.force.overwrite.stateOffset.enable", "false"));
 
-        super.open(configuration);
+            if (skipRestoredState && this.restoredState != null) {
+                // 将状态中的offseet置为null以后，将在super.open方法中取消从状态seek offset
+                this.restoredState = null;
+                LOG.info("将忽略状态中的offset信息，使用默认策略消费kafka消息！topics：{} groupId：{}", topics, groupId);
+            }
+        } catch (Exception e) {
+            LOG.error("强制覆盖状态中的offset或周期性提交offset功能开启失败", e);
+        } finally {
+            super.open(configuration);
+        }
+    }
+
+    /**
+     * 周期性提交kafka offset
+     * @param topics
+     * kafka的topic列表
+     * @param groupId
+     * 为该groupId执行异步的offset提交
+     */
+    private void executeAutoCommit(String topics, String groupId) {
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        service.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    long threadId = Thread.currentThread().getId();
+                    while (true) {
+                        if (running && kafkaFetcher != null && (offsetCommitMode == OffsetCommitMode.ON_CHECKPOINTS)) {
+                            HashMap<KafkaTopicPartition, Long> currentOffsets = kafkaFetcher.snapshotCurrentState();
+                            kafkaFetcher.commitInternalOffsetsToKafka(currentOffsets, offsetCommitCallback);
+                            LOG.warn("周期性自动提交kafka offset成功！topics：{} groupId：{} ThreadId：{}", topics, groupId, threadId);
+                        }
+                        Thread.sleep(forceAutoCommitIntervalMillis);
+                    }
+                } catch (Exception e) {
+                    LOG.error("周期性自动提交offset定时任务执行出错", e);
+                }
+            }
+        });
     }
     // TODO: ------------ end：二次开发代码 ----------------- //
 }
