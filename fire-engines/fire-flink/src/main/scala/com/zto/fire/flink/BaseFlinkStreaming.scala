@@ -96,6 +96,7 @@ trait BaseFlinkStreaming extends BaseFlink {
     val runtimeExecutionMode = RuntimeExecutionMode.valueOf(FireFlinkConf.flinkRuntimeMode)
     this.env.setRuntimeMode(runtimeExecutionMode)
     this.env.getConfig.setGlobalJobParameters(ParameterTool.fromMap(finalConf.toMap))
+    if (!FireFlinkConf.operatorChainingEnable) this.env.disableOperatorChaining()
     this.configParse(this.env)
     this.senv = this.env
     val builder = EnvironmentSettings.newInstance

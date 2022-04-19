@@ -54,6 +54,7 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_SQL_DEFAULT_CATALOG_NAME = "flink.sql.default.catalog.name"
   lazy val FLINK_STATE_TTL_DAYS = "flink.state.ttl.days"
   lazy val DISTRIBUTE_SYNC_ENABLE = "fire.distribute.sync.enable"
+  lazy val OPERATOR_CHAINING_ENABLE = "flink.env.operatorChaining.enable"
 
   // checkpoint相关配置项
   lazy val FLINK_STREAM_CHECKPOINT_INTERVAL = "flink.stream.checkpoint.interval"
@@ -119,4 +120,6 @@ private[fire] object FireFlinkConf {
   lazy val flinkRuntimeMode = PropUtils.getString(this.FLINK_RUNTIME_MODE, PropUtils.getString("execution.runtime-mode", "STREAMING"))
   // 默认的Keyed State的TTL时间
   lazy val flinkStateTTL = PropUtils.getInt(this.FLINK_STATE_TTL_DAYS, 31)
+  // 是否开启算子链合并
+  lazy val operatorChainingEnable = PropUtils.getBoolean(this.OPERATOR_CHAINING_ENABLE, true)
 }
