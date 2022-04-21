@@ -49,11 +49,11 @@ import org.apache.flink.table.functions.ScalarFunction
     |""")
 object UDFTest extends BaseFlinkStreaming {
   override def process: Unit = {
-    val stream = this.fire.createKafkaDirectStream().filter(t => JSONUtils.isLegal(t)).map(JSONUtils.parseObject[Student](_)).setParallelism(3)
-    this.tableEnv.asInstanceOf[StreamTableEnvironment].registerDataStream("test", stream)
+    val stream = this.fire.createKafkaDirectStream()
+      .map(JSONUtils.parseObject[Student](_)).setParallelism(3)
+    stream.createOrReplaceTempView("test")
     // 在sql中使用自定义的udf
     this.flink.sql("select appendFire(name), fire(age) from test").print()
-
     this.fire.start
   }
 }
