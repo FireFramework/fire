@@ -17,13 +17,11 @@
 
 package org.apache.flink.streaming.connectors.kafka;
 
-import org.apache.commons.lang3.StringUtils;
-
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
-import org.apache.flink.metrics.MetricGroup;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.metrics.MetricGroup;
 import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
 import org.apache.flink.streaming.connectors.kafka.config.OffsetCommitMode;
 import org.apache.flink.streaming.connectors.kafka.internals.AbstractFetcher;
@@ -377,7 +375,7 @@ public class FlinkKafkaConsumer<T> extends FlinkKafkaConsumerBase<T> {
     }
 
     /**
-     * 周期性提交kafka offset
+     * 周期性提交kafka offset.
      * @param topics
      * kafka的topic列表
      * @param groupId
