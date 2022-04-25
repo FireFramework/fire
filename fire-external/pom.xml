@@ -31,7 +31,7 @@
     </parent>
 
     <modules>
-        <module>Fire : Apollo </module>
+        <module>fire-apollo</module>
     </modules>
 
     <dependencies>

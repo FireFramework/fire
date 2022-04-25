@@ -33,6 +33,7 @@
     <modules>
         <module>fire-hbase</module>
         <module>fire-jdbc</module>
+        <module>flink-connectors</module>
     </modules>
 
     <dependencies>

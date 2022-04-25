@@ -68,7 +68,7 @@ object JdbcTest extends BaseSparkCore {
     // 方式二：通过JdbcConnector.executeUpdate
 
     // 同一个事务
-    /*val connection = this.jdbc.getConnection()
+    /*val connection = JdbcConnector.getConnection(keyNum = 2)
     this.fire.jdbcBatchUpdate("insert", connection = connection, commit = false, closeConnection = false)
     this.fire.jdbcBatchUpdate("delete", connection = connection, commit = false, closeConnection = false)
     this.fire.jdbcBatchUpdate("update", connection = connection, commit = true, closeConnection = true)*/
