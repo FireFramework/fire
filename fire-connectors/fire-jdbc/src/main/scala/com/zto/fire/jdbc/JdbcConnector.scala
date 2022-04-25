@@ -341,8 +341,12 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
    */
   @Internal
   private[this] def sqlBuriedPoint(sql: String, sink: Boolean = true): String = {
-    DatasourceManager.addDBSql(this.dbType, this.url, this.username, sql, sink)
-    StringsUtils.substring(sql, 0, this.logSqlLength)
+    try {
+      DatasourceManager.addDBSql(this.dbType, this.url, this.username, sql, sink)
+      StringsUtils.substring(sql, 0, this.logSqlLength)
+    } catch {
+      case _: Throwable => ""
+    }
   }
 
 }
