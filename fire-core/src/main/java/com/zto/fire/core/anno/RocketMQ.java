@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.anno;
+package com.zto.fire.core.anno;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -23,26 +23,47 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 基于注解进行任务的配置，支持纯注解方式进行任务的参数配置以及指定多个配置文件
+ * 基于注解进行RocketMQ connector配置，优先级低于配置文件，低于@Config注解
  *
- * @author ChengLong 2021-8-3 10:49:30
- * @since 2.1.1
+ * @author ChengLong 2022-04-26 15:18:34
+ * @since 2.2.2
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Config {
-    /**
-     * 配置文件名称列表
-     */
-    String[] files() default "";
+public @interface RocketMQ {
 
     /**
-     * 配置项列表，key=value的字符串形式
+     * kafka集群连接信息
      */
-    String[] props() default "";
+    String brokers();
 
     /**
-     * 配置的字符串
+     * kafka topics，多个使用逗号分隔
      */
-    String value() default "";
+    String topics();
+
+    /**
+     * 消费者标识
+     */
+    String groupId();
+
+    /**
+     * 指定消费的tag
+     */
+    String consumerTag() default "*";
+
+    /**
+     * 指定从何处开始消费
+     */
+    String startingOffset() default "";
+
+    /**
+     * 是否开启主动提交offset
+     */
+    boolean autoCommit() default false;
+
+    /**
+     * RocketMQ-client参数，以key=value形式注明
+     */
+    String[] config() default "";
 }

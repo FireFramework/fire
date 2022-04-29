@@ -15,32 +15,32 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.spark
+package com.zto.fire.spark.conf
 
-import com.zto.fire._
-import com.zto.fire.common.anno.Config
-import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.JSONUtils
-import com.zto.fire.examples.bean.Student
+import com.zto.fire.core.conf.AnnoManager
 import com.zto.fire.spark.anno.StreamingDuration
-import com.zto.fire.spark.{BaseSparkCore, BaseSparkStreaming}
 
 /**
- * 基于Fire进行Spark Streaming开发
+ * 注解管理器，用于将主键中的配置信息映射为键值对信息
+ *
+ * @author ChengLong 2022-04-26 11:19:00
+ * @since 2.2.2
  */
-@Config(
-  """
-    |# 直接从配置文件中拷贝过来即可
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire2
-    |""")
-@StreamingDuration(10)
-object Test extends BaseSparkStreaming {
+private[fire] class SparkAnnoManager extends AnnoManager {
 
-  override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream()
-    dstream.print()
-    this.fire.start()
+  /**
+   * 将@Checkpoint中配置的信息映射为键值对形式
+   * @param checkpoint
+   * Checkpoint注解实例
+   */
+  def mapStreamingDuration(duration: StreamingDuration): Unit = {
+    println("调用：mapStreamingDuration -> interval=" + duration.value())
+  }
+
+  /**
+   * 用于注册需要映射配置信息的自定义主键
+   */
+  override protected[fire] def register: Unit = {
+    this.registerAnnoSet.add(classOf[StreamingDuration])
   }
 }

@@ -15,32 +15,32 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.spark
-
-import com.zto.fire._
-import com.zto.fire.common.anno.Config
-import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.JSONUtils
-import com.zto.fire.examples.bean.Student
-import com.zto.fire.spark.anno.StreamingDuration
-import com.zto.fire.spark.{BaseSparkCore, BaseSparkStreaming}
+package com.zto.fire.common.enu;
 
 /**
- * 基于Fire进行Spark Streaming开发
+ * 用于枚举常见数据库的jdbc驱动类
+ *
+ * @author ChengLong 2022-04-26 14:58:17
  */
-@Config(
-  """
-    |# 直接从配置文件中拷贝过来即可
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire2
-    |""")
-@StreamingDuration(10)
-object Test extends BaseSparkStreaming {
+public enum JdbcDriver {
+    mysql("com.mysql.jdbc.Driver"),
+    tidb("com.mysql.jdbc.Driver"),
+    sqlserver("com.microsoft.sqlserver.jdbc.SQLServerDriver"),
+    oracle("oracle.jdbc.driver.OracleDriver"),
+    hive("org.apache.hive.jdbc.HiveDriver"),
+    presto("com.facebook.presto.jdbc.PrestoDriver"),
+    spark("org.apache.hive.jdbc.HiveDriver"),
+    clickhouse("ru.yandex.clickhouse.ClickHouseDriver"),
+    postgreSql("org.postgresql.Driver"),
+    impala("com.cloudera.impala.jdbc41.Driver");
 
-  override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream()
-    dstream.print()
-    this.fire.start()
-  }
+    private String driver;
+
+    JdbcDriver(String driver) {
+        this.driver = driver;
+    }
+
+    public String getDriver() {
+        return driver;
+    }
 }

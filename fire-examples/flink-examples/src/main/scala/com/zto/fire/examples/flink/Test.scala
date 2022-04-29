@@ -20,7 +20,11 @@ package com.zto.fire.examples.flink
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.common.enu.JdbcDriver
+import com.zto.fire.core.anno._
 import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.anno.Checkpoint
+import org.apache.commons.lang3.StringUtils
 
 /**
  * 基于Fire进行Flink Streaming开发
@@ -54,12 +58,17 @@ import com.zto.fire.flink.BaseFlinkStreaming
     |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
     |fire.analysis.arthas.container.enable=false
     |""")
+@HBase("batch")
+@Hive("test")
+@Checkpoint(interval = 100, unaligned = true)
+@Kafka(brokers = "kafka", topics = "fire", groupId = "fire")
 object Test extends BaseFlinkStreaming {
 
   /**
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
+    println(this.conf.getString("hive.cluster"))
     val dstream = this.fire.createKafkaDirectStream()
     dstream.print("fire1==> ")
 

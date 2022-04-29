@@ -23,7 +23,7 @@ import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 
 import java.util
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, CopyOnWriteArraySet, TimeUnit}
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, CopyOnWriteArraySet, Executors, TimeUnit}
 import scala.collection.mutable
 
 /**
@@ -39,6 +39,9 @@ private[fire] class DatasourceManager extends Logging {
   private[fire] lazy val tableMetaSet = new CopyOnWriteArraySet[TableMeta]()
   // 用于收集来自不同数据源的sql语句，后续会异步进行SQL解析，考虑到分布式场景下会有很多重复的SQL执行，因此使用了线程不安全的队列即可满足需求
   private lazy val dbSqlQueue = new ConcurrentLinkedQueue[DBSqlSource]()
+  // 用于解析数据源的异步定时调度线程
+  private lazy val paserExecutor = Executors.newScheduledThreadPool(1)
+  private var parseCount = 0
   // 用于收集各实时引擎执行的sql语句
   this.sqlParse()
 
@@ -47,47 +50,58 @@ private[fire] class DatasourceManager extends Logging {
    */
   private[this] def sqlParse(): Unit = {
     if (buriedPointDatasourceEnable) {
-      ThreadUtils.scheduleWithFixedDelay({
-        // 1. 解析jdbc sql语句
-        val start = currentTime
-        for (_ <- 1 until this.dbSqlQueue.size()) {
-          val sqlSource = this.dbSqlQueue.poll()
-          if (sqlSource != null) {
-            val tableNames = SQLUtils.tableParse(sqlSource.sql)
-            if (tableNames != null && tableNames.nonEmpty) {
-              tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
-                add(Datasource.parse(sqlSource.datasource), DBDatasource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, sqlSource.sink))
-              })
-            }
-          }
+      this.paserExecutor.scheduleWithFixedDelay(() => {
+        this.parseCount += 1
+
+        if (this.parseCount >= buriedPointDatasourceCount && !paserExecutor.isShutdown) {
+          this.logger.info(s"4. 异步解析实时血缘的定时任务采样共计：${buriedPointDatasourceCount}次，即将退出异步线程")
+          this.paserExecutor.shutdown()
         }
 
-        // 2. 将解析好的引擎SQL血缘按Datasource进行分类
-        this.tableMetaSet.foreach(tableMeta => {
-          val prop = tableMeta.properties
-          val isSink = if (tableMeta.operation == Operation.SELECT) false else true
-
-          tableMeta.datasource match {
-            case Datasource.KAFKA => {
-              val dataSource = MQDatasource(Datasource.KAFKA.toString, prop.getOrDefault("properties.bootstrap.servers", ""), prop.getOrDefault("topic", ""), prop.getOrDefault("properties.group.id", ""), isSink)
-              add(Datasource.KAFKA, dataSource)
+        // 1. 解析jdbc sql语句
+        val start = currentTime
+        tryWithLog {
+          for (_ <- 1 until this.dbSqlQueue.size()) {
+            val sqlSource = this.dbSqlQueue.poll()
+            if (sqlSource != null) {
+              val tableNames = SQLUtils.tableParse(sqlSource.sql)
+              if (tableNames != null && tableNames.nonEmpty) {
+                tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
+                  add(Datasource.parse(sqlSource.datasource), DBDatasource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, sqlSource.sink))
+                })
+              }
             }
-            case Datasource.FIRE_ROCKETMQ => {
-              val datasource = MQDatasource(Datasource.ROCKETMQ.toString, PropUtils.getString(prop.getOrDefault("rocket.brokers.name", "")), prop.getOrDefault("rocket.topics", ""), prop.getOrDefault("rocket.group.id", ""), isSink)
-              add(Datasource.FIRE_ROCKETMQ, datasource)
-            }
-            case Datasource.JDBC => {
-              val driver = prop.getOrDefault("driver", "")
-              val url = prop.getOrDefault("url", "")
-              val user = prop.getOrDefault("username", "")
-              val datasource = DBDatasourceDetail(Datasource.JDBC.toString, url, tableMeta.tableName, user, isSink, tableMeta.operation)
-              add(Datasource.JDBC, datasource)
-            }
-            case _ => add(tableMeta.datasource, tableMeta)
           }
-        })
+        } (this.logger, s"1. 开始第${parseCount}/${buriedPointDatasourceCount}次解析JDBC中的血缘信息", "jdbc血缘信息解析失败")
 
-        this.logger.debug(s"异步解析SQL埋点中的表信息,耗时：${elapsed(start)}")
+        // 2. 将解析好的引擎SQL血缘按Datasource进行分类
+        tryWithLog {
+          this.tableMetaSet.foreach(tableMeta => {
+            val prop = tableMeta.properties
+            val isSink = if (tableMeta.operation == Operation.SELECT) false else true
+
+            tableMeta.datasource match {
+              case Datasource.KAFKA => {
+                val dataSource = MQDatasource(Datasource.KAFKA.toString, prop.getOrDefault("properties.bootstrap.servers", ""), prop.getOrDefault("topic", ""), prop.getOrDefault("properties.group.id", ""), isSink)
+                add(Datasource.KAFKA, dataSource)
+              }
+              case Datasource.FIRE_ROCKETMQ => {
+                val datasource = MQDatasource(Datasource.ROCKETMQ.toString, PropUtils.getString(prop.getOrDefault("rocket.brokers.name", "")), prop.getOrDefault("rocket.topics", ""), prop.getOrDefault("rocket.group.id", ""), isSink)
+                add(Datasource.FIRE_ROCKETMQ, datasource)
+              }
+              case Datasource.JDBC => {
+                val driver = prop.getOrDefault("driver", "")
+                val url = prop.getOrDefault("url", "")
+                val user = prop.getOrDefault("username", "")
+                val datasource = DBDatasourceDetail(Datasource.JDBC.toString, url, tableMeta.tableName, user, isSink, tableMeta.operation)
+                add(Datasource.JDBC, datasource)
+              }
+              case _ => add(tableMeta.datasource, tableMeta)
+            }
+          })
+        } (this.logger, s"2. 开始第${parseCount}/${buriedPointDatasourceCount}次解析SQL中的血缘关系", "sql血缘关系解析失败")
+
+        this.logger.info(s"3. 完成第${this.parseCount}/${buriedPointDatasourceCount}次异步解析SQL埋点中的表信息，耗时：${elapsed(start)}")
       }, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod, TimeUnit.SECONDS)
     }
   }

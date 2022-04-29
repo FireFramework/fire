@@ -15,32 +15,29 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.spark
+package com.zto.fire.core.anno;
 
-import com.zto.fire._
-import com.zto.fire.common.anno.Config
-import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.JSONUtils
-import com.zto.fire.examples.bean.Student
-import com.zto.fire.spark.anno.StreamingDuration
-import com.zto.fire.spark.{BaseSparkCore, BaseSparkStreaming}
+import com.zto.fire.common.enu.JdbcDriver;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * 基于Fire进行Spark Streaming开发
+ * 基于注解进行Jdbc connector配置，优先级低于配置文件，低于@Config注解
+ *
+ * @author ChengLong 2022-04-26 13:56:00
+ * @since 2.2.2
  */
-@Config(
-  """
-    |# 直接从配置文件中拷贝过来即可
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire2
-    |""")
-@StreamingDuration(10)
-object Test extends BaseSparkStreaming {
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Jdbc2 {
+    String url();
 
-  override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream()
-    dstream.print()
-    this.fire.start()
-  }
+    JdbcDriver driver();
+
+    String username();
+
+    String password();
 }

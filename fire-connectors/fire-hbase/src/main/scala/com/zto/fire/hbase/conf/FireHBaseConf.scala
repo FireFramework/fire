@@ -86,11 +86,11 @@ private[fire] object FireHBaseConf {
   def hbaseDurability(keyNum: Int = 1): String = PropUtils.getString(this.HBASE_DURABILITY, "", keyNum)
 
   // HBase结果集的缓存策略配置
-  def hbaseStorageLevel: String = PropUtils.getString(this.FIRE_HBASE_STORAGE_LEVEL, "memory_and_disk_ser").toUpperCase
+  def hbaseStorageLevel(keyNum: Int = 1): String = PropUtils.getString(this.FIRE_HBASE_STORAGE_LEVEL, "memory_and_disk_ser", keyNum).toUpperCase
 
   // 通过HBase scan后repartition的分区数，默认1200
-  def hbaseHadoopScanPartitions: Int = {
-    val partitions = PropUtils.getInt(this.FIRE_HBASE_SCAN_PARTITIONS, -1)
-    if (partitions != -1) partitions else PropUtils.getInt(this.FIRE_HBASE_SCAN_REPARTITIONS, 1200)
+  def hbaseHadoopScanPartitions(keyNum: Int = 1): Int = {
+    val partitions = PropUtils.getInt(this.FIRE_HBASE_SCAN_PARTITIONS, -1, keyNum)
+    if (partitions != -1) partitions else PropUtils.getInt(this.FIRE_HBASE_SCAN_REPARTITIONS, 1200, keyNum)
   }
 }

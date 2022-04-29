@@ -134,7 +134,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       val rowKeyRDD = rdd.filter(StringUtils.isNotBlank(_)).map(rowKey => Bytes.toBytes(rowKey))
       val getRDD = this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
         HBaseConnector(keyNum = this.keyNum).hbaseRow2Bean(result, clazz)
-      }).filter(bean => bean != null).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
+      }).filter(bean => bean != null).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
       getRDD
     }(this.logger, s"execute bulkGetRDD(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
@@ -276,7 +276,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       if (scan.getCaching == -1) {
         scan.setCaching(this.finalBatchSize)
       }
-      this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseConnector(keyNum = this.keyNum).hbaseRow2BeanList(it, clazz)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
+      this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseConnector(keyNum = this.keyNum).hbaseRow2BeanList(it, clazz)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
     }(this.logger, s"execute bulkScanRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 

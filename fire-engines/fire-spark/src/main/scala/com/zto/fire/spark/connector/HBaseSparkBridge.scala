@@ -160,7 +160,7 @@ class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
     hbaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
     hbaseConf.set(TableInputFormat.SCAN, HBaseUtils.convertScanToString(scan))
     // 将指定范围内的hbase数据转为rdd
-    val resultRDD = this.spark.sparkContext.newAPIHadoopRDD(hbaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result]).repartition(FireHBaseConf.hbaseHadoopScanPartitions).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
+    val resultRDD = this.spark.sparkContext.newAPIHadoopRDD(hbaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result]).repartition(FireHBaseConf.hbaseHadoopScanPartitions(this.keyNum)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
     resultRDD
   }
 
@@ -307,7 +307,7 @@ class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
       } else {
         HBaseConnector(keyNum = keyNum).hbaseRow2BeanList(it, clazz)
       }
-    }).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
+    }).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
     scanRDD
   }
 
@@ -379,7 +379,7 @@ class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
         getList.clear()
       }
       beanList.iterator
-    }).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel))
+    }).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
     getRDD
   }
 

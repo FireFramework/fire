@@ -29,7 +29,7 @@ import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.collection.mutable.Map
 import scala.collection.{immutable, mutable}
-import scala.reflect.ClassTag
+import scala.reflect.{ClassTag, classTag}
 
 /**
  * 读取配置文件工具类
@@ -148,6 +148,31 @@ object PropUtils extends Logging {
   }
 
   /**
+   * 加载扩展的注解配置信息：
+   * @Kafka、@RocketMQ、@Hive、@HBase等
+   *
+   * @param clazz
+   * 任务入口类
+   */
+  def loadAnnoConf(clazz: Class[_]): this.type = {
+    if (!FireFrameworkConf.annoConfEnable) return this
+    if (clazz == null) return this
+
+    val annoManagerClass = FireFrameworkConf.annoManagerClass
+    if (isEmpty(annoManagerClass)) throw new IllegalArgumentException(s"未找到注解管理器，请通过：${FireFrameworkConf.FIRE_CONF_ANNO_MANAGER_CLASS}进行配置！")
+
+    tryWithLog {
+      val annoClazz = Class.forName(annoManagerClass)
+      val method = ReflectionUtils.getMethodByName(annoClazz, "getAnnoProps")
+      if (isEmpty(method)) throw new RuntimeException(s"未找到getAnnoProps()方法，通过${FireFrameworkConf.FIRE_CONF_ANNO_MANAGER_CLASS}指定的类必须是com.zto.fire.core.conf.AnnoManager的子类")
+      val annoProps = method.invoke(annoClazz.newInstance(), clazz)
+      this.setProperties(annoProps.asInstanceOf[mutable.HashMap[String, String]])
+    } (this.logger, "成功加载注解中的配置信息！", "注解配置信息加载失败！")
+
+    this
+  }
+
+  /**
    * 加载注解配置信息
    *
    * @param clazz
@@ -186,6 +211,8 @@ object PropUtils extends Logging {
     val centerConfig = this.invokeConfigCenter(className)
     // 配置中心的默认配置优先级高于框架（fire.properties）以及引擎（spark.properties/flink.properties）等配置
     this.setProperties(centerConfig.get(ConfigureLevel.FRAMEWORK))
+    // 加载扩展类注解配置（@Kafka、@RocketMQ、@Hive、@HBase等）
+    this.loadAnnoConf(Class.forName(className))
     // 加载用户配置文件以及@Config注解配置
     this.loadJobConf(Class.forName(className))
     // 配置中心任务级别配置优先级高于用户本地配置文件中的配置，做到重启任务即可生效

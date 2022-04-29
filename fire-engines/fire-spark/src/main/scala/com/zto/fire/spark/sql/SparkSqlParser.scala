@@ -1,6 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.zto.fire.spark.sql
 
-import com.zto.fire.predef._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.util.TableMeta
@@ -24,6 +40,7 @@ import scala.collection.mutable
 object SparkSqlParser extends SqlParser {
   private lazy val spark = SparkSingletonFactory.getSparkSession
   private lazy val catalog = spark.catalog
+  private var throwCount = 0
 
   /**
    * 用于判断给定的表是否为hive表
@@ -58,18 +75,25 @@ object SparkSqlParser extends SqlParser {
       if (this.isTempView(dbName, tableName)) {
         this.hiveTableMap.put(tableIdentifier, false)
       } else {
-        // 非临时表，进行重量级的解析，依据storage的存储路径进行判断是否为hive表
-        val catalog = this.spark.sessionState.catalog.getTablesByName(Seq(new TableIdentifier(tableName, if (isEmpty(dbName)) None else Some(dbName))))
-        if (catalog.isEmpty) {
-          this.hiveTableMap.put(tableIdentifier, false)
-        } else {
-          val isHiveTable = catalog.head.storage.locationUri.getOrElse("").toString.contains("hdfs")
-          this.hiveTableMap.put(tableIdentifier, isHiveTable)
+        try {
+          // 非临时表，进行重量级的解析，依据storage的存储路径进行判断是否为hive表
+          val catalog = this.spark.sessionState.catalog.getTablesByName(Seq(new TableIdentifier(tableName, if (isEmpty(dbName)) Some("default") else Some(dbName))))
+          if (catalog.isEmpty) {
+            this.hiveTableMap.put(tableIdentifier, false)
+          } else {
+            val isHiveTable = catalog.head.storage.locationUri.getOrElse("").toString.contains("hdfs")
+            this.hiveTableMap.put(tableIdentifier, isHiveTable)
+          }
+        } catch {
+          case e: Exception => {
+            this.throwCount += 1
+            if (throwCount <= 3) this.logger.warn(s"可忽略异常：确认${dbName}.${tableName}是否为hive表失败", e)
+          }
         }
       }
     }
 
-    this.hiveTableMap(tableIdentifier)
+    this.hiveTableMap.getOrDefault(tableIdentifier, false)
   }
 
   /**
@@ -77,10 +101,12 @@ object SparkSqlParser extends SqlParser {
    */
   override def sqlParser(sql: String): Unit = {
     if (isEmpty(sql)) return
-    this.logger.debug(s"开始解析sql语句：$sql")
-    val logicalPlan = this.spark.sessionState.sqlParser.parsePlan(sql)
-    this.sqlQueryParser(logicalPlan, sql)
-    this.ddlParser(logicalPlan, sql)
+    tryWithLog {
+      this.logger.debug(s"开始解析sql语句：$sql")
+      val logicalPlan = this.spark.sessionState.sqlParser.parsePlan(sql)
+      this.sqlQueryParser(logicalPlan, sql)
+      this.ddlParser(logicalPlan, sql)
+    } (this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n${sql}")
   }
 
   /**

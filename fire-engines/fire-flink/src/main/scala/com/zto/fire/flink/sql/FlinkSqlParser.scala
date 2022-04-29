@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.zto.fire.flink.sql
 
 import com.zto.fire._
@@ -230,7 +247,7 @@ object FlinkSqlParser extends SqlParser {
       case sqlAlterTable: SqlAlterTable => {
         this.parseSqlNode(sqlAlterTable.getTableName, Operation.ALTER_TABLE)
       }
-      case _ => this.logger.warn(s"当前SQL无法解析：$sql")
+      case _ => this.logger.warn(s"可忽略异常：实时血缘解析SQL报错，SQL：\n${sql}")
     }
   }
 
@@ -248,8 +265,7 @@ object FlinkSqlParser extends SqlParser {
       }
     } catch {
       case e => {
-        this.logger.error(s"判断tmp view失败, db name is ${dbName}, table name is ${tableName}：$e")
-        e.printStackTrace()
+        this.logger.error(s"可忽略异常：判断tmp view失败, db name is ${dbName}, table name is ${tableName}", e)
         false
       }
     }

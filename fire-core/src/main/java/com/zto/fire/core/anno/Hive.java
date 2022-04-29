@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.anno;
+package com.zto.fire.core.anno;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -23,26 +23,33 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 基于注解进行任务的配置，支持纯注解方式进行任务的参数配置以及指定多个配置文件
+ * 基于注解进行Hive connector配置，优先级低于配置文件，低于@Config注解
  *
- * @author ChengLong 2021-8-3 10:49:30
- * @since 2.1.1
+ * @author ChengLong
+ * @Date 2022-04-26 13:46:00
+ * @since 2.2.2
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Config {
-    /**
-     * 配置文件名称列表
-     */
-    String[] files() default "";
+public @interface Hive {
 
     /**
-     * 配置项列表，key=value的字符串形式
-     */
-    String[] props() default "";
-
-    /**
-     * 配置的字符串
+     * hive连接别名：hive.cluster
      */
     String value() default "";
+
+    /**
+     * hive的版本：hive.version
+     */
+    String version() default "";
+
+    /**
+     * 在flink中hive的catalog名称：hive.catalog.name
+     */
+    String catalog() default "hive";
+
+    /**
+     * 分区名称（dt、ds）：default.table.partition.name
+     */
+    String partition() default "";
 }
