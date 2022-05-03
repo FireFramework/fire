@@ -158,6 +158,24 @@ object PropUtils extends Logging {
     if (!FireFrameworkConf.annoConfEnable) return this
     if (clazz == null) return this
 
+    // 加载通过@Config注解配置的信息
+    val option = this.getAnnoConfig(clazz)
+    if (option.nonEmpty) {
+      val (files, props, value) = option.get
+      if (noEmpty(value)) {
+        // 移除所有的注释信息
+        val normalValue = RegularUtils.propAnnotation.replaceAllIn(value, "").replaceAll("\\|", "").trim
+        val valueProps = new Properties()
+        val stringReader = new StringReader(normalValue)
+        valueProps.load(stringReader)
+        stringReader.close()
+        valueProps.map(kv => (StringUtils.trim(kv._1), StringUtils.trim(kv._2))).filter(kv => noEmpty(kv, kv._1, kv._2)).foreach(kv => this.setProperty(kv._1, kv._2))
+      }
+      props.foreach(kv => this.setProperty(kv._1, kv._2))
+      if (noEmpty(files)) this.load(files: _*)
+    }
+
+    // 加载其他注解指定的配置信息
     val annoManagerClass = FireFrameworkConf.annoManagerClass
     if (isEmpty(annoManagerClass)) throw new IllegalArgumentException(s"未找到注解管理器，请通过：${FireFrameworkConf.FIRE_CONF_ANNO_MANAGER_CLASS}进行配置！")
 
@@ -180,21 +198,6 @@ object PropUtils extends Logging {
    */
   def loadJobConf(clazz: Class[_]): this.type = {
     if (clazz == null) return this
-    val option = this.getAnnoConfig(clazz)
-    if (option.nonEmpty) {
-      val (files, props, value) = option.get
-      if (noEmpty(value)) {
-        // 移除所有的注释信息
-        val normalValue = RegularUtils.propAnnotation.replaceAllIn(value, "").replaceAll("\\|", "").trim
-        val valueProps = new Properties()
-        val stringReader = new StringReader(normalValue)
-        valueProps.load(stringReader)
-        stringReader.close()
-        valueProps.map(kv => (StringUtils.trim(kv._1), StringUtils.trim(kv._2))).filter(kv => noEmpty(kv, kv._1, kv._2)).foreach(kv => this.setProperty(kv._1, kv._2))
-      }
-      props.foreach(kv => this.setProperty(kv._1, kv._2))
-      if (noEmpty(files)) this.load(files: _*)
-    }
     this.load(clazz.getSimpleName.replace("$", ""))
     this
   }

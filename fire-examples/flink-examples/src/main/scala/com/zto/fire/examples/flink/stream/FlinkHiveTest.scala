@@ -20,8 +20,10 @@ package com.zto.fire.examples.flink.stream
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.core.anno.{Hive, Kafka}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.anno.Checkpoint
 import org.apache.flink.api.scala._
 
 /**
@@ -41,11 +43,12 @@ import org.apache.flink.api.scala._
     |kafka.brokers.name = bigdata_test
     |kafka.topics = fire
     |kafka.group.id=fire
-    |flink.stream.checkpoint.interval=60000
-    |hive.cluster=test
     |# 1. 读取hive维表必须启用该配置
     |sql.conf.table.dynamic-table-options.enabled=true
     |""")
+@Hive("test")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
+@Checkpoint(interval = 60, concurrent = 1, pauseBetween = 60, timeout = 60)
 object FlinkHiveTest extends BaseFlinkStreaming {
 
   override def process: Unit = {

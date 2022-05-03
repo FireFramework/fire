@@ -19,7 +19,9 @@ package com.zto.fire.examples.flink.connector.rocketmq
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.core.anno.RocketMQ
 import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.anno.Checkpoint
 import org.apache.flink.api.scala._
 
 /**
@@ -29,17 +31,9 @@ import org.apache.flink.api.scala._
  * @since 2.0.0
  * @create 2021-5-13 14:26:24
  */
-@Config(
-  """
-    |stream.checkpoint.interval=60000
-    |default.parallelism=8
-    |# 消费rocketmq相关配置项
-    |rocket.brokers.name=bigdata_test
-    |rocket.topics=fire
-    |rocket.group.id=fire
-    |rocket.starting.offsets=latest
-    |rocket.consumer.tag=*
-    |""")
+@Checkpoint(60)
+@Config("default.parallelism=8")
+@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire", tag = "*", startingOffset = "latest")
 object RocketTest extends BaseFlinkStreaming {
 
   override def process: Unit = {

@@ -30,7 +30,6 @@ import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import spark.{Request, Response}
 import com.zto.fire._
-import com.zto.fire.spark.anno.StreamingDuration
 import com.zto.fire.spark.conf.FireSparkConf
 
 
@@ -151,18 +150,9 @@ trait BaseSparkStreaming extends BaseSpark {
    * 批次时间可通过子类复写main方法实现或通过在配置文件中指定：spark.streaming.batch.duration=30
    */
   override def main(args: Array[String]): Unit = {
-    val (duration, checkpoint) = this.getStreamingAnnotation
-    this.init(duration, checkpoint, args)
-  }
-
-  /**
-   * 获取注解中的批次间隔时间以及checkpoint配置
-   */
-  private[this] def getStreamingAnnotation: (Int, Boolean) = {
-    val anno = ReflectionUtils.getClassAnnotation(this.getClass, classOf[StreamingDuration])
-    if (anno == null) return (10, false)
-    val durationAnno = anno.asInstanceOf[StreamingDuration]
-    (durationAnno.value(), durationAnno.checkpoint())
+    val batchDuration = this.conf.getLong("spark.streaming.batch.duration", 10)
+    val ck = this.conf.getBoolean("spark.streaming.receiver.writeAheadLog.enable", false)
+    this.init(batchDuration, ck, args)
   }
 
   /**

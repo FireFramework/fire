@@ -21,7 +21,9 @@ import java.util.concurrent.TimeUnit
 import com.zto.fire._
 import com.zto.fire.common.anno.{Config, Scheduled}
 import com.zto.fire.common.util.{DateFormatUtils, PropUtils, ThreadUtils}
+import com.zto.fire.core.anno.{Hive, Kafka}
 import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.anno.Streaming
 
 
 /**
@@ -29,16 +31,9 @@ import com.zto.fire.spark.BaseSparkStreaming
  *
  * @author ChengLong 2019年9月10日 09:50:16
  */
-@Config(
-  """
-    |spark.kafka.brokers.name           =       zmsNew
-    |# 必须配置项：kafka的topic列表，以逗号分隔
-    |spark.kafka.topics                 =       sjzn_spark_order_unique_topic
-    |# 非必须配置项：默认为appName
-    |spark.kafka.group.id               =       fire
-    |spark.fire.rest.filter.enable      =       false
-    |spark.hive.cluster                 =       batch
-    |""")
+@Streaming(10)
+@Hive("batch")
+@Kafka(brokers = "zmsNew", topics = "sjzn_spark_order_unique_topic", groupId = "fire")
 object FireAccTest extends BaseSparkStreaming {
   val key = "fire.partitions"
 

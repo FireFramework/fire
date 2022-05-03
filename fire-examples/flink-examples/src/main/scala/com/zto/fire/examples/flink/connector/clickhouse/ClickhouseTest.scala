@@ -20,28 +20,18 @@ package com.zto.fire.examples.flink.connector.clickhouse
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.core.anno.Kafka
 import com.zto.fire.examples.bean.Student
 import org.apache.flink.api.scala._
 import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.anno.Checkpoint
 
 
 /**
  * flink clickhouse connector
  */
-@Config(
-  """
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire
-    |flink.stream.checkpoint.interval=60000
-    |""")
-/*@checkpoint(interval = 60, timeout=120, unaligned = true, pause_between = 10, concurrent = 1, mode = EXACTLY_ONCE)
-@kafka(topic="fire", groupId="fire")
-@hive(cluster="batch")
-@hbase(cluster="xx:2181,xxx2181")
-@rocketmq(topic="fire", groupId = "fire")
-@jdbc(url = "", username= "", password = "")
-@parallelism(10)*/
+@Checkpoint(60)
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 object ClickhouseTest extends BaseFlinkStreaming {
 
   /**

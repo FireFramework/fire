@@ -17,11 +17,11 @@
 
 package com.zto.fire.examples.flink.connector
 
-import com.zto.fire.common.anno.Config
 import com.zto.fire.common.conf.FireKafkaConf
 import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.anno.Checkpoint
 
-@Config("flink.stream.checkpoint.interval=60000")
+@Checkpoint(60)
 object FlinkHudiTest extends BaseFlinkStreaming {
 
   /**

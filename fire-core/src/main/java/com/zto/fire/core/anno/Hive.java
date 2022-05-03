@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 基于注解进行Hive connector配置，优先级低于配置文件，低于@Config注解
+ * 基于注解进行Hive connector配置，优先级低于配置文件，高于@Config注解
  *
  * @author ChengLong
  * @Date 2022-04-26 13:46:00
@@ -39,6 +39,11 @@ public @interface Hive {
     String value() default "";
 
     /**
+     * hive连接别名：hive.cluster，同value
+     */
+    String cluster() default "";
+
+    /**
      * hive的版本：hive.version
      */
     String version() default "";
@@ -46,7 +51,7 @@ public @interface Hive {
     /**
      * 在flink中hive的catalog名称：hive.catalog.name
      */
-    String catalog() default "hive";
+    String catalog() default "";
 
     /**
      * 分区名称（dt、ds）：default.table.partition.name

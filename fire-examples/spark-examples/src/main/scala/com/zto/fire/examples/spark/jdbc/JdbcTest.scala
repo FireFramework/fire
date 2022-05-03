@@ -19,6 +19,7 @@ package com.zto.fire.examples.spark.jdbc
 
 import com.zto.fire._
 import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
+import com.zto.fire.core.anno.{Jdbc, Jdbc2}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.spark.BaseSparkCore
@@ -30,6 +31,8 @@ import org.apache.spark.sql.SaveMode
  *
  * @author ChengLong 2019-6-17 15:17:38
  */
+@Jdbc(url = "jdbc:mysql://localhost:3306/fire", username = "root", password = "root")
+@Jdbc2(url = "jdbc:mysql://localhost:3306/fire", username = "root", password = "root")
 object JdbcTest extends BaseSparkCore {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "t_cluster_info"

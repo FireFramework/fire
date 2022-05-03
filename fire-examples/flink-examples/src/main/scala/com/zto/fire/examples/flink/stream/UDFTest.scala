@@ -20,10 +20,10 @@ package com.zto.fire.examples.flink.stream
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.core.anno.Kafka
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.scala._
-import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import org.apache.flink.table.functions.ScalarFunction
 
 /**
@@ -34,11 +34,6 @@ import org.apache.flink.table.functions.ScalarFunction
  */
 @Config(
   """
-    |flink.kafka.brokers.name            =       bigdata_test
-    |flink.kafka.topics                  =       fire
-    |flink.kafka.group.id                =       fire
-    |flink.fire.rest.filter.enable       =       false
-    |
     |# 开启fire udf注册功能（默认为关闭）
     |flink.sql.udf.fireUdf.enable=true
     |# 指定udf jar包的本地路径
@@ -47,6 +42,7 @@ import org.apache.flink.table.functions.ScalarFunction
     |flink.sql.udf.conf.appendFire=com.zto.fire.examples.flink.stream.Udf
     |flink.sql.udf.conf.fire=com.zto.fire.examples.flink.stream.Udf
     |""")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 object UDFTest extends BaseFlinkStreaming {
   override def process: Unit = {
     val stream = this.fire.createKafkaDirectStream()

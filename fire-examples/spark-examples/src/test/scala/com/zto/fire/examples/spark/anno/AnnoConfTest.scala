@@ -1,3 +1,5 @@
+package com.zto.fire.examples.spark.anno
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -15,28 +17,22 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.flink.anno
-
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf, FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.anno._
-import com.zto.fire.flink.BaseFlinkStreaming
-import com.zto.fire.flink.anno.Checkpoint
-import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.hbase.conf.FireHBaseConf
 import com.zto.fire.jdbc.conf.FireJdbcConf
+import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.anno.{Streaming, StreamingDuration}
+import com.zto.fire.spark.conf.FireSparkConf
 import org.junit.Test
 
-/**
- * 基于Fire注解进行任务参数设置
- */
 @Config(
   """
     |hive.cluster=test
-    |flink.max.parallelism=11
+    |spark.max.parallelism=11
     |""")
-@Checkpoint(interval = 100, unaligned = false, timeout = 10, concurrent = 2, pauseBetween = 30, failureNumber = 10)
 @Hive(value = "batch", catalog = "hive_catalog", version = "1.1.1", partition = "dt")
 @HBase(value = "batch-new1", batchSize = 10, durability = "off", scanPartitions = 12, config = Array("hbase.zookeeper.property.clientPort=2181", "zookeeper.znode.parent = /hbase"))
 @HBase2(value = "batch-new2", tableMetaCache = false, batchSize = 10, storageLevel = "memory_only", config = Array("hbase.zookeeper.property.clientPort=2182", "zookeeper.znode.parent = /hbase2"))
@@ -49,7 +45,22 @@ import org.junit.Test
 @Jdbc(url = "jdbc:mysql://localhost:3306", username = "root1", password = "root1", maxPoolSize = 10, maxIdleTime = 10, batchSize = 51, flushInterval = 1000, logSqlLength = 20, storageLevel = "memory", queryPartitions = 12)
 @Jdbc2(url = "jdbc:mysql://192.168.0.1:3306", driver = "com.fire", username = "root2", minPoolSize = 9, initialPoolSize = 8, password = "root2", maxRetries = 6, config = Array[String]("hello=world", "scala=flink"))
 @Jdbc3(url = "jdbc:mysql://192.168.0.2:3306", username = "root3", isolationLevel = "read",  password = "root3", acquireIncrement = 2)
-class AnnoConfTest extends BaseFlinkStreaming {
+@StreamingDuration(value = 20, checkpoint = false)
+@Streaming(value = 10, interval = 11, checkpoint = true, concurrent = 3, maxRatePerPartition = 10, backpressure = false, backpressureInitialRate = 26, stopGracefullyOnShutdown = false)
+class AnnoConfTest extends BaseSparkStreaming{
+
+  /**
+   * 测试@Streaming注解
+   */
+  @Test
+  def testStreaming: Unit = {
+    assert(FireSparkConf.confBathDuration == 11)
+    assert(this.conf.getBoolean("spark.streaming.receiver.writeAheadLog.enable", false))
+    assert(this.conf.getInt("spark.streaming.concurrentJobs", 1) == 3)
+    assert(this.conf.getLong("spark.streaming.kafka.maxRatePerPartition", 0) == 10)
+    assert(!this.conf.getBoolean("spark.streaming.backpressure.enabled", false))
+    assert(!this.conf.getBoolean("spark.streaming.stopGracefullyOnShutdown", true))
+  }
 
   /**
    * 测试@Jdbc注解
@@ -155,24 +166,11 @@ class AnnoConfTest extends BaseFlinkStreaming {
   }
 
   /**
-   * 测试@Checkpoint注解
-   */
-  @Test
-  def testCheckpoint: Unit = {
-    assert(FireFlinkConf.streamCheckpointInterval == 100)
-    assert(!FireFlinkConf.unalignedCheckpointEnable)
-    assert(FireFlinkConf.streamCheckpointTimeout == 10)
-    assert(FireFlinkConf.streamCheckpointMaxConcurrent == 2)
-    assert(FireFlinkConf.streamCheckpointMinPauseBetween == 30)
-    assert(FireFlinkConf.streamCheckpointTolerableFailureNumber == 10)
-  }
-
-  /**
    * 测试@Config注解
    */
   @Test
   def testConfig: Unit = {
-    assert(this.conf.getInt("flink.max.parallelism", 10240) == 11)
+    assert(this.conf.getInt("spark.max.parallelism", 10240) == 11)
   }
 
   /**
@@ -212,9 +210,8 @@ class AnnoConfTest extends BaseFlinkStreaming {
     assert(FireHBaseConf.hbaseBatchSize() == 10)
     assert(FireHBaseConf.hbaseHadoopScanPartitions(3) == 11)
 
-    assert(this.conf.getString("flink.fire.hbase.conf.hbase.zookeeper.property.clientPort").equals("2181"))
+    assert(this.conf.getString("spark.fire.hbase.conf.hbase.zookeeper.property.clientPort").equals("2181"))
     assert(this.conf.getString("fire.hbase.conf.zookeeper.znode.parent2").equals("/hbase2"))
-    assert(this.conf.getString("flink.fire.hbase.conf.hbase.zookeeper.property.clientPort3").equals("2183"))
+    assert(this.conf.getString("spark.fire.hbase.conf.hbase.zookeeper.property.clientPort3").equals("2183"))
   }
-
 }

@@ -20,6 +20,7 @@ package com.zto.fire.examples.flink.stream
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
+import com.zto.fire.core.anno.{Hive, Kafka}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.ext.watermark.FirePeriodicWatermarks
@@ -47,16 +48,11 @@ import java.text.SimpleDateFormat
  */
 @Config(
   """
-    |flink.kafka.brokers.name            =       test
-    |# 必须配置项：kafka的topic列表，以逗号分隔
-    |flink.kafka.topics                  =       flink
-    |flink.kafka.group.id                =       fire
-    |flink.kafka.enable.auto.commit      =       true
-    |spark.fire.rest.filter.enable       =       false
     |flink.stream.time.characteristic    =       EventTime
     |flink.default.parallelism           =       2
-    |flink.hive.cluster                  =       test
     |""")
+@Hive("test")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 object WatermarkTest extends BaseFlinkStreaming {
 
   override def process: Unit = {

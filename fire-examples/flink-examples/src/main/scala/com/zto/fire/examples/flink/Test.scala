@@ -20,61 +20,33 @@ package com.zto.fire.examples.flink
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.common.enu.JdbcDriver
 import com.zto.fire.core.anno._
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
-import org.apache.commons.lang3.StringUtils
 
 /**
  * 基于Fire进行Flink Streaming开发
  */
 @Config(
   """
-    |# 是否覆盖状态中的offset（请谨慎配置，用于kafka集群迁移等不正常状况的运维）
+    |# flink调优参数、fire框架参数、用户自定义参数
     |flink.kafka.force.overwrite.stateOffset.enable=true
     |# 是否在开启checkpoint的情况下强制开启周期性offset提交
     |flink.kafka.force.autoCommit.enable=true
-    |# 周期性提交offset的时间间隔（ms）
-    |flink.kafka.force.autoCommit.Interval=10000
-    |
-    | #注释信息
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire4
-    |
-    |kafka.brokers.name2 = bigdata_test
-    |kafka.topics2 = fire2
-    |kafka.group.id2=fire4
-    |kafka.starting.offsets2=earliest
-    |
-    |fire.acc.timer.max.size=30
-    |fire.acc.log.max.size=20
-    |flink.stream.checkpoint.interval=60000
-    |flink.state.choose.disk.policy=round_robin
-    |state.external.zookeeper.url=10.7.69.238:2181
-    |fire.analysis.arthas.enable=false
-    |fire.log.level.conf.org.apache.flink=warn
-    |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
-    |fire.analysis.arthas.container.enable=false
     |""")
-@HBase("batch")
-@Hive("test")
-@Checkpoint(interval = 100, unaligned = true)
-@Kafka(brokers = "kafka", topics = "fire", groupId = "fire")
+@HBase("test")  // 配置连接到指定的Hbase
+@Hive("test") // 配置连接到指定的hive
+@Checkpoint(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Kafka2(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
 object Test extends BaseFlinkStreaming {
 
   /**
    * fire2.1不再需要main方法，逻辑直接放到process中
    */
   override def process: Unit = {
-    println(this.conf.getString("hive.cluster"))
     val dstream = this.fire.createKafkaDirectStream()
     dstream.print("fire1==> ")
-
-    val dstream2 = this.fire.createKafkaDirectStream(keyNum = 2)
-    dstream2.print("fire2--> ")
-
     this.fire.start
   }
 }

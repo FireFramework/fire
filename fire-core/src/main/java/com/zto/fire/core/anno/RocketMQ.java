@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 基于注解进行RocketMQ connector配置，优先级低于配置文件，低于@Config注解
+ * 基于注解进行RocketMQ connector配置，优先级低于配置文件，高于@Config注解
  *
  * @author ChengLong 2022-04-26 15:18:34
  * @since 2.2.2
@@ -33,12 +33,12 @@ import java.lang.annotation.Target;
 public @interface RocketMQ {
 
     /**
-     * kafka集群连接信息
+     * rocketmq集群连接信息
      */
     String brokers();
 
     /**
-     * kafka topics，多个使用逗号分隔
+     * rocketmq topics，多个使用逗号分隔
      */
     String topics();
 
@@ -50,7 +50,7 @@ public @interface RocketMQ {
     /**
      * 指定消费的tag
      */
-    String consumerTag() default "*";
+    String tag() default "";
 
     /**
      * 指定从何处开始消费
@@ -66,4 +66,5 @@ public @interface RocketMQ {
      * RocketMQ-client参数，以key=value形式注明
      */
     String[] config() default "";
+
 }

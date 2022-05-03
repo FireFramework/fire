@@ -17,14 +17,10 @@
 
 package com.zto.fire.examples.spark
 
-import com.zto.fire.common.anno.Config
+import com.zto.fire.core.anno.Hive
 import com.zto.fire.spark.BaseSparkCore
 
-@Config(
-  """
-    |# 指定别名为test的hive集群连接
-    |spark.hive.cluster=test
-    |""")
+@Hive("test")
 object TestHive extends BaseSparkCore {
 
   override def process: Unit = {

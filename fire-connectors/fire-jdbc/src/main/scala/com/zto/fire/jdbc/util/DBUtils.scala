@@ -17,6 +17,7 @@
 
 package com.zto.fire.jdbc.util
 
+import com.google.common.collect.Maps
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
@@ -36,6 +37,15 @@ import scala.util.Try
  * @author ChengLong 2019-6-23 11:16:18
  */
 object DBUtils extends Logging {
+  private lazy val driverFile = "driver.properties"
+  // 读取配置文件，获取jdbc url与driver的映射关系
+  private lazy val driverMap = {
+    tryWithReturn {
+      val properties = new Properties()
+      properties.load(this.getClass.getClassLoader.getResourceAsStream(this.driverFile))
+      Maps.fromProperties(properties)
+    } (this.logger, s"加载${this.driverFile}成功", s"加载${this.driverFile}失败，请确认该配置文件是否存在！")
+  }
 
   /**
    * 将ResultSet结果转为JavaBean集合
@@ -157,6 +167,25 @@ object DBUtils extends Logging {
       })
     }
     dbType
+  }
+
+  /**
+   * 通过解析jdbc url，返回url对应的已知的driver class
+   *
+   * @param url
+   * jdbc url
+   * @return
+   * driver class
+   */
+  def parseDriverByUrl(url: String): String = {
+    var driver = ""
+    // 尝试从url中的端口号解析，对结果进行校正，因为有些数据库使用的是mysql驱动，可以通过url中的端口号区分
+    if (StringUtils.isNotBlank(url)) {
+      this.driverMap.foreach(kv => {
+        if (url.toLowerCase.contains(kv._1)) driver = kv._2
+      })
+    }
+    driver
   }
 
 }

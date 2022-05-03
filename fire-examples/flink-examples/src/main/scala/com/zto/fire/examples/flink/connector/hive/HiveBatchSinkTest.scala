@@ -19,6 +19,7 @@ package com.zto.fire.examples.flink.connector.hive
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.core.anno.Hive
 import com.zto.fire.flink.BaseFlinkStreaming
 
 /**
@@ -30,10 +31,7 @@ import com.zto.fire.flink.BaseFlinkStreaming
  * @since 2.0.0
  * @create 2021-01-18 17:24
  */
-@Config(
-  """
-    |hive.cluster=test
-    |""")
+@Hive("test")
 object HiveBatchSinkTest extends BaseFlinkStreaming {
 
   // 具体的业务逻辑放到process方法中

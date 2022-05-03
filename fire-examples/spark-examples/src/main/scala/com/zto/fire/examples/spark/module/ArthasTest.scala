@@ -20,9 +20,10 @@ package com.zto.fire.examples.spark.module
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.core.anno.{Hive, Kafka}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
-import com.zto.fire.spark.anno.StreamingDuration
+import com.zto.fire.spark.anno.Streaming
 
 /**
  * Spark Streaming集成Arthas工具测试
@@ -30,10 +31,6 @@ import com.zto.fire.spark.anno.StreamingDuration
 @Config(
   """
     |# 直接从配置文件中拷贝过来即可
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire2
-    |hive.cluster=test
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
     |fire.analysis.arthas.enable=true
@@ -41,7 +38,9 @@ import com.zto.fire.spark.anno.StreamingDuration
     |fire.analysis.arthas.container.enable=true
     |fire.analysis.arthas.conf.arthas.username=spark
     |""")
-@StreamingDuration(20) // spark streaming的批次时间
+@Hive("test")
+@Streaming(20)
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object ArthasTest extends BaseSparkStreaming {
 
   override def process: Unit = {

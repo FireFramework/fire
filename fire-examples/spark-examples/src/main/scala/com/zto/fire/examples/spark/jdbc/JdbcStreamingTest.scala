@@ -18,17 +18,13 @@
 package com.zto.fire.examples.spark.jdbc
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Config
+import com.zto.fire.core.anno.Kafka
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.anno.Streaming
 
-@Config(
-  """
-    |spark.kafka.brokers.name           =       bigdata_test
-    |spark.kafka.topics                 =       fire
-    |spark.kafka.group.id               =       fire
-    |spark.fire.rest.filter.enable      =       false
-    |""")
+@Streaming(10)
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object JdbcStreamingTest extends BaseSparkStreaming {
   val tableName = "spark_test"
 
@@ -50,9 +46,5 @@ object JdbcStreamingTest extends BaseSparkStreaming {
     })
 
     this.fire.start
-  }
-
-  override def main(args: Array[String]): Unit = {
-    this.init(10, false)
   }
 }

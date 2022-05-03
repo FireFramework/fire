@@ -18,21 +18,14 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Config
+import com.zto.fire.core.anno.{Hive, Kafka}
 import com.zto.fire.flink.BaseFlinkStreaming
 
 /**
  * 基于Fire进行Flink Streaming开发
  */
-@Config(
-  """
-    |# 直接从配置文件中拷贝过来即可
-    | #注释信息
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire
-    |hive.cluster=test
-    |""")
+@Hive("test")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 object HiveRW extends BaseFlinkStreaming {
 
   /**

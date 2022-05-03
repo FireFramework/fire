@@ -1,26 +1,18 @@
 package com.zto.fire.examples.spark.hive
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.core.anno.{Hive, Kafka}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
-import org.apache.spark.sql.{DataFrame, SaveMode}
+import org.apache.spark.sql.DataFrame
 
 
 /**
  * 基于Fire进行Spark Streaming开发
  */
-@Config(
-  """
-    |# 直接从配置文件中拷贝过来即可
-    | #注释信息
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire
-    |fire.rest.filter.enable=true
-    |hive.cluster=test
-    |""")
+@Hive("test")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object HiveRW extends BaseSparkStreaming {
 
   // 消息格式

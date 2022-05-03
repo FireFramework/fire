@@ -20,6 +20,7 @@ package com.zto.fire.examples.flink.stream
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, PropUtils}
+import com.zto.fire.core.anno.Kafka
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.util.FlinkUtils
@@ -37,16 +38,8 @@ import org.apache.flink.streaming.api.scala.DataStream
 @Config(
   """
     |#########################################################################################
-    |#  JDBC数据源配置信息详见：common.properties，公共数据源配置可放到common.properties中，便于维护    #
+    |#  JDBC数据源配置信息详见：common.properties，公共数据源配置可放到common.properties中，便于维护  #
     |#########################################################################################
-    |
-    |flink.kafka.brokers.name            =       bigdata_test
-    |# 必须配置项：kafka的topic列表，以逗号分隔
-    |flink.kafka.topics                  =       fire
-    |flink.kafka.group.id                =       fire
-    |flink.fire.rest.filter.enable       =       false
-    |flink.fire.config_center.enable     =       true
-    |flink.fire.rest.url.show.enable     =       true
     |
     |# flink所支持的参数
     |state.checkpoints.num-retained      =       3
@@ -61,6 +54,7 @@ import org.apache.flink.streaming.api.scala.DataStream
 // @Config(Array("test.properties"))
 // 3. 指定从以下两个配置文件中加载配置信息
 // @Config(Array("test.properties", "test2.properties"))
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 object JdbcTest extends BaseFlinkStreaming {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "spark_test2"

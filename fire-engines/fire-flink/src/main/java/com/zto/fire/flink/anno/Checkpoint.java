@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
 import static org.apache.flink.streaming.api.environment.CheckpointConfig.*;
 
 /**
- * 基于注解flink checkpoint配置，优先级低于配置文件，低于@Config注解
+ * 基于注解flink checkpoint配置，优先级低于配置文件，高于@Config注解
  * 注：@Checkpoint中相关时间单位均为秒
  *
  * @author ChengLong 2022-04-26 11:16:00
@@ -36,27 +36,50 @@ import static org.apache.flink.streaming.api.environment.CheckpointConfig.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Checkpoint {
-    // checkpoint周期（s）
-    int interval() default 60;
 
-    // checkpoint超时时间（s）
-    int timeout() default 120;
+    /**
+     * checkpoint周期（s）
+     */
+    int value() default 60;
 
-    // 是否开启非对齐的checkpoint
+    /**
+     * checkpoint周期（s），同value
+     */
+    int interval() default -1;
+
+    /**
+     * checkpoint超时时间（s）
+     */
+    int timeout() default -1;
+
+    /**
+     * 是否开启非对齐的checkpoint
+     */
     boolean unaligned() default true;
 
-    // checkpoint的并发度
-    int concurrent() default 1;
+    /**
+     * checkpoint的并发度
+     */
+    int concurrent() default -1;
 
-    // 两次checkpoint的最短时间间隔
-    int pauseBetween() default 60;
+    /**
+     * 两次checkpoint的最短时间间隔
+     */
+    int pauseBetween() default -1;
 
-    // 运行checkpoint失败的总次数
-    int failureNumber() default 5;
+    /**
+     * 运行checkpoint失败的总次数
+     */
+    int failureNumber() default -1;
 
-    // checkpoint的模式
+    /**
+     * checkpoint的模式
+     */
     CheckpointingMode mode() default CheckpointingMode.EXACTLY_ONCE;
 
-    // 当任务停止时checkpoint的保持策略
+    /**
+     * 当任务停止时checkpoint的保持策略
+     */
     ExternalizedCheckpointCleanup cleanup() default ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION;
+
 }

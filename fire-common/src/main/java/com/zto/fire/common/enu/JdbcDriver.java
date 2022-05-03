@@ -32,7 +32,8 @@ public enum JdbcDriver {
     spark("org.apache.hive.jdbc.HiveDriver"),
     clickhouse("ru.yandex.clickhouse.ClickHouseDriver"),
     postgreSql("org.postgresql.Driver"),
-    impala("com.cloudera.impala.jdbc41.Driver");
+    impala("com.cloudera.impala.jdbc41.Driver"),
+    automatic("");
 
     private String driver;
 

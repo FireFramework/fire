@@ -19,6 +19,7 @@ package com.zto.fire.examples.spark.structured
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.core.anno.{Hive, Kafka}
 import com.zto.fire.spark.BaseStructuredStreaming
 
 /**
@@ -26,15 +27,8 @@ import com.zto.fire.spark.BaseStructuredStreaming
  *
  * @author ChengLong 2019年12月23日 22:16:59
  */
-@Config(
-  """
-    |spark.kafka.brokers.name           =       zmsNew
-    |# 必须配置项：kafka的topic列表，以逗号分隔
-    |spark.kafka.group.id               =       fire
-    |spark.kafka.topics                 =       sjzn_spark_scan_send_topic
-    |spark.hive.cluster                 =       batch
-    |spark.kafka.poll.timeout.ms        =       10000
-    |""")
+@Hive("batch")
+@Kafka(brokers = "zmsNew", topics = "sjzn_spark_scan_send_topic", groupId = "fire")
 object StructuredStreamingTest extends BaseStructuredStreaming {
 
   /**

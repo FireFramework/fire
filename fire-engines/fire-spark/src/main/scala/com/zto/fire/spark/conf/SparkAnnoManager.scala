@@ -18,7 +18,7 @@
 package com.zto.fire.spark.conf
 
 import com.zto.fire.core.conf.AnnoManager
-import com.zto.fire.spark.anno.StreamingDuration
+import com.zto.fire.spark.anno.{Streaming, StreamingDuration}
 
 /**
  * 注解管理器，用于将主键中的配置信息映射为键值对信息
@@ -29,12 +29,31 @@ import com.zto.fire.spark.anno.StreamingDuration
 private[fire] class SparkAnnoManager extends AnnoManager {
 
   /**
-   * 将@Checkpoint中配置的信息映射为键值对形式
-   * @param checkpoint
-   * Checkpoint注解实例
+   * 将@StreamingDuration中配置的信息映射为键值对形式
+   * @param StreamingDuration
+   * StreamingDuration注解实例
    */
-  def mapStreamingDuration(duration: StreamingDuration): Unit = {
-    println("调用：mapStreamingDuration -> interval=" + duration.value())
+  def mapStreamingDuration(streaming: StreamingDuration): Unit = {
+    this.put(FireSparkConf.SPARK_STREAMING_BATCH_DURATION, streaming.value())
+    this.put(FireSparkConf.SPARK_STREAMING_BATCH_DURATION, streaming.interval())
+    this.put("spark.streaming.receiver.writeAheadLog.enable", streaming.checkpoint())
+  }
+
+  /**
+   * 将@Streaming中配置的信息映射为键值对形式
+   * @param Streaming
+   * Streaming注解实例
+   */
+  def mapStreaming(streaming: Streaming): Unit = {
+    this.put(FireSparkConf.SPARK_STREAMING_BATCH_DURATION, streaming.value())
+    this.put(FireSparkConf.SPARK_STREAMING_BATCH_DURATION, streaming.interval())
+    this.put("spark.streaming.receiver.writeAheadLog.enable", streaming.checkpoint())
+    this.put("spark.streaming.backpressure.enabled", streaming.backpressure())
+    this.put("spark.streaming.concurrentJobs", streaming.concurrent())
+    this.put("spark.streaming.stopGracefullyOnShutdown", streaming.stopGracefullyOnShutdown())
+    this.put("spark.streaming.kafka.maxRatePerPartition", streaming.maxRatePerPartition())
+    this.put("spark.streaming.backpressure.initialRate", streaming.backpressureInitialRate())
+    this.put("spark.rocket.pull.max.speed.per.partition", streaming.maxRatePerPartition())
   }
 
   /**
@@ -42,5 +61,6 @@ private[fire] class SparkAnnoManager extends AnnoManager {
    */
   override protected[fire] def register: Unit = {
     this.registerAnnoSet.add(classOf[StreamingDuration])
+    this.registerAnnoSet.add(classOf[Streaming])
   }
 }

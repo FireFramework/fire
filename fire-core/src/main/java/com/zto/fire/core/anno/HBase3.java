@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 基于注解进行Hbase connector配置，优先级低于配置文件，低于@Config注解
+ * 基于注解进行Hbase connector配置，优先级低于配置文件，高于@Config注解
  *
  * @author ChengLong 2022-04-26 13:36:00
  * @since 2.2.2
@@ -35,12 +35,17 @@ public @interface HBase3 {
     /**
      * HBase集群连接信息：hbase.cluster
      */
-    String value();
+    String value() default "";
+
+    /**
+     * HBase集群连接信息：hbase.cluster，同value
+     */
+    String cluster() default "";
 
     /**
      * 列族名称：hbase.column.family
      */
-    String family() default "info";
+    String family() default "";
 
     /**
      * 每个线程最多insert的记录数：fire.hbase.batch.size

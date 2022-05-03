@@ -18,6 +18,7 @@
 package com.zto.fire.examples.spark.hive
 
 import com.zto.fire.common.anno.Config
+import com.zto.fire.core.anno.Hive
 import com.zto.fire.spark.BaseSparkCore
 
 /**
@@ -29,10 +30,8 @@ import com.zto.fire.spark.BaseSparkCore
 @Config(
   """
     |spark.log.level                    =       ERROR
-    |# ------------------- < hive 配置 > ------------------- #
-    |# hive 集群名称（batch离线hive/streaming 180集群hive/test本地测试hive），用于spark跨集群读取hive元数据信息
-    |spark.hive.cluster                 =       test
     |""")
+@Hive("test")
 object HiveClusterReader extends BaseSparkCore {
 
   override def process: Unit = {

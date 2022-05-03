@@ -163,7 +163,7 @@ trait BaseFlink extends BaseFire {
         // flink.stream.checkpoint.prefer.recovery  默认：false
         // ckConfig.setPreferCheckpointForRecovery(FireFlinkConf.streamCheckpointPreferRecovery)
         // flink.stream.checkpoint.tolerable.failure.number 默认：0
-        if (FireFlinkConf.streamCheckpointTolerableTailureNumber >= 0) ckConfig.setTolerableCheckpointFailureNumber(FireFlinkConf.streamCheckpointTolerableTailureNumber)
+        if (FireFlinkConf.streamCheckpointTolerableFailureNumber >= 0) ckConfig.setTolerableCheckpointFailureNumber(FireFlinkConf.streamCheckpointTolerableFailureNumber)
         // flink.stream.checkpoint.externalized
         if (StringUtils.isNotBlank(FireFlinkConf.streamCheckpointExternalized)) ckConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.valueOf(FireFlinkConf.streamCheckpointExternalized.trim))
         // flink.stream.checkpoint.unaligned.enable

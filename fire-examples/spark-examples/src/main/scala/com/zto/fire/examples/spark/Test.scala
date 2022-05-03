@@ -18,24 +18,17 @@
 package com.zto.fire.examples.spark
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Config
-import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.JSONUtils
-import com.zto.fire.examples.bean.Student
-import com.zto.fire.spark.anno.StreamingDuration
-import com.zto.fire.spark.{BaseSparkCore, BaseSparkStreaming}
+import com.zto.fire.core.anno.Kafka
+import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.anno.Streaming
 
 /**
  * 基于Fire进行Spark Streaming开发
  */
-@Config(
-  """
-    |# 直接从配置文件中拷贝过来即可
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire2
-    |""")
-@StreamingDuration(10)
+// 60s一个批，最大同时执行2个streaming批次，开启反压机制、每个分区每秒最大消费100条消息
+@Streaming(interval = 60, concurrent = 2, backpressure = true, maxRatePerPartition = 100)
+// 配置消费的kafka信息
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object Test extends BaseSparkStreaming {
 
   override def process: Unit = {

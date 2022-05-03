@@ -18,11 +18,11 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.core.anno.{HBase, HBase2, HBase3, Kafka}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
-import com.zto.fire.flink.util.FlinkUtils
+import com.zto.fire.flink.anno.Checkpoint
 import com.zto.fire.hbase.HBaseConnector
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.DataStream
@@ -36,21 +36,11 @@ import scala.collection.mutable.ListBuffer
  * @since 1.1.0
  * @create 2020-5-25 16:32:50
  */
-@Config(
-  """
-    |flink.kafka.brokers.name            =       bigdata_test
-    |# 必须配置项：kafka的topic列表，以逗号分隔
-    |flink.kafka.topics                  =       fire
-    |flink.kafka.group.id                =       fire
-    |flink.kafka.enable.auto.commit      =       true
-    |flink.fire.rest.filter.enable       =       false
-    |flink.stream.checkpoint.interval    =       30
-    |
-    |# 关系型数据库连接信息
-    |flink.hbase.cluster                 =       test
-    |flink.hbase.cluster2                =       test
-    |flink.hbase.cluster3                =       test
-    |""")
+@Checkpoint(30)
+@HBase("test")
+@HBase2("test") // 对应keyNum=2的Hbase集群地址
+@HBase3("test") // 对应keyNum=3的Hbase集群地址
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object HBaseTest extends BaseFlinkStreaming {
   lazy val tableName = "fire_test_1"
   lazy val tableName2 = "fire_test_2"

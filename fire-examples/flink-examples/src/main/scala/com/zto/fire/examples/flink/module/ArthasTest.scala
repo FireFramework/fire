@@ -20,8 +20,10 @@ package com.zto.fire.examples.flink.module
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.core.anno.Kafka
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.anno.Checkpoint
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction
 import org.apache.flink.streaming.api.scala.KeyedStream
@@ -34,17 +36,15 @@ import org.apache.flink.util.Collector
   """
     |# 直接从配置文件中拷贝过来即可
     | #注释信息
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
-    |flink.stream.checkpoint.interval=10
     |fire.analysis.arthas.enable=false
     |fire.log.level.conf.org.apache.flink=warn
     |fire.analysis.arthas.container.enable=false
     |fire.rest.filter.enable=true
     |""")
+@Checkpoint(interval = 10, concurrent = 1, pauseBetween = 60, timeout = 60)
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 object ArthasTest extends BaseFlinkStreaming {
 
   /**

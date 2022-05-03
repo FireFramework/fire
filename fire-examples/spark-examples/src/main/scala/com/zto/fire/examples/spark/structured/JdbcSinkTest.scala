@@ -19,26 +19,16 @@ package com.zto.fire.examples.spark.structured
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.core.anno.{HBase, Hive, Kafka}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseStructuredStreaming
 
 /**
  * 结构化流测试
  */
-@Config(
-  """
-    |spark.kafka.brokers.name           =       bigdata_test
-    |# 必须配置项：kafka的topic列表，以逗号分隔
-    |spark.kafka.topics                 =       fire
-    |# 非必须配置项：默认为appName
-    |spark.kafka.group.id               =       fire
-    |spark.fire.rest.filter.enable      =       false
-    |spark.hive.cluster                 =       test
-    |spark.hbase.cluster                =       test
-    |spark.chkpoint.dir                 =       /tmp/spark-checkpoint/
-    |spark.sql.shuffle.partitions       =       300
-    |spark.sql.streaming.metricsEnabled =       true
-    |""")
+@Hive("test")
+@HBase("test")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object JdbcSinkTest extends BaseStructuredStreaming {
 
   override def process: Unit = {

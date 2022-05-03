@@ -20,29 +20,17 @@ package com.zto.fire.examples.spark.thread
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.{DateFormatUtils, ThreadUtils}
+import com.zto.fire.core.anno.Kafka
 import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.anno.Streaming
 
 /**
   * 在driver中启用线程池的示例
   * 1. 开启子线程执行一个任务
   * 2. 开启子线程执行周期性任务
   */
-@Config(
-  """
-    |spark.log.level                    =       INFO
-    |# 非必须配置项：默认就是这个地址
-    |spark.kafka.brokers.name           =       zms
-    |# 必须配置项：kafka的topic列表，以逗号分隔
-    |spark.kafka.topics                 =       aries_binlog_order
-    |# 非必须配置项：默认为appName
-    |spark.kafka.group.id               =       OrderDetailMainCommon
-    |
-    |spark.hive.cluster                 =       batch
-    |
-    |# spark的参数可以直接写在下面，都会被加载，覆盖程序中默认的配置信息
-    |spark.speculation                  =       false
-    |spark.streaming.concurrentJobs     =       1
-    |""")
+@Streaming(interval = 10, checkpoint = false, concurrent = 2)
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object ThreadTest extends BaseSparkStreaming {
 
   override def main(args: Array[String]): Unit = {

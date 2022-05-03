@@ -20,24 +20,22 @@ package com.zto.fire.examples.spark.streaming
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.core.anno.{Hive, Kafka}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
-import com.zto.fire.spark.anno.StreamingDuration
-import com.zto.fire.spark.util.SparkUtils
+import com.zto.fire.spark.anno.Streaming
 
 /**
  * 基于Fire进行Spark Streaming开发
  */
 @Config(
   """
-    |kafka.brokers.name = bigdata_test
-    |kafka.topics = fire
-    |kafka.group.id=fire
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
     |fire.conf.test=java
     |""")
-@StreamingDuration(20) // spark streaming的批次时间
+@Streaming(20) // spark streaming的批次时间
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object ConfigCenterTest extends BaseSparkStreaming {
 
   /**

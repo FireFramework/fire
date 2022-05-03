@@ -19,6 +19,7 @@ package com.zto.fire.examples.flink.acc
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.core.anno.Kafka
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.scala._
@@ -32,13 +33,9 @@ import org.apache.flink.streaming.api.scala.DataStream
  */
 @Config(
   """
-    |flink.kafka.brokers.name            =       test
-    |# 必须配置项：kafka的topic列表，以逗号分隔
-    |flink.kafka.topics                  =       flink
-    |flink.kafka.group.id                =       fire
-    |flink.kafka.enable.auto.commit      =       true
     |flink.max.parallelism               =       8
     |""")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 object FlinkAccTest extends BaseFlinkStreaming {
 
   /**

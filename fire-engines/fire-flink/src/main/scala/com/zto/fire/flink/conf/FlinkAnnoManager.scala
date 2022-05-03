@@ -19,6 +19,7 @@ package com.zto.fire.flink.conf
 
 import com.zto.fire.core.conf.AnnoManager
 import com.zto.fire.flink.anno.Checkpoint
+import com.zto.fire.flink.conf.FireFlinkConf._
 
 /**
  * 注解管理器，用于将主键中的配置信息映射为键值对信息
@@ -34,7 +35,15 @@ private[fire] class FlinkAnnoManager extends AnnoManager {
    * Checkpoint注解实例
    */
   def mapCheckpoint(checkpoint: Checkpoint): Unit = {
-    println("调用：mapCheckpoint -> interval=" + checkpoint.interval())
+    this.put(FLINK_STREAM_CHECKPOINT_INTERVAL, checkpoint.value())
+    this.put(FLINK_STREAM_CHECKPOINT_INTERVAL, checkpoint.interval())
+    this.put(FLINK_STREAM_CHECKPOINT_TIMEOUT, checkpoint.timeout())
+    this.put(FLINK_STREAM_CHECKPOINT_UNALIGNED, checkpoint.unaligned())
+    this.put(FLINK_STREAM_CHECKPOINT_MAX_CONCURRENT, checkpoint.concurrent())
+    this.put(FLINK_STREAM_CHECKPOINT_MIN_PAUSE_BETWEEN, checkpoint.pauseBetween())
+    this.put(FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER, checkpoint.failureNumber())
+    this.put(FLINK_STREAM_CHECKPOINT_MODE, checkpoint.mode())
+    this.put(streamCheckpointExternalized, checkpoint.cleanup())
   }
 
   /**
