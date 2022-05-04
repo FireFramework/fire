@@ -203,7 +203,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-client_${scala.binary.version}</artifactId>
+      <artifactId>hbase-client</artifactId>
       <version>${hbase.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>

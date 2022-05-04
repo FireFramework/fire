@@ -148,19 +148,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client_${scala.binary.version}</artifactId>
+            <artifactId>hbase-client</artifactId>
             <version>${hbase.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-spark${spark.major.version}_${scala.binary.version}</artifactId>
-            <version>${hbase.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.hbase</groupId>
-                    <artifactId>hbase-client</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <!-- rocketmq相关依赖 -->

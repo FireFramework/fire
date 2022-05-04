@@ -34,6 +34,7 @@
     <module>apache-flink</module>
     <module>rocketmq-externals</module>
       <module>arthas</module>
+      <module>apache-hbase</module>
   </modules>
 
   <build>
