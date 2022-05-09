@@ -1,18 +1,23 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>apache-hbase_1.2.0</artifactId>
+    <artifactId>apache-hbase_${hbase.version}</artifactId>
     <version>2.2.2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Fire : Enhance : HBase </name>
 
     <parent>
-        <artifactId>fire-enhance_2.12</artifactId>
+        <artifactId>fire-enhance</artifactId>
         <groupId>com.zto.fire</groupId>
         <version>2.2.2-SNAPSHOT</version>
     </parent>
 
     <dependencies>
+        <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>apache-spark_${spark.reference}</artifactId>
+            <version>${fire.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>

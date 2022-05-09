@@ -44,8 +44,8 @@ object ThreadUtils extends Logging {
    * 用于指定以多线程方式执行的函数
    */
   def runAsSingle(fun: => Unit): Unit = {
-    this.singlePool.execute(() => {
-      fun
+    this.singlePool.execute(new Runnable {
+      override def run(): Unit = fun
     })
   }
 
@@ -56,8 +56,8 @@ object ThreadUtils extends Logging {
    * 用于指定以多线程方式执行的函数
    */
   def run(fun: => Unit): Unit = {
-    this.cachedPool.execute(() => {
-      fun
+    this.cachedPool.execute(new Runnable {
+      override def run(): Unit = fun
       logger.debug(s"Invoke runAsThread as ${Thread.currentThread().getName}.")
     })
   }
@@ -71,11 +71,13 @@ object ThreadUtils extends Logging {
    * 循环调用间隔时间（单位s）
    */
   def runLoop(fun: => Unit, delay: Long = 10): Unit = {
-    this.cachedPool.execute(() => {
-      while (true) {
-        fun
-        this.logger.debug(s"Loop invoke runAsThreadLoop as ${Thread.currentThread().getName}. Delay is ${delay}s.")
-        Thread.sleep(delay * 1000)
+    this.cachedPool.execute(new Runnable {
+      override def run(): Unit = {
+        while (true) {
+          fun
+          logger.debug(s"Loop invoke runAsThreadLoop as ${Thread.currentThread().getName}. Delay is ${delay}s.")
+          Thread.sleep(delay * 1000)
+        }
       }
     })
   }
@@ -98,13 +100,13 @@ object ThreadUtils extends Logging {
   def schedule(fun: => Unit, initialDelay: Long, period: Long, rate: Boolean = true, timeUnit: TimeUnit = TimeUnit.MINUTES): Unit = {
     if (rate) {
       // 表示周期性的执行，不受上一个定时任务的约束
-      this.scheduledPool.scheduleAtFixedRate(() => {
-        wrapFun()
+      this.scheduledPool.scheduleAtFixedRate(new Runnable {
+        override def run(): Unit = wrapFun()
       }, initialDelay, period, timeUnit)
     } else {
       // 表示当上一次周期性任务执行成功后，period后开始执行
-      this.scheduledPool.scheduleWithFixedDelay(() => {
-        wrapFun()
+      this.scheduledPool.scheduleWithFixedDelay(new Runnable {
+        override def run(): Unit = wrapFun()
       }, initialDelay, period, timeUnit)
     }
 

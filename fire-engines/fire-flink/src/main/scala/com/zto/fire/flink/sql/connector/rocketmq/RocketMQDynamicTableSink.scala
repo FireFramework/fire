@@ -30,7 +30,7 @@ import org.apache.flink.table.data.RowData
 import org.apache.flink.table.types.DataType
 import org.apache.flink.table.types.utils.DataTypeUtils
 import org.apache.rocketmq.flink.common.selector.DefaultTopicSelector
-import org.apache.rocketmq.flink.serialization.JsonSerializationSchema
+import org.apache.rocketmq.flink.common.serialization.JsonSerializationSchema
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSinkWithTag}
 
 /**

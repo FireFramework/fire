@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>fire-shell_${scala.binary.version}</artifactId>
+    <artifactId>fire-shell</artifactId>
     <packaging>pom</packaging>
     <name>Fire : Shell : </name>
 
@@ -13,7 +13,7 @@
     </modules>
 
     <parent>
-        <artifactId>fire-parent_2.12</artifactId>
+        <artifactId>fire-parent</artifactId>
         <groupId>com.zto.fire</groupId>
         <version>2.2.2-SNAPSHOT</version>
     </parent>

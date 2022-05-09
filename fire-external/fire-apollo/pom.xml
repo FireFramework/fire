@@ -25,7 +25,7 @@
 
     <parent>
         <groupId>com.zto.fire</groupId>
-        <artifactId>fire-external_2.12</artifactId>
+        <artifactId>fire-external</artifactId>
         <version>2.2.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>

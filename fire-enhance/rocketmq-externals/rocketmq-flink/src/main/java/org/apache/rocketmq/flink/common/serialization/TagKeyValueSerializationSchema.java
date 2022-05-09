@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.rocketmq.flink.serialization;
+package org.apache.rocketmq.flink.common.serialization;
 
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.rocketmq.common.message.Message;

@@ -25,12 +25,17 @@
 
     <parent>
         <groupId>com.zto.fire</groupId>
-        <artifactId>rocketmq-externals_2.12</artifactId>
+        <artifactId>rocketmq-externals</artifactId>
         <version>2.2.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <dependencies>
+        <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>apache-spark_${spark.reference}</artifactId>
+            <version>${fire.version}</version>
+        </dependency>
         <!-- spark相关依赖 -->
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -72,13 +77,6 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-streaming-kafka-0-10_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>${maven.scope}</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-spark${spark.major.version}_${scala.binary.version}</artifactId>
-            <version>${rocketmq.external.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
     </dependencies>

@@ -33,7 +33,7 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.flink.common.selector.TopicSelector;
-import org.apache.rocketmq.flink.serialization.JsonSerializationSchema;
+import org.apache.rocketmq.flink.common.serialization.JsonSerializationSchema;
 import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

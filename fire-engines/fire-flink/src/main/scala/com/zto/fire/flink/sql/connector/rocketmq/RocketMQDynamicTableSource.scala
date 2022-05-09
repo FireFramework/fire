@@ -29,7 +29,7 @@ import org.apache.flink.table.connector.source.{DynamicTableSource, ScanTableSou
 import org.apache.flink.table.data.RowData
 import org.apache.flink.table.types.DataType
 import org.apache.flink.table.types.utils.DataTypeUtils
-import org.apache.rocketmq.flink.serialization.JsonDeserializationSchema
+import org.apache.rocketmq.flink.common.serialization.JsonDeserializationSchema
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource, RocketMQSourceWithTag}
 
 import java.util.Properties

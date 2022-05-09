@@ -19,14 +19,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>rocketmq-externals_2.12</artifactId>
+    <artifactId>rocketmq-externals</artifactId>
     <version>2.2.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Fire : Enhance : RocketMQ : </name>
 
     <parent>
         <groupId>com.zto.fire</groupId>
-        <artifactId>fire-enhance_2.12</artifactId>
+        <artifactId>fire-enhance</artifactId>
         <version>2.2.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>

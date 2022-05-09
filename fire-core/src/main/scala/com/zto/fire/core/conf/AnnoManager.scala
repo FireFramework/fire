@@ -48,7 +48,7 @@ private[fire] trait AnnoManager {
     classOf[Hive], classOf[HBase], classOf[HBase2], classOf[HBase3],
     classOf[Jdbc], classOf[Jdbc2], classOf[Jdbc3],
     classOf[Kafka], classOf[Kafka2], classOf[Kafka3],
-    classOf[RocketMQ], classOf[RocketMQ2], classOf[RocketMQ3],
+    classOf[RocketMQ], classOf[RocketMQ2], classOf[RocketMQ3]
   )
 
   this.register

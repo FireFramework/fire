@@ -25,7 +25,7 @@
 
     <parent>
         <groupId>com.zto.fire</groupId>
-        <artifactId>fire-engines_2.12</artifactId>
+        <artifactId>fire-engines</artifactId>
         <version>2.2.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
@@ -79,12 +79,6 @@
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-runtime-web_${scala.binary.version}</artifactId>
-            <version>${flink.version}</version>
-            <scope>${maven.scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-queryable-state-runtime</artifactId>
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
@@ -214,12 +208,6 @@
         </dependency>
 
         <!-- RocketMQ相关依赖 -->
-        <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-flink_${flink.major.version}_${scala.binary.version}</artifactId>
-            <version>${rocketmq.external.version}</version>
-            <scope>${maven.scope}</scope>
-        </dependency>
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-client</artifactId>

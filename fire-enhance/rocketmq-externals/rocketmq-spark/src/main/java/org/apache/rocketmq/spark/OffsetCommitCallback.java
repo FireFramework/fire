@@ -14,18 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.rocketmq.spark;
 
-package org.apache.rocketmq.flink.serialization;
+import org.apache.rocketmq.common.message.MessageQueue;
 
-import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
-
-import java.io.Serializable;
+import java.util.Map;
 
 /**
- * 反序列化，携带tag信息
- * @author ChengLong 2021-5-10 09:43:35
+ * A callback interface that the user can implement to trigger custom actions when a commit request completes.
  */
-public interface TagKeyValueDeserializationSchema<T> extends ResultTypeQueryable<T>, Serializable {
-
-    T deserializeTagKeyAndValue(byte[] tag, byte[] key, byte[] value);
+public interface OffsetCommitCallback {
+    /**
+     * A callback method the user can implement to provide asynchronous handling of commit request completion.
+     * This method will be called by InputDstream when the last batch is handled successfully.
+     * @param offsets the offsets which already are handled successfully
+     * @param exception The exception thrown during processing of the request, or null if the commit completed successfully
+     */
+    void onComplete(Map<MessageQueue, Long> offsets, Exception exception);
 }

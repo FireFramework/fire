@@ -17,16 +17,15 @@
 
 package org.apache.hadoop.hbase.spark.datasources
 
-import java.util.ArrayList
-
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.spark._
-import org.apache.hadoop.hbase.spark.hbase._
 import org.apache.hadoop.hbase.spark.datasources.HBaseResources._
-import org.apache.spark.{SparkEnv, TaskContext, Partition}
-import org.apache.spark.rdd.RDD
+import org.apache.hadoop.hbase.spark.hbase._
 import org.apache.spark.internal.Logging
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{Partition, SparkEnv, TaskContext}
 
+import java.util.ArrayList
 import scala.collection.mutable
 
 class HBaseTableScanRDD(relation: HBaseRelation,

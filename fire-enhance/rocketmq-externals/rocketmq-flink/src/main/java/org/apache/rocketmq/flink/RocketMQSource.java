@@ -13,7 +13,6 @@
 
 package org.apache.rocketmq.flink;
 
-import com.esotericsoftware.minlog.Log;
 import org.apache.commons.collections.map.LinkedMap;
 import org.apache.commons.lang.Validate;
 import org.apache.flink.api.common.state.ListState;
@@ -29,15 +28,11 @@ import org.apache.flink.runtime.state.FunctionSnapshotContext;
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
 import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
 import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
-import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
-import org.apache.rocketmq.client.consumer.MQPullConsumerScheduleService;
-import org.apache.rocketmq.client.consumer.PullResult;
-import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.consumer.*;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.message.MessageQueue;
-import org.apache.rocketmq.flink.serialization.TagKeyValueDeserializationSchema;
-import org.apache.rocketmq.remoting.exception.RemotingException;
+import org.apache.rocketmq.flink.common.serialization.KeyValueDeserializationSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,17 +48,17 @@ import static org.apache.rocketmq.flink.RocketMQUtils.getLong;
  * The RocketMQSource is based on RocketMQ pull consumer mode, and provides exactly once reliability guarantees when
  * checkpoints are enabled. Otherwise, the source doesn't provide any reliability guarantees.
  */
-public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
+public class RocketMQSource<OUT> extends RichParallelSourceFunction<OUT>
     implements CheckpointedFunction, CheckpointListener, ResultTypeQueryable<OUT> {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Logger LOG = LoggerFactory.getLogger(RocketMQSourceWithTag.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RocketMQSource.class);
 
     private transient MQPullConsumerScheduleService pullConsumerScheduleService;
     private DefaultMQPullConsumer consumer;
 
-    private TagKeyValueDeserializationSchema<OUT> schema;
+    private KeyValueDeserializationSchema<OUT> schema;
 
     private RunningChecker runningChecker;
 
@@ -77,12 +72,12 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
     private String topic;
     private String group;
 
-    private static final String OFFSETS_STATE_NAME = "topic-partition-offset-states-with-tags";
+    private static final String OFFSETS_STATE_NAME = "topic-partition-offset-states";
 
     private transient volatile boolean restored;
     private transient boolean enableCheckpoint;
 
-    public RocketMQSourceWithTag(TagKeyValueDeserializationSchema<OUT> schema, Properties props) {
+    public RocketMQSource(KeyValueDeserializationSchema<OUT> schema, Properties props) {
         this.schema = schema;
         this.props = props;
     }
@@ -91,7 +86,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
     public void open(Configuration parameters) throws Exception {
         LOG.debug("source open....");
         Validate.notEmpty(props, "Consumer properties can not be empty");
-        Validate.notNull(schema, "TagKeyValueDeserializationSchema can not be null");
+        Validate.notNull(schema, "KeyValueDeserializationSchema can not be null");
 
         this.topic = props.getProperty(RocketMQConfig.CONSUMER_TOPIC);
         this.group = props.getProperty(RocketMQConfig.CONSUMER_GROUP);
@@ -117,7 +112,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         pullConsumerScheduleService = new MQPullConsumerScheduleService(group, RocketMQConfig.buildAclRPCHook(props));
         consumer = pullConsumerScheduleService.getDefaultMQPullConsumer();
 
-        consumer.setInstanceName(getRuntimeContext().getIndexOfThisSubtask() + "_" + UUID.randomUUID());
+        consumer.setInstanceName(String.valueOf(getRuntimeContext().getIndexOfThisSubtask()) + "_" + UUID.randomUUID());
         RocketMQConfig.buildConsumerConfigs(props, consumer);
     }
 
@@ -129,66 +124,68 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         final Object lock = context.getCheckpointLock();
 
         int delayWhenMessageNotFound = getInteger(props, RocketMQConfig.CONSUMER_DELAY_WHEN_MESSAGE_NOT_FOUND,
-                RocketMQConfig.DEFAULT_CONSUMER_DELAY_WHEN_MESSAGE_NOT_FOUND);
+            RocketMQConfig.DEFAULT_CONSUMER_DELAY_WHEN_MESSAGE_NOT_FOUND);
 
         String tag = props.getProperty(RocketMQConfig.CONSUMER_TAG, RocketMQConfig.DEFAULT_CONSUMER_TAG);
 
         int pullPoolSize = getInteger(props, RocketMQConfig.CONSUMER_PULL_POOL_SIZE,
-                RocketMQConfig.DEFAULT_CONSUMER_PULL_POOL_SIZE);
+            RocketMQConfig.DEFAULT_CONSUMER_PULL_POOL_SIZE);
 
         int pullBatchSize = getInteger(props, RocketMQConfig.CONSUMER_BATCH_SIZE,
-                RocketMQConfig.DEFAULT_CONSUMER_BATCH_SIZE);
+            RocketMQConfig.DEFAULT_CONSUMER_BATCH_SIZE);
 
         pullConsumerScheduleService.setPullThreadNums(pullPoolSize);
-        pullConsumerScheduleService.registerPullTaskCallback(topic, (mq, pullTaskContext) -> {
-            try {
-                long offset = getMessageQueueOffset(mq);
-                if (offset < 0) {
-                    return;
-                }
-                Log.debug("Current pullBatchSize is: " + pullBatchSize);
-                PullResult pullResult = consumer.pull(mq, tag, offset, pullBatchSize);
-                boolean found = false;
-                switch (pullResult.getPullStatus()) {
-                    case FOUND:
-                        List<MessageExt> messages = pullResult.getMsgFoundList();
-                        if (pullBatchSize != messages.size()) LOG.debug("Pull from rocketmq records is: {}", messages.size());
-                        for (MessageExt msg : messages) {
-                            byte[] tag1 = msg.getTags() != null ? msg.getTags().getBytes(StandardCharsets.UTF_8) : null;
-                            byte[] key = msg.getKeys() != null ? msg.getKeys().getBytes(StandardCharsets.UTF_8) : null;
-                            byte[] value = msg.getBody();
-                            OUT data = schema.deserializeTagKeyAndValue(tag1, key, value);
+        pullConsumerScheduleService.registerPullTaskCallback(topic, new PullTaskCallback() {
 
-                            // output and state update are atomic
-                            synchronized (lock) {
-                                context.collectWithTimestamp(data, msg.getBornTimestamp());
+            @Override
+            public void doPullTask(MessageQueue mq, PullTaskContext pullTaskContext) {
+                try {
+                    long offset = getMessageQueueOffset(mq);
+                    if (offset < 0) {
+                        return;
+                    }
+
+                    PullResult pullResult = consumer.pull(mq, tag, offset, pullBatchSize);
+                    boolean found = false;
+                    switch (pullResult.getPullStatus()) {
+                        case FOUND:
+                            List<MessageExt> messages = pullResult.getMsgFoundList();
+                            for (MessageExt msg : messages) {
+                                byte[] key = msg.getKeys() != null ? msg.getKeys().getBytes(StandardCharsets.UTF_8) : null;
+                                byte[] value = msg.getBody();
+                                OUT data = schema.deserializeKeyAndValue(key, value);
+
+                                // output and state update are atomic
+                                synchronized (lock) {
+                                    context.collectWithTimestamp(data, msg.getBornTimestamp());
+                                }
                             }
-                        }
-                        found = true;
-                        break;
-                    case NO_MATCHED_MSG:
-                        LOG.debug("No matched message after offset {} for queue {}", offset, mq);
-                        break;
-                    case NO_NEW_MSG:
-                        break;
-                    case OFFSET_ILLEGAL:
-                        LOG.warn("Offset {} is illegal for queue {}", offset, mq);
-                        break;
-                    default:
-                        break;
-                }
+                            found = true;
+                            break;
+                        case NO_MATCHED_MSG:
+                            LOG.debug("No matched message after offset {} for queue {}", offset, mq);
+                            break;
+                        case NO_NEW_MSG:
+                            break;
+                        case OFFSET_ILLEGAL:
+                            LOG.warn("Offset {} is illegal for queue {}", offset, mq);
+                            break;
+                        default:
+                            break;
+                    }
 
-                synchronized (lock) {
-                    putMessageQueueOffset(mq, pullResult.getNextBeginOffset());
-                }
+                    synchronized (lock) {
+                        putMessageQueueOffset(mq, pullResult.getNextBeginOffset());
+                    }
 
-                if (found) {
-                    pullTaskContext.setPullNextDelayTimeMillis(0); // no delay when messages were found
-                } else {
-                    pullTaskContext.setPullNextDelayTimeMillis(delayWhenMessageNotFound);
+                    if (found) {
+                        pullTaskContext.setPullNextDelayTimeMillis(0); // no delay when messages were found
+                    } else {
+                        pullTaskContext.setPullNextDelayTimeMillis(delayWhenMessageNotFound);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
         });
 
@@ -197,8 +194,11 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         } catch (MQClientException e) {
             throw new RuntimeException(e);
         }
+
         runningChecker.setRunning(true);
+
         awaitTermination();
+
     }
 
     private void awaitTermination() throws InterruptedException {
@@ -215,8 +215,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
             offset = restoredOffsets.get(mq);
         }
         if (offset == null) {
-            LOG.warn("从状态中获取Offset列表为空，将从server端获取offset列表");
-            offset = consumer.fetchConsumeOffset(mq, true);
+            offset = consumer.fetchConsumeOffset(mq, false);
             if (offset < 0) {
                 String initialOffset = props.getProperty(RocketMQConfig.CONSUMER_OFFSET_RESET_TO, CONSUMER_OFFSET_LATEST);
                 switch (initialOffset) {
@@ -228,7 +227,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                         break;
                     case CONSUMER_OFFSET_TIMESTAMP:
                         offset = consumer.searchOffset(mq, getLong(props,
-                                RocketMQConfig.CONSUMER_OFFSET_FROM_TIMESTAMP, System.currentTimeMillis()));
+                            RocketMQConfig.CONSUMER_OFFSET_FROM_TIMESTAMP, System.currentTimeMillis()));
                         break;
                     default:
                         throw new IllegalArgumentException("Unknown value for CONSUMER_OFFSET_RESET_TO.");
@@ -239,11 +238,10 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         return offsetTable.get(mq);
     }
 
-    private void putMessageQueueOffset(MessageQueue mq, long offset) throws MQClientException, RemotingException, InterruptedException, MQBrokerException {
+    private void putMessageQueueOffset(MessageQueue mq, long offset) throws MQClientException {
         offsetTable.put(mq, offset);
         if (!enableCheckpoint) {
             consumer.updateConsumeOffset(mq, offset);
-//            consumer.getOffsetStore().updateConsumeOffsetToBroker(mq,offset,true);
         }
     }
 
@@ -307,7 +305,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Snapshotted state, last processed offsets: {}, checkpoint id: {}, timestamp: {}",
-                    offsetTable, context.getCheckpointId(), context.getCheckpointTimestamp());
+                offsetTable, context.getCheckpointId(), context.getCheckpointTimestamp());
         }
     }
 
@@ -321,8 +319,11 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         LOG.debug("initialize State ...");
 
         this.unionOffsetStates = context.getOperatorStateStore().getUnionListState(new ListStateDescriptor<>(
-                OFFSETS_STATE_NAME, TypeInformation.of(new TypeHint<Tuple2<MessageQueue, Long>>() {})));
+                OFFSETS_STATE_NAME, TypeInformation.of(new TypeHint<Tuple2<MessageQueue, Long>>() {
+
+                })));
         this.restored = context.isRestored();
+
         if (restored) {
             if (restoredOffsets == null) {
                 restoredOffsets = new ConcurrentHashMap<>();

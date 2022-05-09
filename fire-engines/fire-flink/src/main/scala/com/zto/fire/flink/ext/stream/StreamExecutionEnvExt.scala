@@ -37,7 +37,7 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema
 import org.apache.flink.table.api.{Table, TableResult}
-import org.apache.rocketmq.flink.serialization.SimpleTagKeyValueDeserializationSchema
+import org.apache.rocketmq.flink.common.serialization.SimpleTagKeyValueDeserializationSchema
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSourceWithTag}
 
 import java.util.Properties

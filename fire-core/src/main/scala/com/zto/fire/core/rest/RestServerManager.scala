@@ -98,27 +98,37 @@ private[fire] class RestServerManager extends Logging {
       restList.filter(_ != null).foreach(rest => {
         if (FireFrameworkConf.fireRestUrlShow) logger.info(s"---------> start rest: ${FirePS1Conf.wrap(restPrefix + rest.path, FirePS1Conf.BLUE, FirePS1Conf.UNDER_LINE)} successfully. <---------")
         rest.method match {
-          case "get" | "GET" => Spark.get(rest.path, (request: Request, response: Response) => {
-            rest.fun(request, response)
+          case "get" | "GET" => Spark.get(rest.path, new Route {
+            override def handle(request: Request, response: Response): AnyRef = {
+              rest.fun(request, response)
+            }
           })
-          case "post" | "POST" => Spark.post(rest.path, (request: Request, response: Response) => {
-            rest.fun(request, response)
+          case "post" | "POST" => Spark.post(rest.path, new Route {
+            override def handle(request: Request, response: Response): AnyRef = {
+              rest.fun(request, response)
+            }
           })
-          case "put" | "PUT" => Spark.put(rest.path, (request: Request, response: Response) => {
-            rest.fun(request, response)
+          case "put" | "PUT" => Spark.put(rest.path, new Route {
+            override def handle(request: Request, response: Response): AnyRef = {
+              rest.fun(request, response)
+            }
           })
-          case "delete" | "DELETE" => Spark.delete(rest.path, (request: Request, response: Response) => {
-            rest.fun(request, response)
+          case "delete" | "DELETE" => Spark.delete(rest.path, new Route {
+            override def handle(request: Request, response: Response): AnyRef = {
+              rest.fun(request, response)
+            }
           })
         }
       })
 
       // 注册过滤器，用于进行权限校验
-      Spark.before((request: Request, response: Response) => {
-        if (FireFrameworkConf.restFilter) {
-          val msg = checkAuth(request)
-          if (msg != null && msg.getCode != null && ErrorCode.UNAUTHORIZED == msg.getCode) {
-            Spark.halt(401, msg.toString)
+      Spark.before(new Filter {
+        override def handle(request: Request, response: Response): Unit = {
+          if (FireFrameworkConf.restFilter) {
+            val msg = checkAuth(request)
+            if (msg != null && msg.getCode != null && ErrorCode.UNAUTHORIZED == msg.getCode) {
+              Spark.halt(401, msg.toString)
+            }
           }
         }
       })
