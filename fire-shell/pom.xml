@@ -47,12 +47,12 @@
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>fire-jdbc_${scala.binary.version}</artifactId>
+            <artifactId>fire-connector-jdbc_${scala.binary.version}</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>fire-hbase_${scala.binary.version}</artifactId>
+            <artifactId>fire-connector-spark-hbase_${spark.reference}</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

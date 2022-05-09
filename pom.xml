@@ -32,6 +32,8 @@
         <flink.version>1.14.3</flink.version>
         <flink.major.version>1.14</flink.major.version>
         <hudi.version>0.9.0</hudi.version>
+        <commons-lang.version>2.5</commons-lang.version>
+        <clickhouse-jdbc.version>0.3.1</clickhouse-jdbc.version>
         <scala.binary.version>2.12</scala.binary.version>
         <scala.minor.version>13</scala.minor.version>
         <maven.scope>provided</maven.scope>
@@ -96,6 +98,14 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-avro_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+            </dependencies>
         </profile>
         <profile>
             <id>spark-2.3.2</id>
@@ -467,6 +477,8 @@
                         </goals>
                         <configuration>
                             <sources>
+                                <source>src/main/java</source>
+                                <source>src/main/scala</source>
                                 <source>src/main/java-spark-${spark.version}</source>
                                 <source>src/main/scala-spark-${spark.version}</source>
                                 <source>src/main/java-flink-${flink.version}</source>
@@ -484,7 +496,12 @@
                         </goals>
                         <configuration>
                             <sources>
+                                <source>src/test/java</source>
                                 <source>src/test/scala</source>
+                                <source>src/test/java-spark-${spark.version}</source>
+                                <source>src/test/scala-spark-${spark.version}</source>
+                                <source>src/test/java-flink-${flink.version}</source>
+                                <source>src/test/scala-flink-${flink.version}</source>
                             </sources>
                         </configuration>
                     </execution>

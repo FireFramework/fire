@@ -16,13 +16,12 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>rocketmq-externals</artifactId>
+    <artifactId>fire-enhance-arthas_${scala.binary.version}</artifactId>
     <version>2.2.2-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <name>Fire : Enhance : RocketMQ : </name>
+    <packaging>jar</packaging>
+    <name>Fire : Enhance : Arthas </name>
 
     <parent>
         <groupId>com.zto.fire</groupId>
@@ -31,23 +30,26 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <modules>
-        <module>rocketmq-spark</module>
-        <module>rocketmq-flink</module>
-    </modules>
-
     <dependencies>
         <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-client</artifactId>
-            <version>${rocketmq.version}</version>
-            <scope>${maven.scope}</scope>
+            <groupId>com.taobao.arthas</groupId>
+            <artifactId>arthas-agent-attach</artifactId>
+            <version>${arthas.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-acl</artifactId>
-            <version>${rocketmq.version}</version>
-            <scope>${maven.scope}</scope>
+            <groupId>com.taobao.arthas</groupId>
+            <artifactId>arthas-packaging</artifactId>
+            <version>${arthas.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.taobao.arthas</groupId>
+            <artifactId>arthas-core</artifactId>
+            <version>${arthas.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.taobao.arthas</groupId>
+            <artifactId>arthas-spy</artifactId>
+            <version>${arthas.version}</version>
         </dependency>
     </dependencies>
 

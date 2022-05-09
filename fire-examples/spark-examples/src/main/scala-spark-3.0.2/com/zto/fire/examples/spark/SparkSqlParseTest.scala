@@ -1,9 +1,9 @@
 package com.zto.fire.examples.spark
 
-import com.zto.fire.core.anno.Hive
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkCore
 import com.zto.fire.spark.sql.SparkSqlParser
+import com.zto.fire.core.anno.Hive
 
 /**
  * Spark SQL血缘解析工具
@@ -65,58 +65,59 @@ object SparkSqlParseTest extends BaseSparkCore {
     val dropDB = "drop database tmp"
     val insertOverwrite = "insert overwrite table dw.kwang_test partition(ds='202106', city='beijing') values(4,'zz')"
 
-    val sql = """
-                |insert into zto_cockpit_site_target_ds
-                |SELECT site_id,scan_date,scan_day,
-                |SUM(a.rec_cnt) rec_cnt,
-                |SUM(a.order_cnt) order_cnt,
-                |SUM(a.disp_cnt) disp_cnt,
-                |SUM(a.sign_cnt) sign_cnt,
-                |SUM(a.ele_cnt) ele_cnt,
-                |SUM(a.bag_cnt) bag_cnt
-                |FROM (
-                |SELECT t1.site_id,t1.scan_date,t1.scan_day ,
-                |t1.cnt rec_cnt,
-                |0 order_cnt,
-                |0 disp_cnt,
-                |0 sign_cnt,
-                |t1.ele_cnt ele_cnt,
-                |t1.bag_cnt bag_cnt
-                |FROM ztkb.zto_cockpit_site_rec_ds t1
-                |WHERE t1.scan_day = '#date#'
-                |UNION ALL
-                |SELECT t2.site_id,t2.order_date scan_date,t2.order_day scan_day ,
-                |0 rec_cnt,
-                |t2.cnt order_cnt,
-                |0 disp_cnt,
-                |0 sign_cnt,
-                |0 ele_cnt,
-                |0 bag_cnt
-                |FROM ztkb.zto_cockpit_site_order_ds t2
-                |WHERE t2.order_day = '#date#'
-                |UNION ALL
-                |SELECT t3.site_id,t3.scan_date,t3.scan_day ,
-                |0 rec_cnt,
-                |0 order_cnt,
-                |t3.cnt disp_cnt,
-                |0 sign_cnt,
-                |0 ele_cnt,
-                |0 bag_cnt
-                |FROM ztkb.zto_cockpit_site_disp_ds t3
-                |WHERE t3.scan_day = '#date#'
-                |UNION ALL
-                |select t.record_site_id site_id,t.sign_date scan_date,t.sign_day scan_day,
-                |0 rec_cnt,
-                |0 order_cnt,
-                |0 disp_cnt,
-                |sum(t.cnt) sign_cnt,
-                |0 ele_cnt,
-                |0 bag_cnt
-                |from ztkb.zto_cockpit_site_sign_ds t
-                |where t.sign_day = '#date#'
-                |group by t.record_site_id,t.sign_date,t.sign_day
-                |) a
-                |GROUP BY site_id,scan_date,scan_day
+    val sql =
+      """
+        |insert into zto_cockpit_site_target_ds
+        |SELECT site_id,scan_date,scan_day,
+        |SUM(a.rec_cnt) rec_cnt,
+        |SUM(a.order_cnt) order_cnt,
+        |SUM(a.disp_cnt) disp_cnt,
+        |SUM(a.sign_cnt) sign_cnt,
+        |SUM(a.ele_cnt) ele_cnt,
+        |SUM(a.bag_cnt) bag_cnt
+        |FROM (
+        |SELECT t1.site_id,t1.scan_date,t1.scan_day ,
+        |t1.cnt rec_cnt,
+        |0 order_cnt,
+        |0 disp_cnt,
+        |0 sign_cnt,
+        |t1.ele_cnt ele_cnt,
+        |t1.bag_cnt bag_cnt
+        |FROM ztkb.zto_cockpit_site_rec_ds t1
+        |WHERE t1.scan_day = '#date#'
+        |UNION ALL
+        |SELECT t2.site_id,t2.order_date scan_date,t2.order_day scan_day ,
+        |0 rec_cnt,
+        |t2.cnt order_cnt,
+        |0 disp_cnt,
+        |0 sign_cnt,
+        |0 ele_cnt,
+        |0 bag_cnt
+        |FROM ztkb.zto_cockpit_site_order_ds t2
+        |WHERE t2.order_day = '#date#'
+        |UNION ALL
+        |SELECT t3.site_id,t3.scan_date,t3.scan_day ,
+        |0 rec_cnt,
+        |0 order_cnt,
+        |t3.cnt disp_cnt,
+        |0 sign_cnt,
+        |0 ele_cnt,
+        |0 bag_cnt
+        |FROM ztkb.zto_cockpit_site_disp_ds t3
+        |WHERE t3.scan_day = '#date#'
+        |UNION ALL
+        |select t.record_site_id site_id,t.sign_date scan_date,t.sign_day scan_day,
+        |0 rec_cnt,
+        |0 order_cnt,
+        |0 disp_cnt,
+        |sum(t.cnt) sign_cnt,
+        |0 ele_cnt,
+        |0 bag_cnt
+        |from ztkb.zto_cockpit_site_sign_ds t
+        |where t.sign_day = '#date#'
+        |group by t.record_site_id,t.sign_date,t.sign_day
+        |) a
+        |GROUP BY site_id,scan_date,scan_day
       """.stripMargin
 
     SparkSqlParser.sqlParser(sql)

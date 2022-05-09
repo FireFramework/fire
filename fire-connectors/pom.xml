@@ -31,9 +31,10 @@
     </parent>
 
     <modules>
-        <module>fire-hbase</module>
-        <module>fire-jdbc</module>
-        <module>flink-connectors</module>
+        <!--<module>flink-connectors</module>-->
+        <module>fire</module>
+        <module>spark</module>
+        <module>flink</module>
     </modules>
 
     <dependencies>

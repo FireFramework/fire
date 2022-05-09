@@ -26,7 +26,7 @@ import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.listener.FireSparkListener
 import com.zto.fire.spark.rest.SparkSystemRestful
-import com.zto.fire.spark.sql.SparkSqlExtensionsParser
+import com.zto.fire.spark.sql.{SparkSqlExtensionsParser, SqlExtensions}
 import com.zto.fire.spark.task.{SparkInternalTask, SparkSchedulerManager}
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
@@ -145,13 +145,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     if (StringUtils.isNotBlank(hiveMetastoreUrl)) sessionBuilder.enableHiveSupport()
 
     // 自定义Sql解析器扩展
-    if (FireSparkConf.sqlExtensionsEnable) {
-      type ParserBuilder = (SparkSession, ParserInterface) => ParserInterface
-      type ExtensionsBuilder = SparkSessionExtensions => Unit
-      val parserBuilder: ParserBuilder = (_, parser) => new SparkSqlExtensionsParser(parser)
-      val extBuilder: ExtensionsBuilder = { e => e.injectParser(parserBuilder) }
-      sessionBuilder.withExtensions(extBuilder)
-    }
+    SqlExtensions.sqlExtension(sessionBuilder)
 
     // 在mac或windows环境下执行local模式，cpu数通过spark.local.cores指定，默认local[*]
     if (OSUtils.isLocal) sessionBuilder.master(s"local[${FireSparkConf.localCores}]")

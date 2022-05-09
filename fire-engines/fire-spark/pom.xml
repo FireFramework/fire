@@ -33,17 +33,17 @@
     <dependencies>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>apache-spark_${spark.reference}</artifactId>
+            <artifactId>fire-enhance-spark_${spark.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>rocketmq-spark_${spark.reference}</artifactId>
+            <artifactId>fire-connector-spark-rocketmq_${spark.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>apache-hbase_${hbase.version}</artifactId>
+            <artifactId>fire-connector-spark-hbase_${spark.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
         <!-- spark相关依赖 -->

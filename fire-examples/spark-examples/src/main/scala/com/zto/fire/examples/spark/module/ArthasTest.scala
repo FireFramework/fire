@@ -47,9 +47,11 @@ object ArthasTest extends BaseSparkStreaming {
     val dstream = this.fire.createKafkaDirectStream()
 
     // 用于模拟性能问题
-    new Thread(() => {
-      while (true) {
-        printConf
+    new Thread(new Runnable {
+      override def run(): Unit = {
+        while (true) {
+          printConf
+        }
       }
     }).start()
 

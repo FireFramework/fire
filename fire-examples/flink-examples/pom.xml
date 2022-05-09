@@ -38,7 +38,7 @@
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>fire-flink-connectors-clickhouse_${flink.reference}</artifactId>
+            <artifactId>fire-connector-flink-clickhouse_${flink.reference}</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

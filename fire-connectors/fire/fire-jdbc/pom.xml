@@ -16,25 +16,38 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>fire-enhance</artifactId>
-  <packaging>pom</packaging>
-  <name>Fire : Enhance : </name>
+  <artifactId>fire-connector-jdbc_${scala.binary.version}</artifactId>
+  <packaging>jar</packaging>
+  <name>Fire : Connectors : Common : JDBC </name>
 
   <parent>
     <groupId>com.zto.fire</groupId>
-    <artifactId>fire-parent</artifactId>
+    <artifactId>fire-connectors-common</artifactId>
     <version>2.2.2-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <modules>
-    <module>apache-spark</module>
-    <module>apache-flink</module>
-    <module>apache-arthas</module>
-  </modules>
-
+  <dependencies>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>${mysql.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>c3p0</groupId>
+      <artifactId>c3p0</artifactId>
+      <version>0.9.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.derby</groupId>
+      <artifactId>derby</artifactId>
+      <version>10.13.1.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
   <build>
     <plugins>
       <plugin>

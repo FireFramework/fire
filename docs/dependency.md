@@ -32,12 +32,12 @@ under the License.
 </dependency>
 <dependency>
 	<groupId>com.zto.fire</groupId>
-	<artifactId>fire-jdbc_${scala.binary.version}</artifactId>
+	<artifactId>fire-connector-jdbc_${scala.binary.version}</artifactId>
 	<version>${project.version}</version>
 </dependency>
 <dependency>
 	<groupId>com.zto.fire</groupId>
-	<artifactId>fire-hbase_${scala.binary.version}</artifactId>
+	<artifactId>fire-connector-hbase_${scala.binary.version}</artifactId>
 	<version>${project.version}</version>
 </dependency>
 <!-- spark任务单独引入fire-spark依赖 -->

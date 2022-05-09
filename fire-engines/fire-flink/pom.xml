@@ -33,12 +33,12 @@
     <dependencies>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>apache-flink_${flink.reference}</artifactId>
+            <artifactId>fire-enhance-flink_${flink.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>rocketmq-flink_${flink.reference}</artifactId>
+            <artifactId>fire-connector-flink-rocketmq_${flink.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
         <dependency>
