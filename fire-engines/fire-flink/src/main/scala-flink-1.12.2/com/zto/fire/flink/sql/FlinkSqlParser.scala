@@ -31,9 +31,10 @@ import org.apache.flink.sql.parser.ddl._
 import org.apache.flink.sql.parser.dml._
 import org.apache.flink.sql.parser.hive.impl.FlinkHiveSqlParserImpl
 import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl
-import org.apache.flink.sql.parser.validate.FlinkSqlConformance
 import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import org.apache.flink.table.catalog.ObjectPath
+
+import scala.collection.JavaConversions
 
 /**
  * Flink SQL解析器，用于解析Flink SQL语句中的库、表、分区、操作类型等信息
@@ -155,7 +156,7 @@ object FlinkSqlParser extends SqlParser {
       case sqlIdentifier: SqlIdentifier => {
         this.setTableName(sqlIdentifier.names.toSeq, operation)
       }
-      case sqlNodeList: SqlNodeList => sqlNodeList.getList.forEach(this.parseSqlNode(_))
+      case sqlNodeList: SqlNodeList => JavaConversions.asScalaBuffer(sqlNodeList.getList).foreach(this.parseSqlNode(_))
       // 解析分区信息
       case sqlProperty: SqlProperty => {
         this.logger.info(s"解析SQL分区信息：partition=${sqlProperty.getKeyString} value=${sqlProperty.getValueString}")

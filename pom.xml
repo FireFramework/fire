@@ -39,17 +39,16 @@
         <maven.scope>provided</maven.scope>
         <kafka.version>0.11.0.2</kafka.version>
         <sparkjava.version>2.8.0</sparkjava.version>
-        <hadoop.version>2.6.0-cdh5.12.1</hadoop.version>
+        <hadoop.version>2.7.5</hadoop.version>
         <hive.apache.version>1.1.0</hive.apache.version>
         <hive.flink.version>1.2.1</hive.flink.version>
-        <hive.version>1.1.0-cdh5.12.1</hive.version>
+        <hive.version>1.1.0</hive.version>
         <hive.group>org.apache.hive</hive.group>
-        <hbase.version>1.2.0-cdh5.12.1</hbase.version>
+        <hbase.version>1.2.0</hbase.version>
         <impala.jdbc.version>2.5.30</impala.jdbc.version>
         <jackson.version>2.10.5</jackson.version>
         <junit.version>4.13.2</junit.version>
         <rocketmq.version>4.8.0</rocketmq.version>
-        <rocketmq.external.version>0.0.3</rocketmq.external.version>
         <mysql.version>5.1.49</mysql.version>
         <guava.version>18.0</guava.version>
         <curator.verrsion>2.6.0</curator.verrsion>
@@ -225,6 +224,9 @@
         </profile>
         <profile>
             <id>spark3.0.2-hadoop-3.2</id>
+            <properties>
+                <hadoop.version>3.2.0</hadoop.version>
+            </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.spark</groupId>

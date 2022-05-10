@@ -22,7 +22,7 @@ import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.util.{DatasourceManager, KafkaUtils, ValueUtils}
 import com.zto.fire.core.Api
 import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvider}
-import com.zto.fire.flink.sql.FlinkSqlParser
+import com.zto.fire.flink.sql.{FlinkSqlExtensionsParser, FlinkSqlParser}
 import com.zto.fire.flink.util.{FlinkSingletonFactory, RocketMQUtils}
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import org.apache.commons.lang3.StringUtils
@@ -41,7 +41,7 @@ import org.apache.rocketmq.flink.common.serialization.SimpleTagKeyValueDeseriali
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSourceWithTag}
 
 import java.util.Properties
-import scala.collection.JavaConverters
+import scala.collection.{JavaConversions, JavaConverters}
 import scala.reflect.ClassTag
 
 /**
@@ -100,10 +100,10 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
 
     deserializer match {
       case schema: JSONKeyValueDeserializationSchema =>
-        new FlinkKafkaConsumer[ObjectNode](JavaConverters.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
+        new FlinkKafkaConsumer[ObjectNode](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
           schema, properties).asInstanceOf[FlinkKafkaConsumer[T]]
       case _ =>
-        new FlinkKafkaConsumer[String](JavaConverters.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
+        new FlinkKafkaConsumer[String](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
           new SimpleStringSchema, properties).asInstanceOf[FlinkKafkaConsumer[T]]
     }
   }
@@ -300,7 +300,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    */
   def sqlQuery(sql: String, keyNum: Int = 1): Table = {
     require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
-    FlinkSqlParser.sqlParse(sql)
+    FlinkSqlExtensionsParser.sqlParse(sql)
     this.tableEnv.sqlQuery(sql.with$(keyNum))
   }
 

@@ -31,10 +31,9 @@
     </parent>
 
     <modules>
-        <!--<module>flink-connectors</module>-->
-        <module>fire</module>
-        <module>spark</module>
-        <module>flink</module>
+        <module>base-connectors</module>
+        <module>spark-connectors</module>
+        <module>flink-connectors</module>
     </modules>
 
     <dependencies>

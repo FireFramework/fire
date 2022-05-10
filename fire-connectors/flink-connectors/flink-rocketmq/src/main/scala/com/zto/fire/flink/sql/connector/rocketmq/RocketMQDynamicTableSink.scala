@@ -20,7 +20,6 @@ package com.zto.fire.flink.sql.connector.rocketmq
 import com.zto.fire.common.conf.FireRocketMQConf
 import com.zto.fire.common.util.DatasourceManager
 import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.getRocketMQProperties
-import com.zto.fire.noEmpty
 import com.zto.fire.predef._
 import org.apache.flink.api.common.serialization.SerializationSchema
 import org.apache.flink.table.connector.ChangelogMode

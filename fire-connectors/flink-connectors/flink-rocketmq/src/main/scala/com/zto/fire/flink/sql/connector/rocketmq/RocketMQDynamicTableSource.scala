@@ -19,8 +19,7 @@ package com.zto.fire.flink.sql.connector.rocketmq
 
 import com.zto.fire.common.conf.FireRocketMQConf
 import com.zto.fire.common.util.DatasourceManager
-import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.{TOPIC, getRocketMQProperties}
-import com.zto.fire.noEmpty
+import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.getRocketMQProperties
 import com.zto.fire.predef._
 import org.apache.flink.api.common.serialization.DeserializationSchema
 import org.apache.flink.table.connector.ChangelogMode
@@ -30,9 +29,7 @@ import org.apache.flink.table.data.RowData
 import org.apache.flink.table.types.DataType
 import org.apache.flink.table.types.utils.DataTypeUtils
 import org.apache.rocketmq.flink.common.serialization.JsonDeserializationSchema
-import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSource, RocketMQSourceWithTag}
-
-import java.util.Properties
+import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSourceWithTag}
 
 /**
  * 定义source table

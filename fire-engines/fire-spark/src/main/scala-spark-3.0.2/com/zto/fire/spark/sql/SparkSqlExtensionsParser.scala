@@ -1,5 +1,6 @@
 package com.zto.fire.spark.sql
 
+import com.zto.fire.core.sql.SqlExtensionsParser
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.parser.ParserInterface
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
@@ -61,7 +62,7 @@ private[fire] class SparkSqlExtensionsParser(parser: ParserInterface) extends Pa
   override def parseRawDataType(sqlText: String): DataType = parser.parseRawDataType(sqlText)
 }
 
-private[fire] object SparkSqlExtensionsParser {
+private[fire] object SparkSqlExtensionsParser extends SqlExtensionsParser {
 
   /**
    * 启用自定义Sql解析器扩展

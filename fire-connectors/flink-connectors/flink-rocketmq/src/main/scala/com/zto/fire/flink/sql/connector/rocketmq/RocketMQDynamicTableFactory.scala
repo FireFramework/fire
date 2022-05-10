@@ -17,7 +17,6 @@
 
 package com.zto.fire.flink.sql.connector.rocketmq
 
-import com.zto.fire._
 import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions._
 import org.apache.flink.api.common.serialization.{DeserializationSchema, SerializationSchema}
 import org.apache.flink.configuration.ConfigOption
@@ -26,6 +25,7 @@ import org.apache.flink.table.connector.sink.DynamicTableSink
 import org.apache.flink.table.connector.source.DynamicTableSource
 import org.apache.flink.table.data.RowData
 import org.apache.flink.table.factories._
+import com.zto.fire.predef._
 
 /**
  * sql connector的source与sink创建工厂

@@ -17,7 +17,6 @@
 
 package com.zto.fire.flink.sql.connector.rocketmq
 
-import com.zto.fire._
 import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.ValueFieldsStrategy.ValueFieldsStrategy
 import org.apache.flink.configuration.{ConfigOption, ConfigOptions, ReadableConfig}
 import org.apache.flink.table.api.{TableException, ValidationException}
@@ -27,6 +26,9 @@ import org.apache.flink.table.types.logical.utils.LogicalTypeChecks
 import java.util
 import java.util.Properties
 import java.util.stream.IntStream
+import com.zto.fire.predef._
+
+import scala.collection.{JavaConversions, JavaConverters}
 
 /**
  * RocketMQ connector支持的with参数
@@ -120,9 +122,9 @@ object RocketMQOptions {
 
     if (!optionalKeyFormat.isPresent) return new Array[Int](0)
     val keyPrefix = options.getOptional(RocketMQOptions.KEY_FIELDS_PREFIX).orElse("")
-    val keyFields = optionalKeyFields.get
+    val keyFields = JavaConversions.asScalaBuffer(optionalKeyFields.get)
     val physicalFields = LogicalTypeChecks.getFieldNames(physicalType)
-    keyFields.stream.mapToInt((keyField: String) => {
+    keyFields.map((keyField: String) => {
       def foo(keyField: String): Int = {
         val pos = physicalFields.indexOf(keyField)
         // check that field name exists
@@ -140,7 +142,8 @@ object RocketMQOptions {
     val physicalType = physicalDataType.getLogicalType
 
     val physicalFieldCount = LogicalTypeChecks.getFieldCount(physicalType)
-    val physicalFields = IntStream.range(0, physicalFieldCount)
+    // val physicalFields = IntStream.range(0, physicalFieldCount)
+    val physicalFields = (1 until physicalFieldCount).toArray
 
     val keyPrefix = options.getOptional(KEY_FIELDS_PREFIX).orElse("")
 
@@ -149,12 +152,10 @@ object RocketMQOptions {
       if (keyPrefix.nonEmpty) {
         throw new ValidationException(s"A key prefix is not allowed when option '${VALUE_FIELDS_INCLUDE.key()}' is set to '${ValueFieldsStrategy.ALL}'. Set it to '${ValueFieldsStrategy.EXCEPT_KEY}' instead to avoid field overlaps.")
       }
-      return physicalFields.toArray
+      return physicalFields
     } else if (strategy == ValueFieldsStrategy.EXCEPT_KEY) {
       val keyProjection = createKeyFormatProjection(options, physicalDataType);
-      return physicalFields
-        .filter(pos => IntStream.of(keyProjection: _*).noneMatch(k => k == pos))
-        .toArray
+      return physicalFields.filter(pos => !keyProjection.contains(pos))
     }
     throw new TableException(s"Unknown value fields strategy:$strategy");
   }
@@ -162,17 +163,18 @@ object RocketMQOptions {
   /**
    * 是否存在以properties.开头的参数
    */
-  private def hasRocketMQClientProperties(tableOptions: util.Map[String, String]) = tableOptions
-    .keySet
-    .stream
-    .anyMatch((k: String) => k.startsWith(PROPERTIES_PREFIX))
+  private def hasRocketMQClientProperties(tableOptions: util.Map[String, String]) = {
+    JavaConversions.mapAsScalaMap(tableOptions)
+      .keySet
+      .filter((k: String) => k.startsWith(PROPERTIES_PREFIX)).size > 0
+  }
 
   /**
    * 获取以rocket.conf.开头的所有的参数
    */
   def getRocketMQProperties(tableOptions: util.Map[String, String]): Properties = {
     val rocketMQProperties = new Properties
-    if (hasRocketMQClientProperties(tableOptions)) tableOptions.keySet.stream.filter((key: String) => key.startsWith(PROPERTIES_PREFIX)).forEach((key: String) => {
+    if (hasRocketMQClientProperties(tableOptions)) JavaConversions.mapAsScalaMap(tableOptions).keySet.filter((key: String) => key.startsWith(PROPERTIES_PREFIX)).foreach((key: String) => {
       def foo(key: String): Unit = {
         val value = tableOptions.get(key)
         val subKey = key.substring(PROPERTIES_PREFIX.length)
