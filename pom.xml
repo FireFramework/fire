@@ -39,7 +39,7 @@
         <maven.scope>provided</maven.scope>
         <kafka.version>0.11.0.2</kafka.version>
         <sparkjava.version>2.8.0</sparkjava.version>
-        <hadoop.version>2.7.5</hadoop.version>
+        <hadoop.version>2.6.0</hadoop.version>
         <hive.apache.version>1.1.0</hive.apache.version>
         <hive.flink.version>1.2.1</hive.flink.version>
         <hive.version>1.1.0</hive.version>
@@ -50,7 +50,7 @@
         <junit.version>4.13.2</junit.version>
         <rocketmq.version>4.8.0</rocketmq.version>
         <mysql.version>5.1.49</mysql.version>
-        <guava.version>18.0</guava.version>
+        <guava.version>15.0</guava.version>
         <curator.verrsion>2.6.0</curator.verrsion>
         <arthas.version>3.5.4</arthas.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -116,7 +116,7 @@
 
         <!-- 以hadoop2.7、hive1.2低版本编译 -->
         <profile>
-            <id>spark3.0.2-hadoop-2.7</id>
+            <id>spark-3.0.2-hadoop-2.7</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
@@ -223,7 +223,7 @@
             </dependencies>
         </profile>
         <profile>
-            <id>spark3.0.2-hadoop-3.2</id>
+            <id>spark-3.0.2-hadoop-3.2</id>
             <properties>
                 <hadoop.version>3.2.0</hadoop.version>
             </properties>

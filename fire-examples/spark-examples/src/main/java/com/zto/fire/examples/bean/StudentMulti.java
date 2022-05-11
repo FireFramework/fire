@@ -17,25 +17,25 @@
 
 package com.zto.fire.examples.bean;
 
-import com.zto.fire.common.anno.FieldName;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.JSONUtils;
 import com.zto.fire.hbase.anno.HConfig;
 import com.zto.fire.hbase.bean.HBaseBaseBean;
-import com.zto.fire.spark.bean.GenerateBean;
-import com.zto.fire.spark.connector.DataGenReceiver;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 对应HBase表的JavaBean
  *
- * @author ChengLong 2019-6-20 16:06:16
+ * @author ChengLong
+ * @date 2022-05-11 13:41:42
+ * @since 2.2.2
  */
-// @HConfig(multiVersion = true)
-// @HConfig(nullable = true, multiVersion = true, versions = 3)
-public class Student extends HBaseBaseBean<Student> implements GenerateBean<Student> {
+@HConfig(nullable = true, multiVersion = true, versions = 3)
+public class StudentMulti extends HBaseBaseBean<StudentMulti> {
     protected Long id;
     protected String name;
     protected Integer age;
@@ -53,23 +53,23 @@ public class Student extends HBaseBaseBean<Student> implements GenerateBean<Stud
      * @return
      */
     @Override
-    public Student buildRowKey() {
+    public StudentMulti buildRowKey() {
         this.rowKey = this.id.toString();
         return this;
     }
 
-    public Student(Long id, String name) {
+    public StudentMulti(Long id, String name) {
         this.id = id;
         this.name = name;
     }
 
-    public Student(Long id, String name, Integer age) {
+    public StudentMulti(Long id, String name, Integer age) {
         this.id = id;
         this.name = name;
         this.age = age;
     }
 
-    public Student(Long id, String name, Integer age, BigDecimal length, Boolean sex, String createTime) {
+    public StudentMulti(Long id, String name, Integer age, BigDecimal length, Boolean sex, String createTime) {
         this.id = id;
         this.name = name;
         this.age = age;
@@ -78,18 +78,18 @@ public class Student extends HBaseBaseBean<Student> implements GenerateBean<Stud
         this.createTime = createTime;
     }
 
-    public Student(Long id, String name, Integer age, BigDecimal length) {
+    public StudentMulti(Long id, String name, Integer age, BigDecimal length) {
         this.id = id;
         this.name = name;
         this.age = age;
         this.length = length;
     }
 
-    public Student() {
+    public StudentMulti() {
 
     }
 
-    public Student(Long id) {
+    public StudentMulti(Long id) {
         this.id = id;
     }
 
@@ -146,37 +146,36 @@ public class Student extends HBaseBaseBean<Student> implements GenerateBean<Stud
         return JSONUtils.toJSONString(this);
     }
 
-    @Override
-    public List<Student> generate() {
-        return newStudentList();
+    public List<StudentMulti> generate() {
+        return newStudentMultiList();
     }
 
-    public static List<Student> newStudentList() {
+    public static List<StudentMulti> newStudentMultiList() {
         String dateTime = DateFormatUtils.formatCurrentDateTime();
         return Arrays.asList(
-                new Student(1L, "admin", 12, BigDecimal.valueOf(12.1), true, dateTime),
-                new Student(2L, "root", 22, BigDecimal.valueOf(22), true, dateTime),
-                new Student(3L, "scala", 11, BigDecimal.valueOf(11), true, dateTime),
-                new Student(4L, "spark", 15, BigDecimal.valueOf(15), true, dateTime),
-                new Student(5L, "java", 16, BigDecimal.valueOf(16.1), true, dateTime),
-                new Student(6L, "hive", 17, BigDecimal.valueOf(17.1), true, dateTime),
-                new Student(7L, "presto", 18, BigDecimal.valueOf(18.1), true, dateTime),
-                new Student(8L, "flink", 19, BigDecimal.valueOf(19.1), true, dateTime),
-                new Student(9L, "streaming", 10, BigDecimal.valueOf(10.1), true, dateTime)
+                new StudentMulti(1L, "admin", 12, BigDecimal.valueOf(12.1), true, dateTime),
+                new StudentMulti(2L, "root", 22, BigDecimal.valueOf(22), true, dateTime),
+                new StudentMulti(3L, "scala", 11, BigDecimal.valueOf(11), true, dateTime),
+                new StudentMulti(4L, "spark", 15, BigDecimal.valueOf(15), true, dateTime),
+                new StudentMulti(5L, "java", 16, BigDecimal.valueOf(16.1), true, dateTime),
+                new StudentMulti(6L, "hive", 17, BigDecimal.valueOf(17.1), true, dateTime),
+                new StudentMulti(7L, "presto", 18, BigDecimal.valueOf(18.1), true, dateTime),
+                new StudentMulti(8L, "flink", 19, BigDecimal.valueOf(19.1), true, dateTime),
+                new StudentMulti(9L, "streaming", 10, BigDecimal.valueOf(10.1), true, dateTime)
         );
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Student)) return false;
-        Student student = (Student) o;
-        return Objects.equals(id, student.id) &&
-                Objects.equals(name, student.name) &&
-                Objects.equals(age, student.age) &&
-                Objects.equals(createTime, student.createTime) &&
-                Objects.equals(length, student.length) &&
-                Objects.equals(sex, student.sex);
+        if (!(o instanceof StudentMulti)) return false;
+        StudentMulti StudentMulti = (StudentMulti) o;
+        return Objects.equals(id, StudentMulti.id) &&
+                Objects.equals(name, StudentMulti.name) &&
+                Objects.equals(age, StudentMulti.age) &&
+                Objects.equals(createTime, StudentMulti.createTime) &&
+                Objects.equals(length, StudentMulti.length) &&
+                Objects.equals(sex, StudentMulti.sex);
     }
 
     @Override

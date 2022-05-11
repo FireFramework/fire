@@ -39,8 +39,4 @@ object HBaseStreamingTest extends BaseSparkStreaming {
 
     this.fire.start()
   }
-
-  override def main(args: Array[String]): Unit = {
-    this.init(30, false)
-  }
 }

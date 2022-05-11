@@ -271,6 +271,13 @@ private[hbase] trait HBaseFunctions {
   }
 
   /**
+   * 用于判断HBase表是否存在（走缓存）
+   */
+  def isExists(tableName: String, keyNum: Int = 1): Boolean = {
+    HBaseConnector(keyNum = keyNum).isExists(tableName)
+  }
+
+  /**
    * 根据多个rowKey删除对应的整行记录
    *
    * @param tableName 表名

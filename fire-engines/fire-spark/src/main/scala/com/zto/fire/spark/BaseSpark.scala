@@ -80,7 +80,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
    * 生命周期方法：用于关闭SparkContext
    */
   override final def stop: Unit = {
-    if (this._spark != null && this.sc != null && !this.sc.isStopped) {
+    if (noEmpty(this._spark, this.sc) && !this.sc.isStopped) {
       this._spark.stop()
     }
   }
