@@ -35,12 +35,6 @@
             <artifactId>apache-spark_${spark.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-            <version>${scala.version}</version>
-            <scope>provided</scope>
-        </dependency>
         <!-- we exclude jsr305 below and then expressly relist it as
              provided / optional to avoid dependency resolution possibly
              bringing it back into runtime scope.

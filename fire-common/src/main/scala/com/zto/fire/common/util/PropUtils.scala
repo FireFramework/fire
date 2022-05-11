@@ -213,15 +213,15 @@ object PropUtils extends Logging {
     // 通过接口调用获取配置中心配置各等级的参数信息
     val centerConfig = this.invokeConfigCenter(className)
     // 配置中心的默认配置优先级高于框架（fire.properties）以及引擎（spark.properties/flink.properties）等配置
-    this.setProperties(centerConfig.get(ConfigureLevel.FRAMEWORK))
+    this.setProperties(centerConfig.getOrDefault(ConfigureLevel.FRAMEWORK, Map.empty[String, String]))
     // 加载扩展类注解配置（@Kafka、@RocketMQ、@Hive、@HBase等）
     this.loadAnnoConf(Class.forName(className))
     // 加载用户配置文件以及@Config注解配置
     this.loadJobConf(Class.forName(className))
     // 配置中心任务级别配置优先级高于用户本地配置文件中的配置，做到重启任务即可生效
-    this.setProperties(centerConfig.get(ConfigureLevel.TASK))
+    this.setProperties(centerConfig.getOrDefault(ConfigureLevel.TASK, Map.empty[String, String]))
     // 配置中心紧急配置优先级最高，用于对所有任务生效的紧急参数调优
-    this.setProperties(centerConfig.get(ConfigureLevel.URGENT))
+    this.setProperties(centerConfig.getOrDefault(ConfigureLevel.URGENT, Map.empty[String, String]))
 
     this
   }

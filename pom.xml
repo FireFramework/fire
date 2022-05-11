@@ -27,15 +27,9 @@
 
     <properties>
         <fire.version>${project.version}</fire.version>
-        <spark.version>3.0.2</spark.version>
-        <spark.major.version>3</spark.major.version>
-        <flink.version>1.14.3</flink.version>
-        <flink.major.version>1.14</flink.major.version>
         <hudi.version>0.9.0</hudi.version>
         <commons-lang.version>2.5</commons-lang.version>
         <clickhouse-jdbc.version>0.3.1</clickhouse-jdbc.version>
-        <scala.binary.version>2.12</scala.binary.version>
-        <scala.minor.version>13</scala.minor.version>
         <maven.scope>provided</maven.scope>
         <kafka.version>0.11.0.2</kafka.version>
         <sparkjava.version>2.8.0</sparkjava.version>
@@ -46,7 +40,6 @@
         <hive.group>org.apache.hive</hive.group>
         <hbase.version>1.2.0</hbase.version>
         <impala.jdbc.version>2.5.30</impala.jdbc.version>
-        <jackson.version>2.10.5</jackson.version>
         <junit.version>4.13.2</junit.version>
         <rocketmq.version>4.8.0</rocketmq.version>
         <mysql.version>5.1.49</mysql.version>
@@ -78,6 +71,23 @@
                 <scala.binary.version>2.11</scala.binary.version>
                 <scala.minor.version>8</scala.minor.version>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                    <version>${scala.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-compiler</artifactId>
+                    <version>${scala.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-reflect</artifactId>
+                    <version>${scala.version}</version>
+                </dependency>
+            </dependencies>
         </profile>
 
         <profile>
@@ -89,6 +99,23 @@
                 <scala.binary.version>2.12</scala.binary.version>
                 <scala.minor.version>13</scala.minor.version>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                    <version>${scala.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-compiler</artifactId>
+                    <version>${scala.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-reflect</artifactId>
+                    <version>${scala.version}</version>
+                </dependency>
+            </dependencies>
         </profile>
 
         <!-- spark profile -->
@@ -97,6 +124,10 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
+            <properties>
+                <spark.version>3.0.2</spark.version>
+                <spark.major.version>3</spark.major.version>
+            </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.spark</groupId>
@@ -111,18 +142,17 @@
             <properties>
                 <spark.version>2.3.2</spark.version>
                 <spark.major.version>2</spark.major.version>
+                <jackson.version>2.6.7</jackson.version>
             </properties>
         </profile>
 
         <!-- 以hadoop2.7、hive1.2低版本编译 -->
         <profile>
             <id>spark-3.0.2-hadoop-2.7</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <hive.group>org.spark-project.hive</hive.group>
                 <hive.version>1.2.1.spark2</hive.version>
+                <jackson.version>2.10.5</jackson.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -243,6 +273,11 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
+            <properties>
+                <flink.version>1.14.3</flink.version>
+                <flink.major.version>1.14</flink.major.version>
+                <jackson.version>2.10.5</jackson.version>
+            </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.flink</groupId>
@@ -283,11 +318,6 @@
 
     <dependencies>
         <!-- 第三方库相关依赖 -->
-        <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-            <version>${scala.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
