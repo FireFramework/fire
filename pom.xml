@@ -127,6 +127,7 @@
             <properties>
                 <spark.version>3.0.2</spark.version>
                 <spark.major.version>3</spark.major.version>
+                <jackson.version>2.10.5</jackson.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -149,10 +150,12 @@
         <!-- 以hadoop2.7、hive1.2低版本编译 -->
         <profile>
             <id>spark-3.0.2-hadoop-2.7</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
                 <hive.group>org.spark-project.hive</hive.group>
                 <hive.version>1.2.1.spark2</hive.version>
-                <jackson.version>2.10.5</jackson.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -276,7 +279,6 @@
             <properties>
                 <flink.version>1.14.3</flink.version>
                 <flink.major.version>1.14</flink.major.version>
-                <jackson.version>2.10.5</jackson.version>
             </properties>
             <dependencies>
                 <dependency>
