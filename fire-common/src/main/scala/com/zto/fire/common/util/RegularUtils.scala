@@ -14,5 +14,5 @@ object RegularUtils {
   // 用于匹配字符串中以固定的字母+空白符结尾
   lazy val unitSuffix = "[a-zA-Z]+\\s*$".r
   // 用于匹配使用#号作为注释的所有结尾
-  lazy val propAnnotation = "\\#.*".r
+  lazy val propAnnotation = "\\s+\\#.*".r
 }
