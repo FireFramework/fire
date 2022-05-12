@@ -15,12 +15,16 @@
  * limitations under the License.
  */
 
-package com.zto.fire.jdbc
+package com.zto.fire.examples.spark.jdbc
 
 import com.zto.fire.common.anno.TestStep
-import com.zto.fire.common.db.bean.Student
 import com.zto.fire.common.util.{DatasourceManager, PropUtils}
+import com.zto.fire.core.anno.{Jdbc, Jdbc3}
+import com.zto.fire.examples.bean.Student
+import com.zto.fire.examples.spark.core.BaseSparkTester
+import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.predef._
+import com.zto.fire.spark.BaseSparkCore
 import org.junit.Assert._
 import org.junit.{After, Before, Test}
 
@@ -28,13 +32,16 @@ import org.junit.{After, Before, Test}
  * 用于测试JdbcConnector相关API
  *
  * @author ChengLong
- * @since 1.1.2
- * @create 2020-11-30 14:23
+ * @since 2.2.2
+ * @create 2022-05-12 13:26:11
  */
-class JdbcConnectorTest {
+@Jdbc(url = "jdbc:derby:memory:fire;create=true", username = "fire", password = "fire", driver = "org.apache.derby.jdbc.EmbeddedDriver")
+@Jdbc3(url = "jdbc:derby:memory:fire2;create=true", username = "fire", password = "fire", maxPoolSize = 1, driver = "org.apache.derby.jdbc.EmbeddedDriver")
+class JdbcConnectorTest extends BaseSparkCore with BaseSparkTester {
   private var jdbc: JdbcConnector = _
   private var jdbc3: JdbcConnector = _
   private val tableName = "t_student"
+
   private val createTable =
     s"""
       |CREATE TABLE $tableName(
@@ -47,18 +54,19 @@ class JdbcConnectorTest {
       |	rowkey VARCHAR(100)
       |)
       |""".stripMargin
-  
 
   @Before
-  def init: Unit = {
-    PropUtils.load("JdbcConnectorTest")
+  override def before: Unit = {
+    super.before
     this.jdbc = JdbcConnector()
     this.jdbc.executeUpdate(this.createTable)
     this.jdbc3 = JdbcConnector(keyNum = 3)
     this.jdbc3.executeUpdate(this.createTable)
   }
 
-
+  /**
+   * 基于derby数据库进行crud测试
+   */
   @Test
   @TestStep(step = 1, desc = "jdbc CRUD测试")
   def testCRUD: Unit = {
@@ -86,20 +94,10 @@ class JdbcConnectorTest {
     studentList11.foreach(println)
     assertEquals(studentList33.size, 1)
     studentList33.foreach(println)
-
-    for (i <- 1 to 5) {
-      DatasourceManager.get.foreach(t => {
-        t._2.foreach(source => {
-          println("数据源：" + t._1.toString + " " + source)
-        })
-      })
-      println("=====================================")
-      Thread.sleep(1000)
-    }
   }
 
   @After
-  def close: Unit = {
+  override def after: Unit = {
     this.jdbc.executeUpdate(s"drop table $tableName")
     this.jdbc3.executeUpdate(s"drop table $tableName")
   }

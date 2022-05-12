@@ -43,7 +43,7 @@ object HiveSinkTest extends BaseFlinkStreaming {
         |) WITH (
         |  'connector' = 'kafka',								-- 用于指定connector的类型
         |  'topic' = 'fire',										-- 消费的topic名称为fire
-        |  'properties.bootstrap.servers' = '10.9.46.111:9092',	-- kafka的broker地址
+        |  'properties.bootstrap.servers' = 'kafka-server:9092',	-- kafka的broker地址
         |  'properties.group.id' = 'fire',						-- 当前flink sql任务所使用的groupId
         |  'scan.startup.mode' = 'earliest-offset',				-- 指定从什么位置开始消费
         |  'format' = 'json'										-- 指定解析的kafka消息为json格式

@@ -32,8 +32,8 @@ import com.zto.fire.spark.anno.Streaming
  * @author ChengLong 2019年9月10日 09:50:16
  */
 @Streaming(10)
-@Hive("batch")
-@Kafka(brokers = "zmsNew", topics = "sjzn_spark_order_unique_topic", groupId = "fire")
+@Hive("test")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object FireAccTest extends BaseSparkStreaming {
   val key = "fire.partitions"
 

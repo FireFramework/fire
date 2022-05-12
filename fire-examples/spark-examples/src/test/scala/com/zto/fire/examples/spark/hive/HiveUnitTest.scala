@@ -15,40 +15,36 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.util
+package com.zto.fire.examples.spark.hive
 
-import com.zto.fire.common.util.ExceptionBus.stackTrace
-import com.zto.fire.predef._
-import org.junit.Assert._
+import com.zto.fire.common.anno.TestStep
+import com.zto.fire.core.anno.Hive
+import com.zto.fire.examples.spark.core.BaseSparkTester
+import com.zto.fire.spark.BaseSparkCore
 import org.junit.Test
 
 /**
- * 用于ExceptionBus的单元测试
+ * 用于测试与hive的集成
  *
  * @author ChengLong
- * @since 1.1.2
- * @create 2020-11-16 14:42
+ * @date 2022-05-12 14:56:36
+ * @since 2.2.2
  */
-class ExceptionBusTest {
+@Hive("test")
+class HiveUnitTest extends BaseSparkCore with BaseSparkTester {
 
-  /**
-   * 用于测试queue大小限制与exception的存入和获取
-   */
   @Test
-  def testTry: Unit = {
-    (1 to 10020).foreach(i => {
-      tryWithLog {
-        val a = 1 / 0
-      } (isThrow = false)
-    })
-
-    val t = ExceptionBus.getAndClear
-    assertEquals(t._1.size, 1000)
-    t._1.foreach(t => stackTrace(t._2))
-
-    // 上一次获取后queue中的记录数为0
-    assertEquals(ExceptionBus.queueSize.get(), 0)
-    assertEquals(ExceptionBus.exceptionCount.get(), 10020)
+  @TestStep(step = 1, desc = "测试列出所有的数据库名称")
+  def testShowDatabases: Unit = {
+    val df = this.fire.sql("show databases")
+    assert(df.count() > 3)
   }
 
+  @Test
+  @TestStep(step = 1, desc = "测试列出tmp库下所有的hive表名称")
+  def testShowTables: Unit = {
+    this.fire.sql("use tmp")
+    val df = this.fire.sql("show tables")
+    assert(df.count() > 10)
+  }
 }

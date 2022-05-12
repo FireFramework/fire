@@ -49,7 +49,7 @@ object KafkaConsumer extends BaseFlinkStreaming {
         |) WITH (
         |  'connector' = 'kafka',
         |  'topic' = 'fire',
-        |  'properties.bootstrap.servers' = '10.9.46.111:9092',
+        |  'properties.bootstrap.servers' = 'kafka-server:9092',
         |  'properties.group.id' = 'fire',
         |  'scan.startup.mode' = 'latest-offset',
         |  'value.format' = 'json'
@@ -70,7 +70,7 @@ object KafkaConsumer extends BaseFlinkStreaming {
         |) WITH (
         |  'connector' = 'kafka',
         |  'topic' = 'fire2',
-        |  'properties.bootstrap.servers' = '10.9.46.111:9092',
+        |  'properties.bootstrap.servers' = 'kafka-server:9092',
         |  'properties.group.id' = 'fire2',
         |  'scan.startup.mode' = 'latest-offset',
         |  'value.format' = 'json'
@@ -113,7 +113,7 @@ object KafkaConsumer extends BaseFlinkStreaming {
         |) WITH (
         |  'connector' = 'kafka',
         |  'topic' = 'fire',
-        |  'properties.bootstrap.servers' = '10.9.46.111:9092',
+        |  'properties.bootstrap.servers' = 'kafka-server:9092',
         |  'properties.group.id' = 'fire',
         |  'scan.startup.mode' = 'latest-offset',
         |  'value.format' = 'json'

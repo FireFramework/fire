@@ -17,7 +17,7 @@ object FlinkSQLParseTest extends BaseFlinkStreaming {
     val insertInto = s"insert into dim.t_sink_table partition(ds='20210619') ${selectJoin}"
     val insertOverwrite = "insert overwrite dw.kwang_test partition(ds='202106', city='beijing') values(4,'zz')"
     val createView = s"create view t_view as ${selectJoin}"
-    val createTable = "CREATE TABLE wjk_sink(id int,code String,PRIMARY KEY (id, code) NOT ENFORCED) WITH( 'password'='ZTOzto123!@#','connector'='jdbc','driver'='com.mysql.jdbc.Driver','table-name'='zwp_test','url'='jdbc:mysql://10.9.46.107:3306/test?useSSL=false','username'='root')"
+    val createTable = "CREATE TABLE wjk_sink(id int,code String,PRIMARY KEY (id, code) NOT ENFORCED) WITH( 'password'='ZTOzto123!@#','connector'='jdbc','driver'='com.mysql.jdbc.Driver','table-name'='zwp_test','url'='jdbc:mysql://hive-thrift-server:3306/test?useSSL=false','username'='root')"
     val createTableAsSelect = s"CREATE TABLE t_baseuser like tmp.test"
     val createKafkaTable =
       """
@@ -28,7 +28,7 @@ object FlinkSQLParseTest extends BaseFlinkStreaming {
         |) WITH (
         |  'connector' = 'kafka',								-- 用于指定connector的类型
         |  'topic' = 'fire',										-- 消费的topic名称为fire
-        |  'properties.bootstrap.servers' = '10.9.46.111:9092',	-- kafka的broker地址
+        |  'properties.bootstrap.servers' = 'kafka-server:9092',	-- kafka的broker地址
         |  'properties.group.id' = 'fire',						-- 当前flink sql任务所使用的groupId
         |  'scan.startup.mode' = 'earliest-offset',				-- 指定从什么位置开始消费
         |  'format' = 'json'										-- 指定解析的kafka消息为json格式

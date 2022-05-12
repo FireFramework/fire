@@ -17,7 +17,7 @@
 
 package com.zto.fire.examples.spark.hbase
 
-import com.zto.fire.common.anno.{Internal, TestStep}
+import com.zto.fire.common.anno.TestStep
 import com.zto.fire.common.util.DatasourceManager
 import com.zto.fire.core.anno.{HBase, HBase2}
 import com.zto.fire.examples.bean.Student

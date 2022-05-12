@@ -31,8 +31,8 @@ import org.apache.spark.sql.SaveMode
  *
  * @author ChengLong 2019-6-17 15:17:38
  */
-@Jdbc(url = "jdbc:mysql://localhost:3306/fire", username = "root", password = "root")
-@Jdbc2(url = "jdbc:mysql://localhost:3306/fire", username = "root", password = "root")
+@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "..root726")
+@Jdbc2(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "..root726")
 object JdbcTest extends BaseSparkCore {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "t_cluster_info"

@@ -20,13 +20,19 @@ package com.zto.fire.examples.spark.streaming
 import com.zto.fire._
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.util.DateFormatUtils
+import com.zto.fire.core.anno.{Kafka, Kafka2, Kafka3}
 import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.anno.Streaming
 
 /**
  * kafka json解析
  *
  * @author ChengLong 2019-6-26 16:52:58
  */
+@Streaming(interval = 10)
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Kafka2(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
+@Kafka3(brokers = "bigdata_test", topics = "fire3", groupId = "fire")
 object KafkaTest extends BaseSparkStreaming {
 
   // 每天凌晨4点01将锁标志设置为false，这样下一个批次就可以先更新维表再执行sql
@@ -70,8 +76,6 @@ object KafkaTest extends BaseSparkStreaming {
       println("count=" + rdd.count())
     })
     dstream3.print(1)
-    val dstream5 = this.fire.createKafkaDirectStream(keyNum = 5)
-    dstream5.print(1)
 
     this.fire.start
   }

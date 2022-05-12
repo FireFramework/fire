@@ -54,7 +54,7 @@ object FlinkSinkHiveTest extends BaseFlinkStreaming {
         |  'connector' = 'kafka',								-- 用于指定connector的类型
         |  'topic' = 'fire',										-- 消费的topic名称为fire
         |  'scan.startup.mode'='latest-offset',
-        |  'properties.bootstrap.servers' = '10.9.46.111:9092',	-- kafka的broker地址
+        |  'properties.bootstrap.servers' = 'kafka-server:9092',	-- kafka的broker地址
         |  'properties.group.id' = 'fire2',						-- 当前flink sql任务所使用的groupId
         |  'format' = 'json'										-- 指定解析的kafka消息为json格式
         |)
