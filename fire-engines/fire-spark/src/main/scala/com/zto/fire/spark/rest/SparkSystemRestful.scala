@@ -506,7 +506,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       this.sparkInfoBean.setBatchDuration(this.baseSpark.batchDuration + "")
       this.sparkInfoBean.setTimestamp(DateFormatUtils.formatCurrentDateTime())
       this.logger.info(s"[sparkInfo] 获取spark信息成功：json=$json")
-      ResultMsg.buildSuccess(this.sparkInfoBean, ErrorCode.SUCCESS.toString)
+      ResultMsg.buildSuccess(JSONUtils.toJSONString(this.sparkInfoBean), ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
         this.logger.error(s"[sparkInfo] 获取spark信息失败：json=$json", e)

@@ -29,10 +29,12 @@ import com.zto.fire.flink.BaseFlinkStreaming
 object HiveRW extends BaseFlinkStreaming {
 
   /**
-   * fire2.1不再需要main方法，逻辑直接放到process中
+   * 业务逻辑代码，会被fire自动调用
    */
   override def process: Unit = {
     this.fire.useHiveCatalog()
+
+    this.ddl
 
     this.fire.sql(
       """
@@ -43,5 +45,25 @@ object HiveRW extends BaseFlinkStreaming {
       """
         |select * from tmp.baseorganize_fire
         |""".stripMargin).print()
+  }
+
+  /**
+   * 创建表
+   */
+  def ddl: Unit = {
+    this.fire.sql(
+      """
+        |drop table if exists tmp.baseorganize_fire
+        |""".stripMargin)
+
+    this.fire.sql(
+      """
+        |create table tmp.baseorganize_fire (
+        |    id bigint,
+        |    name string,
+        |    age int
+        |) partitioned by (ds string)
+        |row format delimited fields terminated by '/t'
+        |""".stripMargin)
   }
 }

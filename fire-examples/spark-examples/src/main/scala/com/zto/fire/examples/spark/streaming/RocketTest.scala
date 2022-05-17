@@ -29,7 +29,7 @@ import com.zto.fire.spark.anno.Streaming
  * 消费rocketmq中的数据
  */
 @Streaming(10)
-@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire", tag = "*")
 @RocketMQ2(brokers = "bigdata_test", topics = "fire2", groupId = "fire2", tag = "*", startingOffset = "latest")
 object RocketTest extends BaseSparkStreaming {
   override def process: Unit = {

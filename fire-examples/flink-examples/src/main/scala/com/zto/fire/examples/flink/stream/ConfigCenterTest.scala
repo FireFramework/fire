@@ -20,6 +20,7 @@ package com.zto.fire.examples.flink.stream
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.core.anno.Kafka
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
@@ -38,11 +39,12 @@ import org.apache.flink.util.Collector
     |fire.acc.log.max.size=20
     |fire.conf.test=java
     |""")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @Checkpoint(interval = 10, concurrent = 1, pauseBetween = 60, timeout = 60)
 object ConfigCenterTest extends BaseFlinkStreaming {
 
   /**
-   * fire2.1不再需要main方法，逻辑直接放到process中
+   * 业务逻辑代码，会被fire自动调用
    */
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream().filter(json => JSONUtils.isJson(json)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(2)

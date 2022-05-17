@@ -39,7 +39,7 @@ import com.zto.fire.spark.anno.Streaming
 object ConfigCenterTest extends BaseSparkStreaming {
 
   /**
-   * fire2.1不再需要main方法，逻辑直接放到process中
+   * 业务逻辑代码，会被fire自动调用
    */
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream()

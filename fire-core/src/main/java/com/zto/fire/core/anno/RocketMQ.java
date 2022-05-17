@@ -50,7 +50,7 @@ public @interface RocketMQ {
     /**
      * 指定消费的tag
      */
-    String tag() default "";
+    String tag() default "*";
 
     /**
      * 指定从何处开始消费

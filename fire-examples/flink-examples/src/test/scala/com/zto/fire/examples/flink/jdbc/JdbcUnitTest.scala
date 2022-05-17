@@ -15,17 +15,19 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.flink.stream
+package com.zto.fire.examples.flink.jdbc
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, PropUtils}
 import com.zto.fire.core.anno.Kafka
 import com.zto.fire.examples.bean.Student
+import com.zto.fire.examples.flink.core.BaseFlinkTester
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.util.FlinkUtils
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.DataStream
+import org.junit.Test
 
 /**
  * flink jdbc sink
@@ -34,28 +36,8 @@ import org.apache.flink.streaming.api.scala.DataStream
  * @since 1.1.0
  * @create 2020-05-22 11:10
  */
-// 1. 以代码的方式进行配置，支持不单独定义配置文件，如果同时定义了配置文件，则配置文件优先级更高
-@Config(
-  """
-    |#########################################################################################
-    |#  JDBC数据源配置信息详见：common.properties，公共数据源配置可放到common.properties中，便于维护  #
-    |#########################################################################################
-    |
-    |# flink所支持的参数
-    |state.checkpoints.num-retained      =       3
-    |state.backend.incremental           =       true
-    |state.backend.rocksdb.files.open    =       5000
-    |
-    |hello.world                         =       2020
-    |hello.world.flag                    =       false
-    |hello.world.flag2                   =       false
-    |""")
-// 2. 指定从test.properties加载配置文件
-// @Config(Array("test.properties"))
-// 3. 指定从以下两个配置文件中加载配置信息
-// @Config(Array("test.properties", "test2.properties"))
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
-object JdbcTest extends BaseFlinkStreaming {
+object JdbcUnitTest extends BaseFlinkStreaming {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "spark_test2"
 
@@ -108,10 +90,11 @@ object JdbcTest extends BaseFlinkStreaming {
     }.setParallelism(2)
   }
 
-  def testJdbc: Unit = {
+  override def process: Unit = {
+    this.initData
     // 执行查询操作
     val studentList = this.fire.jdbcQueryList(s"select * from $tableName", clazz = classOf[Student])
-    val dataStream = this.env.fromCollection(studentList)
+    val dataStream = this.fire.fromCollection(studentList)
     dataStream.toTable.createOrReplaceTempView("test")
     this.fire.sql(
       """
@@ -122,29 +105,46 @@ object JdbcTest extends BaseFlinkStreaming {
 
     // 执行增删改操作
     this.fire.jdbcUpdate(s"delete from $tableName")
+    this.fire.start("")
+  }
+
+/*  @Test
+  def testJdbc: Unit = {
+
+  }*/
+
+  /**
+   * 消费kafka
+   *
+   * @return
+   * DataStream[Student]
+   */
+  private def kafkaStream: DataStream[Student] = {
+    this.fire.createKafkaDirectStream().filter(t => JSONUtils.isLegal(t)).map(json => {
+      JSONUtils.parseObject[Student](json)
+    })
   }
 
   /**
-   * 用于测试分布式配置
+   * 批量插入测试数据
    */
-  def logConf: Unit = {
-    println(s"isJobManager=${FlinkUtils.isJobManager} isTaskManager=${FlinkUtils.isTaskManager} hello.world=" + PropUtils.getString("hello.world", "not_found"))
-    println(s"isJobManager=${FlinkUtils.isJobManager} isTaskManager=${FlinkUtils.isTaskManager} flink.hello=" + PropUtils.getString("flink.hello", "not_found"))
-    println(s"isJobManager=${FlinkUtils.isJobManager} isTaskManager=${FlinkUtils.isTaskManager} flink.world=" + PropUtils.getString("flink.world", "not_found"))
-    println(s"isJobManager=${FlinkUtils.isJobManager} isTaskManager=${FlinkUtils.isTaskManager} hello.world.flag=" + PropUtils.getBoolean("hello.world.flag", false))
-    println(s"isJobManager=${FlinkUtils.isJobManager} isTaskManager=${FlinkUtils.isTaskManager} hello.world.flag2=" + PropUtils.getBoolean("hello.world.flag", false, keyNum = 2))
+  private def initData: Unit = {
+    this.truncate
+    val timestamp = DateFormatUtils.formatCurrentDateTime()
+    // 执行批量操作
+    val batchSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
+
+    this.fire.jdbcBatchUpdate(batchSql, Seq(Seq("spark1", 21, timestamp, 100.123, 1),
+      Seq("flink2", 22, timestamp, 12.236, 0),
+      Seq("flink3", 22, timestamp, 12.236, 0),
+      Seq("flink4", 22, timestamp, 12.236, 0),
+      Seq("flink5", 27, timestamp, 17.236, 0)))
   }
 
-  override def process: Unit = {
-    this.logConf
-    val stream = this.fire.createKafkaDirectStream().filter(t => JSONUtils.isLegal(t)).map(json => {
-      this.logConf
-      JSONUtils.parseObject[Student](json)
-    })
-    this.testTableJdbcSink(stream)
-    this.testStreamJdbcSink(stream)
-    // this.testJdbc
-
-    this.fire.start("JdbcTest")
+  /**
+   * 清空表
+   */
+  private def truncate: Unit = {
+    this.fire.jdbcUpdate(s"truncate table $tableName")
   }
 }

@@ -17,10 +17,11 @@
 
 package com.zto.fire.examples.flink.anno
 
-import com.zto.fire.common.anno.Config
+import com.zto.fire.common.anno.{Config, TestStep}
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf, FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.anno._
+import com.zto.fire.examples.flink.core.BaseFlinkTester
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
 import com.zto.fire.flink.conf.FireFlinkConf
@@ -49,20 +50,16 @@ import org.junit.Test
 @Jdbc(url = "jdbc:mysql://localhost:3306", username = "root1", password = "root1", maxPoolSize = 10, maxIdleTime = 10, batchSize = 51, flushInterval = 1000, logSqlLength = 20, storageLevel = "memory", queryPartitions = 12)
 @Jdbc2(url = "jdbc:mysql://192.168.0.1:3306", driver = "com.fire", username = "root2", minPoolSize = 9, initialPoolSize = 8, password = "root2", maxRetries = 6, config = Array[String]("hello=world", "scala=flink"))
 @Jdbc3(url = "jdbc:mysql://192.168.0.2:3306", username = "root3", isolationLevel = "read",  password = "root3", acquireIncrement = 2)
-class AnnoConfTest extends BaseFlinkStreaming {
+class AnnoConfTest extends BaseFlinkStreaming with BaseFlinkTester {
 
-  /**
-   * 测试@Jdbc注解
-   */
   @Test
+  @TestStep(step = 1, desc = "测试@Jdbc注解")
   def testJdbc: Unit = {
     assert(FireJdbcConf.url().equals("jdbc:mysql://localhost:3306"))
     assert(FireJdbcConf.url(2).equals("jdbc:mysql://192.168.0.1:3306"))
     assert(FireJdbcConf.url(3).equals("jdbc:mysql://192.168.0.2:3306"))
     assert(FireJdbcConf.driverClass().equals("com.mysql.jdbc.Driver"))
     assert(FireJdbcConf.driverClass(2).equals("com.fire"))
-    // TODO: 自动推断driver
-    // assert(FireJdbcConf.driverClass(3).equals("com.mysql.jdbc.Driver"))
     assert(FireJdbcConf.user().equals("root1"))
     assert(FireJdbcConf.user(2).equals("root2"))
     assert(FireJdbcConf.user(3).equals("root3"))
@@ -91,6 +88,7 @@ class AnnoConfTest extends BaseFlinkStreaming {
    * 测试@RocketMQ注解
    */
   @Test
+  @TestStep(step = 2, desc = "测试@RocketMQ注解")
   def testRocketMQ: Unit = {
     assert(FireRocketMQConf.rocketNameServer().equals("rocketmq"))
     assert(FireRocketMQConf.rocketTopics().equals("fire"))
@@ -121,6 +119,7 @@ class AnnoConfTest extends BaseFlinkStreaming {
    * 测试@Kafka注解
    */
   @Test
+  @TestStep(step = 3, desc = "测试@Kafka注解")
   def testKafka: Unit = {
     assert(FireKafkaConf.kafkaBrokers().equals("localhost:2181"))
     assert(FireKafkaConf.kafkaTopics().equals("fire"))
@@ -158,6 +157,7 @@ class AnnoConfTest extends BaseFlinkStreaming {
    * 测试@Checkpoint注解
    */
   @Test
+  @TestStep(step = 4, desc = "测试@Checkpoint注解")
   def testCheckpoint: Unit = {
     assert(FireFlinkConf.streamCheckpointInterval == 100)
     assert(!FireFlinkConf.unalignedCheckpointEnable)
@@ -167,18 +167,14 @@ class AnnoConfTest extends BaseFlinkStreaming {
     assert(FireFlinkConf.streamCheckpointTolerableFailureNumber == 10)
   }
 
-  /**
-   * 测试@Config注解
-   */
   @Test
+  @TestStep(step = 5, desc = "测试@Config注解")
   def testConfig: Unit = {
     assert(this.conf.getInt("flink.max.parallelism", 10240) == 11)
   }
 
-  /**
-   * hive 注解断言
-   */
   @Test
+  @TestStep(step = 1, desc = "hive 注解断言")
   def testHive: Unit = {
     // @Hive注解优先级低于@Config
     assert(FireHiveConf.hiveCluster.equals("batch"))
@@ -188,10 +184,8 @@ class AnnoConfTest extends BaseFlinkStreaming {
     this.logInfo("assert hive annotation success.")
   }
 
-  /**
-   * hbase 注解断言
-   */
   @Test
+  @TestStep(step = 1, desc = "hbase 注解断言")
   def tesHBase: Unit = {
     assert(FireHBaseConf.hbaseCluster().equals("batch-new1"))
     assert(FireHBaseConf.hbaseCluster(2).equals("batch-new2"))

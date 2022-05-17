@@ -1,6 +1,7 @@
 package com.zto.fire.examples.spark.hive
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.{Hive, Kafka}
 import com.zto.fire.examples.bean.Student
@@ -11,6 +12,7 @@ import org.apache.spark.sql.DataFrame
 /**
  * 基于Fire进行Spark Streaming开发
  */
+@Config("spark.fire.sql.extensions.enable=false")
 @Hive("test")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object HiveRW extends BaseSparkStreaming {
@@ -19,6 +21,7 @@ object HiveRW extends BaseSparkStreaming {
   // {"age":16,"className":"Student","createTime":"2020-08-03 17:23:05","id":6,"length":15.0,"name":"root","sex":true}
   // {"age":16,"className":"Student","createTime":"2020-08-03 17:23:05","id":6,"length":15.0,"name":"root","sex":true}
   override def process: Unit = {
+    this.ddl
     this.streaming
     // this.batch
   }
@@ -44,6 +47,26 @@ object HiveRW extends BaseSparkStreaming {
   }
 
   /**
+   * 创建表
+   */
+  def ddl: Unit = {
+    this.fire.sql(
+      """
+        |drop table if exists tmp.baseorganize_fire
+        |""".stripMargin)
+
+    this.fire.sql(
+      """
+        |create table tmp.baseorganize_fire (
+        |    id bigint,
+        |    name string,
+        |    age int
+        |) partitioned by (ds string)
+        |row format delimited fields terminated by '/t'
+        |""".stripMargin)
+  }
+
+  /**
    * 动态分区写入
    */
   def insert(df: DataFrame): Unit = {
@@ -53,7 +76,7 @@ object HiveRW extends BaseSparkStreaming {
 
     this.fire.sql(
       """
-        |insert overwrite table tmp.baseorganize_fire
+        |insert into table tmp.baseorganize_fire
         |select
         | id,
         | name,

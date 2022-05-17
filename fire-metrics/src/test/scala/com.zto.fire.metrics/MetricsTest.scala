@@ -41,11 +41,11 @@ class MetricsTest {
     reporter.start(1, TimeUnit.SECONDS)
 
     val requests = metrics.meter("requests")
-    (1 to 100).foreach(i => {
+    /*(1 to 100).foreach(i => {
       requests.mark()
       Thread.sleep(10)
     })
-    Thread.sleep(1000)
+    Thread.sleep(1000)*/
   }
 
   @Test
@@ -67,7 +67,7 @@ class MetricsTest {
     val resultCounts = metrics.timer("result-counts")
     val resultCounts2 = metrics.meter("cost")
     val random = new Random()
-    (1 to 10000).foreach(i => {
+    /*(1 to 10000).foreach(i => {
       // resultCounts.update(random.nextInt(100))
       val start = System.currentTimeMillis()
       Thread.sleep(random.nextInt(50))
@@ -75,7 +75,7 @@ class MetricsTest {
       resultCounts.update(end, TimeUnit.MILLISECONDS)
       resultCounts2.mark()
     })
-    Thread.sleep(10000)
+    Thread.sleep(10000)*/
   }
 
   @Test
@@ -93,7 +93,7 @@ class MetricsTest {
     metrics.register("jvm.thread-states", new ThreadStatesGaugeSet())
     metrics.register("jvm.fd.usage", new FileDescriptorRatioGauge())
 
-    Thread.sleep(100000)
+    // Thread.sleep(100000)
   }
 
   /*@Test

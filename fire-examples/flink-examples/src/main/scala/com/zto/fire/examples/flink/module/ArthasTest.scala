@@ -48,7 +48,7 @@ import org.apache.flink.util.Collector
 object ArthasTest extends BaseFlinkStreaming {
 
   /**
-   * fire2.1不再需要main方法，逻辑直接放到process中
+   * 业务逻辑代码，会被fire自动调用
    */
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream().filter(json => JSONUtils.isJson(json)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(2)

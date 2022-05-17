@@ -32,7 +32,7 @@ import org.apache.flink.api.scala._
  * @create 2021-5-13 14:26:24
  */
 @Checkpoint(60)
-@Config("default.parallelism=8")
+@Config("default.parallelism=2")
 @RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire", tag = "*", startingOffset = "latest")
 object RocketTest extends BaseFlinkStreaming {
 

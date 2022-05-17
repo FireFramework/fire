@@ -64,7 +64,7 @@ class JdbcUnitTest extends BaseSparkCore with BaseSparkTester {
     assert(resultList.head.getName.equals("root"))
 
     // 执行批量操作
-    this.insertData
+    this.initData
     resultList = this.fire.jdbcQueryList(s"select id, name, age, createTime, length, sex from $tableName", null, classOf[Student])
     assert(resultList.size == 5)
 
@@ -81,7 +81,7 @@ class JdbcUnitTest extends BaseSparkCore with BaseSparkTester {
   @Test
   @TestStep(step = 2, desc = "测试查询相关的API")
   def testJdbcQuery: Unit = {
-    this.insertData
+    this.initData
     val sql = s"select * from $tableName where id in (?, ?, ?)"
 
     // 将查询结果集以List[JavaBean]方式返回
@@ -104,7 +104,7 @@ class JdbcUnitTest extends BaseSparkCore with BaseSparkTester {
   @Test
   @TestStep(step = 3, desc = "测试基于spark的方式查询的数据结果")
   def testTableLoad: Unit = {
-    this.insertData
+    this.initData
     // 一次加载整张的jdbc小表，注：大表严重不建议使用该方法
     val df = this.fire.jdbcTableLoadAll(this.tableName)
     assert(df.count() == 5)
@@ -119,7 +119,7 @@ class JdbcUnitTest extends BaseSparkCore with BaseSparkTester {
   /**
    * 批量插入测试数据
    */
-  private def insertData: Unit = {
+  private def initData: Unit = {
     this.truncate
     val timestamp = DateFormatUtils.formatCurrentDateTime()
     // 执行批量操作
