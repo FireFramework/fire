@@ -12,8 +12,10 @@ import org.apache.spark.sql.DataFrame
 /**
  * 基于Fire进行Spark Streaming开发
  */
-@Config("spark.fire.sql.extensions.enable=false")
-@Hive("test")
+@Config(
+  """
+    |spark.sql.warehouse.dir=hdfs://ns1:9000/usr/hive/warehouse
+    |""")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object HiveRW extends BaseSparkStreaming {
 
