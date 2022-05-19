@@ -12,10 +12,7 @@ import org.apache.spark.sql.DataFrame
 /**
  * 基于Fire进行Spark Streaming开发
  */
-@Config(
-  """
-    |spark.sql.warehouse.dir=hdfs://ns1:9000/usr/hive/warehouse
-    |""")
+@Hive("test")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object HiveRW extends BaseSparkStreaming {
 
@@ -23,7 +20,7 @@ object HiveRW extends BaseSparkStreaming {
   // {"age":16,"className":"Student","createTime":"2020-08-03 17:23:05","id":6,"length":15.0,"name":"root","sex":true}
   // {"age":16,"className":"Student","createTime":"2020-08-03 17:23:05","id":6,"length":15.0,"name":"root","sex":true}
   override def process: Unit = {
-    this.ddl
+    // this.ddl
     this.streaming
     // this.batch
   }

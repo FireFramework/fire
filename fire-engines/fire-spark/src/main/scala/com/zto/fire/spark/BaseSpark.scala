@@ -125,7 +125,6 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     if (conf == null) new SparkConf().setAppName(this.appName) else conf
   }
 
-
   /**
    * 构建一系列context对象
    */
@@ -138,7 +137,11 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     // 设置hive metastore地址
     val hiveMetastoreUrl = FireHiveConf.getMetastoreUrl
     if (StringUtils.isBlank(hiveMetastoreUrl)) this.logger.warn("当前任务未指定hive连接信息，将不会连接hive metastore。如需使用hive，请通过spark.hive.cluster=xxx指定。")
-    if (StringUtils.isNotBlank(hiveMetastoreUrl)) tmpConf.set("hive.metastore.uris", hiveMetastoreUrl)
+    if (StringUtils.isNotBlank(hiveMetastoreUrl)) {
+      tmpConf.set("hive.metastore.uris", hiveMetastoreUrl)
+      // 关联所连接的hive集群，根据预制方案启用HDFS HA
+      FireHDFSConf.hdfsHAConf.foreach(t => tmpConf.set(t._1, t._2))
+    }
 
     // 构建SparkSession对象
     val sessionBuilder = SparkSession.builder().config(tmpConf)
@@ -157,8 +160,6 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     SparkSingletonFactory.setSparkSession(this._spark)
     this._spark.registerUDF()
     this.sc = this._spark.sparkContext
-    // 关联所连接的hive集群，根据预制方案启用HDFS HA
-    FireHDFSConf.hdfsHAConf.foreach(t => this.sc.hadoopConfiguration.set(t._1, t._2))
     this.catalog = this._spark.catalog
     this.sc.setLogLevel(FireSparkConf.logLevel)
     this.listener = new FireSparkListener(this)
