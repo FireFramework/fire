@@ -14,7 +14,8 @@
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-flink_${flink.reference}</artifactId>
-            <version>${project.version}</version>
+            <version>${fire.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.github.scopt</groupId>

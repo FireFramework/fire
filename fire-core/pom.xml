@@ -34,24 +34,26 @@
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-common_${scala.binary.version}</artifactId>
-            <version>${project.version}</version>
+            <version>${fire.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-enhance-arthas_${scala.binary.version}</artifactId>
-            <version>${project.version}</version>
+            <version>${fire.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.taobao.arthas</groupId>
             <artifactId>arthas-agent-attach</artifactId>
             <version>${arthas.version}</version>
-            <scope>provided</scope>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.taobao.arthas</groupId>
             <artifactId>arthas-packaging</artifactId>
             <version>${arthas.version}</version>
-            <scope>provided</scope>
+            <scope>${maven.scope}</scope>
         </dependency>
     </dependencies>
 

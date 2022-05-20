@@ -34,6 +34,7 @@
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-enhance-spark_${spark.reference}</artifactId>
             <version>${fire.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <!-- we exclude jsr305 below and then expressly relist it as
              provided / optional to avoid dependency resolution possibly

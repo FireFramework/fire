@@ -377,7 +377,7 @@
               </excludes>
             </filter>
           </filters>
-          <finalName>zto-${project.artifactId}-${project.version}</finalName>
+          <finalName>zto-${project.artifactId}-${fire.version}</finalName>
         </configuration>
       </plugin>
     </plugins>

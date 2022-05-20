@@ -35,17 +35,21 @@
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-enhance-spark_${spark.reference}</artifactId>
             <version>${fire.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-connector-spark-rocketmq_${spark.reference}</artifactId>
             <version>${fire.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-connector-spark-hbase_${spark.reference}</artifactId>
             <version>${fire.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
+
         <!-- spark相关依赖 -->
         <dependency>
             <groupId>org.apache.spark</groupId>

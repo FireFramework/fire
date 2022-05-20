@@ -41,17 +41,20 @@
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-common_${scala.binary.version}</artifactId>
-            <version>${project.version}</version>
+            <version>${fire.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-core_${scala.binary.version}</artifactId>
-            <version>${project.version}</version>
+            <version>${fire.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-metrics_${scala.binary.version}</artifactId>
-            <version>${project.version}</version>
+            <version>${fire.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
     </dependencies>
     <build>

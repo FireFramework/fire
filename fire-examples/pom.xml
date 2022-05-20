@@ -39,22 +39,22 @@
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-common_${scala.binary.version}</artifactId>
-            <version>${project.version}</version>
+            <version>${fire.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-core_${scala.binary.version}</artifactId>
-            <version>${project.version}</version>
+            <version>${fire.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-connector-jdbc_${scala.binary.version}</artifactId>
-            <version>${project.version}</version>
+            <version>${fire.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-connector-hbase_${scala.binary.version}</artifactId>
-            <version>${project.version}</version>
+            <version>${fire.version}</version>
         </dependency>
     </dependencies>
 
