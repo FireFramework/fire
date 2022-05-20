@@ -38,8 +38,8 @@ object RocketTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     // 1. createRocketMqPullStreamWithTag()返回的是三元组，分别是：(tag, key, value)
-    this.fire.createRocketMqPullStreamWithTag().map(t => {
-      println("消息：" + t._3)
+    this.fire.createRocketMqPullStreamWithTag().setParallelism(1).map(t => {
+      this.logInfo("消息：" + t._3)
       t._3
     }).print()
 
