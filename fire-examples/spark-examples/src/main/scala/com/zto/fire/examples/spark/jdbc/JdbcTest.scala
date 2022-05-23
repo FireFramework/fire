@@ -196,6 +196,7 @@ object JdbcTest extends BaseSparkCore {
 
   override def process: Unit = {
     // 测试环境测试
+    this.testJdbcUpdate
     /*this.testJdbcUpdate
     this.testJdbcQuery
     this.testTableLoad
