@@ -21,36 +21,88 @@ under the License.
 
 ```xml
 <dependency>
-	<groupId>com.zto.fire</groupId>
-	<artifactId>fire-common_${scala.binary.version}</artifactId>
-	<version>${project.version}</version>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-common_${scala.binary.version}</artifactId>
+  <version>${fire.version}</version>
 </dependency>
 <dependency>
-	<groupId>com.zto.fire</groupId>
-	<artifactId>fire-core_${scala.binary.version}</artifactId>
-	<version>${project.version}</version>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-core_${scala.binary.version}</artifactId>
+  <version>${fire.version}</version>
 </dependency>
-<dependency>
-	<groupId>com.zto.fire</groupId>
-	<artifactId>fire-connector-jdbc_${scala.binary.version}</artifactId>
-	<version>${project.version}</version>
-</dependency>
-<dependency>
-	<groupId>com.zto.fire</groupId>
-	<artifactId>fire-connector-hbase_${scala.binary.version}</artifactId>
-	<version>${project.version}</version>
-</dependency>
+
 <!-- spark任务单独引入fire-spark依赖 -->
 <dependency>
-    <groupId>com.zto.fire</groupId>
-    <artifactId>fire-spark_${spark.reference}</artifactId>
-    <version>${project.version}</version>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-spark_${spark.reference}</artifactId>
+  <version>${fire.version}</version>
 </dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-enhance-spark_${spark.reference}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-connector-spark-rocketmq_${spark.reference}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-connector-spark-hbase_${spark.reference}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-connector-hbase_${scala.binary.version}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-connector-jdbc_${scala.binary.version}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+
 <!-- flink任务单独引入fire-flink依赖 -->
 <dependency>
-    <groupId>com.zto.fire</groupId>
-    <artifactId>fire-flink_${flink.reference}</artifactId>
-    <version>${project.version}</version>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-flink_${flink.reference}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-enhance-flink_${flink.reference}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-enhance-arthas_${scala.binary.version}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-connector-flink-clickhouse_${flink.reference}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-connector-hbase_${scala.binary.version}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-connector-jdbc_${scala.binary.version}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-connector-flink-rocketmq_${flink.reference}</artifactId>
+  <version>${fire.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.zto.fire</groupId>
+  <artifactId>fire-metrics_${scala.binary.version}</artifactId>
+  <version>${fire.version}</version>
 </dependency>
 ```
 

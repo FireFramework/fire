@@ -1,10 +1,30 @@
 # Fire框架
-Fire框架是由**中通**开源的，专门用于大数据**实时计算**的开发框架。Fire框架具有易学易用，稳定可靠等诸多优点，基于Fire框架可以很简单的进行**Spark&Flink**需求开发。Fire框架在赋能开发者的同时，也对实时平台进行了赋能，正因为有了Fire，才真正的连接了**平台**与**任务**，消除了任务孤岛。
+​		Fire框架是由**中通**自主研发并开源的、用于进行**Spark**和**Flink**任务开发的大数据框架。该框架屏蔽技术细节，提供大量简易API帮助开发者更快的构建实时计算任务。同时Fire框架也内置了平台化的一些功能，用于与实时平台集成。
 
-![](docs/img/Fire.png)
+![基于fire开发实时任务](docs/img/Fire.png)
 
 ## 一、现状
+
 基于Fire框架的任务在中通每天处理的数据量高达**几千亿以上**，覆盖了**Spark计算**（离线&实时）、**Flink计算**等众多计算场景。
+
+## 二、核心功能
+
+2.1 灵活的配置方式
+
+2.2 多集群支持
+
+2.3 统一的变成风格
+
+2.4 完善的connector支持
+
+2.5 创新功能
+
+2.6 实时血缘
+
+2.7 性能诊断
+
+2.8 平台集成
+
 ## 二、赋能开发者
 Fire框架自研发之日起就以简单高效、稳定可靠为目标。通过屏蔽技术细节、提供简洁通用的API的方式，将开发者从技术的大海中拯救出来，让开发者更专注于业务代码开发。Fire框架支持Spark与Flink两大引擎，并且覆盖离线计算与实时计算两大场景，内部提供了丰富的API，许多复杂操作仅需一行代码，大大提升了生产力。
 
@@ -163,29 +183,27 @@ object Test extends BaseFlinkStreaming {
 
 ### [5.1 依赖管理](docs/dependency.md)
 
-### [5.2 第三方包install](docs/dependency-install.md)
+### [5.2 Fire集成](docs/outline.md)
 
-### [5.3 Fire集成](docs/outline.md)
+### [5.3 配置文件](docs/config.md)
 
-### [5.4 配置文件](docs/config.md)
+### [5.4 消费Kafka](/docs/kafka.md)
 
-### [5.5 消费Kafka](/docs/kafka.md)
+### [5.5 消费RocketMQ](docs/rocketmq.md)
 
-### [5.6 消费RocketMQ](docs/rocketmq.md)
+### [5.6 集成Hive](docs/hive.md)
 
-### [5.7 集成Hive](docs/hive.md)
+### [5.7 HBase API手册](docs/hbase.md)
 
-### [5.8 HBase API手册](docs/hbase.md)
+### [5.8 JDBC API手册](docs/jdbc.md)
 
-### [5.9 JDBC API手册](docs/jdbc.md)
+### [5.9 累加器](docs/accumulator.md)
 
-### [5.10 累加器](docs/accumulator.md)
+### [5.10 定时任务](docs/schedule.md)
 
-### [5.11 定时任务](docs/schedule.md)
+### [5.11 线程池与并发计算](docs/threadpool.md)
 
-### [5.12 线程池与并发计算](docs/threadpool.md)
-
-### [5.13 Spark DataSource增强](docs/datasource.md)
+### [5.12 Spark DataSource增强](docs/datasource.md)
 
 ## 六、平台建设
 

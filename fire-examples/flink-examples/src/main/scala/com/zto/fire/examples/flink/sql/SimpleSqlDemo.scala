@@ -89,7 +89,7 @@ object SimpleSqlDemo extends BaseFlinkStreaming {
                                 |select id, name, age, sum(1) as `count`
                                 |from v_student
                                 |group by id,name,age
-                                |""".stripMargin)
+                                |""".stripMargin).print()
     this.fire.start("test")
   }
 }
