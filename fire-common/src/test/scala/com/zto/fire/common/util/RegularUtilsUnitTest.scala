@@ -41,4 +41,45 @@ class RegularUtilsUnitTest {
     assert(valueProps.getProperty("kafka.brokers1").equals("test#$kafka"))
     assert(valueProps.getProperty("kafka.brokers2").equals("test"))
   }
+
+  @Test
+  @TestStep(step = 2, desc = "用于测试insert的sql语句")
+  def testInsetReg: Unit = {
+    val sql1 = "insert into"
+    val sql2 = "INSERT into"
+    val sql3 = " insert asf "
+    val sql4 = """insert into"""
+    val sql5 =
+      """
+        |insert into
+        |""".stripMargin
+    val sql6 =
+      """
+        | insert into
+        |""".stripMargin
+    val sql7 =
+      """
+        |
+        | insert into
+        |""".stripMargin
+
+    val sqls = Seq(sql1, sql2, sql3, sql4, sql5, sql6, sql7)
+    // 用于匹配使用#号作为注释的所有结尾
+    sqls.foreach(sql => {
+      assert(RegularUtils.insertReg.findFirstIn(sql.toUpperCase).isDefined)
+    })
+
+    val sql8 =
+      """
+        |create xxx -- insert
+        |""".stripMargin
+
+    assert(RegularUtils.insertReg.findFirstIn(sql8.toUpperCase).isEmpty)
+
+    val sql9 =
+      """
+        |c insert
+        |""".stripMargin
+    assert(RegularUtils.insertReg.findFirstIn(sql9.toUpperCase).isEmpty)
+  }
 }

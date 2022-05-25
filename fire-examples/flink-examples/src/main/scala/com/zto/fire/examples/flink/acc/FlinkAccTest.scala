@@ -21,6 +21,7 @@ import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.core.anno.Kafka
 import com.zto.fire.flink.BaseFlinkStreaming
+import org.apache.flink.api.common.JobExecutionResult
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.DataStream
@@ -70,13 +71,13 @@ object FlinkAccTest extends BaseFlinkStreaming {
     val result = this.fire.start
 
     // 获取计数器中的值
-    val longCount = result.getAccumulatorResult[Long]("LongCount")
+    val longCount = result.asInstanceOf[JobExecutionResult].getAccumulatorResult[Long]("LongCount")
     println("累加值Long：" + longCount)
-    val doubleCount = result.getAccumulatorResult[Double]("DoubleCount")
+    val doubleCount = result.asInstanceOf[JobExecutionResult].getAccumulatorResult[Double]("DoubleCount")
     println("累加值Double：" + doubleCount)
-    val intCount = result.getAccumulatorResult[Integer]("IntCount")
+    val intCount = result.asInstanceOf[JobExecutionResult].getAccumulatorResult[Integer]("IntCount")
     println("累加值IntCount：" + intCount)
-    val intCount2 = result.getAccumulatorResult[Integer]("IntCount2")
+    val intCount2 = result.asInstanceOf[JobExecutionResult].getAccumulatorResult[Integer]("IntCount2")
     println("累加值IntCount2：" + intCount2)
     Thread.currentThread().join()
 

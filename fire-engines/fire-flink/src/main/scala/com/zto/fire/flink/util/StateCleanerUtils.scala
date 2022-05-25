@@ -4,11 +4,11 @@ import java.io.{BufferedInputStream, DataInputStream, File, FileInputStream}
 import java.net.URI
 import java.util.Date
 import java.util.regex.{Matcher, Pattern}
-
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.util.UnitFormatUtils.DateUnitEnum
 import com.zto.fire.common.util.{DateFormatUtils, Logging, UnitFormatUtils}
+import com.zto.fire.flink.conf.FireFlinkConf
 import org.apache.commons.lang3.time.DateUtils
 import org.apache.flink.runtime.checkpoint.{Checkpoints, OperatorSubtaskState}
 import org.apache.flink.runtime.state.IncrementalRemoteKeyedStateHandle
@@ -20,18 +20,18 @@ import org.apache.log4j.{Level, Logger}
 import scala.collection.mutable.ListBuffer
 
 /**
-  * flink历史失效状态清理工具
-  * 清理策略：
-  * conservativeModel：筛选出不再使用的checkpoint文件，将这些文件归档至指定的目录中，并定期删除指定时间的数据
-  * 直接删除模式：直接删除不再需要的checkpoint文件
-  *
-  * @author ChengLong 2021-9-6 15:06:21
-  */
+ * flink历史失效状态清理工具
+ * 清理策略：
+ * conservativeModel：筛选出不再使用的checkpoint文件，将这些文件归档至指定的目录中，并定期删除指定时间的数据
+ * 直接删除模式：直接删除不再需要的checkpoint文件
+ *
+ * @author ChengLong 2021-9-6 15:06:21
+ */
 protected[fire] class StateCleanerUtils extends Logging {
 	Logger.getLogger(this.getClass).setLevel(Level.toLevel("info"))
 
 	// ------------------------------ hdfs 选项 ----------------------------------- //
-	protected val hdfs = "hdfs://10.7.69.237:8020"
+	protected val hdfs = FireFlinkConf.stateHdfsUrl
 	protected val hdfsUser = "hadoop"
 
 	// ------------------------------ checkpoint 选项 ------------------------------ //
@@ -76,14 +76,13 @@ protected[fire] class StateCleanerUtils extends Logging {
 	protected val completedTTLStamp = DateUtils.addDays(new Date, -this.completedTTL).getTime
 	protected val deleteCompleteJobEnable = true
 
-	//正则匹配 taskid
-	protected val checkpoint_pattern = Pattern.compile("/user/flink/checkpoint/[0-9]+/")
-	//  protected val checkpoint_pattern = Pattern.compile("/user/flink/checkpoint/111111/") //指定任务id
-	protected val savepoint_pattern = Pattern.compile("/user/flink/savepoint/[0-9]+/")
+	// 指定checkpoint与savepoint的路径
+	protected val checkpoint_pattern = Pattern.compile("/user/flink/checkpoint/") //指定任务id
+	protected val savepoint_pattern = Pattern.compile("/user/flink/savepoint/") //指定任务id
 
 	/**
-	  * 获取HDFS的FileSystem对象
-	  */
+	 * 获取HDFS的FileSystem对象
+	 */
 	@Internal
 	protected def getFileSystem: FileSystem = {
 		val fs = FileSystem.get(new URI(this.hdfs), new Configuration(), this.hdfsUser)
@@ -92,48 +91,50 @@ protected[fire] class StateCleanerUtils extends Logging {
 	}
 
 	/**
-	  * 解析 operatorSubtaskState 的 ManagedKeyedState
-	  *
-	  * @param operatorSubtaskState operatorSubtaskState
-	  */
+	 * 解析 operatorSubtaskState 的 ManagedKeyedState
+	 *
+	 * @param operatorSubtaskState operatorSubtaskState
+	 */
 	@Internal
 	protected def parseManagedKeyedState(operatorSubtaskState: OperatorSubtaskState): Unit = {
 		if (noEmpty(operatorSubtaskState)) {
 			// 本案例针对 Flink RocksDB 的增量 Checkpoint 引发的问题，
 			// 因此仅处理 IncrementalRemoteKeyedStateHandle
 			operatorSubtaskState.getManagedKeyedState.filter(_.isInstanceOf[IncrementalRemoteKeyedStateHandle])
-			  .map(_.asInstanceOf[IncrementalRemoteKeyedStateHandle]).foreach(keyedStateHandle => {
+				.map(_.asInstanceOf[IncrementalRemoteKeyedStateHandle]).foreach(keyedStateHandle => {
 				// 获取 RocksDB 的 sharedState
 				val sharedState = keyedStateHandle.getSharedState
 				if (noEmpty(sharedState)) {
 					sharedState.map(t => t._2).filter(_.isInstanceOf[FileStateHandle]).map(_.asInstanceOf[FileStateHandle])
-					  .foreach(t => {
-						  val filePath = t.getFilePath
-						  this.inuserSet.add(filePath.getPath)
-					  })
+						.foreach(t => {
+							val filePath = t.getFilePath
+							this.logger.info("parseManagedKeyedState:" + filePath)
+							this.inuserSet.add(filePath.getPath)
+						})
 				}
 			})
 		}
 	}
 
 	/**
-	  * 解析 operatorSubtaskState 的 ManagedOperatorState
-	  *
-	  * @param operatorSubtaskState operatorSubtaskState
-	  */
+	 * 解析 operatorSubtaskState 的 ManagedOperatorState
+	 *
+	 * @param operatorSubtaskState operatorSubtaskState
+	 */
 	@Internal
 	protected def parseManagedOperatorState(operatorSubtaskState: OperatorSubtaskState): Unit = {
 		if (isEmpty(operatorSubtaskState)) {
 			operatorSubtaskState.getManagedOperatorState.map(_.getDelegateStateHandle).filter(_.isInstanceOf[FileStateHandle]).map(_.asInstanceOf[FileStateHandle]).foreach(fileStateHandle => {
 				val filePath = fileStateHandle.getFilePath
+				this.logger.info("parseManagedKeyedState:" + filePath)
 				this.inuserSet.add(filePath.getPath)
 			})
 		}
 	}
 
 	/**
-	  * 递归遍历checkpoint目录下所有的_metadata文件
-	  */
+	 * 递归遍历checkpoint目录下所有的_metadata文件
+	 */
 	@Internal
 	protected def recursionCheckpointDir(): Unit = {
 		var count = 0
@@ -148,6 +149,7 @@ protected[fire] class StateCleanerUtils extends Logging {
 				val matcher: Matcher = checkpoint_pattern.matcher(status.getPath().toUri.getPath + "/")
 				if (matcher.find) {
 					this.files += status
+					this.logger.info(status.getPath().toUri.getPath)
 					val timeFlag = if (this.useAccessTime) status.getAccessTime else status.getModificationTime
 					// 只分析最近访问时间在配置的metadataTtl之后的metadata文件，也就是说默认62天之前仍未被访问或修改的metadata文件将会被删除
 					if (status.getPath.getName.endsWith("_metadata") && (timeFlag > this.checkpointTTLStamp)) {
@@ -160,18 +162,19 @@ protected[fire] class StateCleanerUtils extends Logging {
 						val localPath = if (this.overwrite) this.localCheckpointBaseDir + "/_metadata" else this.localCheckpointBaseDir + metadataPath
 						// 将metadata文件拷贝到本地进行分析
 						fs.copyToLocalFile(status.getPath, new Path(localPath))
-						this.analyzeMetadata(localPath)
+						this.analyzeMetadata(localPath, status.getPath.getParent.toString)
 						count += 1
 					}
 				}
 			}
 			this.logger.info(s"此次分析metadata文件数共计：${count}")
+			this.logger.info(s"此次inuserSet文件数共计：${inuserSet.size()}")
 		}(if (fs != null) fs.close())(this.logger, catchLog = "分析metadata文件发生异常", finallyCatchLog = "FileSystem.close()失败")
 	}
 
 	/**
-	  * 清理不再被使用的状态数据
-	  */
+	 * 清理不再被使用的状态数据
+	 */
 	protected def cleanCheckpoint(): Unit = {
 		var count = 0
 		var blockSize = 0L
@@ -206,13 +209,17 @@ protected[fire] class StateCleanerUtils extends Logging {
 	}
 
 	/**
-	  * 通过解析指定的_metadata分析还在被使用的checkpoint文件
-	  *
-	  * @param path
-	  * metadata的绝对路径
-	  */
+	 * 通过解析指定的_metadata分析还在被使用的checkpoint文件
+	 *
+	 * externalPointer 设置为 当前解析_metadata 的父目录即可
+	 * 解决 状态反序列化中 type为 RELATIVE_STREAM_STATE_HANDLE 导致报错
+	 * Cannot deserialize a RelativeFileStateHandle without a context to make it relative to
+	 *
+	 * @param path
+	 * metadata的绝对路径
+	 */
 	@Internal
-	protected def analyzeMetadata(path: String): Unit = {
+	protected def analyzeMetadata(path: String, externalPointer: String): Unit = {
 		//  读取元数据文件
 		val metadataFile = new File(path)
 		var fis: FileInputStream = null
@@ -225,7 +232,7 @@ protected[fire] class StateCleanerUtils extends Logging {
 			bis = new BufferedInputStream(fis)
 			dis = new DataInputStream(bis)
 
-			val checkpointMetadata = Checkpoints.loadCheckpointMetadata(dis, this.getClass.getClassLoader, null)
+			val checkpointMetadata = Checkpoints.loadCheckpointMetadata(dis, this.getClass.getClassLoader, externalPointer)
 
 			// 遍历 OperatorState，这里的每个 OperatorState 对应一个 Flink 任务的 Operator 算子
 			// 不要与 OperatorState  和 KeyedState 混淆，不是一个层级的概念
@@ -243,8 +250,8 @@ protected[fire] class StateCleanerUtils extends Logging {
 	}
 
 	/**
-	  * 删除过期的归档文件
-	  */
+	 * 删除过期的归档文件
+	 */
 	protected def deleteArchive(): Unit = {
 		if (!this.deleteArchiveEnabled || !this.conservativeModel) return
 
@@ -268,8 +275,8 @@ protected[fire] class StateCleanerUtils extends Logging {
 	}
 
 	/**
-	  * 删除空文件夹，文件夹总大小为0的目录会被清空
-	  */
+	 * 删除空文件夹，文件夹总大小为0的目录会被清空
+	 */
 	protected def deleteEmptyDir(): Unit = {
 		if (!this.deleteEmptyDirEnabled) return
 
@@ -301,8 +308,8 @@ protected[fire] class StateCleanerUtils extends Logging {
 	}
 
 	/**
-	  * 定期清理过期的savepoint文件
-	  */
+	 * 定期清理过期的savepoint文件
+	 */
 	protected def deleteSavepoint(): Unit
 
 	= {
@@ -324,6 +331,11 @@ protected[fire] class StateCleanerUtils extends Logging {
 				savepointList.foreach(file => {
 					val timeFlag = if (this.useAccessTime) file.getAccessTime else file.getModificationTime
 					if (timeFlag < this.savepointTTLStamp) {
+
+						//TODO 考虑是否可以改为删除至回收站
+						//						val t = new Trash(fs.getConf)
+						//						t.moveToTrash(file.getPath)
+
 						fs.delete(file.getPath, true)
 						count += 1
 						this.logger.info(s"清理savepoint目录成功：${file.getPath}，savepoint时间：${DateFormatUtils.formatDateTime(new Date(timeFlag))}")
@@ -335,8 +347,8 @@ protected[fire] class StateCleanerUtils extends Logging {
 	}
 
 	/**
-	  * 定期清理过期的complete job文件
-	  */
+	 * 定期清理过期的complete job文件
+	 */
 	protected def deleteCompleteJobs(): Unit
 
 	= {
@@ -360,13 +372,11 @@ protected[fire] class StateCleanerUtils extends Logging {
 	}
 
 	/**
-	  * 执行清理任务
-	  */
-	protected def run(): Unit
-
-	= {
+	 * 执行清理任务
+	 */
+	protected def run(): Unit = {
 		elapsed[Unit]("step 5. 清理完毕，执行结束", this.logger) {
-			this.logger.info("开始执行checkpoint与savepoint清理程序...")
+			this.logger.info("开始执行新checkpoint与savepoint清理程序...")
 			this.logger.warn(s"step 1. 开始解析${checkpointTTL}天内增量checkpoint metadata文件并分析直接的血缘关系.")
 			this.recursionCheckpointDir()
 			this.logger.warn("step 2. 开始归档历史的checkpoint文件.")

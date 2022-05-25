@@ -67,6 +67,7 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_STREAM_CHECKPOINT_EXTERNALIZED = "flink.stream.checkpoint.externalized"
   lazy val FLINK_STREAM_CHECKPOINT_UNALIGNED = "flink.stream.checkpoint.unaligned.enable"
   lazy val FLINK_SQL_WITH_REPLACE_MODE_ENABLE = "flink.sql_with.replaceMode.enable"
+  lazy val FLINK_STATE_CLEAN_HDFS_URL = "flink.state.clean.hdfs.url"
 
   // flink sql相关配置
   lazy val FLINK_SQL_CONF_PREFIX = "flink.sql.conf."
@@ -74,6 +75,7 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_SQL_UDF_CONF_PREFIX = "flink.sql.udf.conf."
   lazy val FLINK_SQL_UDF_ENABLE = "flink.sql.udf.fireUdf.enable"
   lazy val FLINK_SQL_WITH_PREFIX = "flink.sql.with."
+  lazy val FLINK_SQL_AUTO_ADD_STATEMENT_SET = "flink.sql.auto.add.statementSet"
 
   lazy val defaultCatalogName = PropUtils.getString(this.FLINK_SQL_DEFAULT_CATALOG_NAME, "default_catalog")
   lazy val sqlWithReplaceModeEnable = PropUtils.getBoolean(this.FLINK_SQL_WITH_REPLACE_MODE_ENABLE, true)
@@ -122,4 +124,9 @@ private[fire] object FireFlinkConf {
   lazy val flinkStateTTL = PropUtils.getInt(this.FLINK_STATE_TTL_DAYS, 31)
   // 是否开启算子链合并
   lazy val operatorChainingEnable = PropUtils.getBoolean(this.OPERATOR_CHAINING_ENABLE, true)
+  // 是否自动将insert语句加入到StatementSet中
+  lazy val autoAddStatementSet = PropUtils.getBoolean(this.FLINK_SQL_AUTO_ADD_STATEMENT_SET, true)
+
+  // flink状态清理的hdfs路径前缀
+  lazy val stateHdfsUrl = PropUtils.getString(this.FLINK_STATE_CLEAN_HDFS_URL)
 }

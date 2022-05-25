@@ -33,6 +33,7 @@ import com.zto.fire.spark.anno.Streaming
     |# 直接从配置文件中拷贝过来即可
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
+    |fire.shutdown.auto.exit=true
     |""")
 @Hive("test")
 @Streaming(20) // spark streaming的批次时间

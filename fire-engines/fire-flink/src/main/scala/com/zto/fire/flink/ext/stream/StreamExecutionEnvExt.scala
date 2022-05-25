@@ -19,14 +19,13 @@ package com.zto.fire.flink.ext.stream
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
-import com.zto.fire.common.util.{DatasourceManager, KafkaUtils, ValueUtils}
+import com.zto.fire.common.util.{DatasourceManager, KafkaUtils, RegularUtils}
 import com.zto.fire.core.Api
 import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvider}
 import com.zto.fire.flink.sql.{FlinkSqlExtensionsParser, FlinkSqlParser}
 import com.zto.fire.flink.util.{FlinkSingletonFactory, RocketMQUtils}
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import org.apache.commons.lang3.StringUtils
-import org.apache.flink.api.common.JobExecutionResult
 import org.apache.flink.api.common.functions.RuntimeContext
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.common.typeinfo.TypeInformation
@@ -36,12 +35,14 @@ import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironm
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema
-import org.apache.flink.table.api.{Table, TableResult}
+import org.apache.flink.table.api.{StatementSet, Table, TableResult}
+import org.apache.flink.table.api.internal.TableResultImpl
 import org.apache.rocketmq.flink.common.serialization.SimpleTagKeyValueDeserializationSchema
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSourceWithTag}
 
 import java.util.Properties
-import scala.collection.{JavaConversions, JavaConverters}
+import java.util.concurrent.atomic.AtomicBoolean
+import scala.collection.JavaConversions
 import scala.reflect.ClassTag
 
 /**
@@ -314,7 +315,65 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
   def sql(sql: String, keyNum: Int = 1): TableResult = {
     require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
     FlinkSqlParser.sqlParse(sql)
-    this.tableEnv.executeSql(sql.with$(keyNum))
+    if (this.isInsertStatement(sql)) {
+      this.addInsertSql(sql)
+      TableResultImpl.TABLE_RESULT_OK
+    } else this.tableEnv.executeSql(sql.with$(keyNum))
+  }
+
+  /**
+   * 创建并返回StatementSet对象实例
+   */
+  def createStatementSet: StatementSet = StreamExecutionEnvExt.createStatementSet
+
+  /**
+   * 使用正则匹配执行的sql语句是否为insert语句
+   */
+  private[this] def isInsertStatement(sql: String): Boolean = {
+    RegularUtils.insertReg.findFirstIn(sql.toUpperCase).isDefined
+  }
+
+  /**
+   * 将待执行的sql sink语句加入到StatementSet中
+   *
+   * @param sql
+   * insert xxx语句
+   * @return
+   * StatementSet
+   */
+  def addInsertSql(sql: String): StatementSet = {
+    require(StringUtils.isNotBlank(sql), "待执行的sql语句不能为空")
+    FlinkSqlParser.sqlParse(sql)
+    StreamExecutionEnvExt.useStatementSet.compareAndSet(false, true)
+    StreamExecutionEnvExt.statementSet.addInsertSql(sql)
+  }
+
+  /**
+   * addInsertSql方法的别名，将待执行的sql sink语句加入到StatementSet中
+   *
+   * @param sql
+   * insert xxx语句
+   * @return
+   * StatementSet
+   */
+  def sqlSink(sql: String): StatementSet = this.addInsertSql(sql)
+
+  /**
+   * addInsertSql方法的别名，将待执行的sql sink语句加入到StatementSet中
+   *
+   * @param sql
+   * insert xxx语句
+   * @return
+   * StatementSet
+   */
+  def sqlInsert(sql: String): StatementSet = this.addInsertSql(sql)
+
+  /**
+   * 将table sink加入到StatementSet中
+   */
+  def addInsert(targetPath: String, table: Table, overwrite: Boolean = false): StatementSet = {
+    StreamExecutionEnvExt.useStatementSet.compareAndSet(false, true)
+    StreamExecutionEnvExt.statementSet.addInsert(targetPath, table, overwrite)
   }
 
   /**
@@ -345,17 +404,27 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * @param jobName
    * job名称
    */
-  def startAwaitTermination(jobName: String = ""): JobExecutionResult = {
-    if (ValueUtils.isEmpty(jobName)) this.env.execute() else this.env.execute(jobName)
+  def startAwaitTermination(jobName: String = FlinkSingletonFactory.getAppName): Any = {
+    if (StreamExecutionEnvExt.useStatementSet.get()) StreamExecutionEnvExt.statementSet.execute() else this.env.execute(jobName)
   }
 
   /**
    * 提交Flink Streaming Graph并执行
    */
-  def start(jobName: String): JobExecutionResult = this.startAwaitTermination(jobName)
+  def start(jobName: String): Any = this.startAwaitTermination(jobName)
 
   /**
    * 流的启动
    */
-  override def start: JobExecutionResult = this.env.execute(FlinkSingletonFactory.getAppName)
+  override def start: Any = this.startAwaitTermination()
+}
+
+private[fire] object StreamExecutionEnvExt {
+  private[fire] lazy val statementSet = this.createStatementSet
+  private[fire] lazy val useStatementSet = new AtomicBoolean(false)
+
+  /**
+   * 创建并返回StatementSet对象实例
+   */
+  def createStatementSet: StatementSet = FlinkSingletonFactory.getTableEnv.createStatementSet()
 }

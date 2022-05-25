@@ -15,4 +15,6 @@ object RegularUtils {
   lazy val unitSuffix = "[a-zA-Z]+\\s*$".r
   // 用于匹配使用#号作为注释的所有结尾
   lazy val propAnnotation = "\\s+\\#.*".r
+  // 用于匹配insert语句
+  lazy val insertReg = "^\\s*INSERT.*".r
 }

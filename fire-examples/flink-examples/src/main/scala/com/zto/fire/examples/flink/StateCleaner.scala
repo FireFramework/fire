@@ -1,6 +1,7 @@
 package com.zto.fire.examples.flink
 
 import com.zto.fire.JHashSet
+import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.StateCleanerUtils
 import org.apache.commons.lang3.time.DateUtils
 import org.apache.hadoop.fs.LocatedFileStatus
@@ -18,7 +19,7 @@ import scala.collection.mutable.ListBuffer
  */
 object StateCleaner extends StateCleanerUtils {
   // ------------------------------ hdfs 选项 ----------------------------------- //
-  override protected val hdfs = "hdfs://10.7.69.237:8020"
+  override protected val hdfs = FireFlinkConf.stateHdfsUrl
   override protected val hdfsUser = "hadoop"
 
   // ------------------------------ checkpoint 选项 ------------------------------ //

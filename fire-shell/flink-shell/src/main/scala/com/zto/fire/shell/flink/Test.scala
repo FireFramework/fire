@@ -36,10 +36,8 @@ import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
     |fire.acc.log.max.size=20
     |flink.stream.checkpoint.interval=60000
     |flink.state.choose.disk.policy=round_robin
-    |state.external.zookeeper.url=10.7.69.238:2181
     |fire.analysis.arthas.enable=false
     |fire.log.level.conf.org.apache.flink=warn
-    |fire.analysis.arthas.tunnel_server.url=ws://10.7.69.32:7777/ws
     |fire.analysis.arthas.container.enable=false
     |fire.rest.filter.enable=true
     |""")

@@ -65,6 +65,8 @@ import com.zto.fire.flink.BaseFlinkStreaming
 object RocketMQConnectorTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
+    val test = this.getClass.getProtectionDomain.getCodeSource.getLocation.getPath
+    println("path=" + test)
     this.fire.sql("""
                     |CREATE table source (
                     |  id bigint,
@@ -87,7 +89,7 @@ object RocketMQConnectorTest extends BaseFlinkStreaming {
     this.fire.sql(
       """
         |insert into sink select * from source
-        |""".stripMargin).print()
+        |""".stripMargin)
 
     this.fire.sql(
       """
