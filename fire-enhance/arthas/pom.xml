@@ -2,7 +2,6 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>fire-arthas</artifactId>
   <version>2.2.2-SNAPSHOT</version>
-  <name>Fire : Enhance : Arthas </name>
 
   <parent>
     <groupId>com.zto.fire</groupId>

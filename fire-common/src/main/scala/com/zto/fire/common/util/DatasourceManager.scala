@@ -17,16 +17,13 @@
 
 package com.zto.fire.common.util
 
-import com.google.common.collect.EvictingQueue
 import com.zto.fire.common.conf.FireFrameworkConf._
-import com.zto.fire.common.conf.FireRocketMQConf
-import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
+import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.LoggerFactory
 
 import java.util
-import java.util.concurrent.{ConcurrentHashMap, CopyOnWriteArraySet, ScheduledExecutorService, TimeUnit}
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, CopyOnWriteArraySet, TimeUnit}
 import scala.collection.mutable
 
 /**
@@ -41,7 +38,7 @@ private[fire] class DatasourceManager extends Logging {
   private[fire] lazy val datasourceMap = new ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
   private[fire] lazy val tableMetaSet = new CopyOnWriteArraySet[TableMeta]()
   // 用于收集来自不同数据源的sql语句，后续会异步进行SQL解析，考虑到分布式场景下会有很多重复的SQL执行，因此使用了线程不安全的队列即可满足需求
-  private lazy val dbSqlQueue = EvictingQueue.create[DBSqlSource](buriedPointDatasourceMaxSize)
+  private lazy val dbSqlQueue = new ConcurrentLinkedQueue[DBSqlSource]()
   // 用于收集各实时引擎执行的sql语句
   this.sqlParse()
 
@@ -111,7 +108,7 @@ private[fire] class DatasourceManager extends Logging {
   /**
    * 向队列中添加一条sql类型的数据源，用于后续异步解析
    */
-  private[fire] def addDBDataSource(source: DBSqlSource): Unit = if (buriedPointDatasourceEnable) this.dbSqlQueue.offer(source)
+  private[fire] def addDBDataSource(source: DBSqlSource): Unit = if (buriedPointDatasourceEnable && this.dbSqlQueue.size() <= buriedPointDatasourceMaxSize) this.dbSqlQueue.offer(source)
 
   /**
    * 收集执行的sql语句

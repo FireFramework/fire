@@ -145,7 +145,7 @@ private[fire] object FireFrameworkConf {
   // 定时解析埋点SQL的初始延迟（s）
   lazy val buriedPointDatasourceInitialDelay = PropUtils.getInt(this.FIRE_BURIED_POINT_DATASOURCE_INITIAL_DELAY, 30)
   // 用于存放埋点的队列最大大小，超过该大小将会被丢弃
-  lazy val buriedPointDatasourceMaxSize = PropUtils.getInt(this.FIRE_BURIED_POINT_DATASOURCE_MAX_SIZE, 300)
+  lazy val buriedPointDatasourceMaxSize = PropUtils.getInt(this.FIRE_BURIED_POINT_DATASOURCE_MAX_SIZE, 200)
   // 是否开启数据源埋点
   lazy val buriedPointDatasourceEnable = PropUtils.getBoolean(this.FIRE_BURIED_POINT_DATASOURCE_ENABLE, true)
   // 每个jvm实例内部queue用于存放异常对象数最大大小，避免队列过大造成内存溢出
