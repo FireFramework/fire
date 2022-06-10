@@ -30,11 +30,10 @@ object FlinkSQLParseTest extends BaseFlinkStreaming {
 
   override def process: Unit = {
     val select = "select t1.id,t1.name from ods.test t1 where t1.a > 1"
-    val selectJoin = "select t1.id,t2.name from tmp.test t1 left join ods.t_user t2 right join dim.baseuser t3 on t1.id=t3.id where t1.a > 1"
+    val selectJoin = "select t1.id,t2.name from tmp.test t1 left join ods.t_user t2 right join tmp.baseuser t3 on t1.id=t3.id where t1.a > 1"
     val insertInto = s"insert into dim.t_sink_table partition(ds='20210619') ${selectJoin}"
     val insertOverwrite = "insert overwrite dw.kwang_test partition(ds='202106', city='beijing') values(4,'zz')"
     val createView = s"create view t_view as ${selectJoin}"
-    val createTable = "CREATE TABLE wjk_sink(id int,code String,PRIMARY KEY (id, code) NOT ENFORCED) WITH( 'password'='ZTOzto123!@#','connector'='jdbc','driver'='com.mysql.jdbc.Driver','table-name'='zwp_test','url'='jdbc:mysql://hive-thrift-server:3306/test?useSSL=false','username'='root')"
     val createTableAsSelect = s"CREATE TABLE t_baseuser like tmp.test"
     val createKafkaTable =
       """

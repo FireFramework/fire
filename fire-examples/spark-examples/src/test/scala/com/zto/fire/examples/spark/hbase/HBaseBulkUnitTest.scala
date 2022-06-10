@@ -147,9 +147,13 @@ class HBaseBulkUnitTest extends BaseSparkCore with HBaseBaseTester {
    * 使用bulk方式根据rowKey获取数据，并将结果集以DataFrame形式返回
    */
   private def testHBaseBulkGetDF: Unit = {
-    val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString), 2)
+    val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString, 111.toString), 2)
     val studentDF = this.fire.hbaseBulkGetDF(this.tableName1, rowKeyRdd, classOf[Student])
     assert(studentDF.count() == 5)
+
+    val rowKeyRdd2 = this.fire.createRDD(Seq[String](), 2)
+    val studentDF2 = this.fire.hbaseBulkGetDF(this.tableName1, rowKeyRdd2, classOf[Student])
+    assert(studentDF2.count() == 0)
   }
 
   /**

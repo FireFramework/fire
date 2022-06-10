@@ -133,8 +133,8 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     tryWithReturn {
       val rowKeyRDD = rdd.filter(StringUtils.isNotBlank(_)).map(rowKey => Bytes.toBytes(rowKey))
       val getRDD = this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
-        HBaseConnector(keyNum = this.keyNum).hbaseRow2Bean(result, clazz)
-      }).filter(bean => bean != null).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
+        HBaseConnector(keyNum = this.keyNum).hbaseRow2Bean(result, clazz).getOrElse(clazz.newInstance())
+      }).filter(bean => noEmpty(bean, bean.rowKey)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
       getRDD
     }(this.logger, s"execute bulkGetRDD(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
