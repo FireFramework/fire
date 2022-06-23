@@ -33,7 +33,7 @@ import com.zto.fire.flink.BaseFlinkStreaming
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Hive("test")
-// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
+// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HiveBatchSinkTest extends BaseFlinkStreaming {
 
   // 具体的业务逻辑放到process方法中

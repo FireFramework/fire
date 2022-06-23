@@ -35,7 +35,7 @@ import org.apache.flink.api.scala._
 @Checkpoint(60)
 @Config("default.parallelism=2")
 @RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire", tag = "*", startingOffset = "latest")
-// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
+// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object RocketTest extends BaseFlinkStreaming {
 
   override def process: Unit = {

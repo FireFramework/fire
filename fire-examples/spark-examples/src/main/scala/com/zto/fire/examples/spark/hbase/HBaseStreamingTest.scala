@@ -17,7 +17,7 @@ import com.zto.fire.spark.anno.Streaming
 @Streaming(interval = 30, concurrent = 2)
 @HBase2(cluster = "test", scanPartitions = 30, storageLevel = "DISK_ONLY")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
-// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
+// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HBaseStreamingTest extends BaseSparkStreaming {
   private val tableName8 = "fire_test_8"
   private val tableName9 = "fire_test_9"

@@ -35,7 +35,7 @@ import org.apache.spark.sql.{Encoders, Row}
   */
 @HBase("test")
 @HBase2(cluster = "test", scanPartitions = 3, storageLevel = "DISK_ONLY")
-// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
+// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HBaseBulkTest extends BaseSparkCore {
   private val tableName3 = "fire_test_3"
   private val tableName5 = "fire_test_5"

@@ -30,7 +30,7 @@ import com.zto.fire.spark.BaseStructuredStreaming
  */
 @Hive("batch")
 @Kafka(brokers = "zmsNew", topics = "sjzn_spark_scan_send_topic", groupId = "fire")
-// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
+// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object StructuredStreamingTest extends BaseStructuredStreaming {
 
   /**

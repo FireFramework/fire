@@ -38,7 +38,7 @@ import org.apache.flink.streaming.api.scala.DataStream
     |flink.max.parallelism               =       8
     |""")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
-// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
+// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object FlinkAccTest extends BaseFlinkStreaming {
 
   /**

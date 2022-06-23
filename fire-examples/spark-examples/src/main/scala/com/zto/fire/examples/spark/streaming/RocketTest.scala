@@ -33,7 +33,7 @@ import com.zto.fire.spark.anno.Streaming
 @Streaming(10)
 @RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire", tag = "*")
 @RocketMQ2(brokers = "bigdata_test", topics = "fire2", groupId = "fire2", tag = "*", startingOffset = "latest")
-// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
+// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object RocketTest extends BaseSparkStreaming {
   override def process: Unit = {
     //读取RocketMQ消息流

@@ -49,7 +49,7 @@ import org.apache.flink.api.scala._
 @Hive("test")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 @Checkpoint(interval = 60, concurrent = 1, pauseBetween = 60, timeout = 60)
-// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
+// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object FlinkHiveTest extends BaseFlinkStreaming {
 
   override def process: Unit = {

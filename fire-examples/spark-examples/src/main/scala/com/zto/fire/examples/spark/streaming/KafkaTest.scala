@@ -34,7 +34,7 @@ import com.zto.fire.spark.anno.Streaming
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @Kafka2(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
 @Kafka3(brokers = "bigdata_test", topics = "fire3", groupId = "fire")
-// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
+// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object KafkaTest extends BaseSparkStreaming {
 
   // 每天凌晨4点01将锁标志设置为false，这样下一个批次就可以先更新维表再执行sql

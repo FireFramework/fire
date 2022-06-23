@@ -38,7 +38,7 @@ import scala.collection.mutable.ListBuffer
   */
 @HBase("test")
 @HBase2(cluster = "test", scanPartitions = 3, storageLevel = "DISK_ONLY")
-// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
+// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HBaseConnectorTest extends BaseSparkCore {
   private val tableName1 = "fire_test_1"
   private val tableName2 = "fire_test_2"
