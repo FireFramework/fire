@@ -41,6 +41,7 @@ import com.zto.fire.flink.anno.Checkpoint
 @Checkpoint(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @Kafka2(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
+// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
 object Test extends BaseFlinkStreaming {
 
   /**

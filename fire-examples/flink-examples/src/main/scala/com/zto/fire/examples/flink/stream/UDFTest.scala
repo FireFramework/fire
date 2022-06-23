@@ -43,6 +43,7 @@ import org.apache.flink.table.functions.ScalarFunction
     |flink.sql.udf.conf.fire=com.zto.fire.examples.flink.stream.Udf
     |""")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
+// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
 object UDFTest extends BaseFlinkStreaming {
   override def process: Unit = {
     val stream = this.fire.createKafkaDirectStream()

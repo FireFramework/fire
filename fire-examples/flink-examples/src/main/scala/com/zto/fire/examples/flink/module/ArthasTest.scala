@@ -47,6 +47,7 @@ import org.apache.flink.util.Collector
     |""")
 @Checkpoint(interval = 10, concurrent = 1, pauseBetween = 60, timeout = 60)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
+// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
 object ArthasTest extends BaseFlinkStreaming {
 
   /**

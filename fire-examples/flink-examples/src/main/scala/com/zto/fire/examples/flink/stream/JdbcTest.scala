@@ -55,6 +55,7 @@ import org.apache.flink.streaming.api.scala.DataStream
 // 3. 指定从以下两个配置文件中加载配置信息
 // @Config(Array("test.properties", "test2.properties"))
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
+// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
 object JdbcTest extends BaseFlinkStreaming {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "spark_test2"

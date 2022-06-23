@@ -33,6 +33,7 @@ import com.zto.fire.spark.BaseSparkCore
     |spark.log.level                    =       ERROR
     |""")
 @Hive("test")
+// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
 object HiveClusterReader extends BaseSparkCore {
 
   override def process: Unit = {

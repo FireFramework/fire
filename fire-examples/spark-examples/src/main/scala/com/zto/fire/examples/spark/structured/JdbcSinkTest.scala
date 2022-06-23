@@ -31,6 +31,7 @@ import com.zto.fire.spark.BaseStructuredStreaming
 @Hive("test")
 @HBase("test")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
 object JdbcSinkTest extends BaseStructuredStreaming {
 
   override def process: Unit = {

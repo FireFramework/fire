@@ -53,6 +53,7 @@ import java.text.SimpleDateFormat
     |""")
 @Hive("test")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
+// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
 object WatermarkTest extends BaseFlinkStreaming {
 
   override def process: Unit = {

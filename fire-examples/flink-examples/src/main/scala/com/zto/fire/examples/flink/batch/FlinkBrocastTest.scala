@@ -31,6 +31,7 @@ import org.apache.flink.api.scala._
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Hive("test")
+// 注解支持别名或url如：@Hive(thrift://hive:9083)两种方式，别名映射需配置到cluster.properties中
 object FlinkBrocastTest extends BaseFlinkBatch {
 
   override def process: Unit = {
