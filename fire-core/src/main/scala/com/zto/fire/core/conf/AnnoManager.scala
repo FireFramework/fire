@@ -17,18 +17,18 @@
 
 package com.zto.fire.core.conf
 
-import com.zto.fire.predef._
 import com.google.common.collect.Sets
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf.FIRE_LOG_SQL_LENGTH
-import com.zto.fire.common.conf.{FireHiveConf, KeyNum}
 import com.zto.fire.common.conf.FireKafkaConf._
 import com.zto.fire.common.conf.FireRocketMQConf._
+import com.zto.fire.common.conf.{FireHiveConf, KeyNum}
 import com.zto.fire.common.util.{ReflectionUtils, StringsUtils}
+import com.zto.fire.core.anno.{Jdbc4, _}
+import com.zto.fire.predef._
+import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable.HashMap
-import com.zto.fire.core.anno._
-import org.apache.commons.lang3.StringUtils
 
 
 /**
@@ -45,10 +45,10 @@ private[fire] trait AnnoManager {
   protected[fire] lazy val props = new HashMap[String, String]()
   // 用于存放注册了的主键，只解析这些主键中的信息
   protected[fire] lazy val registerAnnoSet = Sets.newHashSet[Class[_]](
-    classOf[Hive], classOf[HBase], classOf[HBase2], classOf[HBase3],
-    classOf[Jdbc], classOf[Jdbc2], classOf[Jdbc3],
-    classOf[Kafka], classOf[Kafka2], classOf[Kafka3],
-    classOf[RocketMQ], classOf[RocketMQ2], classOf[RocketMQ3]
+    classOf[Hive], classOf[HBase], classOf[HBase2], classOf[HBase3], classOf[HBase4], classOf[HBase5],
+    classOf[Jdbc], classOf[Jdbc2], classOf[Jdbc3], classOf[Jdbc4], classOf[Jdbc5],
+    classOf[Kafka], classOf[Kafka2], classOf[Kafka3], classOf[Kafka4], classOf[Kafka5],
+    classOf[RocketMQ], classOf[RocketMQ2], classOf[RocketMQ3], classOf[RocketMQ4], classOf[RocketMQ5]
   )
 
   this.register
@@ -185,6 +185,24 @@ private[fire] trait AnnoManager {
   def mapHBase3(hbase: HBase3): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._3)
 
   /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase4
+   * HBase注解实例
+   */
+  @Internal
+  def mapHBase4(hbase: HBase4): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._4)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase5
+   * HBase注解实例
+   */
+  @Internal
+  def mapHBase5(hbase: HBase5): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._5)
+
+  /**
    * 用于映射JDBC相关配置信息
    * 对应注解中的@Jdbc
    */
@@ -252,6 +270,32 @@ private[fire] trait AnnoManager {
     this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
       jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
       jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.config(), KeyNum._3)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc4
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc4(jdbc: Jdbc4): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.config(), KeyNum._4)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc5
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc5(jdbc: Jdbc5): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.config(), KeyNum._5)
   }
 
   /**
@@ -328,6 +372,36 @@ private[fire] trait AnnoManager {
   }
 
   /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka4
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka4(kafka: Kafka4): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._4
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka5
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka5(kafka: Kafka5): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._5
+    )
+  }
+
+  /**
    * 将@RocketMQ中配置的信息映射为键值对形式
    *
    * @param RocketMQ
@@ -378,6 +452,30 @@ private[fire] trait AnnoManager {
   def mapRocketMQ3(rocketmq: RocketMQ3): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
       rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._3)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ4
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ4(rocketmq: RocketMQ4): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._4)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ5
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ5(rocketmq: RocketMQ5): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._5)
   }
 
   /**
