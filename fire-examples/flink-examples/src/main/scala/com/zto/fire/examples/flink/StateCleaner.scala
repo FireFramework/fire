@@ -16,6 +16,7 @@ import scala.collection.mutable.ListBuffer
  * 直接删除模式：直接删除不再需要的checkpoint文件
  *
  * @author ChengLong 2021-9-6 15:06:21
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 object StateCleaner extends StateCleanerUtils {
   // ------------------------------ hdfs 选项 ----------------------------------- //

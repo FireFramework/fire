@@ -26,6 +26,7 @@ import com.zto.fire.spark.BaseSparkCore
   * 如果需要使用不同的hive集群，只需在该类同名的配置文件中加一下配置即可：hive.cluster=streaming，表示读取180实时集群的hive元数据
   *
   * @author ChengLong 2019-5-17 10:39:19
+  * @contact Fire框架技术交流群（钉钉）：35373471
   */
 @Config(
   """

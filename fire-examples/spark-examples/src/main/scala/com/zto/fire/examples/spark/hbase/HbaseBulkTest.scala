@@ -31,6 +31,7 @@ import org.apache.spark.sql.{Encoders, Row}
   * 注：bulk api相较于java api，在速度上会更快，但目前暂不支持多版本读写
   *
   * @author ChengLong 2019-5-18 09:20:52
+  *  @contact Fire框架技术交流群（钉钉）：35373471
   */
 @HBase("test")
 @HBase2(cluster = "test", scanPartitions = 3, storageLevel = "DISK_ONLY")

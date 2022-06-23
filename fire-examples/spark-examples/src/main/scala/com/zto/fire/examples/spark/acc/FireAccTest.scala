@@ -30,6 +30,7 @@ import com.zto.fire.spark.anno.Streaming
  * 用于演示与测试Fire框架内置的累加器
  *
  * @author ChengLong 2019年9月10日 09:50:16
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Streaming(10)
 @Hive("test")

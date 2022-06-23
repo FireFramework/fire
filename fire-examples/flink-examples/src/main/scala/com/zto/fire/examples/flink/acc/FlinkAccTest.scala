@@ -31,6 +31,7 @@ import org.apache.flink.streaming.api.scala.DataStream
  *
  * @author ChengLong 2020年1月11日 14:08:56
  * @since 0.4.1
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Config(
   """

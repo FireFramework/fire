@@ -31,6 +31,8 @@ import org.apache.flink.util.Collector
 
 /**
  * Flink Streaming与Arthas集成测试
+ *
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Config(
   """

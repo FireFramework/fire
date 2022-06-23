@@ -28,6 +28,8 @@ import com.zto.fire.spark.anno.Streaming
   * 在driver中启用线程池的示例
   * 1. 开启子线程执行一个任务
   * 2. 开启子线程执行周期性任务
+  *
+  * @contact Fire框架技术交流群（钉钉）：35373471
   */
 @Streaming(interval = 10, checkpoint = false, concurrent = 2)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")

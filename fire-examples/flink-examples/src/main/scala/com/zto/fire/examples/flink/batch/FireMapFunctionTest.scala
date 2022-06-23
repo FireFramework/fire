@@ -31,6 +31,7 @@ import org.apache.flink.api.scala._
  * 内部对状态的api进行了封装，使用起来更简洁
  *
  * @author ChengLong 2020-4-9 15:59:19
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Config(
   """

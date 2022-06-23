@@ -27,6 +27,8 @@ import com.zto.fire.spark.anno.Streaming
 
 /**
  * 消费rocketmq中的数据
+ *
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Streaming(10)
 @RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire", tag = "*")

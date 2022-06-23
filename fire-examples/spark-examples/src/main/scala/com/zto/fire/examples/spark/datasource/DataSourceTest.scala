@@ -26,6 +26,8 @@ import org.apache.spark.sql.SaveMode
 
 /**
  * Spark DataSource API示例
+ *
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Config(
   """

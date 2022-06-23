@@ -21,6 +21,9 @@ import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.flink.BaseFlinkStreaming
 
+/**
+ * @contact Fire框架技术交流群（钉钉）：35373471
+ */
 @Config(
   """
     |hive.cluster=test

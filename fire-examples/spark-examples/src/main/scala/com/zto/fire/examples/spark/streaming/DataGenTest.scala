@@ -27,6 +27,8 @@ import com.zto.fire.spark.anno.Streaming
  *
  * @author ChengLong 2022-03-07 15:35:55
  * @since 2.2.1
+ *
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Streaming(20)
 object DataGenTest extends BaseSparkStreaming {

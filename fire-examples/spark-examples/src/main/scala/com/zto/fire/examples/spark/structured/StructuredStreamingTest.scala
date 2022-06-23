@@ -26,6 +26,7 @@ import com.zto.fire.spark.BaseStructuredStreaming
  * 使用fire进行structured streaming开发的demo
  *
  * @author ChengLong 2019年12月23日 22:16:59
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Hive("batch")
 @Kafka(brokers = "zmsNew", topics = "sjzn_spark_scan_send_topic", groupId = "fire")

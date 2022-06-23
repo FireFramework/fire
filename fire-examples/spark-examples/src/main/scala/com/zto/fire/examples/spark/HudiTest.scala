@@ -37,6 +37,7 @@ import org.apache.spark.sql.SaveMode._
  * @author ChengLong
  * @since 1.0.0
  * @create 2021-02-07 13:50
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Config(
   """

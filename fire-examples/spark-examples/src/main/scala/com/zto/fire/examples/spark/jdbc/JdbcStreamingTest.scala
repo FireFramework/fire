@@ -23,6 +23,9 @@ import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.Streaming
 
+/**
+ * @contact Fire框架技术交流群（钉钉）：35373471
+ */
 @Streaming(10)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object JdbcStreamingTest extends BaseSparkStreaming {

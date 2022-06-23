@@ -29,6 +29,8 @@ import com.zto.fire.flink.anno.Checkpoint
 
 /**
  * flink clickhouse connector
+ *
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Checkpoint(60)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)

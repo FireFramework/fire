@@ -30,6 +30,7 @@ import org.apache.flink.api.scala._
  * @author ChengLong
  * @since 2.0.0
  * @create 2021-5-13 14:26:24
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Checkpoint(60)
 @Config("default.parallelism=2")

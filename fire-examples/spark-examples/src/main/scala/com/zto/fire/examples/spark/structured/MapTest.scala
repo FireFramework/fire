@@ -27,7 +27,9 @@ import com.zto.fire.spark.util.SparkUtils
 
 /**
  * 对结构化流执行map、mapPartition操作
+ *
  * @author ChengLong 2020年1月3日 18:00:59
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Hive("batch")
 @Kafka(brokers = "test", topics = "fire", groupId = "fire")

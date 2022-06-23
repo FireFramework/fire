@@ -23,6 +23,10 @@ import com.zto.fire.flink.BaseFlinkStreaming
 
 import java.time.Duration
 
+/**
+ *
+ * @contact Fire框架技术交流群（钉钉）：35373471
+ */
 @Config(
   """
     |flink.sql.conf.table.exec.state.ttl   =       1 ms

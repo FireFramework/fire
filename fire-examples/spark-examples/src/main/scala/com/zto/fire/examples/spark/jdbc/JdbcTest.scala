@@ -30,6 +30,7 @@ import org.apache.spark.sql.SaveMode
  * Spark jdbc操作
  *
  * @author ChengLong 2019-6-17 15:17:38
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "..root726")
 @Jdbc2(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "..root726")

@@ -7,6 +7,7 @@ import com.zto.fire.core.anno.Hive
 
 /**
  * Spark SQL血缘解析工具
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Hive("test")
 object SparkSqlParseTest extends BaseSparkCore {

@@ -27,6 +27,8 @@ import com.zto.fire.spark.anno.Streaming
 
 /**
  * Spark Streaming集成Arthas工具测试
+ *
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Config(
   """

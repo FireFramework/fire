@@ -28,6 +28,7 @@ import com.zto.fire.spark.util.SparkUtils
  *
  * @author ChengLong 2019年11月5日 17:27:20
  * @since 0.3.5
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Config(
   """

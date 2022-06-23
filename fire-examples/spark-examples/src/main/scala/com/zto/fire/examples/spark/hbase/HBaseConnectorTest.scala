@@ -34,6 +34,7 @@ import scala.collection.mutable.ListBuffer
   * 注：适用于少量数据的实时读写，更轻量
   *
   * @author ChengLong 2019-5-9 09:37:25
+  * @contact Fire框架技术交流群（钉钉）：35373471
   */
 @HBase("test")
 @HBase2(cluster = "test", scanPartitions = 3, storageLevel = "DISK_ONLY")

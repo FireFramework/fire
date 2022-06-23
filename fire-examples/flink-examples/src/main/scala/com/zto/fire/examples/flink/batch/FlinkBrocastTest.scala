@@ -28,6 +28,7 @@ import org.apache.flink.api.scala._
  * flink广播变量的使用
  *
  * @author ChengLong 2020年2月18日 13:53:06
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Hive("test")
 object FlinkBrocastTest extends BaseFlinkBatch {

@@ -8,6 +8,7 @@ import com.zto.fire.flink.BaseFlinkStreaming
  * DataGen connector使用
  *
  * @author ChengLong
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 object DataGenTest extends BaseFlinkStreaming {
   private lazy val dataGenTable = "t_student"

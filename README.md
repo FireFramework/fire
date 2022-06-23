@@ -215,3 +215,8 @@ object Test extends BaseFlinkStreaming {
 
 ### [7.1 Fire配置手册](docs/properties.md)
 
+## 八、技术交流
+
+### 技术交流（钉钉群）：35373471
+
+![钉钉扫码入群](./docs/img/dingding.jpeg)

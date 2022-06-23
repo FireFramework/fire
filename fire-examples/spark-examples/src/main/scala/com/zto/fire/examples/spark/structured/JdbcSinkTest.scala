@@ -25,6 +25,8 @@ import com.zto.fire.spark.BaseStructuredStreaming
 
 /**
  * 结构化流测试
+ *
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Hive("test")
 @HBase("test")

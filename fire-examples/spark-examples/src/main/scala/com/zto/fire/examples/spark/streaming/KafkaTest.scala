@@ -28,6 +28,7 @@ import com.zto.fire.spark.anno.Streaming
  * kafka json解析
  *
  * @author ChengLong 2019-6-26 16:52:58
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Streaming(interval = 10)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")

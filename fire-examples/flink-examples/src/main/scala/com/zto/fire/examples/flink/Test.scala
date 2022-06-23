@@ -26,6 +26,8 @@ import com.zto.fire.flink.anno.Checkpoint
 
 /**
  * 基于Fire进行Flink Streaming开发
+ *
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Config(
   """

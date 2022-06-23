@@ -27,6 +27,7 @@ import com.zto.fire.flink.BaseFlinkStreaming
  * @author ChengLong
  * @since 1.0.0
  * @create 2021-01-18 17:24
+ * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Config(
   """

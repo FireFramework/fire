@@ -11,6 +11,7 @@ import com.zto.fire.spark.anno.Streaming
 /**
   * 通过hbase相关api，将数据实时写入到hbase中
   * @author ChengLong 2019-5-26 13:21:59
+  * @contact Fire框架技术交流群（钉钉）：35373471
   */
 @HBase("test")
 @Streaming(interval = 30, concurrent = 2)

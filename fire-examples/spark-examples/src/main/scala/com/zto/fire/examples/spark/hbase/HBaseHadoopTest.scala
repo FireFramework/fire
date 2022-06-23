@@ -31,6 +31,7 @@ import org.apache.spark.sql.{Encoders, Row}
   * 注：使用Spark写hbase的方式适用于海量数据离线写
   *
   * @author ChengLong 2019-5-9 09:37:25
+  * @contact Fire框架技术交流群（钉钉）：35373471
   */
 @Config(
   """
