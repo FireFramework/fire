@@ -1,222 +1,203 @@
 # Fire框架
-​		Fire框架是由**中通**自主研发并开源的、用于进行**Spark**和**Flink**任务开发的大数据框架。该框架屏蔽技术细节，提供大量简易API帮助开发者更快的构建实时计算任务。同时Fire框架也内置了平台化的一些功能，用于与实时平台集成。
 
-![基于fire开发实时任务](docs/img/Fire.png)
+​		Fire框架是由**中通**自主研发并开源的、用于进行**Spark**和**Flink**任务开发的大数据框架。该框架屏蔽技术细节，提供大量简易API帮助开发者更快的构建实时计算任务。同时Fire框架也内置了平台化的一些功能，用于与实时平台集成。基于Fire框架的任务在中通每天处理的数据量高达**几千亿以上**，覆盖了**Spark计算**（离线&实时）、**Flink计算**等众多计算场景。
 
-## 一、现状
+## 一、如何使用？
 
-基于Fire框架的任务在中通每天处理的数据量高达**几千亿以上**，覆盖了**Spark计算**（离线&实时）、**Flink计算**等众多计算场景。
-
-## 二、核心功能
-
-2.1 灵活的配置方式
-
-2.2 多集群支持
-
-2.3 统一的变成风格
-
-2.4 完善的connector支持
-
-2.5 创新功能
-
-2.6 实时血缘
-
-2.7 性能诊断
-
-2.8 平台集成
-
-## 二、赋能开发者
-Fire框架自研发之日起就以简单高效、稳定可靠为目标。通过屏蔽技术细节、提供简洁通用的API的方式，将开发者从技术的大海中拯救出来，让开发者更专注于业务代码开发。Fire框架支持Spark与Flink两大引擎，并且覆盖离线计算与实时计算两大场景，内部提供了丰富的API，许多复杂操作仅需一行代码，大大提升了生产力。
-
-接下来以HBase、JDBC、Kafka为例进行简单介绍（connector连接信息均在任务同名的配置文件中）：
-
-### 2.1 HBase 操作
+### 1.1 flink开发示例
 
 ```scala
-val hTableName = "t_student"
-/** HBase get API **/
-// 构建rowKeyRDD
-val rowKeyRDD: RDD[String] = this.fire.createRDD(getList, 3)
-// 方式一：通过fire变量，批量get到的结果以dataframe形式返回，也支持返回RDD[JavaBean]或Dataset类型
-val studentDF: DataFrame = this.fire.hbaseGetDF(hTableName, classOf[Student], getRDD)
-// 方式二：通过RDD[String]对象直接get
-val studentDS: Dataset[Student] = rowKeyRDD.hbaseGetDS(hTableName, classOf[Student])
-// 方式三：通过bulk api进行HBase读操作
-val studentDS: Dataset[Student] = rowKeyRdd.hbaseBulkGetDS(hTableName, classOf[Student])
+@Config(
+  """
+    |# 支持Flink调优参数、Fire框架参数、用户自定义参数等
+    |state.checkpoints.num-retained=30
+    |state.checkpoints.dir=hdfs:///user/flink/checkpoint
+    |""")
+@Hive("thrift://localhost:9083") // 配置连接到指定的hive
+@Checkpoint(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
+@Kafka(brokers = "localhost:9092", topics = "fire", groupId = "fire")
+object Demo extends BaseFlinkStreaming {
 
-/** HBase insert API **/
-val studentDF: DataFrame = this.fire.createDataFrame(studentList, classOf[Student])
-// 方式一：通过fire变量，将指定DataFrame数据插入到HBase中
-this.fire.hbasePutDF(hTableName, studentDF, classOf[Student])
-// 方式二：直接在DataFrame上调用hbasePutDF方法进行HBase写操作
-studentDF.hbasePutDF(hTableName, classOf[Student])
-// 方式三：通过bulk api进行HBase写操作
-studentDF.hbaseBulkPutDF(hTableName, classOf[Student])
-
-/** 多HBase集群操作 **/
-studentDF.hbaseBulkPutDF(hTableName, classOf[Student], keyNum = 2)
+  override def process: Unit = {
+    val dstream = this.fire.createKafkaDirectStream()	// 使用api的方式消费kafka
+    this.fire.sql("""create table statement ...""")
+    this.fire.sql("""insert into statement ...""")
+    this.fire.start
+  }
+}
 ```
 
-### 2.2 JDBC 操作
+### 1.2 spark开发示例
 
 ```scala
-/** 关系型数据库更新API **/
-// 关系型数据库SQL语句
-val insertSql = s"INSERT INTO table_name(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
+@Config(
+  """
+    |# 支持Spark调优参数、Fire框架参数、用户自定义参数等
+    |spark.shuffle.compress=true
+    |spark.ui.enabled=true
+    |""")
+@Hive("thrift://localhost:9083") // 配置连接到指定的hive
+@Streaming(interval = 100, maxRatePerPartition = 100) // 100s一个Streaming batch，并限制消费速率
+@Kafka(brokers = "localhost:9092", topics = "fire", groupId = "fire")
+object Demo extends BaseSparkStreaming {
+
+  override def process: Unit = {
+    val dstream = this.fire.createKafkaDirectStream()	// 使用api的方式消费kafka
+    this.fire.sql("""select * from xxx""").show()
+    this.fire.start
+  }
+}
+```
+
+## 二、有哪些亮点？
+
+### **2.1 简单易用**
+
+​		fire框架高度封装，屏蔽大量技术细节，许多connector仅需一行代码即可完成主要功能。同时Fire框架统一了spark与flink两大引擎常用的api，使用统一的代码风格即可实现spark与flink的代码开发。
+
+```scala
+// 1. HBase API
+val studentDF: DataFrame = this.fire.hbaseGetDF(hTableName, classOf[Student], getRDD)
+this.fire.hbasePutDF(hTableName, studentDF, classOf[Student])
+
+// 2. JDBC API
 // 将DataFrame中指定几列插入到关系型数据库中，每100条一插入
 df.jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
-
-/** 关系型数据库查询API **/
-val querySql = s"select * from $tableName where id in (?, ?, ?)"
 // 将查询结果通过反射映射到DataFrame中
 val df: DataFrame = this.fire.jdbcQueryDF(querySql, Seq(1, 2, 3), classOf[Student])
-
-/** 多关系型数据库操作 **/
-val df = this.fire.jdbcQueryDF(querySql, Seq(1, 2, 3), classOf[Student], keyNum=2)
-```
-###2.3 Kafka 操作
-
-````scala
-// 从指定kafka集群消费，该写法支持spark与flink，kafka相关信息在类同名的配置文件中
-val dstream = this.fire.createKafkaDirectStream()
-// 通过keyNum指定多kafka集群消费
-val dstream = this.fire.createKafkaDirectStream(keyNum = 2)
-````
-
-可以看到，Fire框架中的API是以DataFrame、RDD为基础进行了高度抽象，通过引入fire隐式转换，让RDD、DataFrame等对象直接具有了某些能力，进而实现直接调用。目前Fire框架已经覆盖了主流大数据组件的API，基本上都是一行代码搞定。同时，Fire框架让任务具有**多集群的操作能力**，仅需在各API中指定参数**keyNum**，即可同时访问不同集群的不同表。
-
-## 三、赋能平台
-Fire框架可以将**实时任务**与**实时管理平台**进行绑定，实现很多酷炫又实用的功能。比如配置管理、SQL在线调试、任务热重启、配置热更新等，甚至可以直接获取到任务的运行时数据，实现更细粒度的监控管理。
-
-### 3.1 配置管理
-
-类似于携程开源的apollo，实时任务管理平台可提供任务配置的管理功能，基于Fire的实时任务在启动时会主动拉取配置信息，并覆盖任务jar包中的配置文件，避免重复打包发布，节约时间。
-
-### 3.2 SQL在线调试
-
-基于该技术，可以在实时任务管理平台中提交SQL语句，交由指定的Spark Streaming任务执行，并将结果返回，该功能的好处是支持Spark内存临时表，便于在web端进行Spark SQL的调试，大幅节省SQL开发时间。
-
-### 3.3 定时任务
-
-有些实时任务会有定时刷新维表的需求，Fire框架支持这样的功能，类似于Spring的@Scheduled，但Fire框架的定时任务功能更强大，甚至支持指定在driver端运行还是在executor端运行。
-
-```scala
-/**
- * 声明了@Scheduled注解的方法将作为定时任务方法，会被Fire框架周期性调用
- *
- * @param cron cron表达式
- * @param scope 默认同时在driver端和executor端执行，如果指定了driver，则只在driver端定时执行
- * @param concurrent 上一个周期定时任务未执行完成时是否允许下一个周期任务开始执行
- * @param startAt 用于指定第一次开始执行的时间
- * @param initialDelay 延迟多长时间开始执行第一次定时任务
- */
-@Scheduled(cron = "0/5 * * * * ?", scope = "driver", concurrent = false, startAt = "2021-01-21 11:30:00", initialDelay = 60000)
-def loadTable: Unit = {
-  this.logger.info("周期性执行")
-}
 ```
 
-### 3.4 任务热重启
+### **2.2 灵活的配置方式**
 
-该功能是主要用于Spark Streaming任务，通过热重启技术，可以在不重启Spark Streaming的前提下，实现批次时间的热修改。比如在web端将某个任务的批次时间调整为10s，会立即生效。
-
-### 3.5 配置热更新
-
-用户仅需在web页面中更新指定的配置信息，就可以让实时任务接收到最新的配置并且立即生效。最典型的应用场景是进行Spark任务的某个算子partition数调整，比如当任务处理的数据量较大时，可以通过该功能将repartition的具体分区数调大，会立即生效。
-
-### 3.6 实时血缘
-
-基于Fire框架，可获取到任务所使用到的组件信息，包括任务使用到的hive表信息、hbase集群信息、jdbc信息等，可用于实时平台进行实时血缘的构建。
-
-### 3.7 RocketMQ支持
-
-Fire框架内部集成了rocketmq，甚至率先支持了flink sql任务的sql connector。
-
-## 四、程序结构
-​		Fire支持Spark与Flink两大热门计算引擎，对常用的初始化操作进行了大幅度的简化，让业务代码更紧凑更突出更具维护性。
-
-###4.1 Spark开发
+支持基于接口、apollo、配置文件以及注解等多种方式配置，支持将spark&flink等引擎参数、fire框架参数以及用户自定义参数混合配置，支持运行时动态修改配置。
 
 ```scala
-import com.zto.fire._
-import com.zto.fire.spark.BaseSparkStreaming
+// 1. 基于配置文件：创建类名同名的properties文件进行参数配置
+// 2. 基于接口配置：fire框架提供了配置接口调用，通过接口获取所需的配置，可用于平台化的配置管理
+// 3. 基于注解配置:
+@Config(
+  """
+    |# 支持Flink调优参数、Fire框架参数、用户自定义参数等
+    |state.checkpoints.num-retained=30
+    |state.checkpoints.dir=hdfs:///user/flink/checkpoint
+    |my.conf=hello
+    |""")
+@Hive("thrift://localhost:9083") // 配置连接到指定的hive
+@Checkpoint(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
+@Kafka(brokers = "localhost:9092", topics = "fire", groupId = "fire")
+@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire", tag = "*", startingOffset = "latest")
+@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "..root726")
 
-/**
- * 基于Fire进行Spark Streaming开发
- */
-object Test extends BaseSparkStreaming {
+// 配置获取：代码内配置信息获取，this.conf.getXXX支持在flink的JobManager与TaskManager端，spark的Driver与Executor端
+// 也就是说map等算子中可以直接调用获取
+this.conf.getString("my.conf")
+this.conf.getInt("state.checkpoints.num-retained")
+```
 
+### **2.2 多集群支持**
+
+​		Fire框架的配置支持多集群，比如同一个任务中可以同时配置多个HBase、Kafka、Jdbc以及RocketMQ等。Fire框架提供了统一的约定，就是相同的参数的key然后跟上不同的数值来区分不同的源，最后在代码中通过这个数值来引用即可：
+
+```scala
+// 假设基于注解配置如下：
+@HBase("localhost:2181")
+@HBase2(cluster = "192.168.0.1:2181", storageLevel = "DISK_ONLY")
+
+// 代码中使用对应的数值后缀进行区分
+this.fire.hbasePutDF(hTableName, studentDF, classOf[Student])	// 默认keyNum=1,表示使用@HBase注解配置的集群信息
+this.fire.hbasePutDF(hTableName2, studentDF, classOf[Student], keyNum=2)	// keyNum=2，表示使用@HBase2注解配置的集群信息
+```
+
+### **2.3 常用connector支持**
+
+​		支持kafka、rocketmq、redis、HBase、Jdbc、clickhouse、Hive、hudi、tidb、adb等常见的connector。
+
+### **2.5 checkpoint热修改**
+
+​		支持运行时动态调整checkpoint周期、超时时间、并行checkpoint等参数，避免任务重启时由于反压带来的checkpoint压力。
+
+### **2.6 streaming热重启**
+
+​		该功能是主要用于Spark Streaming任务，通过热重启技术，可以在不重启Spark Streaming的前提下，实现批次时间的热修改。比如在web端将某个任务的批次时间调整为10s，会立即生效。
+
+### **2.7 配置热更新**
+
+​		用户仅需在web页面中更新指定的配置信息，就可以让实时任务接收到最新的配置并且立即生效。最典型的应用场景是进行Spark任务的某个算子partition数调整，比如当任务处理的数据量较大时，可以通过该功能将repartition的具体分区数调大，会立即生效。
+
+### **2.8 在线性能诊断**
+
+​		深度集成Arthas，可对运行中的任务动态进行性能诊断。fire为arthas诊断提供rest接口，可通过接口调用的方式选择为driver、jobmanager或executor、taskmanager动态开启与关闭arthas诊断线程，然后向统一的arthas tunnel服务注册，即可在网页端输入arthas命令进行性能诊断。
+
+![arthas-shell](docs/img/arthas-shell.png)
+
+### **2.6 sql在线调试**
+
+​		fire框架对外暴露了restful接口，平台等系统可通过接口调用的方式将待执行的sql语句动态传递给fire，由fire将sql提交到对应的引擎，并将sql执行结果通过接口调用的方式返回，实现实时任务sql开发的在线调试，避免重复修改代码发布执行带来的时间成本。
+
+### **2.7 实时血缘**
+
+​		fire框架支持运行时统计分析每个任务所使用到的数据源信息、库表信息、操作类型等，并将这些血缘信息通过接口的方式对外暴露。实时平台等web系统通过接口调用的方式即可获取到实时血缘信息。
+
+### **2.8 定时调度**
+
+​		fire框架内部封装了quartz框架，实现通过Scheduled注解即可完成定时任务的注册。
+
+```scala
   /**
-   * process会被fire框架主动调用
-   * 在该方法中编写主要的业务代码，避免main方法过于臃肿
+   * 声明了@Scheduled注解的方法是定时任务方法，会周期性执行
+   *
+   * @cron cron表达式
+   * @scope 默认同时在driver端和executor端执行，如果指定了driver，则只在driver端定时执行
+   * @initialDelay 延迟多长时间开始执行第一次定时任务
    */
-  override def process: Unit = {
-    // 从配置文件中获取kafka集群信息，并创建KafkaDataStram
-    val dstream = this.fire.createKafkaDirectStream()
-    dstream.print
-    // 提交streaming任务执行
-    this.fire.start
+  @Scheduled(cron = "0/5 * * * * ?", scope = "driver", initialDelay = 60000)
+  def loadTable: Unit = {
+    this.logger.info("更新维表动作")
   }
-}
 ```
 
-###4.2 Flink开发
-```scala
-import com.zto.fire._
-import com.zto.fire.flink.BaseFlinkStreaming
+### **2.9 平台集成**
 
-/**
- * Flink流式计算任务模板
- */
-object Test extends BaseFlinkStreaming {
+​		fire框架内置restful服务，并将许多功能通过接口的方式对外暴露，实时平台可以通过fire框架暴露的接口实现与每个实时任务的信息连接。
 
-  override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream()
-    dstream.print
-    // 提交flink streaming任务，job名称不指定默认当前类名
-    this.fire.start
-  }
-}
-```
+## 三、开发文档
 
-## 五、操作手册
+### [3.1 依赖管理](docs/dependency.md)
 
-### [5.1 依赖管理](docs/dependency.md)
+### [3.2 Fire集成](docs/outline.md)
 
-### [5.2 Fire集成](docs/outline.md)
+### [3.3 配置文件](docs/config.md)
 
-### [5.3 配置文件](docs/config.md)
+### [3.4 消费Kafka](/docs/kafka.md)
 
-### [5.4 消费Kafka](/docs/kafka.md)
+### [3.5 消费RocketMQ](docs/rocketmq.md)
 
-### [5.5 消费RocketMQ](docs/rocketmq.md)
+### [3.6 集成Hive](docs/hive.md)
 
-### [5.6 集成Hive](docs/hive.md)
+### [3.7 HBase API手册](docs/hbase.md)
 
-### [5.7 HBase API手册](docs/hbase.md)
+### [3.8 JDBC API手册](docs/jdbc.md)
 
-### [5.8 JDBC API手册](docs/jdbc.md)
+### [3.9 累加器](docs/accumulator.md)
 
-### [5.9 累加器](docs/accumulator.md)
+### [3.10 定时任务](docs/schedule.md)
 
-### [5.10 定时任务](docs/schedule.md)
+### [3.11 线程池与并发计算](docs/threadpool.md)
 
-### [5.11 线程池与并发计算](docs/threadpool.md)
+### [3.12 Spark DataSource增强](docs/datasource.md)
 
-### [5.12 Spark DataSource增强](docs/datasource.md)
+## 四、平台建设
 
-## 六、平台建设
+### [4.1 实时平台集成方案](docs/platform.md)
 
-### [6.1 实时平台集成方案](docs/platform.md)
+### [4.2 内置接口](docs/restful.md)
 
-### [6.2 内置接口](docs/restful.md)
+## 五、配置与调优
 
-## 七、配置与调优
+### [5.1 Fire配置手册](docs/properties.md)
 
-### [7.1 Fire配置手册](docs/properties.md)
-
-## 八、技术交流
+## 六、技术交流
 
 ### 技术交流（钉钉群）：35373471
 
-![钉钉扫码入群](./docs/img/dingding.jpeg)
+<img src="./docs/img/dingding.jpeg" weight="500px" height="600px">
