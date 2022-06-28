@@ -82,21 +82,18 @@ import com.zto.fire._
 
 #### 3.2 继承父类
 
-​		fire框架针对不同的引擎、不同的场景提供了对应的父类，用户需要根据实际情况去继承：
+fire框架针对不同的引擎、不同的场景提供了对应的父类，用户需要根据实际情况去继承：
 
-​		**1. spark引擎父类列表：**
+##### 3.2.1 spark引擎父类列表：
 
-​			**SparkStreaming**：适用于进行Spark Streaming任务的开发
+- **SparkStreaming**：适用于进行Spark Streaming任务的开发
+- **BaseSparkCore**：适用于进行Spark批处理任务的开发
+- **BaseStructuredStreaming**：适用于进行Spark Structured Streaming任务的开发
 
-​			**BaseSparkCore**：适用于进行Spark批处理任务的开发
+##### 3.2.2 flink引擎父类列表：
 
-​			**BaseStructuredStreaming**：适用于进行Spark Structured Streaming任务的开发
-
-​		**2. flink引擎父类列表：**
-
-​			**BaseFlinkStreaming**：适用于进行flink流式计算任务的开发
-
-​			**BaseFlinkBatch**：适用于进行flink批处理任务的开发
+- **BaseFlinkStreaming**：适用于进行flink流式计算任务的开发
+- **BaseFlinkBatch**：适用于进行flink批处理任务的开发
 
 #### 3.3 业务逻辑
 
