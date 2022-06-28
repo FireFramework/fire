@@ -1,6 +1,25 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 # Fire框架
 
-​		Fire框架是由**中通**自主研发并开源的、用于进行**Spark**和**Flink**任务开发的大数据框架。该框架屏蔽技术细节，提供大量简易API帮助开发者更快的构建实时计算任务。同时Fire框架也内置了平台化的一些功能，用于与实时平台集成。基于Fire框架的任务在中通每天处理的数据量高达**几千亿以上**，覆盖了**Spark计算**（离线&实时）、**Flink计算**等众多计算场景。
+​		Fire框架是由**中通大数据**自主研发并开源的、专门用于进行**Spark**和**Flink**任务开发的大数据框架。该框架屏蔽技术细节，提供大量简易API帮助开发者更快的构建实时计算任务。同时Fire框架也内置了平台化的功能，用于与实时平台集成。基于Fire框架的任务在中通每天处理的数据量高达**几千亿以上**，覆盖了**Spark计算**（离线&实时）、**Flink计算**等众多计算场景。
 
 ## 一、如何使用？
 
@@ -49,18 +68,26 @@ object Demo extends BaseSparkStreaming {
 }
 ```
 
+***说明：structured streaming、spark core、flink sql、flink批任务均支持，代码结构与上述示例一致。***
+
 ## 二、有哪些亮点？
 
 ### **2.1 简单易用**
 
 ​		fire框架高度封装，屏蔽大量技术细节，许多connector仅需一行代码即可完成主要功能。同时Fire框架统一了spark与flink两大引擎常用的api，使用统一的代码风格即可实现spark与flink的代码开发。
 
-```scala
-// 1. HBase API
-val studentDF: DataFrame = this.fire.hbaseGetDF(hTableName, classOf[Student], getRDD)
-this.fire.hbasePutDF(hTableName, studentDF, classOf[Student])
+#### 2.1.1 HBase API
 
-// 2. JDBC API
+```scala
+// 读取HBase中指定rowkey数据并将结果集封装为DataFrame返回
+val studentDF: DataFrame = this.fire.hbaseGetDF(hTableName, classOf[Student], getRDD)
+// 将指定数据集分布式插入到指定HBase表中
+this.fire.hbasePutDF(hTableName, studentDF, classOf[Student])
+```
+
+#### 2.1.2 JDBC API
+
+```scala
 // 将DataFrame中指定几列插入到关系型数据库中，每100条一插入
 df.jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
 // 将查询结果通过反射映射到DataFrame中
@@ -69,37 +96,43 @@ val df: DataFrame = this.fire.jdbcQueryDF(querySql, Seq(1, 2, 3), classOf[Studen
 
 ### **2.2 灵活的配置方式**
 
-支持基于接口、apollo、配置文件以及注解等多种方式配置，支持将spark&flink等引擎参数、fire框架参数以及用户自定义参数混合配置，支持运行时动态修改配置。
+​		支持基于接口、apollo、配置文件以及注解等多种方式配置，支持将spark&flink等**引擎参数**、**fire框架参数**以及**用户自定义参数**混合配置，支持运行时动态修改配置。几种常用配置方式如下（[配置手册](./docs/config.md)）：
+
+1. **基于配置文件：**创建类名同名的properties文件进行参数配置
+2. **基于接口配置：**fire框架提供了配置接口调用，通过接口获取所需的配置，可用于平台化的配置管理
+3. **基于注解配置:**  通过注解的方式实现集群环境、connector、调优参数的配置，常用注解如下：
 
 ```scala
-// 1. 基于配置文件：创建类名同名的properties文件进行参数配置
-// 2. 基于接口配置：fire框架提供了配置接口调用，通过接口获取所需的配置，可用于平台化的配置管理
-// 3. 基于注解配置:
 @Config(
   """
     |# 支持Flink调优参数、Fire框架参数、用户自定义参数等
     |state.checkpoints.num-retained=30
     |state.checkpoints.dir=hdfs:///user/flink/checkpoint
-    |my.conf=hello
     |""")
-@Hive("thrift://localhost:9083") // 配置连接到指定的hive
-@Checkpoint(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
+@Hive("thrift://localhost:9083")
+@Checkpoint(interval = 100, unaligned = true)
 @Kafka(brokers = "localhost:9092", topics = "fire", groupId = "fire")
 @RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire", tag = "*", startingOffset = "latest")
 @Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "..root726")
+@HBase("localhost:2181")
+```
 
-// 配置获取：代码内配置信息获取，this.conf.getXXX支持在flink的JobManager与TaskManager端，spark的Driver与Executor端
-// 也就是说map等算子中可以直接调用获取
+**配置获取：**
+
+​		fire框架封装了统一的配置获取api，基于该api，无论是spark还是flink，无论是在Driver | JobManager端还是在Executor | TaskManager端，都可以一行代码获取所需配置。这套配置获取api，无需再在flink的map等算子中复写open方法了，用起来十分方便。
+
+```scala
 this.conf.getString("my.conf")
 this.conf.getInt("state.checkpoints.num-retained")
+...
 ```
 
 ### **2.2 多集群支持**
 
-​		Fire框架的配置支持多集群，比如同一个任务中可以同时配置多个HBase、Kafka、Jdbc以及RocketMQ等。Fire框架提供了统一的约定，就是相同的参数的key然后跟上不同的数值来区分不同的源，最后在代码中通过这个数值来引用即可：
+​		Fire框架的配置支持多集群（理论无限多），比如同一个任务中可以同时配置多个HBase、Kafka、Jdbc以及RocketMQ等。Fire框架提供了统一的约定，就是相同的参数的key然后跟上不同的数值来区分不同的源，最后在代码中通过这个数值来引用即可：
 
 ```scala
-// 假设基于注解配置如下：
+// 假设基于注解配置HBase多集群如下：
 @HBase("localhost:2181")
 @HBase2(cluster = "192.168.0.1:2181", storageLevel = "DISK_ONLY")
 
@@ -156,35 +189,46 @@ this.fire.hbasePutDF(hTableName2, studentDF, classOf[Student], keyNum=2)	// keyN
   }
 ```
 
-### **2.9 平台集成**
+### 2.9 优秀的兼容性
+
+​		fire框架支持不同的spark与flink版本，理论上支持spark2.x及以上所有版本，flink1.11及以上所有版本，支持基于scala2.11或scala2.12进行编译。
+
+```shell
+# 可根据实际需要选择不同的引擎版本进行fire框架的构建
+mvn clean install -DskipTests -Pspark-3.0.2 -Pflink-1.14.3 -Pscala-2.12
+```
+
+### **2.10 平台集成**
 
 ​		fire框架内置restful服务，并将许多功能通过接口的方式对外暴露，实时平台可以通过fire框架暴露的接口实现与每个实时任务的信息连接。
 
+### **2.11 fire-shell**
+
+​		fire框架整合spark shell与flink shell，支持通过REPL方式去动态调试spark和flink任务，并且支持fire框架的所有API。fire框架将shell能力通过接口方式暴露给实时平台，如此一来就可以通过web页面去调试spark和flink任务了。
+
 ## 三、开发文档
 
-### [3.1 依赖管理](docs/dependency.md)
+### [3.1 框架集成](docs/integration.md)
 
-### [3.2 Fire集成](docs/outline.md)
+### [3.2 参数配置](docs/config.md)
 
-### [3.3 配置文件](docs/config.md)
+### [3.3 消费Kafka](/docs/kafka.md)
 
-### [3.4 消费Kafka](/docs/kafka.md)
+### [3.4 消费RocketMQ](docs/rocketmq.md)
 
-### [3.5 消费RocketMQ](docs/rocketmq.md)
+### [3.5 集成Hive](docs/hive.md)
 
-### [3.6 集成Hive](docs/hive.md)
+### [3.6 HBase API手册](docs/hbase.md)
 
-### [3.7 HBase API手册](docs/hbase.md)
+### [3.7 JDBC API手册](docs/jdbc.md)
 
-### [3.8 JDBC API手册](docs/jdbc.md)
+### [3.8 累加器](docs/accumulator.md)
 
-### [3.9 累加器](docs/accumulator.md)
+### [3.9 定时任务](docs/schedule.md)
 
-### [3.10 定时任务](docs/schedule.md)
+### [3.10 线程池与并发计算](docs/threadpool.md)
 
-### [3.11 线程池与并发计算](docs/threadpool.md)
-
-### [3.12 Spark DataSource增强](docs/datasource.md)
+### [3.11 Spark DataSource增强](docs/datasource.md)
 
 ## 四、平台建设
 
@@ -194,9 +238,9 @@ this.fire.hbasePutDF(hTableName2, studentDF, classOf[Student], keyNum=2)	// keyN
 
 ## 五、配置与调优
 
-### [5.1 Fire配置手册](docs/properties.md)
+### [5.1 Fire configuration](docs/properties.md)
 
-## 六、技术交流
+## 六、加入我们
 
 ### 技术交流（钉钉群）：35373471
 
