@@ -44,8 +44,8 @@ val dstream = this.fire.createKafkaDirectStream()
 
 ```properties
 # 以下定义了两个kafka集群的别名，分别叫mq和test，别名与定义的url对应
-fire.kafka.cluster.map.mq=kafka01:9092,kafka02:9092,kafka03:9092
-fire.kafka.cluster.map.test=kafka-test01:9092,kafka-test02:9092,kafka-test03:9092
+fire.kafka.cluster.map.mq					=				kafka01:9092,kafka02:9092,kafka03:9092
+fire.kafka.cluster.map.test				=				kafka-test01:9092,kafka-test02:9092,kafka-test03:9092
 ```
 
 #### 2.2 基于注解配置

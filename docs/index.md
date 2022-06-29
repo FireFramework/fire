@@ -21,34 +21,45 @@ under the License.
 
 ## 一、开发手册
 
-### [1.1 框架集成](integration.md)
+### 	[1.1 框架集成](integration.md)
 
-### [1.2 参数配置](config.md)
+### 	[1.2 参数配置](config.md)
 
-### [1.3 消费Kafka](kafka.md)
+### 	1.3 数据源
 
-### [1.4 消费RocketMQ](rocketmq.md)
+#### 		[1.3.1 Kafka Connector](connector/kafka.md)
 
-### [1.5 集成Hive](hive.md)
+#### 		[1.3.2 RocketMQ Connector](connector/rocketmq.md)
 
-### [1.6 HBase API手册](hbase.md)
+#### 		[1.3.3 Hive Connector](connector/hive.md)
 
-### [1.7 JDBC API手册](jdbc.md)
+#### 		[1.3.4 HBase Connector](connector/hbase.md)
 
-### [1.8 累加器](accumulator.md)
+#### 		[1.3.5 JDBC  Connector](connector/jdbc.md)
 
-### [1.9 定时任务](schedule.md)
+#### 		[1.3.6 Oracle  Connector](connector/oracle.md)
 
-### [1.10 线程池与并发计算](threadpool.md)
+#### 		[1.3.7 Clickhouse  Connector](connector/clickhouse.md)
 
-### [1.11 Spark DataSource增强](datasource.md)
+#### 		[1.3.8 ADB  Connector](connector/adb.md)
 
-## 二、平台建设
+#### 		[1.3.9 Kudu  Connector](#)
 
-### [2.1 实时平台集成方案](platform.md)
+### 	[1.4 累加器](accumulator.md)
 
-### [2.2 内置接口](restful.md)
+### 	[1.5 定时任务](schedule.md)
+
+### 	[1.6 线程池与并发计算](threadpool.md)
+
+### 	[1.7 Spark DataSource增强](datasource.md)
+
+## 二、实时平台建设
+
+### 	[2.1 集成方案](platform.md)
+
+### 	[2.2 内置接口](restful.md)
 
 ## 三、配置与调优
 
-### [3.1 Fire configuration](properties.md)
+### 	[3.1 Fire configuration](properties.md)
+
