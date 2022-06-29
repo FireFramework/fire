@@ -37,6 +37,7 @@ import com.zto.fire.flink.anno.Checkpoint
 @Hive("thrift://localhost:9083") // 配置连接到指定的hive
 @Checkpoint(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
 @Kafka(brokers = "localhost:9092", topics = "fire", groupId = "fire")
+@HBase(cluster = "test", config = Array[String]("hbase.rpc.timeout=60000ms", "hbase.client.scanner.timeout.period=60000ms"))
 object FlinkDemo extends BaseFlinkStreaming {
 
   override def process: Unit = {

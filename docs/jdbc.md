@@ -19,11 +19,20 @@ under the License.
 
 # JDBC读写
 
-实时任务开发中，对jdbc读写的需求很高。为了简化jdbc开发步骤，fire框架对jdbc操作做了进一步封装，将许多常见操作简化成一行代码。另外，fire框架支持在同一个任务中对任意多个数据源进行读写。
+​		实时任务开发中，对jdbc读写的需求很高。为了简化jdbc开发步骤，fire框架对jdbc操作做了进一步封装，将许多常见操作简化成一行代码。另外，fire框架支持在同一个任务中对任意多个数据源进行读写。
 
 ### 一、数据源配置
 
-数据源包括jdbc的url、driver、username与password等重要信息，建议将这些配置放到commons.properties中，避免每个任务单独配置。fire框架内置了c3p0数据库连接池，在分布式场景下，限制每个container默认最多3个connection，避免申请过多资源时申请太多的数据库连接。
+#### 1.1 基于注解
+
+```scala
+@Jdbc(url = "jdbc:derby:memory:fire;create=true", username = "fire", password = "fire")
+@Jdbc3(url = "jdbc:derby:memory:fire;create=true", username = "fire", maxPoolSize=3, config=Array[String]("c3p0.key=value"))
+```
+
+#### 1.2 基于配置文件
+
+​		数据源包括jdbc的url、driver、username与password等重要信息，建议将这些配置放到commons.properties中，避免每个任务单独配置。fire框架内置了c3p0数据库连接池，在分布式场景下，限制每个container默认最多3个connection，避免申请过多资源时申请太多的数据库连接。
 
 ```properties
 db.jdbc.url                  =       jdbc:derby:memory:fire;create=true
@@ -33,10 +42,10 @@ db.jdbc.user                 =       fire
 db.jdbc.password             =       fire
 
 # 如果需要多个数据源，则可在每项配置的结尾添加对应的keyNum作为区分
-db.jdbc.url2                  =       jdbc:mysql://localhost:3306/fire
-db.jdbc.driver2               =       com.mysql.jdbc.Driver
-db.jdbc.user2                 =       fire
-db.jdbc.password2             =       fire
+db.jdbc.url2                 =       jdbc:mysql://mysql:3306/fire
+db.jdbc.driver2              =       com.mysql.jdbc.Driver
+db.jdbc.user2                =       fire
+db.jdbc.password2            =       fire
 ```
 
 ### 二、API使用
@@ -154,3 +163,110 @@ def testStreamJdbcSink(stream: DataStream[Student]): Unit = {
 ### 三、多个数据源读写
 
 fire框架支持同一个任务中读写任意个数的数据源，只需要通过keyNum指定即可。配置和使用方式可以参考：HBase、kafka等。
+
+### 四、@JDBC
+
+```java
+
+/**
+ * Jdbc的url，同value
+ */
+String url();
+
+/**
+ * jdbc 驱动类，不填可根据url自动推断
+ */
+String driver() default "";
+
+/**
+ * jdbc的用户名
+ */
+String username();
+
+/**
+ * jdbc的密码
+ */
+String password() default "";
+
+/**
+ * 事务的隔离级别
+ */
+String isolationLevel() default "";
+
+/**
+ * 连接池的最大连接数
+ */
+int maxPoolSize() default -1;
+
+/**
+ * 连接池最少连接数
+ */
+int minPoolSize() default -1;
+
+/**
+ * 连接池初始连接数
+ */
+int initialPoolSize() default -1;
+
+/**
+ * 连接池的增量
+ */
+int acquireIncrement() default -1;
+
+/**
+ * 连接的最大空闲时间
+ */
+int maxIdleTime() default -1;
+
+/**
+ * 多少条操作一次
+ */
+int batchSize() default -1;
+
+/**
+ * flink引擎：flush的间隔周期（ms）
+ */
+long flushInterval() default -1;
+
+/**
+ * flink引擎：失败最大重试次数
+ */
+int maxRetries() default -1;
+
+/**
+ * spark引擎：scan后的缓存级别：fire.jdbc.storage.level
+ */
+String storageLevel() default "";
+
+/**
+ * spark引擎：select后存放到rdd的多少个partition中：fire.jdbc.query.partitions
+ */
+int queryPartitions() default -1;
+
+/**
+ * 日志中打印的sql长度
+ */
+int logSqlLength() default -1;
+
+/**
+ * c3p0参数，以key=value形式注明
+ */
+String[] config() default "";
+```
+
+### 五、配置参数
+
+列表中的配置参数可根据需要放到任务的配置文件中。
+
+| 参数名称                 | 引擎 | 含义                                     |
+| ------------------------ | ---- | ---------------------------------------- |
+| db.jdbc.url              | 通用 | jdbc url                                 |
+| db.jdbc.url.map.         | 通用 | 用于为url取别名                          |
+| db.jdbc.driver           | 通用 | driver class                             |
+| db.jdbc.user             | 通用 | 数据库用户名                             |
+| db.jdbc.password         | 通用 | 数据库密码                               |
+| db.jdbc.isolation.level  | 通用 | 事务的隔离级别                           |
+| db.jdbc.maxPoolSize      | 通用 | 连接池最大连接数                         |
+| db.jdbc.minPoolSize      | 通用 | 连接池最小连接数                         |
+| db.jdbc.acquireIncrement | 通用 | 当连接池连接数不足时，增量申请连接数大小 |
+

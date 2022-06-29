@@ -124,7 +124,7 @@ fire框架提供了很多种参数配置的方式，总结下来相同key的配�
 fire框架内置了多个配置文件，用于应对多种引擎场景，分别是：
 
 - **fire.properties**：该配置文件中fire框架的总配置文件，位于fire-core包中，其中的配置主要是针对fire框架的，不含有spark或flink引擎的配置
-- **cluster.properties：**该配置文件用于存放各公司集群地址相关的映射信息，由于集群地址信息比较敏感，因此单独拿出来作为一个配置文件
+- **cluster.properties**：该配置文件用于存放各公司集群地址相关的映射信息，由于集群地址信息比较敏感，因此单独拿出来作为一个配置文件
 - **spark.properties**：该配置文件是spark引擎的总配置文件，位于fire-spark包中，作为spark引擎任务的总配置文件
 - **spark-core.properties**：该配置文件位于fire-spark包中，该配置文件用于配置spark core任务
 - **spark-streaming.properties**：该配置文件位于fire-spark包中，主要用于spark streaming任务

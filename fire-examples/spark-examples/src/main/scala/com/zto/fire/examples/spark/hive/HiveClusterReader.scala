@@ -28,10 +28,6 @@ import com.zto.fire.spark.BaseSparkCore
   * @author ChengLong 2019-5-17 10:39:19
   * @contact Fire框架技术交流群（钉钉）：35373471
   */
-@Config(
-  """
-    |spark.log.level                    =       ERROR
-    |""")
 @Hive("test")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HiveClusterReader extends BaseSparkCore {
