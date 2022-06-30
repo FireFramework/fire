@@ -91,7 +91,7 @@
       <id>spark-3.0.2</id>
       <properties>
         <spark.version>3.0.2</spark.version>
-        <spark.major.version>3</spark.major.version>
+        <spark.major.version>3.0</spark.major.version>
         <jackson.version>2.10.5</jackson.version>
         <scala.binary.version>2.12</scala.binary.version>
         <scala.minor.version>13</scala.minor.version>
@@ -227,7 +227,7 @@
       <id>spark-2.3.2</id>
       <properties>
         <spark.version>2.3.2</spark.version>
-        <spark.major.version>2</spark.major.version>
+        <spark.major.version>2.3</spark.major.version>
         <jackson.version>2.6.7</jackson.version>
         <scala.binary.version>2.11</scala.binary.version>
         <scala.minor.version>8</scala.minor.version>

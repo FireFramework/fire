@@ -21,9 +21,15 @@ under the License.
 
 ## 一、开发手册
 
-### 	[1.1 框架集成](integration.md)
+### 1.1 开发与发布
 
-### 	[1.2 参数配置](config.md)
+#### [1.1.1 框架集成](dev/integration.md)
+
+#### [1.1.2 参数配置](dev/config.md)
+
+#### [1.1.3 集群环境](dev/engine-env.md)
+
+#### [1.1.4 任务发布](dev/deploy-script.md)
 
 ### 	1.3 数据源
 
