@@ -76,7 +76,7 @@ object Demo extends BaseSparkStreaming {
 
 ### 3.1 兼容主流版本
 
-​		fire框架适配了不同的spark与flink版本，理论上支持spark2.x及以上所有版本，flink1.11及以上所有版本，支持基于scala2.11或scala2.12进行编译。
+​		fire框架适配了不同的spark与flink版本，支持spark2.x及以上所有版本，flink1.10及以上所有版本，支持基于scala2.11或scala2.12进行编译。
 
 ```shell
 # 可根据实际需要选择不同的引擎版本进行fire框架的构建

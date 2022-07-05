@@ -288,6 +288,10 @@ public final class GlobalConfiguration {
             throw new RuntimeException("Error parsing YAML configuration.", e);
         }
 
+        // TODO: ------------ start：二次开发代码 --------------- //
+        fireBootstrap(config);
+        // TODO: ------------ end：二次开发代码 --------------- //
+
         return config;
     }
 
