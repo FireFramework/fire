@@ -21,11 +21,14 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.internal.io.FileCommitProtocol
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.catalog.CatalogTypes.TablePartitionSpec
+import org.apache.spark.sql.catalyst.catalog.ExternalCatalogUtils._
 import org.apache.spark.sql.catalyst.catalog.{BucketSpec, CatalogTable, CatalogTablePartition}
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.util.CaseInsensitiveMap
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.command._
+import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.internal.SQLConf.PartitionOverwriteMode
 import org.apache.spark.sql.util.SchemaUtils
 
@@ -56,7 +59,21 @@ case class InsertIntoHadoopFsRelationCommand(
                                               fileIndex: Option[FileIndex],
                                               outputColumnNames: Seq[String])
   extends DataWritingCommand {
-  import org.apache.spark.sql.catalyst.catalog.ExternalCatalogUtils.escapePathName
+
+  private lazy val parameters = CaseInsensitiveMap(options)
+
+  private[sql] lazy val dynamicPartitionOverwrite: Boolean = {
+    val partitionOverwriteMode = parameters.get("partitionOverwriteMode")
+      // scalastyle:off caselocale
+      .map(mode => PartitionOverwriteMode.withName(mode.toUpperCase))
+      // scalastyle:on caselocale
+      .getOrElse(SQLConf.get.partitionOverwriteMode)
+    val enableDynamicOverwrite = partitionOverwriteMode == PartitionOverwriteMode.DYNAMIC
+    // This config only makes sense when we are overwriting a partitioned dataset with dynamic
+    // partition columns.
+    enableDynamicOverwrite && mode == SaveMode.Overwrite &&
+      staticPartitions.size < partitionColumns.length
+  }
 
   override def run(sparkSession: SparkSession, child: SparkPlan): Seq[Row] = {
     // Most formats don't do well with duplicate columns, so lets not allow that
@@ -88,40 +105,36 @@ case class InsertIntoHadoopFsRelationCommand(
         fs, catalogTable.get, qualifiedOutputPath, matchingPartitions)
     }
 
-    val pathExists = fs.exists(qualifiedOutputPath)
-
-    val enableDynamicOverwrite =
-      sparkSession.sessionState.conf.partitionOverwriteMode == PartitionOverwriteMode.DYNAMIC
-    // This config only makes sense when we are overwriting a partitioned dataset with dynamic
-    // partition columns.
-    val dynamicPartitionOverwrite = enableDynamicOverwrite && mode == SaveMode.Overwrite &&
-      staticPartitions.size < partitionColumns.length
-
     val committer = FileCommitProtocol.instantiate(
       sparkSession.sessionState.conf.fileCommitProtocolClass,
       jobId = java.util.UUID.randomUUID().toString,
       outputPath = outputPath.toString,
       dynamicPartitionOverwrite = dynamicPartitionOverwrite)
 
-    val doInsertion = (mode, pathExists) match {
-      case (SaveMode.ErrorIfExists, true) =>
-        throw new AnalysisException(s"path $qualifiedOutputPath already exists.")
-      case (SaveMode.Overwrite, true) =>
-        if (ifPartitionNotExists && matchingPartitions.nonEmpty) {
-          false
-        } else if (dynamicPartitionOverwrite) {
-          // For dynamic partition overwrite, do not delete partition directories ahead.
+    val doInsertion = if (mode == SaveMode.Append) {
+      true
+    } else {
+      val pathExists = fs.exists(qualifiedOutputPath)
+      (mode, pathExists) match {
+        case (SaveMode.ErrorIfExists, true) =>
+          throw new AnalysisException(s"path $qualifiedOutputPath already exists.")
+        case (SaveMode.Overwrite, true) =>
+          if (ifPartitionNotExists && matchingPartitions.nonEmpty) {
+            false
+          } else if (dynamicPartitionOverwrite) {
+            // For dynamic partition overwrite, do not delete partition directories ahead.
+            true
+          } else {
+            deleteMatchingPartitions(fs, qualifiedOutputPath, customPartitionLocations, committer)
+            true
+          }
+        case (SaveMode.Overwrite, _) | (SaveMode.ErrorIfExists, false) =>
           true
-        } else {
-          deleteMatchingPartitions(fs, qualifiedOutputPath, customPartitionLocations, committer)
-          true
-        }
-      case (SaveMode.Append, _) | (SaveMode.Overwrite, _) | (SaveMode.ErrorIfExists, false) =>
-        true
-      case (SaveMode.Ignore, exists) =>
-        !exists
-      case (s, exists) =>
-        throw new IllegalStateException(s"unsupported save mode $s ($exists)")
+        case (SaveMode.Ignore, exists) =>
+          !exists
+        case (s, exists) =>
+          throw new IllegalStateException(s"unsupported save mode $s ($exists)")
+      }
     }
 
     if (doInsertion) {
@@ -178,15 +191,15 @@ case class InsertIntoHadoopFsRelationCommand(
       // refresh cached files in FileIndex
       fileIndex.foreach(_.refresh())
       // refresh data cache if table is cached
-      sparkSession.catalog.refreshByPath(outputPath.toString)
-      sparkSession.catalog.clearCache()
+      sparkSession.sharedState.cacheManager.recacheByPath(sparkSession, outputPath, fs)
 
       if (catalogTable.nonEmpty) {
         CommandUtils.updateTableStats(sparkSession, catalogTable.get)
       }
 
-      // 只更新分区表的分区元数据信息
+      // TODO: ------------ start：二次开发代码 --------------- //
       if (catalogTable.get.partitionColumnNames.nonEmpty) {
+        logWarning("Current partition table, will update partition information soon")
         val catalog = sparkSession.sessionState.catalog
         val identifier = catalogTable.get.identifier
         val partitions = updatedPartitionPaths.map(partitionColumnName => {
@@ -194,19 +207,26 @@ case class InsertIntoHadoopFsRelationCommand(
           catalog.getPartition(identifier, Map[String, String](partitionMap(0) -> partitionMap(1)))
         })
 
-        val newPartitions = partitions.zipWithIndex.flatMap { case (p, idx) =>
-          val newSize = 30
-          val newNumFiles = 29
-          val newStats = CommandUtils.compareAndGetNewStats(p.stats, newSize, Some((p.stats.get.rowCount.get + 1)))
+        val newPartitions = partitions.zipWithIndex.flatMap { case (p, _) =>
+          // Statistical partition file size
+          val newSize = CommandUtils.calculateSingleLocationSize(sparkSession.sessionState, identifier, Some(p.location))
+          val rowCount = if (p.stats.isDefined && p.stats.get.rowCount.isDefined) p.stats.get.rowCount.get else BigInt(1)
+          val newStats = CommandUtils.compareAndGetNewStats(p.stats, newSize, Some(rowCount + 1))
           val newStatParameters =
-            Map("numFiles" -> newNumFiles.toString,
-              "rawDataSize" -> newSize.toString,
-              "totalSize" -> newSize.toString)
+            Map("numFiles" -> 1.toString,
+                "rawDataSize" -> newSize.toString,
+                "totalSize" -> newSize.toString)
           val newParameters = p.parameters ++ newStatParameters
           newStats.map(_ => p.copy(stats = newStats, parameters = newParameters))
         }
-        catalog.alterPartitions(identifier, newPartitions.toSeq)
+
+        // update metastore partition metadata
+        newPartitions.foreach(partition => {
+          catalog.alterPartitions(identifier, newPartitions.toSeq)
+          logWarning(s"Complete partition information update, partition: $partition")
+        })
       }
+      // TODO: ------------ end：二次开发代码 --------------- //
 
     } else {
       logInfo("Skipping insertion into a relation that already exists.")
@@ -226,12 +246,7 @@ case class InsertIntoHadoopFsRelationCommand(
                                         committer: FileCommitProtocol): Unit = {
     val staticPartitionPrefix = if (staticPartitions.nonEmpty) {
       "/" + partitionColumns.flatMap { p =>
-        staticPartitions.get(p.name) match {
-          case Some(value) =>
-            Some(escapePathName(p.name) + "=" + escapePathName(value))
-          case None =>
-            None
-        }
+        staticPartitions.get(p.name).map(getPartitionPathString(p.name, _))
       }.mkString("/")
     } else {
       ""
