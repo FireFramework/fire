@@ -20,9 +20,13 @@ package com.zto.fire.examples.flink
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import org.apache.flink.api.scala._
+import com.zto.fire.common.util.{JSONUtils, MQProducer, MQType}
 import com.zto.fire.core.anno._
+import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
+import com.zto.fire.predef.JString
 
 /**
  * 基于Fire进行Flink Streaming开发
@@ -39,7 +43,7 @@ import com.zto.fire.flink.anno.Checkpoint
 @HBase("test")  // 配置连接到指定的Hbase
 @Hive("test") // 配置连接到指定的hive
 @Checkpoint(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
-@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Kafka(brokers = "bigdata_test", topics = "fire5", groupId = "fire")
 @Kafka2(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object Test extends BaseFlinkStreaming {
@@ -48,8 +52,15 @@ object Test extends BaseFlinkStreaming {
    * 业务逻辑代码，会被fire自动调用
    */
   override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream()
-    dstream.print("fire1==> ")
+    /*val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t))
+    dstream.map(t => {
+      val id = t.getId / 0
+      t
+    }).addSink(println(_))*/
+    sql(
+      """
+        |select xxx from
+        |""".stripMargin)
     this.fire.start
   }
 }

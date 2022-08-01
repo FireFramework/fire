@@ -18,7 +18,9 @@
 package com.zto.fire.examples.spark
 
 import com.zto.fire._
+import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.Kafka
+import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.Streaming
 
@@ -28,14 +30,22 @@ import com.zto.fire.spark.anno.Streaming
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 // 60s一个批，最大同时执行2个streaming批次，开启反压机制、每个分区每秒最大消费100条消息
-@Streaming(interval = 60, concurrent = 2, backpressure = true, maxRatePerPartition = 100)
+@Streaming(interval = 10, concurrent = 2, backpressure = true, maxRatePerPartition = 100)
 // 配置消费的kafka信息
-@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Kafka(brokers = "bigdata_test", topics = "fire5", groupId = "fire")
 object Test extends BaseSparkStreaming {
 
   override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream()
-    dstream.print()
+    /*val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject(t.value(), classOf[Student]))
+    dstream.map(t => {
+      val id = t.getId / 0
+      t
+    }).print()*/
+    sql(
+      """
+        |select from
+        |""".stripMargin)
     this.fire.start()
+
   }
 }

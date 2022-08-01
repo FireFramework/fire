@@ -53,6 +53,11 @@ private[fire] object FireUtils extends Serializable with Logging {
   def fireVersion: String = FireFrameworkConf.fireVersion
 
   /**
+   * 当前任务实例的主类名：packageName+className
+   */
+  def mainClass: String = FireFrameworkConf.driverClassName
+
+  /**
    * 用于在fire框架启动时展示信息
    */
   private[fire] def splash: Unit = {
