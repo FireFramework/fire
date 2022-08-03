@@ -19,7 +19,7 @@ package com.zto.fire.examples.spark
 
 import com.zto.fire._
 import com.zto.fire.common.util.JSONUtils
-import com.zto.fire.core.anno.Kafka
+import com.zto.fire.core.anno.{Hive, Kafka}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.Streaming
@@ -33,19 +33,19 @@ import com.zto.fire.spark.anno.Streaming
 @Streaming(interval = 10, concurrent = 2, backpressure = true, maxRatePerPartition = 100)
 // 配置消费的kafka信息
 @Kafka(brokers = "bigdata_test", topics = "fire5", groupId = "fire")
+@Hive("test")
 object Test extends BaseSparkStreaming {
 
   override def process: Unit = {
-    /*val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject(t.value(), classOf[Student]))
+    val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject(t.value(), classOf[Student]))
     dstream.map(t => {
       val id = t.getId / 0
       t
-    }).print()*/
-    sql(
+    }).print()
+    /*sql(
       """
-        |select from
-        |""".stripMargin)
+        |select from tmp.baseuser1
+        |""".stripMargin)*/
     this.fire.start()
-
   }
 }

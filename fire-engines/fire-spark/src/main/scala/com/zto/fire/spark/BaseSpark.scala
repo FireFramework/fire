@@ -220,4 +220,14 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     val resourceId = SparkUtils.getExecutorId
     if (StringUtils.isBlank(resourceId) || "driver".equals(resourceId)) "driver" else s"container_${resourceId}"
   }
+
+  /**
+   * SQL语法校验
+   *
+   * @param sql
+   * sql statement
+   * @return
+   * true：校验成功 false：校验失败
+   */
+  override def sqlCheck(sql: JString): Boolean = SparkUtils.sqlCheck(sql)
 }

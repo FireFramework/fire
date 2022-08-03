@@ -1,5 +1,7 @@
 package com.zto.fire.spark.sql
 
+import com.zto.fire._
+import com.zto.fire.common.util.{ExceptionBus, Logging}
 import com.zto.fire.core.sql.SqlExtensionsParser
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.parser.ParserInterface
@@ -15,14 +17,21 @@ import org.apache.spark.sql.{SparkSession, SparkSessionExtensions}
  * @author ChengLong 2021-6-23 10:25:17
  * @since 2.0.0
  */
-private[fire] class SparkSqlExtensionsParser(parser: ParserInterface) extends ParserInterface {
+private[fire] class SparkSqlExtensionsParser(sparkSession: SparkSession, parser: ParserInterface) extends ParserInterface with Logging {
 
   /**
    * Parse a string to a [[LogicalPlan]].
    */
   override def parsePlan(sqlText: String): LogicalPlan = {
-    SparkSqlParser.sqlParse(sqlText)
-    parser.parsePlan(sqlText)
+    try {
+      this.parseExpression(sqlText)
+      SparkSqlParser.sqlParse(sqlText)
+      parser.parsePlan(sqlText)
+    } catch {
+      case e: Throwable =>
+        ExceptionBus.post(e, sqlText)
+        throw e
+    }
   }
 
   /**
@@ -70,7 +79,7 @@ private[fire] object SparkSqlExtensionsParser extends SqlExtensionsParser {
   def sqlExtension(sessionBuilder: SparkSession.Builder): SparkSession.Builder = {
     type ParserBuilder = (SparkSession, ParserInterface) => ParserInterface
     type ExtensionsBuilder = SparkSessionExtensions => Unit
-    val parserBuilder: ParserBuilder = (_, parser) => new SparkSqlExtensionsParser(parser)
+    val parserBuilder: ParserBuilder = (sparkSession, parser) => new SparkSqlExtensionsParser(sparkSession, parser)
     val extBuilder: ExtensionsBuilder = { e => e.injectParser(parserBuilder) }
     sessionBuilder.withExtensions(extBuilder)
   }

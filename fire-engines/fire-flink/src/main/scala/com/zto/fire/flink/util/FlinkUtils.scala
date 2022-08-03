@@ -22,6 +22,7 @@ import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.util._
 import com.zto.fire.flink.bean.FlinkTableSchema
 import com.zto.fire.flink.conf.FireFlinkConf
+import com.zto.fire.flink.sql.FlinkSqlParser
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
@@ -34,6 +35,7 @@ import org.apache.flink.types.Row
 import org.slf4j.LoggerFactory
 
 import java.net.{URL, URLClassLoader}
+import scala.util.Try
 
 /**
  * flink相关工具类
@@ -46,6 +48,15 @@ object FlinkUtils extends Serializable with Logging {
   private[this] val schemaTable = HashBasedTable.create[FlinkTableSchema, String, Int]
   private var jobManager: Option[Boolean] = None
   private var mode: Option[String] = None
+
+  /**
+   * SQL语法校验
+   * @param sql
+   * sql statement
+   * @return
+   * true：校验成功 false：校验失败
+   */
+  def sqlCheck(sql: String): Boolean = FlinkSqlParser.sqlCheck(sql)
 
   /**
    * 将schema、fieldName与fieldIndex信息维护到table中

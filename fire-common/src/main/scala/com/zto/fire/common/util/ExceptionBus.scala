@@ -43,13 +43,13 @@ object ExceptionBus extends Logging {
   private[fire] lazy val queueSize = new AtomicInteger(0)
   // 异常总数计数器
   private[fire] lazy val exceptionCount = new AtomicLong(0)
-  this.sendMQ
 
   /**
    * 周期性将异常堆栈信息发送到指定的MQ中，用于平台异常诊断
    */
   @Internal
-  private[this] def sendMQ: Unit = {
+  private[fire] def sendToMQ: Unit = {
+    if (!FireFrameworkConf.exceptionTraceEnable) return
     ThreadUtils.scheduleAtFixedRate({
       this.postException
     }, 0, 3, TimeUnit.SECONDS)
@@ -65,7 +65,6 @@ object ExceptionBus extends Logging {
    * 将异常信息投递到MQ中
    */
   private[this] def postException: Unit = {
-    if (!FireFrameworkConf.exceptionTraceEnable) return
     val mqUrl = FireFrameworkConf.exceptionTraceMQ
     val mqTopic = FireFrameworkConf.exceptionTraceMQTopic
     if (isEmpty(mqUrl, mqTopic)) return
@@ -97,7 +96,7 @@ object ExceptionBus extends Logging {
     val list = this.queue.toList
     this.queue.clear()
     queueSize.set(0)
-    this.logger.warn(s"成功收集异常总线中的异常对象共计：${list.size}条，异常总线将会被清空.")
+    this.logger.debug(s"成功收集异常总线中的异常对象共计：${list.size}条，异常总线将会被清空.")
     (list, this.exceptionCount.get())
   }
 
@@ -105,8 +104,8 @@ object ExceptionBus extends Logging {
    * 工具方法，用于打印异常信息
    */
   @Internal
-  private[fire] def offAndLogError(logger: Logger, msg: String, t: Throwable): Unit = {
-    this.post(t)
+  private[fire] def offAndLogError(logger: Logger, msg: String, t: Throwable, sql: String = ""): Unit = {
+    this.post(t, sql)
     if (noEmpty(msg)) {
       if (logger != null) logger.error(msg, t) else t.printStackTrace()
     }

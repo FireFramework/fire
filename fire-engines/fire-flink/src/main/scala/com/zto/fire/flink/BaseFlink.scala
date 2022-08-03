@@ -185,6 +185,17 @@ trait BaseFlink extends BaseFire {
    */
   override protected def resourceId: String = FlinkUtils.getResourceId
 
+
+  /**
+   * SQL语法校验
+   *
+   * @param sql
+   * sql statement
+   * @return
+   * true：校验成功 false：校验失败
+   */
+  override def sqlCheck(sql: JString): Boolean = FlinkUtils.sqlCheck(sql)
+
   /**
    * 初始化引擎上下文，如SparkSession、StreamExecutionEnvironment等
    * 可根据实际情况，将配置参数放到同名的配置文件中进行差异化的初始化

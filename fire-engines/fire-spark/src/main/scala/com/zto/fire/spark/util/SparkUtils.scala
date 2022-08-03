@@ -46,6 +46,24 @@ object SparkUtils extends Logging {
   private lazy val spark = SparkSingletonFactory.getSparkSession
 
   /**
+   * SQL语法校验
+   * @param sql
+   * sql statement
+   * @return
+   * true：校验成功 false：校验失败
+   */
+  def sqlCheck(sql: String): Boolean = {
+    val retVal = Try {
+      this.spark.sessionState.sqlParser.parseExpression(sql)
+    }
+
+    if (retVal.isSuccess) true else {
+      ExceptionBus.post(retVal.failed.get, sql)
+      false
+    }
+  }
+
+  /**
    * 将Row转为自定义bean，以JavaBean中的Field为基准
    * bean中的field名称要与DataFrame中的field名称保持一致
    */

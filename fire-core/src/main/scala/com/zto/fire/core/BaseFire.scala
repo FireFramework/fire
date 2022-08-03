@@ -70,8 +70,17 @@ trait BaseFire extends Logging {
     FireUtils.splash
     if (FireFrameworkConf.arthasEnable) ArthasManager.startArthas(this.resourceId, FireFrameworkConf.arthasContainerEnable)
     PropUtils.sliceKeys(FireFrameworkConf.FIRE_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
+    ExceptionBus.sendToMQ
   }
 
+  /**
+   * SQL语法校验
+   * @param sql
+   * sql statement
+   * @return
+   * true：校验成功 false：校验失败
+   */
+  def sqlCheck(sql: String): Boolean
 
   /**
    * 获取任务的resourceId

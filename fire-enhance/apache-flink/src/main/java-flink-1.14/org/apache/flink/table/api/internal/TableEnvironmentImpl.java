@@ -145,7 +145,6 @@ import org.apache.flink.table.utils.EncodingUtils;
 import org.apache.flink.table.utils.PrintUtils;
 import org.apache.flink.table.utils.TableSchemaUtils;
 import org.apache.flink.types.Row;
-import org.apache.flink.util.ExceptionUtils;
 import org.apache.flink.util.Preconditions;
 
 import org.apache.commons.lang3.StringUtils;
@@ -684,9 +683,7 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
 
     @Override
     public String explainSql(String statement, ExplainDetail... extraDetails) {
-        // TODO: ------------ start：二次开发代码 --------------- //
-        List<Operation> operations = this.parse(statement);
-        // TODO: ------------ end：二次开发代码 --------------- //
+        List<Operation> operations = getParser().parse(statement);
 
         if (operations.size() != 1) {
             throw new TableException(
@@ -718,9 +715,7 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
 
     @Override
     public Table sqlQuery(String query) {
-        // TODO: ------------ start：二次开发代码 --------------- //
-        List<Operation> operations = this.parse(query);
-        // TODO: ------------ end：二次开发代码 --------------- //
+        List<Operation> operations = getParser().parse(query);
 
         if (operations.size() != 1) {
             throw new ValidationException(
@@ -741,17 +736,6 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
     // TODO: ------------ start：二次开发代码 --------------- //
     private static Method sqlParseMethod = null;
     private static AtomicBoolean canParse = new AtomicBoolean(true);
-
-    private List<Operation> parse(String stmt) {
-        List<Operation> list = Collections.EMPTY_LIST;
-        try {
-            list = getParser().parse(stmt);
-        } catch (Exception e) {
-            ExceptionUtils.stringifyException(e);
-            throw e;
-        }
-        return list;
-    }
     // TODO: ------------ end：二次开发代码 ----------------- //
 
     @Override
@@ -773,9 +757,9 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
                 canParse.set(false);
             } catch (Exception e1) {}
         }
-
-        List<Operation> operations = this.parse(statement);
         // TODO: ------------ end：二次开发代码 ----------------- //
+
+        List<Operation> operations = getParser().parse(statement);
 
         if (operations.size() != 1) {
             throw new TableException(UNSUPPORTED_QUERY_IN_EXECUTE_SQL_MSG);
@@ -873,9 +857,7 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
 
     @Override
     public void sqlUpdate(String stmt) {
-        // TODO: ------------ start：二次开发代码 --------------- //
-        List<Operation> operations = this.parse(stmt);
-        // TODO: ------------ end：二次开发代码 --------------- //
+        List<Operation> operations = getParser().parse(stmt);
 
         if (operations.size() != 1) {
             throw new TableException(UNSUPPORTED_QUERY_IN_SQL_UPDATE_MSG);
@@ -1936,9 +1918,7 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
 
     @Override
     public String getJsonPlan(String stmt) {
-        // TODO: ------------ start：二次开发代码 --------------- //
-        List<Operation> operations = this.parse(stmt);
-        // TODO: ------------ end：二次开发代码 --------------- //
+        List<Operation> operations = getParser().parse(stmt);
         if (operations.size() != 1) {
             throw new TableException(
                     "Unsupported SQL query! getJsonPlan() only accepts a single INSERT statement.");
