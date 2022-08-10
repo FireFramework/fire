@@ -55,6 +55,6 @@ private[fire] class FlinkAnnoManager extends AnnoManager {
    * 用于注册需要映射配置信息的自定义主键
    */
   override protected[fire] def register: Unit = {
-    this.registerAnnoSet.add(classOf[Checkpoint])
+    AnnoManager.registerAnnoSet.add(classOf[Checkpoint])
   }
 }

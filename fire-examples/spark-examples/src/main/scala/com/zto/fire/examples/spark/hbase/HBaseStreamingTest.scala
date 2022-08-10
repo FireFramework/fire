@@ -2,7 +2,7 @@ package com.zto.fire.examples.spark.hbase
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.core.anno.{HBase, HBase2, Kafka}
+import com.zto.fire.core.anno.connector.{HBase, HBase2, Kafka}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.BaseSparkStreaming

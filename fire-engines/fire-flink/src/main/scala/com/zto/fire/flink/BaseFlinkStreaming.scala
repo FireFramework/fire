@@ -41,7 +41,7 @@ import org.apache.flink.table.functions.ScalarFunction
 trait BaseFlinkStreaming extends BaseFlink {
   protected var env, senv, flink, fire: StreamExecutionEnvironment = _
   protected var tableEnv: TableEnvironment = _
-  protected lazy val sql = fire.sql(_, keyNum = 1)
+  protected lazy val sql = fire._sql(_)
   protected lazy val steamTableEnv: StreamTableEnvironment = this.tableEnv.asInstanceOf[StreamTableEnvironment]
   override val jobType: JobType = JobType.FLINK_STREAMING
   // 用于存放延期的数据
@@ -79,7 +79,7 @@ trait BaseFlinkStreaming extends BaseFlink {
    */
   override def init(conf: Any = null, args: Array[String] = null): Unit = {
     super.init(conf, args)
-    this.process
+    this.processAll
   }
 
   /**

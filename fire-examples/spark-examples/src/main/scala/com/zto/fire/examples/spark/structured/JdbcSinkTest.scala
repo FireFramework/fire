@@ -19,7 +19,7 @@ package com.zto.fire.examples.spark.structured
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.core.anno.{HBase, Hive, Kafka}
+import com.zto.fire.core.anno.connector.{HBase, Hive, Kafka}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseStructuredStreaming
 

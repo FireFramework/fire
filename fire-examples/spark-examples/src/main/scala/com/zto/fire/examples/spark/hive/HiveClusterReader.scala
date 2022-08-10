@@ -18,7 +18,7 @@
 package com.zto.fire.examples.spark.hive
 
 import com.zto.fire.common.anno.Config
-import com.zto.fire.core.anno.Hive
+import com.zto.fire.core.anno.connector.Hive
 import com.zto.fire.spark.BaseSparkCore
 
 /**

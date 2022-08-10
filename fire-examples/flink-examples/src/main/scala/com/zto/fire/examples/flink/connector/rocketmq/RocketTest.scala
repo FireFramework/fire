@@ -19,7 +19,7 @@ package com.zto.fire.examples.flink.connector.rocketmq
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.core.anno.RocketMQ
+import com.zto.fire.core.anno.connector.RocketMQ
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
 import org.apache.flink.api.scala._

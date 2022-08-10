@@ -36,7 +36,7 @@ private[fire] object FlinkSqlExtensionsParser extends SqlExtensionsParser {
    */
   def sqlParse(sql: String): Unit = {
     if (buriedPointDatasourceEnable && noEmpty(sql)) {
-      FlinkUtils.sqlCheck(sql)
+      FlinkUtils.sqlValidate(sql)
       FlinkSqlParser.sqlParse(sql)
     }
   }

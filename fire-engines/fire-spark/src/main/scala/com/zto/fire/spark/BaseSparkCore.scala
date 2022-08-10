@@ -36,7 +36,7 @@ class BaseSparkCore extends BaseSpark {
     */
   override def init(conf: Any = null, args: Array[String] = null): Unit = {
     super.init(conf, args)
-    this.process
+    this.processAll
   }
 
   /**

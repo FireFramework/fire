@@ -245,5 +245,5 @@ object SparkSqlParser extends SqlParser {
    * @return
    * true：校验成功 false：校验失败
    */
-  def sqlCheck(sql: String): Boolean = SparkUtils.sqlCheck(sql)
+  def sqlLegal(sql: String): Boolean = SparkUtils.sqlLegal(sql)
 }

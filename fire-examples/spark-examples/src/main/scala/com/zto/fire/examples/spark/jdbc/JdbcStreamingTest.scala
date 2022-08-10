@@ -18,7 +18,7 @@
 package com.zto.fire.examples.spark.jdbc
 
 import com.zto.fire._
-import com.zto.fire.core.anno.Kafka
+import com.zto.fire.core.anno.connector.Kafka
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.Streaming

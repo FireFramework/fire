@@ -20,7 +20,7 @@ package com.zto.fire.examples.spark.streaming
 import com.zto.fire._
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.util.DateFormatUtils
-import com.zto.fire.core.anno.{Kafka, Kafka2, Kafka3}
+import com.zto.fire.core.anno.connector.{Kafka, Kafka2, Kafka3}
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.Streaming
 

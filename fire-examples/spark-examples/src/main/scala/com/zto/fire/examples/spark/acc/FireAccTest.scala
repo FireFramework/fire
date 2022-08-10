@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import com.zto.fire._
 import com.zto.fire.common.anno.{Config, Scheduled}
 import com.zto.fire.common.util.{DateFormatUtils, PropUtils, ThreadUtils}
-import com.zto.fire.core.anno.{Hive, Kafka}
+import com.zto.fire.core.anno.connector.{Hive, Kafka}
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.Streaming
 

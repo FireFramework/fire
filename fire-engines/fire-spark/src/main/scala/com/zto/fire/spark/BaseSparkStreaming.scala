@@ -98,7 +98,7 @@ trait BaseSparkStreaming extends BaseSpark {
       val rememberTime = FireSparkConf.streamingRemember
       if (rememberTime > 0) this.ssc.remember(Milliseconds(Math.abs(rememberTime)))
       SparkSingletonFactory.setStreamingContext(this.ssc)
-      this.process
+      this.processAll
     } else {
       this.checkPointDir = FireSparkConf.chkPointDirPrefix + this.appName
       this.ssc = StreamingContext.getOrCreate(this.checkPointDir, createStreamingContext _)
@@ -115,7 +115,7 @@ trait BaseSparkStreaming extends BaseSpark {
         }
         this.ssc.checkpoint(checkPointDir)
         SparkSingletonFactory.setStreamingContext(this.ssc)
-        this.process
+        this.processAll
         this.ssc
       }
     }

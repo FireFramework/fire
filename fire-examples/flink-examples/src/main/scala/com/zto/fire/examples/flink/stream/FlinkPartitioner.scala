@@ -19,7 +19,7 @@ package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.core.anno.{Hive, Kafka}
+import com.zto.fire.core.anno.connector.{Hive, Kafka}
 import com.zto.fire.flink.BaseFlinkStreaming
 import org.apache.flink.api.common.functions.Partitioner
 import org.apache.flink.api.scala._

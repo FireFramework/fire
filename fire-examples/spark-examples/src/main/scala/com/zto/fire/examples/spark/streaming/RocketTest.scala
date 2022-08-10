@@ -19,7 +19,7 @@ package com.zto.fire.examples.spark.streaming
 
 import com.zto.fire._
 import com.zto.fire.common.util.JSONUtils
-import com.zto.fire.core.anno.{RocketMQ, RocketMQ2}
+import com.zto.fire.core.anno.connector.{RocketMQ, RocketMQ2}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkStreaming
 import com.zto.fire.spark.anno.Streaming

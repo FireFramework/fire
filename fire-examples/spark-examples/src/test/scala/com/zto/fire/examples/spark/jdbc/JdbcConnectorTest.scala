@@ -19,7 +19,7 @@ package com.zto.fire.examples.spark.jdbc
 
 import com.zto.fire.common.anno.TestStep
 import com.zto.fire.common.util.{DatasourceManager, PropUtils}
-import com.zto.fire.core.anno.{Jdbc, Jdbc3}
+import com.zto.fire.core.anno.connector.{Jdbc, Jdbc3}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.examples.spark.core.BaseSparkTester
 import com.zto.fire.jdbc.JdbcConnector

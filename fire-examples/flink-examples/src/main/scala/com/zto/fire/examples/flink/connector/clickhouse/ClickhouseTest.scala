@@ -20,7 +20,7 @@ package com.zto.fire.examples.flink.connector.clickhouse
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
-import com.zto.fire.core.anno.Kafka
+import com.zto.fire.core.anno.connector.Kafka
 import com.zto.fire.examples.bean.Student
 import org.apache.flink.api.scala._
 import com.zto.fire.flink.BaseFlinkStreaming

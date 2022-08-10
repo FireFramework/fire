@@ -22,7 +22,8 @@ import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import org.apache.flink.api.scala._
 import com.zto.fire.common.util.{JSONUtils, MQProducer, MQType}
-import com.zto.fire.core.anno._
+import com.zto.fire.core.anno.connector._
+import com.zto.fire.core.anno.lifecycle.{Handle, Process, Step1}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
@@ -51,12 +52,18 @@ object Test extends BaseFlinkStreaming {
   /**
    * 业务逻辑代码，会被fire自动调用
    */
+  @Process
   override def process: Unit = {
-    /*val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t))
+    val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t))
     dstream.map(t => {
       val id = t.getId / 0
       t
-    }).addSink(println(_))*/
+    }).addSink(println(_))
+
+  }
+
+  @Step1
+  def sqlError: Unit = {
     sql(
       """
         |select xxx from

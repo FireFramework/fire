@@ -18,7 +18,7 @@
 package com.zto.fire.examples.spark.hive
 
 import com.zto.fire.common.anno.Config
-import com.zto.fire.core.anno.{Hive, Kafka}
+import com.zto.fire.core.anno.connector.{Hive, Kafka}
 import com.zto.fire.spark.BaseSparkCore
 
 /**

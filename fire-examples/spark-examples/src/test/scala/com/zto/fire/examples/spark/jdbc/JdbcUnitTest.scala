@@ -20,7 +20,7 @@ package com.zto.fire.examples.spark.jdbc
 import com.zto.fire._
 import com.zto.fire.common.anno.TestStep
 import com.zto.fire.common.util.DateFormatUtils
-import com.zto.fire.core.anno.{Jdbc, Jdbc2}
+import com.zto.fire.core.anno.connector.{Jdbc, Jdbc2}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.examples.spark.core.BaseSparkTester
 import com.zto.fire.spark.BaseSparkCore

@@ -271,7 +271,7 @@ private[fire] object FireFrameworkConf {
   // 是否启用基于注解的方式进行配置
   lazy val annoConfEnable = PropUtils.getBoolean(this.FIRE_CONF_ANNOTATION, true)
   // 是否启用异常堆栈采集
-  def exceptionTraceEnable: Boolean = PropUtils.getBoolean(this.FIRE_ANALYSIS_LOG_EXCEPTION_STACK_ENABLE, true)
+  def exceptionTraceEnable: Boolean = PropUtils.getBoolean(this.FIRE_ANALYSIS_LOG_EXCEPTION_STACK_ENABLE, false)
   // 异常堆栈发送MQ失败最大重试次数
   lazy val exceptionTraceSendMQMaxRetries = PropUtils.getInt(this.FIRE_ANALYSIS_LOG_EXCEPTION_SEND_MAX_RETIRES, 10)
   // 异常日志发送MQ超时时间

@@ -19,7 +19,7 @@ package com.zto.fire.examples.flink.connector.hive
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.core.anno.Hive
+import com.zto.fire.core.anno.connector.Hive
 import com.zto.fire.flink.BaseFlinkStreaming
 
 /**

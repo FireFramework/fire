@@ -1,8 +1,8 @@
 package com.zto.fire.examples.spark
 
+import com.zto.fire.core.anno.connector.Hive
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.BaseSparkCore
-import com.zto.fire.core.anno.Hive
 import com.zto.fire.spark.sql.SparkSqlParser
 
 /**

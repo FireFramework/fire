@@ -25,7 +25,7 @@ import com.zto.fire.predef._
 import org.slf4j.Logger
 
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger, AtomicLong}
 
 
 /**
@@ -43,22 +43,28 @@ object ExceptionBus extends Logging {
   private[fire] lazy val queueSize = new AtomicInteger(0)
   // 异常总数计数器
   private[fire] lazy val exceptionCount = new AtomicLong(0)
+  private[this] lazy val isStarted = new AtomicBoolean(false)
+  this.sendToMQ
 
   /**
    * 周期性将异常堆栈信息发送到指定的MQ中，用于平台异常诊断
    */
   @Internal
-  private[fire] def sendToMQ: Unit = {
+  def sendToMQ: Unit = {
     if (!FireFrameworkConf.exceptionTraceEnable) return
-    ThreadUtils.scheduleAtFixedRate({
-      this.postException
-    }, 0, 3, TimeUnit.SECONDS)
 
-    // 注册回调，在jvm退出前将所有异常发送到mq中
-    ShutdownHookManager.addShutdownHook() (() => {
-      this.postException
-      MQProducer.release
-    })
+    // 启动异步线程，定时将异常信息发送到指定的消息队列
+    if (this.isStarted.compareAndSet(false, true)) {
+      ThreadUtils.scheduleAtFixedRate({
+        this.postException
+      }, 0, 3, TimeUnit.SECONDS)
+
+      // 注册回调，在jvm退出前将所有异常发送到mq中
+      ShutdownHookManager.addShutdownHook() (() => {
+        this.postException
+        MQProducer.release
+      })
+    }
   }
 
   /**

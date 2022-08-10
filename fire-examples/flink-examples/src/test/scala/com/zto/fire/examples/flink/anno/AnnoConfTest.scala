@@ -21,6 +21,7 @@ import com.zto.fire.common.anno.{Config, TestStep}
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf, FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.anno._
+import com.zto.fire.core.anno.connector.{HBase, HBase2, HBase3, Hive, Jdbc, Jdbc2, Jdbc3, Kafka, Kafka2, Kafka3, RocketMQ, RocketMQ2}
 import com.zto.fire.examples.flink.core.BaseFlinkTester
 import com.zto.fire.flink.BaseFlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint

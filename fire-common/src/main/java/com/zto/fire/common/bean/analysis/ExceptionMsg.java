@@ -33,6 +33,11 @@ public class ExceptionMsg {
     private String engine;
 
     /**
+     * 异常堆栈类名
+     */
+    private String exceptionClass;
+
+    /**
      * 异常堆栈的标题
      */
     private String stackTitle;
@@ -72,9 +77,10 @@ public class ExceptionMsg {
      */
     private String timestamp;
 
-    public ExceptionMsg(String stackTitle, String stackTrace, String sql) {
+    public ExceptionMsg(String stackTitle, String stackTrace, String exceptionClass, String sql) {
         this.stackTitle = stackTitle;
         this.stackTrace = stackTrace;
+        this.exceptionClass = exceptionClass;
         this.sql = sql;
         this.engine = FireUtils.engine();
         this.ip = OSUtils.getIp();
@@ -85,19 +91,19 @@ public class ExceptionMsg {
     }
 
     public ExceptionMsg(Throwable e, String sql) {
-        this(e.getMessage(), ExceptionBus.stackTrace(e), sql);
+        this(e.getMessage(), ExceptionBus.stackTrace(e), e.getClass().getName(), sql);
     }
 
     public ExceptionMsg(Throwable e) {
-        this(e.getMessage(), ExceptionBus.stackTrace(e), "");
+        this(e.getMessage(), ExceptionBus.stackTrace(e), e.getClass().getName(), "");
     }
 
-    public ExceptionMsg(String stackTitle, String stackTrace) {
-        this(stackTitle, stackTrace, "");
+    public ExceptionMsg(String stackTitle, String stackTrace, String exceptionClass) {
+        this(stackTitle, stackTrace, exceptionClass, "");
     }
 
     public ExceptionMsg(String stackTrace) {
-        this("", stackTrace, "");
+        this("", stackTrace, "", "");
     }
 
     public String getEngine() {

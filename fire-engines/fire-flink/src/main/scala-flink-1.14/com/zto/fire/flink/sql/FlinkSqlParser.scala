@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.util.{ExceptionBus, TableMeta}
 import com.zto.fire.core.sql.SqlParser
-import com.zto.fire.flink.util.FlinkSingletonFactory
+import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.calcite.avatica.util.{Casing, Quoting}
 import org.apache.calcite.sql._
 import org.apache.calcite.sql.parser.{SqlParser => CalciteParser}
@@ -312,14 +312,5 @@ object FlinkSqlParser extends SqlParser {
    * @return
    * true：校验成功 false：校验失败
    */
-  override def sqlCheck(sql: JString): Boolean = {
-    val retVal = Try {
-      FlinkSqlParser.sqlParser(sql)
-    }
-
-    if (retVal.isSuccess) true else {
-      ExceptionBus.post(retVal.failed.get, sql)
-      false
-    }
-  }
+  override def sqlLegal(sql: JString): Boolean = FlinkUtils.sqlLegal(sql)
 }
