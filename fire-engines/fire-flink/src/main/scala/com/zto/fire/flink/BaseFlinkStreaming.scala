@@ -80,6 +80,7 @@ trait BaseFlinkStreaming extends BaseFlink {
   override def init(conf: Any = null, args: Array[String] = null): Unit = {
     super.init(conf, args)
     this.processAll
+    if (FireFrameworkConf.jobAutoStart) this.fire.start
   }
 
   /**

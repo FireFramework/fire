@@ -367,7 +367,7 @@ public class ReflectionUtils {
                             successCount += 1;
                         } catch (Exception e) {
                             long end = System.currentTimeMillis();
-                            logger.error(FirePS1Conf.RED() + " " + step + ". 执行报错！"+ (readable(end - start, UnitFormatUtils.TimeUnitEnum.MS))  + " " + FirePS1Conf.DEFAULT() + "\n", e);
+                            logger.error(FirePS1Conf.RED() + " " + step + ". 执行报错！耗时："+ (readable(end - start, UnitFormatUtils.TimeUnitEnum.MS))  + " " + FirePS1Conf.DEFAULT() + "\n", e);
                             boolean isSkip = Boolean.parseBoolean(skipError.toString());
                             failedCount += 1;
                             if (!isSkip) throw e;

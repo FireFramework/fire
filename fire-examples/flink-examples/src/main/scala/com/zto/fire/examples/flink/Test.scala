@@ -19,35 +19,18 @@ package com.zto.fire.examples.flink
 
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Config
-import org.apache.flink.api.scala._
-import com.zto.fire.common.util.{JSONUtils, MQProducer, MQType}
+import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector._
-import com.zto.fire.core.anno.lifecycle.{Handle, Process, Step1}
+import com.zto.fire.core.anno.lifecycle.Process
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.flink.BaseFlinkStreaming
-import com.zto.fire.flink.anno.Checkpoint
-import com.zto.fire.predef.JString
+import com.zto.fire.flink.FlinkStreaming
+import com.zto.fire.flink.anno.Streaming
+import org.apache.flink.api.scala._
 
-/**
- * 基于Fire进行Flink Streaming开发
- *
- * @contact Fire框架技术交流群（钉钉）：35373471
- */
-@Config(
-  """
-    |# flink调优参数、fire框架参数、用户自定义参数
-    |flink.kafka.force.overwrite.stateOffset.enable=true
-    |# 是否在开启checkpoint的情况下强制开启周期性offset提交
-    |flink.kafka.force.autoCommit.enable=true
-    |""")
-@HBase("test")  // 配置连接到指定的Hbase
-@Hive("test") // 配置连接到指定的hive
-@Checkpoint(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
-@Kafka(brokers = "bigdata_test", topics = "fire5", groupId = "fire")
-@Kafka2(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
+@Streaming(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
-object Test extends BaseFlinkStreaming {
+object Test extends FlinkStreaming {
 
   /**
    * 业务逻辑代码，会被fire自动调用
@@ -56,18 +39,8 @@ object Test extends BaseFlinkStreaming {
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t))
     dstream.map(t => {
-      val id = t.getId / 0
+      val id = t.getId / 1
       t
     }).addSink(println(_))
-
-  }
-
-  @Step1
-  def sqlError: Unit = {
-    sql(
-      """
-        |select xxx from
-        |""".stripMargin)
-    this.fire.start
   }
 }

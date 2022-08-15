@@ -21,7 +21,7 @@ import com.zto.fire._
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.{HBase, HBase2, HBase3, Kafka}
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
 import com.zto.fire.hbase.HBaseConnector
 import org.apache.flink.api.scala._
@@ -42,7 +42,7 @@ import scala.collection.mutable.ListBuffer
 @HBase3("test") // 对应keyNum=3的Hbase集群地址
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
-object HBaseTest extends BaseFlinkStreaming {
+object HBaseTest extends FlinkStreaming {
   lazy val tableName = "fire_test_1"
   lazy val tableName2 = "fire_test_2"
   lazy val tableName3 = "fire_test_3"

@@ -22,8 +22,8 @@ import com.zto.fire.common.anno.TestStep
 import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.anno.connector.{Jdbc, Jdbc2}
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.examples.spark.core.BaseSparkTester
-import com.zto.fire.spark.BaseSparkCore
+import com.zto.fire.examples.spark.core.SparkTester
+import com.zto.fire.spark.SparkCore
 import org.junit.Test
 
 /**
@@ -33,9 +33,9 @@ import org.junit.Test
  * @date 2022-05-12 13:49:24
  * @since 2.2.2
  */
-@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "..root726")
-@Jdbc2(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "..root726")
-class JdbcUnitTest extends BaseSparkCore with BaseSparkTester {
+@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "1qaz@WSX")
+@Jdbc2(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "1qaz@WSX")
+class JdbcUnitTest extends SparkCore with SparkTester {
   lazy val tableName = "spark_test"
 
   /**

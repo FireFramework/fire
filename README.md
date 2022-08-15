@@ -23,47 +23,45 @@ under the License.
 
 ## 一、就这么简单！
 
-### 1.1 flink开发示例
+### 1.1 Flink开发示例
 
 ```scala
 @Config(
   """
-    |# 支持Flink调优参数、Fire框架参数、用户自定义参数等
-    |state.checkpoints.num-retained=30
+    |state.checkpoints.num-retained=30 	# 支持任意Flink调优参数、Fire框架参数、用户自定义参数等
     |state.checkpoints.dir=hdfs:///user/flink/checkpoint
     |""")
 @Hive("thrift://localhost:9083") // 配置连接到指定的hive
-@Checkpoint(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
+@Streaming(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
 @Kafka(brokers = "localhost:9092", topics = "fire", groupId = "fire")
-object Demo extends BaseFlinkStreaming {
+object FlinkDemo extends FlinkStreaming {
 
-  override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream()	// 使用api的方式消费kafka
-    this.fire.sql("""create table statement ...""")
-    this.fire.sql("""insert into statement ...""")
-    this.fire.start
+  @Process
+  def kafkaSource: Unit = {
+    val dstream = this.fire.createKafkaDirectStream() 	// 使用api的方式消费kafka
+    sql("""create table statement ...""")
+    sql("""insert into statement ...""")
   }
 }
 ```
 
-### 1.2 spark开发示例
+### 1.2 Spark开发示例
 
 ```scala
 @Config(
   """
-    |# 支持Spark调优参数、Fire框架参数、用户自定义参数等
-    |spark.shuffle.compress=true
+    |spark.shuffle.compress=true		# 支持任意Spark调优参数、Fire框架参数、用户自定义参数等
     |spark.ui.enabled=true
     |""")
 @Hive("thrift://localhost:9083") // 配置连接到指定的hive
 @Streaming(interval = 100, maxRatePerPartition = 100) // 100s一个Streaming batch，并限制消费速率
 @Kafka(brokers = "localhost:9092", topics = "fire", groupId = "fire")
-object Demo extends BaseSparkStreaming {
+object SparkDemo extends SparkStreaming {
 
-  override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream()	// 使用api的方式消费kafka
-    this.fire.sql("""select * from xxx""").show()
-    this.fire.start
+  @Process
+  def kafkaSource: Unit = {
+    val dstream = this.fire.createKafkaDirectStream() 	// 使用api的方式消费kafka
+    sql("""select * from xxx""").show()
   }
 }
 ```

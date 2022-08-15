@@ -18,7 +18,7 @@
 package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
-import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.FlinkStreaming
 
 /**
  * 基于fire框架进行Flink SQL开发<br/>
@@ -29,7 +29,7 @@ import com.zto.fire.flink.BaseFlinkStreaming
  * @since 2.0.0
  * @create 2021-01-18 17:24
  */
-object FlinkSinkHiveTest extends BaseFlinkStreaming {
+object FlinkSinkHiveTest extends FlinkStreaming {
 
   // 具体的业务逻辑放到process方法中
   override def process: Unit = {

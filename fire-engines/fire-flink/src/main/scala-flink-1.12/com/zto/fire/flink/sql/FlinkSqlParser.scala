@@ -249,7 +249,7 @@ object FlinkSqlParser extends SqlParser {
       case sqlAlterTable: SqlAlterTable => {
         this.parseSqlNode(sqlAlterTable.getTableName, Operation.ALTER_TABLE)
       }
-      case _ => this.logger.warn(s"可忽略异常：实时血缘解析SQL报错，SQL：\n${sql}")
+      case _ => this.logger.debug(s"可忽略异常：实时血缘解析SQL报错，SQL：\n${sql}")
     }
   }
 

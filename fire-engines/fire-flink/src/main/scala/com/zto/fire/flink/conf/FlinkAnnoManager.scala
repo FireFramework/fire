@@ -17,8 +17,9 @@
 
 package com.zto.fire.flink.conf
 
+import com.zto.fire.common.conf.FireFrameworkConf.FIRE_JOB_AUTO_START
 import com.zto.fire.core.conf.AnnoManager
-import com.zto.fire.flink.anno.Checkpoint
+import com.zto.fire.flink.anno.{Checkpoint, Streaming}
 import com.zto.fire.flink.conf.FireFlinkConf._
 
 /**
@@ -28,6 +29,29 @@ import com.zto.fire.flink.conf.FireFlinkConf._
  * @since 2.2.2
  */
 private[fire] class FlinkAnnoManager extends AnnoManager {
+
+  /**
+   * 将@Streaming中配置的信息映射为键值对形式
+   * @param streaming
+   * Streaming注解实例
+   */
+  def mapStreaming(streaming: Streaming): Unit = {
+    /**
+     * 将时间单位由s转为ms
+     */
+    def unitConversion(value: Int): Int = if (value > 0) value * 1000 else -1
+
+    this.put(FLINK_STREAM_CHECKPOINT_INTERVAL, unitConversion(streaming.value()))
+    this.put(FLINK_STREAM_CHECKPOINT_INTERVAL, unitConversion(streaming.interval()))
+    this.put(FLINK_STREAM_CHECKPOINT_TIMEOUT, unitConversion(streaming.timeout()))
+    this.put(FLINK_STREAM_CHECKPOINT_MIN_PAUSE_BETWEEN, unitConversion(streaming.pauseBetween()))
+    this.put(FLINK_STREAM_CHECKPOINT_UNALIGNED, streaming.unaligned())
+    this.put(FLINK_STREAM_CHECKPOINT_MAX_CONCURRENT, streaming.concurrent())
+    this.put(FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER, streaming.failureNumber())
+    this.put(FLINK_STREAM_CHECKPOINT_MODE, streaming.mode())
+    this.put(streamCheckpointExternalized, streaming.cleanup())
+    this.put(FIRE_JOB_AUTO_START, streaming.autoStart())
+  }
 
   /**
    * 将@Checkpoint中配置的信息映射为键值对形式
@@ -55,6 +79,7 @@ private[fire] class FlinkAnnoManager extends AnnoManager {
    * 用于注册需要映射配置信息的自定义主键
    */
   override protected[fire] def register: Unit = {
+    AnnoManager.registerAnnoSet.add(classOf[Streaming])
     AnnoManager.registerAnnoSet.add(classOf[Checkpoint])
   }
 }

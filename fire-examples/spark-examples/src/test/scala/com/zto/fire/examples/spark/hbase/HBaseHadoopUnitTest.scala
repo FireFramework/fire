@@ -21,8 +21,7 @@ import com.zto.fire._
 import com.zto.fire.common.anno.TestStep
 import com.zto.fire.core.anno.connector.{HBase, HBase2}
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.hbase.HBaseConnector
-import com.zto.fire.spark.BaseSparkCore
+import com.zto.fire.spark.SparkCore
 import org.apache.spark.sql.{Encoders, Row}
 import org.junit.Test
 
@@ -35,7 +34,7 @@ import org.junit.Test
   */
 @HBase("test")
 @HBase2(cluster = "test", scanPartitions = 3)
-class HBaseHadoopUnitTest extends BaseSparkCore with HBaseBaseTester {
+class HBaseHadoopUnitTest extends SparkCore with HBaseTester {
 
   /**
    * 基于saveAsNewAPIHadoopDataset封装，将rdd数据保存到hbase中

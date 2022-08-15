@@ -19,7 +19,7 @@ package com.zto.fire.examples.spark.hive
 
 import com.zto.fire.common.anno.Config
 import com.zto.fire.core.anno.connector.{Hive, Kafka}
-import com.zto.fire.spark.BaseSparkCore
+import com.zto.fire.spark.SparkCore
 
 /**
  * 基于Fire进行Spark Streaming开发
@@ -33,7 +33,7 @@ import com.zto.fire.spark.BaseSparkCore
 @Hive("test")
 // 配置消费的kafka信息
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
-object HiveMetadataTest extends BaseSparkCore {
+object HiveMetadataTest extends SparkCore {
   val sourceTable = "ods.mdb_md_dbs"
   val partitionTable = "dw.mdb_md_dbs_fire_orc"
   val multiPartitionTable = "tmp.mdb_md_dbs_fire_multi_partition_orc"

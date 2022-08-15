@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, PropUtils}
 import com.zto.fire.core.anno.connector.Kafka
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.util.FlinkUtils
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.DataStream
@@ -56,7 +56,7 @@ import org.apache.flink.streaming.api.scala.DataStream
 // @Config(Array("test.properties", "test2.properties"))
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
-object JdbcTest extends BaseFlinkStreaming {
+object JdbcTest extends FlinkStreaming {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "spark_test2"
 

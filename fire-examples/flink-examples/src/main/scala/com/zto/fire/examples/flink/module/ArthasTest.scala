@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.Kafka
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction
@@ -48,7 +48,7 @@ import org.apache.flink.util.Collector
 @Checkpoint(interval = 10, concurrent = 1, pauseBetween = 60, timeout = 60)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
-object ArthasTest extends BaseFlinkStreaming {
+object ArthasTest extends FlinkStreaming {
 
   /**
    * 业务逻辑代码，会被fire自动调用

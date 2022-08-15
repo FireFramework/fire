@@ -17,6 +17,7 @@
 
 package com.zto.fire.spark.conf
 
+import com.zto.fire.common.conf.FireFrameworkConf.FIRE_JOB_AUTO_START
 import com.zto.fire.core.conf.AnnoManager
 import com.zto.fire.spark.anno.{Streaming, StreamingDuration}
 
@@ -54,6 +55,7 @@ private[fire] class SparkAnnoManager extends AnnoManager {
     this.put("spark.streaming.kafka.maxRatePerPartition", streaming.maxRatePerPartition())
     this.put("spark.streaming.backpressure.initialRate", streaming.backpressureInitialRate())
     this.put("spark.rocket.pull.max.speed.per.partition", streaming.maxRatePerPartition())
+    this.put(FIRE_JOB_AUTO_START, streaming.autoStart())
   }
 
   /**

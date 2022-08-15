@@ -20,7 +20,7 @@ package com.zto.fire.examples.spark.datasource
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.spark.BaseSparkCore
+import com.zto.fire.spark.SparkCore
 import org.apache.spark.sql.SaveMode
 
 
@@ -68,7 +68,7 @@ import org.apache.spark.sql.SaveMode
     |spark.datasource.loadParam3=/user/hive/warehouse/hudi.db/hudi_bill_event_test3
     |spark.datasource.options.hoodie.datasource.write.recordkey.field3=id3
     |""")
-object DataSourceTest extends BaseSparkCore {
+object DataSourceTest extends SparkCore {
 
   override def process: Unit = {
     val ds = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])

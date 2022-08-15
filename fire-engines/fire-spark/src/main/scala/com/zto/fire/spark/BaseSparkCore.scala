@@ -22,7 +22,7 @@ import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.PropUtils
 
 /**
-  * 实时平台Spark通用父类
+  * Spark core通用父接口
   * Created by ChengLong on 2018-03-28.
   */
 class BaseSparkCore extends BaseSpark {

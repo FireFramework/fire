@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.Kafka
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.FlinkStreaming
 import org.apache.flink.api.scala._
 import org.apache.flink.table.functions.ScalarFunction
 
@@ -44,7 +44,7 @@ import org.apache.flink.table.functions.ScalarFunction
     |""")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
-object UDFTest extends BaseFlinkStreaming {
+object UDFTest extends FlinkStreaming {
   override def process: Unit = {
     val stream = this.fire.createKafkaDirectStream()
       .map(JSONUtils.parseObject[Student](_)).setParallelism(3)

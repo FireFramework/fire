@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.{Hive, Kafka}
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
 import org.apache.flink.api.scala._
 
@@ -50,7 +50,7 @@ import org.apache.flink.api.scala._
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 @Checkpoint(interval = 60, concurrent = 1, pauseBetween = 60, timeout = 60)
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
-object FlinkHiveTest extends BaseFlinkStreaming {
+object FlinkHiveTest extends FlinkStreaming {
 
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream().filter(json => JSONUtils.isJson(json))

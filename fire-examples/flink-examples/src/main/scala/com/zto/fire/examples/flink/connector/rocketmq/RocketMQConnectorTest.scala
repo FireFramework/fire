@@ -19,7 +19,7 @@ package com.zto.fire.examples.flink.connector.rocketmq
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.FlinkStreaming
 
 /**
  * RocketMQ connector
@@ -63,7 +63,7 @@ import com.zto.fire.flink.BaseFlinkStreaming
     |flink.sql.with.rocket.consumer.tag3=*
     |flink.sql.with.rocket.sink.parallelism3=1
     |""")
-object RocketMQConnectorTest extends BaseFlinkStreaming {
+object RocketMQConnectorTest extends FlinkStreaming {
 
   override def process: Unit = {
     val test = this.getClass.getProtectionDomain.getCodeSource.getLocation.getPath

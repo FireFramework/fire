@@ -18,14 +18,13 @@ private[fire] class SparkSqlExtensionsParserBase(sparkSession: SparkSession, par
    */
   def parsePlan(sqlText: String): LogicalPlan = {
     try {
-      this.parseExpression(sqlText)
+      sparkSession.sessionState.sqlParser.parseExpression(sqlText)
       SparkSqlParser.sqlParse(sqlText)
-      parser.parsePlan(sqlText)
     } catch {
       case e: Throwable =>
         ExceptionBus.post(e, sqlText)
-        throw e
     }
+    parser.parsePlan(sqlText)
   }
 
   /**

@@ -1,11 +1,10 @@
 package com.zto.fire.examples.spark.hive
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.{Hive, Kafka}
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.spark.BaseSparkStreaming
+import com.zto.fire.spark.SparkStreaming
 import org.apache.spark.sql.DataFrame
 
 
@@ -17,7 +16,7 @@ import org.apache.spark.sql.DataFrame
 @Hive("test")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
-object HiveRW extends BaseSparkStreaming {
+object HiveRW extends SparkStreaming {
 
   // 消息格式
   // {"age":16,"className":"Student","createTime":"2020-08-03 17:23:05","id":6,"length":15.0,"name":"root","sex":true}

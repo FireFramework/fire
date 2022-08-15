@@ -2,13 +2,13 @@
 
 package com.zto.fire.examples.flink.sql
 
-import com.zto.fire.flink.BaseFlinkStreaming
+import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire._
 
 /**
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-object SimpleSqlDemo extends BaseFlinkStreaming {
+object SimpleSqlDemo extends FlinkStreaming {
 
   override def process: Unit = {
     this.fire.sql(

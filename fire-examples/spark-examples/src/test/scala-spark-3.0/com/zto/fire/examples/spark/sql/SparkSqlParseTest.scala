@@ -19,7 +19,7 @@ package com.zto.fire.examples.spark.sql
 
 import com.zto.fire.core.anno.connector.Hive
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.spark.BaseSparkCore
+import com.zto.fire.spark.SparkCore
 import com.zto.fire.spark.sql.SparkSqlParser
 import org.junit.{Before, Test}
 
@@ -33,7 +33,7 @@ import scala.util.Try
  * @since 2.2.1
  */
 @Hive("test")
-class SparkSqlParseTest extends BaseSparkCore {
+class SparkSqlParseTest extends SparkCore {
 
   @Before
   def before: Unit = {

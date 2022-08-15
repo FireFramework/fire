@@ -22,7 +22,7 @@ import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
 import com.zto.fire.core.anno.connector.{Jdbc, Jdbc2}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.jdbc.JdbcConnector
-import com.zto.fire.spark.BaseSparkCore
+import com.zto.fire.spark.SparkCore
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.spark.sql.SaveMode
 
@@ -34,7 +34,7 @@ import org.apache.spark.sql.SaveMode
  */
 @Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
 @Jdbc2(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
-object JdbcTest extends BaseSparkCore {
+object JdbcTest extends SparkCore {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "t_cluster_info"
   lazy val tableName3 = "t_cluster_status"
