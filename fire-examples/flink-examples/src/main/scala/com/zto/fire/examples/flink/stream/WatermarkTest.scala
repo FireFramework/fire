@@ -89,8 +89,6 @@ object WatermarkTest extends FlinkStreaming {
     windowDStream.print().setParallelism(1)
     // 获取由于延迟太久而被丢弃的数据
     windowDStream.getSideOutput[(Student, Long)](this.outputTag.asInstanceOf[OutputTag[(Student, Long)]]).map(t => ("丢弃", t)).print()
-
-    this.fire.start
   }
 
   /**

@@ -79,7 +79,7 @@ object KafkaConsumer extends FlinkStreaming {
         |)
         |""".stripMargin)
 
-    this.fire.sql(
+    sql(
       """
         |create view kafka_join
         |as
@@ -94,7 +94,7 @@ object KafkaConsumer extends FlinkStreaming {
         |where k1.bage > 10
         |""".stripMargin)
 
-    this.fire.sql(
+    sql(
       """
         |select * from kafka_join
         |""".stripMargin).print()
@@ -122,12 +122,12 @@ object KafkaConsumer extends FlinkStreaming {
         |)
         |""".stripMargin)
 
-    this.fire.sql(
+    sql(
       """
         |create table `print` with('connector' = 'print') like kafka (EXCLUDING ALL)
         |""".stripMargin)
 
-    this.fire.sql(
+    sql(
       """
         |insert into print select * from kafka
         |""".stripMargin)

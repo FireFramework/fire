@@ -74,7 +74,7 @@ object DataSourceTest extends SparkCore {
     val ds = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])
     ds.createOrReplaceTempView("test")
 
-    val dataFrame = this.fire.sql("select * from test")
+    val dataFrame = sql("select * from test")
 
     // 一、 dataFrame.write.format.mode.save中的所有参数均可通过配置文件指定
     // dataFrame.writeEnhance()

@@ -135,7 +135,5 @@ object HBaseTest extends FlinkStreaming {
     this.testStreamHBaseSink2(stream)
     this.testTableHBaseSink2(stream)
     this.testHBase
-
-    this.fire.start
   }
 }

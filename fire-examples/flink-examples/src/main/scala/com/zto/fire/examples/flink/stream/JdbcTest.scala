@@ -145,7 +145,5 @@ object JdbcTest extends FlinkStreaming {
     this.testTableJdbcSink(stream)
     this.testStreamJdbcSink(stream)
     // this.testJdbc
-
-    this.fire.start("JdbcTest")
   }
 }

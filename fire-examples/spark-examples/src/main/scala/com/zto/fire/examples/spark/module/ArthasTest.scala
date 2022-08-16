@@ -77,7 +77,6 @@ object ArthasTest extends SparkStreaming {
         |  order_create_date>= cast( date_add(current_date,-10) as timestamp )
         |  AND order_create_date< cast( date_add(current_date,1) as timestamp )
         |""".stripMargin).show(100000, false)
-    this.fire.start
   }
 
   def printConf: Unit = {

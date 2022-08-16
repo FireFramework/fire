@@ -156,7 +156,5 @@ object FlinkStateTest extends FlinkStreaming {
     // this.testFunctionState
     // 演示mapWithState的使用
     // this.testWithState
-
-    this.fire.start("Flink State Test")
   }
 }

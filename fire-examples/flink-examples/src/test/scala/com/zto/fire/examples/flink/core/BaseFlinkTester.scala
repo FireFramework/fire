@@ -39,6 +39,5 @@ trait BaseFlinkTester extends FlinkStreaming {
 
   @After
   override def after: Unit = {
-    // this.fire.start("JdbcTest")
   }
 }

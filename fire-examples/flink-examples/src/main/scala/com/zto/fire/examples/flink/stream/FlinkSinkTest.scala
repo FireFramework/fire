@@ -36,8 +36,6 @@ object FlinkSinkTest extends FlinkStreaming {
   override def process: Unit = {
     val dstream = this.fire.createDirectStream().map(json => JSONUtils.parseObject[Student](json))
     dstream.map(t => t.getName).addSink(new MySink).setParallelism(1)
-
-    this.fire.start
   }
 }
 

@@ -69,7 +69,6 @@ object ArthasTest extends FlinkStreaming {
       }
 
     }).print("name")
-    this.fire.start
   }
 
   def printConf: Unit = {

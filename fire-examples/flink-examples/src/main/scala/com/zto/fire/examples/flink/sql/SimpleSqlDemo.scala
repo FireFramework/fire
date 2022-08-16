@@ -11,7 +11,7 @@ import com.zto.fire._
 object SimpleSqlDemo extends FlinkStreaming {
 
   override def process: Unit = {
-    this.fire.sql(
+    sql(
       """
         |CREATE TABLE t_student (
         |  `table` STRING,
@@ -28,7 +28,7 @@ object SimpleSqlDemo extends FlinkStreaming {
         |  'format' = 'json'										-- 指定解析的kafka消息为json格式
         |)
         |""".stripMargin)
-    this.fire.sql(
+    sql(
       """
         |create view v_student as
         |select
@@ -40,7 +40,7 @@ object SimpleSqlDemo extends FlinkStreaming {
         |	order_time as create_time
         |from t_student t
         |""".stripMargin)
-    this.fire.sql(
+    sql(
       """
         |CREATE TABLE sink (
         |  id BIGINT,
@@ -60,7 +60,7 @@ object SimpleSqlDemo extends FlinkStreaming {
         |   'sink.max-retries' = '3'								-- 插入失败时重试几次
         |)
         |""".stripMargin)
-    this.fire.sql(
+    sql(
       """
         |CREATE TABLE sink2 (
         |  id BIGINT,
@@ -81,18 +81,17 @@ object SimpleSqlDemo extends FlinkStreaming {
         |)
         |""".stripMargin)
 
-    this.fire.sql("""
+    sql("""
                                 |insert into sink
                                 |select id, name, age, sum(1) as `count`
                                 |from v_student
                                 |group by id,name,age
                                 |""".stripMargin)
-    this.fire.sql("""
+    sql("""
                                 |insert into sink2
                                 |select id, name, age, sum(1) as `count`
                                 |from v_student
                                 |group by id,name,age
                                 |""".stripMargin).print()
-    this.fire.start("test")
   }
 }

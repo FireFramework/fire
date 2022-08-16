@@ -60,8 +60,6 @@ object FireAccTest extends SparkStreaming {
 
     // 定时打印fire内置累加器中的值
     ThreadUtils.schedule(this.printAcc, 0, 10, true, TimeUnit.MINUTES)
-
-    this.fire.start
   }
 
   /**

@@ -37,12 +37,12 @@ object HiveRW extends FlinkStreaming {
 
     this.ddl
 
-    this.fire.sql(
+    sql(
       """
         |insert into table tmp.baseorganize_fire select * from dim.baseorganize limit 10
         |""".stripMargin)
 
-    this.fire.sql(
+    sql(
       """
         |select * from tmp.baseorganize_fire
         |""".stripMargin).print()
@@ -52,12 +52,12 @@ object HiveRW extends FlinkStreaming {
    * 创建表
    */
   def ddl: Unit = {
-    this.fire.sql(
+    sql(
       """
         |drop table if exists tmp.baseorganize_fire
         |""".stripMargin)
 
-    this.fire.sql(
+    sql(
       """
         |create table tmp.baseorganize_fire (
         |    id bigint,

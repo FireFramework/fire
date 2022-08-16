@@ -63,7 +63,6 @@ object ConfigCenterTest extends FlinkStreaming {
       }
 
     }).print("name")
-    this.fire.start
   }
 
   /**

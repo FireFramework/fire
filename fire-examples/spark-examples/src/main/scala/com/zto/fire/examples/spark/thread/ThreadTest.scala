@@ -56,8 +56,6 @@ object ThreadTest extends SparkStreaming {
     dstream.foreachRDD(rdd => {
       println("count--> " + rdd.count())
     })
-
-    this.fire.start
   }
 
   /**
@@ -72,7 +70,7 @@ object ThreadTest extends SparkStreaming {
     */
   def showSchema: Unit = {
     println(s"${DateFormatUtils.formatCurrentDateTime()}--------------> atFixRate <----------------")
-    this.fire.sql("use tmp")
-    this.fire.sql("show tables").show(false)
+    sql("use tmp")
+    sql("show tables").show(false)
   }
 }

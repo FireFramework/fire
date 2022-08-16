@@ -44,19 +44,18 @@ object HiveRW extends SparkStreaming {
       val df = this.fire.createDataFrame(rdd, classOf[Student])
       insert(df)
     })
-    this.fire.start
   }
 
   /**
    * 创建表
    */
   def ddl: Unit = {
-    this.fire.sql(
+    sql(
       """
         |drop table if exists tmp.baseorganize_fire
         |""".stripMargin)
 
-    this.fire.sql(
+    sql(
       """
         |create table tmp.baseorganize_fire (
         |    id bigint,
@@ -71,11 +70,11 @@ object HiveRW extends SparkStreaming {
    * 动态分区写入
    */
   def insert(df: DataFrame): Unit = {
-    this.fire.sql("set hive.exec.dynamic.partition = true")
-    this.fire.sql("set hive.exec.dynamic.partition.mode=nonstrict")
+    sql("set hive.exec.dynamic.partition = true")
+    sql("set hive.exec.dynamic.partition.mode=nonstrict")
     df.createOrReplaceTempView("t_student")
 
-    this.fire.sql(
+    sql(
       """
         |insert into table tmp.baseorganize_fire
         |select
@@ -86,7 +85,7 @@ object HiveRW extends SparkStreaming {
         |from t_student
         |""".stripMargin)
 
-    this.fire.sql(
+    sql(
       """
         |select
         | *,

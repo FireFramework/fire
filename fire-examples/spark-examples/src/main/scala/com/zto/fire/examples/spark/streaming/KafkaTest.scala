@@ -59,9 +59,9 @@ object KafkaTest extends SparkStreaming {
       // 一、将json解析并注册为临时表，默认不cache临时表
       rdd.kafkaJson2Table("test", cacheTable = true)
       // toLowerDF表示将大写的字段转为小写
-      this.fire.sql("select * from test").toLowerDF.show(1, false)
-      /*this.fire.sql("select after.* from test").toLowerDF.show(1, false)
-      this.fire.sql("select after.* from test where after.order_type=1").toLowerDF.show(1, false)*/
+      sql("select * from test").toLowerDF.show(1, false)
+      /*sql("select after.* from test").toLowerDF.show(1, false)
+      sql("select after.* from test where after.order_type=1").toLowerDF.show(1, false)*/
 
       // 二、直接将json按指定的schema解析（只解析after），fieldNameUpper=true表示按大写方式解析，并自动转为小写
       // rdd.kafkaJson2DF(classOf[OrderCommon], fieldNameUpper = true).show(1, false)
@@ -78,8 +78,6 @@ object KafkaTest extends SparkStreaming {
       println("count=" + rdd.count())
     })
     dstream3.print(1)
-
-    this.fire.start
   }
 
   @Scheduled(fixedInterval = 60 * 1000, scope = "all")

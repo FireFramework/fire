@@ -36,15 +36,15 @@ class HiveUnitTest extends SparkCore with SparkTester {
   @Test
   @TestStep(step = 1, desc = "测试列出所有的数据库名称")
   def testShowDatabases: Unit = {
-    val df = this.fire.sql("show databases")
+    val df = sql("show databases")
     assert(df.count() > 3)
   }
 
   @Test
   @TestStep(step = 1, desc = "测试列出tmp库下所有的hive表名称")
   def testShowTables: Unit = {
-    this.fire.sql("use tmp")
-    val df = this.fire.sql("show tables")
+    sql("use tmp")
+    val df = sql("show tables")
     assert(df.count() > 10)
   }
 }

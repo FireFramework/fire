@@ -40,7 +40,7 @@ object MapTest extends BaseStructuredStreaming {
     this.fire.loadKafkaParseJson()
 
     // 将字段转为与JavaBean对应的类型
-    val sqlDF = this.fire.sql("select cast(age as int), createTime, cast(length as decimal), name, rowKey, cast(sex as boolean) from kafka")
+    val sqlDF = sql("select cast(age as int), createTime, cast(length as decimal), name, rowKey, cast(sex as boolean) from kafka")
 
     // 执行map操作
     sqlDF.map(row => {

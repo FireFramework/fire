@@ -48,7 +48,5 @@ object JdbcStreamingTest extends SparkStreaming {
         logInfo("查询结果：" + retVal)
       })
     })
-
-    this.fire.start
   }
 }

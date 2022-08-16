@@ -41,10 +41,10 @@ object ClickhouseTest extends FlinkStreaming {
    * 业务逻辑代码，会被fire自动调用
    */
   override def process: Unit = {
-    // this.fire.sql(DDL.createStudent("t_kafka", 10))
+    // sql(DDL.createStudent("t_kafka", 10))
     val dstream = this.fire.createKafkaDirectStream().filter(JSONUtils.isJson(_)).map(JSONUtils.parseObject[Student](_))
     dstream.createOrReplaceTempView("t_kafka")
-    this.fire.sql(
+    sql(
       """
         |CREATE TABLE t_user (
         |    `id` BIGINT,
@@ -67,7 +67,7 @@ object ClickhouseTest extends FlinkStreaming {
         |)
         |""".stripMargin)
 
-    this.fire.sql(
+    sql(
       """
         |insert into t_user
         |select
@@ -78,7 +78,7 @@ object ClickhouseTest extends FlinkStreaming {
         |from t_kafka
         |""".stripMargin)
 
-    this.fire.sql(
+    sql(
       """
         |select
         |   id, name, age,

@@ -60,7 +60,5 @@ object FlinkRetractStreamTest extends FlinkStreaming {
     // 使用toRetractStream后会将之前的旧的聚合结果重新发送一次，并且tuple中的flag标记为false，然后再发送一条正确的结果
     // 类似于structured streaming中自动维护结果表，并进行update操作
     this.tableEnv.asInstanceOf[StreamTableEnvironment].toRetractStream[Row](table).print()
-
-    this.fire.start
   }
 }

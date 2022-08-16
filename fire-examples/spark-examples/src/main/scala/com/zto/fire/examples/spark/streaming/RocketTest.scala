@@ -44,6 +44,5 @@ object RocketTest extends SparkStreaming {
       println("rocket.brokers.name=>" + this.conf.getString("rocket.brokers.name"))
       studentRDD.toDF().jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
     })(reTry = 5, exitOnFailure = true)
-    this.fire.start()
   }
 }

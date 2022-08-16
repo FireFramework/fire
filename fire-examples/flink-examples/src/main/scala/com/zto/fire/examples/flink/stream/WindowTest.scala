@@ -48,8 +48,6 @@ object WindowTest extends FlinkStreaming {
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t)).map(s => (s.getName, s.getAge))
     this.testTimeWindow(dstream)
-
-    this.fire.start
   }
 
   /**

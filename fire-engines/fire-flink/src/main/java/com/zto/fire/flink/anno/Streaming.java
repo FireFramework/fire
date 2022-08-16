@@ -84,5 +84,15 @@ public @interface Streaming {
     /**
      * 是否自动提交job：call env.execute()
      */
-    boolean autoStart() default false;
+    boolean autoStart() default true;
+
+    /**
+     * 任务的并行度
+     */
+    int parallelism() default -1;
+
+    /**
+     * 是否禁用OperatorChaining
+     */
+    boolean disableOperatorChaining() default false;
 }

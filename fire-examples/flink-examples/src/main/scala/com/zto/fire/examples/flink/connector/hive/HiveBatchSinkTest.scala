@@ -38,15 +38,15 @@ object HiveBatchSinkTest extends FlinkStreaming {
   // 具体的业务逻辑放到process方法中
   override def process: Unit = {
     this.fire.useHiveCatalog()
-    this.fire.sql("drop table if exists tmp.flink_hive_sink4")
-    this.fire.sql(
+    sql("drop table if exists tmp.flink_hive_sink4")
+    sql(
       """
         |CREATE TABLE if not exists tmp.flink_hive_sink4 (
         |   bill_num BIGINT,
         |   disorsen_man_code STRING
         | ) PARTITIONED BY (ds STRING) STORED AS textfile
         |""".stripMargin)
-    this.fire.sql(
+    sql(
       """
         |insert overwrite table tmp.flink_hive_sink4 select bill_num,disorsen_man_code,ds from dw.zto_rn_bill_statis limit 10
         |""".stripMargin)

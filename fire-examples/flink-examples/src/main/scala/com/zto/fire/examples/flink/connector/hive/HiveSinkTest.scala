@@ -35,7 +35,7 @@ object HiveSinkTest extends FlinkStreaming {
   // 具体的业务逻辑放到process方法中
   override def process: Unit = {
     this.fire.disableOperatorChaining()
-    this.fire.sql(
+    sql(
       """
         |CREATE TABLE t_student (
         |  `table` STRING,
@@ -50,7 +50,7 @@ object HiveSinkTest extends FlinkStreaming {
         |  'format' = 'json'										-- 指定解析的kafka消息为json格式
         |)
         |""".stripMargin)
-    this.fire.sql(
+    sql(
       """
         |create view v_student as
         |select
@@ -64,7 +64,7 @@ object HiveSinkTest extends FlinkStreaming {
         |""".stripMargin)
     this.fire.useHiveCatalog()
     println(this.tableEnv.getCurrentCatalog)
-    this.fire.sql(
+    sql(
       """
         |CREATE TABLE if not exists tmp.flink_hive_sink (
         |  id BIGINT,
@@ -76,7 +76,7 @@ object HiveSinkTest extends FlinkStreaming {
         |  'sink.partition-commit.policy.kind'='metastore,success-file'    -- 提交类型
         |)
         |""".stripMargin)
-    this.fire.sql(
+    sql(
       """
         |INSERT INTO TABLE hive.tmp.flink_hive_sink SELECT id, name, age, DATE_FORMAT(create_time, 'yyyyMMdd') FROM default_catalog.default_database.v_student
         |""".stripMargin)

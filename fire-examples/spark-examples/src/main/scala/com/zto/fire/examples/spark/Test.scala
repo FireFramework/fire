@@ -30,8 +30,7 @@ import com.zto.fire.spark.anno.Streaming
  */
 // 60s一个批，最大同时执行2个streaming批次，开启反压机制、每个分区每秒最大消费100条消息
 @Streaming(interval = 10, concurrent = 2, backpressure = true, maxRatePerPartition = 100)
-// 配置消费的kafka信息
-@Kafka(brokers = "bigdata_test", topics = "fire5", groupId = "fire")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object Test extends SparkStreaming {
 
   override def process: Unit = {

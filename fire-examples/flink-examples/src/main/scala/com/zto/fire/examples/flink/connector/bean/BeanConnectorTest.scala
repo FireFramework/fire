@@ -31,7 +31,7 @@ object BeanConnectorTest extends FlinkStreaming {
 
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream()
-    this.fire.sql(
+    sql(
       """
         |CREATE table source (
         |  id bigint,
@@ -49,7 +49,7 @@ object BeanConnectorTest extends FlinkStreaming {
         |   )
         |""".stripMargin)
 
-    this.fire.sql(
+    sql(
       """
         |CREATE table sink (
         |  id bigint,
@@ -64,11 +64,10 @@ object BeanConnectorTest extends FlinkStreaming {
         |   'table-name' = 'sink'
         |   )
         |""".stripMargin)
-    this.fire.sql(
+    sql(
       """
         |insert into sink select * from source
         |""".stripMargin)
     dstream.print()
-    this.fire.start
   }
 }

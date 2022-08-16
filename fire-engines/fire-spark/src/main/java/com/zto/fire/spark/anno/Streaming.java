@@ -34,7 +34,7 @@ public @interface Streaming {
     /**
      * 是否自动提交job：call startAwaitTermination()
      */
-    boolean autoStart() default false;
+    boolean autoStart() default true;
 
     /**
      * 并行执行的streaming批次数

@@ -51,7 +51,6 @@ object UDFTest extends FlinkStreaming {
     stream.createOrReplaceTempView("test")
     // 在sql中使用自定义的udf
     this.flink.sql("select appendFire(name), fire(age) from test").print()
-    this.fire.start
   }
 }
 

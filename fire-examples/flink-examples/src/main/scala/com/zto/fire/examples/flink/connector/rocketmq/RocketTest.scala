@@ -52,6 +52,5 @@ object RocketTest extends FlinkStreaming {
     // this.fire.createRocketMqPullStream()
 
     // 从另一个rocketmq中消费数据
-    this.fire.start
   }
 }

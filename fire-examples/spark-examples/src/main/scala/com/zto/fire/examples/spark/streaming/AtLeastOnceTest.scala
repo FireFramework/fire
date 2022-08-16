@@ -53,7 +53,5 @@ object AtLeastOnceTest extends SparkStreaming {
       println("kafka.brokers.name=>" + this.conf.getString("kafka.brokers.name"))
       studentRDD.toDF().jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 1)
     })
-
-    this.fire.start
   }
 }

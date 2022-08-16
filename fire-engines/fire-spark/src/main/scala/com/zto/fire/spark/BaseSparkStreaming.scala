@@ -64,7 +64,7 @@ trait BaseSparkStreaming extends BaseSpark {
    */
   def init(batchDuration: Long, isCheckPoint: Boolean, args: Array[String]): Unit = {
     this.init(batchDuration, isCheckPoint, null, args)
-    if (FireFrameworkConf.jobAutoStart && this.ssc.getState() == StreamingContextState.INITIALIZED) this.fire.start()
+    if (FireFrameworkConf.jobAutoStart && this.ssc.getState() == StreamingContextState.INITIALIZED) this.fire.start
   }
 
   /**

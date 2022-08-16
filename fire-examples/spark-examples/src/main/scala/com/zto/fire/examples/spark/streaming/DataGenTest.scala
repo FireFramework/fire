@@ -41,7 +41,5 @@ object DataGenTest extends SparkStreaming {
     // 方式二、通过实现generateFun函数来定义数据生成规则
     val dstream2 = this.fire.createDataGenStream(10, generateFun = Student.newStudentList())
     dstream2.print(1)
-
-    this.fire.start()
   }
 }

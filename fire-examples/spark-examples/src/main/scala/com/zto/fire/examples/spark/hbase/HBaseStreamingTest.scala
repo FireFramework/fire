@@ -37,7 +37,5 @@ object HBaseStreamingTest extends SparkStreaming {
         student2.foreach(t => logger.error("HBase2 Get结果：" + t))
       })
     })
-
-    this.fire.start()
   }
 }

@@ -39,7 +39,7 @@ object JdbcSinkTest extends BaseStructuredStreaming {
     val kafkaDataset = this.fire.loadKafkaParseJson()
     // 直接使用或sql
     /*kafkaDataset.print()
-    this.fire.sql("select * from kafka").print()*/
+    sql("select * from kafka").print()*/
 
     // jdbc的sql语句
     val insertSql = "insert into spark_test(name, age, createTime, length, sex, rowKey) values(?,?,?,?,?,?)"
@@ -50,7 +50,7 @@ object JdbcSinkTest extends BaseStructuredStreaming {
     kafkaDataset.select("data.*").jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex", "rowKey"), keyNum = 6)
 
     this.fire.createDataFrame(Student.newStudentList(), classOf[Student]).createOrReplaceTempViewCache("student")
-    this.fire.sql(
+    sql(
       """
         |select
         | t.name,

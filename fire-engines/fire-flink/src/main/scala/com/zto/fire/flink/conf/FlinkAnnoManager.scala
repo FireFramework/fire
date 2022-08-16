@@ -51,6 +51,8 @@ private[fire] class FlinkAnnoManager extends AnnoManager {
     this.put(FLINK_STREAM_CHECKPOINT_MODE, streaming.mode())
     this.put(streamCheckpointExternalized, streaming.cleanup())
     this.put(FIRE_JOB_AUTO_START, streaming.autoStart())
+    this.put(FLINK_DEFAULT_PARALLELISM, streaming.parallelism())
+    this.put(OPERATOR_CHAINING_ENABLE, streaming.disableOperatorChaining())
   }
 
   /**

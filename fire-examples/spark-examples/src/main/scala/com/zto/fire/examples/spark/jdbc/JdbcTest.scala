@@ -146,7 +146,7 @@ object JdbcTest extends SparkCore {
 
 
     df.createOrReplaceTempViewCache("student")
-    val sqlDF = this.fire.sql("select name, age, createTime from student where id>=1").repartition(1)
+    val sqlDF = sql("select name, age, createTime from student where id>=1").repartition(1)
     // 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
     sqlDF.jdbcBatchUpdate("insert into spark_test(name, age, createTime) values(?, ?, ?)", keyNum = 2)
     this.fire.jdbcTableLoadAll(this.tableName, keyNum = 2).show(100, false)

@@ -69,20 +69,5 @@ object FlinkAccTest extends FlinkStreaming {
         value
       }
     })
-
-    val result = this.fire.start
-
-    // 获取计数器中的值
-    val longCount = result.asInstanceOf[JobExecutionResult].getAccumulatorResult[Long]("LongCount")
-    println("累加值Long：" + longCount)
-    val doubleCount = result.asInstanceOf[JobExecutionResult].getAccumulatorResult[Double]("DoubleCount")
-    println("累加值Double：" + doubleCount)
-    val intCount = result.asInstanceOf[JobExecutionResult].getAccumulatorResult[Integer]("IntCount")
-    println("累加值IntCount：" + intCount)
-    val intCount2 = result.asInstanceOf[JobExecutionResult].getAccumulatorResult[Integer]("IntCount2")
-    println("累加值IntCount2：" + intCount2)
-    Thread.currentThread().join()
-
-    this.stop
   }
 }

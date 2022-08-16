@@ -54,8 +54,6 @@ object ConfigCenterTest extends SparkStreaming {
         JSONUtils.parseObject[Student](t.value())
       }).repartition(2).count()
     })
-
-    this.fire.start
   }
 
   /**

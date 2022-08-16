@@ -89,7 +89,7 @@ class HBaseHadoopUnitTest extends SparkCore with HBaseTester {
     val studentRDD = this.fire.createRDD(Student.newStudentList(), 2)
     this.fire.createDataFrame(studentRDD, classOf[Student]).createOrReplaceTempView("student")
     // 指定rowKey构建的函数
-    this.fire.sql("select age,createTime,id,length,name,sex from student").hbaseHadoopPutDFRow(this.tableName1, buildRowKey)
+    sql("select age,createTime,id,length,name,sex from student").hbaseHadoopPutDFRow(this.tableName1, buildRowKey)
     this.assertScan
   }
 

@@ -101,7 +101,6 @@ object JdbcUnitTest extends FlinkStreaming {
 
     // 执行增删改操作
     this.fire.jdbcUpdate(s"delete from $tableName")
-    this.fire.start("")
   }
 
 /*  @Test

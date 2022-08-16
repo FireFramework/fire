@@ -42,7 +42,7 @@ object FlinkSinkHiveTest extends FlinkStreaming {
       |{"table":"t_student", "order_time": "2021-07-30 15:58:59.181","before":{"id":5,"age":5,"name":"spark5","length":55.5,"createTime":"2021-07-29 11:35:55"},"after":{"id":5,"age":25,"name":"flink5","length":155.5,"createTime":"2021-07-29 09:35:30"}}
       |""".stripMargin
 
-    this.fire.sql(
+    sql(
       """
         |CREATE TABLE t_student (
         |  `table` STRING,
@@ -59,7 +59,7 @@ object FlinkSinkHiveTest extends FlinkStreaming {
         |  'format' = 'json'										-- 指定解析的kafka消息为json格式
         |)
         |""".stripMargin)
-    this.fire.sql(
+    sql(
       """
         |create view v_student as
         |select
@@ -73,8 +73,8 @@ object FlinkSinkHiveTest extends FlinkStreaming {
         |""".stripMargin)
     this.tableEnv.useHiveCatalog()
     println(this.tableEnv.getCurrentCatalog)
-    this.fire.sql("drop table if exists tmp.flink_hive_sink")
-    this.fire.sql(
+    sql("drop table if exists tmp.flink_hive_sink")
+    sql(
       """
         |CREATE TABLE if not exists tmp.flink_hive_sink (
         |  id BIGINT,
@@ -91,7 +91,7 @@ object FlinkSinkHiveTest extends FlinkStreaming {
         |  'sink.partition-commit.policy.kind'='metastore,success-file'    -- 提交类型
         |)
         |""".stripMargin)
-    this.fire.sql(
+    sql(
       """
         |INSERT INTO TABLE hive.tmp.flink_hive_sink SELECT id, name, age, DATE_FORMAT(order_time, 'yyyyMMdd') as ds FROM default_catalog.default_database.v_student
         |""".stripMargin)

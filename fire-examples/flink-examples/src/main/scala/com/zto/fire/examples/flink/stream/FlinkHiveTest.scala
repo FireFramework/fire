@@ -60,7 +60,7 @@ object FlinkHiveTest extends FlinkStreaming {
 
     // 2. 切换hive catalog以及方言，表示从hive中读取维表数据
     this.fire.useHiveCatalog()
-    val dimTable = this.fire.sqlQuery(
+    val dimTable = sql(
       """
         |select id,shortname
         |from tmp.baseorganize_flink
@@ -77,14 +77,12 @@ object FlinkHiveTest extends FlinkStreaming {
     // dimTable.createOrReplaceTempView("baseorganize")
 
     // 5. 关联流表与hive维表，当hive维表更新后flink会自动周期性的刷新维表数据，并体现在关联的结果中
-    this.fire.sql(
+    sql(
       s"""
         |select s.id,s.name,b.shortname
         |from student s
         |left join $dimTable b
         |on s.id=b.id
         |""".stripMargin).print()
-
-    this.fire.start
   }
 }
