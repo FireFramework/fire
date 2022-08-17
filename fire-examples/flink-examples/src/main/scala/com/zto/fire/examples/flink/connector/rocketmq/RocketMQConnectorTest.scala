@@ -20,7 +20,6 @@ package com.zto.fire.examples.flink.connector.rocketmq
 import com.zto.fire.core.anno.lifecycle.{Step1, Step2, Step3}
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
-import com.zto.fire._
 
 /**
  * RocketMQ connector

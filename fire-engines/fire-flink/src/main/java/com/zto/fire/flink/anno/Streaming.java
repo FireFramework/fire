@@ -95,4 +95,9 @@ public @interface Streaming {
      * 是否禁用OperatorChaining
      */
     boolean disableOperatorChaining() default false;
+
+    /**
+     * 状态的TTL时间（day）
+     */
+    int stateTTL() default 31;
 }
