@@ -405,4 +405,11 @@ public class ReflectionUtils {
         }
         return retVal;
     }
+
+    /**
+     * 获取指定类所在的jar包
+     */
+    public static String getClassInJar(Class clazz) {
+        return clazz.getProtectionDomain().getCodeSource().getLocation().getFile();
+    }
 }

@@ -19,7 +19,7 @@ package com.zto.fire.spark
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
-import com.zto.fire.common.util.{OSUtils, PropUtils}
+import com.zto.fire.common.util.{OSUtils, PropUtils, SQLUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.spark.acc.AccumulatorManager
@@ -32,7 +32,7 @@ import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.sql.catalog.Catalog
-import org.apache.spark.sql.{SQLContext, SparkSession}
+import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 import org.apache.spark.streaming.{StreamingContext, StreamingContextState}
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -46,7 +46,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
   private[fire] var _conf: SparkConf = _
   protected[fire] var _spark: SparkSession = _
   protected lazy val spark, fire: SparkSession = _spark
-  protected lazy val sql = _spark.sql _
+  protected lazy val sql = this.executeSql _
   protected[fire] var sc: SparkContext = _
   protected[fire] var catalog: Catalog = _
   protected[fire] var ssc: StreamingContext = _
@@ -241,4 +241,11 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
    * true：校验成功 false：校验失败
    */
   override def sqlLegal(sql: JString): Boolean = SparkUtils.sqlLegal(sql)
+
+  /**
+   * 执行多条sql语句，以分号分割
+   */
+  private[this] def executeSql(sql: String): DataFrame = {
+    SQLUtils.executeSql(sql) (statement => _spark.sql(statement)).get
+  }
 }

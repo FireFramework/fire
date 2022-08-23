@@ -72,6 +72,11 @@ object PropUtils extends Logging {
   }
 
   /**
+   * 获取配置信息
+   */
+  def apply(key: String, keyNum: Int = 1): String = this.getString(key, "", keyNum = keyNum)
+
+  /**
    * 获取完整的配置文件名称
    */
   private[this] def getFullName(fileName: String): String = if (fileName.endsWith(".properties")) fileName else s"$fileName.properties"

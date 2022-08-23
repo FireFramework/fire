@@ -18,6 +18,7 @@
 package com.zto.fire.flink.util
 
 import com.google.common.collect.HashBasedTable
+import com.zto.fire.{JHashMap, JStringBuilder, noEmpty}
 import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.util._
 import com.zto.fire.flink.bean.FlinkTableSchema
@@ -356,4 +357,101 @@ object FlinkUtils extends Serializable with Logging {
    * 获取flink版本号
    */
   def getVersion: String = EnvironmentInformation.getVersion
+
+  /**
+   * 替换sql中with表达式的value部分
+   * 如果配置中有与sql中相同的信息，则会被替换
+   *
+   * @param originalSql
+   * 原始含有敏感信息的SQL语句
+   * @return
+   * 替换敏感信息后的SQL语句
+   */
+  def sqlWithConfReplace(originalSql: String): String = {
+    if (!FireFlinkConf.sqlWithReplaceModeEnable) return originalSql
+    var replacedSql = originalSql
+    val repMap = new JHashMap[String, String]()
+
+    // 正则匹配with表达式中的value部分
+    RegularUtils.withValueReg.findAllMatchIn(replacedSql).foreach(matchStr => {
+      val withValue = matchStr.matched
+      if (noEmpty(withValue)) {
+        val matchValue = RegularUtils.valueReg.findFirstIn(withValue)
+        if (matchValue.isDefined) {
+          val oldValue = matchValue.get
+          // 判断sql中的值与配置信息是否有匹配，存在匹配项则放入到map中等待下一步批量替换
+          val confValue = PropUtils.getString(matchValue.get.replace("'", ""), "")
+          if (noEmpty(confValue)) {
+            val replacedValue = if (noEmpty(confValue)) confValue else oldValue
+            repMap.put(oldValue, s"'${replacedValue}'")
+          }
+        }
+      }
+    })
+
+    // 将存在配置的值进行替换
+    repMap.foreach(kv => {
+      replacedSql = replacedSql.replace(kv._1, kv._2)
+    })
+
+    replacedSql
+  }
+
+  /**
+   * 替换sql中with表达式的options
+   * 包含value变量替换与datasource数据源整体替换
+   *
+   * @param originalSql
+   * 原始含有敏感信息的SQL语句
+   * @return
+   * 替换敏感信息后的SQL语句
+   */
+  def sqlWithReplace(originalSql: String): String = {
+    val replacedSql = this.replaceSqlAlias(this.sqlWithConfReplace(originalSql))
+    logger.debug("Flink Sql with options替换成功，最终SQL：" + replacedSql)
+    replacedSql
+  }
+
+  /**
+   * 替换Flink Sql with表达式中的options选项，规则如下：
+   *
+   * 获取所有flink.sql.with.为前缀的配置信息如：
+   * flink.sql.with.bill_db.connector	=	mysql
+   * flink.sql.with.bill_db.url			  =	jdbc:mysql://localhost:3306/fire
+   * 上述配置标识定义名为bill_db的数据源，配置了两个options选项分别为：
+   * connector	=	mysql
+   * url			  =	jdbc:mysql://localhost:3306/fire
+   * sql中即可通过 'datasource'='bill_db' 引用到上述两项option
+   */
+  def replaceSqlAlias(sql: String): String = {
+    if (!FireFlinkConf.sqlWithReplaceModeEnable) return sql
+
+    var replacedSql = sql
+    val matchDatasource = RegularUtils.withDatasourceReg.findFirstIn(sql)
+    if (matchDatasource.isDefined) {
+      val matchValue = RegularUtils.withValueReg.findFirstIn(matchDatasource.get)
+      if (matchValue.isDefined) {
+        // 获取 'datasource'='value' 中的value值
+        val datasource = matchValue.get.replaceAll("=", "").replace("'", "").trim
+        if (noEmpty(datasource)) {
+          val optionsText = new JStringBuilder
+          FireFlinkConf.flinkSqlWithOptions.foreach(options => {
+            if (options._1.startsWith(s"${datasource}.")) {
+              // 将配置文件中定义的数据源options拼接成flink sql with字句中的options：'key' = 'value'
+              optionsText.append(s"""\t'${options._1.replace(s"${datasource}.", "")}'='${options._2}',\n""")
+            }
+          })
+
+          val optionsList = optionsText.toString
+          if (noEmpty(optionsList)) {
+            // 移除动态拼接的option列表中最后一行的逗号
+            val replaceLast = optionsList.substring(0, optionsList.lastIndexOf(","))
+            replacedSql = RegularUtils.withDatasourceReg.replaceFirstIn(sql, replaceLast)
+          }
+        }
+      }
+    }
+
+    replacedSql
+  }
 }

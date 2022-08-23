@@ -62,7 +62,7 @@ trait BaseFire extends Logging {
   // 默认的任务名称为类名
   protected[fire] var appName: JString = this.driverClass
   // 配置信息
-  protected lazy val conf = PropUtils
+  protected lazy val conf, $ = PropUtils
   this.boot()
 
   /**
