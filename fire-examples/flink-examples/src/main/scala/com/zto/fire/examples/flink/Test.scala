@@ -19,16 +19,22 @@ package com.zto.fire.examples.flink
 
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
+import org.apache.flink.api.scala._
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.core.anno.lifecycle.Process
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
-import org.apache.flink.api.scala._
 
-@Streaming(interval = 100, unaligned = true) // 100s做一次checkpoint，开启非对齐checkpoint
-@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Config(
+  """
+    |spark.streaming.batch.duration=hello
+    |""")
+@Streaming(interval = 100, unaligned = true, parallelism = 30) // 100s做一次checkpoint，开启非对齐checkpoint
+@Kafka(brokers = "ip:9091,ip2:9092", topics = "fire", groupId = "fire")
+@Kafka2(brokers = "ip:9091,ip2:9092", topics = "fire2", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object Test extends FlinkStreaming {
 
@@ -38,9 +44,12 @@ object Test extends FlinkStreaming {
   @Process
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t))
+    this.fire.createKafkaDirectStream(keyNum = 2)
+    val list = new JHashMap[String, String]()
     dstream.map(t => {
       val id = t.getId / 1
+      this.conf.getString("spark.streaming.batch.duration")
       t
-    }).addSink(println(_))
+    }).createOrReplaceTempView("t_student")
   }
 }
