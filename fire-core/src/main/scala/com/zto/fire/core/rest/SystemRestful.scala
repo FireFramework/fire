@@ -26,6 +26,7 @@ import com.zto.fire.common.util._
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.bean.ArthasParam
 import com.zto.fire.core.plugin.ArthasDynamicLauncher
+import com.zto.fire.core.sync.SyncEngineConfHelper
 import com.zto.fire.predef.noEmpty
 import org.apache.commons.httpclient.Header
 import org.slf4j.{Logger, LoggerFactory}
@@ -57,7 +58,7 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
   protected def datasource(request: Request, response: Response): AnyRef = {
     try {
       this.logger.info(s"Ip address ${request.ip()} request /system/datasource")
-      val dataSource = JSONUtils.toJSONString(DatasourceManager.manager.datasourceMap)
+      val dataSource = JSONUtils.toJSONString(JavaConversions.seqAsJavaList(SyncEngineConfHelper.syncEngineMsg))
       this.logger.info(s"[DataSource] 获取数据源列表成功：counter=$dataSource")
       ResultMsg.buildSuccess(dataSource, "获取数据源列表成功")
     } catch {

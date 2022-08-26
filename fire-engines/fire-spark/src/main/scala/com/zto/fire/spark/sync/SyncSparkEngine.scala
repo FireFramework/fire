@@ -18,11 +18,16 @@
 package com.zto.fire.spark.sync
 
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{Logging, PropUtils}
+import com.zto.fire.common.util.{DatasourceManager, JSONUtils, Logging, OSUtils, PropUtils, ThreadUtils}
 import com.zto.fire.core.sync.SyncEngineConf
+import com.zto.fire.predef.noEmpty
+import com.zto.fire.spark.acc.AccumulatorManager
+import com.zto.fire.spark.acc.AccumulatorManager.{addString, logger}
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
+
+import java.util.concurrent.TimeUnit
 
 /**
  * 获取Spark引擎的所有配置信息
@@ -31,7 +36,7 @@ import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
  * @since 2.0.0
  * @create 2021-03-02 10:57
  */
-private[fire] class SyncSparkEngineConf extends SyncEngineConf {
+private[fire] class SyncSparkEngine extends SyncEngineConf {
 
   /**
    * 获取引擎的所有配置信息
@@ -43,9 +48,25 @@ private[fire] class SyncSparkEngineConf extends SyncEngineConf {
       Map.empty[String, String]
     }
   }
+
+  /**
+   * 在master端获取系统累加器中的数据
+   */
+  override def syncEngineMsg: List[String] = {
+    SparkAccumulatorManager.getValue
+  }
+
+  /**
+   * 同步引擎各个container的信息到累加器中
+   */
+  override def collect: Unit = {
+    if (SparkUtils.isDriver) {
+      AccumulatorManager.collectDatasource
+    }
+  }
 }
 
-object SyncSparkEngineConf extends Logging {
+object SyncSparkEngine extends Logging {
   // 用于广播spark配置信息
   private[fire] var broadcastConf: Broadcast[SparkConf] = _
 

@@ -40,7 +40,7 @@ private[fire] class DatasourceManager extends Logging {
   // 用于收集来自不同数据源的sql语句，后续会异步进行SQL解析，考虑到分布式场景下会有很多重复的SQL执行，因此使用了线程不安全的队列即可满足需求
   private lazy val dbSqlQueue = new ConcurrentLinkedQueue[DBSqlSource]()
   // 用于解析数据源的异步定时调度线程
-  private lazy val paserExecutor = ThreadUtils.createThreadPool("DatasourceManager", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
+  private lazy val parserExecutor = ThreadUtils.createThreadPool("DatasourceManager", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
   private var parseCount = 0
   // 用于收集各实时引擎执行的sql语句
   this.sqlParse()
@@ -50,13 +50,13 @@ private[fire] class DatasourceManager extends Logging {
    */
   private[this] def sqlParse(): Unit = {
     if (buriedPointDatasourceEnable) {
-      this.paserExecutor.scheduleWithFixedDelay(new Runnable {
+      this.parserExecutor.scheduleWithFixedDelay(new Runnable {
         override def run(): Unit = {
           parseCount += 1
 
-          if (parseCount >= buriedPointDatasourceCount && !paserExecutor.isShutdown) {
+          if (parseCount >= buriedPointDatasourceCount && !parserExecutor.isShutdown) {
             logger.info(s"4. 异步解析实时血缘的定时任务采样共计：${buriedPointDatasourceCount}次，即将退出异步线程")
-            paserExecutor.shutdown()
+            parserExecutor.shutdown()
           }
 
           // 1. 解析jdbc sql语句

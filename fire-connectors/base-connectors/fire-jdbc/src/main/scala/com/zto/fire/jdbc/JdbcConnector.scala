@@ -61,19 +61,19 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
       // 支持url和别名两种配置方式
       this.url = if (isEmpty(FireJdbcConf.jdbcUrl(keyNum)) && noEmpty(this.conf, this.conf.url)) this.conf.url else FireJdbcConf.jdbcUrl(keyNum)
       require(noEmpty(this.url), s"数据库url不能为空，keyNum=${this.keyNum}")
-      val driverClass = if (isEmpty(FireJdbcConf.driverClass(keyNum)) && noEmpty(this.conf, this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
-      val autoDriver = if (isEmpty(driverClass)) DBUtils.parseDriverByUrl(this.url) else  driverClass
+      val driverClass = if (isEmpty(FireJdbcConf.driverClass(keyNum)) && noEmpty(this.conf) && noEmpty(this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
+      val autoDriver = if (isEmpty(driverClass)) DBUtils.parseDriverByUrl(this.url) else driverClass
       require(noEmpty(autoDriver), s"数据库driverClass不能为空，keyNum=${this.keyNum}")
       this.username = if (isEmpty(FireJdbcConf.user(keyNum)) && noEmpty(this.conf, this.conf.username)) this.conf.username else FireJdbcConf.user(keyNum)
       val password = if (isEmpty(FireJdbcConf.password(keyNum)) && noEmpty(this.conf, this.conf.password)) this.conf.password else FireJdbcConf.password(keyNum)
       // 识别数据源类型是oracle、mysql等
-      this.dbType = DBUtils.dbTypeParser(driverClass, this.url)
+      this.dbType = DBUtils.dbTypeParser(autoDriver, this.url)
       logger.info(s"Fire框架识别到当前jdbc数据源标识为：${this.dbType}，keyNum=${this.keyNum}")
 
       // 创建c3p0数据库连接池实例
       val pool = new ComboPooledDataSource(true)
       pool.setJdbcUrl(this.url)
-      pool.setDriverClass(driverClass)
+      pool.setDriverClass(autoDriver)
       if (noEmpty(this.username)) pool.setUser(this.username)
       if (noEmpty(password)) pool.setPassword(password)
       pool.setMaxPoolSize(FireJdbcConf.maxPoolSize(keyNum))

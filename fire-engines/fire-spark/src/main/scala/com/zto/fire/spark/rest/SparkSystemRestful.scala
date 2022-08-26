@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.{ErrorCode, RequestMethod}
-import com.zto.fire.common.util.{ExceptionBus, _}
+import com.zto.fire.common.util._
 import com.zto.fire.core.rest.{RestCase, SystemRestful}
 import com.zto.fire.spark.{BaseSpark, bean}
 import org.apache.commons.lang3.StringUtils
@@ -31,7 +31,7 @@ import com.zto.fire._
 import com.zto.fire.core.bean.ArthasParam
 import com.zto.fire.spark.bean.{ColumnMeta, FunctionMeta, SparkInfo}
 import com.zto.fire.spark.plugin.SparkArthasLauncher
-import com.zto.fire.spark.sync.SyncSparkEngineConf
+import com.zto.fire.spark.sync.SyncSparkEngine
 
 import java.util
 
@@ -82,7 +82,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       if (ValueUtils.noEmpty(confMap)) {
         PropUtils.setProperties(confMap)
         this.baseSpark._conf.setAll(PropUtils.settings)
-        SyncSparkEngineConf.syncDynamicConf(this.baseSpark.sc, this.baseSpark._conf)
+        SyncSparkEngine.syncDynamicConf(this.baseSpark.sc, this.baseSpark._conf)
       }
       ResultMsg.buildSuccess("配置信息已更新", ErrorCode.SUCCESS.toString)
     } catch {

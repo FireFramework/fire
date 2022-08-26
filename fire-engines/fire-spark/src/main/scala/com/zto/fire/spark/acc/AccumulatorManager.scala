@@ -31,7 +31,7 @@ import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
 
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, TimeUnit}
 import scala.collection.mutable
 
 /**
@@ -44,6 +44,14 @@ private[fire] object AccumulatorManager extends Logging  {
   // 累加器名称，含有fire的名字将会显示在webui中
   private[this] val counterLabel = "fire-counter"
   private[fire] val counter = new LongAccumulator
+
+  // String累加器
+  private[this] val stringAccumulatorLabel = "stringAccumulator"
+  private[fire] val stringAccumulator = new StringAccumulator
+
+  // 同步累加器
+  private[this] val syncAccumulatorLabel = "syncAccumulator"
+  private[fire] val syncAccumulator = new SyncAccumulator
 
   // 日志累加器
   private[this] val logAccumulatorLabel = "logAccumulator"
@@ -62,7 +70,7 @@ private[fire] object AccumulatorManager extends Logging  {
   private[fire] val envAccumulator = new EnvironmentAccumulator
 
   // 累加器注册列表
-  private[this] val accMap = Map(this.logAccumulatorLabel -> this.logAccumulator, this.counterLabel -> this.counter, this.multiCounterLabel -> this.multiCounter, this.multiTimerLabel -> this.multiTimer, this.envAccumulatorLabel -> this.envAccumulator)
+  private[this] val accMap = Map(this.syncAccumulatorLabel -> this.syncAccumulator, this.stringAccumulatorLabel -> this.stringAccumulator, this.logAccumulatorLabel -> this.logAccumulator, this.counterLabel -> this.counter, this.multiCounterLabel -> this.multiCounter, this.multiTimerLabel -> this.multiTimer, this.envAccumulatorLabel -> this.envAccumulator)
 
   // 获取当前任务的全类名
   private[this] lazy val jobClassName = SparkEnv.get.conf.get(FireFrameworkConf.DRIVER_CLASS_NAME, "")
@@ -131,6 +139,50 @@ private[fire] object AccumulatorManager extends Logging  {
   }
 
   /**
+   * 将系统信息累加到同步累加器中
+   *
+   * @param json
+   * 通信消息
+   */
+  private[fire] def addSync(json: String): Unit = {
+    if (isEmpty(json)) return
+    if (FireUtils.isSparkEngine) {
+      val env = SparkEnv.get
+      if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
+        val syncAccumulator = SparkEnv.get.conf.get(this.syncAccumulatorLabel, "")
+        if (StringUtils.isNotBlank(syncAccumulator)) {
+          val syncAcc: SyncAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(syncAccumulator)))
+          syncAcc.add(json)
+        }
+      } else {
+        this.syncAccumulator.add(json)
+      }
+    }
+  }
+
+  /**
+   * 将字符串等累加到String累加器中
+   *
+   * @param str
+   * 字符串（json）
+   */
+  def addString(str: String): Unit = {
+    if (isEmpty(str)) return
+    if (FireUtils.isSparkEngine) {
+      val env = SparkEnv.get
+      if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
+        val stringAccumulator = SparkEnv.get.conf.get(this.stringAccumulatorLabel, "")
+        if (StringUtils.isNotBlank(stringAccumulator)) {
+          val logAcc: StringAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(stringAccumulator)))
+          logAcc.add(str)
+        }
+      } else {
+        this.stringAccumulator.add(str)
+      }
+    }
+  }
+
+  /**
    * 添加异常堆栈日志到累加器中
    *
    * @param exceptionList
@@ -157,6 +209,22 @@ private[fire] object AccumulatorManager extends Logging  {
    * 日志累加值
    */
   def getLog: ConcurrentLinkedQueue[String] = this.logAccumulator.value
+
+  /**
+   * 获取字符串累加器中的值
+   *
+   * @return
+   * 日志累加值
+   */
+  def getString: ConcurrentLinkedQueue[String] = this.stringAccumulator.value
+
+  /**
+   * 获取系统同步累加器中的值
+   *
+   * @return
+   * 日志累加值
+   */
+  def getSync: ConcurrentLinkedQueue[String] = this.syncAccumulator.value
 
   /**
    * 将运行时信息累加到env累加器中
@@ -310,5 +378,27 @@ private[fire] object AccumulatorManager extends Logging  {
         }
       }, false)
     }
+  }
+
+  /**
+   * 分布式采集血缘依赖
+   */
+  private[fire] def collectDatasource: Unit = {
+    ThreadUtils.scheduleAtFixedRate({
+      // driver端采集
+      val datasource = DatasourceManager.get
+      if (noEmpty(datasource)) {
+        addString(JSONUtils.toJSONString(datasource))
+      }
+
+      // executor端分布式采集
+      DistributeSyncManager.sync({
+        val datasource = DatasourceManager.get
+        if (noEmpty(datasource)) {
+          addString(JSONUtils.toJSONString(datasource))
+        }
+      })
+    }, 30, 30, TimeUnit.SECONDS)
+
   }
 }

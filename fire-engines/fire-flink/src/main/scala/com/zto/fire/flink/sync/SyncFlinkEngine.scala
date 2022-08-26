@@ -29,7 +29,7 @@ import com.zto.fire.predef._
  * @since 2.0.0
  * @create 2021-03-02 11:12
  */
-private[fire] class SyncFlinkEngineConf extends SyncEngineConf  {
+private[fire] class SyncFlinkEngine extends SyncEngineConf  {
   private lazy val globalConfiguration = "org.apache.flink.configuration.GlobalConfiguration"
   private lazy val environmentInformation = "org.apache.flink.runtime.util.EnvironmentInformation"
   private lazy val getSettings = "getSettings"
@@ -55,4 +55,16 @@ private[fire] class SyncFlinkEngineConf extends SyncEngineConf  {
     }
     new JHashMap[String, String]().toMap
   }
+
+  /**
+   * 在master端获取系统累加器中的数据
+   */
+  override def syncEngineMsg: List[JString] = {
+    List.empty
+  }
+
+  /**
+   * 同步引擎各个container的信息到累加器中
+   */
+  override def collect: Unit = {}
 }

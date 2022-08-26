@@ -15,24 +15,37 @@
  * limitations under the License.
  */
 
-package com.zto.fire.spark.acc
+package com.zto.fire.core.sync
 
 import com.zto.fire.common.conf.FireFrameworkConf
-import org.apache.spark.util.AccumulatorV2
-
+import com.zto.fire.predef._
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicLong
 
 /**
-  * fire框架日志累加器
-  *
-  * @author ChengLong 2019-7-23 14:22:16
-  */
-private[fire] class LogAccumulator extends StringAccumulator {
-  // 判断是否打开日志累加器
-  override protected lazy val isEnable = FireFrameworkConf.accEnable && FireFrameworkConf.accLogEnable
+ * 用于将各个container端数据收集到master端
+ *
+ * @author ChengLong 2022-08-24 14:16:08
+ * @since 2.3.2
+ */
+trait FireAccumulatorManager extends SyncManager {
+  private lazy val accumulator = new ConcurrentLinkedQueue[String]()
+  private lazy val longCounter = new AtomicLong()
 
   /**
-   * 用于复制累加器
+   * 将消息放到累加器中
    */
-  override def copy(): AccumulatorV2[String, ConcurrentLinkedQueue[String]] = new LogAccumulator
+  def add(msg: String): Unit = {
+    if (FireFrameworkConf.accEnable && this.accumulator.size() <= FireFrameworkConf.accSyncMaxSize && noEmpty(msg)) this.accumulator.offer(msg)
+  }
+
+  /**
+   * 累加Long类型数据
+   */
+  def add(value: Long): Unit = this.longCounter.addAndGet(value)
+
+  /**
+   * 获取收集到的消息
+   */
+  def getValue: List[String]
 }

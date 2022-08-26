@@ -17,22 +17,20 @@
 
 package com.zto.fire.spark.acc
 
-import com.zto.fire.common.conf.FireFrameworkConf
 import org.apache.spark.util.AccumulatorV2
 
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
-  * fire框架日志累加器
+  * fire框架内部信息同步累加器
   *
-  * @author ChengLong 2019-7-23 14:22:16
+  * @author 2022-08-24 14:49:55
+  * @since 2.3.2
   */
-private[fire] class LogAccumulator extends StringAccumulator {
-  // 判断是否打开日志累加器
-  override protected lazy val isEnable = FireFrameworkConf.accEnable && FireFrameworkConf.accLogEnable
+private[fire] class SyncAccumulator extends StringAccumulator {
 
   /**
    * 用于复制累加器
    */
-  override def copy(): AccumulatorV2[String, ConcurrentLinkedQueue[String]] = new LogAccumulator
+  override def copy(): AccumulatorV2[String, ConcurrentLinkedQueue[String]] = new SyncAccumulator
 }
