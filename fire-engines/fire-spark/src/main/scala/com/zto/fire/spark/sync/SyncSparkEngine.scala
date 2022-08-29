@@ -17,17 +17,15 @@
 
 package com.zto.fire.spark.sync
 
+import com.zto.fire._
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{DatasourceManager, JSONUtils, Logging, OSUtils, PropUtils, ThreadUtils}
+import com.zto.fire.common.enu.Datasource
+import com.zto.fire.common.util.{DatasourceDesc, Logging, PropUtils}
 import com.zto.fire.core.sync.SyncEngineConf
-import com.zto.fire.predef.noEmpty
 import com.zto.fire.spark.acc.AccumulatorManager
-import com.zto.fire.spark.acc.AccumulatorManager.{addString, logger}
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
-
-import java.util.concurrent.TimeUnit
 
 /**
  * 获取Spark引擎的所有配置信息
@@ -52,17 +50,15 @@ private[fire] class SyncSparkEngine extends SyncEngineConf {
   /**
    * 在master端获取系统累加器中的数据
    */
-  override def syncEngineMsg: List[String] = {
-    SparkAccumulatorManager.getValue
+  override def syncLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
+    SparkLineageAccumulatorManager.getValue
   }
 
   /**
    * 同步引擎各个container的信息到累加器中
    */
   override def collect: Unit = {
-    if (SparkUtils.isDriver) {
-      AccumulatorManager.collectDatasource
-    }
+    if (SparkUtils.isDriver) AccumulatorManager.collectLineage
   }
 }
 

@@ -45,6 +45,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
     this.restfulRegister
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/kill", kill))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/datasource", datasource))
+      .addRest(RestCase(RequestMethod.GET.toString, s"/system/lineage", lineage))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/checkpoint", checkpoint))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/distributeSync", distributeSync))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/setConf", setConf))
@@ -164,7 +165,6 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
       }
     }
   }
-
 
   /**
    * 用于执行sql语句

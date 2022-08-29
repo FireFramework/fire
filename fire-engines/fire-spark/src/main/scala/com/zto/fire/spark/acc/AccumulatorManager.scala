@@ -17,10 +17,12 @@
 
 package com.zto.fire.spark.acc
 
+import com.zto.fire.predef._
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.common.conf.FireFrameworkConf.{lineageRunCount, lineageRunInitialDelay, lineageRunPeriod}
+import com.zto.fire.common.enu.{Datasource, ThreadPoolType}
 import com.zto.fire.common.util._
-import com.zto.fire.predef._
 import com.zto.fire.spark.sync.DistributeSyncManager
 import com.zto.fire.spark.task.SparkSchedulerManager
 import com.zto.fire.spark.util.SparkUtils
@@ -31,7 +33,7 @@ import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
 
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, TimeUnit}
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, ScheduledExecutorService, TimeUnit}
 import scala.collection.mutable
 
 /**
@@ -48,6 +50,10 @@ private[fire] object AccumulatorManager extends Logging  {
   // String累加器
   private[this] val stringAccumulatorLabel = "stringAccumulator"
   private[fire] val stringAccumulator = new StringAccumulator
+
+  // 血缘累加器
+  private[this] val lineageAccumulatorLabel = "lineageAccumulator"
+  private[fire] val lineageAccumulator = new LineageAccumulator
 
   // 同步累加器
   private[this] val syncAccumulatorLabel = "syncAccumulator"
@@ -70,7 +76,9 @@ private[fire] object AccumulatorManager extends Logging  {
   private[fire] val envAccumulator = new EnvironmentAccumulator
 
   // 累加器注册列表
-  private[this] val accMap = Map(this.syncAccumulatorLabel -> this.syncAccumulator, this.stringAccumulatorLabel -> this.stringAccumulator, this.logAccumulatorLabel -> this.logAccumulator, this.counterLabel -> this.counter, this.multiCounterLabel -> this.multiCounter, this.multiTimerLabel -> this.multiTimer, this.envAccumulatorLabel -> this.envAccumulator)
+  private[this] val accMap = Map(this.lineageAccumulatorLabel -> this.lineageAccumulator, this.syncAccumulatorLabel -> this.syncAccumulator,
+    this.stringAccumulatorLabel -> this.stringAccumulator, this.logAccumulatorLabel -> this.logAccumulator, this.counterLabel -> this.counter,
+    this.multiCounterLabel -> this.multiCounter, this.multiTimerLabel -> this.multiTimer, this.envAccumulatorLabel -> this.envAccumulator)
 
   // 获取当前任务的全类名
   private[this] lazy val jobClassName = SparkEnv.get.conf.get(FireFrameworkConf.DRIVER_CLASS_NAME, "")
@@ -78,6 +86,10 @@ private[fire] object AccumulatorManager extends Logging  {
   private[this] val taskRegisterSet = mutable.HashSet[Object]()
   // 用于广播spark配置信息
   private[fire] var broadcastConf: Broadcast[SparkConf] = _
+  // 用于解析数据源的异步定时调度线程
+  private lazy val lineageThread = ThreadUtils.createThreadPool("LineageAccumulator", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
+  // 用于记录血缘解析运行的次数
+  private lazy val lineageRunCount = new AtomicInteger()
 
   /**
    * 注册定时任务实例
@@ -161,6 +173,25 @@ private[fire] object AccumulatorManager extends Logging  {
   }
 
   /**
+   * 将血缘信息添加到累加器中
+   */
+  private[fire] def addLineage(lineageMap: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
+    if (isEmpty(lineageMap)) return
+    if (FireUtils.isSparkEngine) {
+      val env = SparkEnv.get
+      if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
+        val lineageAccumulator = SparkEnv.get.conf.get(this.lineageAccumulatorLabel, "")
+        if (StringUtils.isNotBlank(lineageAccumulator)) {
+          val lineageAcc: LineageAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(lineageAccumulator)))
+          lineageAcc.add(lineageMap)
+        }
+      } else {
+        this.lineageAccumulator.add(lineageMap)
+      }
+    }
+  }
+
+  /**
    * 将字符串等累加到String累加器中
    *
    * @param str
@@ -225,6 +256,11 @@ private[fire] object AccumulatorManager extends Logging  {
    * 日志累加值
    */
   def getSync: ConcurrentLinkedQueue[String] = this.syncAccumulator.value
+
+  /**
+   * 获取Fire采集到的血缘信息
+   */
+  def getLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = this.lineageAccumulator.value
 
   /**
    * 将运行时信息累加到env累加器中
@@ -383,22 +419,26 @@ private[fire] object AccumulatorManager extends Logging  {
   /**
    * 分布式采集血缘依赖
    */
-  private[fire] def collectDatasource: Unit = {
-    ThreadUtils.scheduleAtFixedRate({
-      // driver端采集
-      val datasource = DatasourceManager.get
-      if (noEmpty(datasource)) {
-        addString(JSONUtils.toJSONString(datasource))
-      }
+  private[fire] def collectLineage: Unit = {
+    if (!FireFrameworkConf.accEnable || !FireFrameworkConf.lineageEnable) return
 
-      // executor端分布式采集
-      DistributeSyncManager.sync({
-        val datasource = DatasourceManager.get
-        if (noEmpty(datasource)) {
-          addString(JSONUtils.toJSONString(datasource))
+    this.lineageThread.scheduleWithFixedDelay(new Runnable {
+      override def run(): Unit = {
+        if (SparkUtils.isDriver) {
+          // driver端采集
+          addLineage(LineageManager.get)
+          // executor端分布式采集
+          DistributeSyncManager.sync({
+            addLineage(LineageManager.get)
+          })
+          logger.info(s"完成Spark 分布式血缘解析与采集：${lineageRunCount.get()}次")
+
+          if (lineageRunCount.incrementAndGet() > FireFrameworkConf.lineageRunCount) {
+            logger.info(s"Spark 分布式血缘解析与采集任务即将退出，总计运行：${lineageRunCount.get()}次")
+            lineageThread.shutdown()
+          }
         }
-      })
-    }, 30, 30, TimeUnit.SECONDS)
-
+      }
+    }, lineageRunInitialDelay + 10, lineageRunPeriod, TimeUnit.SECONDS)
   }
 }

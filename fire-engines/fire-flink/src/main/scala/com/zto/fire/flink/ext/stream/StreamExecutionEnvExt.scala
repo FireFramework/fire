@@ -19,7 +19,7 @@ package com.zto.fire.flink.ext.stream
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
-import com.zto.fire.common.util.{DatasourceManager, FireUtils, KafkaUtils, RegularUtils, SQLUtils}
+import com.zto.fire.common.util.{LineageManager, FireUtils, KafkaUtils, RegularUtils, SQLUtils}
 import com.zto.fire.core.Api
 import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvider}
 import com.zto.fire.flink.sql.{FlinkSqlExtensionsParser, FlinkSqlParser}
@@ -97,7 +97,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
     properties.setProperty(FireKafkaConf.KAFKA_FORCE_AUTO_COMMIT_INTERVAL, FireKafkaConf.kafkaForceCommitInterval.toString)
 
     // 消费kafka埋点信息
-    DatasourceManager.addMQDatasource("kafka", confKafkaParams("bootstrap.servers").toString, topicsStr, confKafkaParams("group.id").toString)
+    LineageManager.addMQDatasource("kafka", confKafkaParams("bootstrap.servers").toString, topicsStr, confKafkaParams("group.id").toString)
 
     deserializer match {
       case schema: JSONKeyValueDeserializationSchema =>
@@ -241,7 +241,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
     require(finalRocketParam.containsKey(RocketMQConfig.NAME_SERVER_ADDR), s"RocketMQ nameserver.address不能为空，请在配置文件中指定：rocket.brokers.name$keyNum")
 
     // 消费rocketmq埋点信息
-    DatasourceManager.addMQDatasource("rocketmq", finalRocketParam(RocketMQConfig.NAME_SERVER_ADDR), finalTopics, finalGroupId)
+    LineageManager.addMQDatasource("rocketmq", finalRocketParam(RocketMQConfig.NAME_SERVER_ADDR), finalTopics, finalGroupId)
 
     val props = new Properties()
     props.putAll(finalRocketParam)

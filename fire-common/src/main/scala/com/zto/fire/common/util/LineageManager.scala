@@ -22,8 +22,7 @@ import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 
-import java.util
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, CopyOnWriteArraySet, Executors, ScheduledExecutorService, TimeUnit}
+import java.util.concurrent._
 import scala.collection.mutable
 
 /**
@@ -33,29 +32,29 @@ import scala.collection.mutable
  * @since 2.0.0
  * @create 2020-11-26 15:30
  */
-private[fire] class DatasourceManager extends Logging {
+private[fire] class LineageManager extends Logging {
   // 用于存放当前任务用到的数据源信息
-  private[fire] lazy val datasourceMap = new ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
+  private[fire] lazy val lineageMap = new ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
   private[fire] lazy val tableMetaSet = new CopyOnWriteArraySet[TableMeta]()
   // 用于收集来自不同数据源的sql语句，后续会异步进行SQL解析，考虑到分布式场景下会有很多重复的SQL执行，因此使用了线程不安全的队列即可满足需求
   private lazy val dbSqlQueue = new ConcurrentLinkedQueue[DBSqlSource]()
   // 用于解析数据源的异步定时调度线程
-  private lazy val parserExecutor = ThreadUtils.createThreadPool("DatasourceManager", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
+  private lazy val parserExecutor = ThreadUtils.createThreadPool("LineageManager", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
   private var parseCount = 0
   // 用于收集各实时引擎执行的sql语句
-  this.sqlParse()
+  this.lineageParse()
 
   /**
-   * 用于异步解析sql中使用到的表，并放到datasourceMap中
+   * 用于异步解析sql中使用到的表，并放到linageMap中
    */
-  private[this] def sqlParse(): Unit = {
-    if (buriedPointDatasourceEnable) {
+  private[this] def lineageParse(): Unit = {
+    if (lineageEnable) {
       this.parserExecutor.scheduleWithFixedDelay(new Runnable {
         override def run(): Unit = {
           parseCount += 1
 
-          if (parseCount >= buriedPointDatasourceCount && !parserExecutor.isShutdown) {
-            logger.info(s"4. 异步解析实时血缘的定时任务采样共计：${buriedPointDatasourceCount}次，即将退出异步线程")
+          if (parseCount >= lineageRunCount && !parserExecutor.isShutdown) {
+            logger.info(s"4. 异步解析实时血缘的定时任务采样共计：${lineageRunCount}次，即将退出异步线程")
             parserExecutor.shutdown()
           }
 
@@ -73,7 +72,7 @@ private[fire] class DatasourceManager extends Logging {
                 }
               }
             }
-          } (logger, s"1. 开始第${parseCount}/${buriedPointDatasourceCount}次解析JDBC中的血缘信息", "jdbc血缘信息解析失败")
+          } (logger, s"1. 开始第${parseCount}/${lineageRunCount}次解析JDBC中的血缘信息", "jdbc血缘信息解析失败")
 
           // 2. 将解析好的引擎SQL血缘按Datasource进行分类
           tryWithLog {
@@ -100,11 +99,11 @@ private[fire] class DatasourceManager extends Logging {
                 case _ => add(tableMeta.datasource, tableMeta)
               }
             })
-          } (logger, s"2. 开始第${parseCount}/${buriedPointDatasourceCount}次解析SQL中的血缘关系", "sql血缘关系解析失败")
+          } (logger, s"2. 开始第${parseCount}/${lineageRunCount}次解析SQL中的血缘关系", "sql血缘关系解析失败")
 
-          logger.info(s"3. 完成第${parseCount}/${buriedPointDatasourceCount}次异步解析SQL埋点中的表信息，耗时：${elapsed(start)}")
+          logger.info(s"3. 完成第${parseCount}/${lineageRunCount}次异步解析SQL埋点中的表信息，耗时：${elapsed(start)}")
         }
-      }, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod, TimeUnit.SECONDS)
+      }, lineageRunInitialDelay, lineageRunPeriod, TimeUnit.SECONDS)
     }
   }
 
@@ -112,36 +111,36 @@ private[fire] class DatasourceManager extends Logging {
    * 添加一个数据源描述信息
    */
   private[fire] def add(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = {
-    if (!buriedPointDatasourceEnable) return
-    var set = this.datasourceMap.get(sourceType)
+    if (!lineageEnable) return
+    var set = this.lineageMap.get(sourceType)
     if (set == null) {
-      set = new util.HashSet[DatasourceDesc]()
+      set = new JHashSet[DatasourceDesc]()
     }
     set.add(datasourceDesc)
-    this.datasourceMap.put(sourceType, set)
+    this.lineageMap.put(sourceType, set)
   }
 
   /**
    * 向队列中添加一条sql类型的数据源，用于后续异步解析
    */
-  private[fire] def addDBDataSource(source: DBSqlSource): Unit = if (buriedPointDatasourceEnable && this.dbSqlQueue.size() <= buriedPointDatasourceMaxSize) this.dbSqlQueue.offer(source)
+  private[fire] def addDBDataSource(source: DBSqlSource): Unit = if (lineageEnable && this.dbSqlQueue.size() <= lineMaxSize) this.dbSqlQueue.offer(source)
 
   /**
    * 收集执行的sql语句
    */
-  private[fire] def addTableMeta(tableMetaSet: JSet[TableMeta]): Unit = if (buriedPointDatasourceEnable) this.tableMetaSet.addAll(tableMetaSet)
+  private[fire] def addTableMeta(tableMetaSet: JSet[TableMeta]): Unit = if (lineageEnable) this.tableMetaSet.addAll(tableMetaSet)
 
   /**
    * 获取所有使用到的数据源
    */
-  private[fire] def get: util.Map[Datasource, util.HashSet[DatasourceDesc]] = this.datasourceMap
+  private[fire] def get: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = this.lineageMap
 }
 
 /**
  * 对外暴露API，用于收集并处理各种埋点信息
  */
-private[fire] object DatasourceManager extends Logging {
-  private[fire] lazy val manager = new DatasourceManager
+private[fire] object LineageManager extends Logging {
+  private[fire] lazy val manager = new LineageManager
 
   /**
    * 添加一条sql记录到队列中
@@ -165,7 +164,7 @@ private[fire] object DatasourceManager extends Logging {
    *
    * @param tableMeta 待解析的sql语句
    */
-  def addTableMeta(tableMeta: JSet[TableMeta]): Unit = DatasourceManager.manager.addTableMeta(tableMeta)
+  def addTableMeta(tableMeta: JSet[TableMeta]): Unit = LineageManager.manager.addTableMeta(tableMeta)
 
   /**
    * 添加一条DB的埋点信息
@@ -206,7 +205,7 @@ private[fire] object DatasourceManager extends Logging {
   /**
    * 获取所有使用到的数据源
    */
-  private[fire] def get: util.Map[Datasource, util.HashSet[DatasourceDesc]] = this.manager.get
+  private[fire] def get: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = this.manager.get
 }
 
 /**

@@ -21,7 +21,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Stateme
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{DatasourceManager, LogUtils, ReflectionUtils, StringsUtils}
+import com.zto.fire.common.util.{LineageManager, LogUtils, ReflectionUtils, StringsUtils}
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils
@@ -342,7 +342,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
   @Internal
   private[this] def sqlBuriedPoint(sql: String, sink: Boolean = true): String = {
     try {
-      DatasourceManager.addDBSql(this.dbType, this.url, this.username, sql, sink)
+      LineageManager.addDBSql(this.dbType, this.url, this.username, sql, sink)
       StringsUtils.substring(sql, 0, this.logSqlLength)
     } catch {
       case _: Throwable => ""

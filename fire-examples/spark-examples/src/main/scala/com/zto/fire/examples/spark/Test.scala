@@ -19,13 +19,12 @@ package com.zto.fire.examples.spark
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.common.util.{DatasourceManager, DateFormatUtils, JSONUtils, OSUtils, ThreadUtils}
-import com.zto.fire.core.anno.connector.{Jdbc, Kafka, RocketMQ}
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
+import com.zto.fire.core.anno.connector.{Jdbc, RocketMQ}
 import com.zto.fire.core.anno.lifecycle.Step1
 import com.zto.fire.spark.SparkStreaming
-import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.anno.Streaming
-import com.zto.fire.spark.sync.SparkAccumulatorManager
+import com.zto.fire.spark.sync.SparkLineageAccumulatorManager
 
 import java.util.concurrent.TimeUnit
 
@@ -34,7 +33,7 @@ import java.util.concurrent.TimeUnit
  *
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Config("""fire.buried_point.datasource.initialDelay=10""")
+@Config("""fire.lineage.run.initialDelay=10""")
 // 60s一个批，最大同时执行2个streaming批次，开启反压机制、每个分区每秒最大消费100条消息
 @Streaming(interval = 10, concurrent = 2, backpressure = true, maxRatePerPartition = 100)
 @RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
@@ -57,7 +56,7 @@ object Test extends SparkStreaming {
   @Step1("周期性执行")
   def test: Unit = {
     ThreadUtils.scheduleAtFixedRate({
-      println(s"累加器值：" + JSONUtils.toJSONString(SparkAccumulatorManager.getValue))
+      println(s"累加器值：" + JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
     }, 0, 10, TimeUnit.SECONDS)
   }
 }

@@ -15,36 +15,40 @@
  * limitations under the License.
  */
 
-package com.zto.fire.spark.sync
+package com.zto.fire.core.sync
 
-import com.zto.fire.core.sync.FireAccumulatorManager
-import com.zto.fire.spark.acc.AccumulatorManager
+import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.common.enu.Datasource
+import com.zto.fire.common.util.DatasourceDesc
 import com.zto.fire.predef._
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
+
 /**
- * 用于将各个executor端数据收集到driver端
+ * 用于将各个container端数据收集到master端
  *
- * @author ChengLong 2022-08-24 14:31:08
+ * @author ChengLong 2022-08-24 14:16:08
  * @since 2.3.2
  */
-object SparkAccumulatorManager extends FireAccumulatorManager {
+trait LineageAccumulatorManager extends SyncManager {
+  private lazy val accumulator = new ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
+  private lazy val longCounter = new AtomicLong()
 
   /**
    * 将消息放到累加器中
    */
-  override def add(msg: String): Unit = {
-    if (noEmpty(msg)) AccumulatorManager.addString(msg)
+  def add(lineage: ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
+    if (FireFrameworkConf.accEnable) this.accumulator.putAll(lineage)
   }
 
   /**
    * 累加Long类型数据
    */
-  override def add(value: Long): Unit = AccumulatorManager.addCounter(value)
+  def add(value: Long): Unit = this.longCounter.addAndGet(value)
 
   /**
    * 获取收集到的消息
    */
-  override def getValue: List[String] = {
-    AccumulatorManager.getString.toList
-  }
+  def getValue: ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]
 }

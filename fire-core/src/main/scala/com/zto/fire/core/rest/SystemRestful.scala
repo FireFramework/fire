@@ -56,9 +56,17 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
    */
   @Rest("/system/datasource")
   protected def datasource(request: Request, response: Response): AnyRef = {
+    this.lineage(request, response)
+  }
+
+  /**
+   * 获取当前任务所使用到的实时血缘信息
+   */
+  @Rest("/system/lineage")
+  protected def lineage(request: Request, response: Response): AnyRef = {
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/datasource")
-      val dataSource = JSONUtils.toJSONString(JavaConversions.seqAsJavaList(SyncEngineConfHelper.syncEngineMsg))
+      this.logger.info(s"Ip address ${request.ip()} request /system/lineage")
+      val dataSource = JSONUtils.toJSONString(SyncEngineConfHelper.syncLineage)
       this.logger.info(s"[DataSource] 获取数据源列表成功：counter=$dataSource")
       ResultMsg.buildSuccess(dataSource, "获取数据源列表成功")
     } catch {

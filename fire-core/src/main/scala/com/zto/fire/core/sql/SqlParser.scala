@@ -17,8 +17,8 @@
 
 package com.zto.fire.core.sql
 
-import com.zto.fire.common.conf.FireFrameworkConf.{buriedPointDatasourceEnable, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod}
-import com.zto.fire.common.util.{DatasourceManager, Logging, TableMeta, ThreadUtils}
+import com.zto.fire.common.conf.FireFrameworkConf.{lineageEnable, lineageRunInitialDelay, lineageRunPeriod}
+import com.zto.fire.common.util.{LineageManager, Logging, TableMeta, ThreadUtils}
 import com.zto.fire.predef._
 
 import java.util.concurrent.{CopyOnWriteArraySet, TimeUnit}
@@ -42,12 +42,12 @@ trait SqlParser extends Logging {
    * 周期性的解析SQL语句
    */
   protected def sqlParse: Unit = {
-    if (buriedPointDatasourceEnable) {
+    if (lineageEnable) {
       ThreadUtils.scheduleWithFixedDelay({
         this.buffer.foreach(sql => this.sqlParser(sql))
-        DatasourceManager.addTableMeta(this.tableMetaSet)
+        LineageManager.addTableMeta(this.tableMetaSet)
         this.clear
-      }, buriedPointDatasourceInitialDelay, buriedPointDatasourcePeriod, TimeUnit.SECONDS)
+      }, lineageRunInitialDelay, lineageRunPeriod, TimeUnit.SECONDS)
     }
   }
 
@@ -82,7 +82,7 @@ trait SqlParser extends Logging {
    * 将待解析的SQL添加到buffer中
    */
   def sqlParse(sql: String): Unit = {
-    if (buriedPointDatasourceEnable && noEmpty(sql) && sqlLegal(sql)) {
+    if (lineageEnable && noEmpty(sql) && sqlLegal(sql)) {
       this.buffer += sql
     }
   }

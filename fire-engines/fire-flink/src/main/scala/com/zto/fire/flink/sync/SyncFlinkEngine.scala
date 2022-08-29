@@ -17,7 +17,8 @@
 
 package com.zto.fire.flink.sync
 
-import com.zto.fire.common.util.ReflectionUtils
+import com.zto.fire.common.enu.Datasource
+import com.zto.fire.common.util.{DatasourceDesc, ReflectionUtils}
 import com.zto.fire.core.sync.SyncEngineConf
 import com.zto.fire.flink.util.FlinkUtils
 import com.zto.fire.predef._
@@ -59,8 +60,8 @@ private[fire] class SyncFlinkEngine extends SyncEngineConf  {
   /**
    * 在master端获取系统累加器中的数据
    */
-  override def syncEngineMsg: List[JString] = {
-    List.empty
+  override def syncLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
+    new JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
   }
 
   /**
