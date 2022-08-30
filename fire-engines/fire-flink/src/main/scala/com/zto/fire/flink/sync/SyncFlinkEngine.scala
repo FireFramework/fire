@@ -17,6 +17,7 @@
 
 package com.zto.fire.flink.sync
 
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.util.{DatasourceDesc, ReflectionUtils}
 import com.zto.fire.core.sync.SyncEngineConf
@@ -35,6 +36,7 @@ private[fire] class SyncFlinkEngine extends SyncEngineConf  {
   private lazy val environmentInformation = "org.apache.flink.runtime.util.EnvironmentInformation"
   private lazy val getSettings = "getSettings"
 
+
   /**
    * 获取Flink引擎的所有配置信息
    */
@@ -46,6 +48,8 @@ private[fire] class SyncFlinkEngine extends SyncEngineConf  {
         return clazz.getMethod(this.getSettings).invoke(null).asInstanceOf[JMap[String, String]].toMap
       }
     } else if (FlinkUtils.isTaskManager) {
+      // 启动分布式血缘采集
+      this.collect
       // 启用分布式同步
       DistributeSyncManager.sync
       // 如果是TaskManager端，则flink会通过EnvironmentInformation将参数进行传递
@@ -61,11 +65,15 @@ private[fire] class SyncFlinkEngine extends SyncEngineConf  {
    * 在master端获取系统累加器中的数据
    */
   override def syncLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
-    new JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
+    FlinkLineageAccumulatorManager.getValue
   }
 
   /**
    * 同步引擎各个container的信息到累加器中
    */
-  override def collect: Unit = {}
+  override def collect: Unit = {
+    if (!FireFrameworkConf.lineageEnable || !this.isCollect.compareAndSet(false, true)) return
+
+    DistributeSyncManager.collect
+  }
 }

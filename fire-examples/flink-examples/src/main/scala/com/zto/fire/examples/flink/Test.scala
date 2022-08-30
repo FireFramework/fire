@@ -17,39 +17,47 @@
 
 package com.zto.fire.examples.flink
 
-
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import org.apache.flink.api.scala._
-import com.zto.fire.common.util.JSONUtils
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
 import com.zto.fire.core.anno.connector._
-import com.zto.fire.core.anno.lifecycle.Process
+import com.zto.fire.core.anno.lifecycle.{Process, Step1}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
+import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
+import com.zto.fire.hbase.HBaseConnector
 
-@Config(
-  """
-    |spark.streaming.batch.duration=hello
-    |""")
-@Streaming(interval = 100, unaligned = true, parallelism = 30) // 100s做一次checkpoint，开启非对齐checkpoint
-@Kafka(brokers = "ip:9091,ip2:9092", topics = "fire", groupId = "fire")
-@Kafka2(brokers = "ip:9091,ip2:9092", topics = "fire2", groupId = "fire")
-// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
+import java.util.concurrent.TimeUnit
+
+@HBase("test")
+@Config("""fire.lineage.run.initialDelay=10""")
+@Streaming(interval = 60, unaligned = true, parallelism = 2) // 100s做一次checkpoint，开启非对齐checkpoint
+@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "1qaz@WSX")
 object Test extends FlinkStreaming {
+  private val hbaseTable = "fire_test_1"
+  private lazy val tableName = "spark_test"
 
-  /**
-   * 业务逻辑代码，会被fire自动调用
-   */
   @Process
-  override def process: Unit = {
-    val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t))
-    this.fire.createKafkaDirectStream(keyNum = 2)
-    val list = new JHashMap[String, String]()
+  def kafkaSource: Unit = {
+    this.fire.createKafkaDirectStream().print()
+    val dstream = this.fire.createRocketMqPullStream()
     dstream.map(t => {
-      val id = t.getId / 1
-      this.conf.getString("spark.streaming.batch.duration")
+      val timestamp = DateFormatUtils.formatCurrentDateTime()
+      val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
+      this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
+      HBaseConnector.get[Student](hbaseTable, classOf[Student], Seq("1"))
       t
-    }).createOrReplaceTempView("t_student")
+    }).print()
+  }
+
+  @Step1("获取血缘信息")
+  def lineage: Unit = {
+    ThreadUtils.scheduleAtFixedRate({
+      println(s"累加器值：" + JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue))
+    }, 0, 60, TimeUnit.SECONDS)
   }
 }

@@ -58,7 +58,7 @@ private[fire] class SyncSparkEngine extends SyncEngineConf {
    * 同步引擎各个container的信息到累加器中
    */
   override def collect: Unit = {
-    if (SparkUtils.isDriver) AccumulatorManager.collectLineage
+    if (SparkUtils.isDriver && isCollect.compareAndSet(false, true)) AccumulatorManager.collectLineage
   }
 }
 

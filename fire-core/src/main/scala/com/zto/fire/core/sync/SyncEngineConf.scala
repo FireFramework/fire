@@ -22,6 +22,7 @@ import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.util.{DatasourceDesc, ReflectionUtils}
 import com.zto.fire.predef._
 
+import java.util.concurrent.atomic.AtomicBoolean
 import scala.collection.immutable
 
 /**
@@ -32,6 +33,7 @@ import scala.collection.immutable
  * @create 2021-03-02 10:48
  */
 private[fire] trait SyncEngineConf extends SyncManager {
+  protected val isCollect = new AtomicBoolean(false)
   this.collect
 
   /**

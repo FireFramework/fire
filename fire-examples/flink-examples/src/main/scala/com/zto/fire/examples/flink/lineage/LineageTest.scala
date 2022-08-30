@@ -15,54 +15,49 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.spark
+package com.zto.fire.examples.flink.lineage
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
-import com.zto.fire.core.anno.connector.{HBase, Jdbc, Kafka, RocketMQ}
-import com.zto.fire.core.anno.lifecycle.Step1
+import com.zto.fire.core.anno.connector._
+import com.zto.fire.core.anno.lifecycle.{Process, Step1}
 import com.zto.fire.examples.bean.Student
+import com.zto.fire.flink.FlinkStreaming
+import com.zto.fire.flink.anno.Streaming
+import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
 import com.zto.fire.hbase.HBaseConnector
-import com.zto.fire.spark.SparkStreaming
-import com.zto.fire.spark.anno.Streaming
-import com.zto.fire.spark.sync.SparkLineageAccumulatorManager
+import org.apache.flink.api.scala._
 
 import java.util.concurrent.TimeUnit
 
-/**
- * 基于Fire进行Spark Streaming开发
- *
- * @contact Fire框架技术交流群（钉钉）：35373471
- */
 @HBase("test")
 @Config("""fire.lineage.run.initialDelay=10""")
+@Streaming(interval = 60, unaligned = true, parallelism = 2) // 100s做一次checkpoint，开启非对齐checkpoint
+@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
-@Streaming(interval = 10, concurrent = 2, backpressure = true, maxRatePerPartition = 100)
-@RocketMQ(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
 @Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "1qaz@WSX")
-object Test extends SparkStreaming {
+object LineageTest extends FlinkStreaming {
   private val hbaseTable = "fire_test_1"
   private lazy val tableName = "spark_test"
 
-  override def process: Unit = {
+  @Process
+  def kafkaSource: Unit = {
     this.fire.createKafkaDirectStream().print()
-    val dstream = this.fire.createRocketMqPullStream().map(t => JSONUtils.toJSONString(t))
-    dstream.foreachRDD(rdd => {
-      rdd.foreachPartition(it => {
-        val timestamp = DateFormatUtils.formatCurrentDateTime()
-        val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-        this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
-        HBaseConnector.get[Student](hbaseTable, classOf[Student], Seq("1"))
-      })
-    })
-    dstream.print()
+    val dstream = this.fire.createRocketMqPullStream()
+    dstream.map(t => {
+      val timestamp = DateFormatUtils.formatCurrentDateTime()
+      val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
+      this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
+      HBaseConnector.get[Student](hbaseTable, classOf[Student], Seq("1"))
+      t
+    }).print()
   }
 
-  @Step1("周期性执行")
-  def test: Unit = {
+  @Step1("获取血缘信息")
+  def lineage: Unit = {
     ThreadUtils.scheduleAtFixedRate({
-      println(s"累加器值：" + JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
+      println(s"累加器值：" + JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue))
     }, 0, 60, TimeUnit.SECONDS)
   }
 }
