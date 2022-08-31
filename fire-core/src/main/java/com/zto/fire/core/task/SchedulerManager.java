@@ -240,7 +240,7 @@ public abstract class SchedulerManager implements Serializable {
                 }
             }
         } catch (Exception e) {
-            logger.error("执行execute发生异常", e);
+            logger.error("执行定时任务发生异常", e);
         }
     }
 

@@ -54,6 +54,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
   protected[fire] val acc = AccumulatorManager
   protected[fire] var batchDuration: Long = _
   protected[fire] var listener: SparkListener = _
+  protected[fire] var taskSchedule: SparkInternalTask = _
 
   /**
    * 生命周期方法：初始化fire框架必要的信息
@@ -183,11 +184,11 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
   override protected def deployConf: Unit = {
     if (!FireFrameworkConf.deployConf) return
     // 向driver和executor注册定时任务
-    val taskSchedule = new SparkInternalTask(this)
+    this.taskSchedule = new SparkInternalTask(this)
     // driver端注册定时任务
-    SparkSchedulerManager.getInstance().registerTasks(this, taskSchedule, this.listener)
+    SparkSchedulerManager.getInstance().registerTasks(this, this.taskSchedule, this.listener)
     // executor端与自定义累加器一同完成定时任务注册
-    AccumulatorManager.registerTasks(this, taskSchedule)
+    AccumulatorManager.registerTasks(this, this.taskSchedule)
     // 向executor端注册自定义累加器
     if (FireFrameworkConf.accEnable) this.acc.registerAccumulators(this.sc)
   }

@@ -19,6 +19,7 @@ package com.zto.fire.common.util
 
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.common.enu.JobType
 import com.zto.fire.predef._
 import com.zto.fire.common.util.MQType.MQType
 import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
@@ -170,6 +171,18 @@ object MQProducer {
   @Internal
   private[fire] def release: Unit = {
     kafkaProducerMap.foreach(t => t._2.close)
+  }
+
+  /**
+   * 注册jvm退出前回调，在任务退出前完成消息的发出
+   * @param fun
+   * 消息发送逻辑
+   */
+  private[fire] def addHook(fun: => Unit): Unit = {
+    // 注册回调，在jvm退出前将所有异常发送到mq中
+    ShutdownHookManager.addShutdownHook() (() => {
+      fun
+    })
   }
 
   def apply(url: String, mqType: MQType = MQType.kafka,

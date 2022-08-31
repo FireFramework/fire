@@ -15,49 +15,49 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.bean.analysis;
+package com.zto.fire.common.bean;
 
-import com.zto.fire.common.bean.FireTask;
 import com.zto.fire.common.util.*;
 
 /**
- * 用于封装异常堆栈信息
+ * 用于封装Fire框架任务的基本信息
  *
- * @author ChengLong 2022-08-01 09:28:04
+ * @author ChengLong 2022-08-30 14:44:03
  * @since 2.3.2
  */
-public class ExceptionMsg extends FireTask {
+public class FireTask {
 
     /**
-     * 异常堆栈类名
+     * 触发异常的执行引擎：spark/flink
      */
-    private String exceptionClass;
+    protected String engine;
 
     /**
-     * 异常堆栈的标题
+     * 异常所在jvm进程发送的主机ip
      */
-    private String stackTitle;
+    protected String ip;
 
     /**
-     * 异常堆栈详细信息
+     * 异常所属jvm进程所在的主机名称
      */
-    private String stackTrace;
+    protected String hostname;
 
     /**
-     * 发送异常的sql语句
+     * 进程的pid
      */
-    private String sql;
+    protected String pid;
 
-    public ExceptionMsg() {
-        super();
-    }
+    /**
+     * 任务的主类名：package+类名
+     */
+    protected String mainClass;
 
-    public ExceptionMsg(String stackTitle, String stackTrace, String exceptionClass, String sql) {
-        super();
-        this.stackTitle = stackTitle;
-        this.stackTrace = stackTrace;
-        this.exceptionClass = exceptionClass;
-        this.sql = sql;
+    /**
+     * 异常发生的时间戳
+     */
+    protected String timestamp;
+
+    public FireTask() {
         this.engine = FireUtils.engine();
         this.ip = OSUtils.getIp();
         this.timestamp = DateFormatUtils.formatCurrentDateTime();
@@ -66,52 +66,12 @@ public class ExceptionMsg extends FireTask {
         this.pid = OSUtils.getPid();
     }
 
-    public ExceptionMsg(Throwable e, String sql) {
-        this(e.getMessage(), ExceptionBus.stackTrace(e), e.getClass().getName(), sql);
-    }
-
-    public ExceptionMsg(Throwable e) {
-        this(e.getMessage(), ExceptionBus.stackTrace(e), e.getClass().getName(), "");
-    }
-
-    public ExceptionMsg(String stackTitle, String stackTrace, String exceptionClass) {
-        this(stackTitle, stackTrace, exceptionClass, "");
-    }
-
-    public ExceptionMsg(String stackTrace) {
-        this("", stackTrace, "", "");
-    }
-
     public String getEngine() {
         return engine;
     }
 
     public void setEngine(String engine) {
         this.engine = engine;
-    }
-
-    public String getStackTitle() {
-        return stackTitle;
-    }
-
-    public void setStackTitle(String stackTitle) {
-        this.stackTitle = stackTitle;
-    }
-
-    public String getStackTrace() {
-        return stackTrace;
-    }
-
-    public void setStackTrace(String stackTrace) {
-        this.stackTrace = stackTrace;
-    }
-
-    public String getSql() {
-        return sql;
-    }
-
-    public void setSql(String sql) {
-        this.sql = sql;
     }
 
     public String getIp() {
@@ -152,10 +112,5 @@ public class ExceptionMsg extends FireTask {
 
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
-    }
-
-    @Override
-    public String toString() {
-        return JSONUtils.toJSONString(this);
     }
 }

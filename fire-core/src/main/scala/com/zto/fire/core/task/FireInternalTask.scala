@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @since 1.0.0
  * @create 2020-07-14 11:02
  */
-private[fire] class FireInternalTask(baseFire: BaseFire) extends Serializable with Logging {
+private[fire] abstract class FireInternalTask(baseFire: BaseFire) extends Serializable with Logging {
   private[this] lazy val doJvmMonitor = new AtomicBoolean(true)
 
   /**
@@ -63,4 +63,9 @@ private[fire] class FireInternalTask(baseFire: BaseFire) extends Serializable wi
       }
     }
   }
+
+  /**
+   * 实时血缘发送定时任务，定时将血缘信息发送到kafka中
+   */
+  def lineage: Unit
 }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.spark
+package com.zto.fire.examples.spark.lineage
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @RocketMQ(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
 @Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "1qaz@WSX")
-object Test extends SparkCore {
+object SparkCoreLineageTest extends SparkCore {
   private val hbaseTable = "fire_test_1"
   private lazy val tableName = "spark_test"
 

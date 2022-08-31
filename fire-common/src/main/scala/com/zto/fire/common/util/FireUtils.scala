@@ -19,6 +19,7 @@ package com.zto.fire.common.util
 
 import com.zto.fire.predef._
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
+import com.zto.fire.common.enu.JobType
 
 /**
  * fire框架通用的工具方法
@@ -30,6 +31,7 @@ import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
  */
 private[fire] object FireUtils extends Serializable with Logging {
   private[fire] var isSplash = false
+  private[fire] var _jobType: JobType = JobType.UNDEFINED
 
   /**
    * 判断是否为spark引擎
@@ -47,6 +49,11 @@ private[fire] object FireUtils extends Serializable with Logging {
    * spark / flink
    */
   def engine: String = PropUtils.engine
+
+  /**
+   * 当前任务的引擎类型
+   */
+  def jobType: JobType = this._jobType
 
   /**
    * 获取fire版本号

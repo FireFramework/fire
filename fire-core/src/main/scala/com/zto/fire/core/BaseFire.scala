@@ -133,6 +133,7 @@ trait BaseFire extends Logging {
    */
   def init(conf: Any = null, args: Array[String] = null): Unit = {
     this.before(args)
+    FireUtils._jobType = this.jobType
     this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成用户资源初始化，任务类型：${this.jobType.getJobTypeDesc} <--- ${FirePS1Conf.DEFAULT}")
     this.args = args
     this.createContext(conf)

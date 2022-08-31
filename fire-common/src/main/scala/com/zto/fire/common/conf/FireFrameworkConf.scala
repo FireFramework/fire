@@ -123,6 +123,9 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_LINEAGE_RUN_INITIAL_DELAY = "fire.lineage.run.initialDelay"
   lazy val FIRE_LINEAGE_RUN_PERIOD = "fire.lineage.run.period"
   lazy val FIRE_LINEAGE_DATASOURCE_MAP = "fire.lineage.datasource.map."
+  lazy val FIRE_LINEAGE_SEND_MQ_ENABLE = "fire.lineage.send.mq.enable"
+  lazy val FIRE_LINEAGE_SEND_MQ_URL = "fire.lineage.send.mq.url"
+  lazy val FIRE_LINEAGE_SEND_MQ_TOPIC = "fire.lineage.send.mq.topic"
   lazy val FIRE_CONF_ADAPTIVE_PREFIX = "fire.conf.adaptive.prefix"
   lazy val FIRE_ANALYSIS_ARTHAS_ENABLE = "fire.analysis.arthas.enable"
   lazy val FIRE_ANALYSIS_ARTHAS_CONTAINER_ENABLE = "fire.analysis.arthas.container.enable"
@@ -138,6 +141,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_ANALYSIS_LOG_EXCEPTION_SEND_MQ_TOPIC = "fire.analysis.log.exception.send.mq.topic"
   lazy val FIRE_JOB_AUTO_START = "fire.job.autoStart"
   lazy val FIRE_ACC_SYNC_MAX_SIZE = "fire.acc.sync.max.size"
+
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -158,8 +162,14 @@ private[fire] object FireFrameworkConf {
   lazy val lineMaxSize = PropUtils.getInt(this.FIRE_LINEAGE_MAX_SIZE, 200)
   // 异步解析血缘线程执行的次数
   lazy val lineageRunCount = PropUtils.getInt(this.FIRE_LINEAGE_RUN_COUNT, 10)
-  // 是否开启数据源埋点
+  // 是否开启实时血缘埋点
   lazy val lineageEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_ENABLE, true)
+  lazy val lineageSendMqEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_SEND_MQ_ENABLE, false)
+  lazy val lineageMQUrl = {
+    val url = PropUtils.getString(this.FIRE_LINEAGE_SEND_MQ_URL, "")
+    FireKafkaConf.kafkaBrokers(url)
+  }
+  lazy val lineageTopic = PropUtils.getString(this.FIRE_LINEAGE_SEND_MQ_TOPIC)
   // 每个jvm实例内部queue用于存放异常对象数最大大小，避免队列过大造成内存溢出
   lazy val exceptionBusSize = PropUtils.getInt(this.FIRE_EXCEPTION_BUS_SIZE, 1000)
   // 是否将配置同步到executor、taskmanager端
