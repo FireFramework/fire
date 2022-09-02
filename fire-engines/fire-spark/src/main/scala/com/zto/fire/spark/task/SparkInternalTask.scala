@@ -18,9 +18,9 @@
 package com.zto.fire.spark.task
 
 import com.zto.fire.common.anno.Scheduled
-import com.zto.fire.common.bean.Lineage
+import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{JSONUtils, MQProducer}
+import com.zto.fire.common.util.{JSONUtils, MQProducer, SQLLineageManager}
 import com.zto.fire.core.task.FireInternalTask
 import com.zto.fire.spark.BaseSpark
 import com.zto.fire.spark.sync.SparkLineageAccumulatorManager
@@ -45,10 +45,7 @@ private[fire] class SparkInternalTask(baseSpark: BaseSpark) extends FireInternal
   @Scheduled(fixedInterval = 60000, initialDelay = 60000, repeatCount = 30)
   override def lineage: Unit = {
     if (FireFrameworkConf.lineageEnable && FireFrameworkConf.lineageSendMqEnable) {
-      val lineageMap = SparkLineageAccumulatorManager.getValue
-      if (lineageMap.nonEmpty) {
-        MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, JSONUtils.toJSONString(new Lineage(lineageMap)))
-      }
+      MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
     }
   }
 }

@@ -17,6 +17,7 @@
 
 package com.zto.fire.flink.sync
 
+import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.util.{DatasourceDesc, ReflectionUtils}
@@ -64,7 +65,7 @@ private[fire] class SyncFlinkEngine extends SyncEngineConf  {
   /**
    * 在master端获取系统累加器中的数据
    */
-  override def syncLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
+  override def syncLineage: Lineage = {
     FlinkLineageAccumulatorManager.getValue
   }
 

@@ -17,8 +17,9 @@
 
 package com.zto.fire.spark.sync
 
+import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.util.DatasourceDesc
+import com.zto.fire.common.util.{DatasourceDesc, SQLLineageManager}
 import com.zto.fire.core.sync.LineageAccumulatorManager
 import com.zto.fire.predef._
 import com.zto.fire.spark.acc.AccumulatorManager
@@ -46,7 +47,7 @@ object SparkLineageAccumulatorManager extends LineageAccumulatorManager {
   /**
    * 获取收集到的血缘消息
    */
-  override def getValue: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
-    AccumulatorManager.getLineage
+  override def getValue: Lineage = {
+    new Lineage(AccumulatorManager.getLineage, SQLLineageManager.getSQLLineage)
   }
 }

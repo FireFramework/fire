@@ -17,6 +17,7 @@
 
 package com.zto.fire.core.sync
 
+import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.util.DatasourceDesc
@@ -50,5 +51,5 @@ trait LineageAccumulatorManager extends SyncManager {
   /**
    * 获取收集到的消息
    */
-  def getValue: ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]
+  def getValue: Lineage
 }

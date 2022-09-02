@@ -19,8 +19,9 @@ package com.zto.fire.examples.flink
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.common.bean.lineage.SQLTableColumns
 import org.apache.flink.api.scala._
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, SQLLineageManager, ThreadUtils}
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.core.anno.lifecycle.{Process, Step1}
 import com.zto.fire.examples.bean.Student
@@ -28,6 +29,7 @@ import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
 import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
 import com.zto.fire.hbase.HBaseConnector
+import com.zto.fire.predef.{JString, println}
 
 import java.util.concurrent.TimeUnit
 
@@ -43,6 +45,7 @@ object Test extends FlinkStreaming {
 
   @Process
   def kafkaSource: Unit = {
+    this.sqlLineage
     this.fire.createKafkaDirectStream().print()
     val dstream = this.fire.createRocketMqPullStream()
     dstream.map(t => {
@@ -59,5 +62,30 @@ object Test extends FlinkStreaming {
     ThreadUtils.scheduleAtFixedRate({
       println(s"累加器值：" + JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue))
     }, 0, 60, TimeUnit.SECONDS)
+  }
+
+  def sqlLineage: Unit = {
+    var dbName = "dw"
+    var tableName = "basefire"
+    SQLLineageManager.addRelation(tableName, "t_hive_sink")
+    SQLLineageManager.setCatalog(dbName, tableName, "hive")
+    SQLLineageManager.setTmpView(dbName, tableName, "v_basefire")
+    SQLLineageManager.setCluster(dbName, tableName, "localhost:7890")
+    SQLLineageManager.setPhysicalTable(dbName, tableName, tableName)
+    SQLLineageManager.setColumns(dbName, tableName, new SQLTableColumns("id", "Int"), new SQLTableColumns("name", "String"))
+    SQLLineageManager.setOptions(dbName, tableName, Map[String, String]("connector" -> "kafka", "username" -> "root"))
+    SQLLineageManager.setOperation(dbName, tableName, "INSERT", "DROP", "CREATE")
+
+    dbName = "ods"
+    tableName = "baseuser"
+    SQLLineageManager.addRelation(tableName, "t_kafka_sink")
+    SQLLineageManager.setCatalog(dbName, tableName, "kafka")
+    SQLLineageManager.setTmpView(dbName, tableName, "v_baseuser")
+    SQLLineageManager.setCluster(dbName, tableName, "192.168.0.1:7890")
+    SQLLineageManager.setPhysicalTable(dbName, tableName, tableName)
+    SQLLineageManager.setColumns(dbName, tableName, new SQLTableColumns("id", "Int"), new SQLTableColumns("name", "String"))
+    SQLLineageManager.setOptions(dbName, tableName, Map[String, String]("connector" -> "kafka", "username" -> "root"))
+    SQLLineageManager.setOperation(dbName, tableName, "INSERT", "DROP", "CREATE")
+    println(JSONUtils.toJSONString(SQLLineageManager.getSQLLineage))
   }
 }

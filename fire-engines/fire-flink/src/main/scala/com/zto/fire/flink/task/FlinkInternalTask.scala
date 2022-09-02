@@ -18,9 +18,9 @@
 package com.zto.fire.flink.task
 
 import com.zto.fire.common.anno.Scheduled
-import com.zto.fire.common.bean.Lineage
+import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{JSONUtils, MQProducer}
+import com.zto.fire.common.util.{JSONUtils, MQProducer, SQLLineageManager}
 import com.zto.fire.core.task.FireInternalTask
 import com.zto.fire.flink.BaseFlink
 import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
@@ -40,11 +40,7 @@ private[fire] class FlinkInternalTask(baseFlink: BaseFlink) extends FireInternal
   @Scheduled(fixedInterval = 60000, initialDelay = 60000, repeatCount = 30)
   override def lineage: Unit = {
     if (FireFrameworkConf.lineageEnable && FireFrameworkConf.lineageSendMqEnable) {
-      val lineageMap = FlinkLineageAccumulatorManager.getValue
-      if (lineageMap.nonEmpty) {
-        logger.warn("血缘信息：" + JSONUtils.toJSONString(lineageMap))
-        MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, JSONUtils.toJSONString(new Lineage(lineageMap)))
-      }
+      MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue))
     }
   }
 }

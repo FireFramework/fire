@@ -18,6 +18,7 @@
 package com.zto.fire.spark.sync
 
 import com.zto.fire._
+import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.util.{DatasourceDesc, Logging, PropUtils}
@@ -50,7 +51,7 @@ private[fire] class SyncSparkEngine extends SyncEngineConf {
   /**
    * 在master端获取系统累加器中的数据
    */
-  override def syncLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
+  override def syncLineage: Lineage = {
     SparkLineageAccumulatorManager.getValue
   }
 

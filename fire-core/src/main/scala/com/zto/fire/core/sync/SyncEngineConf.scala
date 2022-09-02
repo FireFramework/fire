@@ -17,6 +17,7 @@
 
 package com.zto.fire.core.sync
 
+import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.util.{DatasourceDesc, ReflectionUtils}
@@ -44,7 +45,7 @@ private[fire] trait SyncEngineConf extends SyncManager {
   /**
    * 在master端获取系统累加器中的数据
    */
-  def syncLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]
+  def syncLineage: Lineage
 
   /**
    * 同步引擎各个container的信息到累加器中
@@ -79,10 +80,10 @@ private[fire] object SyncEngineConfHelper extends SyncEngineConf {
   /**
    * 同步引擎各个container的信息到master端（collect）
    */
-  override def syncLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
+  override def syncLineage: Lineage = {
     val method = syncEngineClass.getDeclaredMethod("syncLineage")
     ReflectionUtils.setAccessible(method)
-    method.invoke(instance).asInstanceOf[JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]]
+    method.invoke(instance).asInstanceOf[Lineage]
   }
 
   /**

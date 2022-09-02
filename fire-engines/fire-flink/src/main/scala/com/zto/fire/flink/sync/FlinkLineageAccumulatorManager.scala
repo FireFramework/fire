@@ -17,8 +17,9 @@
 
 package com.zto.fire.flink.sync
 
+import com.zto.fire.common.bean.lineage.{Lineage, SQLLineage}
 import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.util.DatasourceDesc
+import com.zto.fire.common.util.{DatasourceDesc, SQLLineageManager}
 import com.zto.fire.core.sync.LineageAccumulatorManager
 import com.zto.fire.predef.{JConcurrentHashMap, JHashSet}
 
@@ -49,7 +50,7 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
   /**
    * 获取收集到的血缘消息
    */
-  override def getValue: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
-    this.lineageMap
+  override def getValue: Lineage = {
+    new Lineage(this.lineageMap, SQLLineageManager.getSQLLineage)
   }
 }

@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.bean;
+package com.zto.fire.common.bean.lineage;
+
+import com.zto.fire.common.bean.FireTask;
 
 /**
  * 用于封装采集到的实时血缘信息
@@ -24,7 +26,16 @@ package com.zto.fire.common.bean;
  * @since 2.3.2
  */
 public class Lineage extends FireTask {
-    private Object lineage;
+
+    /**
+     * 血缘信息
+     */
+    private Object datasource;
+
+    /**
+     * SQL血缘
+     */
+    private SQLLineage sql;
 
     public Lineage() {
         super();
@@ -32,14 +43,27 @@ public class Lineage extends FireTask {
 
     public Lineage(Object lineage) {
         super();
-        this.lineage = lineage;
+        this.datasource = lineage;
     }
 
-    public Object getLineage() {
-        return lineage;
+    public Lineage(Object lineage, SQLLineage sql) {
+        this.datasource = lineage;
+        this.sql = sql;
     }
 
-    public void setLineage(Object lineage) {
-        this.lineage = lineage;
+    public Object getDatasource() {
+        return datasource;
+    }
+
+    public void setDatasource(Object datasource) {
+        this.datasource = datasource;
+    }
+
+    public SQLLineage getSql() {
+        return sql;
+    }
+
+    public void setSql(SQLLineage sql) {
+        this.sql = sql;
     }
 }
