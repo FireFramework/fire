@@ -22,7 +22,7 @@ import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.util.SQLLineageManager
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.logical._
-import org.apache.spark.sql.execution.command._
+import org.apache.spark.sql.execution.command.{CacheTableCommand, UncacheTableCommand}
 import org.apache.spark.sql.execution.datasources.CreateTable
 
 /**
@@ -45,11 +45,10 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
       var sourceTable: Option[TableIdentifier] = None
       child match {
         case unresolvedRelation: UnresolvedRelation =>
-          val tableIdentifier = toFireTableIdentifier(unresolvedRelation.tableIdentifier)
-          this.addCatalog(tableIdentifier, Operation.SELECT)
-          sourceTable = Some(tableIdentifier)
+          this.addCatalog(unresolvedRelation.multipartIdentifier, Operation.SELECT)
+          sourceTable = Some(toTableIdentifier(unresolvedRelation.multipartIdentifier))
           // 如果是insert xxx select或create xxx select语句，则维护表与表之间的关系
-          if (sinkTable.isDefined) SQLLineageManager.addRelation(tableIdentifier, sinkTable.get)
+          if (sinkTable.isDefined) SQLLineageManager.addRelation(toTableIdentifier(unresolvedRelation.multipartIdentifier), sinkTable.get)
         case _ => this.logger.debug(s"Parse query SQL异常，无法匹配该Statement. ")
       }
     })
@@ -64,24 +63,29 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
     var sinkTable: Option[TableIdentifier] = None
     logicalPlan match {
       // insert into语句解析
-      case insertInto: InsertIntoTable => {
-        val identifier = this.toFireTableIdentifier(insertInto.table.asInstanceOf[UnresolvedRelation].tableIdentifier)
+      case insertInto: InsertIntoStatement => {
+        val identifier = insertInto.table.asInstanceOf[UnresolvedRelation].multipartIdentifier
         this.addCatalog(identifier, Operation.INSERT_INTO)
         // 维护分区信息
-        val partitions = insertInto.partition.map(part => (part._1, if (part._2.isDefined) part._2.get else ""))
-        SQLLineageManager.setPartitions(identifier, partitions.toSeq)
+        val fireTableIdentifier = toTableIdentifier(identifier)
+        val partitions = insertInto.partitionSpec.map(part => (part._1, if (part._2.isDefined) part._2.get else ""))
+        SQLLineageManager.setPartitions(fireTableIdentifier, partitions.toSeq)
+        sinkTable = Some(fireTableIdentifier)
+      }
+      // rename table语句解析
+      case renameTable: RenameTableStatement => {
+        this.addCatalog(renameTable.oldName, Operation.RENAME_TABLE_OLD)
+        this.addCatalog(renameTable.newName, Operation.RENAME_TABLE_NEW)
+        SQLLineageManager.addRelation(toTableIdentifier(renameTable.oldName), toTableIdentifier(renameTable.newName))
+      }
+      // create table as select语句解析
+      case createTableAsSelect: CreateTableAsSelectStatement => {
+        val identifier = this.toTableIdentifier(createTableAsSelect.tableName)
+        this.addCatalog(identifier, Operation.CREATE_TABLE_AS_SELECT)
+        // 采集建表属性信息
+        SQLLineageManager.setOptions(identifier, createTableAsSelect.properties)
         sinkTable = Some(identifier)
       }
-      // drop table语句解析
-      case dropTable: DropTableCommand =>
-        this.addCatalog(this.toFireTableIdentifier(dropTable.tableName), Operation.DROP_TABLE)
-      // rename table语句解析
-      case renameTableEvent: AlterTableRenameCommand =>
-        val tableIdentifier = toFireTableIdentifier(renameTableEvent.oldName)
-        val newTableIdentifier = toFireTableIdentifier(renameTableEvent.newName)
-        this.addCatalog(tableIdentifier, Operation.RENAME_TABLE_OLD)
-        this.addCatalog(newTableIdentifier, Operation.RENAME_TABLE_NEW)
-        SQLLineageManager.addRelation(tableIdentifier, newTableIdentifier)
       // create table语句解析
       case createTable: CreateTable => {
         val identifier = this.toFireTableIdentifier(createTable.tableDesc.identifier)
@@ -94,37 +98,11 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         SQLLineageManager.setPartitions(identifier, partitions)
       }
       // rename partition语句解析
-      case renamePartition: AlterTableRenamePartitionCommand => {
-        val tableIdentifier = this.toFireTableIdentifier(renamePartition.tableName)
-        this.addCatalog(tableIdentifier, Operation.ALTER_TABLE_RENAME_PARTITION_OLD)
-        this.addCatalog(tableIdentifier, Operation.ALTER_TABLE_RENAME_PARTITION_NEW)
-        SQLLineageManager.setPartitions(tableIdentifier, renamePartition.oldPartition.toSeq)
-        SQLLineageManager.setPartitions(tableIdentifier, renamePartition.newPartition.toSeq)
-      }
-      // drop partition语句解析
-      case dropPartition: AlterTableDropPartitionCommand => {
-        val tableIdentifier = this.toFireTableIdentifier(dropPartition.tableName)
-        this.addCatalog(tableIdentifier, Operation.ALTER_TABLE_DROP_PARTITION)
-        SQLLineageManager.setPartitions(tableIdentifier, dropPartition.specs.head.toSeq)
-      }
-      // add partition语句解析
-      case addPartition: AlterTableAddPartitionCommand => {
-        val tableIdentifier = this.toFireTableIdentifier(addPartition.tableName)
-        this.addCatalog(tableIdentifier, Operation.ALTER_TABLE_ADD_PARTITION)
-        SQLLineageManager.setPartitions(tableIdentifier, addPartition.partitionSpecsAndLocs.head._1.toSeq)
-      }
-      // truncate table语句解析
-      case truncateTable: TruncateTableCommand => {
-        val tableIdentifier = this.toFireTableIdentifier(truncateTable.tableName)
-        this.addCatalog(tableIdentifier, Operation.TRUNCATE)
-      }
-      case cacheTable: CacheTableCommand => {
-        val tableIdentifier = this.toFireTableIdentifier(cacheTable.tableIdent)
-        this.addCatalog(tableIdentifier, Operation.CACHE)
-      }
-      case uncacheTable: UncacheTableCommand => {
-        val tableIdentifier = this.toFireTableIdentifier(uncacheTable.tableIdent)
-        this.addCatalog(tableIdentifier, Operation.UNCACHE)
+      case renamePartition: AlterTableRenamePartitionStatement => {
+        this.addCatalog(renamePartition.tableName, Operation.ALTER_TABLE_RENAME_PARTITION_OLD)
+        this.addCatalog(renamePartition.tableName, Operation.ALTER_TABLE_RENAME_PARTITION_NEW)
+        SQLLineageManager.setPartitions(this.toTableIdentifier(renamePartition.tableName), renamePartition.from.toSeq)
+        SQLLineageManager.setPartitions(this.toTableIdentifier(renamePartition.tableName), renamePartition.to.toSeq)
       }
       case _ => this.logger.debug(s"Parse ddl SQL异常，无法匹配该Statement.")
     }

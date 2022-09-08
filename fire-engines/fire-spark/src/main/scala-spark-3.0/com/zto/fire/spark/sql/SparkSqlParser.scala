@@ -30,7 +30,7 @@ import org.apache.spark.sql.execution.datasources.CreateTable
  * @author ChengLong 2021-6-18 16:31:04
  * @since 2.0.0
  */
-object SparkSqlParser extends SparkSqlParserBase {
+private[fire] object SparkSqlParser extends SparkSqlParserBase {
 
   /**
    * 用于解析查询sql中的库表信息

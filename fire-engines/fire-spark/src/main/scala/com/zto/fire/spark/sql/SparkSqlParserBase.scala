@@ -38,7 +38,7 @@ import org.apache.spark.sql.execution.datasources.CreateTable
  * @author ChengLong 2022-09-07 15:31:03
  * @since 2.3.2
  */
-trait SparkSqlParserBase extends SqlParser {
+private[fire] trait SparkSqlParserBase extends SqlParser {
   protected lazy val spark = SparkSingletonFactory.getSparkSession
   protected lazy val catalog = this.spark.sessionState.catalog
   protected lazy val hiveTableMetaDataMap = new JConcurrentHashMap[String, CatalogTable]()
@@ -82,7 +82,7 @@ trait SparkSqlParserBase extends SqlParser {
    */
   override def isTempView(tableIdentifier: TableIdentifier): Boolean = {
     tryWithReturn {
-      catalog.isTempView(Seq(tableIdentifier.toString))
+      catalog.isTemporaryTable(toSparkTableIdentifier(tableIdentifier))
     } (this.logger, catchLog = s"判断${tableIdentifier}是否为临时表或视图失败", hook = false)
   }
 

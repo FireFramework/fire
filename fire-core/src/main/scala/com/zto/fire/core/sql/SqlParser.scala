@@ -30,7 +30,7 @@ import java.util.concurrent.{CopyOnWriteArraySet, TimeUnit}
  * @author ChengLong 2021-6-18 16:28:50
  * @since 2.0.0
  */
-trait SqlParser extends Logging {
+private[fire] trait SqlParser extends Logging {
   // 用于临时存放解析后的库表类
   protected[fire] lazy val tmpTableMap = new JHashMap[String, TableMeta]()
   // 用于存放按数据源归类后的所有血缘信息

@@ -70,10 +70,17 @@ object SparkSqlParseTest extends SparkCore {
         |partitioned by(ds string, city string)
         |ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
         |""".stripMargin
-    val dropDB = "drop database tmp"
+    val createTableAsSelect =
+      """
+        |create table if not exists tmp.zto_fire_test
+        |select a.*,'sh' as city
+        |from dw.mdb_md_dbs a left join student t on a.ds=t.name
+        |where ds='20211001' limit 100
+        |""".stripMargin
+    val dropDB = "drop database if exists tmp12"
     val insertOverwrite = "insert overwrite table dw.kwang_test partition(ds='202106', city='beijing') values(4,'zz')"
 
-    val sql =
+    val insertIntoAsSelect =
       """
         |insert into zto_cockpit_site_target_ds
         |SELECT site_id,scan_date,scan_day,
@@ -128,7 +135,7 @@ object SparkSqlParseTest extends SparkCore {
         |GROUP BY site_id,scan_date,scan_day
       """.stripMargin
 
-    SparkSqlParser.sqlParser(insertInto)
+    SparkSqlParser.sqlParser(select1)
     ThreadUtils.scheduleAtFixedRate({
       println(s"累加器值：" + JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue) + "\n\n")
     }, 0, 10, TimeUnit.SECONDS)
