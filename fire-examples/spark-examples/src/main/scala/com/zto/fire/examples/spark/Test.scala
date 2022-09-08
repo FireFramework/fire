@@ -20,7 +20,7 @@ package com.zto.fire.examples.spark
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
-import com.zto.fire.core.anno.connector.{HBase, Jdbc, Kafka, RocketMQ}
+import com.zto.fire.core.anno.connector.{HBase, Hive, Jdbc, Kafka, RocketMQ}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.SparkCore
@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit
     |fire.lineage.run.initialDelay=10
     |fire.shutdown.auto.exit=false
     |""")
+@Hive("test")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @RocketMQ(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
 @Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "1qaz@WSX")
@@ -50,7 +51,14 @@ object Test extends SparkCore {
     ThreadUtils.scheduleAtFixedRate({
       println(s"累加器值：" + JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
     }, 0, 60, TimeUnit.SECONDS)
-
+    this.fire.createDataFrame(Student.newStudentList(), classOf[Student]).createOrReplaceTempView("student")
+    sql(
+      s"""
+         |create table if not exists tmp.zto_fire_test
+         |select a.*,'sh' as city
+         |from dw.mdb_md_dbs a left join student t on a.ds=t.name
+         |where ds='20211001' limit 100
+         |""".stripMargin)
     (1 to 10).foreach(x => {
       val df = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])
       df.rdd.foreachPartition(it => {
@@ -60,11 +68,6 @@ object Test extends SparkCore {
         HBaseConnector.get[Student](hbaseTable, classOf[Student], Seq("1"))
       })
       Thread.sleep(10000)
-    })
-
-    val df = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])
-    df.rdd.foreachPartition(it => {
-      val a = 1 / 0
     })
   }
 }

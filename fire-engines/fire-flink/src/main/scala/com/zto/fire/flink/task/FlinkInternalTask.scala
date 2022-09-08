@@ -18,9 +18,8 @@
 package com.zto.fire.flink.task
 
 import com.zto.fire.common.anno.Scheduled
-import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{JSONUtils, MQProducer, SQLLineageManager}
+import com.zto.fire.common.util.{JSONUtils, MQProducer}
 import com.zto.fire.core.task.FireInternalTask
 import com.zto.fire.flink.BaseFlink
 import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager

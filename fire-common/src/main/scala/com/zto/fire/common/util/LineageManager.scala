@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.util
 
+import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf._
 import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
 import com.zto.fire.predef._
@@ -205,7 +206,14 @@ private[fire] object LineageManager extends Logging {
   /**
    * 获取所有使用到的数据源
    */
-  private[fire] def get: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = this.manager.get
+  private[fire] def getDatasourceLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = this.manager.get
+
+  /**
+   * 获取完整的实时血缘信息
+   */
+  private[fire] def getLineage: Lineage = {
+    new Lineage(this.getDatasourceLineage, SQLLineageManager.getSQLLineage)
+  }
 }
 
 /**

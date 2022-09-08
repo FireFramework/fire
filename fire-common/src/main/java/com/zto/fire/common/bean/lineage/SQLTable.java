@@ -17,10 +17,7 @@
 
 package com.zto.fire.common.bean.lineage;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 用于封装采集到SQL的实时血缘信息：SQL中所用到的表信息
@@ -51,6 +48,11 @@ public class SQLTable {
     private String tmpView;
 
     /**
+     * 表注释信息
+     */
+    private String comment;
+
+    /**
      * sql中的属性信息，比如with字句的options
      */
     private Map<String, String> options;
@@ -58,21 +60,32 @@ public class SQLTable {
     /**
      * 任务中对该表的操作：SELECT、DROP、CREATE等
      */
-    private List<String> operation;
+    private Set<String> operation;
 
     /**
      * 使用到的字段列表，包括字段的名称与类型
      */
-    private List<SQLTableColumns> columns;
+    private Set<SQLTableColumns> columns;
+
+    /**
+     * 使用到的分区信息
+     */
+    private Set<SQLTablePartitions> partitions;
 
     public SQLTable() {
-        this.operation = new LinkedList<>();
-        this.columns = new LinkedList<>();
+        this.operation = new HashSet<>();
+        this.columns = new HashSet<>();
         this.options = new HashMap<>();
+        this.partitions = new HashSet<>();
     }
 
-    public SQLTable(String catalog, String cluster, String physicalTable, String tmpView,
-                    HashMap<String, String> options, List<String> operation, List<SQLTableColumns> columns) {
+    public SQLTable(String physicalTable) {
+        this();
+        this.physicalTable = physicalTable;
+    }
+
+    public SQLTable(String catalog, String cluster, String physicalTable, String tmpView, String comment,
+                    HashMap<String, String> options, HashSet<String> operation, HashSet<SQLTableColumns> columns, HashSet<SQLTablePartitions> partitions) {
         this.catalog = catalog;
         this.cluster = cluster;
         this.physicalTable = physicalTable;
@@ -80,6 +93,8 @@ public class SQLTable {
         this.options = options;
         this.operation = operation;
         this.columns = columns;
+        this.partitions = partitions;
+        this.comment = comment;
     }
 
     public void setCatalog(String catalog) {
@@ -122,20 +137,35 @@ public class SQLTable {
         this.options = options;
     }
 
-    public void setOperation(List<String> operation) {
+    public void setOperation(Set<String> operation) {
         this.operation = operation;
     }
 
-    public List<String> getOperation() {
+    public Set<String> getOperation() {
         return operation;
     }
 
-    public void setColumns(List<SQLTableColumns> columns) {
+    public void setColumns(HashSet<SQLTableColumns> columns) {
         this.columns = columns;
     }
 
-    public List<SQLTableColumns> getColumns() {
+    public Set<SQLTableColumns> getColumns() {
         return columns;
     }
 
+    public Set<SQLTablePartitions> getPartitions() {
+        return partitions;
+    }
+
+    public void setPartitions(HashSet<SQLTablePartitions> partitions) {
+        this.partitions = partitions;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
 }

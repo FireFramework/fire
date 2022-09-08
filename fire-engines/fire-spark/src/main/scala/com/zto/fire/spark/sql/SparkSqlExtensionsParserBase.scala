@@ -1,5 +1,6 @@
 package com.zto.fire.spark.sql
 
+import com.zto.fire._
 import com.zto.fire.common.util.{ExceptionBus, Logging}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions.Expression
@@ -18,13 +19,13 @@ private[fire] class SparkSqlExtensionsParserBase(sparkSession: SparkSession, par
    */
   def parsePlan(sqlText: String): LogicalPlan = {
     try {
-      sparkSession.sessionState.sqlParser.parseExpression(sqlText)
       SparkSqlParser.sqlParse(sqlText)
+      parser.parsePlan(sqlText)
     } catch {
       case e: Throwable =>
         ExceptionBus.post(e, sqlText)
+        throw e
     }
-    parser.parsePlan(sqlText)
   }
 
   /**

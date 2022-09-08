@@ -68,6 +68,7 @@ object SparkSqlParser extends SqlParser {
    * 用于判断给定的表是否为hive表
    */
   override def isHiveTable(dbName: String = null, tableName: String): Boolean = true
+
   /**
    * 用于解析SparkSql中的库表信息
    */
@@ -85,7 +86,9 @@ object SparkSqlParser extends SqlParser {
    * 用于解析查询sql中的库表信息
    */
   def sqlQueryParser(logicalPlan: LogicalPlan, sql: String = ""): Unit = {
-
+    val plan = logicalPlan
+    println(plan)
+    println(plan)
   }
 
   /**

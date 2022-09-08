@@ -52,7 +52,7 @@ object SparkUtils extends Logging {
    */
   def sqlValidate(sql: String): Try[Unit] = {
     val retVal = Try {
-      val t = this.spark.sessionState.sqlParser.parseExpression(sql)
+      val t = this.spark.sessionState.sqlParser.parsePlan(sql)
     }
 
     if (retVal.isFailure) {

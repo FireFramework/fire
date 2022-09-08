@@ -31,6 +31,11 @@ import java.util.List;
 public class SQLLineage implements DatasourceDesc {
 
     /**
+     * 待解析的SQL语句
+     */
+    private List<String> statements;
+
+    /**
      * 解析SQL中表的信息
      */
     private List<SQLTable> tables;
@@ -41,8 +46,17 @@ public class SQLLineage implements DatasourceDesc {
     private List<SQLTableRelations> relations;
 
     public SQLLineage() {
+        this.statements = new LinkedList<>();
         this.tables = new LinkedList<>();
         this.relations = new LinkedList<>();
+    }
+
+    public List<String> getStatements() {
+        return statements;
+    }
+
+    public void setStatements(List<String> statements) {
+        this.statements = statements;
     }
 
     public void setTables(List<SQLTable> tables) {

@@ -426,10 +426,10 @@ private[fire] object AccumulatorManager extends Logging  {
       override def run(): Unit = {
         if (SparkUtils.isDriver) {
           // driver端采集
-          addLineage(LineageManager.get)
+          addLineage(LineageManager.getDatasourceLineage)
           // executor端分布式采集
           DistributeSyncManager.sync({
-            addLineage(LineageManager.get)
+            addLineage(LineageManager.getDatasourceLineage)
           })
           logger.info(s"完成Spark分布式血缘解析与采集：${lineageRunCount.get()}次")
 

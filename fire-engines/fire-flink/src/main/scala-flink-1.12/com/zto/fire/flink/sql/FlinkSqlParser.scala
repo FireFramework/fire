@@ -20,8 +20,9 @@ package com.zto.fire.flink.sql
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.util.{ExceptionBus, TableMeta}
+import com.zto.fire.common.util.TableMeta
 import com.zto.fire.core.sql.SqlParser
+import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.calcite.avatica.util.{Casing, Quoting}
 import org.apache.calcite.sql._
@@ -99,9 +100,9 @@ object FlinkSqlParser extends SqlParser {
       case Operation.DROP_DATABASE => if (this.tableEnv.isHiveCatalog) Datasource.HIVE else Datasource.VIEW
       case _ => {
         if (seq.size == 1) {
-          if (this.isHiveTable(null, seq.head)) Datasource.HIVE else Datasource.VIEW
+          if (this.isHiveTable(TableIdentifier(seq.head))) Datasource.HIVE else Datasource.VIEW
         } else {
-          if (this.isHiveTable(seq.head, seq(1))) Datasource.HIVE else Datasource.VIEW
+          if (this.isHiveTable(TableIdentifier(seq(1), seq.head))) Datasource.HIVE else Datasource.VIEW
         }
       }
     }
@@ -256,18 +257,18 @@ object FlinkSqlParser extends SqlParser {
   /**
    * 用于判断给定的表是否为临时表
    */
-  override def isTempView(dbName: String, tableName: String): Boolean = {
+  override def isTempView(tableIdentifier: TableIdentifier): Boolean = {
     try {
       if (this.tableEnv.defaultCatalog.isPresent) {
         val catalog = this.tableEnv.defaultCatalog.get()
-        val db = if (isEmpty(dbName)) catalog.getDefaultDatabase else dbName
-        catalog.tableExists(new ObjectPath(db, tableName))
+        val db = if (tableIdentifier.notExistsDB) catalog.getDefaultDatabase else tableIdentifier.database
+        catalog.tableExists(new ObjectPath(db, tableIdentifier.table))
       } else {
         false
       }
     } catch {
       case e => {
-        this.logger.error(s"可忽略异常：判断tmp view失败, db name is ${dbName}, table name is ${tableName}", e)
+        this.logger.error(s"可忽略异常：判断tmp view失败, db name is ${tableIdentifier.database}, table name is ${tableIdentifier.table}", e)
         false
       }
     }
@@ -276,32 +277,30 @@ object FlinkSqlParser extends SqlParser {
   /**
    * 用于判断给定的表是否为hive表
    */
-  override def isHiveTable(dbName: String, tableName: String): Boolean = {
-    val tableIdentifier = s"$dbName.$tableName"
-
-    if (!this.hiveTableMap.contains(tableIdentifier)) {
+  override def isHiveTable(tableIdentifier: TableIdentifier): Boolean = {
+    if (!this.hiveTableMap.contains(tableIdentifier.identifier)) {
       // 根据catalog判断是否为临时表
-      if (this.isTempView(dbName, tableName)) {
-        this.hiveTableMap.put(tableIdentifier, false)
+      if (this.isTempView(tableIdentifier)) {
+        this.hiveTableMap.put(tableIdentifier.identifier, false)
       } else {
         // 非临时表基于hive catalog进行判断
         if (!this.tableEnv.hiveCatalog.isPresent) {
-          this.hiveTableMap.put(tableIdentifier, false)
+          this.hiveTableMap.put(tableIdentifier.identifier, false)
         } else {
           val catalog = this.tableEnv.hiveCatalog.get()
-          val db = if (isEmpty(dbName)) catalog.getDefaultDatabase else dbName
+          val db = if (tableIdentifier.notExistsDB) catalog.getDefaultDatabase else tableIdentifier.database
           try {
-            if (catalog.tableExists(new ObjectPath(db, tableName))) {
-              this.hiveTableMap.put(tableIdentifier, true)
+            if (catalog.tableExists(new ObjectPath(db, tableIdentifier.table))) {
+              this.hiveTableMap.put(tableIdentifier.identifier, true)
             } else {
-              this.hiveTableMap.put(tableIdentifier, false)
+              this.hiveTableMap.put(tableIdentifier.identifier, false)
             }
           }
         }
       }
     }
 
-    this.hiveTableMap(tableIdentifier)
+    this.hiveTableMap(tableIdentifier.identifier)
   }
 
   /**

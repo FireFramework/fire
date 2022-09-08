@@ -56,7 +56,7 @@ private[fire] object DistributeSyncManager extends SyncManager {
   def collect: Unit = {
     lineageThread.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = {
-        val lineageMap = LineageManager.get
+        val lineageMap = LineageManager.getLineage
         if (noEmpty(lineageMap)) {
           val json = JSONUtils.toJSONString(lineageMap)
           SystemRestful.restInvoke(lineageUrl, json)

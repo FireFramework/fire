@@ -17,7 +17,8 @@
 
 package com.zto.fire.core.sql
 
-import com.zto.fire.common.conf.FireFrameworkConf.{lineageEnable, lineageRunInitialDelay, lineageRunPeriod}
+import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.conf.FireFrameworkConf.lineageEnable
 import com.zto.fire.common.util.{LineageManager, Logging, TableMeta, ThreadUtils}
 import com.zto.fire.predef._
 
@@ -31,7 +32,7 @@ import java.util.concurrent.{CopyOnWriteArraySet, TimeUnit}
  */
 trait SqlParser extends Logging {
   // 用于临时存放解析后的库表类
-  protected lazy val tmpTableMap = new JHashMap[String, TableMeta]()
+  protected[fire] lazy val tmpTableMap = new JHashMap[String, TableMeta]()
   // 用于存放按数据源归类后的所有血缘信息
   protected lazy val tableMetaSet = new CopyOnWriteArraySet[TableMeta]()
   protected[fire] lazy val hiveTableMap = new JConcurrentHashMap[String, Boolean]()
@@ -47,7 +48,8 @@ trait SqlParser extends Logging {
         this.buffer.foreach(sql => this.sqlParser(sql))
         LineageManager.addTableMeta(this.tableMetaSet)
         this.clear
-      }, lineageRunInitialDelay, lineageRunPeriod, TimeUnit.SECONDS)
+      // }, lineageRunInitialDelay, lineageRunPeriod, TimeUnit.SECONDS)
+      }, 1, 1, TimeUnit.SECONDS)
     }
   }
 
@@ -82,7 +84,7 @@ trait SqlParser extends Logging {
    * 将待解析的SQL添加到buffer中
    */
   def sqlParse(sql: String): Unit = {
-    if (lineageEnable && noEmpty(sql) && sqlLegal(sql)) {
+    if (lineageEnable && noEmpty(sql)) {
       this.buffer += sql
     }
   }
@@ -104,12 +106,12 @@ trait SqlParser extends Logging {
   /**
    * 用于判断给定的表是否为临时表
    */
-  def isTempView(dbName: String = null, tableName: String): Boolean
+  def isTempView(tableIdentifier: TableIdentifier): Boolean
 
   /**
    * 用于判断给定的表是否为hive表
    */
-  def isHiveTable(dbName: String = null, tableName: String): Boolean
+  def isHiveTable(tableIdentifier: TableIdentifier): Boolean
 
   /**
    * 将库表名转为字符串

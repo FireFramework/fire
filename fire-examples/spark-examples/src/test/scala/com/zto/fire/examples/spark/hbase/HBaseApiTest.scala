@@ -115,7 +115,7 @@ class HBaseApiTest extends SparkCore with HBaseTester {
     val scanStudentList2 = HBaseConnector(2).scan(this.tableName2, classOf[Student], "1", "6")
     assertEquals(scanStudentList2.size, 5)
 
-    assertEquals(LineageManager.get.size(), 1)
+    assertEquals(LineageManager.getDatasourceLineage.size(), 1)
   }
 
   /**
