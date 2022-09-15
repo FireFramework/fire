@@ -57,6 +57,7 @@ object FlinkUtils extends Serializable with Logging {
    */
   def sqlValidate(sql: String): Try[Unit] = {
     val retVal = Try {
+      SQLLineageManager.addStatement(sql)
       FlinkSqlParser.sqlParser(sql)
     }
 

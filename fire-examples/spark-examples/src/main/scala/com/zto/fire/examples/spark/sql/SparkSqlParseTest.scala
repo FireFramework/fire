@@ -1,10 +1,9 @@
-package com.zto.fire.examples.spark
+package com.zto.fire.examples.spark.sql
 
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.util.{JSONUtils, ThreadUtils}
 import com.zto.fire.core.anno.connector.Hive
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.println
 import com.zto.fire.spark.SparkCore
 import com.zto.fire.spark.sql.SparkSqlParser
 import com.zto.fire.spark.sync.SparkLineageAccumulatorManager
@@ -13,6 +12,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Spark SQL血缘解析工具
+ *
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Hive("test")
@@ -140,8 +140,5 @@ object SparkSqlParseTest extends SparkCore {
       println(s"累加器值：" + JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue) + "\n\n")
     }, 0, 10, TimeUnit.SECONDS)
     Thread.currentThread().join()
-    /*SparkSqlParser.sqlParser(createTable)
-    SparkSqlParser.sqlParser(dropDB)
-    SparkSqlParser.sqlParser(renameTable)*/
   }
 }

@@ -19,9 +19,7 @@ package com.zto.fire.examples.flink
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.common.bean.lineage.SQLTableColumns
-import org.apache.flink.api.scala._
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, SQLLineageManager, ThreadUtils}
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.core.anno.lifecycle.{Process, Step1}
 import com.zto.fire.examples.bean.Student
@@ -29,12 +27,12 @@ import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
 import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
 import com.zto.fire.hbase.HBaseConnector
-import com.zto.fire.predef.{JString, println}
+import com.zto.fire.predef.println
+import org.apache.flink.api.scala._
 
 import java.util.concurrent.TimeUnit
 
 @HBase("test")
-@Config("""fire.lineage.run.initialDelay=10""")
 @Streaming(interval = 60, unaligned = true, parallelism = 2) // 100s做一次checkpoint，开启非对齐checkpoint
 @RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
@@ -60,6 +58,6 @@ object Test extends FlinkStreaming {
   def lineage: Unit = {
     ThreadUtils.scheduleAtFixedRate({
       println(s"累加器值：" + JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue))
-    }, 0, 60, TimeUnit.SECONDS)
+    }, 0, 10, TimeUnit.SECONDS)
   }
 }

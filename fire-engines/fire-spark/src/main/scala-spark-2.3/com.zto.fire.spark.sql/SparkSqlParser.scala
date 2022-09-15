@@ -96,21 +96,21 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
       // rename partition语句解析
       case renamePartition: AlterTableRenamePartitionCommand => {
         val tableIdentifier = this.toFireTableIdentifier(renamePartition.tableName)
-        this.addCatalog(tableIdentifier, Operation.ALTER_TABLE_RENAME_PARTITION_OLD)
-        this.addCatalog(tableIdentifier, Operation.ALTER_TABLE_RENAME_PARTITION_NEW)
+        this.addCatalog(tableIdentifier, Operation.RENAME_PARTITION_OLD)
+        this.addCatalog(tableIdentifier, Operation.RENAME_PARTITION_NEW)
         SQLLineageManager.setPartitions(tableIdentifier, renamePartition.oldPartition.toSeq)
         SQLLineageManager.setPartitions(tableIdentifier, renamePartition.newPartition.toSeq)
       }
       // drop partition语句解析
       case dropPartition: AlterTableDropPartitionCommand => {
         val tableIdentifier = this.toFireTableIdentifier(dropPartition.tableName)
-        this.addCatalog(tableIdentifier, Operation.ALTER_TABLE_DROP_PARTITION)
+        this.addCatalog(tableIdentifier, Operation.DROP_PARTITION)
         SQLLineageManager.setPartitions(tableIdentifier, dropPartition.specs.head.toSeq)
       }
       // add partition语句解析
       case addPartition: AlterTableAddPartitionCommand => {
         val tableIdentifier = this.toFireTableIdentifier(addPartition.tableName)
-        this.addCatalog(tableIdentifier, Operation.ALTER_TABLE_ADD_PARTITION)
+        this.addCatalog(tableIdentifier, Operation.ADD_PARTITION)
         SQLLineageManager.setPartitions(tableIdentifier, addPartition.partitionSpecsAndLocs.head._1.toSeq)
       }
       // truncate table语句解析

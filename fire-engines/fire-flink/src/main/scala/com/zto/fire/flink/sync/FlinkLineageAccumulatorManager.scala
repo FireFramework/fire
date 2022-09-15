@@ -17,12 +17,14 @@
 
 package com.zto.fire.flink.sync
 
-import com.zto.fire.common.bean.lineage.{Lineage, SQLLineage}
+import com.zto.fire._
+import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.util.{DatasourceDesc, SQLLineageManager}
+import com.zto.fire.common.util._
 import com.zto.fire.core.sync.LineageAccumulatorManager
 import com.zto.fire.predef.{JConcurrentHashMap, JHashSet}
 
+import java.lang.{Boolean => JBoolean}
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -36,10 +38,56 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
   private lazy val counter = new AtomicLong()
 
   /**
+   * 去重合并血缘信息
+   */
+  private def mergeLineage(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
+    // 合并来自各个TaskManager端的血缘信息
+    if (lineage.nonEmpty) merge(lineage)
+
+    // 合并血缘管理器中的血缘信息
+    if (LineageManager.getDatasourceLineage.nonEmpty) merge(LineageManager.getDatasourceLineage)
+
+    /**
+     * 合并血缘
+     */
+    def merge(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
+      lineage.foreach(each => {
+        var set = this.lineageMap.get(each._1)
+        if (set == null) set = new JHashSet[DatasourceDesc]()
+
+        // 兼容jackson反序列化不支持HashSet与case class的问题
+        if (each._2.isInstanceOf[JArrayList[_]]) {
+          val datasource = each._2.asInstanceOf[JArrayList[JMap[String, _]]]
+          datasource.foreach(map => {
+            if (map.containsKey("datasource")) {
+              val datasource = map.getOrElse("datasource", "").toString.toUpperCase
+              val cluster = map.getOrElse("cluster", "").toString
+              val username = map.getOrElse("username", "").toString
+              val tableName = map.getOrElse("tableName", "").toString
+              val sink = JBoolean.parseBoolean(map.getOrElse("sink", "false").toString)
+              val topics = map.getOrElse("topics", "").toString
+              val groupId = map.getOrElse("groupId", "").toString
+
+              Datasource.parse(datasource) match {
+                case Datasource.JDBC | Datasource.HBASE => set.add(DBDatasource(datasource, cluster, tableName, username, sink))
+                case Datasource.KAFKA | Datasource.ROCKETMQ => set.add(MQDatasource(datasource, cluster, topics, groupId, sink))
+                case _ =>
+              }
+            }
+          })
+        } else {
+          each._2.filter(desc => desc.toString.contains("datasource")).foreach(desc => set.add(desc))
+        }
+        if (set.nonEmpty) this.lineageMap.put(each._1, set)
+      })
+    }
+  }
+
+  /**
    * 将血缘信息放到累加器中
    */
   override def add(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
-    if (lineage.nonEmpty) this.lineageMap.putAll(lineage)
+    if (lineage.nonEmpty) this.mergeLineage(lineage)
   }
 
   /**
@@ -51,6 +99,6 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
    * 获取收集到的血缘消息
    */
   override def getValue: Lineage = {
-    new Lineage(this.lineageMap, SQLLineageManager.getSQLLineage)
+    new Lineage(this.lineageMap , SQLLineageManager.getSQLLineage)
   }
 }

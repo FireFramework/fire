@@ -1,6 +1,5 @@
 package com.zto.fire.spark.sql
 
-import com.zto.fire._
 import com.zto.fire.common.util.{ExceptionBus, Logging}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions.Expression

@@ -214,6 +214,7 @@ private[fire] object LineageManager extends Logging {
   private[fire] def getLineage: Lineage = {
     new Lineage(this.getDatasourceLineage, SQLLineageManager.getSQLLineage)
   }
+
 }
 
 /**

@@ -38,6 +38,7 @@ import org.apache.spark.sql.execution.datasources.CreateTable
  * @author ChengLong 2022-09-07 15:31:03
  * @since 2.3.2
  */
+@Internal
 private[fire] trait SparkSqlParserBase extends SqlParser {
   protected lazy val spark = SparkSingletonFactory.getSparkSession
   protected lazy val catalog = this.spark.sessionState.catalog
@@ -48,7 +49,8 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    *
    * @param tableIdentifier 库表
    */
-  def getCatalog(tableIdentifier: TableIdentifier): Datasource = {
+  @Internal
+  protected def getCatalog(tableIdentifier: TableIdentifier): Datasource = {
     val isHive = this.isHiveTable(tableIdentifier)
     if (isHive) Datasource.HIVE else Datasource.VIEW
   }
@@ -56,6 +58,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   /**
    * 将Fire的TableIdentifier转为Spark的TableIdentifier
    */
+  @Internal
   private[fire] def toSparkTableIdentifier(tableIdentifier: TableIdentifier): SparkTableIdentifier = {
     val db = if (isEmpty(tableIdentifier.database)) None else Some(tableIdentifier.database)
     SparkTableIdentifier(tableIdentifier.table, db)
@@ -64,6 +67,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   /**
    * 将Spark的TableIdentifier转为Fire的TableIdentifier
    */
+  @Internal
   private[fire] def toFireTableIdentifier(tableIdentifier: SparkTableIdentifier): TableIdentifier = {
     TableIdentifier(tableIdentifier.unquotedString)
   }
@@ -71,6 +75,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   /**
    * 用于判断表是否存在
    */
+  @Internal
   private[fire] def tableExists(tableIdentifier: TableIdentifier): Boolean = {
     tryWithReturn {
       this.catalog.tableExists(toSparkTableIdentifier(tableIdentifier))
@@ -80,6 +85,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   /**
    * 用于判断给定的表是否为临时表
    */
+  @Internal
   override def isTempView(tableIdentifier: TableIdentifier): Boolean = {
     tryWithReturn {
       catalog.isTemporaryTable(toSparkTableIdentifier(tableIdentifier))
@@ -89,6 +95,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   /**
    * 用于判断给定的表是否为hive表
    */
+  @Internal
   override def isHiveTable(tableIdentifier: TableIdentifier): Boolean = {
     this.hiveTableMap.mergeGet(tableIdentifier.identifier) {
       if (this.isTempView(tableIdentifier) || !this.tableExists(tableIdentifier)) return false
@@ -104,7 +111,8 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   /**
    * 将解析到的表信息添加到实时血缘中
    */
-  def addCatalog(identifierSeq: Seq[String], operation: Operation): Unit = {
+  @Internal
+  protected def addCatalog(identifierSeq: Seq[String], operation: Operation): Unit = {
     val identifier = this.toTableIdentifier(identifierSeq)
     this.addCatalog(identifier, operation)
   }
@@ -112,7 +120,8 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   /**
    * 将解析到的表信息添加到实时血缘中
    */
-  def addCatalog(identifier: TableIdentifier, operation: Operation): Unit = {
+  @Internal
+  protected def addCatalog(identifier: TableIdentifier, operation: Operation): Unit = {
     SQLLineageManager.setCatalog(identifier, this.getCatalog(identifier).toString)
     SQLLineageManager.setOperation(identifier, operation.toString)
     if (this.isTempView(identifier)) {
@@ -159,6 +168,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   /**
    * 用于解析SparkSql中的库表信息
    */
+  @Internal
   override def sqlParser(sql: String): Unit = {
     if (isEmpty(sql)) return
     tryWithLog {
@@ -176,12 +186,14 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    * @param sinkTable
    * 当insert xxx select或create xxx select语句时，sinkTable不为空
    */
-  def queryParser(logicalPlan: LogicalPlan, sinkTable: Option[TableIdentifier]): Unit
+  @Internal
+  protected def queryParser(logicalPlan: LogicalPlan, sinkTable: Option[TableIdentifier]): Unit
 
   /**
    * 用于解析DDL语句中的库表、分区信息
    *
    * @return 返回sink目标表，用于维护表与表之间的关系
    */
-  def ddlParser(logicalPlan: LogicalPlan): Option[TableIdentifier]
+  @Internal
+  protected def ddlParser(logicalPlan: LogicalPlan): Option[TableIdentifier]
 }

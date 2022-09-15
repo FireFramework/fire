@@ -307,8 +307,8 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    */
   def sql(sql: String): TableResult = {
     SQLUtils.executeSql(sql) { statement =>
-      FlinkSqlParser.sqlParse(statement)
       if (this.isInsertStatement(statement)) {
+        FlinkSqlExtensionsParser.sqlParse(statement)
         this.addInsertSql(statement)
         // 为兼容flink1.12，使用反射调用返回TABLE_RESULT_OK
         val tableResultClass = Class.forName("org.apache.flink.table.api.internal.TableResultImpl")
@@ -316,7 +316,9 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
         field.setAccessible(true)
         field.get(null).asInstanceOf[TableResult]
       } else {
-        this.tableEnv.executeSql(FlinkUtils.sqlWithReplace(statement))
+        val finalSql = FlinkUtils.sqlWithReplace(statement)
+        FlinkSqlExtensionsParser.sqlParse(finalSql)
+        this.tableEnv.executeSql(finalSql)
       }
     }.get
   }

@@ -17,6 +17,7 @@
 
 package com.zto.fire.spark.sql
 
+import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.util.SQLLineageManager
@@ -30,6 +31,7 @@ import org.apache.spark.sql.execution.datasources.CreateTable
  * @author ChengLong 2021-6-18 16:31:04
  * @since 2.0.0
  */
+@Internal
 private[fire] object SparkSqlParser extends SparkSqlParserBase {
 
   /**
@@ -102,19 +104,19 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
       }
       // rename partition语句解析
       case renamePartition: AlterTableRenamePartitionStatement => {
-        this.addCatalog(renamePartition.tableName, Operation.ALTER_TABLE_RENAME_PARTITION_OLD)
-        this.addCatalog(renamePartition.tableName, Operation.ALTER_TABLE_RENAME_PARTITION_NEW)
+        this.addCatalog(renamePartition.tableName, Operation.RENAME_PARTITION_OLD)
+        this.addCatalog(renamePartition.tableName, Operation.RENAME_PARTITION_NEW)
         SQLLineageManager.setPartitions(this.toTableIdentifier(renamePartition.tableName), renamePartition.from.toSeq)
         SQLLineageManager.setPartitions(this.toTableIdentifier(renamePartition.tableName), renamePartition.to.toSeq)
       }
       // drop partition语句解析
       case dropPartition: AlterTableDropPartitionStatement => {
-        this.addCatalog(dropPartition.tableName, Operation.ALTER_TABLE_DROP_PARTITION)
+        this.addCatalog(dropPartition.tableName, Operation.DROP_PARTITION)
         SQLLineageManager.setPartitions(this.toTableIdentifier(dropPartition.tableName), dropPartition.specs.head.toSeq)
       }
       // add partition语句解析
       case addPartition: AlterTableAddPartitionStatement => {
-        this.addCatalog(addPartition.tableName, Operation.ALTER_TABLE_ADD_PARTITION)
+        this.addCatalog(addPartition.tableName, Operation.ADD_PARTITION)
         SQLLineageManager.setPartitions(this.toTableIdentifier(addPartition.tableName), addPartition.partitionSpecsAndLocs.head._1.toSeq)
       }
       // truncate table语句解析

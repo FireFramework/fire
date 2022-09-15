@@ -226,7 +226,7 @@ object FlinkSqlParser extends SqlParser {
   def hiveSqlParser(sql: String): Unit = {
     this.parser(sql, this.hiveConfig) match {
       case sqlAddPartitions: SqlAddPartitions => {
-        this.parseSqlNode(sqlAddPartitions.getTableName, Operation.ALTER_TABLE_ADD_PARTITION)
+        this.parseSqlNode(sqlAddPartitions.getTableName, Operation.ADD_PARTITION)
         this.getPartitions(sqlAddPartitions.getTableName, sqlAddPartitions.getPartSpecs)
       }
       case sqlCreateDatabase: SqlCreateDatabase => {
@@ -236,7 +236,7 @@ object FlinkSqlParser extends SqlParser {
         this.parseSqlNode(sqlDropDatabase.getDatabaseName, Operation.DROP_DATABASE)
       }
       case sqlDropPartitions: SqlDropPartitions => {
-        this.parseSqlNode(sqlDropPartitions.getTableName, Operation.ALTER_TABLE_DROP_PARTITION)
+        this.parseSqlNode(sqlDropPartitions.getTableName, Operation.DROP_PARTITION)
         this.getPartitions(sqlDropPartitions.getTableName, sqlDropPartitions.getPartSpecs)
       }
       case sqlDropTable: SqlDropTable => {

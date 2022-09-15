@@ -100,8 +100,8 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
       // rename partition语句解析
       case renamePartition: AlterTableRenamePartitionCommand => {
         val table = this.toFireTableIdentifier(renamePartition.tableName)
-        this.addCatalog(table, Operation.ALTER_TABLE_RENAME_PARTITION_OLD)
-        this.addCatalog(table, Operation.ALTER_TABLE_RENAME_PARTITION_NEW)
+        this.addCatalog(table, Operation.RENAME_PARTITION_OLD)
+        this.addCatalog(table, Operation.RENAME_PARTITION_NEW)
         SQLLineageManager.setPartitions(table, renamePartition.oldPartition.toSeq)
         SQLLineageManager.setPartitions(table, renamePartition.newPartition.toSeq)
       }
