@@ -158,8 +158,10 @@ trait BaseFire extends Logging {
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
   protected[fire] def processAll: Unit = {
-    this.process()
-    AnnoManager.processAnno(this)
+    tryWithLog({
+      this.process()
+      AnnoManager.processAnno(this)
+    }) (this.logger, "业务逻辑代码执行完成", "业务逻辑代码执行失败", isThrow = true)
   }
 
   /**

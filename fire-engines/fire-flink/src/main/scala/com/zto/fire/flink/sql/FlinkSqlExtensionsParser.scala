@@ -38,7 +38,7 @@ private[fire] object FlinkSqlExtensionsParser extends SqlExtensionsParser {
   def sqlParse(sql: String): Unit = {
     if (lineageEnable && noEmpty(sql)) {
       FlinkUtils.sqlValidate(sql)
-      // FlinkSqlParser.sqlParse(sql)
+      FlinkSqlParser.sqlParse(sql)
     }
   }
 }

@@ -22,6 +22,7 @@ import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.predef._
 import com.zto.fire.common.util.MQType.MQType
+import com.zto.fire.common.util.ShutdownHookManager.DEFAULT_PRIORITY
 import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.rocketmq.client.producer.{DefaultMQProducer, SendCallback, SendResult}
@@ -29,6 +30,7 @@ import org.apache.rocketmq.common.message.Message
 import org.apache.rocketmq.remoting.common.RemotingHelper
 
 import java.util.Properties
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * 消息队列管理器：内置常用MQ的发送API，消息的key与value默认均为String类型
@@ -42,6 +44,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
   private lazy val maxRetries = FireFrameworkConf.exceptionTraceSendMQMaxRetries
   private lazy val sendTimeout = FireFrameworkConf.exceptionSendTimeout
   private var sendErrorCount = 0
+  private lazy val isRelease = new AtomicBoolean(false)
   private var useKafka, useRocketmq = false
 
   // kafka producer
@@ -72,13 +75,15 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
    * 释放producer资源
    */
   private[fire] def close: Unit = {
-    if (this.useKafka) {
-      this.kafkaProducer.flush()
-      this.kafkaProducer.close()
-    }
+    if (this.isRelease.compareAndSet(false, true)) {
+      if (this.useKafka) {
+        this.kafkaProducer.flush()
+        this.kafkaProducer.close()
+      }
 
-    if (this.useRocketmq) {
-      this.rocketmqProducer.shutdown()
+      if (this.useRocketmq) {
+        this.rocketmqProducer.shutdown()
+      }
     }
   }
 
@@ -164,6 +169,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
 object MQProducer {
   // 用于维护多个producer实例，避免重复创建
   private lazy val kafkaProducerMap = new JConcurrentHashMap[String, MQProducer]()
+  this.addHook() (this.release)
 
   /**
    * 释放所有使用了的producer资源，会被fire框架自动调用
@@ -178,9 +184,9 @@ object MQProducer {
    * @param fun
    * 消息发送逻辑
    */
-  private[fire] def addHook(fun: => Unit): Unit = {
+  private[fire] def addHook(priority: Int = ShutdownHookManager.LOW_PRIORITY)(fun: => Unit): Unit = {
     // 注册回调，在jvm退出前将所有异常发送到mq中
-    ShutdownHookManager.addShutdownHook() (() => {
+    ShutdownHookManager.addShutdownHook(priority) (() => {
       fun
     })
   }

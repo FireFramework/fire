@@ -15,44 +15,30 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.flink.lineage
+package com.zto.fire.examples.flink.module
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Config
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
+import com.zto.fire.common.util.{JSONUtils, ShutdownHookManager}
 import com.zto.fire.core.anno.connector._
-import com.zto.fire.core.anno.lifecycle.{Process, Step1}
 import com.zto.fire.examples.bean.Student
+import com.zto.fire.examples.flink.sql.RocketMQConnectorTest.sql
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
-import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
-import com.zto.fire.hbase.HBaseConnector
 import org.apache.flink.api.scala._
 
-import java.util.concurrent.TimeUnit
-
-@HBase("test")
-@Config("""fire.lineage.run.initialDelay=10""")
-@Streaming(interval = 60, unaligned = true, parallelism = 2) // 100s做一次checkpoint，开启非对齐checkpoint
-@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Streaming(interval = 10, unaligned = true, parallelism = 2) // 100s做一次checkpoint，开启非对齐checkpoint
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
-@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "1qaz@WSX")
-object LineageTest extends FlinkStreaming {
-  private val hbaseTable = "fire_test_1"
-  private lazy val tableName = "spark_test"
+object ExceptionTest extends FlinkStreaming {
 
-  @Process
-  def kafkaSource: Unit = {
-    this.fire.createKafkaDirectStream().print()
-    val dstream = this.fire.createRocketMqPullStream()
-    dstream.map(t => {
-      val timestamp = DateFormatUtils.formatCurrentDateTime()
-      val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-      this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
-      HBaseConnector.get[Student](hbaseTable, classOf[Student], Seq("1"))
-      t
-    }).print()
+  override def process: Unit = {
+    this.testSqlException
+    // this.testApiException
+  }
 
+  /**
+   * 测试SQL异常捕获
+   */
+  def testSqlException: Unit = {
     sql("""
           |CREATE table source (
           |  id int,
@@ -84,14 +70,21 @@ object LineageTest extends FlinkStreaming {
           | 'rocket.sink.parallelism'='1'
           |);
           |
-          |insert into sink select * from source;
+          |insert into select * from source;
           |""".stripMargin)
   }
 
-  @Step1("获取血缘信息")
-  def lineage: Unit = {
-    ThreadUtils.scheduleAtFixedRate({
-      println(s"累加器值：" + JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue))
-    }, 0, 60, TimeUnit.SECONDS)
+  /**
+   * 测试API的异常捕获
+   */
+  def testApiException: Unit = {
+    val dstream = this.fire.createKafkaDirectStream()
+    dstream.map(t => {
+      val student = JSONUtils.parseObject[Student](t)
+      if (student.getId % 2 != 0) {
+        val a = 1 / 0
+      }
+      t
+    }).print()
   }
 }

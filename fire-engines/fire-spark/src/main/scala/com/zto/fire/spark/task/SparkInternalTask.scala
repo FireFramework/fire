@@ -41,10 +41,15 @@ private[fire] class SparkInternalTask(baseSpark: BaseSpark) extends FireInternal
   /**
    * 实时血缘发送定时任务，定时将血缘信息发送到kafka中
    */
-  @Scheduled(fixedInterval = 60000, initialDelay = 60000, repeatCount = 30)
+  @Scheduled(fixedInterval = 60000, initialDelay = 1000, repeatCount = 360)
   override def lineage: Unit = {
-    if (FireFrameworkConf.lineageEnable && FireFrameworkConf.lineageSendMqEnable) {
-      MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
+    sendLineage
+    this.registerLineageHook(sendLineage)
+
+    def sendLineage: Unit = {
+      if (FireFrameworkConf.lineageEnable && FireFrameworkConf.lineageSendMqEnable) {
+        MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
+      }
     }
   }
 }

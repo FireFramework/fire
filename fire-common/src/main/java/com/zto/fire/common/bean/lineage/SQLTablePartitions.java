@@ -64,8 +64,12 @@ public class SQLTablePartitions {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SQLTablePartitions that = (SQLTablePartitions) o;
         return Objects.equals(name, that.name) && Objects.equals(value, that.value);
     }

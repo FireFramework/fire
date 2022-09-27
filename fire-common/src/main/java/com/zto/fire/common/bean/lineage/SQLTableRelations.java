@@ -63,8 +63,12 @@ public class SQLTableRelations {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SQLTableRelations that = (SQLTableRelations) o;
         return Objects.equals(srcTable, that.srcTable) && Objects.equals(sinkTable, that.sinkTable);
     }

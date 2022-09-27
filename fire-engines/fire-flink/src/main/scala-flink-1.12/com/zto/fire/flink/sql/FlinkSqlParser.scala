@@ -19,22 +19,17 @@ package com.zto.fire.flink.sql
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
+import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.util.{LineageManager, ReflectionUtils, SQLLineageManager}
 import com.zto.fire.core.sql.SqlParser
-import com.zto.fire.common.bean.TableIdentifier
-import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
-import org.apache.calcite.avatica.util.{Casing, Quoting}
-import org.apache.calcite.sql.{SqlNodeList, _}
-import org.apache.calcite.sql.parser.{SqlParser => CalciteParser}
-import org.apache.flink.table.api.{SqlDialect => FlinkSqlDialect}
+import org.apache.calcite.sql._
 import org.apache.flink.sql.parser.SqlProperty
 import org.apache.flink.sql.parser.ddl._
 import org.apache.flink.sql.parser.dml._
-import org.apache.flink.sql.parser.hive.impl.FlinkHiveSqlParserImpl
-import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl
 import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import org.apache.flink.table.catalog.ObjectPath
 import org.apache.flink.table.catalog.hive.HiveCatalog
@@ -51,44 +46,15 @@ import scala.collection.JavaConversions
 @Internal
 private[fire] object FlinkSqlParser extends SqlParser {
   // calcite parser config
-  private lazy val config = createParserConfig
-  private lazy val hiveConfig = createHiveParserConfig
   private lazy val tableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[StreamTableEnvironment]
-  private lazy val hiveCatalogName = this.tableEnv.hiveCatalog.get().asInstanceOf[HiveCatalog].getName
   protected lazy val hiveTableMetaDataMap = new JConcurrentHashMap[String, Table]()
-
-  /**
-   * 构建flink default的SqlParser config
-   */
-  @Internal
-  private def createParserConfig(dialect: FlinkSqlDialect = FlinkSqlDialect.DEFAULT): CalciteParser.Config = {
-    val configBuilder = CalciteParser.configBuilder
-      .setQuoting(Quoting.BACK_TICK)
-      .setUnquotedCasing(Casing.TO_UPPER)
-      .setQuotedCasing(Casing.UNCHANGED)
-
-    if (dialect == FlinkSqlDialect.DEFAULT) configBuilder.setParserFactory(FlinkSqlParserImpl.FACTORY) else configBuilder.setParserFactory(FlinkHiveSqlParserImpl.FACTORY)
-    configBuilder.build
-  }
-
-  /**
-   * 构建flink default的SqlParser config
-   */
-  @Internal
-  protected def createParserConfig: CalciteParser.Config = this.createParserConfig()
-
-  /**
-   * 构建flink hive方言版的SqlParser config
-   */
-  @Internal
-  protected def createHiveParserConfig: CalciteParser.Config = this.createParserConfig(FlinkSqlDialect.HIVE)
 
   /**
    * 用于解析给定的SQL语句
    */
   override def sqlParser(sql: String): Unit = {
     try {
-      this.parser(sql) match {
+      FlinkUtils.sqlParser(sql) match {
         case select: SqlSelect => this.parseSqlNode(select)
         case insert: RichSqlInsert => {
           this.parseSqlNode(insert.getTargetTable, Operation.INSERT_INTO)
@@ -112,7 +78,7 @@ private[fire] object FlinkSqlParser extends SqlParser {
    */
   @Internal
   protected def hiveSqlParser(sql: String): Unit = {
-    this.parser(sql, this.hiveConfig) match {
+    FlinkUtils.sqlParser(sql, FlinkUtils.calciteHiveParserConfig) match {
       case sqlAddPartitions: SqlAddPartitions => {
         this.parseSqlNode(sqlAddPartitions.getTableName, Operation.ADD_PARTITION, true)
         this.parsePartitions(sqlAddPartitions.getTableName, sqlAddPartitions.getPartSpecs)
@@ -169,13 +135,6 @@ private[fire] object FlinkSqlParser extends SqlParser {
     }
   }
 
-  /**
-   * 根据sql构建Calcite SqlParser
-   */
-  @Internal
-  protected def parser(sql: String, config: CalciteParser.Config = this.config): SqlNode = {
-    CalciteParser.create(sql, config).parseStmt()
-  }
 
   /**
    * 移除表的catalog名称

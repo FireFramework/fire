@@ -17,6 +17,8 @@
 
 package com.zto.fire.common.bean.lineage;
 
+import java.util.Objects;
+
 /**
  * 用于封装采集到SQL的实时血缘信息：字段级血缘
  *
@@ -60,4 +62,20 @@ public class SQLTableColumns {
         return type;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        SQLTableColumns that = (SQLTableColumns) o;
+        return Objects.equals(name, that.name) && Objects.equals(type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, type);
+    }
 }

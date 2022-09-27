@@ -19,17 +19,24 @@ package com.zto.fire.flink.util
 
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.{JHashMap, JStringBuilder, noEmpty}
-import com.zto.fire.common.anno.FieldName
+import com.zto.fire.common.anno.{FieldName, Internal}
 import com.zto.fire.common.util._
 import com.zto.fire.flink.bean.FlinkTableSchema
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.sql.FlinkSqlParser
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.predef._
+import org.apache.calcite.avatica.util.{Casing, Quoting}
 import org.apache.commons.lang3.StringUtils
+import org.apache.calcite.avatica.util.{Casing, Quoting}
+import org.apache.calcite.sql.{SqlNodeList, _}
+import org.apache.flink.table.api.{SqlDialect => FlinkSqlDialect}
+import org.apache.calcite.sql.parser.{SqlParser => CalciteParser}
 import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
 import org.apache.flink.runtime.util.EnvironmentInformation
+import org.apache.flink.sql.parser.hive.impl.FlinkHiveSqlParserImpl
+import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl
 import org.apache.flink.table.data.binary.BinaryStringData
 import org.apache.flink.table.data.{DecimalData, GenericRowData, RowData}
 import org.apache.flink.table.types.logical.RowType
@@ -49,6 +56,38 @@ object FlinkUtils extends Serializable with Logging {
   private[this] val schemaTable = HashBasedTable.create[FlinkTableSchema, String, Int]
   private var jobManager: Option[Boolean] = None
   private var mode: Option[String] = None
+  lazy val calciteParserConfig = this.createParserConfig
+  lazy val calciteHiveParserConfig = this.createHiveParserConfig
+
+  /**
+   * 构建flink default的SqlParser config
+   */
+  def createParserConfig(dialect: FlinkSqlDialect = FlinkSqlDialect.DEFAULT): CalciteParser.Config = {
+    val configBuilder = CalciteParser.configBuilder
+      .setQuoting(Quoting.BACK_TICK)
+      .setUnquotedCasing(Casing.TO_UPPER)
+      .setQuotedCasing(Casing.UNCHANGED)
+
+    if (dialect == FlinkSqlDialect.DEFAULT) configBuilder.setParserFactory(FlinkSqlParserImpl.FACTORY) else configBuilder.setParserFactory(FlinkHiveSqlParserImpl.FACTORY)
+    configBuilder.build
+  }
+
+  /**
+   * 构建flink default的SqlParser config
+   */
+  private[this] def createParserConfig: CalciteParser.Config = this.createParserConfig()
+
+  /**
+   * 构建flink hive方言版的SqlParser config
+   */
+  private[this] def createHiveParserConfig: CalciteParser.Config = this.createParserConfig(FlinkSqlDialect.HIVE)
+
+  /**
+   * 根据sql构建Calcite SqlParser
+   */
+  def sqlParser(sql: String, config: CalciteParser.Config = this.createParserConfig): SqlNode = {
+    CalciteParser.create(sql, config).parseStmt()
+  }
 
   /**
    * SQL语法校验，如果语法错误，则返回错误堆栈
@@ -57,8 +96,15 @@ object FlinkUtils extends Serializable with Logging {
    */
   def sqlValidate(sql: String): Try[Unit] = {
     val retVal = Try {
-      SQLLineageManager.addStatement(sql)
-      FlinkSqlParser.sqlParser(sql)
+      try {
+        // 使用默认的sql解析器解析
+        val sqlNode = this.sqlParser(sql)
+      } catch {
+        case e: Throwable => {
+          // 使用hive方言语法解析器解析
+          val sqlNode = this.sqlParser(sql, this.calciteHiveParserConfig)
+        }
+      }
     }
 
     if (retVal.isFailure) {

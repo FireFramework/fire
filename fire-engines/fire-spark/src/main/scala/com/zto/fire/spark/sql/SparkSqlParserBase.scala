@@ -173,11 +173,12 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
     if (isEmpty(sql)) return
     tryWithLog {
       this.logger.debug(s"开始解析sql语句：$sql")
+      SparkUtils.sqlValidate(sql)
       val logicalPlan = this.spark.sessionState.sqlParser.parsePlan(sql)
       SQLLineageManager.addStatement(sql)
       val sinkTable = this.ddlParser(logicalPlan)
       this.queryParser(logicalPlan, sinkTable)
-    } (this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n${sql}", hook = false)
+    } (this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", hook = false)
   }
 
   /**

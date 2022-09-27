@@ -60,7 +60,7 @@ object ExceptionBus extends Logging {
       }, 0, 3, TimeUnit.SECONDS)
 
       // 注册回调，在jvm退出前将所有异常发送到mq中
-      MQProducer.addHook(postException)
+      MQProducer.addHook(ShutdownHookManager.HEIGHT_PRIORITY)(postException)
     }
   }
 
