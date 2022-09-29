@@ -478,6 +478,7 @@ object SparkUtils extends Logging {
    * 获取spark任务运行模式
    */
   def deployMode: String = {
+    if (this.isLocal) return "local"
     SparkSingletonFactory.getSparkSession.conf.get("spark.submit.deployMode")
   }
 

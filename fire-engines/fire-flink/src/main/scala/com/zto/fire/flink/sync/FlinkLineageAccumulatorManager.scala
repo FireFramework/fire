@@ -19,9 +19,12 @@ package com.zto.fire.flink.sync
 
 import com.zto.fire._
 import com.zto.fire.common.bean.lineage.Lineage
+import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.util._
 import com.zto.fire.core.sync.LineageAccumulatorManager
+import com.zto.fire.hbase.conf.FireHBaseConf
+import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.predef.{JConcurrentHashMap, JHashSet}
 
 import java.lang.{Boolean => JBoolean}
@@ -69,8 +72,10 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
               val groupId = map.getOrElse("groupId", "").toString
 
               Datasource.parse(datasource) match {
-                case Datasource.JDBC | Datasource.HBASE => set.add(DBDatasource(datasource, cluster, tableName, username, sink))
-                case Datasource.KAFKA | Datasource.ROCKETMQ => set.add(MQDatasource(datasource, cluster, topics, groupId, sink))
+                case Datasource.JDBC => set.add(DBDatasource(datasource, FireJdbcConf.jdbcUrl(cluster), tableName, username, sink))
+                case Datasource.HBASE => set.add(DBDatasource(datasource, FireHBaseConf.hbaseClusterUrl(cluster), tableName, username, sink))
+                case Datasource.KAFKA => set.add(MQDatasource(datasource, FireKafkaConf.kafkaBrokers(cluster), topics, groupId, sink))
+                case Datasource.ROCKETMQ => set.add(MQDatasource(datasource, FireRocketMQConf.rocketNameServer(cluster), topics, groupId, sink))
                 case _ =>
               }
             }

@@ -431,12 +431,12 @@ private[fire] object AccumulatorManager extends Logging  {
           DistributeSyncManager.sync({
             addLineage(LineageManager.getDatasourceLineage)
           })
-          logger.info(s"完成Spark分布式血缘解析与采集：${lineageRunCount.get()}次")
 
           if (lineageRunCount.incrementAndGet() > FireFrameworkConf.lineageRunCount) {
             logger.info(s"Spark分布式血缘解析与采集任务即将退出，总计运行：${lineageRunCount.get()}次")
             lineageThread.shutdown()
           }
+          logger.info(s"完成Spark分布式血缘解析与采集：${lineageRunCount.get()}次")
         }
       }
     }, lineageRunInitialDelay + 10, lineageRunPeriod, TimeUnit.SECONDS)

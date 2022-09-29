@@ -281,7 +281,7 @@ object FlinkUtils extends Serializable with Logging {
   /**
    * 获取flink的运行模式
    */
-  def runMode: String = {
+  def deployMode: String = {
     if (this.mode.isEmpty) {
       val globalConfClass = Class.forName("org.apache.flink.configuration.GlobalConfiguration")
       if (ReflectionUtils.containsMethod(globalConfClass, "getRunMode")) {
@@ -291,18 +291,19 @@ object FlinkUtils extends Serializable with Logging {
         logger.error("未找到方法：GlobalConfiguration.getRunMode()")
       }
     }
-    this.mode.getOrElse("yarn-per-job")
+    val deployMode = this.mode.getOrElse("yarn-per-job")
+    if (isEmpty(deployMode) || "null".equalsIgnoreCase(deployMode)) "local" else deployMode
   }
 
   /**
    * 判断当前运行模式是否为yarn-application模式
    */
-  def isYarnApplicationMode: Boolean = "yarn-application".equalsIgnoreCase(this.runMode)
+  def isYarnApplicationMode: Boolean = "yarn-application".equalsIgnoreCase(this.deployMode)
 
   /**
    * 判断当前运行模式是否为yarn-per-job模式
    */
-  def isYarnPerJobMode: Boolean = "yarn-per-job".equalsIgnoreCase(this.runMode)
+  def isYarnPerJobMode: Boolean = "yarn-per-job".equalsIgnoreCase(this.deployMode)
 
   /**
    * 将Javabean中匹配的field值转为RowData

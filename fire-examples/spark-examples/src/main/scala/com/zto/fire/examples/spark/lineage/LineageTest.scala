@@ -20,9 +20,10 @@ package com.zto.fire.examples.spark.lineage
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
-import com.zto.fire.core.anno.connector.{HBase, Jdbc, Kafka, RocketMQ}
-import com.zto.fire.core.anno.lifecycle.Step1
+import com.zto.fire.core.anno.connector.{HBase, Hive, Jdbc, Kafka, RocketMQ}
+import com.zto.fire.core.anno.lifecycle.{Process, Step1}
 import com.zto.fire.examples.bean.Student
+import com.zto.fire.examples.spark.hive.HiveMetadataTest.{multiPartitionTable, sql}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.SparkStreaming
 import com.zto.fire.spark.anno.Streaming
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeUnit
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @HBase("test")
+@Hive("test")
 @Config("""fire.lineage.run.initialDelay=10""")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @Streaming(interval = 10, concurrent = 2, backpressure = true, maxRatePerPartition = 100)
@@ -45,8 +47,13 @@ object LineageTest extends SparkStreaming {
   private val hbaseTable = "fire_test_1"
   private lazy val tableName = "spark_test"
 
-  override def process: Unit = {
+  @Process
+  def source: Unit = {
     this.fire.createKafkaDirectStream().print()
+    sql(
+      s"""
+         |insert into table ${multiPartitionTable} partition(ds, city) select *,'sh' as city from dw.mdb_md_dbs where ds='20211001' limit 100
+         |""".stripMargin)
     val dstream = this.fire.createRocketMqPullStream().map(t => JSONUtils.toJSONString(t))
     dstream.foreachRDD(rdd => {
       rdd.foreachPartition(it => {

@@ -490,7 +490,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.sparkInfoBean.setApplicationAttemptId(this.baseSpark.sc.applicationAttemptId.getOrElse(""))
         this.sparkInfoBean.setUi(this.baseSpark.webUI)
         this.sparkInfoBean.setPid(OSUtils.getPid)
-        this.sparkInfoBean.setStartTime(DateFormatUtils.formatUnixDateTime(this.baseSpark.startTime * 1000))
+        this.sparkInfoBean.setLaunchTime(DateFormatUtils.formatUnixDateTime(FireUtils.launchTime * 1000))
         this.sparkInfoBean.setExecutorMemory(this.baseSpark.sc.getConf.get("spark.executor.memory", "1"))
         this.sparkInfoBean.setExecutorInstances(this.baseSpark.sc.getConf.get("spark.executor.instances", "1"))
         this.sparkInfoBean.setExecutorCores(this.baseSpark.sc.getConf.get("spark.executor.cores", "1"))
@@ -504,7 +504,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         this.sparkInfoBean.setProperties(PropUtils.cover)
         this.sparkInfoBean.computeCpuMemory()
       }
-      this.sparkInfoBean.setUptime(DateFormatUtils.runTime(this.baseSpark.startTime))
+      this.sparkInfoBean.setUptime(DateFormatUtils.runTime(FireUtils.launchTime))
       this.sparkInfoBean.setBatchDuration(this.baseSpark.batchDuration + "")
       this.sparkInfoBean.setTimestamp(DateFormatUtils.formatCurrentDateTime())
       this.logger.info(s"[sparkInfo] 获取spark信息成功：json=$json")

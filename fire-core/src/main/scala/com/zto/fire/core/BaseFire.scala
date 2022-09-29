@@ -40,7 +40,7 @@ import scala.util.Try
  */
 trait BaseFire extends Logging {
   // 任务启动时间戳
-  protected[fire] val startTime: Long = currentTime
+  protected[fire] val launchTime = FireUtils.launchTime
   // web ui地址
   protected[fire] var webUI, applicationId: String = _
   // main方法参数
@@ -186,7 +186,7 @@ trait BaseFire extends Logging {
       Spark.stop()
       SchedulerManager.shutdown(stopGracefully)
       this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成fire资源回收 <---${FirePS1Conf.DEFAULT}")
-      this.logger.info(s"总耗时：${FirePS1Conf.RED}${elapsed(startTime)}${FirePS1Conf.DEFAULT} The end...${FirePS1Conf.DEFAULT}")
+      this.logger.info(s"总耗时：${FirePS1Conf.RED}${elapsed(launchTime)}${FirePS1Conf.DEFAULT} The end...${FirePS1Conf.DEFAULT}")
       if (FireFrameworkConf.shutdownExit) System.exit(0)
     }
   }

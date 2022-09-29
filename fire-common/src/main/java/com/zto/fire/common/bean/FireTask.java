@@ -33,6 +33,16 @@ public class FireTask {
     protected String engine;
 
     /**
+     * 引擎版本
+     */
+    protected String engineVersion;
+
+    /**
+     * fire框架版本
+     */
+    protected String fireVersion;
+
+    /**
      * 异常所在jvm进程发送的主机ip
      */
     protected String ip;
@@ -57,13 +67,46 @@ public class FireTask {
      */
     protected String timestamp;
 
+    /**
+     * 任务启动时间
+     */
+    protected String launchTime;
+
+    /**
+     * 任务运行时间
+     */
+    protected Long uptime;
+
+    /**
+     * 运行时的appId
+     */
+    protected String appId;
+
+    /**
+     * 任务提交模式
+     */
+    protected String deployMode;
+
+    /**
+     * spark：streaming、structured streaming、core
+     * flink：streaming、batch
+     */
+    protected String jobType;
+
     public FireTask() {
         this.engine = FireUtils.engine();
+        this.engineVersion = FireUtils.engineVersion();
+        this.fireVersion = FireUtils.fireVersion();
         this.ip = OSUtils.getIp();
         this.timestamp = DateFormatUtils.formatCurrentDateTime();
+        this.launchTime = DateFormatUtils.formatUnixDateTime(FireUtils.launchTime());
+        this.uptime = FireUtils.uptime();
         this.mainClass = FireUtils.mainClass();
         this.hostname = OSUtils.getHostName();
         this.pid = OSUtils.getPid();
+        this.appId = FireUtils.applicationId();
+        this.deployMode = FireUtils.deployMode();
+        this.jobType = FireUtils.jobType().toString();
     }
 
     public String getEngine() {
@@ -112,5 +155,61 @@ public class FireTask {
 
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getEngineVersion() {
+        return engineVersion;
+    }
+
+    public void setEngineVersion(String engineVersion) {
+        this.engineVersion = engineVersion;
+    }
+
+    public String getFireVersion() {
+        return fireVersion;
+    }
+
+    public void setFireVersion(String fireVersion) {
+        this.fireVersion = fireVersion;
+    }
+
+    public String getLaunchTime() {
+        return launchTime;
+    }
+
+    public void setLaunchTime(String launchTime) {
+        this.launchTime = launchTime;
+    }
+
+    public Long getUptime() {
+        return uptime;
+    }
+
+    public void setUptime(Long uptime) {
+        this.uptime = uptime;
+    }
+
+    public String getAppId() {
+        return appId;
+    }
+
+    public void setAppId(String appId) {
+        this.appId = appId;
+    }
+
+    public String getDeployMode() {
+        return deployMode;
+    }
+
+    public void setDeployMode(String deployMode) {
+        this.deployMode = deployMode;
+    }
+
+    public String getJobType() {
+        return jobType;
+    }
+
+    public void setJobType(String jobType) {
+        this.jobType = jobType;
     }
 }
