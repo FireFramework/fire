@@ -19,7 +19,8 @@ package com.zto.fire.examples.flink.lineage
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
+import com.zto.fire.common.enu.Datasource
+import com.zto.fire.common.util.{DatasourceDesc, DateFormatUtils, JSONUtils, ThreadUtils}
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.core.anno.lifecycle.{Process, Step1}
 import com.zto.fire.examples.bean.Student
@@ -27,6 +28,7 @@ import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
 import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
 import com.zto.fire.hbase.HBaseConnector
+import com.zto.fire.predef.{JConcurrentHashMap, JHashSet}
 import org.apache.flink.api.scala._
 
 import java.util.concurrent.TimeUnit

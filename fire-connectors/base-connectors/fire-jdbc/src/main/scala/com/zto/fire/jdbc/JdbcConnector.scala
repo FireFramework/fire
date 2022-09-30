@@ -19,6 +19,7 @@ package com.zto.fire.jdbc
 
 import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Statement}
 import com.mchange.v2.c3p0.ComboPooledDataSource
+import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.util.{LineageManager, LogUtils, ReflectionUtils, StringsUtils}
@@ -193,7 +194,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
-    }(this.logger, s"${this.sqlBuriedPoint(sql)}", s"executeUpdate failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
+    }(this.logger, s"${this.sqlBuriedPoint(sql, FOperation.UPDATE)}", s"executeUpdate failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, FOperation.UPDATE)}", finallyCatchLog)
   }
 
   /**
@@ -244,7 +245,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
-    }(this.logger, s"${this.sqlBuriedPoint(sql)}", s"executeBatch failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql)}", finallyCatchLog)
+    }(this.logger, s"${this.sqlBuriedPoint(sql, FOperation.UPDATE)}", s"executeBatch failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, FOperation.UPDATE)}", finallyCatchLog)
   }
 
   /**
@@ -292,7 +293,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
       callback(rs)
     } {
       this.release(sql, conn, stat, rs)
-    }(this.logger, s"${this.sqlBuriedPoint(sql, false)}", s"executeQuery failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, false)}", finallyCatchLog)
+    }(this.logger, s"${this.sqlBuriedPoint(sql, FOperation.UPDATE)}", s"executeQuery failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, FOperation.SELECT)}", finallyCatchLog)
   }
 
   /**
@@ -340,9 +341,9 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
    * 工具方法，截取给定的SQL语句
    */
   @Internal
-  private[this] def sqlBuriedPoint(sql: String, sink: Boolean = true): String = {
+  private[this] def sqlBuriedPoint(sql: String, operation: FOperation): String = {
     try {
-      LineageManager.addDBSql(this.dbType, this.url, this.username, sql, sink)
+      LineageManager.addDBSql(this.dbType, this.url, this.username, sql, operation)
       StringsUtils.substring(sql, 0, this.logSqlLength)
     } catch {
       case _: Throwable => ""

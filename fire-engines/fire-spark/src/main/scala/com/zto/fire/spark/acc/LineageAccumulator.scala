@@ -20,7 +20,7 @@ package com.zto.fire.spark.acc
 import com.zto.fire._
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.util.{DatasourceDesc, Logging}
+import com.zto.fire.common.util.{DatasourceDesc, LineageManager, Logging}
 import com.zto.fire.predef.JHashSet
 import org.apache.spark.util.AccumulatorV2
 
@@ -47,7 +47,8 @@ private[fire] class LineageAccumulator extends AccumulatorV2[ConcurrentHashMap[D
     */
   override def copy(): AccumulatorV2[ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]], ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]] = {
     val strAcc = new LineageAccumulator
-    strAcc.value.putAll(this.lineageMap)
+    // strAcc.value.putAll(this.lineageMap)
+    LineageManager.mergeLineageMap(strAcc.value, this.lineageMap)
     strAcc
   }
 
@@ -61,7 +62,8 @@ private[fire] class LineageAccumulator extends AccumulatorV2[ConcurrentHashMap[D
    */
   override def add(v: ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
     if (FireFrameworkConf.accEnable && v.nonEmpty) {
-      this.lineageMap.putAll(v)
+      // this.lineageMap.putAll(v)
+      LineageManager.mergeLineageMap(this.lineageMap, v)
     }
   }
 

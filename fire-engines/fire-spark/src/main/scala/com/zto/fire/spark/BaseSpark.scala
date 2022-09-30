@@ -188,7 +188,8 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     // driver端注册定时任务
     SparkSchedulerManager.getInstance().registerTasks(this, this.taskSchedule, this.listener)
     // executor端与自定义累加器一同完成定时任务注册
-    AccumulatorManager.registerTasks(this, this.taskSchedule)
+    AccumulatorManager.registerTasks(this.taskSchedule)
+    if (isObject(this.getClass)) AccumulatorManager.registerTasks(this)
     // 向executor端注册自定义累加器
     if (FireFrameworkConf.accEnable) this.acc.registerAccumulators(this.sc)
   }

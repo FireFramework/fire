@@ -67,15 +67,16 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
               val cluster = map.getOrElse("cluster", "").toString
               val username = map.getOrElse("username", "").toString
               val tableName = map.getOrElse("tableName", "").toString
-              val sink = JBoolean.parseBoolean(map.getOrElse("sink", "false").toString)
               val topics = map.getOrElse("topics", "").toString
               val groupId = map.getOrElse("groupId", "").toString
+              val operationArr = map.getOrElse("operation", "[]").toString.replace("[", "").replace("]", "")
+              val operation = operationArr.split(",").map(operation => com.zto.fire.common.enu.Operation.parse(operation)).toSet
 
               Datasource.parse(datasource) match {
-                case Datasource.JDBC => set.add(DBDatasource(datasource, FireJdbcConf.jdbcUrl(cluster), tableName, username, sink))
-                case Datasource.HBASE => set.add(DBDatasource(datasource, FireHBaseConf.hbaseClusterUrl(cluster), tableName, username, sink))
-                case Datasource.KAFKA => set.add(MQDatasource(datasource, FireKafkaConf.kafkaBrokers(cluster), topics, groupId, sink))
-                case Datasource.ROCKETMQ => set.add(MQDatasource(datasource, FireRocketMQConf.rocketNameServer(cluster), topics, groupId, sink))
+                case Datasource.JDBC => set.add(DBDatasource(datasource, FireJdbcConf.jdbcUrl(cluster), tableName, username, operation = operation))
+                case Datasource.HBASE => set.add(DBDatasource(datasource, FireHBaseConf.hbaseClusterUrl(cluster), tableName, username, operation = operation))
+                case Datasource.KAFKA => set.add(MQDatasource(datasource, FireKafkaConf.kafkaBrokers(cluster), topics, groupId, operation = operation))
+                case Datasource.ROCKETMQ => set.add(MQDatasource(datasource, FireRocketMQConf.rocketNameServer(cluster), topics, groupId, operation = operation))
                 case _ =>
               }
             }

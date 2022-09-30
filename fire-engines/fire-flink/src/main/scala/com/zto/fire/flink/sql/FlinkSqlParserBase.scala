@@ -346,7 +346,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     val url = properties.getOrElse("url", "")
     SQLLineageManager.setCluster(tableIdentifier, FireJdbcConf.jdbcUrl(url))
     val username = properties.getOrElse("username", "")
-    LineageManager.addDBSql(Datasource.JDBC.toString, url, username, "")
+    LineageManager.addDBSql(Datasource.JDBC.toString, url, username, "", Operation.CREATE_TABLE, Operation.SELECT)
   }
 
   /**
@@ -359,7 +359,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     val topic = properties.getOrElse("rocket.topics", "")
     SQLLineageManager.setPhysicalTable(tableIdentifier, topic)
     val groupId = properties.getOrElse("rocket.group.id", "")
-    LineageManager.addMQDatasource(Datasource.ROCKETMQ.toString, url, topic, groupId)
+    LineageManager.addMQDatasource(Datasource.ROCKETMQ.toString, url, topic, groupId, Operation.CREATE_TABLE, Operation.SOURCE)
   }
 
   /**
@@ -372,7 +372,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     val topic = properties.getOrElse("topic", "")
     SQLLineageManager.setPhysicalTable(tableIdentifier, topic)
     val groupId = properties.getOrElse("properties.group.id", "")
-    LineageManager.addMQDatasource(Datasource.KAFKA.toString, url, topic, groupId)
+    LineageManager.addMQDatasource(Datasource.KAFKA.toString, url, topic, groupId, Operation.CREATE_TABLE, Operation.SOURCE)
   }
 
   /**
