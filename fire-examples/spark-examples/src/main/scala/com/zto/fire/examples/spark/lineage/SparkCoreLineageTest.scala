@@ -47,10 +47,6 @@ object SparkCoreLineageTest extends SparkCore {
   private lazy val tableName = "spark_test"
 
   override def process: Unit = {
-    ThreadUtils.scheduleAtFixedRate({
-      println(s"累加器值：" + JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
-    }, 0, 60, TimeUnit.SECONDS)
-
     (1 to 10).foreach(x => {
       val df = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])
       df.rdd.foreachPartition(it => {
@@ -59,6 +55,8 @@ object SparkCoreLineageTest extends SparkCore {
         this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
         HBaseConnector.get[Student](hbaseTable, classOf[Student], Seq("1"))
       })
+      // 每个批次插100条
+      df.hbasePutDF(this.hbaseTable, classOf[Student])
       Thread.sleep(10000)
     })
 

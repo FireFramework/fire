@@ -124,14 +124,15 @@ private[fire] class LineageManager extends Logging {
    * merge相同数据源的对象
    */
   private[fire] def mergeDatasource(datasourceList: JHashSet[DatasourceDesc], datasourceDesc: DatasourceDesc): JHashSet[DatasourceDesc] = {
-    datasourceList.foreach {
+    val mergeSet = new CopyOnWriteArraySet[DatasourceDesc](datasourceList)
+    mergeSet.foreach {
       case ds: DBDatasource => {
         if (datasourceDesc.isInstanceOf[DBDatasource]) {
           val target = datasourceDesc.asInstanceOf[DBDatasource]
           if (ds.equals(target)) {
             ds.operation.addAll(target.operation)
           } else {
-            datasourceList.add(datasourceDesc)
+            mergeSet.add(datasourceDesc)
           }
         }
       }
@@ -141,7 +142,7 @@ private[fire] class LineageManager extends Logging {
           if (ds.equals(target)) {
             ds.operation.addAll(target.operation)
           } else {
-            datasourceList.add(datasourceDesc)
+            mergeSet.add(datasourceDesc)
           }
         }
       }
@@ -151,7 +152,7 @@ private[fire] class LineageManager extends Logging {
           if (ds.equals(target)) {
             ds.operation.addAll(target.operation)
           } else {
-            datasourceList.add(datasourceDesc)
+            mergeSet.add(datasourceDesc)
           }
         }
       }
@@ -161,13 +162,13 @@ private[fire] class LineageManager extends Logging {
           if (ds.equals(target)) {
             ds.operation.addAll(target.operation)
           } else {
-            datasourceList.add(datasourceDesc)
+            mergeSet.add(datasourceDesc)
           }
         }
       }
       case _ =>
     }
-    datasourceList
+    new JHashSet[DatasourceDesc](mergeSet)
   }
 
   /**
