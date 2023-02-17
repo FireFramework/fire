@@ -81,4 +81,50 @@ class SQLUtilsTest {
     (1 to 1000).foreach(i => tableParse(selectSql))
     println("耗时：" + (System.currentTimeMillis() - start))
   }
+
+  @Test
+  def testParsePlaceholder: Unit = {
+    val insert = "insert into user(name, age, id) values(?, ?, 10) ON DUPLICATE KEY UPDATE ds=10, birthday=?, age=18"
+    val insertColumns = SQLUtils.parsePlaceholder(insert)
+    assert("name,age,birthday".equals(insertColumns.mkString(",")), "insert语句解析异常")
+
+    val update = "update user set name=?,age=?,is_delete=0 where ds=? and id=? and time=10"
+    val updateColumns = SQLUtils.parsePlaceholder(update)
+    assert("name,age,ds,id".equals(updateColumns.mkString(",")), "update语句解析异常")
+
+    val delete = "delete from user where id=? and name=? and age=10"
+    val deleteColumns = SQLUtils.parsePlaceholder(delete)
+    assert("id,name".equals(deleteColumns.mkString(",")), "delete语句解析异常")
+
+    val replace = "replace into users (id,name,age) values(123, ?, ?)"
+    val replaceColumns = SQLUtils.parsePlaceholder(replace)
+    assert("name,age".equals(replaceColumns.mkString(",")), "replace语句解析异常")
+
+    val merge =
+      """
+        |merge into zto_hw_board_server a
+        |  using (select ? biz_no,
+        |                ? appeal_no,
+        |                ? postal_bill_code,
+        |                ? postal_category_code,
+        |                to_date(?, 'yyyy-mm-dd:hh24:mi:ss') postal_create_time,
+        |                sysdate gmt_create_time,
+        |                sysdate gmt_modify_time
+        |         from dual) b
+        |  on (a.biz_no = b.biz_no)
+        |  when matched then
+        |    update set
+        |       a.appeal_no = ?,
+        |       a.postal_category_code = b.postal_category_code,
+        |       a.postal_bill_code = (case when b.postal_bill_code = ' ' then a.postal_bill_code else b.postal_bill_code end),
+        |       a.postal_create_time = ?,
+        |       a.gmt_modify_time = b.gmt_modify_time
+        |  when not matched then
+        |    insert (biz_no,appeal_no,postal_bill_code,postal_category_code,postal_create_time,gmt_create_time,gmt_modify_time)
+        |    values(?,?,b.postal_bill_code,?,b.postal_create_time,b.gmt_modify_time,b.gmt_modify_time)
+        |""".stripMargin
+
+    val mergeColumns = SQLUtils.parsePlaceholder(merge)
+    assert("biz_no,appeal_no,postal_bill_code,postal_category_code,postal_create_time,appeal_no,postal_create_time,biz_no,appeal_no,postal_category_code".equals(mergeColumns.mkString(",")), "merge语句解析异常")
+  }
 }

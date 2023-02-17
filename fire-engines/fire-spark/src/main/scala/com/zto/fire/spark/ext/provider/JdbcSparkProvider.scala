@@ -18,6 +18,7 @@
 package com.zto.fire.spark.ext.provider
 
 import com.zto.fire._
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.spark.util.SparkUtils
@@ -50,7 +51,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    * @return 查询结果集
    */
-  def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, keyNum: Int = 1): RDD[Row] = {
+  def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, keyNum: Int = KeyNum._1): RDD[Row] = {
     this.jdbcQueryDF(sql, params, keyNum).rdd
   }
 
@@ -66,7 +67,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    * @return 查询结果集
    */
-  def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, keyNum: Int = 1): DataFrame = {
+  def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, keyNum: Int = KeyNum._1): DataFrame = {
     JdbcConnector.executeQuery(sql, params, keyNum = keyNum, callback = rs => {
       SparkUtils.resultSet2DataFrame(rs, keyNum)
     }).persist(StorageLevel.fromString(FireJdbcConf.jdbcStorageLevel))
@@ -84,7 +85,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    */
-  def jdbcTableSave(dataFrame: DataFrame, tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, keyNum: Int = 1): Unit = {
+  def jdbcTableSave(dataFrame: DataFrame, tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): Unit = {
     dataFrame.jdbcTableSave(tableName, saveMode, jdbcProps, keyNum)
   }
 
@@ -102,7 +103,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * @return
    * DataFrame
    */
-  def jdbcTableLoadAll(tableName: String, jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
+  def jdbcTableLoadAll(tableName: String, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): DataFrame = {
     this.spark.sqlContext.jdbcTableLoadAll(tableName, jdbcProps, keyNum)
   }
 
@@ -120,7 +121,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * @return
    * 查询结果集
    */
-  def jdbcTableLoad(tableName: String, predicates: Array[String], jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
+  def jdbcTableLoad(tableName: String, predicates: Array[String], jdbcProps: Properties = null, keyNum: Int = KeyNum._1): DataFrame = {
     this.spark.sqlContext.jdbcTableLoad(tableName, predicates, jdbcProps, keyNum)
   }
 
@@ -142,7 +143,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    * @return
    */
-  def jdbcTableLoadBound(tableName: String, columnName: String, lowerBound: Long, upperBound: Long, numPartitions: Int = 10, jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
+  def jdbcTableLoadBound(tableName: String, columnName: String, lowerBound: Long, upperBound: Long, numPartitions: Int = 10, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): DataFrame = {
     this.spark.sqlContext.jdbcTableLoadBound(tableName, columnName, lowerBound, upperBound, keyNum, jdbcProps, keyNum)
   }
 
@@ -162,8 +163,29 @@ trait JdbcSparkProvider extends SparkProvider {
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
-  def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = 1): Unit = {
+  def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = KeyNum._1): Unit = {
     require(dataFrame != null && StringUtils.isNotBlank(sql), "执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
     dataFrame.jdbcBatchUpdate(sql, fields, batch, keyNum)
+  }
+
+  /**
+   * 将DataFrame中指定的列写入到jdbc中
+   * 调用者需自己保证DataFrame中的列类型与关系型数据库对应字段类型一致
+   *
+   * @param dataFrame
+   * 将要插入到关系型数据库中原始的数据集
+   * @param sql
+   * 关系型数据库待执行的增删改sql
+   * @param fields
+   * 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序
+   * 若不指定字段，则根据sql语句中的占位符自动推断
+   * @param autoConvert
+   * 是否自动将下划线转驼峰
+   * @param keyNum
+   * 对应配置文件中指定的数据源编号
+   */
+  def jdbcUpdateBatchDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, keyNum: Int = KeyNum._1): Unit = {
+    require(dataFrame != null && StringUtils.isNotBlank(sql), "执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
+    dataFrame.jdbcUpdateBatch(sql, fields, autoConvert, keyNum)
   }
 }

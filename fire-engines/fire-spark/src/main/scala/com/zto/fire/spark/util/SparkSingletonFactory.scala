@@ -17,6 +17,7 @@
 
 package com.zto.fire.spark.util
 
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.core.util.SingletonFactory
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.conf.FireHBaseConf
@@ -34,6 +35,25 @@ object SparkSingletonFactory extends SingletonFactory {
   private[this] var sparkSession: SparkSession = _
   private[this] var streamingContext: StreamingContext = _
   @transient private[this] var hbaseContext: HBaseBulkConnector = _
+  private[fire] var isStart: Boolean = false
+
+  /**
+   * 获取Spark引擎状态
+   *
+   * @return
+   * true：start
+   * false：stop
+   */
+  def engineState: Boolean = this.isStart
+
+  /**
+   * 设置Spark引擎状态
+   *
+   * @return
+   * true：start
+   * false：stop
+   */
+  def setEngineState(up: Boolean): Unit = this.isStart = up
 
   /**
    * 获取SparkSession实例
@@ -51,6 +71,7 @@ object SparkSingletonFactory extends SingletonFactory {
   private[fire] def setSparkSession(sparkSession: SparkSession): Unit = this.synchronized {
     require(sparkSession != null, "SparkSession实例不能为空")
     this.sparkSession = sparkSession
+    this.isStart = true
   }
 
   /**
@@ -78,7 +99,7 @@ object SparkSingletonFactory extends SingletonFactory {
    * SparkContext实例
    * @return
    */
-  def getHBaseContextInstance(sparkContext: SparkContext, keyNum: Int = 1): HBaseBulkConnector = this.synchronized {
+  def getHBaseContextInstance(sparkContext: SparkContext, keyNum: Int = KeyNum._1): HBaseBulkConnector = this.synchronized {
     if (this.hbaseContext == null && StringUtils.isNotBlank(FireHBaseConf.hbaseCluster())) {
       this.hbaseContext = new HBaseBulkConnector(sparkContext, HBaseConnector.getConfiguration(keyNum))
     }

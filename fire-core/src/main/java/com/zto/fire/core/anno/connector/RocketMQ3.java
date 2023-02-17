@@ -45,7 +45,7 @@ public @interface RocketMQ3 {
     /**
      * 消费者标识
      */
-    String groupId();
+    String groupId() default "";
 
     /**
      * 指定消费的tag

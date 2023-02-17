@@ -17,6 +17,7 @@
 
 package com.zto.fire.flink.sink
 
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.predef._
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.jdbc.conf.FireJdbcConf
@@ -31,7 +32,7 @@ import com.zto.fire.jdbc.conf.FireJdbcConf
 abstract class JdbcSink[IN](sql: String,
                             batch: Int = 10,
                             flushInterval: Long = 1000,
-                            keyNum: Int = 1) extends BaseSink[IN, Seq[Any]](batch, flushInterval) {
+                            keyNum: Int = KeyNum._1) extends BaseSink[IN, Seq[Any]](batch, flushInterval) {
 
   // jdbc操作失败时允许最大重试次数
   this.maxRetry = FireJdbcConf.maxRetry(keyNum)

@@ -24,7 +24,7 @@
   <name>${project.artifactId}</name>
 
   <properties>
-    <fire.version>2.3.2-SNAPSHOT</fire.version>
+    <fire.version>2.3.3</fire.version>
     <hudi.version>0.9.0</hudi.version>
     <maven.scope>compile</maven.scope>
     <scala.binary.version>2.12</scala.binary.version>
@@ -41,6 +41,8 @@
     <rocketmq.version>4.8.0</rocketmq.version>
     <mysql.version>5.1.30</mysql.version>
     <guava.version>18.0</guava.version>
+    <contains.scala.binary.version></contains.scala.binary.version>
+    <contains.scala.binary.version>_${scala.binary.version}</contains.scala.binary.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <scala.version>${scala.binary.version}.${scala.minor.version}</scala.version>
     <flink.reference>${flink.version}_${scala.binary.version}</flink.reference>
@@ -49,7 +51,7 @@
   <profiles>
     <!-- flink profile -->
     <profile>
-      <id>flink-1.12.2</id>
+      <id>flink-1.12</id>
       <properties>
         <flink.version>1.12.2</flink.version>
         <flink.major.version>1.12</flink.major.version>
@@ -67,11 +69,17 @@
           <version>${flink.version}</version>
           <scope>${maven.scope}</scope>
         </dependency>
+        <dependency>
+          <groupId>org.apache.flink</groupId>
+          <artifactId>flink-runtime_${scala.binary.version}</artifactId>
+          <version>${flink.version}</version>
+          <scope>${maven.scope}</scope>
+        </dependency>
       </dependencies>
     </profile>
 
     <profile>
-      <id>flink-1.13.0</id>
+      <id>flink-1.13</id>
       <properties>
         <flink.version>1.13.0</flink.version>
         <flink.major.version>1.13</flink.major.version>
@@ -89,11 +97,17 @@
           <version>${flink.version}</version>
           <scope>${maven.scope}</scope>
         </dependency>
+        <dependency>
+          <groupId>org.apache.flink</groupId>
+          <artifactId>flink-runtime_${scala.binary.version}</artifactId>
+          <version>${flink.version}</version>
+          <scope>${maven.scope}</scope>
+        </dependency>
       </dependencies>
     </profile>
 
     <profile>
-      <id>flink-1.14.3</id>
+      <id>flink-1.14</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
@@ -114,10 +128,57 @@
           <version>${flink.version}</version>
           <scope>${maven.scope}</scope>
         </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>flink-1.15</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <flink.version>1.15.3</flink.version>
+        <flink.major.version>1.15</flink.major.version>
+        <contains.scala.binary.version></contains.scala.binary.version>
+      </properties>
+      <dependencies>
         <dependency>
-          <groupId>com.zto.fire</groupId>
-          <artifactId>fire-connector-flink-clickhouse_${flink.reference}</artifactId>
-          <version>${fire.version}</version>
+          <groupId>org.apache.flink</groupId>
+          <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
+          <version>${flink.version}</version>
+          <scope>${maven.scope}</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.flink</groupId>
+          <artifactId>flink-queryable-state-runtime</artifactId>
+          <version>${flink.version}</version>
+          <scope>${maven.scope}</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>flink-1.16</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <flink.version>1.16.0</flink.version>
+        <flink.major.version>1.16</flink.major.version>
+        <contains.scala.binary.version></contains.scala.binary.version>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.flink</groupId>
+          <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
+          <version>${flink.version}</version>
+          <scope>${maven.scope}</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.flink</groupId>
+          <artifactId>flink-queryable-state-runtime</artifactId>
+          <version>${flink.version}</version>
+          <scope>${maven.scope}</scope>
         </dependency>
       </dependencies>
     </profile>
@@ -211,6 +272,7 @@
     </dependency>
 
     <!-- flink计算引擎相关依赖 -->
+    <!-- flink计算引擎相关依赖 -->
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-java</artifactId>
@@ -231,13 +293,13 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-clients_${scala.binary.version}</artifactId>
+      <artifactId>flink-clients${contains.scala.binary.version}</artifactId>
       <version>${flink.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-runtime-web_${scala.binary.version}</artifactId>
+      <artifactId>flink-runtime-web${contains.scala.binary.version}</artifactId>
       <version>${flink.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>
@@ -249,13 +311,13 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-statebackend-rocksdb_${scala.binary.version}</artifactId>
+      <artifactId>flink-statebackend-rocksdb${contains.scala.binary.version}</artifactId>
       <version>${flink.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-kafka_${scala.binary.version}</artifactId>
+      <artifactId>flink-connector-kafka${contains.scala.binary.version}</artifactId>
       <version>${flink.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>
@@ -267,7 +329,13 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-table-api-java-bridge_${scala.binary.version}</artifactId>
+      <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
+      <scope>${maven.scope}</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-api-java-bridge${contains.scala.binary.version}</artifactId>
       <version>${flink.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>
@@ -297,7 +365,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-jdbc_${scala.binary.version}</artifactId>
+      <artifactId>flink-connector-jdbc${contains.scala.binary.version}</artifactId>
       <version>${flink.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>
@@ -309,19 +377,13 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-elasticsearch-base_${scala.binary.version}</artifactId>
+      <artifactId>flink-connector-elasticsearch-base${contains.scala.binary.version}</artifactId>
       <version>${flink.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-hadoop-compatibility_${scala.binary.version}</artifactId>
-      <version>${flink.version}</version>
-      <scope>${maven.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
       <version>${flink.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>
@@ -339,7 +401,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-orc-nohive_${scala.binary.version}</artifactId>
+      <artifactId>flink-orc-nohive${contains.scala.binary.version}</artifactId>
       <version>${flink.version}</version>
     </dependency>
 

@@ -40,7 +40,7 @@ public @interface Checkpoint {
     /**
      * checkpoint周期（s）
      */
-    int value() default 60;
+    int value() default -1;
 
     /**
      * checkpoint周期（s），同value

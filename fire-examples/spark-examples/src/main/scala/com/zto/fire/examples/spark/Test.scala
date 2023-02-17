@@ -17,17 +17,48 @@
 
 package com.zto.fire.examples.spark
 
-import com.zto.fire._
-import com.zto.fire.common.anno.Config
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.hbase.HBaseConnector
-import com.zto.fire.predef.println
 import com.zto.fire.spark.SparkCore
-import com.zto.fire.spark.sync.SparkLineageAccumulatorManager
+import org.aspectj.lang.JoinPoint
+import org.aspectj.lang.annotation.{Aspect, Before}
 
-import java.util.concurrent.TimeUnit
+@Aspect
+class Test {
+
+  @Before("execution(* org.apache.spark.sql.SparkSession.sql(java.lang.String)) && args(str)")
+  def setStartTimeInThreadLocal(joinPoint: JoinPoint, str: String): Unit = {
+    println("before ..." + str)
+    //println("sql=" + sqlRaw)
+  }
+
+  /*@Around("execution(public org.apache.spark.sql.Dataset<org.apache.spark.sql.Row> org.apache.spark.sql.SparkSession.sql(java.lang.String)) && args(sqlRaw)")
+  def around(pjp: ProceedingJoinPoint, sqlRaw: String): Dataset[Row] = {
+    val sql = sqlRaw.trim
+    val spark = pjp.getThis.asInstanceOf[SparkSession]
+    val userId = spark.sparkContext.sparkUser
+    val tables = getTables(sql, spark)
+    tables.foreach(x => println("table=" + x))
+    if (accessControl(userId, tables)) {
+      pjp.proceed(pjp.getArgs).asInstanceOf[Dataset[Row]]
+    } else {
+      throw new IllegalAccessException("access failed")
+    }
+  }
+
+  def getTables(query: String,
+                spark: SparkSession): Seq[String] = {
+    val logicalPlan = spark.sessionState.sqlParser.parsePlan(query)
+    import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
+    logicalPlan.collect { case r: UnresolvedRelation => r.tableName }
+  }
+
+  def accessControl(user: String,
+                    table: Seq[String]): Boolean = {
+    println("userId: " + user, "\n tableName: " + table.mkString(","))
+    true
+  }*/
+}
 
 /**
  * 基于Fire进行Spark Streaming开发
@@ -35,40 +66,15 @@ import java.util.concurrent.TimeUnit
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @HBase("test")
-@Config(
-  """
-    |fire.lineage.run.initialDelay=10
-    |fire.shutdown.auto.exit=false
-    |""")
 @Hive("test")
-@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
-@RocketMQ(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
-@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
 object Test extends SparkCore {
-  private val hbaseTable = "fire_test_1"
-  private lazy val tableName = "spark_test"
 
   override def process: Unit = {
-    ThreadUtils.scheduleAtFixedRate({
-      println(s"累加器值：" + JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
-    }, 0, 60, TimeUnit.SECONDS)
     this.fire.createDataFrame(Student.newStudentList(), classOf[Student]).createOrReplaceTempView("student")
-    sql(
+    spark.sql(
       s"""
-         |create table if not exists tmp.zto_fire_test
-         |select a.*,'sh' as city
-         |from dw.mdb_md_dbs a left join student t on a.ds=t.name
-         |where ds='20211001' limit 100
-         |""".stripMargin)
-    (1 to 10).foreach(x => {
-      val df = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])
-      df.rdd.foreachPartition(it => {
-        val timestamp = DateFormatUtils.formatCurrentDateTime()
-        val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-        this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
-        HBaseConnector.get[Student](hbaseTable, classOf[Student], Seq("1"))
-      })
-      Thread.sleep(10000)
-    })
+         |select * from student
+         |""".stripMargin).explain()
+    Thread.sleep(100000)
   }
 }

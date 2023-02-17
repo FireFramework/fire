@@ -55,4 +55,9 @@ case class TableIdentifier(private val _table: String, private val _database: St
   override def toString: JString = {
     if (noEmpty(database)) s"$database.$table".trim else table.trim
   }
+
+  def toNameParts: Seq[String] = {
+    Seq(table, if (noEmpty(database)) database else "").filter(noEmpty(_))
+  }
 }
+

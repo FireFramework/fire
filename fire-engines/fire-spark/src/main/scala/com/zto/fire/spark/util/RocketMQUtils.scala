@@ -18,7 +18,7 @@
 package com.zto.fire.spark.util
 
 import com.zto.fire._
-import com.zto.fire.common.conf.FireRocketMQConf
+import com.zto.fire.common.conf.{FireRocketMQConf, KeyNum}
 import com.zto.fire.common.util.{LogUtils, Logging, StringsUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.rocketmq.spark.{ConsumerStrategy, RocketMQConfig}
@@ -44,7 +44,7 @@ object RocketMQUtils extends Logging {
                    groupId: String = null,
                    rocketNameServer: String = null,
                    tag: String = null,
-                   keyNum: Int = 1): JMap[String, String] = {
+                   keyNum: Int = KeyNum._1): JMap[String, String] = {
 
     val optionParams = if (rocketParam != null) rocketParam else new JHashMap[String, String]()
     if (StringUtils.isNotBlank(groupId)) optionParams.put(RocketMQConfig.CONSUMER_GROUP, groupId)

@@ -17,8 +17,11 @@
 
 package com.zto.fire.common.util;
 
-import java.io.File;
-import java.io.InputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.net.URL;
 import java.util.List;
 import java.util.Objects;
 
@@ -28,6 +31,8 @@ import java.util.Objects;
  * @author ChengLong 2018年8月22日 13:10:03
  */
 public class FileUtils {
+    private static Logger logger = LoggerFactory.getLogger(FileUtils.class);
+
     private FileUtils() {}
 
 
@@ -59,6 +64,28 @@ public class FileUtils {
         return searchFile;
     }
 
+    /**
+     * 读取指定的文本文件内容
+     *
+     * @param file 文本文件
+     * @return 文件内容
+     * @throws Exception
+     */
+    public static String readTextFile(File file) throws Exception {
+        if (file == null || !file.exists() || file.isDirectory()) throw new FileNotFoundException("文件不合法，读取内容失败！" + OSUtils.getIp() + ":/" + file);
+
+        StringBuilder sqlBuilder = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String readLine = "";
+            while ((readLine = reader.readLine()) != null) {
+                sqlBuilder.append(readLine + "\n");
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+
+        return sqlBuilder.toString();
+    }
 
     /**
      * 判断resource路径下的文件是否存在
@@ -68,5 +95,20 @@ public class FileUtils {
      */
     public static InputStream resourceFileExists(String fileName) {
         return FileUtils.class.getClassLoader().getResourceAsStream(fileName);
+    }
+
+    /**
+     * 获取类的jar包或路径信息，可用于jar包冲突排查
+     */
+    public static String getClassJarPath(Class<?> clazz) {
+       try {
+           String classPathName = clazz.getName().replace(".", "/");
+           String resource = "/" + classPathName + ".class";
+           URL url = clazz.getResource(resource);
+           return url.getFile();
+       } catch (Exception e) {
+            logger.error("未获取到类的路径信息：" + clazz.getName(), e);
+       }
+       return "NOT_FOUND";
     }
 }

@@ -19,7 +19,7 @@ package com.zto.fire.flink
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
-import com.zto.fire.common.util.{OSUtils, PropUtils}
+import com.zto.fire.common.util.{FireUtils, OSUtils, ParameterTool, PropUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.flink.conf.FireFlinkConf
@@ -28,7 +28,6 @@ import com.zto.fire.flink.task.{FlinkInternalTask, FlinkSchedulerManager}
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig
-import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.configuration.{Configuration, GlobalConfiguration}
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
@@ -48,7 +47,6 @@ import scala.util.Try
 trait BaseFlink extends BaseFire {
   protected[fire] var _conf: Configuration = _
   protected var hiveCatalog: HiveCatalog = _
-  protected var parameter: ParameterTool = _
 
   /**
    * 生命周期方法：初始化fire框架必要的信息
@@ -118,7 +116,7 @@ trait BaseFlink extends BaseFire {
    */
   override protected[fire] final def shutdown(stopGracefully: Boolean = true, inListener: Boolean = false): Unit = {
     super.shutdown(stopGracefully, inListener)
-    if (FireFrameworkConf.shutdownExit) System.exit(0)
+    if (FireFrameworkConf.shutdownExit) FireUtils.exitError
   }
 
   /**
@@ -146,7 +144,7 @@ trait BaseFlink extends BaseFire {
 
       // checkPoint相关参数
       val ckConfig = streamEnv.getCheckpointConfig
-      if (ckConfig != null && FireFlinkConf.streamCheckpointInterval != -1) {
+      if (ckConfig != null && FireFlinkConf.streamCheckpointInterval > 0) {
         // flink.stream.checkpoint.interval 单位：毫秒 默认：-1 关闭
         streamEnv.enableCheckpointing(FireFlinkConf.streamCheckpointInterval)
         // flink.stream.checkpoint.mode  EXACTLY_ONCE/AT_LEAST_ONCE 默认：EXACTLY_ONCE
@@ -204,17 +202,4 @@ trait BaseFlink extends BaseFire {
    */
   override def sqlLegal(sql: JString): Boolean = FlinkUtils.sqlLegal(sql)
 
-  /**
-   * 初始化引擎上下文，如SparkSession、StreamExecutionEnvironment等
-   * 可根据实际情况，将配置参数放到同名的配置文件中进行差异化的初始化
-   */
-  override def main(args: Array[String]): Unit = {
-    try {
-      if (args != null && args.nonEmpty) this.parameter = ParameterTool.fromArgs(args)
-    } catch {
-      case _: Throwable => this.logger.error("ParameterTool 解析main方法参数失败，请注意参数的key必须以-或--开头")
-    } finally {
-      this.init(null, args)
-    }
-  }
 }

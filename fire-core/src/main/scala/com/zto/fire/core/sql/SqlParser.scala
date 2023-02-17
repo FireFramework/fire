@@ -20,7 +20,7 @@ package com.zto.fire.core.sql
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.conf.FireFrameworkConf._
-import com.zto.fire.common.util.{LineageManager, Logging, SQLLineageManager, TableMeta, ThreadUtils}
+import com.zto.fire.common.util.{LineageManager, Logging, SQLLineageManager, SQLUtils, TableMeta, ThreadUtils}
 import com.zto.fire.predef._
 
 import java.util.concurrent.{CopyOnWriteArraySet, TimeUnit}
@@ -91,8 +91,9 @@ private[fire] trait SqlParser extends Logging {
   @Internal
   def sqlParse(sql: String): Unit = {
     if (lineageEnable && noEmpty(sql)) {
-      SQLLineageManager.addStatement(sql)
-      this.buffer += sql
+      val hideSensitiveSQL = SQLUtils.hideSensitive(sql)
+      if (lineageCollectSQLEnable) SQLLineageManager.addStatement(hideSensitiveSQL)
+      this.buffer += hideSensitiveSQL
     }
   }
 

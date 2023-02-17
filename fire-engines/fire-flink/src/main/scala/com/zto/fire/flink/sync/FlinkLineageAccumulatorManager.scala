@@ -77,6 +77,7 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
                 case Datasource.HBASE => set.add(DBDatasource(datasource, FireHBaseConf.hbaseClusterUrl(cluster), tableName, username, operation = operation))
                 case Datasource.KAFKA => set.add(MQDatasource(datasource, FireKafkaConf.kafkaBrokers(cluster), topics, groupId, operation = operation))
                 case Datasource.ROCKETMQ => set.add(MQDatasource(datasource, FireRocketMQConf.rocketNameServer(cluster), topics, groupId, operation = operation))
+                case Datasource.CLICKHOUSE => set.add(DBDatasource(datasource, cluster, tableName, username, operation = operation))
                 case _ =>
               }
             }

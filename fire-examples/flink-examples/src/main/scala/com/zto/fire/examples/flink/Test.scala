@@ -18,46 +18,26 @@
 package com.zto.fire.examples.flink
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Config
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
 import com.zto.fire.core.anno.connector._
-import com.zto.fire.core.anno.lifecycle.{Process, Step1}
+import com.zto.fire.core.anno.lifecycle.Process
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
-import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
-import com.zto.fire.hbase.HBaseConnector
-import com.zto.fire.predef.println
 import org.apache.flink.api.scala._
 
-import java.util.concurrent.TimeUnit
-
-@HBase("test")
-@Streaming(interval = 60, unaligned = true, parallelism = 2) // 100s做一次checkpoint，开启非对齐checkpoint
-@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Streaming(30)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
-@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
 object Test extends FlinkStreaming {
-  private val hbaseTable = "fire_test_1"
-  private lazy val tableName = "spark_test"
 
   @Process
   def kafkaSource: Unit = {
-    this.fire.createKafkaDirectStream().print()
-    val dstream = this.fire.createRocketMqPullStream()
-    dstream.map(t => {
-      val timestamp = DateFormatUtils.formatCurrentDateTime()
-      val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-      this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
-      HBaseConnector.get[Student](hbaseTable, classOf[Student], Seq("1"))
-      t
-    }).print()
-  }
-
-  @Step1("获取血缘信息")
-  def lineage: Unit = {
-    ThreadUtils.scheduleAtFixedRate({
-      println(s"累加器值：" + JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue))
-    }, 0, 10, TimeUnit.SECONDS)
+    val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t))
+    val sql =
+      s"""
+         |insert into spark_test(name, age, createTime) values(?, ?, '${DateFormatUtils.formatCurrentDateTime()}')
+         |ON DUPLICATE KEY UPDATE age=18
+         |""".stripMargin
+    dstream.sinkJdbcExactlyOnce(sql, keyNum = 2)
   }
 }

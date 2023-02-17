@@ -17,6 +17,7 @@
 
 package com.zto.fire.spark.conf
 
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.util.PropUtils
 
 /**
@@ -34,6 +35,7 @@ private[fire] object FireSparkConf {
   lazy val SPARK_PARALLELISM = "spark.parallelism"
   lazy val SPARK_CHK_POINT_DIR = "spark.chkpoint.dir"
   lazy val SPARK_SQL_EXTENSIONS_ENABLE = "spark.fire.sql.extensions.enable"
+  lazy val SPARK_LINEAGE_LISTENER_ENABLE = "fire.lineage.listener.enable"
 
   // spark datasource v2 api中的options配置key前缀
   lazy val SPARK_DATASOURCE_OPTIONS_PREFIX = "spark.datasource.options."
@@ -65,31 +67,32 @@ private[fire] object FireSparkConf {
   lazy val confBathDuration = PropUtils.getInt(this.SPARK_STREAMING_BATCH_DURATION, -1)
   // 是否启用spark sql解析器扩展
   lazy val sqlExtensionsEnable = PropUtils.getBoolean(this.SPARK_SQL_EXTENSIONS_ENABLE, true)
+  lazy val sparkLineageListenerEnable = PropUtils.getBoolean(this.SPARK_LINEAGE_LISTENER_ENABLE, true)
 
   /**
    * spark datasource api中的format参数
    */
-  def datasourceFormat(keyNum: Int = 1): String = PropUtils.getString(this.SPARK_DATASOURCE_FORMAT, "", keyNum)
+  def datasourceFormat(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.SPARK_DATASOURCE_FORMAT, "", keyNum)
 
   /**
    * spark datasource api中的saveMode参数
    */
-  def datasourceSaveMode(keyNum: Int = 1): String = PropUtils.getString(this.SPARK_DATSOURCE_SAVE_MODE, "Append", keyNum)
+  def datasourceSaveMode(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.SPARK_DATSOURCE_SAVE_MODE, "Append", keyNum)
 
   /**
    * spark datasource api中的save方法参数
    */
-  def datasourceSaveParam(keyNum: Int = 1): String = PropUtils.getString(this.SPARK_DATASOURCE_SAVE_PARAM, "", keyNum)
+  def datasourceSaveParam(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.SPARK_DATASOURCE_SAVE_PARAM, "", keyNum)
 
   /**
    * spark datasource api中的isSaveTable方法
    */
-  def datasourceIsSaveTable(keyNum: Int = 1): String = PropUtils.getString(this.SPARK_DATASOURCE_IS_SAVE_TABLE, "", keyNum)
+  def datasourceIsSaveTable(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.SPARK_DATASOURCE_IS_SAVE_TABLE, "", keyNum)
 
   /**
    * spark datasource api中的load方法参数
    */
-  def datasourceLoadParam(keyNum: Int = 1): String = PropUtils.getString(this.SPARK_DATASOURCE_LOAD_PARAM, "", keyNum)
+  def datasourceLoadParam(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.SPARK_DATASOURCE_LOAD_PARAM, "", keyNum)
 
   /**
    * 当stage失败次数大于该值时SparkSession退出

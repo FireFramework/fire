@@ -18,6 +18,7 @@
 package com.zto.fire.flink.sink
 
 import com.zto.fire._
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.hbase.conf.FireHBaseConf
@@ -35,7 +36,7 @@ import scala.reflect.ClassTag
 abstract class HBaseSink[IN, T <: HBaseBaseBean[T] : ClassTag](tableName: String,
                                                                batch: Int = 100,
                                                                flushInterval: Long = 10000,
-                                                               keyNum: Int = 1) extends BaseSink[IN, T](batch, flushInterval) {
+                                                               keyNum: Int = KeyNum._1) extends BaseSink[IN, T](batch, flushInterval) {
 
   // hbase操作失败时允许最大重试次数
   this.maxRetry = FireHBaseConf.hbaseMaxRetry()

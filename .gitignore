@@ -3,3 +3,7 @@ fire-parent.iml
 *.iml
 target/
 *.log
+conf-test.properties
+conf-dev.properties
+conf-prod.properties
+cluster.properties

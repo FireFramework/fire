@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit
 @Hive("test")
 @Config("""fire.lineage.run.initialDelay=10""")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
-@Streaming(interval = 10, concurrent = 2, backpressure = true, maxRatePerPartition = 100)
+@Streaming(interval = 10, concurrent = 2)
 @RocketMQ(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
 @Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
 object LineageTest extends SparkStreaming {

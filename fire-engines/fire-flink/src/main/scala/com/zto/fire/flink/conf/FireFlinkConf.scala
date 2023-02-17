@@ -85,7 +85,7 @@ private[fire] object FireFlinkConf {
    * sql中即可通过 'datasource'='bill_db' 引用到上述两项option
    */
   lazy val FLINK_SQL_WITH_PREFIX = "flink.sql.with."
-  lazy val FLINK_SQL_AUTO_ADD_STATEMENT_SET = "flink.sql.auto.add.statementSet"
+  lazy val FLINK_SQL_USE_STATEMENT_SET = "flink.sql.useStatementSet"
 
   lazy val defaultCatalogName = PropUtils.getString(this.FLINK_SQL_DEFAULT_CATALOG_NAME, "default_catalog")
   lazy val sqlWithReplaceModeEnable = PropUtils.getBoolean(this.FLINK_SQL_WITH_REPLACE_MODE_ENABLE, true)
@@ -135,7 +135,7 @@ private[fire] object FireFlinkConf {
   // 是否开启算子链合并
   lazy val operatorChainingEnable = PropUtils.getBoolean(this.OPERATOR_CHAINING_ENABLE, true)
   // 是否自动将insert语句加入到StatementSet中
-  lazy val autoAddStatementSet = PropUtils.getBoolean(this.FLINK_SQL_AUTO_ADD_STATEMENT_SET, true)
+  lazy val autoAddStatementSet = PropUtils.getBoolean(this.FLINK_SQL_USE_STATEMENT_SET, true)
   // 将配置的with options映射为map
   lazy val flinkSqlWithOptions = PropUtils.sliceKeys(FireFlinkConf.FLINK_SQL_WITH_PREFIX)
 

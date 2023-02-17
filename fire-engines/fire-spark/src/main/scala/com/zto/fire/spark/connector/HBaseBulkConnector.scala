@@ -18,6 +18,7 @@
 package com.zto.fire.spark.connector
 
 import com.zto.fire.common.anno.Internal
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.core.connector.{Connector, ConnectorFactory}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.{HBaseBaseBean, MultiVersionsBean}
@@ -56,7 +57,7 @@ import scala.reflect.ClassTag
  * HBase相关配置参数
  * @author ChengLong 2018年4月10日 10:39:28
  */
-class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient config: Configuration, batchSize: Int = 10000, keyNum: Int = 1)
+class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient config: Configuration, batchSize: Int = 10000, keyNum: Int = KeyNum._1)
   extends HBaseContext(sc, config) with Connector {
   private[fire] lazy val finalBatchSize = if (FireHBaseConf.hbaseBatchSize(this.keyNum) != -1) FireHBaseConf.hbaseBatchSize(this.keyNum) else this.batchSize
   private[this] lazy val sparkSession = SparkSingletonFactory.getSparkSession
@@ -507,7 +508,7 @@ object HBaseBulkConnector extends ConnectorFactory[HBaseBulkConnector] with HBas
   /**
    * 创建指定集群标识的HBaseContextExt对象实例
    */
-  override protected def create(conf: Any = null, keyNum: Int = 1): HBaseBulkConnector = {
+  override protected def create(conf: Any = null, keyNum: Int = KeyNum._1): HBaseBulkConnector = {
     val hadoopConf = if (conf != null) conf.asInstanceOf[Configuration] else HBaseConnector.getConfiguration(keyNum)
     val connector = new HBaseBulkConnector(SparkSingletonFactory.getSparkSession.sparkContext, hadoopConf, keyNum)
     connector

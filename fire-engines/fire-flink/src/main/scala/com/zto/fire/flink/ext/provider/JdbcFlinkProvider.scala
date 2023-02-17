@@ -18,6 +18,7 @@
 package com.zto.fire.flink.ext.provider
 
 import com.zto.fire._
+import com.zto.fire.common.conf.KeyNum
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.api.Table
@@ -50,12 +51,13 @@ trait JdbcFlinkProvider {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateStream[T](stream: DataStream[T],
                                sql: String,
                                fields: Seq[String],
                                batch: Int = 10,
                                flushInterval: Long = 1000,
-                               keyNum: Int = 1): DataStreamSink[T] = {
+                               keyNum: Int = KeyNum._1): DataStreamSink[T] = {
     stream.jdbcBatchUpdate(sql, fields, batch, flushInterval, keyNum)
   }
 
@@ -73,11 +75,12 @@ trait JdbcFlinkProvider {
    * @param fun
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateStream2[T](stream: DataStream[T],
                                 sql: String,
                                 batch: Int = 10,
                                 flushInterval: Long = 1000,
-                                keyNum: Int = 1)(fun: T => Seq[Any]): DataStreamSink[T] = {
+                                keyNum: Int = KeyNum._1)(fun: T => Seq[Any]): DataStreamSink[T] = {
     stream.jdbcBatchUpdate2(sql, batch, flushInterval, keyNum)(fun)
   }
 
@@ -96,12 +99,13 @@ trait JdbcFlinkProvider {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateTable(table: Table,
                            sql: String,
                            batch: Int = 10,
                            flushInterval: Long = 1000,
                            isMerge: Boolean = true,
-                           keyNum: Int = 1): DataStreamSink[Row] = {
+                           keyNum: Int = KeyNum._1): DataStreamSink[Row] = {
     table.jdbcBatchUpdate(sql, batch, flushInterval, isMerge, keyNum)
   }
 
@@ -117,12 +121,13 @@ trait JdbcFlinkProvider {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateTable2(table: Table,
                             sql: String,
                             batch: Int = 10,
                             flushInterval: Long = 1000,
                             isMerge: Boolean = true,
-                            keyNum: Int = 1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
+                            keyNum: Int = KeyNum._1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
     table.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, keyNum)(fun)
   }
 

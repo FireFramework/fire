@@ -17,7 +17,9 @@
 
 package com.zto.fire.spark.ext.core
 
-import com.zto.fire.common.util.{Logging, ValueUtils}
+import com.zto.fire._
+import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.common.util.{Logging, SQLUtils, ValueUtils}
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.jdbc.conf.FireJdbcConf
@@ -93,7 +95,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    * @return
    */
-  def jdbcTableSave(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, keyNum: Int = 1): Unit = {
+  def jdbcTableSave(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): Unit = {
     dataFrame.write.mode(saveMode).jdbc(FireJdbcConf.jdbcUrl(keyNum), tableName, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
@@ -111,7 +113,8 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
-  def jdbcBatchUpdate(sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = 1): Unit = {
+  @deprecated("use jdbcUpdateBatch", "fire 2.3.3")
+  def jdbcBatchUpdate(sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = KeyNum._1): Unit = {
     if (ValueUtils.isEmpty(sql)) {
       logger.error("执行jdbcBatchUpdate失败，sql语句不能为空")
       return
@@ -168,6 +171,74 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
   }
 
   /**
+   * 将DataFrame中指定的列写入到jdbc中
+   * 调用者需自己保证DataFrame中的列类型与关系型数据库对应字段类型一致
+   *
+   * @param sql
+   * 关系型数据库待执行的增删改sql
+   * @param fields
+   * 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序
+   * 若不指定字段，则根据sql语句中的占位符自动推断
+   * @param autoConvert
+   * 是否自动将下划线转驼峰
+   * @param keyNum
+   * 对应配置文件中指定的数据源编号
+   */
+  def jdbcUpdateBatch(sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, keyNum: Int = KeyNum._1): Unit = {
+    requireNonEmpty(sql)("执行jdbcBatchUpdate失败，sql语句不能为空")
+    val finalFields = if (noEmpty(fields)) fields else SQLUtils.parsePlaceholder(sql).map(column => if (autoConvert) column.toHump else column)
+
+    if (dataFrame.isStreaming) {
+      // 如果是streaming流
+      dataFrame.writeStream.format("fire-jdbc")
+        .option("checkpointLocation", FireSparkConf.chkPointDirPrefix)
+        .option("sql", sql)
+        .option("batch", FireJdbcConf.batchSize(keyNum))
+        .option("keyNum", keyNum)
+        .option("fields", if (finalFields != null) finalFields.mkString(",") else "")
+        .start()
+    } else {
+      // 非structured streaming调用
+      dataFrame.foreachPartition((it: Iterator[Row]) => {
+        var count: Int = 0
+        val list = ListBuffer[ListBuffer[Any]]()
+        var params: ListBuffer[Any] = null
+
+        it.foreach(row => {
+          count += 1
+          params = ListBuffer[Any]()
+          if (noEmpty(finalFields)) {
+            // 若调用者指定了某些列，则取这些列的数据
+            finalFields.foreach(field => {
+              val index = row.fieldIndex(field)
+              params += row.get(index)
+            })
+          } else {
+            // 否则取当前DataFrame全部的列，顺序要与sql问号占位符保持一致
+            (0 until row.size).foreach(index => {
+              params += row.get(index)
+            })
+          }
+          list += params
+
+          // 分批次执行
+          if (count == FireJdbcConf.batchSize(keyNum)) {
+            JdbcConnector.executeBatch(sql, list, keyNum = keyNum)
+            count = 0
+            list.clear()
+          }
+        })
+
+        // 将剩余的数据一次执行掉
+        if (list.nonEmpty) {
+          JdbcConnector.executeBatch(sql, list, keyNum = keyNum)
+          list.clear()
+        }
+      })
+    }
+  }
+
+  /**
    * 批量写入，将自定义的JavaBean数据集批量并行写入
    * 到HBase的指定表中。内部会将自定义JavaBean的相应
    * 字段一一映射为Put对象，并完成一次写入
@@ -177,7 +248,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @tparam T
    * 数据类型为HBaseBaseBean的子类
    */
-  def hbaseBulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = 1): Unit = {
+  def hbaseBulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkPutDF[T](tableName, dataFrame, clazz, keyNum)
   }
 
@@ -191,7 +262,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @tparam T
    * JavaBean类型
    */
-  def hbaseHadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, buildRowKey: (Row) => String, keyNum: Int = 1): Unit = {
+  def hbaseHadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, buildRowKey: (Row) => String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.hadoopPutDFRow[T](tableName, dataFrame, buildRowKey, keyNum)
   }
 
@@ -204,7 +275,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @param clazz
    * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbaseHadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = 1): Unit = {
+  def hbaseHadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.hadoopPutDF[E](tableName, dataFrame, clazz, keyNum)
   }
 
@@ -216,7 +287,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @param clazz
    * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = 1): Unit = {
+  def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutDF(tableName, clazz, this.dataFrame)
   }
 

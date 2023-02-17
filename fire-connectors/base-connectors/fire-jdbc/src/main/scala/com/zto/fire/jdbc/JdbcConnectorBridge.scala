@@ -17,8 +17,9 @@
 
 package com.zto.fire.jdbc
 
-import java.sql.{Connection, ResultSet}
+import com.zto.fire.common.conf.KeyNum
 
+import java.sql.{Connection, ResultSet}
 import scala.reflect.ClassTag
 
 /**
@@ -49,8 +50,8 @@ private[fire] trait JdbcConnectorBridge {
    * @return
    * 影响的记录数
    */
-  def jdbcUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Long = {
-    JdbcConnector.executeUpdate(sql, params, connection, commit, closeConnection, keyNum)
+  def jdbcUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Long = {
+    JdbcConnector.update(sql, params, connection, commit, closeConnection, keyNum)
   }
 
   /**
@@ -72,8 +73,32 @@ private[fire] trait JdbcConnectorBridge {
    * @return
    * 影响的记录数
    */
-  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = 1): Array[Int] = {
-    JdbcConnector.executeBatch(sql, paramsList, connection, commit, closeConnection, keyNum)
+  @deprecated("use jdbcUpdateBatch", "fire 2.3.3")
+  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Array[Int] = {
+    JdbcConnector.updateBatch(sql, paramsList, connection, commit, closeConnection, keyNum)
+  }
+
+  /**
+   * 关系型数据库批量插入、删除、更新操作
+   *
+   * @param sql
+   * 待执行的sql语句
+   * @param paramsList
+   * sql的参数列表
+   * @param connection
+   * 传递已有的数据库连接
+   * @param commit
+   * 是否自动提交事务，默认为自动提交
+   * @param closeConnection
+   * 是否关闭connection，默认关闭
+   * @param keyNum
+   * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
+   * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
+   * @return
+   * 影响的记录数
+   */
+  def jdbcUpdateBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Array[Int] = {
+    JdbcConnector.updateBatch(sql, paramsList, connection, commit, closeConnection, keyNum)
   }
 
   /**
@@ -91,8 +116,8 @@ private[fire] trait JdbcConnectorBridge {
    * @return
    * 查询结果集
    */
-  def jdbcQueryList[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T], keyNum: Int = 1): List[T] = {
-    JdbcConnector.executeQueryList[T](sql, params, clazz, keyNum)
+  def jdbcQueryList[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, keyNum: Int = KeyNum._1): List[T] = {
+    JdbcConnector.queryList[T](sql, params, keyNum)
   }
 
   /**
@@ -108,8 +133,8 @@ private[fire] trait JdbcConnectorBridge {
    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    */
-  def jdbcQuery[T](sql: String, params: Seq[Any] = null, callback: ResultSet => T, keyNum: Int = 1): T = {
-    JdbcConnector.executeQuery(sql, params, callback, keyNum)
+  def jdbcQuery[T](sql: String, params: Seq[Any] = null, callback: ResultSet => T, keyNum: Int = KeyNum._1): T = {
+    JdbcConnector.query(sql, params, callback, keyNum)
   }
 
 }

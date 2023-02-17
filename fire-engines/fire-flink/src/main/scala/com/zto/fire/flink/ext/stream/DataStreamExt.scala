@@ -17,28 +17,43 @@
 
 package com.zto.fire.flink.ext.stream
 
-import java.lang.reflect.Field
-
-import com.zto.fire.common.util.ReflectionUtils
+import com.zto.fire._
+import com.zto.fire.common.anno.Internal
+import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.util._
 import com.zto.fire.flink.sink.{HBaseSink, JdbcSink}
 import com.zto.fire.flink.util.FlinkSingletonFactory
-import com.zto.fire.hbase.bean.HBaseBaseBean
-import com.zto.fire._
 import com.zto.fire.hbase.HBaseConnector
+import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.jdbc.JdbcConf
+import com.zto.fire.jdbc.conf.FireJdbcConf
+import com.zto.fire.jdbc.util.DBUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.accumulators.SimpleAccumulator
 import org.apache.flink.api.common.functions.RichMapFunction
+import org.apache.flink.api.common.serialization.{SerializationSchema, SimpleStringSchema}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.connector.jdbc.JdbcConnectionOptions.JdbcConnectionOptionsBuilder
+import org.apache.flink.connector.jdbc.JdbcExactlyOnceOptions.JDBCExactlyOnceOptionsBuilder
+import org.apache.flink.connector.jdbc.{JdbcConnectionOptions, JdbcExactlyOnceOptions, JdbcExecutionOptions, JdbcStatementBuilder}
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.function.AllWindowFunction
 import org.apache.flink.streaming.api.scala.{DataStream, _}
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer.Semantic
+import org.apache.flink.streaming.connectors.kafka.partitioner.FlinkKafkaPartitioner
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.api.bridge.scala._
 import org.apache.flink.types.Row
 import org.apache.flink.util.Collector
+import org.apache.flink.util.function.SerializableSupplier
 
+import java.lang.reflect.Field
+import java.sql.PreparedStatement
+import javax.sql.XADataSource
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
@@ -48,7 +63,7 @@ import scala.reflect.ClassTag
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class DataStreamExt[T](stream: DataStream[T]) {
+class DataStreamExt[T](stream: DataStream[T]) extends Logging {
   lazy val tableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[StreamTableEnvironment]
 
   /**
@@ -74,8 +89,8 @@ class DataStreamExt[T](stream: DataStream[T]) {
    * 当前实例
    */
   def uname(uid: String, name: String = ""): DataStream[T] = {
-    if (StringUtils.isNotBlank(uid)) stream.uid(uid)
-    if (StringUtils.isNotBlank(name)) stream.name(name)
+    if (noEmpty(uid)) stream.uid(uid)
+    if (noEmpty(name)) stream.name(name) else stream.name(uid)
     this.stream
   }
 
@@ -133,8 +148,8 @@ class DataStreamExt[T](stream: DataStream[T]) {
    * 若DataStream为DataStream[Row]类型，则fields可以为空，但此时row中每列的顺序要与sql占位符顺序一致，数量和类型也要一致
    * 注：
    *  1. fieldList指定DataStream中JavaBean的字段名称，非jdbc表中的字段名称
-   *  2. fieldList多个字段使用逗号分隔
-   *  3. fieldList中的字段顺序要与sql中占位符顺序保持一致，数量一致
+   *     2. fieldList多个字段使用逗号分隔
+   *     3. fieldList中的字段顺序要与sql中占位符顺序保持一致，数量一致
    *
    * @param sql
    * 增删改sql
@@ -147,11 +162,12 @@ class DataStreamExt[T](stream: DataStream[T]) {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate(sql: String,
                       fields: Seq[String],
                       batch: Int = 10,
                       flushInterval: Long = 1000,
-                      keyNum: Int = 1): DataStreamSink[T] = {
+                      keyNum: Int = KeyNum._1): DataStreamSink[T] = {
     this.stream.addSink(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       var fieldMap: java.util.Map[String, Field] = _
       var clazz: Class[_] = _
@@ -183,6 +199,7 @@ class DataStreamExt[T](stream: DataStream[T]) {
         params
       }
     }).name("fire jdbc stream sink")
+    null
   }
 
   /**
@@ -199,15 +216,17 @@ class DataStreamExt[T](stream: DataStream[T]) {
    * @param fun
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate2(sql: String,
                        batch: Int = 10,
                        flushInterval: Long = 1000,
-                       keyNum: Int = 1)(fun: T => Seq[Any]): DataStreamSink[T] = {
+                       keyNum: Int = KeyNum._1)(fun: T => Seq[Any]): DataStreamSink[T] = {
     this.stream.addSink(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       override def map(value: T): Seq[Any] = {
         fun(value)
       }
     }).name("fire jdbc stream sink")
+    null
   }
 
   /**
@@ -223,9 +242,9 @@ class DataStreamExt[T](stream: DataStream[T]) {
    * 配置文件中的key后缀
    */
   def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
-                 batch: Int = 100,
-                 flushInterval: Long = 3000,
-                 keyNum: Int = 1): DataStreamSink[_] = {
+                                                   batch: Int = 100,
+                                                   flushInterval: Long = 3000,
+                                                   keyNum: Int = KeyNum._1): DataStreamSink[_] = {
     this.hbasePutDS2[E](tableName, batch, flushInterval, keyNum) {
       value => {
         value.asInstanceOf[E]
@@ -248,9 +267,9 @@ class DataStreamExt[T](stream: DataStream[T]) {
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
   def hbasePutDS2[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
-                  batch: Int = 100,
-                  flushInterval: Long = 3000,
-                  keyNum: Int = 1)(fun: T => E): DataStreamSink[_] = {
+                                                    batch: Int = 100,
+                                                    flushInterval: Long = 3000,
+                                                    keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
     HBaseConnector.checkClass[E]()
     this.stream.addSink(new HBaseSink[T, E](tableName, batch, flushInterval, keyNum) {
       /**
@@ -260,4 +279,187 @@ class DataStreamExt[T](stream: DataStream[T]) {
     }).name("fire hbase stream sink")
   }
 
+  /**
+   * 将数据写入到kafka中
+   */
+  def sinkKafka[T <: String](kafkaParams: Map[String, Object] = null,
+                             topic: String = null,
+                             serializationSchema: SerializationSchema[String] = new SimpleStringSchema,
+                             customPartitioner: FlinkKafkaPartitioner[String] = null,
+                             semantic: Semantic = Semantic.AT_LEAST_ONCE,
+                             kafkaProducersPoolSize: Int = FlinkKafkaProducer.DEFAULT_KAFKA_PRODUCERS_POOL_SIZE,
+                             keyNum: Int = KeyNum._1): Unit = {
+
+
+    // 1. 设置producer相关额外参数
+    val finalProducerConfig = KafkaUtils.getKafkaParams(kafkaParams, keyNum)
+
+    // 2. 获取topic
+    val finalTopic = KafkaUtils.getTopic(topic, keyNum)
+    requireNonEmpty(finalTopic)(s"Topic不能为空，请检查keyNum=${keyNum}对应的配置信息")
+
+    // 3. 获取kafka集群url
+    val finalBrokers = KafkaUtils.getBrokers(finalProducerConfig, keyNum)
+    requireNonEmpty(finalBrokers)(s"kafka broker地址不能为空，请检查keyNum=${keyNum}对应的配置信息")
+
+    logDebug(
+      s"""
+         |--------> Sink kafka information. keyNum=$keyNum <--------
+         |broker: $finalBrokers
+         |topic: $finalTopic
+         |""".stripMargin)
+
+    // sink kafka埋点信息
+    LineageManager.addMQDatasource("kafka", finalBrokers, finalTopic, "", Operation.SINK)
+
+    val kafkaProducer = new FlinkKafkaProducer[String](
+      finalTopic,
+      serializationSchema,
+      finalProducerConfig,
+      customPartitioner,
+      semantic,
+      kafkaProducersPoolSize
+    )
+
+    this.stream.asInstanceOf[DataStream[String]].addSink(kafkaProducer).uname("Fire kafka sink")
+  }
+
+  /**
+   * 将数据写入到kafka中，开启仅一次的语义
+   */
+  def sinkKafkaExactlyOnce[T <: String](kafkaParams: Map[String, Object] = null,
+                                        topic: String = null,
+                                        serializationSchema: SerializationSchema[String] = new SimpleStringSchema,
+                                        customPartitioner: FlinkKafkaPartitioner[String] = null,
+                                        kafkaProducersPoolSize: Int = FlinkKafkaProducer.DEFAULT_KAFKA_PRODUCERS_POOL_SIZE,
+                                        keyNum: Int = KeyNum._1): Unit = {
+    this.sinkKafka[T](kafkaParams, topic, serializationSchema, customPartitioner, Semantic.EXACTLY_ONCE, kafkaProducersPoolSize, keyNum)
+  }
+
+  /**
+   * 将数据流实时写入jdbc数据源
+   *
+   * @param sql
+   * dml sql语句
+   * @param fields
+   * 当为空时fire框架会自动解析sql中占位符对应的字段名称，如果解析失败，用户可手动指定
+   * @param autoConvert
+   * 是否自动匹配sql中声明的带有下划线的字段与JavaBean中声明的驼峰标识的成员变量
+   * @param keyNum
+   * 数据源配置索引
+   */
+  def sinkJdbc(sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, keyNum: Int = 1): DataStreamSink[T] = {
+    val (jdbcConf: JdbcConf, connectionTimeout: Int, columnList: Seq[String]) = this.preparedJdbcSinkParam(sql, fields, autoConvert, keyNum)
+
+    val connOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+      .withUrl(jdbcConf.url)
+      .withDriverName(jdbcConf.driverClass)
+      .withUsername(jdbcConf.username)
+      .withPassword(jdbcConf.password)
+
+    // 此处反射调用withConnectionCheckTimeoutSeconds方法是为了兼容不同的Flink版本
+    // Flink1.12没有withConnectionCheckTimeoutSeconds这个方法，通过反射验证
+    val checkTimeoutMethod = ReflectionUtils.getMethodByName(classOf[JdbcConnectionOptionsBuilder], "withConnectionCheckTimeoutSeconds")
+    if (checkTimeoutMethod != null) {
+      // checkTimeoutMethod.invoke(connOptions, connectionTimeout)
+      connOptions.withConnectionCheckTimeoutSeconds(connectionTimeout)
+    }
+
+    // 将流式数据实时写入到指定的关系型数据源中
+    import org.apache.flink.connector.jdbc.JdbcSink
+    stream.addSink(JdbcSink.sink(sql,
+      new JdbcStatementBuilder[T]() {
+        override def accept(stat: PreparedStatement, bean: T): Unit = {
+          DBUtils.setPreparedStatement(columnList, stat, bean)
+        }
+      },
+      JdbcExecutionOptions.builder()
+        .withBatchSize(FireJdbcConf.batchSize(keyNum))
+        .withBatchIntervalMs(FireJdbcConf.jdbcFlushInterval(keyNum))
+        .withMaxRetries(FireJdbcConf.maxRetry(keyNum).toInt)
+        .build(),
+      connOptions.build()
+    )).uname("Fire jdbc sink")
+  }
+
+  /**
+   * 将数据流实时写入jdbc数据源
+   *
+   * @param sql
+   * dml sql语句
+   * @param fields
+   * 当为空时fire框架会自动解析sql中占位符对应的字段名称，如果解析失败，用户可手动指定
+   * @param autoConvert
+   * 是否自动匹配sql中声明的带有下划线的字段与JavaBean中声明的驼峰标识的成员变量
+   * @param keyNum
+   * 数据源配置索引
+   */
+  def sinkJdbcExactlyOnce(sql: String, fields: Seq[String] = null, autoConvert: Boolean = true,
+                          dbType: Datasource = Datasource.MYSQL,
+                          transactionPerConnection: Boolean = true, maxCommitAttempts: Int = 3,
+                          recoveredAndRollback: Boolean = true, allowOutOfOrderCommits: Boolean = false,
+                          keyNum: Int = 1): DataStreamSink[T] = {
+    val (jdbcConf: JdbcConf, connectionTimeout: Int, columns: Seq[String]) = this.preparedJdbcSinkParam(sql, fields, autoConvert, keyNum)
+
+    val isExists = ReflectionUtils.existsClass("org.apache.flink.connector.jdbc.JdbcExactlyOnceOptions")
+    if (!isExists) throw new RuntimeException("低于Flink1.13版本暂不支持sinkJdbcExactlyOnce！")
+
+    // 为了兼容Flink1.13，使用反射判断withTransactionPerConnection方法是否存在
+    val jdbcExactlyOnceOptionsBuilder = JdbcExactlyOnceOptions.builder()
+      .withMaxCommitAttempts(maxCommitAttempts)
+      .withRecoveredAndRollback(recoveredAndRollback)
+      .withAllowOutOfOrderCommits(allowOutOfOrderCommits)
+    val method = ReflectionUtils.getMethodByName(classOf[JDBCExactlyOnceOptionsBuilder], "withTransactionPerConnection")
+    if (method != null) jdbcExactlyOnceOptionsBuilder.withTransactionPerConnection(transactionPerConnection)
+
+    // 将流式数据实时写入到指定的关系型数据源中
+    import org.apache.flink.connector.jdbc.JdbcSink
+    stream.addSink(JdbcSink.exactlyOnceSink(sql,
+      new JdbcStatementBuilder[T]() {
+        override def accept(stat: PreparedStatement, bean: T): Unit = {
+          DBUtils.setPreparedStatement(columns, stat, bean)
+        }
+      },
+      JdbcExecutionOptions.builder()
+        .withBatchSize(FireJdbcConf.batchSize(keyNum))
+        .withBatchIntervalMs(FireJdbcConf.jdbcFlushInterval(keyNum))
+        .withMaxRetries(0)
+        .build(),
+      jdbcExactlyOnceOptionsBuilder.build(),
+      new SerializableSupplier[XADataSource]() {
+        override def get(): XADataSource = DBUtils.buildXADataSource(jdbcConf, dbType)
+      }
+    ))
+  }
+
+  /**
+   * 工具方法，准备jdbc sink所需相关配置与参数
+   */
+  @Internal
+  private[this] def preparedJdbcSinkParam(sql: JString, params: Seq[JString], autoConvert: Boolean, keyNum: Int): (JdbcConf, Int, Seq[JString]) = {
+    requireNonEmpty(sql)("SQL语句不能为空！")
+
+    // 1. 获取配置文件中数据源信息
+    val jdbcConf = JdbcConf(keyNum)
+    val connectionTimeout = FireJdbcConf.jdbcConnectionTimeout(keyNum)
+    requireNonEmpty(jdbcConf.url, jdbcConf.driverClass, jdbcConf.username)(s"keyNum=${keyNum} 对应的jdbc相关数据源信息非法，请检查！")
+
+    logInfo(
+      s"""
+         |--------> Sink jdbc information. keyNum=$keyNum <--------
+         |url: ${jdbcConf.url}
+         |driver: ${jdbcConf.driverClass}
+         |username: ${jdbcConf.username}
+         |connectionTimeout: $connectionTimeout
+         |""".stripMargin)
+
+    // 2. 获取SQL中的占位符字段列表，如果主动指定，则基于指定的字段列表，否则使用自动推断
+    val columns = if (noEmpty(params)) params else SQLUtils.parsePlaceholder(sql).map(column => if (autoConvert) column.toHump else column)
+    logInfo(s"Sink jdbc columns: $columns")
+
+    // 3. sink jdbc埋点信息
+    // TODO: 解析sql血缘关系，包括针对表做了哪些操作，数据的流转等
+    LineageManager.addDBSql(DBUtils.dbTypeParser(jdbcConf.driverClass, jdbcConf.url), jdbcConf.url, jdbcConf.username, sql, Operation.UPDATE)
+    (jdbcConf, connectionTimeout, columns)
+  }
 }

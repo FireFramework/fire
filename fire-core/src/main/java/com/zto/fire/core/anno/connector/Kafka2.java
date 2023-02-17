@@ -45,7 +45,7 @@ public @interface Kafka2 {
     /**
      * 消费者标识
      */
-    String groupId();
+    String groupId() default "";
 
     /**
      * 指定从何处开始消费

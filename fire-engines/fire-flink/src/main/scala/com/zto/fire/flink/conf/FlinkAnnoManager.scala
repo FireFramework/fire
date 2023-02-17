@@ -55,6 +55,7 @@ private[fire] class FlinkAnnoManager extends AnnoManager {
     this.put(FLINK_DEFAULT_PARALLELISM, streaming.parallelism())
     this.put(OPERATOR_CHAINING_ENABLE, streaming.disableOperatorChaining())
     this.put(FLINK_STATE_TTL_DAYS, streaming.stateTTL())
+    this.put(FLINK_SQL_USE_STATEMENT_SET, streaming.useStatementSet())
   }
 
   /**

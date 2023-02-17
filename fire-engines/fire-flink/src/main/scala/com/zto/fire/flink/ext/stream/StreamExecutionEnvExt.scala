@@ -18,13 +18,14 @@
 package com.zto.fire.flink.ext.stream
 
 import com.zto.fire._
+import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.{Operation => FOperation}
-import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.util.{KafkaUtils, LineageManager, RegularUtils, SQLUtils}
 import com.zto.fire.core.Api
+import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvider}
 import com.zto.fire.flink.sql.FlinkSqlExtensionsParser
-import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils, RocketMQUtils}
+import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils, RocketMQUtils, TableUtils}
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.functions.RuntimeContext
@@ -73,7 +74,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
   def createKafkaConsumer[T](kafkaParams: Map[String, Object] = null,
                              topics: Set[String] = null,
                              deserializer: Any = new SimpleStringSchema,
-                             keyNum: Int = 1): FlinkKafkaConsumer[T] = {
+                             keyNum: Int = KeyNum._1): FlinkKafkaConsumer[T] = {
     val confTopics = FireKafkaConf.kafkaTopics(keyNum)
     val topicList = if (StringUtils.isNotBlank(confTopics)) confTopics.split(",") else if (topics != null) topics.toArray else null
     require(topicList != null && topicList.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：kafka.topics$keyNum")
@@ -122,7 +123,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                                                                 specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
                                                                 runtimeContext: RuntimeContext = null,
                                                                 deserializer: Any = new SimpleStringSchema,
-                                                                keyNum: Int = 1): DataStream[T] = {
+                                                                keyNum: Int = KeyNum._1): DataStream[T] = {
 
     val kafkaConsumer = this.createKafkaConsumer[T](kafkaParams, topics, deserializer, keyNum)
 
@@ -154,7 +155,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                          topics: Set[String] = null,
                          specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
                          runtimeContext: RuntimeContext = null,
-                         keyNum: Int = 1): DataStream[String] = {
+                         keyNum: Int = KeyNum._1): DataStream[String] = {
 
     this.createDirectStreamBySchema[String](kafkaParams, topics, specificStartupOffsets, runtimeContext, keyNum = keyNum)
   }
@@ -171,7 +172,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                                        topics: Set[String] = null,
                                        specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
                                        runtimeContext: RuntimeContext = null,
-                                       keyNum: Int = 1): DataStream[ObjectNode] = {
+                                       keyNum: Int = KeyNum._1): DataStream[ObjectNode] = {
 
     this.createDirectStreamBySchema[ObjectNode](kafkaParams, topics, specificStartupOffsets, runtimeContext, new JSONKeyValueDeserializationSchema(true), keyNum)
   }
@@ -188,7 +189,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                               topics: Set[String] = null,
                               specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
                               runtimeContext: RuntimeContext = null,
-                              keyNum: Int = 1): DataStream[String] = {
+                              keyNum: Int = KeyNum._1): DataStream[String] = {
     this.createDirectStream(kafkaParams, topics, specificStartupOffsets, runtimeContext, keyNum)
   }
 
@@ -204,7 +205,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                                             topics: Set[String] = null,
                                             specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
                                             runtimeContext: RuntimeContext = null,
-                                            keyNum: Int = 1): DataStream[ObjectNode] = {
+                                            keyNum: Int = KeyNum._1): DataStream[ObjectNode] = {
     this.createDirectStreamByJsonKeyValue(kafkaParams, topics, specificStartupOffsets, runtimeContext, keyNum)
   }
 
@@ -224,7 +225,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                                       groupId: String = null,
                                       topics: String = null,
                                       tag: String = null,
-                                      keyNum: Int = 1): DataStream[(String, String, String)] = {
+                                      keyNum: Int = KeyNum._1): DataStream[(String, String, String)] = {
     // 获取topic信息，配置文件优先级高于代码中指定的
     val confTopics = FireRocketMQConf.rocketTopics(keyNum)
     val finalTopics = if (StringUtils.isNotBlank(confTopics)) confTopics else topics
@@ -265,7 +266,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                                       groupId: String = null,
                                       topics: String = null,
                                       tag: String = null,
-                                      keyNum: Int = 1): DataStream[(String, String)] = {
+                                      keyNum: Int = KeyNum._1): DataStream[(String, String)] = {
     this.createRocketMqPullStreamWithTag(rocketParam, groupId, topics, tag, keyNum).map(t => (t._2, t._3))
   }
 
@@ -285,7 +286,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                                groupId: String = null,
                                topics: String = null,
                                tag: String = null,
-                               keyNum: Int = 1): DataStream[String] = {
+                               keyNum: Int = KeyNum._1): DataStream[String] = {
     this.createRocketMqPullStreamWithTag(rocketParam, groupId, topics, tag, keyNum).map(t => t._3)
   }
 
@@ -307,14 +308,10 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    */
   def sql(sql: String): TableResult = {
     SQLUtils.executeSql(sql) { statement =>
-      if (this.isInsertStatement(statement)) {
+      if (FireFlinkConf.autoAddStatementSet && this.isInsertStatement(statement)) {
         FlinkSqlExtensionsParser.sqlParse(statement)
         this.addInsertSql(statement)
-        // 为兼容flink1.12，使用反射调用返回TABLE_RESULT_OK
-        val tableResultClass = Class.forName("org.apache.flink.table.api.internal.TableResultImpl")
-        val field = tableResultClass.getDeclaredField("TABLE_RESULT_OK")
-        field.setAccessible(true)
-        field.get(null).asInstanceOf[TableResult]
+        TableUtils.TABLE_RESULT_OK
       } else {
         val finalSql = FlinkUtils.sqlWithReplace(statement)
         FlinkSqlExtensionsParser.sqlParse(finalSql)

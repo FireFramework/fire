@@ -21,7 +21,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Stateme
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.anno.Internal
-import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.common.conf.{FireFrameworkConf, KeyNum}
 import com.zto.fire.common.util.{LineageManager, LogUtils, ReflectionUtils, StringsUtils}
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.jdbc.conf.FireJdbcConf
@@ -30,7 +30,7 @@ import com.zto.fire.predef._
 
 import java.lang.reflect.Method
 import scala.collection.mutable
-import scala.reflect.ClassTag
+import scala.reflect.{ClassTag, classTag}
 
 /**
  * 数据库连接池（c3p0）工具类
@@ -42,7 +42,7 @@ import scala.reflect.ClassTag
  * 用于区分连接不同的数据源，不同配置源对应不同的Connector实例
  * @author ChengLong 2020-11-27 10:31:03
  */
-class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
+class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends FireConnector(keyNum = keyNum) {
   private[this] var connPool: ComboPooledDataSource = _
   // 日志中sql截取的长度
   private lazy val logSqlLength = FireFrameworkConf.logSqlLength
@@ -172,7 +172,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
    * @return
    * 影响的记录数
    */
-  def executeUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
+  def update(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
     val conn = if (connection == null) this.getConnection else connection
     var retVal: Long = 0L
     var stat: PreparedStatement = null
@@ -198,6 +198,27 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
   }
 
   /**
+   * 更新操作
+   *
+   * @param sql
+   * 待执行的sql语句
+   * @param params
+   * sql中的参数
+   * @param connection
+   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
+   * @param commit
+   * 是否自动提交事务，默认为自动提交
+   * @param closeConnection
+   * 是否关闭connection，默认关闭
+   * @return
+   * 影响的记录数
+   */
+  @deprecated("use update", "fire 2.3.3")
+  def executeUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
+    this.update(sql, params, connection, commit, closeConnection)
+  }
+
+  /**
    * 执行批量更新操作
    *
    * @param sql
@@ -213,7 +234,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
    * @return
    * 影响的记录数
    */
-  def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+  def updateBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
     val conn = if (connection == null) this.getConnection else connection
     var stat: PreparedStatement = null
 
@@ -249,19 +270,52 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
   }
 
   /**
+   * 执行批量更新操作
+   *
+   * @param sql
+   * 待执行的sql语句
+   * @param paramsList
+   * sql的参数列表
+   * @param connection
+   * 传递已有的数据库连接，可满足跨api的同一事务提交的需求
+   * @param commit
+   * 是否自动提交事务，默认为自动提交
+   * @param closeConnection
+   * 是否关闭connection，默认关闭
+   * @return
+   * 影响的记录数
+   */
+  @deprecated("use updateBatch", "fire 2.3.3")
+  def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+    this.updateBatch(sql, paramsList, connection, commit, closeConnection)
+  }
+
+  /**
    * 执行查询操作，以JavaBean方式返回结果集
    *
    * @param sql
    * 查询语句
    * @param params
    * sql执行参数
-   * @param clazz
-   * JavaBean类型
    */
-  def executeQueryList[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, clazz: Class[T]): List[T] = {
-    this.executeQuery[List[T]](sql, params, rs => {
+  def queryList[T <: Object : ClassTag](sql: String, params: Seq[Any] = null): List[T] = {
+    val clazz = getParamType[T]
+    this.query[List[T]](sql, params, rs => {
       DBUtils.resultSet2BeanList(rs, clazz).toList
     })
+  }
+
+  /**
+   * 执行查询操作，以JavaBean方式返回结果集
+   *
+   * @param sql
+   * 查询语句
+   * @param params
+   * sql执行参数
+   */
+  @deprecated("use queryList", "fire 2.3.3")
+  def executeQueryList[T <: Object : ClassTag](sql: String, params: Seq[Any] = null): List[T] = {
+    this.queryList[T](sql, params)
   }
 
   /**
@@ -274,7 +328,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
    * @param callback
    * 查询回调
    */
-  def executeQuery[T](sql: String, params: Seq[Any] = null, callback: ResultSet => T): T = {
+  def query[T](sql: String, params: Seq[Any] = null, callback: ResultSet => T): T = {
     val conn = this.getConnection
     var stat: PreparedStatement = null
     var rs: ResultSet = null
@@ -294,6 +348,21 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
     } {
       this.release(sql, conn, stat, rs)
     }(this.logger, s"${this.sqlBuriedPoint(sql, FOperation.UPDATE)}", s"executeQuery failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, FOperation.SELECT)}", finallyCatchLog)
+  }
+
+  /**
+   * 执行查询操作
+   *
+   * @param sql
+   * 查询语句
+   * @param params
+   * sql执行参数
+   * @param callback
+   * 查询回调
+   */
+  @deprecated("use query", "fire 2.3.3")
+  def executeQuery[T](sql: String, params: Seq[Any] = null, callback: ResultSet => T): T = {
+    this.query[T](sql, params, callback)
   }
 
   /**
@@ -368,6 +437,21 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = 1) extends FireConnecto
 case class JdbcConf(url: String, driverClass: String, username: String, password: String)
 
 /**
+ * JDBC数据源配置包装类
+ */
+object JdbcConf {
+  def apply(keyNum: Int = KeyNum._1): JdbcConf = {
+    val url = FireJdbcConf.url(keyNum)
+    val username = FireJdbcConf.user(keyNum)
+    val password = FireJdbcConf.password(keyNum)
+    val confDriverClass = FireJdbcConf.driverClass(keyNum)
+    val driverClass = if (noEmpty(confDriverClass)) confDriverClass else DBUtils.parseDriverByUrl(url)
+
+    JdbcConf(url, driverClass, username, password)
+  }
+}
+
+/**
  * 用于单例构建伴生类JdbcConnector的实例对象
  * 每个JdbcConnector实例使用keyNum作为标识，并且与每个关系型数据库一一对应
  */
@@ -376,7 +460,7 @@ object JdbcConnector extends ConnectorFactory[JdbcConnector] with JdbcFunctions 
   /**
    * 约定创建connector子类实例的方法
    */
-  override protected def create(conf: Any = null, keyNum: Int = 1): JdbcConnector = {
+  override protected def create(conf: Any = null, keyNum: Int = KeyNum._1): JdbcConnector = {
     requireNonEmpty(keyNum)
     val connector = new JdbcConnector(conf.asInstanceOf[JdbcConf], keyNum)
     logger.debug(s"创建JdbcConnector实例成功. keyNum=$keyNum")

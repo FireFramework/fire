@@ -17,6 +17,7 @@
 
 package com.zto.fire.flink.ext.stream
 
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.flink.bean.FlinkTableSchema
 import com.zto.fire.flink.sink.HBaseSink
 import com.zto.fire.flink.util.FlinkSingletonFactory
@@ -121,11 +122,12 @@ class TableExt(table: Table) {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate(sql: String,
                       batch: Int = 10,
                       flushInterval: Long = 1000,
                       isMerge: Boolean = true,
-                      keyNum: Int = 1): DataStreamSink[Row] = {
+                      keyNum: Int = KeyNum._1): DataStreamSink[Row] = {
 
     this.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, keyNum) {
       row => {
@@ -150,11 +152,12 @@ class TableExt(table: Table) {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate2(sql: String,
                        batch: Int = 10,
                        flushInterval: Long = 1000,
                        isMerge: Boolean = true,
-                       keyNum: Int = 1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
+                       keyNum: Int = KeyNum._1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
     import com.zto.fire._
     if (!isMerge) throw new IllegalArgumentException("该jdbc sink api暂不支持非merge语义，delete操作需单独实现")
     this.table.toRetractStreamSingle.jdbcBatchUpdate2(sql, batch, flushInterval, keyNum) {
@@ -177,7 +180,7 @@ class TableExt(table: Table) {
   def hbasePutTable[T <: HBaseBaseBean[T]: ClassTag](tableName: String,
                                            batch: Int = 100,
                                            flushInterval: Long = 3000,
-                                           keyNum: Int = 1): DataStreamSink[_] = {
+                                           keyNum: Int = KeyNum._1): DataStreamSink[_] = {
     import com.zto.fire._
     this.table.hbasePutTable2[T](tableName, batch, flushInterval, keyNum) {
       val schema = table.getTableSchema
@@ -205,7 +208,7 @@ class TableExt(table: Table) {
   def hbasePutTable2[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
                      batch: Int = 100,
                      flushInterval: Long = 3000,
-                     keyNum: Int = 1)(fun: Row => T): DataStreamSink[_] = {
+                     keyNum: Int = KeyNum._1)(fun: Row => T): DataStreamSink[_] = {
     import com.zto.fire._
     HBaseConnector.checkClass[T]()
     this.table.toRetractStreamSingle.addSink(new HBaseSink[Row, T](tableName, batch, flushInterval, keyNum) {

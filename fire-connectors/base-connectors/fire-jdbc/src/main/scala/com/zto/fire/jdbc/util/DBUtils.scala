@@ -19,15 +19,17 @@ package com.zto.fire.jdbc.util
 
 import com.google.common.collect.Maps
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.common.conf.{FireFrameworkConf, KeyNum}
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.util.{Logging, ReflectionUtils}
+import com.zto.fire.jdbc.JdbcConf
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 
-import java.sql.{ResultSet, Types}
+import java.sql.{Date, PreparedStatement, ResultSet, Types}
 import java.util.Properties
+import javax.sql.XADataSource
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -162,7 +164,7 @@ object DBUtils extends Logging {
    * @return
    * jdbc配置信息
    */
-  def getJdbcProps(jdbcProps: Properties = null, keyNum: Int = 1): Properties = {
+  def getJdbcProps(jdbcProps: Properties = null, keyNum: Int = KeyNum._1): Properties = {
     if (jdbcProps == null || jdbcProps.size() == 0) {
       val defaultProps = new Properties()
       defaultProps.setProperty("user", FireJdbcConf.user(keyNum))
@@ -213,4 +215,75 @@ object DBUtils extends Logging {
     driver
   }
 
+  /**
+   * 根据指定的列集合，反射将JavaBean中的成员变量设置到Jdbc的PreparedStatement中
+   *
+   * @param columns
+   * 列的集合
+   * @param statement
+   * JDBC的PreparedStatement对象
+   * @param bean
+   * 从指定的JavaBean中获取数据填充到PreparedStatement中
+   */
+  def setPreparedStatement[T](columns: Seq[String], statement: PreparedStatement, bean: T): Unit = {
+    requireNonEmpty(columns, bean)("字段列表或JavaBean不能为空！")
+
+    val fields = ReflectionUtils.getAllFields(bean.getClass)
+    for (i <- columns.indices) {
+      val field = fields.get(columns(i))
+      requireNonNull(field)(s"未在${bean.getClass}中找到字段${columns(i)}，请检查SQL语句或JavaBean的定义")
+
+      field.getType.getName.replace("java.lang.", "") match {
+        case "Integer" | "int" => statement.setInt(i + 1, field.get(bean).asInstanceOf[JInt])
+        case "Long" | "long" => statement.setLong(i + 1, field.get(bean).asInstanceOf[JLong])
+        case "Boolean" | "boolean" => statement.setBoolean(i + 1, field.get(bean).asInstanceOf[JBoolean])
+        case "Float" | "float" => statement.setFloat(i + 1, field.get(bean).asInstanceOf[JFloat])
+        case "Double" | "double" => statement.setDouble(i + 1, field.get(bean).asInstanceOf[JDouble])
+        case "java.math.BigDecimal" => statement.setBigDecimal(i + 1, field.get(bean).asInstanceOf[JBigDecimal])
+        case "java.sql.Date" => statement.setDate(i + 1, field.get(bean).asInstanceOf[Date])
+        case _ => try {
+          statement.setString(i + 1, field.get(bean).toString)
+        } catch {
+          case e: Throwable => logError(s"字段类型不匹配，请检查${columns(i)}与JavaBean的对应关系", e)
+        }
+      }
+    }
+  }
+
+  /**
+   * 根据传入的驱动类构建XADataSource实例
+   *
+   * @param jdbcConf
+   * 数据源链接信息
+   * @param dbType
+   * 对应数据源的类型
+   * MySQL、Oracle、PostgreSQL
+   * @return
+   * 对应数据源的XADataSource实例
+   */
+  def buildXADataSource(jdbcConf: JdbcConf, dbType: Datasource): XADataSource = {
+    val driverClass = dbType match {
+      case Datasource.MYSQL => "com.mysql.jdbc.jdbc2.optional.MysqlXADataSource"
+      case Datasource.ORACLE => "oracle.jdbc.xa.OracleXADataSource"
+      case Datasource.PostgreSQL => "oracle.jdbc.xa.OracleXADataSource"
+      case _ => ""
+    }
+
+    requireNonEmpty(driverClass)("当前只支持MySQL、Oracle与PostgreSQL等数据库！")
+    tryWithReturn {
+      val mysqlXADataSourceClass = Class.forName(driverClass)
+      val mysqlXADataSource = mysqlXADataSourceClass.newInstance()
+
+      val setUrl = ReflectionUtils.getMethodByName(mysqlXADataSourceClass, "setUrl")
+      setUrl.invoke(mysqlXADataSource, jdbcConf.url)
+
+      val setUser = ReflectionUtils.getMethodByName(mysqlXADataSourceClass, "setUser")
+      setUser.invoke(mysqlXADataSource, jdbcConf.username)
+
+      val setPassword = ReflectionUtils.getMethodByName(mysqlXADataSourceClass, "setPassword")
+      setPassword.invoke(mysqlXADataSource, jdbcConf.password)
+
+      mysqlXADataSource.asInstanceOf[XADataSource]
+    }(this.logger, catchLog = "获取MySQL XADataSource失败，请检查是否引入MySQL相关JDBC驱动依赖", hook = true)
+  }
 }

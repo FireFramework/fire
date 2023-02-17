@@ -20,12 +20,12 @@ package com.zto.fire.spark.sql
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.conf.FireFrameworkConf.lineageCollectSQLEnable
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.util.SQLLineageManager
 import com.zto.fire.core.sql.SqlParser
 import com.zto.fire.predef.JConcurrentHashMap
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
-import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.{TableIdentifier => SparkTableIdentifier}
@@ -80,16 +80,6 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
     tryWithReturn {
       this.catalog.tableExists(toSparkTableIdentifier(tableIdentifier))
     } (this.logger, catchLog = s"判断${tableIdentifier}是否存在发生异常", hook = false)
-  }
-
-  /**
-   * 用于判断给定的表是否为临时表
-   */
-  @Internal
-  override def isTempView(tableIdentifier: TableIdentifier): Boolean = {
-    tryWithReturn {
-      catalog.isTemporaryTable(toSparkTableIdentifier(tableIdentifier))
-    } (this.logger, catchLog = s"判断${tableIdentifier}是否为临时表或视图失败", hook = false)
   }
 
   /**
@@ -175,10 +165,18 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
       this.logger.debug(s"开始解析sql语句：$sql")
       SparkUtils.sqlValidate(sql)
       val logicalPlan = this.spark.sessionState.sqlParser.parsePlan(sql)
-      SQLLineageManager.addStatement(sql)
-      val sinkTable = this.ddlParser(logicalPlan)
-      this.queryParser(logicalPlan, sinkTable)
+      if (lineageCollectSQLEnable) SQLLineageManager.addStatement(sql)
+      this.sqlParser(logicalPlan)
     } (this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", hook = false)
+  }
+
+  /**
+   * 用于解析SparkSql中的库表信息
+   */
+  @Internal
+  def sqlParser(logicalPlan: LogicalPlan): Unit = {
+    val sinkTable = this.ddlParser(logicalPlan)
+    this.queryParser(logicalPlan, sinkTable)
   }
 
   /**

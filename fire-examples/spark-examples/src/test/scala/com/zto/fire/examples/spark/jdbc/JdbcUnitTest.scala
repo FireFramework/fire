@@ -49,29 +49,29 @@ class JdbcUnitTest extends SparkCore with SparkTester {
     // 执行insert操作
     val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
     this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
-    var resultList = this.fire.jdbcQueryList(s"select id, name, age, createTime, length, sex from $tableName where id=1", null, classOf[Student])
+    var resultList = this.fire.jdbcQueryList[Student](s"select id, name, age, createTime, length, sex from $tableName where id=1", null)
     assert(resultList.head.getName.equals("admin"))
 
     // 更新配置文件中指定的第二个关系型数据库
     this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1), keyNum = 2)
-    resultList = this.fire.jdbcQueryList(s"select id, name, age, createTime, length, sex from $tableName where id=1", null, classOf[Student], keyNum = 2)
+    resultList = this.fire.jdbcQueryList[Student](s"select id, name, age, createTime, length, sex from $tableName where id=1", null, keyNum = 2)
     assert(resultList.head.getName.equals("admin"))
 
     // 执行更新操作
     val updateSql = s"UPDATE $tableName SET name=? WHERE id=?"
     this.fire.jdbcUpdate(updateSql, Seq("root", 1))
-    resultList = this.fire.jdbcQueryList(s"select id, name, age, createTime, length, sex from $tableName where id=1", null, classOf[Student])
+    resultList = this.fire.jdbcQueryList[Student](s"select id, name, age, createTime, length, sex from $tableName where id=1", null)
     assert(resultList.head.getName.equals("root"))
 
     // 执行批量操作
     this.initData
-    resultList = this.fire.jdbcQueryList(s"select id, name, age, createTime, length, sex from $tableName", null, classOf[Student])
+    resultList = this.fire.jdbcQueryList[Student](s"select id, name, age, createTime, length, sex from $tableName", null)
     assert(resultList.size == 5)
 
-    this.fire.jdbcBatchUpdate(s"update $tableName set sex=? where id=?", Seq(Seq(1, 1), Seq(2, 2), Seq(3, 3), Seq(4, 4), Seq(5, 5), Seq(6, 6)))
+    this.fire.jdbcUpdateBatch(s"update $tableName set sex=? where id=?", Seq(Seq(1, 1), Seq(2, 2), Seq(3, 3), Seq(4, 4), Seq(5, 5), Seq(6, 6)))
     val sql = s"DELETE FROM $tableName WHERE id=?"
     this.fire.jdbcUpdate(sql, Seq(2))
-    resultList = this.fire.jdbcQueryList(s"select id, name, age, createTime, length, sex from $tableName where id=2", null, classOf[Student])
+    resultList = this.fire.jdbcQueryList[Student](s"select id, name, age, createTime, length, sex from $tableName where id=2", null)
     assert(resultList.isEmpty)
   }
 
@@ -85,7 +85,7 @@ class JdbcUnitTest extends SparkCore with SparkTester {
     val sql = s"select * from $tableName where id in (?, ?, ?)"
 
     // 将查询结果集以List[JavaBean]方式返回
-    val list = this.fire.jdbcQueryList(sql, Seq(1, 2, 3), classOf[Student])
+    val list = this.fire.jdbcQueryList[Student](sql, Seq(1, 2, 3))
     // 方式二：使用JdbcConnector
     assert(list.size == 3)
 

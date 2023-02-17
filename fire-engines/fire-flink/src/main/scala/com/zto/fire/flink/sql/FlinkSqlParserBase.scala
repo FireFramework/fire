@@ -55,7 +55,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
    */
   override def sqlParser(sql: String): Unit = {
     try {
-      FlinkUtils.sqlParser(sql) match {
+      FlinkUtils.sqlNodeParser(sql) match {
         case select: SqlSelect => this.parseSqlNode(select)
         case insert: RichSqlInsert => {
           this.parseSqlNode(insert.getTargetTable, Operation.INSERT_INTO)
@@ -79,7 +79,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def hiveSqlParser(sql: String): Unit = {
-    FlinkUtils.sqlParser(sql, FlinkUtils.calciteHiveParserConfig) match {
+    FlinkUtils.sqlNodeParser(sql, FlinkUtils.calciteHiveParserConfig) match {
       case sqlAddPartitions: SqlAddPartitions => {
         this.parseSqlNode(sqlAddPartitions.getTableName, Operation.ADD_PARTITION, true)
         this.parsePartitions(sqlAddPartitions.getTableName, sqlAddPartitions.getPartSpecs)
@@ -313,26 +313,50 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     SQLLineageManager.setTmpView(tableIdentifier, tableIdentifier.identifier)
     this.parseSqlNode(createTable.getTableName, Operation.CREATE_TABLE)
 
-    val tableLike = createTable.getTableLike
-    if (!tableLike.isPresent) {
+    // 从Flink 1.16开始移除getTableLike方法，为了兼容，使用反射进行判断
+    val getTableLikeMethod = ReflectionUtils.getMethodByName(classOf[SqlCreateTable], "getTableLike")
+    // < Flink 1.16解析逻辑
+    if (getTableLikeMethod != null) {
+      val tableLike = createTable.getTableLike
+      if (!tableLike.isPresent) {
+        parseCreateTableStatement
+      } else {
+        // create table like语句
+        this.parseSqlNode(tableLike.get(), Operation.SELECT)
+      }
+    } else {
+      // >= Flink 1.16解析逻辑
+      parseCreateTableStatement
+    }
+
+    /**
+     * 用于解析create table语句
+     */
+    def parseCreateTableStatement: Unit = {
       // 解析建表语句中的with参数列表
       val properties = this.parseOptions(tableIdentifier, createTable.getPropertyList)
       // 解析建表语句中的字段列表
       this.parseColumns(tableIdentifier, createTable.getColumnList)
+      // 解析不同的connector血缘信息
+      this.parseConnector(tableIdentifier, properties)
+    }
+  }
 
-      val catalog = properties.getOrElse("connector", "")
-      if (noEmpty(catalog)) {
-        SQLLineageManager.setCatalog(tableIdentifier, catalog)
-        catalog match {
-          case "kafka" => this.parseKafkaConnector(tableIdentifier, properties)
-          case "jdbc" => this.parseJDBCConnector(tableIdentifier, properties)
-          case "fire-rocketmq" => this.parseRocketMQConnector(tableIdentifier, properties)
-          case _ =>
-        }
+  /**
+   * 解析不同的connector血缘信息
+   */
+  @Internal
+  private def parseConnector(tableIdentifier: TableIdentifier, properties: Map[JString, JString]): Unit = {
+    val catalog = properties.getOrElse("connector", "")
+    if (noEmpty(catalog)) {
+      SQLLineageManager.setCatalog(tableIdentifier, catalog)
+      catalog match {
+        case "kafka" => this.parseKafkaConnector(tableIdentifier, properties)
+        case "jdbc" => this.parseJDBCConnector(tableIdentifier, properties)
+        case "fire-rocketmq" => this.parseRocketMQConnector(tableIdentifier, properties)
+        case "clickhouse" => this.parseClickhouseConnector(tableIdentifier, properties)
+        case _ =>
       }
-    } else {
-      // create table like语句
-      this.parseSqlNode(tableLike.get(), Operation.SELECT)
     }
   }
 
@@ -359,7 +383,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     val topic = properties.getOrElse("rocket.topics", "")
     SQLLineageManager.setPhysicalTable(tableIdentifier, topic)
     val groupId = properties.getOrElse("rocket.group.id", "")
-    LineageManager.addMQDatasource(Datasource.ROCKETMQ.toString, url, topic, groupId, Operation.CREATE_TABLE, Operation.SOURCE)
+    LineageManager.addMQDatasource(Datasource.ROCKETMQ.toString, url, topic, groupId, Operation.CREATE_TABLE)
   }
 
   /**
@@ -372,7 +396,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     val topic = properties.getOrElse("topic", "")
     SQLLineageManager.setPhysicalTable(tableIdentifier, topic)
     val groupId = properties.getOrElse("properties.group.id", "")
-    LineageManager.addMQDatasource(Datasource.KAFKA.toString, url, topic, groupId, Operation.CREATE_TABLE, Operation.SOURCE)
+    LineageManager.addMQDatasource(Datasource.KAFKA.toString, url, topic, groupId, Operation.CREATE_TABLE)
   }
 
   /**
@@ -393,6 +417,21 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
   }
 
   /**
+   * 解析Clickhouse数据源
+   */
+  @Internal
+  protected def parseClickhouseConnector(tableIdentifier: TableIdentifier, properties: Map[JString, JString]): Unit = {
+    val url = properties.getOrElse("url", "")
+    SQLLineageManager.setCluster(tableIdentifier, url)
+    val dbName = properties.getOrElse("database-name", "")
+    val tableName = properties.getOrElse("table-name", "")
+    val physicalTable = if (tableName.contains(".")) tableName else s"$dbName.${tableName}"
+    SQLLineageManager.setPhysicalTable(tableIdentifier, physicalTable)
+    val username = properties.getOrElse("username", "")
+    LineageManager.addDBDatasource(Datasource.CLICKHOUSE.toString, url, physicalTable, username, Operation.CREATE_TABLE)
+  }
+
+  /**
    * 用于解析sql中的options
    * @param tableIdentifier
    * 表名
@@ -402,7 +441,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
   @Internal
   protected def parseOptions(tableIdentifier: TableIdentifier, options: SqlNodeList): Map[String, String] = {
     val props = options.getList.map(t => t.toString.replace("'", "").split("="))
-      .filter(t => t.nonEmpty && t.length == 2).map(t => if (t.contains("password")) (t(0).trim, "******") else (t(0).trim, t(1).trim)).toMap
+      .filter(t => t.nonEmpty && t.length == 2).map(t => if (t(0).contains("password")) (t(0).trim, "******") else (t(0).trim, t(1).trim)).toMap
     SQLLineageManager.setOptions(tableIdentifier, props)
     props
   }

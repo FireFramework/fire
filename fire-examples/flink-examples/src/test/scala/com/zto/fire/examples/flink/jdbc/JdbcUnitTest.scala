@@ -89,7 +89,7 @@ object JdbcUnitTest extends FlinkStreaming {
   override def process: Unit = {
     this.initData
     // 执行查询操作
-    val studentList = this.fire.jdbcQueryList(s"select * from $tableName", clazz = classOf[Student])
+    val studentList = this.fire.jdbcQueryList[Student](s"select * from $tableName")
     val dataStream = this.fire.fromCollection(studentList)
     dataStream.toTable.createOrReplaceTempView("test")
     this.fire.sql(

@@ -17,8 +17,9 @@
 
 package com.zto.fire.spark.connector
 
-import java.nio.charset.StandardCharsets
+import com.zto.fire.common.conf.KeyNum
 
+import java.nio.charset.StandardCharsets
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
@@ -42,7 +43,7 @@ import scala.reflect.ClassTag
   *
   * @author ChengLong 2019-5-10 14:39:39
   */
-class HBaseSparkBridge(keyNum: Int = 1) extends FireConnector(keyNum = keyNum) {
+class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = keyNum) {
   private[this] lazy val spark = SparkSingletonFactory.getSparkSession
   def batchSize: Int = FireHBaseConf.hbaseBatchSize()
 
@@ -554,7 +555,7 @@ object HBaseSparkBridge extends ConnectorFactory[HBaseSparkBridge] {
   /**
    * 约定创建connector子类实例的方法
    */
-  override protected def create(conf: Any = null, keyNum: Int = 1): HBaseSparkBridge = {
+  override protected def create(conf: Any = null, keyNum: Int = KeyNum._1): HBaseSparkBridge = {
     requireNonEmpty(keyNum)
     val connector = new HBaseSparkBridge(keyNum)
     logger.debug(s"创建HBaseSparkBridge实例成功. keyNum=$keyNum")

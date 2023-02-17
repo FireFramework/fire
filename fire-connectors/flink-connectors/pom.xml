@@ -25,13 +25,13 @@
     <modules>
         <module>flink-clickhouse</module>
         <module>flink-rocketmq</module>
-        <module>flink-es</module>
+        <module>flink-rocketmq-apache</module>
     </modules>
 
     <parent>
         <artifactId>fire-connectors</artifactId>
         <groupId>com.zto.fire</groupId>
-        <version>2.3.2-SNAPSHOT</version>
+        <version>2.3.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -62,7 +62,6 @@
 
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
-        <testSourceDirectory>src/test/scala</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.scala-tools</groupId>

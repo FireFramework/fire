@@ -18,6 +18,7 @@
 package com.zto.fire.spark.ext.provider
 
 import com.zto.fire._
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.HBaseBulkConnector
@@ -49,7 +50,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @return
    * clazz类型的rdd
    */
-  def hbaseBulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): RDD[T] = {
+  def hbaseBulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = KeyNum._1): RDD[T] = {
     HBaseBulkConnector.bulkScanRDD(tableName, clazz, scan, keyNum)
   }
 
@@ -67,7 +68,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @return
    * clazz类型的rdd
    */
-  def hbaseBulkScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): RDD[T] = {
+  def hbaseBulkScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = KeyNum._1): RDD[T] = {
     HBaseBulkConnector.bulkScanRDD2(tableName, clazz, startRow, stopRow, keyNum)
   }
 
@@ -83,7 +84,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @return
    * clazz类型的rdd
    */
-  def hbaseBulkScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): DataFrame = {
+  def hbaseBulkScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = KeyNum._1): DataFrame = {
     val rdd = HBaseBulkConnector.bulkScanRDD(tableName, clazz, scan, keyNum)
     this.spark.createDataFrame(rdd, clazz)
   }
@@ -102,7 +103,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @return
    * clazz类型的rdd
    */
-  def hbaseBulkScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): DataFrame = {
+  def hbaseBulkScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = KeyNum._1): DataFrame = {
     this.hbaseBulkScanDF[T](tableName, clazz, HBaseConnector.buildScan(startRow, stopRow), keyNum)
   }
 
@@ -118,7 +119,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @return
    * clazz类型的rdd
    */
-  def hbaseBulkScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): Dataset[T] = {
+  def hbaseBulkScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = KeyNum._1): Dataset[T] = {
     val rdd = HBaseBulkConnector.bulkScanRDD(tableName, clazz, scan, keyNum)
     this.spark.createDataset(rdd)(Encoders.bean(clazz))
   }
@@ -137,7 +138,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @return
    * clazz类型的rdd
    */
-  def hbaseBulkScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): Dataset[T] = {
+  def hbaseBulkScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = KeyNum._1): Dataset[T] = {
     this.hbaseBulkScanDS[T](tableName, clazz, HBaseConnector.buildScan(startRow, stopRow), keyNum)
   }
 
@@ -148,7 +149,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * HBase表名
    * 数据集合，继承自HBaseBaseBean
    */
-  def hbaseBulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], keyNum: Int = 1): Unit = {
+  def hbaseBulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], keyNum: Int = KeyNum._1): Unit = {
     rdd.hbaseBulkPutRDD(tableName, keyNum)
   }
 
@@ -162,7 +163,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @tparam T
    * 数据类型为HBaseBaseBean的子类
    */
-  def hbaseBulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[T], keyNum: Int = 1): Unit = {
+  def hbaseBulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[T], keyNum: Int = KeyNum._1): Unit = {
     dataFrame.hbaseBulkPutDF[T](tableName, clazz, keyNum)
   }
 
@@ -178,7 +179,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @tparam T
    * 数据类型为HBaseBaseBean的子类
    */
-  def hbaseBulkPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], keyNum: Int = 1): Unit = {
+  def hbaseBulkPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], keyNum: Int = KeyNum._1): Unit = {
     dataset.hbaseBulkPutDS[T](tableName, keyNum)
   }
 
@@ -188,7 +189,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @param tableName
    * HBase表名
    */
-  def hbaseBulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], keyNum: Int = 1): Unit = {
+  def hbaseBulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], keyNum: Int = KeyNum._1): Unit = {
     dstream.hbaseBulkPutStream[T](tableName, keyNum)
   }
 
@@ -200,7 +201,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @param rowKeyRDD
    * 装有rowKey的rdd集合
    */
-  def hbaseBulkDeleteRDD(tableName: String, rowKeyRDD: RDD[String], keyNum: Int = 1): Unit = {
+  def hbaseBulkDeleteRDD(tableName: String, rowKeyRDD: RDD[String], keyNum: Int = KeyNum._1): Unit = {
     rowKeyRDD.hbaseBulkDeleteRDD(tableName, keyNum)
   }
 
@@ -211,7 +212,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @param tableName
    * HBase表名
    */
-  def hbaseBulkDeleteDS(tableName: String, dataSet: Dataset[String], keyNum: Int = 1): Unit = {
+  def hbaseBulkDeleteDS(tableName: String, dataSet: Dataset[String], keyNum: Int = KeyNum._1): Unit = {
     dataSet.hbaseBulkDeleteDS(tableName, keyNum)
   }
 
@@ -231,7 +232,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @return
    * 自定义JavaBean的对象结果集
    */
-  def hbaseBulkGetSeq[E <: HBaseBaseBean[E] : ClassTag](tableName: String, seq: Seq[String], clazz: Class[E], keyNum: Int = 1): RDD[E] = {
+  def hbaseBulkGetSeq[E <: HBaseBaseBean[E] : ClassTag](tableName: String, seq: Seq[String], clazz: Class[E], keyNum: Int = KeyNum._1): RDD[E] = {
     HBaseBulkConnector.bulkGetSeq[E](tableName, seq, clazz, keyNum)
   }
 
@@ -245,7 +246,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @return
    * 结果集
    */
-  def hbaseBulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], keyNum: Int = 1): RDD[E] = {
+  def hbaseBulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], keyNum: Int = KeyNum._1): RDD[E] = {
     rowKeyRDD.hbaseBulkGetRDD[E](tableName, clazz, keyNum)
   }
 
@@ -261,7 +262,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @return
    * 自定义JavaBean的对象结果集
    */
-  def hbaseBulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], keyNum: Int = 1): DataFrame = {
+  def hbaseBulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], keyNum: Int = KeyNum._1): DataFrame = {
     rowKeyRDD.hbaseBulkGetDF[E](tableName, clazz, keyNum)
   }
 
@@ -277,7 +278,7 @@ trait HBaseBulkProvider extends SparkProvider {
    * @return
    * 自定义JavaBean的对象结果集
    */
-  def hbaseBulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], keyNum: Int = 1): Dataset[E] = {
+  def hbaseBulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rowKeyRDD: RDD[String], clazz: Class[E], keyNum: Int = KeyNum._1): Dataset[E] = {
     rowKeyRDD.hbaseBulkGetDS[E](tableName, clazz, keyNum)
   }
 }

@@ -217,13 +217,14 @@ case class InsertIntoHadoopFsRelationCommand(
   private def updatePartitionsMetadata(sparkSession: SparkSession,
                                        updatedPartitionPaths: Set[String]): Unit = {
     logInfo("Current partition table, will update partition information soon.")
+    val start = System.currentTimeMillis()
     val catalog = sparkSession.sessionState.catalog
     val identifier = catalogTable.get.identifier
 
     try {
       val partitions = updatedPartitionPaths.map(partitionPath => Try {
         val partitionSpec = partitionPath.split("/").map(_.split("="))
-          .filter(_.length == 2).map {case Array(a, b) => (a, b)}.toMap
+          .filter(_.length == 2).map { case Array(a, b) => (a, b) }.toMap
 
         catalog.getPartition(identifier, partitionSpec)
       })
@@ -231,8 +232,9 @@ case class InsertIntoHadoopFsRelationCommand(
       val newPartitions = partitions.filter(_.isSuccess).map(_.get)
         .zipWithIndex.flatMap { case (p, _) =>
         // Statistical partition file size
-        val newSize = CommandUtils.calculateSingleLocationSize(
-          sparkSession.sessionState, identifier, Some(p.location))
+        val newSize = if (p.stats.isDefined) {
+          p.stats.get.sizeInBytes + 1
+        } else BigInt(1)
 
         val rowCount = if (p.stats.isDefined && p.stats.get.rowCount.isDefined) {
           p.stats.get.rowCount.get
@@ -251,7 +253,8 @@ case class InsertIntoHadoopFsRelationCommand(
 
       // update metastore partition metadata
       catalog.alterPartitions(identifier, newPartitions.toSeq)
-      logInfo(s"All partition information updates have been completed")
+      val elapse = System.currentTimeMillis() - start
+      logInfo(s"All partition information updates have been completed. elapse: ${elapse}ms.")
     } catch {
       case e: Throwable => logError(
         "Partition table metadata information update failed.", e)

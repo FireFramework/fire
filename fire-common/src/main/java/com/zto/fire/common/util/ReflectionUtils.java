@@ -204,6 +204,25 @@ public class ReflectionUtils {
     }
 
     /**
+     * 获取指定方法签名的方法
+     */
+    public static Method getMethodByParameter(Class<?> clazz, String methodName, Class<?>... parameterTypes) throws NoSuchMethodException {
+        Method method;
+        try {
+            method = clazz.getMethod(methodName, parameterTypes);
+        } catch (NoSuchMethodException e) {
+            try {
+                method = clazz.getDeclaredMethod(methodName, parameterTypes);
+                method.setAccessible(true);
+            } catch (NoSuchMethodException e1) {
+                logger.error("反射获取方法{}失败，方法不存在，请检查！", methodName);
+                throw e1;
+            }
+        }
+        return method;
+    }
+
+    /**
      * 获取指定field的类型
      */
     public static Class<?> getFieldType(Class<?> clazz, String fieldName) {
@@ -425,5 +444,19 @@ public class ReflectionUtils {
      */
     public static String getClassInJar(Class clazz) {
         return clazz.getProtectionDomain().getCodeSource().getLocation().getFile();
+    }
+
+    /**
+     * 用于判断给定的类是否存在
+     * @param className
+     * 类的包名+类名
+     */
+    public static boolean existsClass(String className) {
+        try {
+            Class.forName(className);
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
     }
 }

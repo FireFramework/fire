@@ -113,6 +113,11 @@ public @interface Jdbc {
     int logSqlLength() default -1;
 
     /**
+     * 连接超时检测时间
+     */
+    int connectionTimeout() default 60;
+
+    /**
      * c3p0参数，以key=value形式注明
      */
     String[] config() default "";

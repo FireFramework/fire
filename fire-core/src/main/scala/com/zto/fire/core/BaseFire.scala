@@ -61,6 +61,7 @@ trait BaseFire extends Logging {
   protected[fire] lazy val driverClass: JString = this.getClass.getSimpleName.replace("$", "")
   // 默认的任务名称为类名
   protected[fire] var appName: JString = this.driverClass
+  protected var parameter: ParameterTool = _
   // 配置信息
   protected lazy val conf, $ = PropUtils
   this.boot()
@@ -132,6 +133,7 @@ trait BaseFire extends Logging {
    * @param args main方法参数
    */
   def init(conf: Any = null, args: Array[String] = null): Unit = {
+    this.parseParameter(args)
     this.before(args)
     FireUtils._jobType = this.jobType
     this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成用户资源初始化，任务类型：${this.jobType.getJobTypeDesc} <--- ${FirePS1Conf.DEFAULT}")
@@ -187,7 +189,10 @@ trait BaseFire extends Logging {
       SchedulerManager.shutdown(stopGracefully)
       this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成fire资源回收 <---${FirePS1Conf.DEFAULT}")
       this.logger.info(s"总耗时：${FirePS1Conf.RED}${elapsed(launchTime)}${FirePS1Conf.DEFAULT} The end...${FirePS1Conf.DEFAULT}")
-      if (FireFrameworkConf.shutdownExit) System.exit(0)
+      if (FireFrameworkConf.shutdownExit) {
+        val exitStatus = if (FireUtils.isStreamingJob) -1 else 0
+        System.exit(exitStatus)
+      }
     }
   }
 
@@ -202,10 +207,13 @@ trait BaseFire extends Logging {
   final protected def destory: Unit = {}
 
   /**
-   * 初始化引擎上下文，如SparkSession、StreamExecutionEnvironment等
-   * 可根据实际情况，将配置参数放到同名的配置文件中进行差异化的初始化
+   * 解析命令行选型
    */
-  def main(args: Array[String]): Unit = {
-    this.init(null, args)
+  protected[fire] def parseParameter(args: Array[String]): Unit = {
+    try {
+      if (args != null && args.nonEmpty) this.parameter = ParameterTool.fromArgs(args)
+    } catch {
+      case _: Throwable => this.logger.warn("ParameterTool 解析main方法参数失败，请注意参数的key必须以-或--开头")
+    }
   }
 }

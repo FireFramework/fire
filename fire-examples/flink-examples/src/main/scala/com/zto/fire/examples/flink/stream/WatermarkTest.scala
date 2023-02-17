@@ -57,6 +57,8 @@ import java.text.SimpleDateFormat
 object WatermarkTest extends FlinkStreaming {
 
   override def process: Unit = {
+    // 每隔1秒生成一次水位线
+    this.fire.getConfig.setAutoWatermarkInterval(1000)
     // source端接入消息并解析
     val dstream = this.fire.createKafkaDirectStream().filter(str => StringUtils.isNotBlank(str) && str.contains("}")).map(str => {
       val student = JSONUtils.parseObject[Student](str)

@@ -65,43 +65,43 @@ private[fire] object FireKafkaConf {
   private[fire] lazy val kafkaMap = PropUtils.sliceKeys(clusterMapConfStart)
 
   // kafka消费起始位点
-  def kafkaStartingOffset(keyNum: Int = 1): String = PropUtils.getString(this.KAFKA_STARTING_OFFSET, "", keyNum)
+  def kafkaStartingOffset(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.KAFKA_STARTING_OFFSET, "", keyNum)
 
   // kafka消费结束位点
-  def kafkaEndingOffsets(keyNum: Int = 1): String = PropUtils.getString(this.KAFKA_ENDING_OFFSET, "", keyNum)
+  def kafkaEndingOffsets(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.KAFKA_ENDING_OFFSET, "", keyNum)
 
   // 丢失数据时是否失败
-  def kafkaFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.KAFKA_FAIL_ON_DATA_LOSS, true, keyNum)
+  def kafkaFailOnDataLoss(keyNum: Int = KeyNum._1): Boolean = PropUtils.getBoolean(this.KAFKA_FAIL_ON_DATA_LOSS, true, keyNum)
 
   // enable.auto.commit
-  def kafkaEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.KAFKA_ENABLE_AUTO_COMMIT, false, keyNum)
+  def kafkaEnableAutoCommit(keyNum: Int = KeyNum._1): Boolean = PropUtils.getBoolean(this.KAFKA_ENABLE_AUTO_COMMIT, false, keyNum)
 
   // 获取topic列表
-  def kafkaTopics(keyNum: Int = 1): String = PropUtils.getString(this.KAFKA_TOPICS, "", keyNum)
+  def kafkaTopics(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.KAFKA_TOPICS, "", keyNum)
 
   // kafka session超时时间，默认5分钟
-  def kafkaSessionTimeOut(keyNum: Int = 1): java.lang.Integer = PropUtils.getInt(this.KAFKA_SESSION_TIMEOUT_MS, 300000, keyNum)
+  def kafkaSessionTimeOut(keyNum: Int = KeyNum._1): java.lang.Integer = PropUtils.getInt(this.KAFKA_SESSION_TIMEOUT_MS, 300000, keyNum)
 
   // kafka request超时时间，默认10分钟
-  def kafkaPollInterval(keyNum: Int = 1): java.lang.Integer = PropUtils.getInt(this.KAFKA_MAX_POLL_INTERVAL_MS, 600000, keyNum)
+  def kafkaPollInterval(keyNum: Int = KeyNum._1): java.lang.Integer = PropUtils.getInt(this.KAFKA_MAX_POLL_INTERVAL_MS, 600000, keyNum)
 
   // kafka request超时时间
-  def kafkaRequestTimeOut(keyNum: Int = 1): java.lang.Integer = PropUtils.getInt(this.KAFKA_REQUEST_TIMEOUT_MS, 400000, keyNum)
+  def kafkaRequestTimeOut(keyNum: Int = KeyNum._1): java.lang.Integer = PropUtils.getInt(this.KAFKA_REQUEST_TIMEOUT_MS, 400000, keyNum)
 
   // 配置文件中的groupId
-  def kafkaGroupId(keyNum: Int = 1): String = PropUtils.getString(this.KAFKA_GROUP_ID, "", keyNum)
+  def kafkaGroupId(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.KAFKA_GROUP_ID, "", keyNum)
 
   // 是否在checkpoint时记录offset值
-  def kafkaCommitOnCheckpoint(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.KAFKA_COMMIT_OFFSETS_ON_CHECKPOINTS, true, keyNum)
+  def kafkaCommitOnCheckpoint(keyNum: Int = KeyNum._1): Boolean = PropUtils.getBoolean(this.KAFKA_COMMIT_OFFSETS_ON_CHECKPOINTS, true, keyNum)
 
   // 设置从指定时间戳位置开始消费kafka
-  def kafkaStartFromTimeStamp(keyNum: Int = 1): java.lang.Long = PropUtils.getLong(this.KAFKA_START_FROM_TIMESTAMP, 0L, keyNum)
+  def kafkaStartFromTimeStamp(keyNum: Int = KeyNum._1): java.lang.Long = PropUtils.getLong(this.KAFKA_START_FROM_TIMESTAMP, 0L, keyNum)
 
   // 从topic中指定的group上次消费的位置开始消费，必须配置group.id参数
-  def kafkaStartFromGroupOffsets(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.KAFKA_START_FROM_GROUP_OFFSETS, false, keyNum)
+  def kafkaStartFromGroupOffsets(keyNum: Int = KeyNum._1): Boolean = PropUtils.getBoolean(this.KAFKA_START_FROM_GROUP_OFFSETS, false, keyNum)
 
   // kafka-client配置信息
-  def kafkaConfMap(keyNum: Int = 1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(kafkaConfStart, keyNum)
+  def kafkaConfMap(keyNum: Int = KeyNum._1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(kafkaConfStart, keyNum)
 
   // 是否使状态中存放的offset不生效
   def kafkaForceOverwriteStateOffset: Boolean = PropUtils.getBoolean(this.KAFKA_OVERWRITE_STATE_OFFSET, false)
@@ -110,7 +110,7 @@ private[fire] object FireKafkaConf {
   // 周期性提交offset的时间间隔（ms）
   def kafkaForceCommitInterval: Long = PropUtils.getLong(this.KAFKA_FORCE_AUTO_COMMIT_INTERVAL, 30000)
 
-  def kafkaConfMapWithType(keyNum: Int = 1): collection.immutable.Map[String, Object] = {
+  def kafkaConfMapWithType(keyNum: Int = KeyNum._1): collection.immutable.Map[String, Object] = {
     val map = new collection.mutable.HashMap[String, Object]()
     this.kafkaConfMap(keyNum).foreach(kv => {
       map.put(kv._1, StringsUtils.parseString(kv._2))
@@ -121,7 +121,7 @@ private[fire] object FireKafkaConf {
   /**
    * 根据名称获取kafka broker地址
    */
-  def kafkaBrokers(keyNum: Int = 1): String = {
+  def kafkaBrokers(keyNum: Int = KeyNum._1): String = {
     val brokerName = PropUtils.getString(this.KAFKA_BROKERS_NAME, "", keyNum)
     this.kafkaBrokers(brokerName)
   }

@@ -14,4 +14,3 @@
 # limitations under the License.
 
 org.apache.flink.connector.clickhouse.ClickHouseDynamicTableFactory
-org.apache.flink.connector.clickhouse.catalog.ClickHouseCatalogFactory

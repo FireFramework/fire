@@ -17,7 +17,7 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-# Kafka 数据源
+# Kafka source数据源
 
 ### 一、API使用
 
@@ -243,4 +243,48 @@ String[] config() default "";
 | kafka.force.overwrite.stateOffset.enable | flink | 是否使状态中存放的offset不生效（请谨慎配置，用于kafka集群迁移等不正常状况的运维） |
 | kafka.force.autoCommit.enable            | flink | 是否在开启checkpoint的情况下强制开启周期性offset提交         |
 | kafka.force.autoCommit.Interval          | Flink | 周期性提交offset的时间间隔（ms）                             |
+
+# Kafka Sink API
+
+## 一、Spark
+
+```scala
+@Streaming(interval = 10)
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Kafka2(brokers = "bigdata_test", topics = "fire2")
+object KafkaSinkTest extends SparkStreaming {
+
+  override def process: Unit = {
+    // 从@Kafka注解配置的kafa消费数据：topic is fire
+    val dstream = this.fire.createKafkaDirectStream()
+
+    // 将数据写到@Kafka2注解配置的kafka中：topic is fire2
+    dstream.foreachRDD(rdd => {
+      rdd.sinkKafka(keyNum = 2)
+    })
+  }
+}
+```
+
+
+
+## 二、Flink
+
+```scala
+@Streaming(30)
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Kafka2(brokers = "bigdata_test", topics = "fire2")
+object KafkaSinkTest extends FlinkStreaming {
+
+  @Process
+  def kafkaSource: Unit = {
+    // 1. @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")消费数据
+    val dstream = this.fire.createKafkaDirectStream()
+
+    // 2. keyNum=2对应注解@Kafka2(brokers = "bigdata_test", topics = "fire2")
+    // 也就是将数据发送到bigdata_test对应的kafka，topic是fire2
+    dstream.sinkKafka(keyNum = 2)
+  }
+}
+```
 

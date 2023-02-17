@@ -74,7 +74,7 @@ object PropUtils extends Logging {
   /**
    * 获取配置信息
    */
-  def apply(key: String, keyNum: Int = 1): String = this.getString(key, "", keyNum = keyNum)
+  def apply(key: String, keyNum: Int = KeyNum._1): String = this.getString(key, "", keyNum = keyNum)
 
   /**
    * 获取完整的配置文件名称
@@ -309,7 +309,7 @@ object PropUtils extends Logging {
    * @return
    * 对应的配置信息
    */
-  def getString(key: String, default: String, keyNum: Int = 1): String = {
+  def getString(key: String, default: String, keyNum: Int = KeyNum._1): String = {
     if (keyNum <= 1) {
       var value = this.getProperty(key)
       if (StringUtils.isBlank(value)) {
@@ -329,7 +329,7 @@ object PropUtils extends Logging {
    * @return
    * 对应的配置信息
    */
-  def getInt(key: String, default: Int, keyNum: Int = 1): Int = {
+  def getInt(key: String, default: Int, keyNum: Int = KeyNum._1): Int = {
     val value = this.getString(key, default + "", keyNum)
     if (StringUtils.isNotBlank(value)) value.toInt else default
   }
@@ -343,21 +343,21 @@ object PropUtils extends Logging {
    * @return
    * 对应的配置信息
    */
-  def getLong(key: String, default: Long, keyNum: Int = 1): Long = {
+  def getLong(key: String, default: Long, keyNum: Int = KeyNum._1): Long = {
     this.get[Long](key, Some(default), keyNum)
   }
 
   /**
    * 获取float型数据
    */
-  def getFloat(key: String, default: Float, keyNum: Int = 1): Float = {
+  def getFloat(key: String, default: Float, keyNum: Int = KeyNum._1): Float = {
     this.get[Float](key, Some(default), keyNum)
   }
 
   /**
    * 获取Double型数据
    */
-  def getDouble(key: String, default: Double, keyNum: Int = 1): Double = {
+  def getDouble(key: String, default: Double, keyNum: Int = KeyNum._1): Double = {
     this.get[Double](key, Some(default), keyNum)
   }
 
@@ -370,7 +370,7 @@ object PropUtils extends Logging {
    * @return
    * 对应的配置信息
    */
-  def getBoolean(key: String, default: Boolean, keyNum: Int = 1): Boolean = {
+  def getBoolean(key: String, default: Boolean, keyNum: Int = KeyNum._1): Boolean = {
     this.get[Boolean](key, Some(default), keyNum)
   }
 
@@ -389,7 +389,7 @@ object PropUtils extends Logging {
    * 返回配置的类型
    * @return
    */
-  def get[T: ClassTag](key: String, default: Option[T] = Option.empty, keyNum: Int = 1): T = {
+  def get[T: ClassTag](key: String, default: Option[T] = Option.empty, keyNum: Int = KeyNum._1): T = {
     val value = this.getString(key, if (default.isDefined) default.get.toString else "", keyNum = keyNum)
     val paramType = getParamType[T]
     val property = tryWithReturn {
@@ -465,13 +465,14 @@ object PropUtils extends Logging {
   /**
    * 打印配置文件中的kv
    */
-  def show(): Unit = {
+  def show(loggerStyle: Boolean = true): Unit = {
     if (!FireFrameworkConf.fireConfShow) return
     LogUtils.logStyle(this.logger, "Fire configuration.")(logger => {
       this.adaptiveSettingsMap.foreach(key => {
         // 如果包含配置黑名单，则不打印
         if (key != null && !FireFrameworkConf.fireConfBlackList.exists(conf => key.toString.contains(conf))) {
-          logger.info(s">>${FirePS1Conf.PINK} ${key._1} --> ${key._2} ${FirePS1Conf.DEFAULT}")
+          val conf = s"${FirePS1Conf.PINK} ${key._1} = ${key._2} ${FirePS1Conf.DEFAULT}"
+          if (loggerStyle) logger.info(s">> $conf") else println(conf)
         }
       })
     })
@@ -535,7 +536,7 @@ object PropUtils extends Logging {
   /**
    * 根据keyNum选择对应的kafka配置
    */
-  def sliceKeysByNum(keyStart: String, keyNum: Int = 1): collection.immutable.Map[String, String] = {
+  def sliceKeysByNum(keyStart: String, keyNum: Int = KeyNum._1): collection.immutable.Map[String, String] = {
     // 用于匹配以指定keyNum结尾的key
     val reg = "\\D" + keyNum + "$"
     val map = new mutable.HashMap[String, String]()

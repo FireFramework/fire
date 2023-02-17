@@ -114,49 +114,39 @@ def testJdbcUpdate: Unit = {
 #### [2.2 flink任务](../fire-examples/flink-examples/src/main/scala/com/zto/fire/examples/flink/stream/JdbcTest.scala)
 
 ```scala
-/**
-   * table的jdbc sink
-   */
-def testTableJdbcSink(stream: DataStream[Student]): Unit = {
-    stream.createOrReplaceTempView("student")
-    val table = this.fire.sqlQuery("select name, age, createTime, length, sex from student group by name, age, createTime, length, sex")
+@Streaming(30)
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
+object JdbcSinkTest extends FlinkStreaming {
 
-    // 方式一、table中的列顺序和类型需与jdbc sql中的占位符顺序保持一致
-    table.jdbcBatchUpdate(sql(this.tableName)).setParallelism(1)
-    // 或者
-    this.fire.jdbcBatchUpdateTable(table, sql(this.tableName), keyNum = 6).setParallelism(1)
+  @Process
+  def kafkaSource: Unit = {
+    // 执行单个查询，结果集直接封装到Student类的对象中，该api自动从指定的keyNum获取对应的数据源信息
+    val students = this.fire.jdbcQueryList[Student]("select * from spark_test where age>?", Seq(1))
+    println("总计：" + students.length)
 
-    // 方式二、自定义row取数规则，适用于row中的列个数和顺序与sql占位符不一致的情况
-    table.jdbcBatchUpdate2(sql(this.tableName), flushInterval = 10000, keyNum = 7)(row => {
-        Seq(row.getField(0), row.getField(1), row.getField(2), row.getField(3), row.getField(4))
-    })
-    // 或者
-    this.flink.jdbcBatchUpdateTable2(table, sql(this.tableName), keyNum = 8)(row => {
-        Seq(row.getField(0), row.getField(1), row.getField(2), row.getField(3), row.getField(4))
-    }).setParallelism(1)
-}
+    // 执行update、delete、insert、replace、merge等语句
+    this.fire.jdbcUpdate("delete from spark_test where age>?", Seq(10), keyNum = 1)
 
-/**
-   * stream jdbc sink
-   */
-def testStreamJdbcSink(stream: DataStream[Student]): Unit = {
-    // 方式一、指定字段列表，内部根据反射，自动获取DataStream中的数据并填充到sql中的占位符
-    // 此处fields有两层含义：1. sql中的字段顺序（对应表） 2. DataStream中的JavaBean字段数据（对应JavaBean）
-    // 注：要保证DataStream中字段名称是JavaBean的名称，非表中字段名称 顺序要与占位符顺序一致，个数也要一致
-    stream.jdbcBatchUpdate(sql(this.tableName2), fields).setParallelism(3)
-    // 或者
-    this.fire.jdbcBatchUpdateStream(stream, sql(this.tableName2), fields, keyNum = 6).setParallelism(1)
+    val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t))
+    val sql =
+      s"""
+         |insert into spark_test(name, age, createTime) values(?, ?, '${DateFormatUtils.formatCurrentDateTime()}')
+         |ON DUPLICATE KEY UPDATE age=18
+         |""".stripMargin
+    // 1. 将数据实时写入到@Jdbc指定的数据源，无需指定driverclass
+    // 2. sinkJdbc只需指定sql语句即可，fire会自动推断sql中占位符与JavaBean中成员变量的对应关系，并自动设置到PreparedStatement中
+    // 3. 支持update、delete、replace、merge、insert等语句
+    // 4. 支持自动将下划线命名的字段与JavaBean中驼峰式命名的成员变量自动映射
+    // 5. 如果是将数据写入其他数据源，可通过keyNum=xxx指定：
+    //    dstream.sinkJdbc(sql, keyNum=3)表示将数据写入@Jdbc3所配置的数据源中
+    dstream.sinkJdbc(sql)
 
-    // 方式二、通过用户指定的匿名函数方式进行数据的组装，适用于上面方法无法反射获取值的情况，适用面更广
-    stream.jdbcBatchUpdate2(sql(this.tableName2), 3, 30000, keyNum = 7) {
-        // 在此处指定取数逻辑，定义如何将dstream中每列数据映射到sql中的占位符
-        value => Seq(value.getName, value.getAge, DateFormatUtils.formatCurrentDateTime(), value.getLength, value.getSex)
-    }.setParallelism(1)
-
-    // 或者
-    this.flink.jdbcBatchUpdateStream2(stream, sql(this.tableName2), keyNum = 8) {
-        value => Seq(value.getName, value.getAge, DateFormatUtils.formatCurrentDateTime(), value.getLength, value.getSex)
-    }.setParallelism(2)
+    // sinkJdbcExactlyOnce支持仅一次的语义，默认支持mysql，如果是Oracle或PostgreSQL，可通过参数指定：
+    // dstream.sinkJdbcExactlyOnce(sql, dbType = Datasource.ORACLE, keyNum=2)
+    // * Flink1.12不支持该API
+    dstream.sinkJdbcExactlyOnce(sql, keyNum = 2)
+  }
 }
 ```
 

@@ -58,9 +58,9 @@ class JdbcConnectorTest extends SparkCore with SparkTester {
   override def before: Unit = {
     super.before
     this.jdbc = JdbcConnector()
-    this.jdbc.executeUpdate(this.createTable)
+    this.jdbc.update(this.createTable)
     this.jdbc3 = JdbcConnector(keyNum = 3)
-    this.jdbc3.executeUpdate(this.createTable)
+    this.jdbc3.update(this.createTable)
   }
 
   /**
@@ -76,19 +76,19 @@ class JdbcConnectorTest extends SparkCore with SparkTester {
     this.jdbc3.executeUpdate(deleteSql, Seq(studentName))
 
     val selectSql = s"select * from $tableName where name=?"
-    val studentList1 = this.jdbc.executeQueryList(selectSql, Seq(studentName), classOf[Student])
-    val studentList3 = this.jdbc3.executeQueryList(selectSql, Seq(studentName), classOf[Student])
+    val studentList1 = this.jdbc.executeQueryList[Student](selectSql, Seq(studentName))
+    val studentList3 = this.jdbc3.executeQueryList[Student](selectSql, Seq(studentName))
     assertEquals(studentList1.size, 0)
     studentList1.foreach(println)
     assertEquals(studentList3.size, 0)
     studentList3.foreach(println)
 
     val insertSql = s"insert into $tableName(name, age, length) values(?, ?, ?)"
-    this.jdbc.executeUpdate(insertSql, Seq(studentName, 10, 10.3))
-    this.jdbc3.executeUpdate(insertSql, Seq(studentName, 10, 10.3))
+    this.jdbc.update(insertSql, Seq(studentName, 10, 10.3))
+    this.jdbc3.update(insertSql, Seq(studentName, 10, 10.3))
 
-    val studentList11 = this.jdbc.executeQueryList(selectSql, Seq(studentName), classOf[Student])
-    val studentList33 = this.jdbc3.executeQueryList(selectSql, Seq(studentName), classOf[Student])
+    val studentList11 = this.jdbc.queryList[Student](selectSql, Seq(studentName))
+    val studentList33 = this.jdbc3.queryList[Student](selectSql, Seq(studentName))
     assertEquals(studentList11.size, 1)
     studentList11.foreach(println)
     assertEquals(studentList33.size, 1)
@@ -97,7 +97,7 @@ class JdbcConnectorTest extends SparkCore with SparkTester {
 
   @After
   override def after: Unit = {
-    this.jdbc.executeUpdate(s"drop table $tableName")
-    this.jdbc3.executeUpdate(s"drop table $tableName")
+    this.jdbc.update(s"drop table $tableName")
+    this.jdbc3.update(s"drop table $tableName")
   }
 }

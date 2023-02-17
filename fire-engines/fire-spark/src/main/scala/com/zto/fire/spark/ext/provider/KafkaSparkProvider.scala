@@ -17,7 +17,7 @@
 
 package com.zto.fire.spark.ext.provider
 
-import com.zto.fire.common.conf.FireKafkaConf
+import com.zto.fire.common.conf.{FireKafkaConf, KeyNum}
 import com.zto.fire.common.util.{KafkaUtils, LogUtils}
 import com.zto.fire.spark.util.SparkUtils
 import com.zto.fire.{requireNonEmpty, retry, _}
@@ -47,7 +47,7 @@ trait KafkaSparkProvider extends SparkProvider {
    * @return
    * 转换成json字符串后的Dataset
    */
-  def loadKafka(extraOptions: Map[String, String] = null, keyNum: Int = 1): Dataset[(String, String)] = {
+  def loadKafka(extraOptions: Map[String, String] = null, keyNum: Int = KeyNum._1): Dataset[(String, String)] = {
     val extraOptionsMap = new scala.collection.mutable.HashMap[String, String]
     if (extraOptions != null && extraOptions.nonEmpty) extraOptionsMap ++= extraOptions
 
@@ -97,7 +97,7 @@ trait KafkaSparkProvider extends SparkProvider {
                      extraOptions: Map[String, String] = null,
                      parseAll: Boolean = false,
                      isMySQL: Boolean = true,
-                     fieldNameUpper: Boolean = false, keyNum: Int = 1): DataFrame = {
+                     fieldNameUpper: Boolean = false, keyNum: Int = KeyNum._1): DataFrame = {
     val kafkaDataset = this.loadKafka(extraOptions, keyNum)
     val schemaDataset = kafkaDataset.select(from_json($"value", SparkUtils.buildSchema2Kafka(schemaClass, parseAll, isMySQL, fieldNameUpper)).as("data"))
     if (parseAll)
@@ -118,7 +118,7 @@ trait KafkaSparkProvider extends SparkProvider {
    */
   def loadKafkaParseJson(tableName: String = "kafka",
                          extraOptions: Map[String, String] = null,
-                         keyNum: Int = 1): DataFrame = {
+                         keyNum: Int = KeyNum._1): DataFrame = {
     val msg = retry(5, 1000) {
       KafkaUtils.getMsg(FireKafkaConf.kafkaBrokers(keyNum), FireKafkaConf.kafkaTopics(keyNum), null)
     }

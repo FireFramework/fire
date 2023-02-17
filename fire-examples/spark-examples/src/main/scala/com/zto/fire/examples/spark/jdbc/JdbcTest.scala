@@ -57,14 +57,14 @@ object JdbcTest extends SparkCore {
     // 执行批量操作
     val batchSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
 
-    this.fire.jdbcBatchUpdate(batchSql, Seq(Seq("spark1", 21, timestamp, 100.123, 1),
+    this.fire.jdbcUpdateBatch(batchSql, Seq(Seq("spark1", 21, timestamp, 100.123, 1),
       Seq("flink2", 22, timestamp, 12.236, 0),
       Seq("flink3", 22, timestamp, 12.236, 0),
       Seq("flink4", 22, timestamp, 12.236, 0),
       Seq("flink5", 27, timestamp, 17.236, 0)))
 
     // 执行批量更新
-    this.fire.jdbcBatchUpdate(s"update $tableName set sex=? where id=?", Seq(Seq(1, 1), Seq(2, 2), Seq(3, 3), Seq(4, 4), Seq(5, 5), Seq(6, 6)))
+    this.fire.jdbcUpdateBatch(s"update $tableName set sex=? where id=?", Seq(Seq(1, 1), Seq(2, 2), Seq(3, 3), Seq(4, 4), Seq(5, 5), Seq(6, 6)))
 
     // 方式一：通过this.fire方式执行delete操作
     val sql = s"DELETE FROM $tableName WHERE id=?"
@@ -95,7 +95,7 @@ object JdbcTest extends SparkCore {
     })
 
     // 将查询结果集以List[JavaBean]方式返回
-    val list = this.fire.jdbcQueryList(sql, Seq(1, 2, 3), classOf[Student])
+    val list = this.fire.jdbcQueryList[Student](sql, Seq(1, 2, 3))
     // 方式二：使用JdbcConnector
     list.foreach(x => println(JSONUtils.toJSONString(x)))
 
@@ -141,14 +141,15 @@ object JdbcTest extends SparkCore {
 
     val insertSql = s"INSERT INTO spark_test(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
     // 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序，batch用于指定批次大小，默认取spark.db.jdbc.batch.size配置的值
-    df.jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
+    // 可通过db.jdbc.batch.size=100配置每次commit的记录数，控制一次写入多少条。如果要区分数据源，在db.jdbc.batch.size后面加上对应keyNum的数字后缀
+    df.jdbcUpdateBatch(insertSql, Seq("name", "age", "createTime", "length", "sex"))
     this.fire.jdbcTableLoadAll(this.tableName).show(100, false)
 
 
     df.createOrReplaceTempViewCache("student")
     val sqlDF = sql("select name, age, createTime from student where id>=1").repartition(1)
     // 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
-    sqlDF.jdbcBatchUpdate("insert into spark_test(name, age, createTime) values(?, ?, ?)", keyNum = 2)
+    sqlDF.jdbcUpdateBatch("insert into spark_test(name, age, createTime) values(?, ?, ?)", keyNum = 2)
     this.fire.jdbcTableLoadAll(this.tableName, keyNum = 2).show(100, false)
     // 等同以上方式
     // this.fire.jdbcBatchUpdateDF(sqlDF, "insert into spark_test(name, age, createTime) values(?, ?, ?)")
@@ -158,16 +159,16 @@ object JdbcTest extends SparkCore {
    * 在executor中执行jdbc操作
    */
   def testExecutor: Unit = {
-    JdbcConnector.executeQuery(s"select id from $tableName limit 1", null, callback = _ => {
+    JdbcConnector.query(s"select id from $tableName limit 1", null, callback = _ => {
       Thread.sleep(1000)
     })
-    JdbcConnector.executeQuery(s"select id from $tableName limit 1", null, callback = _ => {
+    JdbcConnector.query(s"select id from $tableName limit 1", null, callback = _ => {
     }, keyNum = 2)
     this.logger.info("driver sql执行成功")
     val rdd = this.fire.createRDD(1 to 3, 3)
     rdd.foreachPartition(it => {
       it.foreach(i => {
-        JdbcConnector.executeQuery(s"select id from $tableName limit 1", null, callback = _ => {
+        JdbcConnector.query(s"select id from $tableName limit 1", null, callback = _ => {
         })
       })
       this.logger.info("sql执行成功")
@@ -177,7 +178,7 @@ object JdbcTest extends SparkCore {
     val rdd2 = this.fire.createRDD(1 to 3, 3)
     rdd2.foreachPartition(it => {
       it.foreach(i => {
-        JdbcConnector.executeQuery(s"select id from $tableName limit 1", null, callback = _ => {
+        JdbcConnector.query(s"select id from $tableName limit 1", null, callback = _ => {
           this.logConf
           1
         }, keyNum = 2)

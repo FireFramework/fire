@@ -35,11 +35,10 @@ import com.zto.fire.spark.anno.Streaming
     |# 直接从配置文件中拷贝过来即可
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
-    |fire.shutdown.auto.exit=true
     |""")
 @Hive("test")
-@Streaming(20) // spark streaming的批次时间
-@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Streaming(100) // spark streaming的批次时间
+@Kafka(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object AtLeastOnceTest extends SparkStreaming {
 

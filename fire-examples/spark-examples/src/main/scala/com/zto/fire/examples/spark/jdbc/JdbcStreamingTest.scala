@@ -44,7 +44,7 @@ object JdbcStreamingTest extends SparkStreaming {
     dstream.repartition(5).foreachRDD(rdd => {
       rdd.foreachPartition(it => {
         val sql = s"select id from $tableName limit 1"
-        val retVal = JdbcConnector.executeQuery(sql, callback = _ => 1)
+        val retVal = JdbcConnector.query(sql, callback = _ => 1)
         logInfo("查询结果：" + retVal)
       })
     })

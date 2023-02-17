@@ -310,9 +310,7 @@ protected[fire] class StateCleanerUtils extends Logging {
 	/**
 	 * 定期清理过期的savepoint文件
 	 */
-	protected def deleteSavepoint(): Unit
-
-	= {
+	protected def deleteSavepoint(): Unit = {
 		if (!this.deleteSavepointEnabled) return
 		var fs: FileSystem = null
 		var count = 0
@@ -349,9 +347,7 @@ protected[fire] class StateCleanerUtils extends Logging {
 	/**
 	 * 定期清理过期的complete job文件
 	 */
-	protected def deleteCompleteJobs(): Unit
-
-	= {
+	protected def deleteCompleteJobs(): Unit = {
 		if (!this.deleteCompleteJobEnable) return
 		var fs: FileSystem = null
 		var count = 0

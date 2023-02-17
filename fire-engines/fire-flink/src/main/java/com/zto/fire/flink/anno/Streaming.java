@@ -39,7 +39,7 @@ public @interface Streaming {
     /**
      * checkpoint周期（s）
      */
-    int value() default 60;
+    int value() default -1;
 
     /**
      * checkpoint周期（s），同value
@@ -100,4 +100,9 @@ public @interface Streaming {
      * 状态的TTL时间（day）
      */
     int stateTTL() default 31;
+
+    /**
+     * 是否使用statementSet
+     */
+    boolean useStatementSet() default true;
 }

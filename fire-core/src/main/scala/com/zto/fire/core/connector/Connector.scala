@@ -17,7 +17,7 @@
 
 package com.zto.fire.core.connector
 
-import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.common.conf.{FireFrameworkConf, KeyNum}
 
 import java.util.concurrent.ConcurrentHashMap
 import com.zto.fire.predef._
@@ -70,7 +70,7 @@ trait Connector extends Serializable {
  * @param keyNum
  * 对应的connector实例标识，不同的keyNum对应不同的集群连接实例
  */
-abstract class FireConnector(keyNum: Int = 1) extends Connector
+abstract class FireConnector(keyNum: Int = KeyNum._1) extends Connector
 
 /**
  * 用于根据指定的keyNum创建不同的connector实例
@@ -84,17 +84,17 @@ abstract class ConnectorFactory[T <: Connector] extends Serializable {
   /**
    * 约定创建connector子类实例的方法
    */
-  protected def create(conf: Any = null, keyNum: Int = 1): T
+  protected def create(conf: Any = null, keyNum: Int = KeyNum._1): T
 
   /**
    * 根据指定的keyNum返回单例的HBaseConnector实例
    */
-  def getInstance(keyNum: Int = 1): T = this.instanceMap.get(keyNum)
+  def getInstance(keyNum: Int = KeyNum._1): T = this.instanceMap.get(keyNum)
 
   /**
    * 创建指定集群标识的connector对象实例
    */
-  def apply(conf: Any = null, keyNum: Int = 1): T = {
+  def apply(conf: Any = null, keyNum: Int = KeyNum._1): T = this.synchronized {
     this.instanceMap.mergeGet(keyNum) {
       val instance: T = this.create(conf, keyNum)
       instance.open()

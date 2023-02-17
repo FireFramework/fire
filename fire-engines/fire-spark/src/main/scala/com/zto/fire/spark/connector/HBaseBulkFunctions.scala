@@ -17,6 +17,7 @@
 
 package com.zto.fire.spark.connector
 
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.spark.rdd.RDD
@@ -42,7 +43,7 @@ trait HBaseBulkFunctions {
    * @param tableName
    * HBase表名
    */
-  def bulkDeleteRDD(tableName: String, rdd: RDD[String], keyNum: Int = 1): Unit = {
+  def bulkDeleteRDD(tableName: String, rdd: RDD[String], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).bulkDeleteRDD(tableName, rdd)
   }
 
@@ -55,7 +56,7 @@ trait HBaseBulkFunctions {
    * @param tableName
    * HBase表名
    */
-  def bulkDeleteDS(tableName: String, dataset: Dataset[String], keyNum: Int = 1): Unit = {
+  def bulkDeleteDS(tableName: String, dataset: Dataset[String], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).bulkDeleteDS(tableName, dataset)
   }
 
@@ -68,7 +69,7 @@ trait HBaseBulkFunctions {
    * @param seq
    * 待删除的rowKey集合
    */
-  def bulkDeleteList(tableName: String, seq: Seq[String], keyNum: Int = 1): Unit = {
+  def bulkDeleteList(tableName: String, seq: Seq[String], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).bulkDeleteList(tableName, seq)
   }
 
@@ -86,7 +87,7 @@ trait HBaseBulkFunctions {
    * @return
    * 自定义JavaBean的对象结果集
    */
-  def bulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], keyNum: Int = 1): RDD[E] = {
+  def bulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], keyNum: Int = KeyNum._1): RDD[E] = {
     HBaseBulkConnector(keyNum = keyNum).bulkGetRDD[E](tableName, rdd, clazz)
   }
 
@@ -104,7 +105,7 @@ trait HBaseBulkFunctions {
    * @return
    * 自定义JavaBean的对象结果集
    */
-  def bulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], keyNum: Int = 1): DataFrame = {
+  def bulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], keyNum: Int = KeyNum._1): DataFrame = {
     HBaseBulkConnector(keyNum = keyNum).bulkGetDF[E](tableName, rdd, clazz)
   }
 
@@ -122,7 +123,7 @@ trait HBaseBulkFunctions {
    * @return
    * 自定义JavaBean的对象结果集
    */
-  def bulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], keyNum: Int = 1): Dataset[E] = {
+  def bulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E], keyNum: Int = KeyNum._1): Dataset[E] = {
     HBaseBulkConnector(keyNum = keyNum).bulkGetDS[E](tableName, rdd, clazz)
   }
 
@@ -142,7 +143,7 @@ trait HBaseBulkFunctions {
    * @return
    * 自定义JavaBean的对象结果集
    */
-  def bulkGetSeq[E <: HBaseBaseBean[E] : ClassTag](tableName: String, seq: Seq[String], clazz: Class[E], keyNum: Int = 1): RDD[E] = {
+  def bulkGetSeq[E <: HBaseBaseBean[E] : ClassTag](tableName: String, seq: Seq[String], clazz: Class[E], keyNum: Int = KeyNum._1): RDD[E] = {
     HBaseBulkConnector(keyNum = keyNum).bulkGetSeq[E](tableName, seq, clazz)
   }
 
@@ -158,7 +159,7 @@ trait HBaseBulkFunctions {
    * @tparam T
    * 数据类型为HBaseBaseBean的子类
    */
-  def bulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], keyNum: Int = 1): Unit = {
+  def bulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).bulkPutRDD[T](tableName, rdd)
   }
 
@@ -175,7 +176,7 @@ trait HBaseBulkFunctions {
    * @tparam T
    * 对象类型必须是HBaseBaseBean的子类
    */
-  def bulkPutSeq[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], keyNum: Int = 1): Unit = {
+  def bulkPutSeq[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).bulkPutSeq[T](tableName, seq)
   }
 
@@ -194,7 +195,7 @@ trait HBaseBulkFunctions {
    * @return
    * scan获取到的结果集，类型为RDD[T]
    */
-  def bulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = 1): RDD[T] = {
+  def bulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = KeyNum._1): RDD[T] = {
     HBaseBulkConnector(keyNum = keyNum).bulkScanRDD[T](tableName, clazz, scan)
   }
 
@@ -215,7 +216,7 @@ trait HBaseBulkFunctions {
    * @return
    * scan获取到的结果集，类型为RDD[T]
    */
-  def bulkScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = 1): RDD[T] = {
+  def bulkScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = KeyNum._1): RDD[T] = {
     HBaseBulkConnector(keyNum = keyNum).bulkScanRDD2[T](tableName, clazz, startRow, stopRow)
   }
 
@@ -231,7 +232,7 @@ trait HBaseBulkFunctions {
    * @tparam T
    * 数据类型为HBaseBaseBean的子类
    */
-  def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[T], keyNum: Int = 1): Unit = {
+  def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[T], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).bulkPutDF[T](tableName, dataFrame, clazz)
   }
 
@@ -247,7 +248,7 @@ trait HBaseBulkFunctions {
    * @tparam T
    * 数据类型为HBaseBaseBean的子类
    */
-  def bulkPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], keyNum: Int = 1): Unit = {
+  def bulkPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).bulkPutDS[T](tableName, dataset)
   }
 
@@ -262,7 +263,7 @@ trait HBaseBulkFunctions {
    * @tparam T
    * 对象类型必须是HBaseBaseBean的子类
    */
-  def bulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], keyNum: Int = 1): Unit = {
+  def bulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).bulkPutStream[T](tableName, dstream)
   }
 
@@ -276,7 +277,7 @@ trait HBaseBulkFunctions {
    * @tparam T
    * 数据类型
    */
-  def hadoopPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], keyNum: Int = 1): Unit = {
+  def hadoopPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).hadoopPut[T](tableName, rdd)
   }
 
@@ -288,7 +289,7 @@ trait HBaseBulkFunctions {
    * @param clazz
    * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[E], keyNum: Int = 1): Unit = {
+  def hadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[E], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).hadoopPutDF[E](tableName, dataFrame, clazz)
   }
 
@@ -300,7 +301,7 @@ trait HBaseBulkFunctions {
    * @param dataset
    * JavaBean类型，待插入到hbase的数据集
    */
-  def hadoopPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], keyNum: Int = 1): Unit = {
+  def hadoopPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).hadoopPutDS[E](tableName, dataset)
   }
 
@@ -316,7 +317,7 @@ trait HBaseBulkFunctions {
    * @tparam T
    * JavaBean类型
    */
-  def hadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String, keyNum: Int = 1): Unit = {
+  def hadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector(keyNum = keyNum).hadoopPutDFRow[T](tableName, df, buildRowKey)
   }
 }

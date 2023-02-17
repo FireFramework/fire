@@ -37,12 +37,15 @@ object RocketTest extends SparkStreaming {
   override def process: Unit = {
     // 读取RocketMQ消息流
     val dStream = this.fire.createRocketMqPullStream()
-    this.fire.createRocketMqPullStream(keyNum = 2).print()
+    this.fire.createRocketMqPullStream(keyNum = 2).map(t => new String(t.getBody)).print()
+
     dStream.foreachRDDAtLeastOnce(rdd => {
       val studentRDD = rdd.map(message => new String(message.getBody)).map(t => JSONUtils.parseObject[Student](t)).repartition(2)
       val insertSql = s"INSERT INTO spark_test2(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
       println("rocket.brokers.name=>" + this.conf.getString("rocket.brokers.name"))
-      studentRDD.toDF().jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
+
+      // 可通过db.jdbc.batch.size2=100配置每次commit的记录数，控制一次写入多少条如果要区分数据源。如果要区分数据源，在db.jdbc.batch.size后面加上对应keyNum的数字后缀
+      studentRDD.toDF().jdbcUpdateBatch(insertSql, Seq("name", "age", "createTime", "length", "sex"), keyNum = 2)
     })(reTry = 5, exitOnFailure = true)
   }
 }

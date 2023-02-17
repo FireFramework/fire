@@ -18,6 +18,9 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
+import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.common.enu.Operation
+import com.zto.fire.common.util.{KafkaUtils, LineageManager, MQProducer}
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
@@ -94,7 +97,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param tableName
     * HBase表名
     */
-  def hbaseBulkDeleteRDD[T <: String : ClassTag](tableName: String, keyNum: Int = 1): Unit = {
+  def hbaseBulkDeleteRDD[T <: String : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]], keyNum)
   }
 
@@ -104,7 +107,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param tableName
     * rowKey集合
     */
-  def hbaseDeleteRDD(tableName: String, keyNum: Int = 1): Unit = {
+  def hbaseDeleteRDD(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbaseDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]])
   }
 
@@ -118,7 +121,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @return
     * 结果集
     */
-  def hbaseBulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = 1): RDD[E] = {
+  def hbaseBulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = KeyNum._1): RDD[E] = {
     HBaseBulkConnector.bulkGetRDD(tableName, rdd.asInstanceOf[RDD[String]], clazz, keyNum)
   }
 
@@ -134,7 +137,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @return
     * 自定义JavaBean的对象结果集
     */
-  def hbaseBulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = 1): DataFrame = {
+  def hbaseBulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = KeyNum._1): DataFrame = {
     HBaseBulkConnector.bulkGetDF[E](tableName, rdd.asInstanceOf[RDD[String]], clazz, keyNum)
   }
 
@@ -150,7 +153,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @return
     * 自定义JavaBean的对象结果集
     */
-  def hbaseBulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = 1): Dataset[E] = {
+  def hbaseBulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = KeyNum._1): Dataset[E] = {
     HBaseBulkConnector.bulkGetDS[E](tableName, rdd.asInstanceOf[RDD[String]], clazz, keyNum)
   }
 
@@ -161,7 +164,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * HBase表名
     * 数据集合，继承自HBaseBaseBean
     */
-  def hbaseBulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = 1): Unit = {
+  def hbaseBulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkPutRDD(tableName, rdd.asInstanceOf[RDD[T]], keyNum)
   }
 
@@ -171,7 +174,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param tableName
     * HBase表名
     */
-  def hbaseHadoopPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = 1): Unit = {
+  def hbaseHadoopPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.hadoopPut(tableName, rdd.asInstanceOf[RDD[T]], keyNum)
   }
 
@@ -186,7 +189,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * 目标类型
     * @return
     */
-  def hbaseGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = 1): RDD[T] = {
+  def hbaseGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = KeyNum._1): RDD[T] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseGetRDD(tableName, clazz, rdd.asInstanceOf[RDD[String]])
   }
 
@@ -201,7 +204,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * 目标类型
     * @return
     */
-  def hbaseGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = 1): Dataset[T] = {
+  def hbaseGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = KeyNum._1): Dataset[T] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseGetDS[T](tableName, clazz, rdd.asInstanceOf[RDD[String]])
   }
 
@@ -216,7 +219,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * 目标类型
     * @return
     */
-  def hbaseGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = 1): DataFrame = {
+  def hbaseGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = KeyNum._1): DataFrame = {
     HBaseSparkBridge(keyNum = keyNum).hbaseGetDF(tableName, clazz, rdd.asInstanceOf[RDD[String]])
   }
 
@@ -226,7 +229,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     * @param tableName
     * HBase表名
     */
-  def hbasePutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = 1): Unit = {
+  def hbasePutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutRDD[T](tableName, rdd.asInstanceOf[RDD[T]])
   }
 
@@ -323,5 +326,28 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
    */
   def foreachPartitionBatch[E](mapFun: T => E, sinkFun: ListBuffer[E] => Unit, batch: Int = 1000): Unit = {
     SparkUtils.rddForeachPartitionBatch(this.rdd, mapFun, sinkFun, batch)
+  }
+
+  /**
+   * 将消息写入到Kafka中
+   */
+  def sinkKafka(kafkaParams: Map[String, Object] = null,
+                topic: String = null,
+                keyNum: Int = KeyNum._1): Unit = {
+
+    this.rdd.foreachPartition(it => {
+      // 1. 设置producer相关额外参数
+      val finalProducerConfig = KafkaUtils.getKafkaParams(kafkaParams, keyNum)
+      // 2. 获取topic
+      val finalTopic = KafkaUtils.getTopic(topic, keyNum)
+      requireNonEmpty(finalTopic)(s"Topic不能为空，请检查keyNum=${keyNum}对应的配置信息")
+      // 3. 获取kafka集群url
+      val finalBrokers = KafkaUtils.getBrokers(finalProducerConfig, keyNum)
+      requireNonEmpty(finalBrokers)(s"kafka broker地址不能为空，请检查keyNum=${keyNum}对应的配置信息")
+      // 消费kafka埋点信息
+      LineageManager.addMQDatasource("kafka", finalBrokers, finalTopic, "", Operation.SINK)
+
+      it.foreach(msg => MQProducer.sendKafka(finalBrokers, finalTopic, msg.toString, finalProducerConfig.toMap))
+    })
   }
 }

@@ -27,9 +27,9 @@ import org.apache.flink.table.api.TableEnvironment
   * Created by ChengLong on 2020年1月6日 16:50:56.
   */
 object FlinkSingletonFactory extends SingletonFactory {
-  @transient private[this] var streamEnv: StreamExecutionEnvironment = _
-  @transient private[this] var env: ExecutionEnvironment = _
-  @transient private[this] var tableEnv: TableEnvironment = _
+  @transient private[fire] var streamEnv: StreamExecutionEnvironment = _
+  @transient private[fire] var env: ExecutionEnvironment = _
+  @transient private[fire] var tableEnv: TableEnvironment = _
 
   /**
    * 设置TableEnv实例

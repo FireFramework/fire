@@ -18,6 +18,7 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.util.{ExceptionBus, Logging}
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.HBaseBulkConnector
@@ -49,7 +50,7 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
    * @param tableName
    * HBase表名
    */
-  def hbaseBulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = 1): Unit = {
+  def hbaseBulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkPutStream(tableName, stream.asInstanceOf[DStream[T]], keyNum)
   }
 
@@ -135,6 +136,7 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
           }
         }
       } else if (exitOnFailure) {
+        ExceptionBus.post(retValue.failed.get)
         this.logger.error(s"批次[${batchTime}]执行失败，offset未提交，任务将退出")
         this.logger.error(s"异常堆栈：${ExceptionBus.stackTrace(retValue.failed.get)}")
         SparkSingletonFactory.getStreamingContext.stop(true, false)

@@ -5,6 +5,7 @@ import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.{Hive, Kafka}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.SparkStreaming
+import com.zto.fire.spark.anno.Streaming
 import org.apache.spark.sql.DataFrame
 
 
@@ -14,6 +15,7 @@ import org.apache.spark.sql.DataFrame
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Hive("test")
+@Streaming(interval = 10)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HiveRW extends SparkStreaming {
@@ -94,8 +96,4 @@ object HiveRW extends SparkStreaming {
         |""".stripMargin).show(3, false)
   }
 
-
-  override def main(args: Array[String]): Unit = {
-    this.init(10, false)
-  }
 }

@@ -78,17 +78,17 @@ object SparkDemo extends SparkStreaming {
 
 ```shell
 # 可根据实际需要选择不同的引擎版本进行fire框架的构建
-mvn clean install -DskipTests -Pspark-3.0.2 -Pflink-1.14.3 -Pscala-2.12
+mvn clean install -DskipTests -Pspark-3.0 -Pflink-1.14 -Pscala-2.12
 ```
 
 | Apache Spark | Apache Flink |
 | ------------ | ------------ |
-| 2.3.x        | 1.10.x       |
-| 2.4.x        | 1.11.x       |
-| 3.0.x        | 1.12.x       |
-| 3.1.x        | 1.13.x       |
-| 3.2.x        | 1.14.x       |
-| 3.3.x        | 1.15.x       |
+| 2.3.x        | 1.12.x       |
+| 2.4.x        | 1.13.x       |
+| 3.0.x        | 1.14.x       |
+| 3.1.x        | 1.15.x       |
+| 3.2.x        | 1.16.x       |
+| 3.3.x        |              |
 
 ### **3.2 简单好用**
 
@@ -105,11 +105,34 @@ this.fire.hbasePutDF(hTableName, studentDF, classOf[Student])
 
 - **JDBC API**
 
+1. **通过注解配置数据源：**
+
+```java
+@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
+```
+
+2. **Spark示例：**
+
 ```scala
 // 将DataFrame中指定几列插入到关系型数据库中，每100条一插入
 df.jdbcBatchUpdate(insertSql, Seq("name", "age", "createTime", "length", "sex"), batch = 100)
 // 将查询结果通过反射映射到DataFrame中
 val df: DataFrame = this.fire.jdbcQueryDF(querySql, Seq(1, 2, 3), classOf[Student])
+
+```
+
+3. **Flink示例：**
+
+```scala
+val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t))
+val sql =
+s"""
+|insert into spark_test(name, age, createTime) values(?, ?, ?)
+|ON DUPLICATE KEY UPDATE age=18
+|""".stripMargin
+// sinkJdbc只需指定sql语句即可，fire会自动推断sql中占位符与JavaBean中成员变量的对应关系
+dstream.sinkJdbc(sql)
+dstream.sinkJdbcExactlyOnce(sql, keyNum = 2)
 ```
 
 ### **3.3 灵活的配置方式**
@@ -218,6 +241,11 @@ this.fire.hbasePutDF(hTableName2, studentDF, classOf[Student], keyNum=2)	// keyN
 
 ## 五、期待你的加入
 
-**技术交流（钉钉群）：*35373471***
+**社区技术交流：[*35373471(钉钉)*](https://qr.dingtalk.com/action/joingroup?code=v1,k1,yNUn3bjLGYXPHvzVapvFjI7H5LQReBVrksiECWH+WAI=&_dt_no_comment=1&origin=11)**
 
-<img src="./docs/img/dingding.jpeg" weight="500px" height="600px">
+**入群请备注：<font color='red'>公司名称-岗位-昵称</font>，否则不予理会**
+
+<center class="half">
+    <img src="./docs/img/dingding.jpeg" width="300"/>
+    <img src="./docs/img/weixin.png" width="300" height="400"/>
+</center>

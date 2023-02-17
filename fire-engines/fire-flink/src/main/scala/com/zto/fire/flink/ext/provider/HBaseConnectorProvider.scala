@@ -18,6 +18,7 @@
 package com.zto.fire.flink.ext.provider
 
 import com.zto.fire._
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
@@ -51,7 +52,7 @@ trait HBaseConnectorProvider {
                                         tableName: String,
                                         batch: Int = 100,
                                         flushInterval: Long = 3000,
-                                        keyNum: Int = 1): DataStreamSink[_] = {
+                                        keyNum: Int = KeyNum._1): DataStreamSink[_] = {
     stream.hbasePutDS(tableName, batch, flushInterval, keyNum)
   }
 
@@ -73,7 +74,7 @@ trait HBaseConnectorProvider {
                                                     tableName: String,
                                                     batch: Int = 100,
                                                     flushInterval: Long = 3000,
-                                                    keyNum: Int = 1)(fun: T => T): DataStreamSink[_] = {
+                                                    keyNum: Int = KeyNum._1)(fun: T => T): DataStreamSink[_] = {
     stream.hbasePutDS2[T](tableName, batch, flushInterval, keyNum)(fun)
   }
 
@@ -93,7 +94,7 @@ trait HBaseConnectorProvider {
                                            tableName: String,
                                            batch: Int = 100,
                                            flushInterval: Long = 3000,
-                                           keyNum: Int = 1): DataStreamSink[_] = {
+                                           keyNum: Int = KeyNum._1): DataStreamSink[_] = {
     table.hbasePutTable[T](tableName, batch, flushInterval, keyNum)
   }
 
@@ -113,7 +114,7 @@ trait HBaseConnectorProvider {
                      tableName: String,
                      batch: Int = 100,
                      flushInterval: Long = 3000,
-                     keyNum: Int = 1)(fun: Row => T): DataStreamSink[_] = {
+                     keyNum: Int = KeyNum._1)(fun: Row => T): DataStreamSink[_] = {
     table.hbasePutTable2[T](tableName, batch, flushInterval, keyNum)(fun)
   }
 }

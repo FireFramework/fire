@@ -17,6 +17,7 @@
 
 package com.zto.fire.spark.sql
 
+import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.Operation
@@ -135,5 +136,15 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
       case _ => this.logger.debug(s"Parse ddl SQL异常，无法匹配该Statement.")
     }
     sinkTable
+  }
+
+  /**
+   * 用于判断给定的表是否为临时表
+   */
+  @Internal
+  override def isTempView(tableIdentifier: TableIdentifier): Boolean = {
+    tryWithReturn {
+      catalog.isTempView(tableIdentifier.toNameParts)
+    }(this.logger, catchLog = s"判断${tableIdentifier}是否为临时表或视图失败", hook = false)
   }
 }

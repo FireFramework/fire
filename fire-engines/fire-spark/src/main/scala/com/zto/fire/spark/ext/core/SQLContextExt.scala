@@ -18,7 +18,7 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
-import com.zto.fire.common.conf.FireHiveConf
+import com.zto.fire.common.conf.{FireHiveConf, KeyNum}
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.spark.conf.FireSparkConf
@@ -377,7 +377,7 @@ class SQLContextExt(sqlContext: SQLContext) {
    * @return
    * DataFrame
    */
-  def jdbcTableLoadAll(tableName: String, jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
+  def jdbcTableLoadAll(tableName: String, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): DataFrame = {
     sqlContext.read.jdbc(FireJdbcConf.jdbcUrl(keyNum), tableName, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
@@ -395,7 +395,7 @@ class SQLContextExt(sqlContext: SQLContext) {
    * @return
    * 查询结果集
    */
-  def jdbcTableLoad(tableName: String, predicates: Array[String], jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
+  def jdbcTableLoad(tableName: String, predicates: Array[String], jdbcProps: Properties = null, keyNum: Int = KeyNum._1): DataFrame = {
     sqlContext.read.jdbc(FireJdbcConf.jdbcUrl(keyNum), tableName, predicates, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 
@@ -419,7 +419,7 @@ class SQLContextExt(sqlContext: SQLContext) {
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    * @return
    */
-  def jdbcTableLoadBound(tableName: String, columnName: String, lowerBound: Long, upperBound: Long, numPartitions: Int = 10, jdbcProps: Properties = null, keyNum: Int = 1): DataFrame = {
+  def jdbcTableLoadBound(tableName: String, columnName: String, lowerBound: Long, upperBound: Long, numPartitions: Int = 10, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): DataFrame = {
     sqlContext.read.jdbc(FireJdbcConf.jdbcUrl(keyNum), tableName, columnName, lowerBound, upperBound, numPartitions, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
 

@@ -28,9 +28,8 @@ import com.zto.fire.spark.BaseStructuredStreaming
  * @author ChengLong 2019年12月23日 22:16:59
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Hive("batch")
-@Kafka(brokers = "zmsNew", topics = "sjzn_spark_scan_send_topic", groupId = "fire")
-// 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
+@Hive("test")
+@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object StructuredStreamingTest extends BaseStructuredStreaming {
 
   /**

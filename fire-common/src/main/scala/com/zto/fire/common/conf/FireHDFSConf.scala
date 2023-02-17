@@ -18,6 +18,7 @@
 package com.zto.fire.common.conf
 
 import com.zto.fire.common.util.PropUtils
+import org.apache.hadoop.conf.Configuration
 
 /**
  * HDFS配置
@@ -30,10 +31,17 @@ private[fire] object FireHDFSConf {
   // 是否启用高可用
   lazy val HDFS_HA = "hdfs.ha.enable"
   lazy val HDFS_HA_PREFIX = "hdfs.ha.conf."
+  lazy val HDFS_USER = "hdfs.user"
+  lazy val HDFS_URL = "hdfs.url"
+  lazy val HDFS_CONF_PREFIX = "hdfs.conf."
 
 
   // 配置是否启用hdfs HA
   lazy val hdfsHAEnable = PropUtils.getBoolean(this.HDFS_HA, true)
+  // hdfs访问的用户名
+  lazy val hdfsUser = PropUtils.getString(this.HDFS_USER, "hadoop")
+  // hdfs url前缀
+  lazy val hdfsUrl = PropUtils.getString(this.HDFS_URL)
 
   /**
    * 读取HDFS高可用相关配置信息
@@ -42,5 +50,17 @@ private[fire] object FireHDFSConf {
     if (this.hdfsHAEnable) {
       PropUtils.sliceKeys(s"${this.HDFS_HA_PREFIX}${FireHiveConf.hiveCluster}.")
     } else Map.empty
+  }
+
+  /**
+   * 获取hdfs配置参数
+   */
+  def hdfsConf: Configuration = {
+    val confMap = PropUtils.sliceKeys(this.HDFS_CONF_PREFIX)
+    val hdfsConf = new Configuration()
+    confMap.foreach(kv => {
+      hdfsConf.set(kv._1, kv._2)
+    })
+    hdfsConf
   }
 }

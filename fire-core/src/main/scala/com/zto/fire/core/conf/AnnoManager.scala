@@ -208,7 +208,7 @@ private[fire] trait AnnoManager extends Logging {
   def mapJdbcConf(url: String, driver: String, username: String, password: String, isolationLevel: String,
                   maxPoolSize: Int, minPoolSize: Int, initialPoolSize: Int, acquireIncrement: Int,
                   maxIdleTime: Int, batchSize: Int, flushInterval: Long, maxRetries: Int, storageLevel: String,
-                  queryPartitions: Int, logSqlLength: Int, config: Array[String], keyNum: Int = KeyNum._1): Unit = {
+                  queryPartitions: Int, logSqlLength: Int, connectionTimeout: Int, config: Array[String], keyNum: Int = KeyNum._1): Unit = {
     this.put("db.jdbc.url", url, keyNum)
     // TODO: driver自动推断
     // val autoDriver = if (noEmpty(driver)) driver else DBUtils
@@ -226,6 +226,7 @@ private[fire] trait AnnoManager extends Logging {
     this.put("db.jdbc.max.retry", maxRetries, keyNum)
     this.put("fire.jdbc.storage.level", storageLevel, keyNum)
     this.put("fire.jdbc.query.partitions", queryPartitions, keyNum)
+    this.put("db.jdbc.connection.timeout", connectionTimeout, keyNum)
     this.put(FIRE_LOG_SQL_LENGTH, logSqlLength, keyNum)
 
     this.putConfig("db.c3p0.conf.", config, keyNum)
@@ -241,7 +242,7 @@ private[fire] trait AnnoManager extends Logging {
   def mapJdbc(jdbc: Jdbc): Unit = {
     this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
       jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
-      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.config(), KeyNum._1)
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._1)
   }
 
   /**
@@ -254,7 +255,7 @@ private[fire] trait AnnoManager extends Logging {
   def mapJdbc2(jdbc: Jdbc2): Unit = {
     this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
       jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
-      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.config(), KeyNum._2)
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._2)
   }
 
   /**
@@ -267,7 +268,7 @@ private[fire] trait AnnoManager extends Logging {
   def mapJdbc3(jdbc: Jdbc3): Unit = {
     this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
       jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
-      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.config(), KeyNum._3)
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._3)
   }
 
   /**
@@ -280,7 +281,7 @@ private[fire] trait AnnoManager extends Logging {
   def mapJdbc4(jdbc: Jdbc4): Unit = {
     this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
       jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
-      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.config(), KeyNum._4)
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._4)
   }
 
   /**
@@ -293,7 +294,7 @@ private[fire] trait AnnoManager extends Logging {
   def mapJdbc5(jdbc: Jdbc5): Unit = {
     this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
       jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
-      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.config(), KeyNum._5)
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._5)
   }
 
   /**
@@ -522,6 +523,6 @@ object AnnoManager extends Logging {
   protected[fire] def lifeCycleAnno(baseFire: BaseFire, annoClass: Class[_ <: Annotation]): Unit = {
     tryWithLog {
       ReflectionUtils.invokeAnnoMethod(baseFire, annoClass)
-    } (this.logger, "生命周期方法调用成功", "声明周期方法调用失败", isThrow = true)
+    } (this.logger, "生命周期方法调用成功", "生命周期方法调用失败", isThrow = true)
   }
 }

@@ -93,6 +93,11 @@ public class FireTask {
      */
     protected String jobType;
 
+    /**
+     * 任务在实时平台中的id标识
+     */
+    protected String platformAppId;
+
     public FireTask() {
         this.engine = FireUtils.engine();
         this.engineVersion = FireUtils.engineVersion();
@@ -107,6 +112,7 @@ public class FireTask {
         this.appId = FireUtils.applicationId();
         this.deployMode = FireUtils.deployMode();
         this.jobType = FireUtils.jobType().toString();
+        this.platformAppId = FireUtils.platformAppId();
     }
 
     public String getEngine() {

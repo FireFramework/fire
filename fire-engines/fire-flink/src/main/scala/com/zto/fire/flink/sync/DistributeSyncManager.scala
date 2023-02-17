@@ -2,7 +2,7 @@ package com.zto.fire.flink.sync
 
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.ThreadPoolType
-import com.zto.fire.common.util.{JSONUtils, LineageManager, PropUtils, ThreadUtils}
+import com.zto.fire.common.util.{FireUtils, JSONUtils, LineageManager, PropUtils, ThreadUtils}
 import com.zto.fire.core.bean.ArthasParam
 import com.zto.fire.core.plugin.ArthasDynamicLauncher
 import com.zto.fire.core.rest.SystemRestful
@@ -56,6 +56,7 @@ private[fire] object DistributeSyncManager extends SyncManager {
   def collect: Unit = {
     lineageThread.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = {
+        if (!FireUtils.isEngineUp) return
         val lineageMap = LineageManager.getDatasourceLineage
         if (noEmpty(lineageMap)) {
           val json = JSONUtils.toJSONString(lineageMap)

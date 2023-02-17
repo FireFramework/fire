@@ -17,48 +17,17 @@
 
 package com.zto.fire.spark
 
-import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.PropUtils
-
 /**
   * Spark core通用父接口
   * Created by ChengLong on 2018-03-28.
   */
-class BaseSparkCore extends BaseSpark {
-  override val jobType = JobType.SPARK_CORE
-
-  /**
-    * 程序初始化方法，用于初始化必要的值
-    *
-    * @param conf
-    * Spark配置信息
-    */
-  override def init(conf: Any = null, args: Array[String] = null): Unit = {
-    super.init(conf, args)
-    this.processAll
-  }
-
-  /**
-   * 在加载任务配置文件前将被加载
-   */
-  override private[fire] def loadConf: Unit = {
-    PropUtils.load(FireFrameworkConf.SPARK_CORE_CONF_FILE)
-  }
-
-  /**
-    * Spark处理逻辑
-    * 注：此方法会被自动调用，不需要在main中手动调用
-    */
-  override def process: Unit = {
-    // 子类复写该方法实现业务处理逻辑
-  }
+class BaseSparkCore extends AbstractSparkCore {
 
   /**
    * 初始化SparkSession对象
    */
-  override def main(args: Array[String]): Unit = {
-    super.main(args)
+  def main(args: Array[String]): Unit = {
+    this.init(args = args)
     this.stop
   }
 }

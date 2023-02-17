@@ -23,7 +23,7 @@ import com.zto.fire.common.anno.{FieldName, Internal}
 import com.zto.fire.common.util._
 import com.zto.fire.flink.bean.FlinkTableSchema
 import com.zto.fire.flink.conf.FireFlinkConf
-import com.zto.fire.flink.sql.FlinkSqlParser
+import com.zto.fire.flink.sql.{FlinkSqlExtensionsParser, FlinkSqlParser}
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.predef._
 import org.apache.calcite.avatica.util.{Casing, Quoting}
@@ -85,9 +85,14 @@ object FlinkUtils extends Serializable with Logging {
   /**
    * 根据sql构建Calcite SqlParser
    */
-  def sqlParser(sql: String, config: CalciteParser.Config = this.createParserConfig): SqlNode = {
+  def sqlNodeParser(sql: String, config: CalciteParser.Config = this.createParserConfig): SqlNode = {
     CalciteParser.create(sql, config).parseStmt()
   }
+
+  /**
+   * SQL血缘解析
+   */
+  def sqlParser(sql: String): Unit = FlinkSqlExtensionsParser.sqlParse(sql)
 
   /**
    * SQL语法校验，如果语法错误，则返回错误堆栈
@@ -98,11 +103,11 @@ object FlinkUtils extends Serializable with Logging {
     val retVal = Try {
       try {
         // 使用默认的sql解析器解析
-        val sqlNode = this.sqlParser(sql)
+        val sqlNode = this.sqlNodeParser(sql)
       } catch {
         case e: Throwable => {
           // 使用hive方言语法解析器解析
-          val sqlNode = this.sqlParser(sql, this.calciteHiveParserConfig)
+          val sqlNode = this.sqlNodeParser(sql, this.calciteHiveParserConfig)
         }
       }
     }
@@ -501,5 +506,22 @@ object FlinkUtils extends Serializable with Logging {
     }
 
     replacedSql
+  }
+
+  /**
+   * 用于判断引擎是否已完成上下文的初始化
+   * 1. Spark：SparkContext
+   * 2. Flink: ExecutionEnv
+   */
+  def isEngineUp: Boolean = FlinkSingletonFactory.streamEnv != null
+
+  /**
+   * 用于判断引擎是否已销毁上下文
+   * 1. Spark：SparkContext
+   * 2. Flink: ExecutionEnv
+   */
+  def isEngineDown: Boolean = {
+    // TODO: 判断上下文退出
+    FlinkSingletonFactory.streamEnv == null || (FlinkSingletonFactory.streamEnv != null)
   }
 }

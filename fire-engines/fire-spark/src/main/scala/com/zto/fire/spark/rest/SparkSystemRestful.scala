@@ -374,7 +374,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       this.baseSpark.shutdown(stopGracefully)
       ProcessUtil.executeCmds(s"yarn application -kill ${this.baseSpark.applicationId}", s"kill -9 ${OSUtils.getPid}")
       this.logger.info(s"[kill] kill任务成功：json=$json")
-      System.exit(0)
+      FireUtils.exitNormal
       ResultMsg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {

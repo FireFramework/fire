@@ -18,6 +18,7 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.util.Logging
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.conf.FireSparkConf
@@ -77,7 +78,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    * @tparam T
    * 数据类型为HBaseBaseBean的子类
    */
-  def hbaseBulkPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = 1): Unit = {
+  def hbaseBulkPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkPutDS[T](tableName, dataset.asInstanceOf[Dataset[T]], keyNum)
   }
 
@@ -88,7 +89,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    * @param tableName
    * HBase表名
    */
-  def hbaseBulkDeleteDS(tableName: String, keyNum: Int = 1): Unit = {
+  def hbaseBulkDeleteDS(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkDeleteDS(tableName, dataset.asInstanceOf[Dataset[String]], keyNum)
   }
 
@@ -98,7 +99,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    * @param tableName
    * rowKey集合
    */
-  def hbaseDeleteDS(tableName: String, keyNum: Int = 1): Unit = {
+  def hbaseDeleteDS(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbaseDeleteDS(tableName, dataset.asInstanceOf[Dataset[String]])
   }
 
@@ -108,7 +109,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    * @param tableName
    * HBase表名
    */
-  def hbaseHadoopPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = 1): Unit = {
+  def hbaseHadoopPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.hadoopPutDS[T](tableName, dataset.asInstanceOf[Dataset[T]], keyNum)
   }
 
@@ -120,7 +121,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    * @param clazz
    * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = 1): Unit = {
+  def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutDS[E](tableName, clazz, dataset.asInstanceOf[Dataset[E]])
   }
 
@@ -180,7 +181,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
                    saveParam: String = "",
                    isSaveTable: Boolean = false,
                    options: Map[String, String] = Map.empty,
-                   keyNum: Int = 1): Unit = {
+                   keyNum: Int = KeyNum._1): Unit = {
     val finalFormat = if (noEmpty(FireSparkConf.datasourceFormat(keyNum))) FireSparkConf.datasourceFormat(keyNum) else format
     val finalSaveMode = if (noEmpty(FireSparkConf.datasourceSaveMode(keyNum))) SaveMode.valueOf(FireSparkConf.datasourceSaveMode(keyNum)) else saveMode
     val finalSaveParam = if (noEmpty(FireSparkConf.datasourceSaveParam(keyNum))) FireSparkConf.datasourceSaveParam(keyNum) else saveParam

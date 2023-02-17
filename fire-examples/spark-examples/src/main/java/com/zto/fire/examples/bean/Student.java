@@ -17,11 +17,13 @@
 
 package com.zto.fire.examples.bean;
 
+import com.zto.fire.common.anno.FieldName;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.JSONUtils;
 import com.zto.fire.hbase.bean.HBaseBaseBean;
 import com.zto.fire.spark.bean.GenerateBean;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
@@ -29,12 +31,15 @@ import java.util.Objects;
 
 /**
  * 对应HBase表的JavaBean
+ * 注：JavaBean中的字段必须是基础类型包装类
  *
  * @author ChengLong 2019-6-20 16:06:16
  */
 // @HConfig(multiVersion = true)
 // @HConfig(nullable = true, multiVersion = true, versions = 3)
-public class Student extends HBaseBaseBean<Student> implements GenerateBean<Student> {
+public class Student extends HBaseBaseBean<Student> implements GenerateBean<Student>, Serializable {
+    @FieldName(disuse = true)
+    private static final long serialVersionUID = 1L;
     protected Long id;
     protected String name;
     protected Integer age;

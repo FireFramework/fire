@@ -23,6 +23,7 @@ import com.zto.fire.flink.ext.function.{RichFunctionExt, RuntimeContextExt}
 import com.zto.fire.flink.ext.stream._
 import org.apache.flink.api.common.functions.{RichFunction, RuntimeContext}
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
+import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.{DataStream, KeyedStream, StreamExecutionEnvironment}
 import org.apache.flink.table.api.{Table, TableEnvironment, TableResult}
 import org.apache.flink.types.Row
@@ -64,6 +65,16 @@ package object fire extends BaseFireExt {
    * DataStream对象
    */
   implicit class DataStreamExtBridge[T](dataStream: DataStream[T]) extends DataStreamExt(dataStream) {
+
+  }
+
+  /**
+   * DataStream扩展
+   *
+   * @param dataStream
+   * DataStream对象
+   */
+  implicit class DataStreamExtBridgeSink[T](dataStream: DataStreamSink[T]) extends DataStreamSinkExt(dataStream) {
 
   }
 

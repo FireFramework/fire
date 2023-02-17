@@ -26,11 +26,17 @@
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-examples</artifactId>
-        <version>2.3.2-SNAPSHOT</version>
+        <version>2.3.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <dependencies>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka_${scala.binary.version}</artifactId>
+            <version>${kafka.version}</version>
+            <scope>${maven.scope}</scope>
+        </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-common_${scala.binary.version}</artifactId>
@@ -71,6 +77,16 @@
             <artifactId>fire-connector-flink-rocketmq_${flink.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
+        <!--<dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>fire-connector-flink-rocketmq-apache_${flink.reference}</artifactId>
+            <version>${fire.version}</version>
+        </dependency>-->
+        <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>fire-connector-flink-clickhouse_${flink.reference}</artifactId>
+            <version>${fire.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-metrics_${scala.binary.version}</artifactId>
@@ -82,6 +98,7 @@
             <artifactId>spark-core</artifactId>
             <version>${sparkjava.version}</version>
         </dependency>
+
         <!-- flink计算引擎相关依赖 -->
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -103,13 +120,13 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-clients_${scala.binary.version}</artifactId>
+            <artifactId>flink-clients${contains.scala.binary.version}</artifactId>
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-runtime-web_${scala.binary.version}</artifactId>
+            <artifactId>flink-runtime-web${contains.scala.binary.version}</artifactId>
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
@@ -121,13 +138,13 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-statebackend-rocksdb_${scala.binary.version}</artifactId>
+            <artifactId>flink-statebackend-rocksdb${contains.scala.binary.version}</artifactId>
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-kafka_${scala.binary.version}</artifactId>
+            <artifactId>flink-connector-kafka${contains.scala.binary.version}</artifactId>
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
@@ -145,7 +162,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-api-java-bridge_${scala.binary.version}</artifactId>
+            <artifactId>flink-table-api-java-bridge${contains.scala.binary.version}</artifactId>
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
@@ -175,7 +192,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-jdbc_${scala.binary.version}</artifactId>
+            <artifactId>flink-connector-jdbc${contains.scala.binary.version}</artifactId>
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
@@ -187,7 +204,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-elasticsearch-base_${scala.binary.version}</artifactId>
+            <artifactId>flink-connector-elasticsearch-base${contains.scala.binary.version}</artifactId>
             <version>${flink.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
@@ -211,7 +228,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-orc-nohive_${scala.binary.version}</artifactId>
+            <artifactId>flink-orc-nohive${contains.scala.binary.version}</artifactId>
             <version>${flink.version}</version>
         </dependency>
 
@@ -236,8 +253,8 @@
             <scope>${maven.scope}</scope>
             <exclusions>
                 <exclusion>
-                    <artifactId>calcite-core</artifactId>
                     <groupId>org.apache.calcite</groupId>
+                    <artifactId>calcite-core</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -274,8 +291,8 @@
             <scope>${maven.scope}</scope>
             <exclusions>
                 <exclusion>
-                    <artifactId>calcite-core</artifactId>
                     <groupId>org.apache.calcite</groupId>
+                    <artifactId>calcite-core</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -295,6 +312,7 @@
             <scope>${maven.scope}</scope>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -306,11 +324,5 @@
                 </configuration>
             </plugin>
         </plugins>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
     </build>
 </project>

@@ -75,7 +75,7 @@ object SimpleSqlDemo extends FlinkStreaming {
         |   'table-name' = 'flink_sql_test',						-- 指定往哪张数据库表中写数据，表示往mysql的名为flink_sql_test的表插入或更新数据
         |   'driver' = 'com.mysql.jdbc.Driver',					-- jdbc的驱动类名
         |   'username' = 'root',									-- jdbc的用户名
-        |   'password' = 'fire',							-- jdbc的密码
+        |   'password' = 'root',							-- jdbc的密码
         |   'sink.buffer-flush.interval' = '10s',			    -- 标识每隔10s钟将数据flush一次到mysql中，避免逐条insert效率低
         |   'sink.buffer-flush.max-rows' = '3',					-- 标识积累满3条执行一次批量insert，通用避免逐条insert，和sink.buffer-flush.interval先符合为准
         |   'sink.max-retries' = '3'								-- 插入失败时重试几次
@@ -95,7 +95,7 @@ object SimpleSqlDemo extends FlinkStreaming {
         |   'table-name' = 'flink_sql_test2',						-- 指定往哪张数据库表中写数据，表示往mysql的名为flink_sql_test的表插入或更新数据
         |   'driver' = 'com.mysql.jdbc.Driver',					-- jdbc的驱动类名
         |   'username' = 'root',									-- jdbc的用户名
-        |   'password' = 'fire',							-- jdbc的密码
+        |   'password' = 'root',							-- jdbc的密码
         |   'sink.buffer-flush.interval' = '10s',			    -- 标识每隔10s钟将数据flush一次到mysql中，避免逐条insert效率低
         |   'sink.buffer-flush.max-rows' = '3',					-- 标识积累满3条执行一次批量insert，通用避免逐条insert，和sink.buffer-flush.interval先符合为准
         |   'sink.max-retries' = '3'								-- 插入失败时重试几次

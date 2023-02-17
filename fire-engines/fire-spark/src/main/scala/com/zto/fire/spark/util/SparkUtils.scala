@@ -19,10 +19,11 @@ package com.zto.fire.spark.util
 
 import com.zto.fire._
 import com.zto.fire.common.anno.FieldName
-import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf, KeyNum}
 import com.zto.fire.common.util._
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.spark.conf.FireSparkConf
+import com.zto.fire.spark.sql.SparkSqlParser
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkEnv
 import org.apache.spark.rdd.RDD
@@ -208,7 +209,7 @@ object SparkUtils extends Logging {
    * jdbc查询的结果集
    * @return
    */
-  def resultSet2DataFrame(rs: ResultSet, keyNum: Int = 1): DataFrame = {
+  def resultSet2DataFrame(rs: ResultSet, keyNum: Int = KeyNum._1): DataFrame = {
     val rows = this.resultSet2Rows(rs)
     val structFields = JdbcUtils.getSchema(rs, JdbcDialects.get(FireJdbcConf.jdbcUrl(keyNum)), true)
     this.spark.createDataFrame(rows, structFields)
@@ -629,7 +630,7 @@ object SparkUtils extends Logging {
    * @param keyNum
    * 用于区分多个数据源
    */
-  def optionsEnhance(options: Map[String, String] = Map.empty, keyNum: Int = 1): Map[String, String] = {
+  def optionsEnhance(options: Map[String, String] = Map.empty, keyNum: Int = KeyNum._1): Map[String, String] = {
     val map = collection.mutable.Map[String, String]()
     map ++= options
     map ++= PropUtils.sliceKeysByNum(FireSparkConf.SPARK_DATASOURCE_OPTIONS_PREFIX, keyNum)
@@ -640,4 +641,23 @@ object SparkUtils extends Logging {
     map.foreach(option => this.logger.info(s"${option._1} = ${option._2}"))
     map.toMap
   }
+
+  /**
+   * 用于解析给定的SQL语句
+   */
+  def sqlParser(sql: String): Unit = SparkSqlParser.sqlParser(sql)
+
+  /**
+   * 用于判断引擎是否已完成上下文的初始化
+   * 1. Spark：SparkContext
+   * 2. Flink: ExecutionEnv
+   */
+  def isEngineUp: Boolean = SparkSingletonFactory.engineState
+
+  /**
+   * 用于判断引擎是否已销毁上下文
+   * 1. Spark：SparkContext
+   * 2. Flink: ExecutionEnv
+   */
+  def isEngineDown: Boolean = !this.isEngineUp
 }

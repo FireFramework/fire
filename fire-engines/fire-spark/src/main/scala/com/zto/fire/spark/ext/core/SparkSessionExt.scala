@@ -18,6 +18,7 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
+import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.core.Api
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import com.zto.fire.spark.bean.GenerateBean
@@ -112,7 +113,7 @@ class SparkSessionExt(spark: SparkSession) extends Api with JdbcConnectorBridge 
    * @return
    * DStream
    */
-  def createKafkaDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, groupId: String = null, keyNum: Int = 1): DStream[ConsumerRecord[String, String]] = {
+  def createKafkaDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, groupId: String = null, keyNum: Int = KeyNum._1): DStream[ConsumerRecord[String, String]] = {
     this.ssc.createDirectStream(kafkaParams, topics, groupId, keyNum)
   }
 
@@ -137,7 +138,7 @@ class SparkSessionExt(spark: SparkSession) extends Api with JdbcConnectorBridge 
                                consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                                locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                                instance: String = "",
-                               keyNum: Int = 1): DStream[MessageExt] = {
+                               keyNum: Int = KeyNum._1): DStream[MessageExt] = {
     this.ssc.createRocketPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum)
   }
 
@@ -209,7 +210,7 @@ class SparkSessionExt(spark: SparkSession) extends Api with JdbcConnectorBridge 
   def readEnhance(format: String = "",
                   loadParams: Seq[String] = null,
                   options: Map[String, String] = Map.empty,
-                  keyNum: Int = 1): Unit = {
+                  keyNum: Int = KeyNum._1): Unit = {
     val finalFormat = if (noEmpty(FireSparkConf.datasourceFormat(keyNum))) FireSparkConf.datasourceFormat(keyNum) else format
     val finalLoadParam = if (noEmpty(FireSparkConf.datasourceLoadParam(keyNum))) FireSparkConf.datasourceLoadParam(keyNum).split(",").toSeq else loadParams
     this.logger.info(s"--> Spark DataSource read api参数信息（keyNum=$keyNum）<--")

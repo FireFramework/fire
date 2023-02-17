@@ -26,7 +26,7 @@ import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.listener.FireSparkListener
 import com.zto.fire.spark.rest.SparkSystemRestful
-import com.zto.fire.spark.sql.SqlExtensions
+import com.zto.fire.spark.sql.{SparkSqlParser, SqlExtensions}
 import com.zto.fire.spark.task.{SparkInternalTask, SparkSchedulerManager}
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
@@ -248,6 +248,9 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
    * 执行多条sql语句，以分号分割
    */
   private[this] def executeSql(sql: String): DataFrame = {
-    SQLUtils.executeSql(sql) (statement => _spark.sql(statement)).get
+    SQLUtils.executeSql(sql) (statement => {
+      SparkSqlParser.sqlParse(statement)
+      _spark.sql(statement)
+    }).get
   }
 }

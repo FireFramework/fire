@@ -44,8 +44,31 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
     val rest = FireFrameworkConf.fireRestUrl
     if (StringUtils.isBlank(rest)) this.logger.warn("Fire Rest Server 地址为空，将无法完成注册")
     s"""
-       |{"className": "${className.replace("$", "")}", "url": "$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.configCenterSecret}", "engine": "${PropUtils.engine}"}
+       |{"className": "${className.replace("$", "")}", "url": "$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.configCenterSecret}", "engine": "${PropUtils.engine}", "appId": "${getFireAppId}"}
       """.stripMargin
+  }
+
+  /**
+   * 从环境变量中获取任务在实时平台中的唯一id标识
+   *
+   * tips：
+   *  1. 通用方式：提交脚本中 export fire_config_center_app_id=101
+   *  2. flink任务：-D fire.config_center.app.id=101
+   */
+  private[this] def getFireAppId: String = {
+    var appId = FireFrameworkConf.configCenterAppId
+
+    if (isEmpty(appId)) {
+      appId = System.getProperty(FireFrameworkConf.FIRE_CONFIG_CENTER_APP_ID.replace(".", "_"))
+    }
+
+    if (isEmpty(appId)) {
+      appId = System.getenv(FireFrameworkConf.FIRE_CONFIG_CENTER_APP_ID.replace(".", "_"))
+    }
+
+    PropUtils.setProperty(FireFrameworkConf.FIRE_CONFIG_CENTER_APP_ID, appId)
+
+    appId
   }
 
   /**
@@ -74,7 +97,7 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
     if (isEmpty(json)) {
       // 考虑到任务的重要配置可能存放在配置中心，在接口不通的情况下发布任务存在风险，因此会强制任务退出
       this.logger.error("配置中心注册接口不可用导致任务发布失败。如仍需紧急发布，请确保任务配置与配置中心保存一直，并在common.properties中添加以下参数：fire.config_center.enable=false")
-      System.exit(-1)
+      FireUtils.exitError
     } else {
       if (FireFrameworkConf.fireConfShow) this.logger.info(s"成功获取配置中心配置信息：$json")
       val param = JSONUtils.parseObject[ConfigurationParam](json)

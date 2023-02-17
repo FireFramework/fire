@@ -63,6 +63,7 @@ private[fire] class LineageManager extends Logging {
           // 1. 解析jdbc sql语句
           val start = currentTime
           tryWithLog {
+
             for (_ <- 1 until dbSqlQueue.size()) {
               val sqlSource = dbSqlQueue.poll()
               if (sqlSource != null) {
@@ -174,7 +175,7 @@ private[fire] class LineageManager extends Logging {
   /**
    * 向队列中添加一条sql类型的数据源，用于后续异步解析
    */
-  private[fire] def addDBDataSource(source: DBSqlSource): Unit = if (lineageEnable && this.dbSqlQueue.size() <= lineMaxSize) this.dbSqlQueue.offer(source)
+  private[fire] def addDBSqlSource(source: DBSqlSource): Unit = if (lineageEnable && this.dbSqlQueue.size() <= lineMaxSize) this.dbSqlQueue.offer(source)
 
   /**
    * 收集执行的sql语句
@@ -206,7 +207,7 @@ private[fire] object LineageManager extends Logging {
    *             待解析的sql语句
    */
   private[fire] def addDBSql(datasource: String, cluster: String, username: String, sql: String, operation: Operation*): Unit = {
-    this.manager.addDBDataSource(DBSqlSource(datasource, cluster, username, sql, toOperationSet(operation: _*)))
+    this.manager.addDBSqlSource(DBSqlSource(datasource, cluster, username, sql, toOperationSet(operation: _*)))
   }
 
   /**

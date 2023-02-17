@@ -56,30 +56,30 @@ private[fire] object FireRocketMQConf {
   lazy val ROCKET_SINK_PARALLELISM = "rocket.sink.parallelism"
 
   // 用于标识消费者的名称
-  def rocketInstanceId(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_INSTANCE_ID, "", keyNum)
+  def rocketInstanceId(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.ROCKET_INSTANCE_ID, "", keyNum)
   // rocket-client配置信息
-  def rocketConfMap(keyNum: Int = 1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(rocketConfStart, keyNum)
+  def rocketConfMap(keyNum: Int = KeyNum._1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(rocketConfStart, keyNum)
   // 获取消费位点
-  def rocketStartingOffset(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_STARTING_OFFSET, "", keyNum)
+  def rocketStartingOffset(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.ROCKET_STARTING_OFFSET, "", keyNum)
   // 丢失数据时是否失败
-  def rocketFailOnDataLoss(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.ROCKET_FAIL_ON_DATA_LOSS, true, keyNum)
+  def rocketFailOnDataLoss(keyNum: Int = KeyNum._1): Boolean = PropUtils.getBoolean(this.ROCKET_FAIL_ON_DATA_LOSS, true, keyNum)
   // spark.rocket.forceSpecial
-  def rocketForceSpecial(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.ROCKET_FORCE_SPECIAL, false, keyNum)
+  def rocketForceSpecial(keyNum: Int = KeyNum._1): Boolean = PropUtils.getBoolean(this.ROCKET_FORCE_SPECIAL, false, keyNum)
   // enable.auto.commit
-  def rocketEnableAutoCommit(keyNum: Int = 1): Boolean = PropUtils.getBoolean(this.ROCKET_ENABLE_AUTO_COMMIT, false, keyNum)
+  def rocketEnableAutoCommit(keyNum: Int = KeyNum._1): Boolean = PropUtils.getBoolean(this.ROCKET_ENABLE_AUTO_COMMIT, false, keyNum)
   // 获取rocketMQ 订阅的tag
-  def rocketConsumerTag(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_CONSUMER_TAG, "", keyNum)
+  def rocketConsumerTag(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.ROCKET_CONSUMER_TAG, "", keyNum)
   // 获取groupId
-  def rocketGroupId(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_GROUP_ID, "", keyNum)
+  def rocketGroupId(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.ROCKET_GROUP_ID, "", keyNum)
   // 获取rocket topic列表
-  def rocketTopics(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_TOPICS, null, keyNum)
+  def rocketTopics(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.ROCKET_TOPICS, null, keyNum)
   // 每次拉取每个partition的消息数
-  def rocketPullMaxSpeedPerPartition(keyNum: Int = 1): String = PropUtils.getString(this.ROCKET_PULL_MAX_SPEED_PER_PARTITION, "", keyNum)
+  def rocketPullMaxSpeedPerPartition(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.ROCKET_PULL_MAX_SPEED_PER_PARTITION, "", keyNum)
   // sink rocketmq的并行度
-  def rocketSinkParallelism(keyNum: Int = 1): Int = PropUtils.getInt(this.ROCKET_SINK_PARALLELISM, -1, keyNum)
+  def rocketSinkParallelism(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.ROCKET_SINK_PARALLELISM, -1, keyNum)
 
   // 获取rocketMQ name server 地址
-  def rocketNameServer(keyNum: Int = 1): String = {
+  def rocketNameServer(keyNum: Int = KeyNum._1): String = {
     val brokerName = PropUtils.getString(this.ROCKET_BROKERS_NAME, "", keyNum)
     this.rocketNameServer(brokerName)
   }

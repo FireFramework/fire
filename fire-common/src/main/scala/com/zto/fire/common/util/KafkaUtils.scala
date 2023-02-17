@@ -17,7 +17,7 @@
 
 package com.zto.fire.common.util
 
-import com.zto.fire.common.conf.FireKafkaConf
+import com.zto.fire.common.conf.{FireKafkaConf, KeyNum}
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetAndTimestamp}
@@ -138,7 +138,7 @@ object KafkaUtils extends Logging {
                   kafkaBrokers: String = null,
                   offset: String = FireKafkaConf.offsetLargest,
                   autoCommit: Boolean = false,
-                  keyNum: Int = 1): Map[String, Object] = {
+                  keyNum: Int = KeyNum._1): Map[String, Object] = {
 
     val consumerMap = collection.mutable.Map[String, Object]()
     // 代码中指定的kafka配置优先级最低
@@ -180,4 +180,54 @@ object KafkaUtils extends Logging {
     consumerMap.toMap
   }
 
+  /**
+   * 根据配置信息与方法传参，获取kafka的broker地址
+   * 配置文件优先级高于方法传参
+   *
+   * @param props
+   * 最终要用到的kafka参数
+   * @param keyNum
+   * 配置参数中对应的索引
+   */
+  def getBrokers(props: Properties, keyNum: Int = KeyNum._1): String = {
+    val brokers = FireKafkaConf.kafkaBrokers(keyNum)
+    if (noEmpty(brokers)) props.setProperty("bootstrap.servers", brokers)
+    val finalBrokers = props.getProperty("bootstrap.servers")
+    finalBrokers
+  }
+
+  /**
+   * 获取topic的kafka参数
+   *
+   * @param props
+   * 最终要用到的kafka参数
+   * @param kafkaParams
+   * 方法传参中指定的kafkaParams
+   * @param keyNum
+   * 配置参数中对应的索引
+   */
+  def getKafkaParams(kafkaParams: Map[String, Object], keyNum: Int = KeyNum._1): Properties = {
+    val props = new Properties()
+    // 1.1 从方法传参中获取额外参数
+    if (kafkaParams != null) kafkaParams.foreach(kv => props.setProperty(kv._1, kv._2.toString))
+    // 1.2 从配置文件或注解中获取额外参数
+    val kafkaProducerConf = PropUtils.sliceKeysByNum(FireKafkaConf.kafkaConfStart, keyNum)
+    if (noEmpty(kafkaProducerConf)) kafkaProducerConf.foreach(kv => props.setProperty(kv._1, kv._2))
+
+    props
+  }
+
+  /**
+   * 获取topic的最终值
+   *
+   * @param topic
+   * 方法传参中指定的topic
+   * @param keyNum
+   * 配置参数中对应的索引
+   * @return
+   * 返回经过优先级比较的最终topic
+   */
+  def getTopic(topic: String, keyNum: Int = KeyNum._1): String = {
+    if (noEmpty(FireKafkaConf.kafkaTopics(keyNum))) FireKafkaConf.kafkaTopics(keyNum) else topic
+  }
 }

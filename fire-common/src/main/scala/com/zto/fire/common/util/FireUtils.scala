@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.util
 
+import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.predef._
@@ -57,6 +58,19 @@ private[fire] object FireUtils extends Serializable with Logging {
   def isFlinkEngine: Boolean = "flink".equals(this.engine)
 
   /**
+   * 用于判断任务类型是否为流式计算任务
+   */
+  def isStreamingJob: Boolean = !this.isBatchJob
+
+  /**
+   * 用于判断任务类型是否为批处理任务
+   * @return
+   */
+  def isBatchJob: Boolean = {
+    this.jobType == JobType.SPARK_CORE || this.jobType == JobType.SPARK_SQL || this.jobType == JobType.FLINK_BATCH
+  }
+
+  /**
    * 获取当前实时任务所使用的计算引擎
    * @return
    * spark / flink
@@ -78,17 +92,36 @@ private[fire] object FireUtils extends Serializable with Logging {
    * @return
    * spark-version / flink-version
    */
-  def engineVersion: String = invokeEngineUtils("getVersion")
+  def engineVersion: String = invokeEngineUtils[String]("getVersion", null)
 
   /**
    * 获取当前执行引擎运行时的appId
    */
-  def applicationId: String = invokeEngineUtils("getApplicationId")
+  def applicationId: String = invokeEngineUtils[String]("getApplicationId")
 
   /**
    * 任务发布类型：yarn-client/yarn-cluster/run-application
    */
-  def deployMode: String = invokeEngineUtils("deployMode")
+  def deployMode: String = invokeEngineUtils[String]("deployMode")
+
+  /**
+   * SQL血缘解析
+   */
+  def sqlParser(sql: String): Unit = invokeEngineUtils[Unit]("sqlParser", Array[Class[_]](classOf[String]), Array[Object](sql))
+
+  /**
+   * 用于判断引擎是否已完成上下文的初始化
+   * 1. Spark：SparkContext
+   * 2. Flink: ExecutionEnv
+   */
+  def isEngineUp: Boolean = invokeEngineUtils[Boolean]("isEngineUp")
+
+  /**
+   * 用于判断引擎是否已销毁上下文
+   * 1. Spark：SparkContext
+   * 2. Flink: ExecutionEnv
+   */
+  def isEngineDown: Boolean = !invokeEngineUtils[Boolean]("isEngineDown")
 
   /**
    * 反射调用不同引擎上层的工具方法
@@ -96,14 +129,15 @@ private[fire] object FireUtils extends Serializable with Logging {
    * spark或flink工具类的方法名
    * @return
    */
-  private[this] def invokeEngineUtils(methodName: JString): String = {
+  @Internal
+  private[this] def invokeEngineUtils[T](methodName: JString, parameterTypes: Array[Class[_]] = Array[Class[_]](), args: Array[Object] = Array[Object]()): T = {
     tryWithReturn {
       if (this.isSparkEngine) {
-        val getVersionMethod = ReflectionUtils.getMethodByName(sparkUtils, methodName)
-        getVersionMethod.invoke(null).toString
+        val getVersionMethod = ReflectionUtils.getMethodByParameter(Class.forName(sparkUtils), methodName, parameterTypes: _*)
+        getVersionMethod.invoke(null, args: _*).asInstanceOf[T]
       } else {
-        val getVersionMethod = ReflectionUtils.getMethodByName(flinkUtils, methodName)
-        getVersionMethod.invoke(null).toString
+        val getVersionMethod = ReflectionUtils.getMethodByParameter(Class.forName(flinkUtils), methodName, parameterTypes: _*)
+        getVersionMethod.invoke(null, args: _*).asInstanceOf[T]
       }
     } (this.logger, catchLog = s"反射调用工具类方法[$methodName]失败")
   }
@@ -112,6 +146,28 @@ private[fire] object FireUtils extends Serializable with Logging {
    * 当前任务实例的主类名：packageName+className
    */
   def mainClass: String = FireFrameworkConf.driverClassName
+
+  /**
+   * 退出jvm
+   * @param status
+   * 状态码
+   */
+  def exit(status: Int): Unit = System.exit(status)
+
+  /**
+   * 正常退出jvm
+   */
+  def exitNormal: Unit = this.exit(0)
+
+  /**
+   * 非正常退出jvm
+   */
+  def exitError: Unit = this.exit(-1)
+
+  /**
+   * 用于获取任务在实时平台中的唯一id标识
+   */
+  def platformAppId: String = FireFrameworkConf.configCenterAppId
 
   /**
    * 用于在fire框架启动时展示信息

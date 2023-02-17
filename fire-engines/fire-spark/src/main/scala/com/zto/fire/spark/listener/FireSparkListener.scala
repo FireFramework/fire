@@ -25,6 +25,7 @@ import com.zto.fire.spark.BaseSpark
 import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.sync.SyncSparkEngine
+import com.zto.fire.spark.util.SparkSingletonFactory
 import org.apache.spark.SparkException
 import org.apache.spark.scheduler._
 
@@ -45,6 +46,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
    */
   override def onApplicationStart(applicationStart: SparkListenerApplicationStart): Unit = {
     this.logger.info(s"Spark 初始化完成.")
+    SparkSingletonFactory.setEngineState(true)
     this.baseSpark.onApplicationStart(applicationStart)
   }
 
@@ -64,6 +66,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
    */
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
     this.exit
+    SparkSingletonFactory.setEngineState(false)
     super.onApplicationEnd(applicationEnd)
   }
 

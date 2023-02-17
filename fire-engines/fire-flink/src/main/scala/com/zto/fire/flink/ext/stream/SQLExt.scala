@@ -21,6 +21,7 @@ import com.zto.fire.common.util.{Logging, PropUtils}
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.{noEmpty, requireNonEmpty}
 import com.zto.fire._
+import com.zto.fire.common.conf.KeyNum
 
 /**
  * Flink SQL扩展类
@@ -43,7 +44,7 @@ class SQLExt(sql: String) extends Logging {
    * @return
    * 组装了with表达式的Flink SQL文本
    */
-  def with$(keyNum: Int = 1): String = {
+  def with$(keyNum: Int = KeyNum._1): String = {
     requireNonEmpty(sql, "sql语句不能为空！")
 
     // 未开启with表达式替换或keyNum不合法，则直接返回

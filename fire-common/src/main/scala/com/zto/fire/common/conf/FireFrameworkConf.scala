@@ -65,6 +65,8 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_CONFIG_CENTER_LOCAL_ENABLE = "fire.config_center.local.enable"
   // 配置中心接口调用秘钥
   lazy val FIRE_CONFIG_CENTER_SECRET = "fire.config_center.register.conf.secret"
+  // 任务的唯一id标识，由提交任务时通过平台下传指定
+  lazy val FIRE_CONFIG_CENTER_APP_ID = "fire.config_center.app.id"
   // fire框架restful端口冲突重试次数
   lazy val FIRE_RESTFUL_PORT_RETRY_NUM = "fire.restful.port.retry_num"
   // fire框架restful端口冲突重试时间（ms）
@@ -118,6 +120,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_DEPLOY_CONF_ENABLE = "fire.deploy_conf.enable"
   lazy val FIRE_EXCEPTION_BUS_SIZE = "fire.exception_bus.size"
   lazy val FIRE_LINEAGE_ENABLE = "fire.lineage.enable"
+  lazy val FIRE_LINEAGE_COLLECT_SQL_ENABLE = "fire.lineage.collect_sql.enable"
   lazy val FIRE_LINEAGE_RUN_COUNT = "fire.lineage.run.count"
   lazy val FIRE_LINEAGE_MAX_SIZE = "fire.lineage.max.size"
   lazy val FIRE_LINEAGE_RUN_INITIAL_DELAY = "fire.lineage.run.initialDelay"
@@ -164,6 +167,7 @@ private[fire] object FireFrameworkConf {
   lazy val lineageRunCount = PropUtils.getInt(this.FIRE_LINEAGE_RUN_COUNT, 10)
   // 是否开启实时血缘埋点
   lazy val lineageEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_ENABLE, true)
+  lazy val lineageCollectSQLEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_COLLECT_SQL_ENABLE, true)
   lazy val lineageSendMqEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_SEND_MQ_ENABLE, false)
   lazy val lineageMQUrl = {
     val url = PropUtils.getString(this.FIRE_LINEAGE_SEND_MQ_URL, "")
@@ -236,6 +240,8 @@ private[fire] object FireFrameworkConf {
   lazy val configCenterProdAddress = PropUtils.getString(this.FIRE_CONFIG_CENTER_REGISTER_CONF_PROD_ADDRESS, "")
   // 配置中心测试环境注册地址
   lazy val configCenterTestAddress = PropUtils.getString(this.FIRE_CONFIG_CENTER_REGISTER_CONF_TEST_ADDRESS)
+  // 任务的唯一标识
+  lazy val configCenterAppId = PropUtils.getString(this.FIRE_CONFIG_CENTER_APP_ID)
 
 
   // fire框架rest接口服务最大线程数
