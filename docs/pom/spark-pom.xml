@@ -54,8 +54,8 @@
 
   <repositories>
     <repository>
-      <id>zto</id>
-      <url>http://maven.dev.ztosys.com/nexus/content/groups/public/</url>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
       <releases>
         <enabled>true</enabled>
       </releases>
@@ -74,7 +74,7 @@
       </snapshots>
     </repository>
     <repository>
-      <id>huaweicloud</id>
+      <id>central</id>
       <url>https://mirrors.huaweicloud.com/repository/maven/</url>
       <releases>
         <enabled>true</enabled>

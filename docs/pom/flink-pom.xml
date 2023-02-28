@@ -186,8 +186,8 @@
 
   <repositories>
     <repository>
-      <id>zto</id>
-      <url>http://maven.dev.ztosys.com/nexus/content/groups/public/</url>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
       <releases>
         <enabled>true</enabled>
       </releases>
