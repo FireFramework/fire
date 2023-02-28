@@ -84,12 +84,9 @@
     <modules>
         <module>fire-common</module>
         <module>fire-core</module>
-        <module>fire-metrics</module>
         <module>fire-connectors</module>
         <module>fire-engines</module>
         <module>fire-enhance</module>
-        <module>fire-shell</module>
-        <module>fire-platform</module>
     </modules>
 
     <profiles>
@@ -101,6 +98,17 @@
             </activation>
             <modules>
                 <module>fire-examples</module>
+            </modules>
+        </profile>
+
+        <!-- Configure whether to build the fire-shell module. -->
+        <profile>
+            <id>build-shell</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>fire-shell</module>
             </modules>
         </profile>
 

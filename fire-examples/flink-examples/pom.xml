@@ -87,11 +87,6 @@
             <artifactId>fire-connector-flink-clickhouse_${flink.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-metrics_${scala.binary.version}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>com.sparkjava</groupId>

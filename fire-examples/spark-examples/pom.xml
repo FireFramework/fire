@@ -85,11 +85,6 @@
             <artifactId>fire-enhance-arthas_${scala.binary.version}</artifactId>
             <version>${fire.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-metrics_${scala.binary.version}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

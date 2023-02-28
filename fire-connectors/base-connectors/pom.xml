@@ -49,12 +49,6 @@
             <version>${fire.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-metrics_${scala.binary.version}</artifactId>
-            <version>${fire.version}</version>
-            <scope>${maven.scope}</scope>
-        </dependency>
     </dependencies>
     <build>
         <plugins>
