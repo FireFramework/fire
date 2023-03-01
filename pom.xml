@@ -41,6 +41,14 @@
             <organization>fire-framework</organization>
             <organizationUrl>https://github.com/fire-framework/fire</organizationUrl>
         </developer>
+
+        <developer>
+            <name>u2huangzhijun</name>
+            <email>u2huangzhijun@163.com</email>
+            <organization>fire-framework</organization>
+            <organizationUrl>https://gitee.com/fire-framework/fire</organizationUrl>
+        </developer>
+
     </developers>
 
     <scm>
