@@ -32,6 +32,36 @@ under the License.
 
 　　Fire框架是由**中通大数据**自主研发并开源的、专门用于进行**Spark**和**Flink**任务开发的大数据框架。该框架屏蔽技术细节，提供大量简易API帮助开发者更快的构建实时计算任务。同时Fire框架也内置了平台化的功能，用于与实时平台集成。基于Fire框架的任务在中通每天处理的数据量高达**几千亿以上**，覆盖了**Spark计算**（离线&实时）、**Flink计算**等众多计算场景。
 
+---
+
+## 摘要
+
+!> 开发手册请看侧边栏提供的详情哦!
+
+* [一、就这么简单！](#一就这么简单)
+  * [1\.1 Flink开发示例](#11-flink开发示例)
+  * [1\.2 Spark开发示例](#12-spark开发示例)
+* [<em><a href="\./index\.md">二、开发文档</a></em>](#二开发文档)
+* [三、亮点多多！](#三亮点多多)
+  * [3\.1 兼容主流版本](#31-兼容主流版本)
+  * [3\.2 简单好用](#32-简单好用)
+  * [3\.3 灵活的配置方式](#33-灵活的配置方式)
+  * [3\.4 多集群支持](#34-多集群支持)
+  * [3\.5 常用connector支持](#35-常用connector支持)
+  * [3\.6 <a href="highlight/checkpoint\.md">checkpoint热修改</a>](#36-checkpoint热修改)
+  * [3\.7 <a href="highlight/spark\-duration\.md">streaming热重启</a>](#37-streaming热重启)
+  * [3\.8 配置热更新](#38-配置热更新)
+  * [3\.9 在线性能诊断](#39-在线性能诊断)
+  * [3\.10 sql在线调试](#310-sql在线调试)
+  * [3\.11 实时血缘](#311-实时血缘)
+  * [3\.12 定时调度](#312-定时调度)
+  * [3\.13 平台无缝集成](#313-平台无缝集成)
+  * [3\.14 fire\-shell](#314-fire-shell)
+* [<em><a href="feature\.md">四、升级日志</a></em>](#四升级日志)
+* [五、期待你的加入](#五期待你的加入)
+
+---
+
 ## 一、就这么简单！
 
 ### 1.1 Flink开发示例
@@ -77,17 +107,23 @@ object SparkDemo extends SparkStreaming {
 }
 ```
 
-***说明：structured streaming、spark core、flink sql、flink批任务均支持，代码结构与上述示例一致。***
+!> 说明：structured streaming、spark core、flink sql、flink批任务均支持，代码结构与上述示例一致。
 
-## *[二、开发文档](./docs/index.md)*
+---
+
+## *[二、开发文档](./index.md)*
+
+!> 开发手册请看侧边栏提供的详情哦!
+
+---
 
 ## 三、亮点多多！
 
 ### 3.1 兼容主流版本
 
-　　fire框架适配了不同的spark与flink版本，支持spark2.x及以上所有版本，flink1.10及以上所有版本，支持基于scala2.11或scala2.12进行编译。
+    fire框架适配了不同的spark与flink版本，支持spark2.x及以上所有版本，flink1.10及以上所有版本，支持基于scala2.11或scala2.12进行编译。
 
-```shell
+```bash
 # 可根据实际需要选择不同的引擎版本进行fire框架的构建
 mvn clean install -DskipTests -Pspark-3.0 -Pflink-1.14 -Pscala-2.12
 ```
@@ -197,11 +233,11 @@ this.fire.hbasePutDF(hTableName2, studentDF, classOf[Student], keyNum=2)	// keyN
 
 　　支持kafka、rocketmq、redis、HBase、Jdbc、clickhouse、Hive、hudi、tidb、adb等常见的connector。
 
-### **3.6 [checkpoint热修改](./docs/highlight/checkpoint.md)**
+### **3.6 [checkpoint热修改](highlight/checkpoint.md)**
 
 　　支持运行时动态调整checkpoint周期、超时时间、并行checkpoint等参数，避免任务重启时由于反压带来的checkpoint压力。
 
-### **3.7 [streaming热重启](./docs/highlight/spark-duration.md)**
+### **3.7 [streaming热重启](highlight/spark-duration.md)**
 
 　　该功能是主要用于Spark Streaming任务，通过热重启技术，可以在不重启Spark Streaming的前提下，实现批次时间的热修改。比如在web端将某个任务的批次时间调整为10s，会立即生效。
 
@@ -248,13 +284,17 @@ this.fire.hbasePutDF(hTableName2, studentDF, classOf[Student], keyNum=2)	// keyN
 
 　　Fire框架整合spark shell与flink shell，支持通过REPL方式去动态调试spark和flink任务，并且支持fire框架的所有API。fire框架将shell能力通过接口方式暴露给实时平台，如此一来就可以通过web页面去调试spark和flink任务了。
 
-## *[四、升级日志](./docs/feature.md)*
+---
+
+## *[四、升级日志](feature.md)*
+
+---
 
 ## 五、期待你的加入
 
-**社区技术交流：[*35373471(钉钉)*](https://qr.dingtalk.com/action/joingroup?code=v1,k1,yNUn3bjLGYXPHvzVapvFjI7H5LQReBVrksiECWH+WAI=&_dt_no_comment=1&origin=11)**
+!> 社区技术交流：[*35373471(钉钉)*](https://qr.dingtalk.com/action/joingroup?code=v1,k1,yNUn3bjLGYXPHvzVapvFjI7H5LQReBVrksiECWH+WAI=&_dt_no_comment=1&origin=11)
 
-**入群请备注：<font color='red'>公司名称-岗位-昵称</font>，否则不予理会**
+!> 入群请备注：<font color='red'>公司名称-岗位-昵称</font>，否则不予理会
 
 <center class="half">
     <img src="img/dingding.jpeg" width="300"/>
