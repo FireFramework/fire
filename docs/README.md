@@ -257,6 +257,6 @@ this.fire.hbasePutDF(hTableName2, studentDF, classOf[Student], keyNum=2)	// keyN
 **入群请备注：<font color='red'>公司名称-岗位-昵称</font>，否则不予理会**
 
 <center class="half">
-    <img src="../docs/img/dingding.jpeg" width="300"/>
-    <img src="../docs/img/weixin.png" width="300" height="400"/>
+    <img src="img/dingding.jpeg" width="300"/>
+    <img src="img/weixin.png" width="300" height="400"/>
 </center>
