@@ -38,6 +38,6 @@ object Test extends FlinkStreaming {
          |insert into spark_test(name, age, createTime) values(?, ?, '${DateFormatUtils.formatCurrentDateTime()}')
          |ON DUPLICATE KEY UPDATE age=18
          |""".stripMargin
-    dstream.sinkJdbcExactlyOnce(sql, keyNum = 2)
+    dstream.sinkJdbc(sql, keyNum = 2)
   }
 }
