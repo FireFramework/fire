@@ -79,7 +79,13 @@ object SparkDemo extends SparkStreaming {
 
 ***说明：structured streaming、spark core、flink sql、flink批任务均支持，代码结构与上述示例一致。***
 
-## *[二、开发文档](./docs/index.md)*
+## *二、开发与示例*
+
+## 2.1 [Spark开发示例](https://gitee.com/fire-framework/spark-examples)
+
+## 2.2 [Flink开发示例](https://gitee.com/fire-framework/flink-examples)
+
+**示例项目clone后导入idea即可run，无需任何额外配置！**
 
 ## 三、亮点多多！
 
