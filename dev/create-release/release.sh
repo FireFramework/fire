@@ -46,15 +46,15 @@ rm -rf $MVN_TEMP_REPO/com/zto/fire
 
 # 3. build in MVN_TEMP_REPO
 set -e
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7 -Pscala-2.11 -Pflink-1.12 -Pspark-2.3 -U -T20C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7 -Pscala-2.11 -Pflink-1.13 -Pspark-2.4 -U -T20C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7 -Pscala-2.11 -Pflink-1.14 -Pspark-2.4 -U -T20C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.12,spark-2.3,release -U -T20C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.13,spark-2.4,release -U -T20C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.14,spark-2.4,release -U -T20C
 
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7 -Pscala-2.12 -Pflink-1.12 -Pspark-2.4 -U -T20C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7 -Pscala-2.12 -Pflink-1.13 -Pspark-3.0 -U -T20C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7 -Pscala-2.12 -Pflink-1.14 -Pspark-3.1 -U -T20C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7 -Pscala-2.12 -Pflink-1.15 -Pspark-3.2 -U -T20C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7 -Pscala-2.12 -Pflink-1.16 -Pspark-3.3 -U -T20C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.12,spark-2.4,release -U -T20C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.13,spark-3.0,release -U -T20C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.14,spark-3.1,release -U -T20C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.15,spark-3.2,release -U -T20C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.16,spark-3.3,release -U -T20C
 set +e
 
 # 4. ready to uploading file

@@ -60,7 +60,7 @@
 
     <properties>
         <fire.version>${project.version}</fire.version>
-        <hudi.version>0.9.0</hudi.version>
+        <hudi.version>0.13.0</hudi.version>
         <commons-lang.version>2.5</commons-lang.version>
         <clickhouse-jdbc.version>0.3.1</clickhouse-jdbc.version>
         <maven.scope>provided</maven.scope>
@@ -98,6 +98,46 @@
     </modules>
 
     <profiles>
+        <profile>
+            <id>release</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.9.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <failOnError>false</failOnError>
+                            <additionalparam>-Xdoclint:none</additionalparam>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <!-- 本地运行需启用该profile，否则会报某些类找不到异常。集群模式请禁用，否则包非常大，依赖冲突风险倍增 -->
         <profile>
             <id>run-local</id>
@@ -136,6 +176,7 @@
             <id>scala-2.11</id>
             <properties>
                 <scala.binary.version>2.11</scala.binary.version>
+                <scala.exclusion.version>2.12</scala.exclusion.version>
                 <scala.minor.version>8</scala.minor.version>
             </properties>
         </profile>
@@ -147,6 +188,7 @@
             </activation>
             <properties>
                 <scala.binary.version>2.12</scala.binary.version>
+                <scala.exclusion.version>2.11</scala.exclusion.version>
                 <scala.minor.version>13</scala.minor.version>
             </properties>
         </profile>
@@ -667,36 +709,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <failOnError>false</failOnError>
-                    <additionalparam>-Xdoclint:none</additionalparam>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
