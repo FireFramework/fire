@@ -15,13 +15,20 @@
  * limitations under the License.
  */
 
-package com.zto.fire.hudi
+package com.zto.fire.hudi.conf
+
+import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.common.util.PropUtils
 
 /**
- * Hudi任务父接口，实现一些通用的操作
+ * Hudi相关配置
  *
- * @author ChengLong 2023-03-13 11:15:43
+ * @author ChengLong 2023-03-15 17:06:40
+ * @since 2.3.5
  */
-trait HudiConnector {
-  
+private[fire] object FireHudiConf {
+  lazy val HUDI_OPTIONS_START = "hudi.options."
+
+  // Spark write hudi的options选项
+  def hudiOptions(keyNum: Int = KeyNum._1): Map[String, String] = PropUtils.sliceKeysByNum(this.HUDI_OPTIONS_START, keyNum)
 }
