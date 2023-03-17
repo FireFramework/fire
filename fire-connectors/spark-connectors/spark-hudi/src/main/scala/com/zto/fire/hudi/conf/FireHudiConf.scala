@@ -27,6 +27,7 @@ import com.zto.fire.common.util.PropUtils
  * @since 2.3.5
  */
 private[fire] object FireHudiConf {
+  lazy val HUDI_FORMAT = "org.apache.hudi"
   lazy val HUDI_OPTIONS_START = "hudi.options."
 
   // Spark write hudi的options选项

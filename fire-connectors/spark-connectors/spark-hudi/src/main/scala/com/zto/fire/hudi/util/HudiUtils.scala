@@ -18,9 +18,7 @@
 package com.zto.fire.hudi.util
 
 import com.zto.fire.common.util.Logging
-import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
-import com.zto.fire.{JHashMap, JMap}
-import org.apache.hudi.DataSourceWriteOptions._
+import java.util.HashMap
 import org.apache.hudi.common.model.HoodieTableType
 
 /**
@@ -43,11 +41,10 @@ object HudiUtils extends Logging {
    * COPY_ON_WRITE or MERGE_ON_READ
    * @return
    */
-  def hudiOptions(deltaCommitNum: Int = 0, parallelism: Int = SparkUtils.executorNum * 3,
-                  tableType: HoodieTableType = HoodieTableType.MERGE_ON_READ): JMap[String, String] = {
+  def hudiOptions(deltaCommitNum: Int = 0, parallelism: Int = 128,
+                  tableType: HoodieTableType = HoodieTableType.MERGE_ON_READ): HashMap[String, String] = {
 
-    val options = new JHashMap[String, String]()
-    options.put("hoodie.upsert.shuffle.parallelism", s"$parallelism")
+    val options = new HashMap[String, String]()
     options.put("hoodie.insert.shuffle.parallelism", s"$parallelism")
     options.put("hoodie.upsert.shuffle.parallelism", s"$parallelism")
     options.put("hoodie.bulkinsert.shuffle.parallelism", s"$parallelism")
