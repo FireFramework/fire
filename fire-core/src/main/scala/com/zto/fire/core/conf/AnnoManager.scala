@@ -23,11 +23,10 @@ import com.zto.fire.common.conf.FireFrameworkConf.FIRE_LOG_SQL_LENGTH
 import com.zto.fire.common.conf.FireKafkaConf._
 import com.zto.fire.common.conf.FireRocketMQConf._
 import com.zto.fire.common.conf.{FireHiveConf, KeyNum}
-import com.zto.fire.common.util.{Logging, ReflectionUtils, StringsUtils}
+import com.zto.fire.common.util.{Logging, PropUtils, ReflectionUtils, StringsUtils}
 import com.zto.fire.core.BaseFire
+import com.zto.fire.core.anno.connector._
 import com.zto.fire.core.anno.lifecycle.{Handle, Process, Step1, Step10, Step11, Step12, Step13, Step14, Step15, Step16, Step17, Step18, Step19, Step2, Step3, Step4, Step5, Step6, Step7, Step8, Step9}
-import com.zto.fire.core.anno._
-import com.zto.fire.core.anno.connector.{HBase, HBase2, HBase3, HBase4, HBase5, Hive, Jdbc, Jdbc2, Jdbc3, Jdbc4, Jdbc5, Kafka, Kafka2, Kafka3, Kafka4, Kafka5, RocketMQ, RocketMQ2, RocketMQ3, RocketMQ4, RocketMQ5}
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 
@@ -230,6 +229,83 @@ private[fire] trait AnnoManager extends Logging {
     this.put(FIRE_LOG_SQL_LENGTH, logSqlLength, keyNum)
 
     this.putConfig("db.c3p0.conf.", config, keyNum)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi(hudi: Hudi): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._1))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._1))
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi2(hudi: Hudi2): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._2))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._2))
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi3(hudi: Hudi3): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._3))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._3))
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi4(hudi: Hudi4): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._4))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._4))
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi5(hudi: Hudi5): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._5))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._5))
+  }
+
+  /**
+   * 将配置转换为hudi的参数
+   */
+  private[this] def toHudiConf(kv: (String, String), keyNum: Int): Unit = {
+    this.put("hudi.options." + kv._1, kv._2, keyNum)
   }
 
   /**
@@ -499,7 +575,8 @@ object AnnoManager extends Logging {
     classOf[Hive], classOf[HBase], classOf[HBase2], classOf[HBase3], classOf[HBase4], classOf[HBase5],
     classOf[Jdbc], classOf[Jdbc2], classOf[Jdbc3], classOf[Jdbc4], classOf[Jdbc5], classOf[Kafka],
     classOf[Kafka2], classOf[Kafka3], classOf[Kafka4], classOf[Kafka5], classOf[RocketMQ], classOf[RocketMQ2],
-    classOf[RocketMQ3], classOf[RocketMQ4], classOf[RocketMQ5]
+    classOf[RocketMQ3], classOf[RocketMQ4], classOf[RocketMQ5], classOf[Hudi], classOf[Hudi2], classOf[Hudi3],
+    classOf[Hudi4], classOf[Hudi5]
   )
 
   // 用于注册所有的生命周期注解

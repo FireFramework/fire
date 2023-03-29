@@ -49,11 +49,13 @@ object HudiUtils extends Logging {
     options.put("hoodie.upsert.shuffle.parallelism", s"$parallelism")
     options.put("hoodie.bulkinsert.shuffle.parallelism", s"$parallelism")
     options.put("hoodie.delete.shuffle.parallelism", s"$parallelism")
+    options.put("hoodie.fail.on.timeline.archiving", "false")
 
     if (deltaCommitNum > 0) {
       options.put("hoodie.compact.inline", "true")
       options.put("hoodie.compact.inline.max.delta.commits", deltaCommitNum.toString)
-      options.put("hoodie.fail.on.timeline.archiving", "false")
+    } else {
+      options.put("hoodie.compact.inline", "false")
     }
 
     options

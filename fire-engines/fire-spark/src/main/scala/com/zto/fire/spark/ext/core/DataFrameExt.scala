@@ -354,13 +354,15 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * 按该字段进行upsert
    * @param precombineKey
    * 根据该字段进行合并
+   * @param tablePath
+   * hudi表的存储路径
    * @param partition
    * 分区字段
    * @param options
    * 额外的options信息
    */
   def sinkHudi(hudiTableName: String, recordKey: String,
-               precombineKey: String, partition: String,
+               precombineKey: String, partition: String, tablePath: String = "",
                typeType: HoodieTableType = HoodieTableType.MERGE_ON_READ,
                options: JMap[String, String] = Map.empty[String, String],
                keyNum: Int = KeyNum._1
@@ -380,7 +382,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
     LogUtils.logMap(this.logger, confOptions.toMap, s"Hudi option conf. keyNum=$keyNum")
 
     // 3. 获取hudi表的hdfs存储路径
-    val hudiTablePath = this.tablePathMap.mergeGet(hudiTableName)(SparkSqlUtils.getTablePath(hudiTableName))
+    val hudiTablePath = if (noEmpty(tablePath)) tablePath else this.tablePathMap.mergeGet(hudiTableName)(SparkSqlUtils.getTablePath(hudiTableName))
 
     // 4. 将dataFrame数据写入到指定的hudi表中
     dataFrame.write.format(FireHudiConf.HUDI_FORMAT)

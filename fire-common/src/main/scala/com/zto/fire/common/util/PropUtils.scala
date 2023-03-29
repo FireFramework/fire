@@ -611,14 +611,23 @@ object PropUtils extends Logging {
     val files = fireArray.filter(StringUtils.isNotBlank).map(_.trim)
 
     // 获取通过@Config与@FireConf配置的所有参数
-    val props = allProps.filter(StringUtils.isNotBlank)
-      .map(_.split("=", 2))
-      .filter(prop => noEmpty(prop) && prop.length == 2 && noEmpty(prop(0), prop(1)))
-      .map(prop => {
-        (prop(0).trim, prop(1).trim)
-      })
-
+    val props = allProps.filter(StringUtils.isNotBlank).map(conf => this.splitConfLine(conf)).filter(_.isDefined).map(_.get)
     Some(files.toArray, props.toArray, confText.toString())
+  }
+
+  /**
+   * 将以指定分隔符配置的key=value的配置项拆分
+   * @param conf
+   * key=value的配置
+   * @return
+   * (key, value)
+   */
+  def splitConfLine(conf: String): Option[(String, String)] = {
+    if (isEmpty(conf) || !conf.contains("=")) return None
+    val pair = conf.split("=", 2).map(t => t.trim)
+
+    if (pair.length != 2 || isEmpty(pair(0), pair(1))) return None
+    Some(pair(0), pair(1))
   }
 
   /**
