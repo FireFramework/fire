@@ -22,6 +22,8 @@ under the License.
     <img src="./img/fire-framework-logo.jpeg" width="600" height="600">
   </a>
   <p align="center">
+    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/fireframework/fire?style=social">
+    <img alt="GitHub forks" src="https://img.shields.io/github/forks/fireframework/fire?style=social">
     <a href='https://gitee.com/fire-framework/fire/stargazers'><img src='https://gitee.com/fire-framework/fire/badge/star.svg?theme=gray' alt='star'></img></a>
     <a href='https://gitee.com/fire-framework/fire/members'><img src='https://gitee.com/fire-framework/fire/badge/fork.svg?theme=gray' alt='fork'></img></a>
   </p>
