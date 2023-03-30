@@ -41,4 +41,25 @@ public @interface Hudi3 {
      * 配置的字符串
      */
     String value() default "";
+
+    /**
+     * hudi相关并行度
+     */
+    int parallelism() default -1;
+
+    /**
+     * 几个批次做一次compaction，当大于零时默认开启inline的compaction
+     * 相当于：
+     * hoodie.compact.inline=true
+     * hoodie.compact.inline.max.delta.commits=xxx
+     */
+    int compactCommits() default -1;
+
+    /**
+     * 是否只做compaction的调度计划，适用于有独立的离线的compaction任务场景下开启
+     * 当开启该调度计划时，默认关闭inline的异步compaction：
+     * hoodie.compact.inline=false
+     * hoodie.compact.schedule.inline=true
+     */
+    boolean compactSchedule() default false;
 }

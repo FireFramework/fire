@@ -61,6 +61,7 @@
     <properties>
         <fire.version>${project.version}</fire.version>
         <hudi.version>0.8.0</hudi.version>
+        <hudi.major.version>0.8</hudi.major.version>
         <commons-lang.version>2.5</commons-lang.version>
         <clickhouse-jdbc.version>0.3.1</clickhouse-jdbc.version>
         <maven.scope>provided</maven.scope>
@@ -536,6 +537,26 @@
                     <scope>${maven.scope}</scope>
                 </dependency>
             </dependencies>
+        </profile>
+        <profile>
+            <id>hudi-0.8</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <hudi.version>0.8.0</hudi.version>
+                <hudi.major.version>0.8</hudi.major.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>hudi-0.13</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <hudi.version>0.13.0</hudi.version>
+                <hudi.major.version>0.13</hudi.major.version>
+            </properties>
         </profile>
     </profiles>
 

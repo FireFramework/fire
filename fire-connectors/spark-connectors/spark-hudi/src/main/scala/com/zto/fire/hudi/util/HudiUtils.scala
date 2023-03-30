@@ -46,12 +46,13 @@ object HudiUtils extends Logging {
    */
   def majorOptions(hudiTableName: String, recordKey: String, precombineKey: String, partition: String, typeType: HoodieTableType): Map[String, String] = {
     Map("hoodie.datasource.write.recordkey.field" -> recordKey,
-      "hoodie.datasource.write.precombine.field" -> precombineKey,
-      "hoodie.datasource.write.partitionpath.field" -> partition,
-      "hoodie.datasource.write.table.name" -> hudiTableName,
-      "hoodie.table.name" -> hudiTableName,
-      "hoodie.datasource.write.hive_style_partitioning" -> "true",
-      "hoodie.datasource.write.table.type" -> typeType.name
+        "hoodie.datasource.write.precombine.field" -> precombineKey,
+        "hoodie.datasource.write.partitionpath.field" -> partition,
+        "hoodie.datasource.write.table.name" -> hudiTableName,
+        "hoodie.table.name" -> hudiTableName,
+        "hoodie.datasource.write.hive_style_partitioning" -> "true",
+        "hoodie.datasource.write.table.type" -> typeType.name,
+        "hoodie.fail.on.timeline.archiving" -> "false"
     )
   }
 

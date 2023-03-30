@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.FireFrameworkConf.FIRE_LOG_SQL_LENGTH
 import com.zto.fire.common.conf.FireKafkaConf._
 import com.zto.fire.common.conf.FireRocketMQConf._
-import com.zto.fire.common.conf.{FireHiveConf, KeyNum}
+import com.zto.fire.common.conf.{FireHDFSConf, FireHiveConf, KeyNum}
 import com.zto.fire.common.util.{Logging, PropUtils, ReflectionUtils, StringsUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.anno.connector._
@@ -243,6 +243,8 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._1))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._1))
+    this.hudiParallelism(hudi.parallelism(), KeyNum._1)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._1)
   }
 
   /**
@@ -257,6 +259,8 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._2))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._2))
+    this.hudiParallelism(hudi.parallelism(), KeyNum._2)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._2)
   }
 
   /**
@@ -271,6 +275,8 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._3))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._3))
+    this.hudiParallelism(hudi.parallelism(), KeyNum._3)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._3)
   }
 
   /**
@@ -285,6 +291,8 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._4))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._4))
+    this.hudiParallelism(hudi.parallelism(), KeyNum._4)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._4)
   }
 
   /**
@@ -299,6 +307,40 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._5))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._5))
+    this.hudiParallelism(hudi.parallelism(), KeyNum._5)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._5)
+  }
+
+  /**
+   * 统一设置hudi任务各项参数的并行度
+   *
+   * @param parallelism
+   * 并行度
+   */
+  @Internal
+  private[this] def hudiParallelism(parallelism: Int, keyNum: Int): Unit = {
+    if (parallelism > 0) {
+      this.put("hoodie.bloom.index.parallelism", parallelism.toString, keyNum)
+      this.put("hoodie.simple.index.parallelism", parallelism.toString, keyNum)
+      this.put("hoodie.insert.shuffle.parallelism", parallelism.toString, keyNum)
+      this.put("hoodie.upsert.shuffle.parallelism", parallelism.toString, keyNum)
+      this.put("hoodie.bulkinsert.shuffle.parallelism", parallelism.toString, keyNum)
+      this.put("hoodie.delete.shuffle.parallelism", parallelism.toString, keyNum)
+    }
+  }
+
+  /**
+   * 用于配置hudi任务的compaction参数
+   */
+  @Internal
+  private[this] def hudiCompactConf(compactCommits: Int, compactSchedule: Boolean, keyNum: Int): Unit = {
+    if (compactSchedule) {
+      this.toHudiConf(("hoodie.compact.inline", "false"), keyNum)
+      this.toHudiConf(("hoodie.compact.schedule.inline", "true"), keyNum)
+    } else if (compactCommits > 0) {
+      this.toHudiConf(("hoodie.compact.inline", "true"), keyNum)
+      this.toHudiConf(("hoodie.compact.inline.max.delta.commits", compactCommits.toString), keyNum)
+    }
   }
 
   /**
@@ -566,6 +608,14 @@ private[fire] trait AnnoManager extends Logging {
     if (noEmpty(hive.catalog())) this.put(FireHiveConf.HIVE_CATALOG_NAME, hive.catalog())
     if (noEmpty(hive.version())) this.put(FireHiveConf.HIVE_VERSION, hive.version())
     if (noEmpty(hive.partition())) this.put(FireHiveConf.DEFAULT_TABLE_PARTITION_NAME, hive.partition())
+
+    // 加载hdfs相关参数（必须通过@Hive注解指定hive thrift的别名）
+    if (noEmpty(hive.config())) {
+      val hiveAlias = if (noEmpty(hive.cluster())) hive.cluster() else hive.value()
+      if (FireHiveConf.hiveMetastoreMap.containsKey(hiveAlias)) {
+        this.putConfig(FireHDFSConf.HDFS_HA_PREFIX + hiveAlias + ".", hive.config())
+      }
+    }
   }
 }
 

@@ -56,6 +56,46 @@
                     <target>8</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <!-- Add src/main/scala to source path of Eclipse -->
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/main/java</source>
+                                <source>src/main/scala</source>
+                                <source>src/main/java-hudi-${hudi.major.version}</source>
+                                <source>src/main/scala-hudi-${hudi.major.version}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+
+                    <!-- Add src/test/scala to test source path of Eclipse -->
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/main/java</source>
+                                <source>src/main/scala</source>
+                                <source>src/main/java-hudi-${hudi.major.version}</source>
+                                <source>src/main/scala-hudi-${hudi.major.version}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <resources>
             <resource>

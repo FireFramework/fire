@@ -48,7 +48,7 @@ private[fire] object FireHiveConf {
   // hive集群标识（batch/streaming/test）
   lazy val hiveCluster = PropUtils.getString(this.HIVE_CLUSTER, "")
   // 初始化hive集群名称与metastore映射
-  private lazy val hiveMetastoreMap = PropUtils.sliceKeys(this.HIVE_CLUSTER_MAP_PREFIX)
+  private[fire] lazy val hiveMetastoreMap = PropUtils.sliceKeys(this.HIVE_CLUSTER_MAP_PREFIX)
   // hive-site.xml存放路径映射
   private lazy val hiveSiteMap = PropUtils.sliceKeys(this.HIVE_SITE_PATH_MAP_PREFIX)
   // hive版本号
