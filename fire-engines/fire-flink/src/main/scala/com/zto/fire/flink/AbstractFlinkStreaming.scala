@@ -19,8 +19,8 @@ package com.zto.fire.flink
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
-import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.{OSUtils, PropUtils}
+import com.zto.fire.common.enu.{JobType, RunMode}
+import com.zto.fire.common.util.{FireUtils, OSUtils, PropUtils}
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
@@ -28,11 +28,11 @@ import org.apache.flink.api.common.RuntimeExecutionMode
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.{ConfigConstants, Configuration}
+import org.apache.flink.streaming.api.environment.{StreamExecutionEnvironment => JStreamExecutionEnvironment}
 import org.apache.flink.streaming.api.scala.{OutputTag, StreamExecutionEnvironment}
 import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import org.apache.flink.table.api.{EnvironmentSettings, TableEnvironment}
 import org.apache.flink.table.functions.ScalarFunction
-import org.apache.flink.streaming.api.environment.{StreamExecutionEnvironment => JStreamExecutionEnvironment}
 
 
 /**
@@ -94,7 +94,7 @@ trait AbstractFlinkStreaming extends BaseFlink {
     super.createContext(conf)
     if (FlinkUtils.isYarnApplicationMode) this.restfulRegister.startRestServer
     val finalConf = this.buildConf(conf.asInstanceOf[Configuration])
-    if (OSUtils.isLocal) {
+    if (FireUtils.isLocalRunMode) {
       this.env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(finalConf)
     } else {
       this.env = StreamExecutionEnvironment.getExecutionEnvironment

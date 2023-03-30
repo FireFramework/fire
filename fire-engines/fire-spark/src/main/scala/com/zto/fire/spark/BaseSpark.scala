@@ -19,7 +19,7 @@ package com.zto.fire.spark
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
-import com.zto.fire.common.util.{OSUtils, PropUtils, SQLUtils}
+import com.zto.fire.common.util.{FireUtils, OSUtils, PropUtils, SQLUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.spark.acc.AccumulatorManager
@@ -154,7 +154,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     SqlExtensions.sqlExtension(sessionBuilder)
 
     // 在mac或windows环境下执行local模式，cpu数通过spark.local.cores指定，默认local[*]
-    if (OSUtils.isLocal) sessionBuilder.master(s"local[${FireSparkConf.localCores}]")
+    if (FireUtils.isLocalRunMode) sessionBuilder.master(s"local[${FireSparkConf.localCores}]")
     this._spark = sessionBuilder.getOrCreate()
     // 将当前spark conf中所有的配置信息同步给PropUtils
     PropUtils.setProperties(this._spark.conf.getAll)

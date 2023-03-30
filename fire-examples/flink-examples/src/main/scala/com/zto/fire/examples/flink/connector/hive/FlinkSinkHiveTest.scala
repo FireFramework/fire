@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.connector.hive
 
 import com.zto.fire._
+import com.zto.fire.core.anno.connector.Hive
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.println
 
@@ -30,6 +31,7 @@ import com.zto.fire.println
  * @since 2.0.0
  * @create 2021-01-18 17:24
  */
+@Hive("test")
 object FlinkSinkHiveTest extends FlinkStreaming {
 
   // 具体的业务逻辑放到process方法中

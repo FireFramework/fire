@@ -30,9 +30,8 @@ import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
 import com.zto.fire.spark.sql.SparkSqlUtils
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.hudi.DataSourceWriteOptions._
-import org.apache.hudi.common.model.HoodieTableType
-import org.apache.hudi.config.HoodieWriteConfig.TBL_NAME
+import com.zto.fire.hudi.enu.HoodieTableType
+import com.zto.fire.hudi.util.HudiUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.storage.StorageLevel
@@ -369,13 +368,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
               ): Unit = {
 
     // 1. 组装param中指定的hudi参数
-    val paramMap = FireHudiConf.hudiOptions(keyNum) ++ Map(RECORDKEY_FIELD.key -> recordKey,
-      PRECOMBINE_FIELD.key -> precombineKey,
-      PARTITIONPATH_FIELD.key -> partition,
-      TBL_NAME.key -> hudiTableName,
-      HIVE_STYLE_PARTITIONING.key -> "true",
-      TABLE_TYPE.key -> typeType.name
-    )
+    val paramMap = FireHudiConf.hudiOptions(keyNum) ++ HudiUtils.majorOptions(hudiTableName, recordKey, precombineKey, partition, typeType)
 
     // 2. 配置文件的优先级高于代码，将配置文件中以hudi.option.开头的配置进行覆盖
     val confOptions = options ++ paramMap

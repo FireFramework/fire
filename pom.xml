@@ -60,7 +60,7 @@
 
     <properties>
         <fire.version>${project.version}</fire.version>
-        <hudi.version>0.13.0</hudi.version>
+        <hudi.version>0.8.0</hudi.version>
         <commons-lang.version>2.5</commons-lang.version>
         <clickhouse-jdbc.version>0.3.1</clickhouse-jdbc.version>
         <maven.scope>provided</maven.scope>

@@ -18,8 +18,9 @@
 package com.zto.fire.hudi.util
 
 import com.zto.fire.common.util.Logging
+import com.zto.fire.hudi.enu.HoodieTableType
+
 import java.util.HashMap
-import org.apache.hudi.common.model.HoodieTableType
 
 /**
  * Hudi相关工具类
@@ -28,6 +29,31 @@ import org.apache.hudi.common.model.HoodieTableType
  * @since 2.3.5
  */
 object HudiUtils extends Logging {
+
+  /**
+   * 用于构建hudi表主要的参数
+   *
+   * @param hudiTableName
+   * hudi表名
+   * @param recordKey
+   * 去重主键
+   * @param precombineKey
+   * 合并策略键
+   * @param partition
+   * 分区类型
+   * @param typeType
+   * 表类型
+   */
+  def majorOptions(hudiTableName: String, recordKey: String, precombineKey: String, partition: String, typeType: HoodieTableType): Map[String, String] = {
+    Map("hoodie.datasource.write.recordkey.field" -> recordKey,
+      "hoodie.datasource.write.precombine.field" -> precombineKey,
+      "hoodie.datasource.write.partitionpath.field" -> partition,
+      "hoodie.datasource.write.table.name" -> hudiTableName,
+      "hoodie.table.name" -> hudiTableName,
+      "hoodie.datasource.write.hive_style_partitioning" -> "true",
+      "hoodie.datasource.write.table.type" -> typeType.name
+    )
+  }
 
 
   /**
