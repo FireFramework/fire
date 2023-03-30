@@ -56,6 +56,10 @@ private[fire] class SparkAnnoManager extends AnnoManager {
     this.put("spark.streaming.kafka.maxRatePerPartition", streaming.maxRatePerPartition())
     this.put("spark.streaming.backpressure.initialRate", streaming.backpressureInitialRate())
     this.put("spark.rocket.pull.max.speed.per.partition", streaming.maxRatePerPartition())
+    if (streaming.parallelism() > 0) {
+      this.put("spark.default.parallelism", streaming.parallelism())
+      this.put("spark.sql.shuffle.partitions", streaming.parallelism())
+    }
     this.put(FIRE_JOB_AUTO_START, streaming.autoStart())
   }
 

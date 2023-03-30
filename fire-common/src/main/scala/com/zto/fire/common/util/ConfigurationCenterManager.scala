@@ -87,7 +87,7 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
    * 调用外部配置中心接口获取配合信息
    */
   def invokeConfigCenter(className: String): JMap[ConfigureLevel, JMap[String, String]] = {
-    if (!FireFrameworkConf.configCenterEnable || (OSUtils.isLocal && !FireFrameworkConf.configCenterLocalEnable)) return this.configCenterProperties
+    if (!FireFrameworkConf.configCenterEnable || (FireUtils.isLocalRunMode && !FireFrameworkConf.configCenterLocalEnable)) return this.configCenterProperties
 
     val param = buildRequestParam(className)
     // 尝试从生产环境配置中心获取参数列表
@@ -103,7 +103,7 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
       val param = JSONUtils.parseObject[ConfigurationParam](json)
       if (noEmpty(param, param.getCode, param.getContent) && param.getCode == 200) {
         this.configCenterProperties.putAll(param.getContent)
-        this.logger.debug("配置中心参数已生效")
+        this.logger.info("配置中心参数已生效")
       }
     }
     this.configCenterProperties

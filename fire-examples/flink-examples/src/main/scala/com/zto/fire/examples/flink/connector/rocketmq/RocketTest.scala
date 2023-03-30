@@ -19,9 +19,9 @@ package com.zto.fire.examples.flink.connector.rocketmq
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.core.anno.connector.RocketMQ
+import com.zto.fire.core.anno.connector.{RocketMQ, RocketMQ2}
 import com.zto.fire.flink.FlinkStreaming
-import com.zto.fire.flink.anno.Checkpoint
+import com.zto.fire.flink.anno.{Checkpoint, Streaming}
 import org.apache.flink.api.scala._
 
 /**
@@ -32,9 +32,9 @@ import org.apache.flink.api.scala._
  * @create 2021-5-13 14:26:24
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Checkpoint(60)
-@Config("default.parallelism=2")
-@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire", tag = "*", startingOffset = "latest")
+@Streaming(interval = 30, parallelism = 2, disableOperatorChaining = true)
+@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@RocketMQ2(brokers = "bigdata_test", topics = "fire2", groupId = "fire2", tag = "*", startingOffset = "latest")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object RocketTest extends FlinkStreaming {
 
@@ -51,6 +51,7 @@ object RocketTest extends FlinkStreaming {
     // 3. createRocketMqPullStream()返回的是消息体
     // this.fire.createRocketMqPullStream()
 
-    // 从另一个rocketmq中消费数据
+    // 从另一个rocketmq中消费数据，keyNum=2对应@RocketMQ2注解中的配置
+    val dstream2 = this.fire.createRocketMqPullStream(keyNum = 2)
   }
 }

@@ -55,7 +55,7 @@ trait BaseFlink extends BaseFire {
   override private[fire] def boot: Unit = {
     PropUtils.load(FireFrameworkConf.FLINK_CONF_FILE)
     // flink引擎无需主动在父类中主动加载配置信息，配置加载在GlobalConfiguration中完成
-    if (OSUtils.isLocal || FireFrameworkConf.localEnv) {
+    if (FireUtils.isLocalRunMode || FireFrameworkConf.localEnv) {
       this.loadConf
       PropUtils.load(FireFrameworkConf.userCommonConf: _*).loadJobConf(this.getClass.getName)
     }

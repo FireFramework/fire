@@ -19,15 +19,19 @@ package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
-import com.zto.fire.common.util.{Logging, SQLUtils, ValueUtils}
+import com.zto.fire.common.util.{LogUtils, Logging, SQLUtils, ValueUtils}
 import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.hudi.conf.FireHudiConf
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
+import com.zto.fire.spark.sql.SparkSqlUtils
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
+import com.zto.fire.hudi.enu.HoodieTableType
+import com.zto.fire.hudi.util.HudiUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.storage.StorageLevel
@@ -43,6 +47,7 @@ import scala.reflect._
  * dataFrame实例
  */
 class DataFrameExt(dataFrame: DataFrame) extends Logging {
+  private[this] lazy val tablePathMap = new JHashMap[String, String]()
 
   /**
    * 注册为临时表的同时缓存表
@@ -337,5 +342,45 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    */
   def toExternalRow: DataFrame = {
     if (this.dataFrame.isStreaming) SparkUtils.toExternalRow(dataFrame) else this.dataFrame
+  }
+
+  /**
+   * 将DataFrame中的数据写入到指定的hudi表中
+   *
+   * @param hudiTableName
+   * hudi表名
+   * @param recordKey
+   * 按该字段进行upsert
+   * @param precombineKey
+   * 根据该字段进行合并
+   * @param tablePath
+   * hudi表的存储路径
+   * @param partition
+   * 分区字段
+   * @param options
+   * 额外的options信息
+   */
+  def sinkHudi(hudiTableName: String, recordKey: String,
+               precombineKey: String, partition: String, tablePath: String = "",
+               typeType: HoodieTableType = HoodieTableType.MERGE_ON_READ,
+               options: JMap[String, String] = Map.empty[String, String],
+               keyNum: Int = KeyNum._1
+              ): Unit = {
+
+    // 1. 组装param中指定的hudi参数
+    val paramMap = FireHudiConf.hudiOptions(keyNum) ++ HudiUtils.majorOptions(hudiTableName, recordKey, precombineKey, partition, typeType)
+
+    // 2. 配置文件的优先级高于代码，将配置文件中以hudi.option.开头的配置进行覆盖
+    val confOptions = options ++ paramMap
+    LogUtils.logMap(this.logger, confOptions.toMap, s"Hudi option conf. keyNum=$keyNum")
+
+    // 3. 获取hudi表的hdfs存储路径
+    val hudiTablePath = if (noEmpty(tablePath)) tablePath else this.tablePathMap.mergeGet(hudiTableName)(SparkSqlUtils.getTablePath(hudiTableName))
+
+    // 4. 将dataFrame数据写入到指定的hudi表中
+    dataFrame.write.format(FireHudiConf.HUDI_FORMAT)
+      .options(confOptions)
+      .mode(SaveMode.Append)
+      .save(hudiTablePath)
   }
 }

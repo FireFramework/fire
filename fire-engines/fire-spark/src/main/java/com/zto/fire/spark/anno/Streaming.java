@@ -61,4 +61,8 @@ public @interface Streaming {
      */
     boolean stopGracefullyOnShutdown() default true;
 
+    /**
+     * 任务的并行度
+     */
+    int parallelism() default -1;
 }

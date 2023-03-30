@@ -19,7 +19,7 @@ package com.zto.fire.flink
 
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.{OSUtils, PropUtils}
+import com.zto.fire.common.util.{FireUtils, OSUtils, PropUtils}
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.java.utils.ParameterTool
@@ -82,7 +82,7 @@ trait AbstractFlinkBatch extends BaseFlink {
   override private[fire] def createContext(conf: Any): Unit = {
     super.createContext(conf)
     val finalConf = this.buildConf(conf.asInstanceOf[Configuration])
-    if (OSUtils.isLocal) {
+    if (FireUtils.isLocalRunMode) {
       this.env = ExecutionEnvironment.createLocalEnvironmentWithWebUI(finalConf)
     } else {
       this.env = ExecutionEnvironment.getExecutionEnvironment

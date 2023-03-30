@@ -20,11 +20,13 @@ package com.zto.fire.spark.ext.core
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.core.Api
+import com.zto.fire.hudi.conf.FireHudiConf
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import com.zto.fire.spark.bean.GenerateBean
 import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.connector.{BeanGenReceiver, DataGenReceiver}
 import com.zto.fire.spark.ext.provider._
+import com.zto.fire.spark.sql.SparkSqlUtils
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.common.message.MessageExt
@@ -46,7 +48,7 @@ import scala.reflect.ClassTag
  * sparkSession对象
  * @author ChengLong 2019-5-18 10:51:19
  */
-class SparkSessionExt(spark: SparkSession) extends Api with JdbcConnectorBridge with JdbcSparkProvider
+class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge with JdbcSparkProvider
   with HBaseBulkProvider with SqlProvider with HBaseConnectorProvider with HBaseHadoopProvider with KafkaSparkProvider {
   private[fire] lazy val ssc = SparkSingletonFactory.getStreamingContext
   private[this] lazy val appName = ssc.sparkContext.appName
@@ -218,5 +220,22 @@ class SparkSessionExt(spark: SparkSession) extends Api with JdbcConnectorBridge 
 
     requireNonEmpty(finalFormat, finalLoadParam)
     SparkSingletonFactory.getSparkSession.read.format(format).options(SparkUtils.optionsEnhance(options, keyNum)).load(finalLoadParam: _*)
+  }
+
+  /**
+   * 将已hive表为载体的hudi表注册成hudi表
+   *
+   * @param hiveTableName
+   * hive表名
+   * @param hudiViewName
+   * hudi视图名
+   */
+  def createOrReplaceHudiTempView(hiveTableName: String, hudiViewName: String): Unit = {
+    requireNonEmpty(hiveTableName)("Hive表名不能为空！")
+    requireNonEmpty(hudiViewName)("Hudi视图表名不能为空")
+
+    if (!this.spark.catalog.tableExists(hiveTableName)) throw new IllegalArgumentException(s"Hive表名不存在：$hiveTableName")
+    val df = this.spark.read.format(FireHudiConf.HUDI_FORMAT).load(SparkSqlUtils.getTablePath(hiveTableName))
+    df.createOrReplaceTempView(hudiViewName)
   }
 }

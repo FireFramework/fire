@@ -660,4 +660,11 @@ object SparkUtils extends Logging {
    * 2. Flink: ExecutionEnv
    */
   def isEngineDown: Boolean = !this.isEngineUp
+
+  /**
+   * 获取executor个数
+   */
+  def executorNum: Int = {
+    SparkSingletonFactory.getSparkSession.sparkContext.getConf.get("spark.executor.instances", "10").toInt
+  }
 }

@@ -57,4 +57,10 @@ public @interface Hive {
      * 分区名称（dt、ds）：default.table.partition.name
      */
     String partition() default "";
+
+    /**
+     * hdfs参数，以key=value形式注明
+     * 可以是一些hdfs的配置参数，如：dfs.client.read.timeout=10000
+     */
+    String[] config() default "";
 }

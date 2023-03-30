@@ -7,3 +7,5 @@ conf-test.properties
 conf-dev.properties
 conf-prod.properties
 cluster.properties
+dev/repo
+pom.xml.versionsBackup

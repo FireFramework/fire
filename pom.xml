@@ -22,7 +22,7 @@
     <groupId>com.zto.fire</groupId>
     <artifactId>fire-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.3.3</version>
+    <version>2.3.5-SNAPSHOT</version>
     <name>Fire : </name>
     <description>Fire framework is a development framework for real-time computing task development . The framework provides a simple and easy to use API that can significantly reduce the development threshold of Spark and Flink and improve development efficiency.</description>
     <url>https://github.com/fire-framework/fire</url>
@@ -60,7 +60,8 @@
 
     <properties>
         <fire.version>${project.version}</fire.version>
-        <hudi.version>0.9.0</hudi.version>
+        <hudi.version>0.8.0</hudi.version>
+        <hudi.major.version>0.8</hudi.major.version>
         <commons-lang.version>2.5</commons-lang.version>
         <clickhouse-jdbc.version>0.3.1</clickhouse-jdbc.version>
         <maven.scope>provided</maven.scope>
@@ -98,6 +99,58 @@
     </modules>
 
     <profiles>
+        <profile>
+            <id>release</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.9.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <failOnError>false</failOnError>
+                            <additionalparam>-Xdoclint:none</additionalparam>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- 本地运行需启用该profile，否则会报某些类找不到异常。集群模式请禁用，否则包非常大，依赖冲突风险倍增 -->
+        <profile>
+            <id>run-local</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <maven.scope>compile</maven.scope>
+            </properties>
+        </profile>
+
         <!-- Configure whether to build the fire-examples module. -->
         <profile>
             <id>build-examples</id>
@@ -125,6 +178,7 @@
             <id>scala-2.11</id>
             <properties>
                 <scala.binary.version>2.11</scala.binary.version>
+                <scala.exclusion.version>2.12</scala.exclusion.version>
                 <scala.minor.version>8</scala.minor.version>
             </properties>
         </profile>
@@ -136,6 +190,7 @@
             </activation>
             <properties>
                 <scala.binary.version>2.12</scala.binary.version>
+                <scala.exclusion.version>2.11</scala.exclusion.version>
                 <scala.minor.version>13</scala.minor.version>
             </properties>
         </profile>
@@ -440,9 +495,6 @@
 
         <profile>
             <id>flink-1.15</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <flink.version>1.15.3</flink.version>
                 <flink.major.version>1.15</flink.major.version>
@@ -466,9 +518,6 @@
 
         <profile>
             <id>flink-1.16</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <flink.version>1.16.0</flink.version>
                 <flink.major.version>1.16</flink.major.version>
@@ -489,74 +538,25 @@
                 </dependency>
             </dependencies>
         </profile>
-
         <profile>
-            <id>build-deploy</id>
+            <id>hudi-0.8</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
+                <activeByDefault>true</activeByDefault>
             </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>2.2.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <failOnError>false</failOnError>
-                            <additionalparam>-Xdoclint:none</additionalparam>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>net.ju-n.maven.plugins</groupId>
-                        <artifactId>checksum-maven-plugin</artifactId>
-                        <version>1.2</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>artifacts</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
+            <properties>
+                <hudi.version>0.8.0</hudi.version>
+                <hudi.major.version>0.8</hudi.major.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>hudi-0.13</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <hudi.version>0.13.0</hudi.version>
+                <hudi.major.version>0.13</hudi.major.version>
+            </properties>
         </profile>
     </profiles>
 

@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.util
 
+import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.DateUtils
 
@@ -566,6 +567,34 @@ object DateFormatUtils extends Logging {
       nextDay = tmpDay
     }
     dates.toArray
+  }
+
+  /**
+   * 返回区间内的所有分区（左闭右开）
+   *
+   * @param dayStart
+   * 开始时间
+   * @param dayEnd
+   * 结束时间
+   * @param schema
+   * 开始时间与结束时间的schema
+   * @return
+   * 返回区间内所有时间（schema）
+   */
+  def getRange(dayStart: String, dayEnd: String, schema: String): Array[String] = {
+    requireNonEmpty(dayStart, dayEnd, schema)("参数不能为空！")
+
+    val array = ArrayBuffer[String]()
+    val startDay = DateFormatUtils.formatDate(DateFormatUtils.dateSchemaFormat(dayStart, schema, "yyyy-MM-dd HH:mm:ss"))
+    val endDay = DateFormatUtils.formatDate(DateFormatUtils.dateSchemaFormat(dayEnd, schema, "yyyy-MM-dd HH:mm:ss"))
+
+    var currentDS = startDay
+    while (currentDS.before(endDay)) {
+      array += DateFormatUtils.formatBySchema(currentDS, schema)
+      currentDS = DateUtils.addDays(currentDS, 1)
+    }
+
+    array.toArray
   }
 
   /**

@@ -19,7 +19,7 @@ under the License.
 
 # Fire框架
 
-　　Fire框架是由**中通大数据**自主研发并开源的、专门用于进行**Spark**和**Flink**任务开发的大数据框架。该框架屏蔽技术细节，提供大量简易API帮助开发者更快的构建实时计算任务。同时Fire框架也内置了平台化的功能，用于与实时平台集成。基于Fire框架的任务在中通每天处理的数据量高达**几千亿以上**，覆盖了**Spark计算**（离线&实时）、**Flink计算**等众多计算场景。
+　　Fire框架是由**中通**大数据自主研发并开源的、专门用于进行Spark和Flink任务开发的大数据框架，可节约70%以上的代码量。首创基于注解进行Spark和Flink任务开发，具备**实时血缘、根因诊断、动态调优、参数热调整**等众多平台化功能。Fire框架在中通内部每天处理数据量高达数千亿，在外部已被数十家公司所使用。
 
 ## 一、就这么简单！
 
@@ -68,7 +68,13 @@ object SparkDemo extends SparkStreaming {
 
 ***说明：structured streaming、spark core、flink sql、flink批任务均支持，代码结构与上述示例一致。***
 
-## *[二、开发文档](./docs/index.md)*
+## *二、开发与示例*
+
+## 2.1 [Spark开发示例](https://gitee.com/fire-framework/spark-examples)
+
+## 2.2 [Flink开发示例](https://gitee.com/fire-framework/flink-examples)
+
+**示例项目clone后导入idea即可run，无需任何额外配置！**
 
 ## 三、亮点多多！
 

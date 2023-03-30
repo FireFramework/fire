@@ -19,7 +19,7 @@ package com.zto.fire.common.util
 
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
-import com.zto.fire.common.enu.JobType
+import com.zto.fire.common.enu.{JobType, RunMode}
 import com.zto.fire.predef._
 
 /**
@@ -168,6 +168,22 @@ private[fire] object FireUtils extends Serializable with Logging {
    * 用于获取任务在实时平台中的唯一id标识
    */
   def platformAppId: String = FireFrameworkConf.configCenterAppId
+
+  /**
+   * 获取配置的任务运行模式
+   */
+  def runMode: RunMode = RunMode.parse(FireFrameworkConf.fireJobRunMode)
+
+  /**
+   * 用于判断是否以local模式提交执行
+   */
+  def isLocalRunMode: Boolean = {
+    if (RunMode.LOCAL == FireUtils.runMode) {
+      true
+    } else if (RunMode.AUTO == this.runMode &&  OSUtils.isLocal) {
+      true
+    } else false
+  }
 
   /**
    * 用于在fire框架启动时展示信息

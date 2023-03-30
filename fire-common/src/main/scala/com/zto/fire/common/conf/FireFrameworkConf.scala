@@ -31,6 +31,7 @@ private[fire] object FireFrameworkConf {
   // fire版本号
   lazy val FIRE_VERSION = "fire.version"
   lazy val DRIVER_CLASS_NAME = "driver.class.name"
+  lazy val FIRE_JOB_RUN_MODE = "fire.job.run.mode"
   // fire内置线程池大小
   lazy val FIRE_THREAD_POOL_SIZE = "fire.thread.pool.size"
   // fire内置定时任务线程池大小
@@ -205,6 +206,8 @@ private[fire] object FireFrameworkConf {
   lazy val driverClassName = PropUtils.getString(this.DRIVER_CLASS_NAME)
   // 是否打印配置信息
   lazy val fireConfShow: Boolean = PropUtils.getBoolean(this.FIRE_CONF_SHOW_ENABLE, false)
+  // 任务运行模式
+  lazy val fireJobRunMode: String = PropUtils.getString(this.FIRE_JOB_RUN_MODE, "auto")
   // 是否将restful地址以日志方式打印
   lazy val fireRestUrlShow: Boolean = PropUtils.getBoolean(this.FIRE_REST_URL_SHOW_ENABLE, false)
   // 获取动态配置参数
