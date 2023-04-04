@@ -22,6 +22,7 @@ import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.HiveTableStoredType
 import com.zto.fire.common.util.Logging
 import com.zto.fire.spark.util.SparkSingletonFactory
+import org.apache.spark.sql.catalyst.util.quoteIdentifier
 import org.apache.spark.sql.types.StructField
 
 /**
@@ -108,6 +109,25 @@ object SparkSqlUtils extends Logging {
   def generateCreateSQL(srcTableName: String, hudiTableName: String, partitionFiledAndType: String, tableStoredType: HiveTableStoredType = HiveTableStoredType.ORC): String = {
     requireNonEmpty(srcTableName, hudiTableName)("表名不能为空，请检查！")
 
+    def escapeSingleQuotedString(str: String): String = {
+      val builder = StringBuilder.newBuilder
+
+      str.foreach {
+        case '\'' => builder ++= s"\\\'"
+        case ch => builder += ch
+      }
+
+      builder.toString()
+    }
+
+    def toDDL(field: StructField): String = {
+      val comment = field.getComment()
+        .map(escapeSingleQuotedString)
+        .map(" COMMENT '" + _ + "'")
+
+      s"${quoteIdentifier(field.name)} ${field.dataType.sql}${comment.getOrElse("")}"
+    }
+
     val fields = SparkSqlUtils.tableSchema(srcTableName)
     requireNonEmpty(fields)(s"表${srcTableName}的字段列表为空！")
 
@@ -122,7 +142,7 @@ object SparkSqlUtils extends Logging {
     fields.filter(t => !partitionFiledAndType.contains(t.name)).foreach(field => {
       fieldBuilder
         .append("\t")
-        .append(field.toDDL)
+        .append(toDDL(field))
         .append(",\n")
     })
 
