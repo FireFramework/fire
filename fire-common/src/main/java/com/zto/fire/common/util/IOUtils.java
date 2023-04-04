@@ -20,7 +20,10 @@ package com.zto.fire.common.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileWriter;
 
 /**
  * io流工具类
@@ -63,6 +66,31 @@ public class IOUtils {
                     logger.error("close process 对象失败", e);
                 }
             }
+        }
+    }
+
+    /**
+     * 将文本写入到指定的文件中
+     * @param filePath
+     * 文件
+     * @param text
+     * 文本
+     * @param overwrite
+     * 是否覆盖写，若false则追加写
+     */
+    public static void writeText(String filePath, String text, boolean overwrite) {
+        FileWriter fileWriter = null;
+        BufferedWriter bw = null;
+        try {
+            if (overwrite && FileUtils.exists(filePath)) new File(filePath).delete();
+
+            fileWriter = new FileWriter(filePath);
+            bw = new BufferedWriter(fileWriter);
+            bw.write(text);
+        } catch (Exception e) {
+            logger.error("文件写入失败！", e);
+        } finally {
+            IOUtils.close(bw, fileWriter);
         }
     }
 }

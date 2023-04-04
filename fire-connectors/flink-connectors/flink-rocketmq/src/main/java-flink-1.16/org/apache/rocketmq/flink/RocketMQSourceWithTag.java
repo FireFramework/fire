@@ -209,16 +209,21 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
 
     private long getMessageQueueOffset(MessageQueue mq) throws MQClientException {
         Long offset = offsetTable.get(mq);
-        // restoredOffsets(unionOffsetStates) is the restored global union state;
-        // should only snapshot mqs that actually belong to us
-        if (restored && offset == null) {
-            offset = restoredOffsets.get(mq);
-        }
+
         if (offset == null) {
             LOG.debug("从状态中获取Offset列表为空，将从server端获取offset列表");
             offset = consumer.fetchConsumeOffset(mq, true);
+
+            int retryCount = 1;
+            while (offset < 0 && retryCount <= 3) {
+                offset = consumer.fetchConsumeOffset(mq, true);
+                retryCount += 1;
+                LOG.error("offset-> fetchConsumeOffset 返回值=" + offset + " 第" + retryCount + "次重试.");
+            }
+
             if (offset < 0) {
                 String initialOffset = props.getProperty(RocketMQConfig.CONSUMER_OFFSET_RESET_TO, CONSUMER_OFFSET_LATEST);
+                Log.error("重试获取offset 5次仍失败，将强制重置offset=" + initialOffset);
                 switch (initialOffset) {
                     case CONSUMER_OFFSET_EARLIEST:
                         offset = consumer.minOffset(mq);
@@ -327,9 +332,14 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
             if (restoredOffsets == null) {
                 restoredOffsets = new ConcurrentHashMap<>();
             }
+            if (offsetTable == null) {
+                offsetTable = new ConcurrentHashMap<>();
+            }
             for (Tuple2<MessageQueue, Long> mqOffsets : unionOffsetStates.get()) {
                 if (!restoredOffsets.containsKey(mqOffsets.f0) || restoredOffsets.get(mqOffsets.f0) < mqOffsets.f1) {
                     restoredOffsets.put(mqOffsets.f0, mqOffsets.f1);
+                    // 将状态中的offset列表在初始化时直接塞给offsetTable
+                    offsetTable.put(mqOffsets.f0, mqOffsets.f1);
                 }
             }
             LOG.info("Setting restore state in the consumer. Using the following offsets: {}", restoredOffsets);

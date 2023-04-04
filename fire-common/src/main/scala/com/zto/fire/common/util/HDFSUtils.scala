@@ -34,6 +34,7 @@ object HDFSUtils extends Logging {
 
   /**
    * 执行hdfs相关命令
+   *
    * @param fun
    * 业务逻辑
    */
@@ -51,6 +52,7 @@ object HDFSUtils extends Logging {
 
   /**
    * 读取指定hdfs路径下的文本文件
+   *
    * @param path
    * hdfs文件路径
    * @return
@@ -92,6 +94,46 @@ object HDFSUtils extends Logging {
     val fs = FileSystem.get(new URI(hdfsUrl), hdfsConf, hdfsUser)
     fs.setWorkingDirectory(new Path("/"))
     fs
+  }
+
+  /**
+   * 将本地文件上传到指定hdfs路径下
+   *
+   * @param localFile
+   * 本地文件路径
+   * @param destPath
+   * hdfs目标路径
+   * @param overwrite
+   * 是否强制覆盖已存在的文件
+   */
+  def upload(localFile: String, destPath: String, overwrite: Boolean = false): Unit = {
+    execute(fs => {
+      try {
+        fs.copyFromLocalFile(false, overwrite, new Path(localFile), new Path(destPath))
+      } catch {
+        case e: Throwable => logError(s"将本地文件：${localFile}上传至hdfs：${destPath}失败！", e)
+      }
+    })
+  }
+
+  /**
+   * 将本地文件上传到指定hdfs路径下
+   *
+   * @param localFile
+   * 本地文件路径
+   * @param destPath
+   * hdfs目标路径
+   * @param overwrite
+   * 是否强制覆盖已存在的文件
+   */
+  def download(hdfsFile: String, destPath: String, overwrite: Boolean = false): Unit = {
+    execute(fs => {
+      try {
+        fs.copyToLocalFile(overwrite, new Path(hdfsFile), new Path(destPath))
+      } catch {
+        case e: Throwable => logError(s"将hdfs文件：${hdfsFile}下载至本地：${destPath}失败！", e)
+      }
+    })
   }
 
   /**

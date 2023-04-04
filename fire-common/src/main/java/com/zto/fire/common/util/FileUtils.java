@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,13 +34,14 @@ import java.util.Objects;
 public class FileUtils {
     private static Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
-    private FileUtils() {}
+    private FileUtils() {
+    }
 
 
     /**
      * 递归查找指定目录下的文件
      *
-     * @param path 路径
+     * @param path     路径
      * @param fileName 文件名
      * @return 文件全路径
      */
@@ -72,7 +74,8 @@ public class FileUtils {
      * @throws Exception
      */
     public static String readTextFile(File file) throws Exception {
-        if (file == null || !file.exists() || file.isDirectory()) throw new FileNotFoundException("文件不合法，读取内容失败！" + OSUtils.getIp() + ":/" + file);
+        if (file == null || !file.exists() || file.isDirectory())
+            throw new FileNotFoundException("文件不合法，读取内容失败！" + OSUtils.getIp() + ":/" + file);
 
         StringBuilder sqlBuilder = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -101,14 +104,60 @@ public class FileUtils {
      * 获取类的jar包或路径信息，可用于jar包冲突排查
      */
     public static String getClassJarPath(Class<?> clazz) {
-       try {
-           String classPathName = clazz.getName().replace(".", "/");
-           String resource = "/" + classPathName + ".class";
-           URL url = clazz.getResource(resource);
-           return url.getFile();
-       } catch (Exception e) {
+        try {
+            String classPathName = clazz.getName().replace(".", "/");
+            String resource = "/" + classPathName + ".class";
+            URL url = clazz.getResource(resource);
+            return url.getFile();
+        } catch (Exception e) {
             logger.error("未获取到类的路径信息：" + clazz.getName(), e);
-       }
-       return "NOT_FOUND";
+        }
+        return "NOT_FOUND";
+    }
+
+    /**
+     * 用于判断指定路径的文件是否存在
+     *
+     * @param filePath 文件路径
+     */
+    public static boolean exists(String filePath) {
+        if (StringUtils.isBlank(filePath)) return false;
+
+        File file = new File(filePath);
+        return file.exists();
+    }
+
+    /**
+     * 为指定的path路径添加斜线分隔符
+     *
+     * @param path 原始path字符串路径
+     * @return 以斜线结尾的path
+     */
+    public static String appendSeparator(String path) {
+        if (StringUtils.isBlank(path)) return "";
+
+        String trimPath = StringUtils.trim(path);
+        if (trimPath.endsWith(File.separator)) {
+            return trimPath;
+        } else {
+            return trimPath + File.separator;
+        }
+    }
+
+    /**
+     * 将多个路径合并成一个
+     *
+     * @param files 多个文件路径
+     * @return 以指定路径分隔符拼接后的完整路径
+     */
+    public static String appendPath(String... files) {
+        if (files == null || files.length == 0) return "";
+        StringBuilder path = new StringBuilder();
+
+        for (String file : files) {
+            path.append(appendSeparator(file));
+        }
+
+        return path.substring(0, path.length() - 1);
     }
 }
