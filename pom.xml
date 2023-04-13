@@ -274,7 +274,7 @@
         <profile>
             <id>spark-3.3</id>
             <properties>
-                <spark.version>3.3.1</spark.version>
+                <spark.version>3.3.2</spark.version>
                 <spark.major.version>3.3</spark.major.version>
                 <jackson.version>2.10.5</jackson.version>
             </properties>
@@ -546,6 +546,16 @@
             <properties>
                 <hudi.version>0.8.0</hudi.version>
                 <hudi.major.version>0.8</hudi.major.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>hudi-0.10</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <hudi.version>0.10.2-SNAPSHOT</hudi.version>
+                <hudi.major.version>0.10</hudi.major.version>
             </properties>
         </profile>
         <profile>

@@ -245,6 +245,7 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._1))
     this.hudiParallelism(hudi.parallelism(), KeyNum._1)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._1)
+    this.hudiClusterConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._1)
   }
 
   /**
@@ -333,13 +334,35 @@ private[fire] trait AnnoManager extends Logging {
    * 用于配置hudi任务的compaction参数
    */
   @Internal
+  private[this] def hudiClusterConf(clusterCommits: Int, clusterSchedule: Boolean, keyNum: Int): Unit = {
+    if (clusterCommits > 0) {
+      this.toHudiConf(("hoodie.clustering.inline.max.commits", clusterCommits.toString), keyNum)
+    }
+
+    if (clusterSchedule) {
+      this.toHudiConf(("hoodie.clustering.inline", "false"), keyNum)
+      this.toHudiConf(("hoodie.clustering.schedule.inline", "true"), keyNum)
+    } else {
+      this.toHudiConf(("hoodie.clustering.inline", "true"), keyNum)
+      this.toHudiConf(("hoodie.clustering.schedule.inline", "false"), keyNum)
+    }
+  }
+
+  /**
+   * 用于配置hudi任务的compaction参数
+   */
+  @Internal
   private[this] def hudiCompactConf(compactCommits: Int, compactSchedule: Boolean, keyNum: Int): Unit = {
+    if (compactCommits > 0) {
+      this.toHudiConf(("hoodie.compact.inline.max.delta.commits", compactCommits.toString), keyNum)
+    }
+
     if (compactSchedule) {
       this.toHudiConf(("hoodie.compact.inline", "false"), keyNum)
       this.toHudiConf(("hoodie.compact.schedule.inline", "true"), keyNum)
-    } else if (compactCommits > 0) {
+    } else {
       this.toHudiConf(("hoodie.compact.inline", "true"), keyNum)
-      this.toHudiConf(("hoodie.compact.inline.max.delta.commits", compactCommits.toString), keyNum)
+      this.toHudiConf(("hoodie.compact.schedule.inline", "false"), keyNum)
     }
   }
 
