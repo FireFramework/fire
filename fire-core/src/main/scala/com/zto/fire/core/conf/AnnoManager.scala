@@ -321,12 +321,12 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   private[this] def hudiParallelism(parallelism: Int, keyNum: Int): Unit = {
     if (parallelism > 0) {
-      this.put("hoodie.bloom.index.parallelism", parallelism.toString, keyNum)
-      this.put("hoodie.simple.index.parallelism", parallelism.toString, keyNum)
-      this.put("hoodie.insert.shuffle.parallelism", parallelism.toString, keyNum)
-      this.put("hoodie.upsert.shuffle.parallelism", parallelism.toString, keyNum)
-      this.put("hoodie.bulkinsert.shuffle.parallelism", parallelism.toString, keyNum)
-      this.put("hoodie.delete.shuffle.parallelism", parallelism.toString, keyNum)
+      this.toHudiConf(("hoodie.bloom.index.parallelism", parallelism.toString), keyNum)
+      this.toHudiConf(("hoodie.simple.index.parallelism", parallelism.toString), keyNum)
+      this.toHudiConf(("hoodie.insert.shuffle.parallelism", parallelism.toString), keyNum)
+      this.toHudiConf(("hoodie.upsert.shuffle.parallelism", parallelism.toString), keyNum)
+      this.toHudiConf(("hoodie.bulkinsert.shuffle.parallelism", parallelism.toString), keyNum)
+      this.toHudiConf(("hoodie.delete.shuffle.parallelism", parallelism.toString), keyNum)
     }
   }
 
