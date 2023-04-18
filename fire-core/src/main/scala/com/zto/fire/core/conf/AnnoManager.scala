@@ -262,6 +262,7 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._2))
     this.hudiParallelism(hudi.parallelism(), KeyNum._2)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._2)
+    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._2)
   }
 
   /**
@@ -278,6 +279,7 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._3))
     this.hudiParallelism(hudi.parallelism(), KeyNum._3)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._3)
+    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._3)
   }
 
   /**
@@ -294,6 +296,7 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._4))
     this.hudiParallelism(hudi.parallelism(), KeyNum._4)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._4)
+    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._4)
   }
 
   /**
@@ -310,6 +313,7 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._5))
     this.hudiParallelism(hudi.parallelism(), KeyNum._5)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._5)
+    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._5)
   }
 
   /**
