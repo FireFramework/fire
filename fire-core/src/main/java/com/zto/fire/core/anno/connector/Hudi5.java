@@ -69,7 +69,7 @@ public @interface Hudi5 {
      * hoodie.clustering.inline=true
      * hoodie.clustering.inline.max.commits=xxx
      */
-    int clusterCommits() default 5;
+    int clusterCommits() default -1;
 
     /**
      * 是否只做clustering的调度计划，适用于有独立的离线的clustering任务场景下开启

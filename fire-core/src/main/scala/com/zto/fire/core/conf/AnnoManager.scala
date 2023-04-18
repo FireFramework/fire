@@ -245,7 +245,7 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._1))
     this.hudiParallelism(hudi.parallelism(), KeyNum._1)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._1)
-    this.hudiClusterConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._1)
+    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._1)
   }
 
   /**
