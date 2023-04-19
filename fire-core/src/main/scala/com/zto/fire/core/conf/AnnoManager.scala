@@ -341,14 +341,14 @@ private[fire] trait AnnoManager extends Logging {
   private[this] def hudiClusterConf(clusterCommits: Int, clusterSchedule: Boolean, keyNum: Int): Unit = {
     if (clusterCommits > 0) {
       this.toHudiConf(("hoodie.clustering.inline.max.commits", clusterCommits.toString), keyNum)
-    }
 
-    if (clusterSchedule) {
-      this.toHudiConf(("hoodie.clustering.inline", "false"), keyNum)
-      this.toHudiConf(("hoodie.clustering.schedule.inline", "true"), keyNum)
-    } else {
-      this.toHudiConf(("hoodie.clustering.inline", "true"), keyNum)
-      this.toHudiConf(("hoodie.clustering.schedule.inline", "false"), keyNum)
+      if (clusterSchedule) {
+        this.toHudiConf(("hoodie.clustering.inline", "false"), keyNum)
+        this.toHudiConf(("hoodie.clustering.schedule.inline", "true"), keyNum)
+      } else {
+        this.toHudiConf(("hoodie.clustering.inline", "true"), keyNum)
+        this.toHudiConf(("hoodie.clustering.schedule.inline", "false"), keyNum)
+      }
     }
   }
 
@@ -359,14 +359,14 @@ private[fire] trait AnnoManager extends Logging {
   private[this] def hudiCompactConf(compactCommits: Int, compactSchedule: Boolean, keyNum: Int): Unit = {
     if (compactCommits > 0) {
       this.toHudiConf(("hoodie.compact.inline.max.delta.commits", compactCommits.toString), keyNum)
-    }
 
-    if (compactSchedule) {
-      this.toHudiConf(("hoodie.compact.inline", "false"), keyNum)
-      this.toHudiConf(("hoodie.compact.schedule.inline", "true"), keyNum)
-    } else {
-      this.toHudiConf(("hoodie.compact.inline", "true"), keyNum)
-      this.toHudiConf(("hoodie.compact.schedule.inline", "false"), keyNum)
+      if (compactSchedule) {
+        this.toHudiConf(("hoodie.compact.inline", "false"), keyNum)
+        this.toHudiConf(("hoodie.compact.schedule.inline", "true"), keyNum)
+      } else {
+        this.toHudiConf(("hoodie.compact.inline", "true"), keyNum)
+        this.toHudiConf(("hoodie.compact.schedule.inline", "false"), keyNum)
+      }
     }
   }
 
