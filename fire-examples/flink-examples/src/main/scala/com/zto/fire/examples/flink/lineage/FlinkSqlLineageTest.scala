@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
  * @author ChengLong 2022-09-13 14:20:13
  * @since 2.0.0
  */
-@Hive("test")
+@Hive("fat")
 @Streaming(interval = 60, parallelism = 2)
 object FlinkSqlLineageTest extends FlinkStreaming {
 

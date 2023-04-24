@@ -32,7 +32,7 @@ import scala.util.Try
  * @Date 2022-04-29 13:37:30
  * @since 2.2.1
  */
-@Hive("test")
+@Hive("fat")
 class SparkSqlParseTest extends SparkCore {
 
   @Before

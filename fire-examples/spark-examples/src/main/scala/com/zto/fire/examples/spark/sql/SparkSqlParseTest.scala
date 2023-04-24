@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
  *
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Hive("test")
+@Hive("fat")
 object SparkSqlParseTest extends SparkCore {
 
   override def process: Unit = {

@@ -28,7 +28,7 @@ import org.apache.flink.api.scala._
  *
  * @author ChengLong 2020-4-10 09:50:26
  */
-@Hive("test")
+@Hive("fat")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object FlinkPartitioner extends FlinkStreaming {

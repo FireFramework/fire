@@ -30,7 +30,7 @@ import com.zto.fire.flink.anno.Streaming
  * @since 2.0.0
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Hive("test")
+@Hive("fat")
 @Streaming(interval = 60, parallelism = 2)
 object HiveWriteDemo extends FlinkStreaming {
 

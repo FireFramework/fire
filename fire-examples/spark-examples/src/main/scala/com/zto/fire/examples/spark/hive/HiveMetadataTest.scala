@@ -30,7 +30,7 @@ import com.zto.fire.spark.SparkCore
   """
     |spark.sql.statistics.size.autoUpdate.enabled=true
     |""")
-@Hive("test")
+@Hive("fat")
 // 配置消费的kafka信息
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object HiveMetadataTest extends SparkCore {

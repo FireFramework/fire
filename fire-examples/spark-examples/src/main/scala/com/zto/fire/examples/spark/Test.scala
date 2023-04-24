@@ -66,7 +66,7 @@ class Test {
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @HBase("test")
-@Hive("test")
+@Hive("fat")
 object Test extends SparkCore {
 
   override def process: Unit = {

@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @HBase("test")
-@Hive("test")
+@Hive("fat")
 @Config("""fire.lineage.run.initialDelay=10""")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @Streaming(interval = 10, concurrent = 2)

@@ -40,7 +40,7 @@ import com.zto.fire.spark.anno.Streaming
     |fire.analysis.arthas.container.enable=true
     |fire.analysis.arthas.conf.arthas.username=spark
     |""")
-@Hive("test")
+@Hive("fat")
 @Streaming(20)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中

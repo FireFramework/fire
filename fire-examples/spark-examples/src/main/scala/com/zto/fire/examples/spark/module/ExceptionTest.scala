@@ -22,7 +22,7 @@ import com.zto.fire.core.anno.connector._
 import com.zto.fire.spark.SparkCore
 import com.zto.fire.spark.anno.Streaming
 
-@Hive("test")
+@Hive("fat")
 @Streaming(interval = 10)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object ExceptionTest extends SparkCore {

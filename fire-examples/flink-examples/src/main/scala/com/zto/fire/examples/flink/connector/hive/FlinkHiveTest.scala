@@ -29,7 +29,7 @@ import com.zto.fire.flink.anno.Checkpoint
     |# 1. 读取hive维表必须启用该配置
     |sql.conf.table.dynamic-table-options.enabled=true
     |""")
-@Hive("test")
+@Hive("fat")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 @Checkpoint(interval = 60, concurrent = 1, pauseBetween = 60, timeout = 60)
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中

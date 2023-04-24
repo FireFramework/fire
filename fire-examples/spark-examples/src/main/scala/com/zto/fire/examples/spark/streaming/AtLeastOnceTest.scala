@@ -36,7 +36,7 @@ import com.zto.fire.spark.anno.Streaming
     |fire.acc.timer.max.size=30
     |fire.acc.log.max.size=20
     |""")
-@Hive("test")
+@Hive("fat")
 @Streaming(100) // spark streaming的批次时间
 @Kafka(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中

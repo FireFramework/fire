@@ -31,7 +31,7 @@ import com.zto.fire.println
  * @since 2.0.0
  * @create 2021-01-18 17:24
  */
-@Hive("test")
+@Hive("fat")
 object FlinkSinkHiveTest extends FlinkStreaming {
 
   // 具体的业务逻辑放到process方法中

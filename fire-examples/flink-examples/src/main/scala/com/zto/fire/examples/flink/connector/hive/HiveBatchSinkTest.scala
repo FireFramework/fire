@@ -31,7 +31,7 @@ import com.zto.fire.flink.FlinkStreaming
  * @create 2021-01-18 17:24
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Hive("test")
+@Hive("fat")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HiveBatchSinkTest extends FlinkStreaming {
 

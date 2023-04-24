@@ -34,7 +34,7 @@ import org.junit.Test
  * @date 2022年09月06日 13:58:59
  * @since 2.3.2
  */
-@Hive("test")
+@Hive("fat")
 class SparkSQLParserTest extends SparkCore with SparkTester {
   val student = TableIdentifier("student")
   val baseorganize = TableIdentifier("dim.baseorganize")

@@ -28,7 +28,7 @@ import com.zto.fire.spark.BaseStructuredStreaming
  * @author ChengLong 2019年12月23日 22:16:59
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Hive("test")
+@Hive("fat")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object StructuredStreamingTest extends BaseStructuredStreaming {
 

@@ -30,7 +30,7 @@ import org.junit.Test
  * @date 2022-05-12 14:56:36
  * @since 2.2.2
  */
-@Hive("test")
+@Hive("fat")
 class HiveUnitTest extends SparkCore with SparkTester {
 
   @Test

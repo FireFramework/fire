@@ -30,7 +30,7 @@ import org.apache.flink.api.scala._
  * @author ChengLong 2020年2月18日 13:53:06
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Hive("test")
+@Hive("fat")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object FlinkBrocastTest extends FlinkBatch {
 

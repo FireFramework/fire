@@ -29,7 +29,7 @@ import com.zto.fire.flink.anno.Streaming
  * @author ChengLong 2022-08-23 14:21:55
  * @since 2.0.0
  */
-@Hive("test")
+@Hive("fat")
 @Streaming(interval = 60, parallelism = 2)
 object HiveDimDemo extends FlinkStreaming {
 
