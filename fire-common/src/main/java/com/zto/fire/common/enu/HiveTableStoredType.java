@@ -33,7 +33,7 @@ public enum HiveTableStoredType {
     HUDI("ROW FORMAT SERDE\n" +
             "  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'\n" +
             "STORED AS INPUTFORMAT\n" +
-            "  'org.apache.hudi.hadoop.HoodieParquetInputFormat'\n" +
+            "  'org.apache.hudi.hadoop.realtime.HoodieParquetRealtimeInputFormat'\n" +
             "OUTPUTFORMAT\n" +
             "  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'");
 
