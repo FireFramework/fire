@@ -549,6 +549,16 @@
             </properties>
         </profile>
         <profile>
+            <id>hudi-0.9</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <hudi.version>0.9.0</hudi.version>
+                <hudi.major.version>0.9</hudi.major.version>
+            </properties>
+        </profile>
+        <profile>
             <id>hudi-0.10</id>
             <activation>
                 <activeByDefault>true</activeByDefault>

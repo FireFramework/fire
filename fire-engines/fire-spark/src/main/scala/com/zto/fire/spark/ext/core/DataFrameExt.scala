@@ -364,6 +364,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
                precombineKey: String, partition: String, tablePath: String = "",
                typeType: HoodieTableType = HoodieTableType.MERGE_ON_READ,
                options: JMap[String, String] = Map.empty[String, String],
+               saveMode: SaveMode = SaveMode.Append,
                keyNum: Int = KeyNum._1
               ): Unit = {
 
@@ -380,7 +381,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
     // 4. 将dataFrame数据写入到指定的hudi表中
     dataFrame.write.format(FireHudiConf.HUDI_FORMAT)
       .options(confOptions)
-      .mode(SaveMode.Append)
+      .mode(saveMode)
       .save(hudiTablePath)
   }
 }
