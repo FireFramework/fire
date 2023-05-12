@@ -19,11 +19,17 @@
 package com.zto.fire.hudi.enu;
 
 /**
- * hudi表类型
+ * hudi表操作类型
  *
- * @author ChengLong 2023-04-10 10:40:17
+ * @author ChengLong 2023-05-12 14:40:17
  * @since 2.3.5
  */
-public enum HoodieTableType {
-  COPY_ON_WRITE, MERGE_ON_READ
+public enum HoodieOperationType {
+    INSERT("insert"), INSERT_OVERWRITE("insert_overwrite"), UPSERT("upsert"), BULK_INSERT("bulk_insert"), DELETE("delete");
+
+    private String name;
+    HoodieOperationType(String name) {
+        this.name = name;
+    }
+
 }

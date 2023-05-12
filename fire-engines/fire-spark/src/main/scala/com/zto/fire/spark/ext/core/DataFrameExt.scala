@@ -30,7 +30,7 @@ import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
 import com.zto.fire.spark.sql.SparkSqlUtils
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
-import com.zto.fire.hudi.enu.HoodieTableType
+import com.zto.fire.hudi.enu.{HoodieOperationType, HoodieTableType}
 import com.zto.fire.hudi.util.HudiUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
@@ -353,23 +353,28 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * 按该字段进行upsert
    * @param precombineKey
    * 根据该字段进行合并
-   * @param tablePath
-   * hudi表的存储路径
    * @param partition
    * 分区字段
+   * @param tablePath
+   * hudi表的存储路径
+   * @param tableType
+   * hudi表的类型（COW or MOR）
+   * @param operationType
+   * 对hudi表执行的操作（insert、upsert、bulk_insert等）
    * @param options
    * 额外的options信息
    */
   def sinkHudi(hudiTableName: String, recordKey: String,
                precombineKey: String, partition: String, tablePath: String = "",
-               typeType: HoodieTableType = HoodieTableType.MERGE_ON_READ,
+               tableType: HoodieTableType = HoodieTableType.MERGE_ON_READ,
+               operationType: HoodieOperationType = HoodieOperationType.UPSERT,
                options: JMap[String, String] = Map.empty[String, String],
                saveMode: SaveMode = SaveMode.Append,
                keyNum: Int = KeyNum._1
               ): Unit = {
 
     // 1. 组装param中指定的hudi参数
-    val paramMap = FireHudiConf.hudiOptions(keyNum) ++ HudiUtils.majorOptions(hudiTableName, recordKey, precombineKey, partition, typeType)
+    val paramMap = FireHudiConf.hudiOptions(keyNum) ++ HudiUtils.majorOptions(hudiTableName, recordKey, precombineKey, partition, tableType, operationType)
 
     // 2. 配置文件的优先级高于代码，将配置文件中以hudi.option.开头的配置进行覆盖
     val confOptions = options ++ paramMap

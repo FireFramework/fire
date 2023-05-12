@@ -18,7 +18,7 @@
 package com.zto.fire.hudi.util
 
 import com.zto.fire.common.util.Logging
-import com.zto.fire.hudi.enu.HoodieTableType
+import com.zto.fire.hudi.enu.{HoodieOperationType, HoodieTableType}
 
 import java.util.HashMap
 
@@ -44,7 +44,7 @@ object HudiUtils extends Logging {
    * @param typeType
    * 表类型
    */
-  def majorOptions(hudiTableName: String, recordKey: String, precombineKey: String, partition: String, typeType: HoodieTableType): Map[String, String] = {
+  def majorOptions(hudiTableName: String, recordKey: String, precombineKey: String, partition: String, typeType: HoodieTableType, operationType: HoodieOperationType): Map[String, String] = {
     Map("hoodie.datasource.write.recordkey.field" -> recordKey,
         "hoodie.datasource.write.precombine.field" -> precombineKey,
         "hoodie.datasource.write.partitionpath.field" -> partition,
@@ -52,7 +52,8 @@ object HudiUtils extends Logging {
         "hoodie.table.name" -> hudiTableName,
         "hoodie.datasource.write.hive_style_partitioning" -> "true",
         "hoodie.datasource.write.table.type" -> typeType.name,
-        "hoodie.fail.on.timeline.archiving" -> "false"
+        "hoodie.fail.on.timeline.archiving" -> "false",
+        "hoodie.datasource.write.operation" -> operationType.name
     )
   }
 
