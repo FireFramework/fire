@@ -18,7 +18,9 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
-import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
+import com.zto.fire.common.util.MQType
+import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.core.Api
 import com.zto.fire.hudi.conf.FireHudiConf
 import com.zto.fire.jdbc.JdbcConnectorBridge
@@ -143,6 +145,44 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
                                keyNum: Int = KeyNum._1): DStream[MessageExt] = {
     this.ssc.createRocketPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum)
   }
+
+  /**
+   * 精简版的消费KAFKA或ROCKETMQ的api，可根据mqType参数进行主动设置
+   * @param mqType
+   * auto：表示自动根据配置消费kafka或rocketmq，比如使用@Kafka注解，则消费kafka
+   *       注：如果同时指定@Kafka和@Rocketmq且keyNum相同，则会报错
+   * kafka：强制设置mq类型为kafka，则只会去消费kafka
+   * rocketmq：强制设置rocketmq，则只会消费rocketmq
+   * @param keyNum
+   * 用于区分不同的mq源
+   * @return
+   * key & body
+   */
+  def createMQStream(processFun: RDD[String] => Unit, mqType: MQType = MQType.auto, keyNum: Int = KeyNum._1): Unit = {
+    def kafkaStream: Unit = this.createKafkaDirectStream(keyNum = keyNum).foreachRDDAtLeastOnce(rdd => processFun(rdd.map(t => t.value())))
+    def rocketStream: Unit = this.createRocketMqPullStream(keyNum = keyNum).foreachRDDAtLeastOnce(rdd => processFun(rdd.map(t => new String(t.getBody))))
+    mqType match {
+      case MQType.kafka => kafkaStream
+      case MQType.rocketmq => rocketStream
+
+      case _ => {
+        val kafkaTopicValue = FireKafkaConf.kafkaBrokers(keyNum)
+        val rocketTopicValue = FireRocketMQConf.rocketNameServer(keyNum)
+
+        // 根据配置文件区分不同的消费场景（消费kafka还是rocketmq）
+        if (noEmpty(kafkaTopicValue) && noEmpty(rocketTopicValue)) {
+          throw new IllegalArgumentException(s"kafka和rocketmq对应的连接参数均未指定，自动推断失败！keyNum=${keyNum}")
+        }
+
+        if (isEmpty(kafkaTopicValue) && isEmpty(rocketTopicValue)) {
+          throw new IllegalArgumentException(s"kafka和rocketmq对应的连接参数同时被指定，自动推断失败！keyNum=${keyNum}")
+        }
+
+        if (noEmpty(kafkaTopicValue)) kafkaStream else rocketStream
+      }
+    }
+  }
+
 
   /**
    * 创建根据指定规则生成对象实例的DataGenReceiver

@@ -226,4 +226,6 @@ object MQType extends Enumeration {
 
   val kafka = Value("kafka")
   val rocketmq = Value("rocketmq")
+  // 自动识别
+  val auto = Value("auto")
 }

@@ -20,7 +20,8 @@ package com.zto.fire.flink.ext.stream
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.{Operation => FOperation}
-import com.zto.fire.common.util.{KafkaUtils, LineageManager, RegularUtils, SQLUtils}
+import com.zto.fire.common.util.MQType.MQType
+import com.zto.fire.common.util.{KafkaUtils, LineageManager, MQType, RegularUtils, SQLUtils}
 import com.zto.fire.core.Api
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvider}
@@ -34,10 +35,11 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
+import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer, KafkaDeserializationSchema}
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
-import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema
+import org.apache.flink.streaming.util.serialization.{JSONKeyValueDeserializationSchema, KeyedDeserializationSchema}
 import org.apache.flink.table.api.{StatementSet, Table, TableResult}
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.flink.common.serialization.SimpleTagKeyValueDeserializationSchema
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSourceWithTag}
 
@@ -107,6 +109,28 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
       case _ =>
         new FlinkKafkaConsumer[String](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
           new SimpleStringSchema, properties).asInstanceOf[FlinkKafkaConsumer[T]]
+    }
+  }
+
+  /**
+   * 用于反序列化kafka消息中的key与value的包装
+   */
+  private case class KafkaMessage(key: String, value: String)
+
+  /**
+   * 自定义反序列化器，支持反序列化kafka消息中的key与value
+   */
+  private class KafkaMessageDeserializationSchema extends KafkaDeserializationSchema[KafkaMessage] {
+    override def isEndOfStream(nextElement: KafkaMessage): Boolean = false
+
+    override def getProducedType: TypeInformation[KafkaMessage] = {
+      TypeInformation.of(classOf[KafkaMessage])
+    }
+
+    override def deserialize(record: ConsumerRecord[Array[Byte], Array[Byte]]): KafkaMessage = {
+      val key = new String(record.key(), "UTF-8")
+      val value = new String(record.value(), "UTF-8")
+      KafkaMessage(key, value)
     }
   }
 
@@ -288,6 +312,63 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                                tag: String = null,
                                keyNum: Int = KeyNum._1): DataStream[String] = {
     this.createRocketMqPullStreamWithTag(rocketParam, groupId, topics, tag, keyNum).map(t => t._3)
+  }
+
+  /**
+   * 精简版的消费KAFKA或ROCKETMQ的api，可根据mqType参数进行主动设置
+   *
+   * @param mqType
+   * auto：表示自动根据配置消费kafka或rocketmq，比如使用@Kafka注解，则消费kafka
+   * 注：如果同时指定@Kafka和@Rocketmq且keyNum相同，则会报错
+   * kafka：强制设置mq类型为kafka，则只会去消费kafka
+   * rocketmq：强制设置rocketmq，则只会消费rocketmq
+   * @param keyNum
+   * 用于区分不同的mq源
+   * @return
+   * key & body
+   */
+  def createMQStreamWithKey(mqType: MQType = MQType.auto, keyNum: Int = KeyNum._1): DataStream[(String, String)] = {
+    def kafkaStream: DataStream[(String, String)] = this.createKafkaDirectStream(keyNum = keyNum).asInstanceOf[DataStream[KafkaMessage]].map(t => (t.key, t.value))
+
+    def rocketStream: DataStream[(String, String)] = this.createRocketMqPullStreamWithKey(keyNum = keyNum)
+
+    mqType match {
+      case MQType.kafka => kafkaStream
+      case MQType.rocketmq => rocketStream
+
+      case _ => {
+        val kafkaTopicValue = FireKafkaConf.kafkaBrokers(keyNum)
+        val rocketTopicValue = FireRocketMQConf.rocketNameServer(keyNum)
+
+        // 根据配置文件区分不同的消费场景（消费kafka还是rocketmq）
+        if (noEmpty(kafkaTopicValue) && noEmpty(rocketTopicValue)) {
+          throw new IllegalArgumentException(s"kafka和rocketmq对应的连接参数均未指定，自动推断失败！keyNum=${keyNum}")
+        }
+
+        if (isEmpty(kafkaTopicValue) && isEmpty(rocketTopicValue)) {
+          throw new IllegalArgumentException(s"kafka和rocketmq对应的连接参数同时被指定，自动推断失败！keyNum=${keyNum}")
+        }
+
+        if (noEmpty(kafkaTopicValue)) kafkaStream else rocketStream
+      }
+    }
+  }
+
+  /**
+   * 精简版的消费KAFKA或ROCKETMQ的api，可根据mqType参数进行主动设置
+   *
+   * @param mqType
+   * auto：表示自动根据配置消费kafka或rocketmq，比如使用@Kafka注解，则消费kafka
+   * 注：如果同时指定@Kafka和@Rocketmq且keyNum相同，则会报错
+   * kafka：强制设置mq类型为kafka，则只会去消费kafka
+   * rocketmq：强制设置rocketmq，则只会消费rocketmq
+   * @param keyNum
+   * 用于区分不同的mq源
+   * @return
+   * key & body
+   */
+  def createMQStream(mqType: MQType = MQType.auto, keyNum: Int = KeyNum._1): DataStream[String] = {
+    this.createMQStreamWithKey(mqType, keyNum).map(_._2)
   }
 
   /**
