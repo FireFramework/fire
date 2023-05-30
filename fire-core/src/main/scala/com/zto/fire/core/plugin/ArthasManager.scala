@@ -20,7 +20,7 @@ package com.zto.fire.core.plugin
 import com.taobao.arthas.agent.attach.ArthasAgent
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.util.{FireUtils, Logging, ReflectionUtils, ThreadUtils}
-import com.zto.fire.predef.{JHashMap, _}
+import com.zto.fire.predef._
 
 import java.util.concurrent.atomic.AtomicBoolean
 

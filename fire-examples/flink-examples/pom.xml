@@ -49,17 +49,17 @@
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
+            <artifactId>fire-enhance-arthas_${scala.binary.version}</artifactId>
+            <version>${fire.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.zto.fire</groupId>
             <artifactId>fire-flink_${flink.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
             <artifactId>fire-enhance-flink_${flink.reference}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-enhance-arthas_${scala.binary.version}</artifactId>
             <version>${fire.version}</version>
         </dependency>
         <dependency>

@@ -47,7 +47,7 @@
                 <dependency>
                     <groupId>com.zto.bigdata</groupId>
                     <artifactId>cluster-env</artifactId>
-                    <version>1.0.3</version>
+                    <version>1.0.3-SNAPSHOT</version>
                 </dependency>
             </dependencies>
             <build>

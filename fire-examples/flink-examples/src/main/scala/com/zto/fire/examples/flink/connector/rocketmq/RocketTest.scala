@@ -52,6 +52,7 @@ object RocketTest extends FlinkStreaming {
     // this.fire.createRocketMqPullStream()
 
     // 从另一个rocketmq中消费数据，keyNum=2对应@RocketMQ2注解中的配置
-    val dstream2 = this.fire.createRocketMqPullStream(keyNum = 2)
+    val dstream2 = this.fire.createMQStream(keyNum = 2)
+    dstream2.printToErr("keyNum2=>")
   }
 }
