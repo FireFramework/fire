@@ -39,7 +39,7 @@ object ExceptionTest extends SparkCore {
     sql(
       """
         |use dim;
-        |select ,'sh' as city from dw.mdb_md_dbs where ds='20211001' limit 100;
+        |select ,'sh' as city from dw.mdb_md_dbs where ds='20211125' limit 100;
         |""".stripMargin).print()
   }
 

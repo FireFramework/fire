@@ -57,19 +57,19 @@ object HiveMetadataTest extends SparkCore {
   def testMultiPartitionTable: Unit = {
     sql(
       s"""
-         |insert into table ${multiPartitionTable} partition(ds, city) select *,'sh' as city from dw.mdb_md_dbs where ds='20211001' limit 100
+         |insert into table ${multiPartitionTable} partition(ds, city) select *,'sh' as city from dw.mdb_md_dbs where ds='20211125' limit 100
          |""".stripMargin)
     (1 to 3).foreach(x => {
       sql(
         s"""
-           |insert into table ${multiPartitionTable} partition(ds, city) select *,'sh' as city from dw.mdb_md_dbs where ds='20211001' limit 100
+           |insert into table ${multiPartitionTable} partition(ds, city) select *,'sh' as city from dw.mdb_md_dbs where ds='20211125' limit 100
            |""".stripMargin)
     })
 
     (1 to 3).foreach(x => {
       sql(
         s"""
-           |insert overwrite table ${multiPartitionTable} partition(ds, city) select *,'bj' as city from dw.mdb_md_dbs where ds='20211001' limit 100
+           |insert overwrite table ${multiPartitionTable} partition(ds, city) select *,'bj' as city from dw.mdb_md_dbs where ds='20211125' limit 100
            |""".stripMargin)
     })
   }
@@ -116,15 +116,15 @@ object HiveMetadataTest extends SparkCore {
          |""".stripMargin)
     sql(
       s"""
-         |insert into table ${partitionTable}2 partition(ds) select * from dw.mdb_md_dbs where ds='20211001' limit 100
+         |insert into table ${partitionTable}2 partition(ds) select * from dw.mdb_md_dbs where ds='20211125' limit 100
          |""".stripMargin)
     var partition = 20211002
     (1 to 3).foreach(x => {
-      sql(s"""alter table ${partitionTable}2 PARTITION (ds='20211001') RENAME TO PARTITION (ds='${partition}')""")
+      sql(s"""alter table ${partitionTable}2 PARTITION (ds='20211125') RENAME TO PARTITION (ds='${partition}')""")
       partition = partition + 1
       sql(
         s"""
-           |insert into table ${partitionTable}2 partition(ds) select * from dw.mdb_md_dbs where ds='20211001' limit 100
+           |insert into table ${partitionTable}2 partition(ds) select * from dw.mdb_md_dbs where ds='20211125' limit 100
            |""".stripMargin)
     })
 

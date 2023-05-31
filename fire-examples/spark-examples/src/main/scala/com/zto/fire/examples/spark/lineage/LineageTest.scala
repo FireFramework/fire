@@ -52,7 +52,7 @@ object LineageTest extends SparkStreaming {
     this.fire.createKafkaDirectStream().print()
     sql(
       s"""
-         |insert into table ${multiPartitionTable} partition(ds, city) select *,'sh' as city from dw.mdb_md_dbs where ds='20211001' limit 100
+         |insert into table ${multiPartitionTable} partition(ds, city) select *,'sh' as city from dw.mdb_md_dbs where ds='20211125' limit 100
          |""".stripMargin)
     val dstream = this.fire.createRocketMqPullStream().map(t => JSONUtils.toJSONString(t))
     dstream.foreachRDD(rdd => {

@@ -75,7 +75,7 @@ object SparkSqlParseTest extends SparkCore {
         |create table if not exists tmp.zto_fire_test
         |select a.*,'sh' as city
         |from dw.mdb_md_dbs a left join student t on a.ds=t.name
-        |where ds='20211001' limit 100
+        |where ds='20211125' limit 100
         |""".stripMargin
     val dropDB = "drop database if exists tmp12"
     val insertOverwrite = "insert overwrite table dw.kwang_test partition(ds='202106', city='beijing') values(4,'zz')"
