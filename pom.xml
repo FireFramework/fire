@@ -22,7 +22,7 @@
     <groupId>com.zto.fire</groupId>
     <artifactId>fire-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.3.5-SNAPSHOT</version>
+    <version>2.3.6-SNAPSHOT</version>
     <name>Fire : </name>
     <description>Fire framework is a development framework for real-time computing task development . The framework provides a simple and easy to use API that can significantly reduce the development threshold of Spark and Flink and improve development efficiency.</description>
     <url>https://github.com/fire-framework/fire</url>
@@ -101,9 +101,6 @@
     <profiles>
         <profile>
             <id>release</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
             <build>
                 <plugins>
                     <plugin>
@@ -143,9 +140,6 @@
         <!-- 本地运行需启用该profile，否则会报某些类找不到异常。集群模式请禁用，否则包非常大，依赖冲突风险倍增 -->
         <profile>
             <id>run-local</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <maven.scope>compile</maven.scope>
             </properties>
@@ -154,9 +148,6 @@
         <!-- Configure whether to build the fire-examples module. -->
         <profile>
             <id>build-examples</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
             <modules>
                 <module>fire-examples</module>
             </modules>
@@ -165,9 +156,6 @@
         <!-- Configure whether to build the fire-shell module. -->
         <profile>
             <id>build-shell</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
             <modules>
                 <module>fire-shell</module>
             </modules>
@@ -291,9 +279,6 @@
         <!-- 以hadoop2.7、hive1.2低版本编译 -->
         <profile>
             <id>hadoop-2.7</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <hive.group>org.spark-project.hive</hive.group>
                 <hive.version>1.2.1.spark2</hive.version>
@@ -540,9 +525,6 @@
         </profile>
         <profile>
             <id>hudi-0.8</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <hudi.version>0.8.0</hudi.version>
                 <hudi.major.version>0.8</hudi.major.version>
@@ -550,9 +532,6 @@
         </profile>
         <profile>
             <id>hudi-0.9</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <hudi.version>0.9.0</hudi.version>
                 <hudi.major.version>0.9</hudi.major.version>
@@ -560,9 +539,6 @@
         </profile>
         <profile>
             <id>hudi-0.10</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <hudi.version>0.10.1</hudi.version>
                 <hudi.major.version>0.10</hudi.major.version>
@@ -570,9 +546,6 @@
         </profile>
         <profile>
             <id>hudi-0.13</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <hudi.version>0.13.0</hudi.version>
                 <hudi.major.version>0.13</hudi.major.version>
