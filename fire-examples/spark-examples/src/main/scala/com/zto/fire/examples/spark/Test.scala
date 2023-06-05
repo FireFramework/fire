@@ -17,9 +17,12 @@
 
 package com.zto.fire.examples.spark
 
+import com.zto.fire._
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.examples.bean.Student
-import com.zto.fire.spark.SparkCore
+import com.zto.fire.spark.SparkStreaming
+import com.zto.fire.spark.anno.Streaming
+import com.zto.fire.spark.connector.StreamingConnectors.JSONConnector
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.{Aspect, Before}
 
@@ -67,14 +70,14 @@ class Test {
  */
 @HBase("test")
 @Hive("fat")
-object Test extends SparkCore {
+@Streaming(interval = 10)
+object Test extends SparkStreaming {
 
   override def process: Unit = {
-    this.fire.createDataFrame(Student.newStudentList(), classOf[Student]).createOrReplaceTempView("student")
-    spark.sql(
-      s"""
-         |select * from student
-         |""".stripMargin).explain()
-    Thread.sleep(100000)
+    val dstream = this.fire.receiverStream(new JSONConnector[Student](100))
+
+    dstream.foreachRDD(rdd => {
+      rdd.foreach(x => println(x))
+    })
   }
 }

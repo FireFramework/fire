@@ -18,15 +18,15 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
+import com.zto.fire.common.bean.Generator
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.util.MQType
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.core.Api
 import com.zto.fire.hudi.conf.FireHudiConf
 import com.zto.fire.jdbc.JdbcConnectorBridge
-import com.zto.fire.spark.bean.GenerateBean
 import com.zto.fire.spark.conf.FireSparkConf
-import com.zto.fire.spark.connector.{BeanGenReceiver, DataGenReceiver}
+import com.zto.fire.spark.connector.StreamingConnectors._
 import com.zto.fire.spark.ext.provider._
 import com.zto.fire.spark.sql.SparkSqlUtils
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
@@ -40,7 +40,6 @@ import org.apache.spark.streaming.dstream.{DStream, ReceiverInputDStream}
 import org.apache.spark.streaming.receiver.Receiver
 
 import java.io.InputStream
-import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
@@ -148,9 +147,10 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
 
   /**
    * 精简版的消费KAFKA或ROCKETMQ的api，可根据mqType参数进行主动设置
+   *
    * @param mqType
    * auto：表示自动根据配置消费kafka或rocketmq，比如使用@Kafka注解，则消费kafka
-   *       注：如果同时指定@Kafka和@Rocketmq且keyNum相同，则会报错
+   * 注：如果同时指定@Kafka和@Rocketmq且keyNum相同，则会报错
    * kafka：强制设置mq类型为kafka，则只会去消费kafka
    * rocketmq：强制设置rocketmq，则只会消费rocketmq
    * @param keyNum
@@ -160,7 +160,9 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
    */
   def createMQStream(processFun: RDD[String] => Unit, mqType: MQType = MQType.auto, keyNum: Int = KeyNum._1): Unit = {
     def kafkaStream: Unit = this.createKafkaDirectStream(keyNum = keyNum).foreachRDDAtLeastOnce(rdd => processFun(rdd.map(t => t.value())))
+
     def rocketStream: Unit = this.createRocketMqPullStream(keyNum = keyNum).foreachRDDAtLeastOnce(rdd => processFun(rdd.map(t => new String(t.getBody))))
+
     mqType match {
       case MQType.kafka => kafkaStream
       case MQType.rocketmq => rocketStream
@@ -183,35 +185,107 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
     }
   }
 
+  /**
+   * 创建自定义数据生成规则的DStream流
+   * 调用者需通过定义gen函数确定具体数据的生成逻辑
+   *
+   * @param gen
+   * 数据生成策略的函数
+   * @param qps
+   * 数据生成的qps
+   * @return
+   * ReceiverInputDStream[T]
+   */
+  def createGenStream[T: ClassTag](gen: => T, qps: Long = 1000): ReceiverInputDStream[T] = {
+    this.receiverStream[T](new GenConnector(gen, qps))
+  }
+
+  /**
+   * 创建Int型数据随机数DStream
+   *
+   * @param qps
+   * 数据生成的qps
+   * @return
+   * ReceiverInputDStream[T]
+   */
+  def createRandomIntStream(qps: Long = 1000): ReceiverInputDStream[Int] = {
+    this.receiverStream[Int](new RandomIntConnector(qps))
+  }
+
+  /**
+   * 创建Long型数据随机数DStream
+   *
+   * @param qps
+   * 数据生成的qps
+   * @return
+   * ReceiverInputDStream[T]
+   */
+  def createRandomLongStream(qps: Long = 1000): ReceiverInputDStream[Long] = {
+    this.receiverStream[Long](new RandomLongConnector(qps))
+  }
+
+  /**
+   * 创建Double型数据随机数DStream
+   *
+   * @param qps
+   * 数据生成的qps
+   * @return
+   * ReceiverInputDStream[T]
+   */
+  def createRandomDoubleStream(qps: Long = 1000): ReceiverInputDStream[Double] = {
+    this.receiverStream[Double](new RandomDoubleConnector(qps))
+  }
+
+  /**
+   * 创建Float型数据随机数DStream
+   *
+   * @param qps
+   * 数据生成的qps
+   * @return
+   * ReceiverInputDStream[T]
+   */
+  def createRandomFloatStream(qps: Long = 1000): ReceiverInputDStream[Float] = {
+    this.receiverStream[Float](new RandomFloatConnector(qps))
+  }
 
   /**
    * 创建根据指定规则生成对象实例的DataGenReceiver
    *
-   * @param delay
-   * 数据生成间隔时间（ms）
-   * @param generateFun
-   * 数据生成规则
-   * @tparam T
-   * 生成数据的类型
+   * @param qps
+   * 数据生成的qps
    * @return
    * ReceiverInputDStream[T]
    */
-  def createDataGenStream[T <: GenerateBean[T] : ClassTag](delay: Long = 1000, generateFun: => mutable.Buffer[T]): ReceiverInputDStream[T] = {
-    this.receiverStream[T](new DataGenReceiver[T](delay, generateFun = generateFun))
+  def createUUIDStream(qps: Long = 1000): ReceiverInputDStream[String] = {
+    this.receiverStream[String](new UUIDConnector(qps))
   }
 
   /**
-   * 创建根据指定规则生成对象实例的BeanDataGenReceiver
+   * 创建JavaBean DStream流，JavaBean必须实现Generator接口
    *
-   * @param delay
-   * 数据生成间隔时间（ms）
+   * @param qps
+   * 数据生成的qps
    * @tparam T
    * 生成数据的类型
    * @return
    * ReceiverInputDStream[T]
    */
-  def createBeanGenStream[T <: GenerateBean[T] : ClassTag](delay: Long = 1000): ReceiverInputDStream[T] = {
-    this.receiverStream[T](new BeanGenReceiver[T](delay))
+  def createBeanStream[T <: Generator[T] : ClassTag](qps: Long = 1000): ReceiverInputDStream[T] = {
+    this.receiverStream[T](new BeanConnector[T](qps))
+  }
+
+  /**
+   * 创建基于JavaBean序列化JSON DStream流，JavaBean必须实现Generator接口
+   *
+   * @param qps
+   * 数据生成的qps
+   * @tparam T
+   * 生成数据的类型
+   * @return
+   * ReceiverInputDStream[T]
+   */
+  def createJSONStream[T <: Generator[T] : ClassTag](qps: Long = 1000): ReceiverInputDStream[String] = {
+    this.receiverStream(new JSONConnector[T](100))
   }
 
   /**
@@ -227,6 +301,21 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
   def receiverStream[T: ClassTag](receiver: Receiver[T]): ReceiverInputDStream[T] = {
     this.ssc.receiverStream[T](receiver)
   }
+
+  /**
+   * 接受自定义receiver的数据
+   *
+   * @param receiver
+   * 自定义receiver
+   * @tparam T
+   * 接受的数据类型
+   * @return
+   * 包装后的DStream[T]
+   */
+  def source[T: ClassTag](receiver: Receiver[T]): ReceiverInputDStream[T] = {
+    this.ssc.receiverStream[T](receiver)
+  }
+
 
   /**
    * 启动StreamingContext

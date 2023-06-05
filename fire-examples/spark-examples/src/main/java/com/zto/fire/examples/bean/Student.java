@@ -18,16 +18,14 @@
 package com.zto.fire.examples.bean;
 
 import com.zto.fire.common.anno.FieldName;
+import com.zto.fire.common.bean.Generator;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.JSONUtils;
 import com.zto.fire.hbase.bean.HBaseBaseBean;
-import com.zto.fire.spark.bean.GenerateBean;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 对应HBase表的JavaBean
@@ -37,7 +35,7 @@ import java.util.Objects;
  */
 // @HConfig(multiVersion = true)
 // @HConfig(nullable = true, multiVersion = true, versions = 3)
-public class Student extends HBaseBaseBean<Student> implements GenerateBean<Student>, Serializable {
+public class Student extends HBaseBaseBean<Student> implements Generator<Student>, Serializable {
     @FieldName(disuse = true)
     private static final long serialVersionUID = 1L;
     protected Long id;
@@ -151,8 +149,15 @@ public class Student extends HBaseBaseBean<Student> implements GenerateBean<Stud
     }
 
     @Override
-    public List<Student> generate() {
-        return newStudentList();
+    public Student generate() {
+        Random random = new Random();
+        this.id = Math.abs(random.nextLong());
+        this.name = UUID.randomUUID().toString();
+        this.age = Math.abs(random.nextInt(120));
+        this.length = BigDecimal.valueOf(Math.abs(random.nextInt(200)), 2);
+        this.sex = random.nextBoolean();
+        this.createTime = DateFormatUtils.formatCurrentDateTime();
+        return this;
     }
 
     public static List<Student> newStudentList() {
