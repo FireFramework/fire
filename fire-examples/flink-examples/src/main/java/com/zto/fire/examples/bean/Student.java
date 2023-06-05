@@ -18,6 +18,7 @@
 package com.zto.fire.examples.bean;
 
 import com.zto.fire.common.anno.FieldName;
+import com.zto.fire.common.bean.Generator;
 import com.zto.fire.common.util.JSONUtils;
 import com.zto.fire.hbase.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
@@ -25,17 +26,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 对应HBase表的JavaBean
  *
  * @author ChengLong 2019-6-20 16:06:16
  */
-public class Student extends HBaseBaseBean<Student> {
+public class Student extends HBaseBaseBean<Student> implements Generator<Student> {
     @FieldName(value = "Student", disuse = true)
     protected static final transient Logger logger = LoggerFactory.getLogger(Student.class);
     private Long id;
@@ -143,6 +141,18 @@ public class Student extends HBaseBaseBean<Student> {
     }
 
     public void setClassName(String name) {}
+
+    @Override
+    public Student generate() {
+        Random random = new Random();
+        this.id = Math.abs(random.nextLong());
+        this.name = UUID.randomUUID().toString();
+        this.age = Math.abs(random.nextInt(120));
+        this.length = BigDecimal.valueOf(Math.abs(random.nextInt(200)), 2);
+        this.sex = random.nextBoolean();
+        this.createTime = DateFormatUtils.formatCurrentDateTime();
+        return this;
+    }
 
     @Override
     public String toString() {

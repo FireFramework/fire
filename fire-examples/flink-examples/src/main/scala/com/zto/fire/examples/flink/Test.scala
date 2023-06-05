@@ -18,26 +18,41 @@
 package com.zto.fire.examples.flink
 
 import com.zto.fire._
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.core.anno.lifecycle.Process
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
-import org.apache.flink.api.scala._
 
-@Streaming(30)
+
+@Streaming(interval = 20, disableOperatorChaining = true, parallelism = 2)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object Test extends FlinkStreaming {
 
   @Process
   def kafkaSource: Unit = {
-    val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t))
-    val sql =
-      s"""
-         |insert into spark_test(name, age, createTime) values(?, ?, '${DateFormatUtils.formatCurrentDateTime()}')
-         |ON DUPLICATE KEY UPDATE age=18
-         |""".stripMargin
-    dstream.sinkJdbc(sql, keyNum = 2)
+    // 基于JavaBean创建json流（根据JavaBean序列化为json），JavaBean必须实现Generator接口
+    val jsonStream = this.fire.createJSONStream[Student](1)
+    jsonStream.print
+
+    // 创建uuid流
+    val uuidStream = this.fire.createUUIDStream(qps = 1)
+    uuidStream.print
+
+    // 创建Int型随机数流
+    val intStream = this.fire.createRandomIntStream(1)
+    intStream.print
+
+    // 创建Long型随机数流
+    val longStream = this.fire.createRandomLongStream(1)
+    longStream.print
+
+    // 创建Double型随机数流
+    val doubleStream = this.fire.createRandomDoubleStream(1)
+    doubleStream.print
+
+    // 创建Float型随机数流
+    val flaotStream = this.fire.createRandomFloatStream(1)
+    flaotStream.print
   }
 }

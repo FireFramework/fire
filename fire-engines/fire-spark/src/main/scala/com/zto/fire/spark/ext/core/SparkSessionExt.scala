@@ -26,7 +26,7 @@ import com.zto.fire.core.Api
 import com.zto.fire.hudi.conf.FireHudiConf
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import com.zto.fire.spark.conf.FireSparkConf
-import com.zto.fire.spark.connector.StreamingConnectors._
+import com.zto.fire.spark.connector.SparkConnectors._
 import com.zto.fire.spark.ext.provider._
 import com.zto.fire.spark.sql.SparkSqlUtils
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
@@ -312,7 +312,7 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
    * @return
    * 包装后的DStream[T]
    */
-  def source[T: ClassTag](receiver: Receiver[T]): ReceiverInputDStream[T] = {
+  def addSource[T: ClassTag](receiver: Receiver[T]): ReceiverInputDStream[T] = {
     this.ssc.receiverStream[T](receiver)
   }
 

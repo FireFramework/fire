@@ -19,10 +19,8 @@ package com.zto.fire.examples.spark
 
 import com.zto.fire._
 import com.zto.fire.core.anno.connector._
-import com.zto.fire.examples.bean.Student
 import com.zto.fire.spark.SparkStreaming
 import com.zto.fire.spark.anno.Streaming
-import com.zto.fire.spark.connector.StreamingConnectors.JSONConnector
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.{Aspect, Before}
 
@@ -74,10 +72,6 @@ class Test {
 object Test extends SparkStreaming {
 
   override def process: Unit = {
-    val dstream = this.fire.receiverStream(new JSONConnector[Student](100))
 
-    dstream.foreachRDD(rdd => {
-      rdd.foreach(x => println(x))
-    })
   }
 }

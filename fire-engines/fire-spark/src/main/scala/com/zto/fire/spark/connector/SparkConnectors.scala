@@ -20,6 +20,7 @@ package com.zto.fire.spark.connector
 import com.zto.fire.common.bean.Generator
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.util.{JSONUtils, ReflectionUtils, ThreadUtils}
+import com.zto.fire.core.connector.StreamingConnectors
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.receiver.Receiver
 
@@ -35,49 +36,7 @@ import scala.reflect.{ClassTag, classTag}
  * @author ChengLong 2023-06-05 08:34:57
  * @since 2.3.6
  */
-object StreamingConnectors {
-
-  /**
-   * 随机数生成器
-   */
-  private lazy val random = new Random
-
-  /**
-   * 随机生成UUID
-   */
-  private def genUUID: String = UUID.randomUUID().toString
-
-  /**
-   * 随机生成long类型数据
-   */
-  private def genRandomLong(abs: Boolean = true): Long = {
-    val value = random.nextLong()
-    if (abs) Math.abs(value) else value
-  }
-
-  /**
-   * 随机生成Int型数据
-   */
-  def genRandomInt(abs: Boolean = true): Int = {
-    val value = random.nextInt()
-    if (abs) Math.abs(value) else value
-  }
-
-  /**
-   * 随机生成Double型数据
-   */
-  private def genRandomDouble(abs: Boolean = true): Double = {
-    val value = random.nextDouble()
-    if (abs) Math.abs(value) else value
-  }
-
-  /**
-   * 随机生成Float型数据
-   */
-  private def genRandomFloat(abs: Boolean = true): Float = {
-    val value = random.nextFloat()
-    if (abs) Math.abs(value) else value
-  }
+object SparkConnectors extends StreamingConnectors {
 
   /**
    * 通用的数据产生receiver
@@ -118,7 +77,7 @@ object StreamingConnectors {
    * @param qps
    * 每秒生成的记录数
    */
-  class UUIDConnector(qps: Long = 1000, abs: Boolean = true) extends GenConnector[String](genUUID, qps) {}
+  class UUIDConnector(qps: Long = 1000) extends GenConnector[String](genUUID, qps) {}
 
   /**
    * Long connector，随机生成Long类型数据

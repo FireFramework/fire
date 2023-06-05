@@ -18,12 +18,14 @@
 package com.zto.fire.flink.ext.stream
 
 import com.zto.fire._
+import com.zto.fire.common.bean.Generator
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util.{KafkaUtils, LineageManager, MQType, RegularUtils, SQLUtils}
 import com.zto.fire.core.Api
 import com.zto.fire.flink.conf.FireFlinkConf
+import com.zto.fire.flink.connector.FlinkConnectors._
 import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvider}
 import com.zto.fire.flink.sql.FlinkSqlExtensionsParser
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils, RocketMQUtils, TableUtils}
@@ -369,6 +371,113 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    */
   def createMQStream(mqType: MQType = MQType.auto, keyNum: Int = KeyNum._1): DataStream[String] = {
     this.createMQStreamWithKey(mqType, keyNum).map(_._2)
+  }
+
+/*
+
+  /**
+   * 创建自定义数据生成规则的DStream流
+   * 调用者需通过定义gen函数确定具体数据的生成逻辑
+   *
+   * @param gen
+   * 数据生成策略的函数
+   * @param qps
+   * 数据生成的qps
+   * @return
+   * ReceiverInputDStream[T]
+   */
+  def createGenStream[T](gen: => T, qps: Long = 1000): DataStream[T] = {
+    this.env.addSource(new GenConnector(gen, qps))
+  }
+
+  /**
+   * 创建JavaBean DStream流，JavaBean必须实现Generator接口
+   *
+   * @param qps
+   * 数据生成的qps
+   * @tparam T
+   * 生成数据的类型
+   * @return
+   * DataStream[T]
+   */
+  def createBeanStream[T <: Generator[T] : ClassTag](qps: Long = 1000): DataStream[Generator[T]] = {
+    this.env.addSource(new BeanConnector[T](100))
+  }
+*/
+
+
+  /**
+   * 创建Int型数据随机数DStream
+   *
+   * @param qps
+   * 数据生成的qps
+   * @return
+   * ReceiverInputDStream[T]
+   */
+  def createRandomIntStream(qps: Long = 1000): DataStream[Int] = {
+    this.env.addSource(new RandomIntConnector(qps))
+  }
+
+  /**
+   * 创建Long型数据随机数DStream
+   *
+   * @param qps
+   * 数据生成的qps
+   * @return
+   * DataStream[T]
+   */
+  def createRandomLongStream(qps: Long = 1000): DataStream[Long] = {
+    this.env.addSource(new RandomLongConnector(qps))
+  }
+
+  /**
+   * 创建Double型数据随机数DStream
+   *
+   * @param qps
+   * 数据生成的qps
+   * @return
+   * DataStream[T]
+   */
+  def createRandomDoubleStream(qps: Long = 1000): DataStream[Double] = {
+    this.env.addSource(new RandomDoubleConnector(qps))
+  }
+
+  /**
+   * 创建Float型数据随机数DStream
+   *
+   * @param qps
+   * 数据生成的qps
+   * @return
+   * DataStream[T]
+   */
+  def createRandomFloatStream(qps: Long = 1000): DataStream[Float] = {
+    this.env.addSource(new RandomFloatConnector(qps))
+  }
+
+  /**
+   * 创建根据指定规则生成对象实例的DataGenReceiver
+   *
+   * @param qps
+   * 数据生成的qps
+   * @return
+   * DataStream[T]
+   */
+  def createUUIDStream(qps: Long = 1000): DataStream[String] = {
+    this.env.addSource(new UUIDConnector(qps))
+  }
+
+  /**
+   * 创建基于JavaBean序列化JSON DStream流，JavaBean必须实现Generator接口
+   *
+   * @param qps
+   * 数据生成的qps
+   * @tparam T
+   * 生成数据的类型
+   * @return
+   * DataStream[T]
+   */
+  def createJSONStream[T <: Generator[T] : ClassTag](qps: Long = 1000): DataStream[String] = {
+    this.env.addSource(new JSONConnector[T](100))
   }
 
   /**
