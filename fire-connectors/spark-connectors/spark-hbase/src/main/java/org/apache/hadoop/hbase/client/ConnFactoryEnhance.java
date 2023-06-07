@@ -20,7 +20,7 @@ package org.apache.hadoop.hbase.client;
 
 import java.io.Serializable;
 
-public class ConnFactoryExtend extends ConnectionFactory implements Serializable {
-    public ConnFactoryExtend() {
+public class ConnFactoryEnhance extends ConnectionFactoryEnhance implements Serializable {
+    public ConnFactoryEnhance() {
     }
 }

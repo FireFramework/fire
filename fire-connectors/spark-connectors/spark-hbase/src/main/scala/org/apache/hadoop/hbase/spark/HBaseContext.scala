@@ -63,7 +63,7 @@ class HBaseContext(@transient sc: SparkContext,
 
   @transient var tmpHdfsConfiguration:Configuration = config
   val broadcastedConf = sc.broadcast(new SerializableWritable(config))
-  val connFactory = new ConnFactoryExtend
+  val connFactory = new ConnFactoryEnhance
 
   LatestHBaseContextCache.latest = this
 
@@ -1050,7 +1050,7 @@ class HBaseContext(@transient sc: SparkContext,
     }
   }
 
-  //single hbase connection close
+  //single hbase connection closeyingg
   def cleanup(): Unit = {
     connFactory.cleanupInstance()
   }

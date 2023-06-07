@@ -149,6 +149,7 @@
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
             <version>${hbase.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
 
         <!-- rocketmq相关依赖 -->

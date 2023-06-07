@@ -64,11 +64,11 @@ import static org.apache.hadoop.hbase.client.ConnectionManager.MAX_CACHED_CONNEC
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
-public class ConnectionFactory {
-  public static final Log LOG = LogFactory.getLog(ConnectionFactory.class);
+public class ConnectionFactoryEnhance {
+  public static final Log LOG = LogFactory.getLog(ConnectionFactoryEnhance.class);
 
   /** No public c.tors */
-  protected ConnectionFactory() {
+  protected ConnectionFactoryEnhance() {
   }
 
   /**
@@ -290,11 +290,11 @@ public class ConnectionFactory {
     synchronized (CONNECTION_INSTANCES_CACHE) {
       Connection connection = CONNECTION_INSTANCES_CACHE.get(connectionKey);
       if (connection == null) {
-        connection = ConnectionFactory.createConnection(conf);
+        connection = ConnectionFactoryEnhance.createConnection(conf);
         CONNECTION_INSTANCES_CACHE.put(connectionKey, connection);
       } else if (connection.isClosed()) {
         deleteConnection(connectionKey);
-        connection = ConnectionFactory.createConnection(conf);
+        connection = ConnectionFactoryEnhance.createConnection(conf);
         CONNECTION_INSTANCES_CACHE.put(connectionKey, connection);
       }
       return connection;
@@ -307,11 +307,11 @@ public class ConnectionFactory {
     synchronized (CONNECTION_INSTANCES_CACHE) {
       Connection connection = CONNECTION_INSTANCES_CACHE.get(connectionKey);
       if (connection == null) {
-        connection = ConnectionFactory.createConnection(conf);
+        connection = ConnectionFactoryEnhance.createConnection(conf);
         CONNECTION_INSTANCES_CACHE.put(connectionKey, connection);
       } else if (connection.isClosed()) {
         deleteConnection(connectionKey);
-        connection = ConnectionFactory.createConnection(conf);
+        connection = ConnectionFactoryEnhance.createConnection(conf);
         CONNECTION_INSTANCES_CACHE.put(connectionKey, connection);
       }
       return connection;

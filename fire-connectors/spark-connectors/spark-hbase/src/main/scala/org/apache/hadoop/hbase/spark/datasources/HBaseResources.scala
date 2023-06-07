@@ -88,7 +88,7 @@ case class TableResource(relation: HBaseRelation) extends ReferencedResource {
   var table: Table = _
 
   override def init(): Unit = {
-    connection = ConnectionFactory.createConnection(relation.hbaseConf)
+    connection = ConnectionFactoryEnhance.createConnection(relation.hbaseConf)
     table = connection.getTable(TableName.valueOf(relation.tableName))
   }
 
@@ -127,7 +127,7 @@ case class RegionResource(relation: HBaseRelation) extends ReferencedResource {
   }
 
   override def init(): Unit = {
-    connection = ConnectionFactory.createConnection(relation.hbaseConf)
+    connection = ConnectionFactoryEnhance.createConnection(relation.hbaseConf)
     rl = connection.getRegionLocator(TableName.valueOf(relation.tableName))
   }
 
