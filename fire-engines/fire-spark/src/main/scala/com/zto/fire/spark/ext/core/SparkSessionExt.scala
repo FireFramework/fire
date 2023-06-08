@@ -36,7 +36,7 @@ import org.apache.rocketmq.spark.{ConsumerStrategy, LocationStrategy}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.streaming.dstream.{DStream, ReceiverInputDStream}
+import org.apache.spark.streaming.dstream.{DStream, InputDStream, ReceiverInputDStream}
 import org.apache.spark.streaming.receiver.Receiver
 
 import java.io.InputStream
@@ -141,7 +141,7 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
                                consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                                locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                                instance: String = "",
-                               keyNum: Int = KeyNum._1): DStream[MessageExt] = {
+                               keyNum: Int = KeyNum._1): InputDStream[MessageExt] = {
     this.ssc.createRocketPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum)
   }
 
@@ -173,11 +173,11 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
 
         // 根据配置文件区分不同的消费场景（消费kafka还是rocketmq）
         if (noEmpty(kafkaTopicValue) && noEmpty(rocketTopicValue)) {
-          throw new IllegalArgumentException(s"kafka和rocketmq对应的连接参数均未指定，自动推断失败！keyNum=${keyNum}")
+          throw new IllegalArgumentException(s"kafka和rocketmq对应的连接参数同时指定，自动推断失败！keyNum=${keyNum}")
         }
 
         if (isEmpty(kafkaTopicValue) && isEmpty(rocketTopicValue)) {
-          throw new IllegalArgumentException(s"kafka和rocketmq对应的连接参数同时被指定，自动推断失败！keyNum=${keyNum}")
+          throw new IllegalArgumentException(s"kafka和rocketmq对应的连接参数均未被指定，自动推断失败！keyNum=${keyNum}")
         }
 
         if (noEmpty(kafkaTopicValue)) kafkaStream else rocketStream
