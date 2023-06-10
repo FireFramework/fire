@@ -129,7 +129,7 @@ object DBUtils extends Logging {
   def columns(rs: ResultSet): JHashMap[String, Int] = {
     val metaData = rs.getMetaData
     val fieldMap = new JHashMap[String, Int]()
-    for (i <- 1 until metaData.getColumnCount) {
+    for (i <- 1 to metaData.getColumnCount) {
       val fieldName = metaData.getColumnName(i)
       val fieldType = metaData.getColumnType(i)
       fieldMap.put(fieldName, fieldType)
