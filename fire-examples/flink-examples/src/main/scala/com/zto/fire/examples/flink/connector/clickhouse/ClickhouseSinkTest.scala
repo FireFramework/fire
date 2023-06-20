@@ -23,7 +23,7 @@ import com.zto.fire.core.anno.connector.Kafka
 import com.zto.fire.core.anno.lifecycle.{Process, Step1}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.FlinkStreaming
-import com.zto.fire.flink.anno.Checkpoint
+import com.zto.fire.flink.anno.Streaming
 import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
 import com.zto.fire.predef.println
 import org.apache.flink.api.scala._
@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit
  *
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Checkpoint(60)
+@Streaming(interval = 60, disableOperatorChaining = true)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object ClickhouseSinkTest extends FlinkStreaming {
 
@@ -55,7 +55,7 @@ object ClickhouseSinkTest extends FlinkStreaming {
         |    `age` INT,
         |    `sex` STRING,
         |    `score` DECIMAL,
-        |    `birthday` TIMESTAMP
+        |    `createTime` TIMESTAMP
         |) WITH (
         |    'datasource' = 'ck_test',  -- 配置信息在common.properties中，包括url、username、passwd等敏感数据源信息
         |    'database-name' = 'study',

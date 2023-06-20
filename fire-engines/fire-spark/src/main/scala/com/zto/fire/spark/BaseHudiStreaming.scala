@@ -43,7 +43,9 @@ trait BaseHudiStreaming extends SparkStreaming {
    * 修复hive分区元数据信息
    */
   @Scheduled(cron = "0 05,10,30 * * * ?")
-  private def repair: Unit = SparkSqlUtils.repairHiveTable(this.tableName)
+  private def repair: Unit = {
+    SparkSqlUtils.repairHiveTable(this.tableName)
+  }
 
   /**
    * 检查必选的配置是否合法
@@ -52,23 +54,27 @@ trait BaseHudiStreaming extends SparkStreaming {
     requireNonEmpty(tableName)("hudi表名不能为空，请通过hudi.tableName指定该配置")
     requireNonEmpty(primaryKey)("hudi表主键不能为空，请通过hudi.primaryKey指定该配置")
     requireNonEmpty(precombineKey)("hudi表预聚合字段不能为空，请通过hudi.precombineKey指定该配置")
-    requireNonEmpty(sqlQuery(this.tmpView))("解析临时表的SQL语句不能为空，请通过hudi.sql指定该配置")
+    requireNonEmpty(sqlUpsert(this.tmpView))("解析临时表的SQL语句不能为空，请通过hudi.sql指定该配置")
     logInfo(
       s"""
         |-----------------hudi参数-----------------
-        |hudi表名（hudi.tableName）                :$tableName
+        |hudi表名(hudi.tableName)                 :$tableName
         |hudi表主键（hudi.primaryKey）          　 :$primaryKey
-        |hudi表预聚合字段（hudi.precombineKey）     :$precombineKey
-        |hudi表分区字段（hudi.partitionFieldName）  :$partitionFieldName
-        |消息视图名称（hudi.tmpView）               :$tmpView
-        |解析kafka的sql（hudi.sql）\n              :${sqlQuery(tmpView)}
+        |hudi表预聚合字段(hudi.precombineKey)      :$precombineKey
+        |hudi表分区字段(hudi.partitionFieldName）  :$partitionFieldName
+        |消息视图名称(hudi.tmpView)                :$tmpView
+        |解析kafka的sql(hudi.sql)                 :\n ${sqlUpsert(tmpView)}
         |-----------------------------------------
         |""".stripMargin)
   }
+
+  protected def sqlCreate(tableName: String): String = ""
 
   /**
    * 待执行的SQL语句，子类应当覆盖该方法
    * 用于解析kafka中的消息，并生成与hudi表相对于的DataFrame
    */
-  protected def sqlQuery(tmpView: String): String = this.sqlStatement
+  protected def sqlUpsert(tmpView: String): String = this.sqlStatement
+
+  protected def sqlDelete(tmpView: String): String = ""
 }

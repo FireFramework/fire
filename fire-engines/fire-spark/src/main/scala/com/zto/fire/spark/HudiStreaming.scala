@@ -18,7 +18,8 @@
 package com.zto.fire.spark
 
 import com.zto.fire._
-import com.zto.fire.common.util.DateFormatUtils
+import com.zto.fire.common.util.{DateFormatUtils, PropUtils}
+import com.zto.fire.hudi.enu.HoodieOperationType
 import org.apache.spark.rdd.RDD
 
 /**
@@ -31,6 +32,13 @@ trait HudiStreaming extends BaseHudiStreaming {
 
   override def process: Unit = {
     this.validate
+    // 执行前置SQL
+    val ddl = this.sqlCreate(this.tableName)
+    if (noEmpty(ddl)) {
+      logInfo(s"开始执行hudi前置SQL：\n $ddl")
+      sql(ddl)
+    }
+
     this.fire.createMQStream(rdd => {
       if (!rdd.isEmpty()) {
         val cachedRDD = rdd.cache()
@@ -51,11 +59,23 @@ trait HudiStreaming extends BaseHudiStreaming {
     val df = this.fire.read.json(rddMsg)
 
     // 2. 将解析后的json注册为临时表
-    df.createOrReplaceTempViewCache(this.tmpView)
+    df.createOrReplaceTempView(this.tmpView)
 
     // 3. 将用户传入的查询sql结果集写入到指定的hudi表中
-    val inputDF = sql(sqlQuery(this.tmpView)).cache()
+    val inputDF = sql(sqlUpsert(this.tmpView)).cache()
     inputDF.sinkHudi(this.tableName, this.primaryKey, this.precombineKey, this.partitionFieldName)
-    this.fire.uncache(inputDF, this.tmpView)
+
+    // 4. 执行delete语句进行数据删除
+    val sqlDelete = this.sqlDelete(this.tmpView)
+    if (noEmpty(sqlDelete)) {
+      logInfo(s"开始执行hudi删除逻辑：\n $sqlDelete")
+      val deleteDF = sql(sqlDelete).cache()
+      // 此处不使用deleteDF.isEmpty是基于性能考虑，count会触发cache
+      if (deleteDF.count() > 0) {
+        deleteDF.sinkHudi(this.tableName, this.primaryKey, this.precombineKey, this.partitionFieldName, operationType = HoodieOperationType.DELETE)
+      }
+    }
+
+    this.fire.uncache(inputDF)
   }
 }
