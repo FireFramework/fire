@@ -59,6 +59,11 @@ public @interface Hive {
     String partition() default "";
 
     /**
+     * 默认的数据库名称（use tmp）
+     */
+    String defaultDB() default "tmp";
+
+    /**
      * hdfs参数，以key=value形式注明
      * 可以是一些hdfs的配置参数，如：dfs.client.read.timeout=10000
      */
