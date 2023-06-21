@@ -25,7 +25,7 @@ import com.zto.fire.common.conf.FireRocketMQConf._
 import com.zto.fire.common.conf.{FireHDFSConf, FireHiveConf, KeyNum}
 import com.zto.fire.common.util.{Logging, PropUtils, ReflectionUtils, StringsUtils}
 import com.zto.fire.core.BaseFire
-import com.zto.fire.core.anno.connector._
+import com.zto.fire.core.anno.connector.{HBase11, HBase6, HBase7, HBase8, HBase9, Jdbc10, Jdbc11, Jdbc6, Jdbc7, Jdbc8, Jdbc9, Kafka10, Kafka11, Kafka6, Kafka7, Kafka8, Kafka9, RocketMQ10, RocketMQ11, RocketMQ4, RocketMQ6, RocketMQ7, RocketMQ8, RocketMQ9, _}
 import com.zto.fire.core.anno.lifecycle.{Handle, Process, Step1, Step10, Step11, Step12, Step13, Step14, Step15, Step16, Step17, Step18, Step19, Step2, Step3, Step4, Step5, Step6, Step7, Step8, Step9}
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
@@ -200,6 +200,59 @@ private[fire] trait AnnoManager extends Logging {
   def mapHBase5(hbase: HBase5): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._5)
 
   /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase6
+   */
+  @Internal
+  def mapHBase6(hbase: HBase6): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._6)
+
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase7
+   */
+  @Internal
+  def mapHBase7(hbase: HBase7): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._7)
+
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase8
+   */
+  @Internal
+  def mapHBase8(hbase: HBase8): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._8)
+
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase9
+   */
+  @Internal
+  def mapHBase9(hbase: HBase9): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._9)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase10
+   */
+  @Internal
+  def mapHBase10(hbase: HBase10): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._10)
+
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase11
+   */
+  @Internal
+  def mapHBase11(hbase: HBase11): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._11)
+
+
+  /**
    * 用于映射JDBC相关配置信息
    * 对应注解中的@Jdbc
    */
@@ -317,6 +370,114 @@ private[fire] trait AnnoManager extends Logging {
   }
 
   /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi6(hudi: Hudi6): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._6))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._6))
+    this.hudiParallelism(hudi.parallelism(), KeyNum._6)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._6)
+    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._6)
+  }
+
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi7(hudi: Hudi7): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._7))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._7))
+    this.hudiParallelism(hudi.parallelism(), KeyNum._7)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._7)
+    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._7)
+  }
+
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi8(hudi: Hudi8): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._8))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._8))
+    this.hudiParallelism(hudi.parallelism(), KeyNum._8)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._8)
+    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._8)
+  }
+
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi9(hudi: Hudi9): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._9))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._9))
+    this.hudiParallelism(hudi.parallelism(), KeyNum._9)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._9)
+    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._9)
+
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi10(hudi: Hudi10): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._10))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._10))
+    this.hudiParallelism(hudi.parallelism(), KeyNum._10)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._10)
+    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._10)
+
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi11(hudi: Hudi11): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._11))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._11))
+    this.hudiParallelism(hudi.parallelism(), KeyNum._11)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._11)
+    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._11)
+  }
+
+
+  /**
    * 统一设置hudi任务各项参数的并行度
    *
    * @param parallelism
@@ -331,8 +492,6 @@ private[fire] trait AnnoManager extends Logging {
       this.toHudiConf(("hoodie.upsert.shuffle.parallelism", parallelism.toString), keyNum)
       this.toHudiConf(("hoodie.bulkinsert.shuffle.parallelism", parallelism.toString), keyNum)
       this.toHudiConf(("hoodie.delete.shuffle.parallelism", parallelism.toString), keyNum)
-      this.toHudiConf(("hoodie.markers.delete.parallelism", parallelism.toString), keyNum)
-      this.toHudiConf(("hoodie.rollback.parallelism", parallelism.toString), keyNum)
     }
   }
 
@@ -445,6 +604,84 @@ private[fire] trait AnnoManager extends Logging {
   }
 
   /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc6
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc6(jdbc: Jdbc6): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._6)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc7
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc7(jdbc: Jdbc7): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._7)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc8
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc8(jdbc: Jdbc8): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._8)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc9
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc9(jdbc: Jdbc9): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._9)
+  }
+
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   * @param Jdbc10
+   */
+  @Internal
+  def mapJdbc10(jdbc: Jdbc10): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._10)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc11
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc11(jdbc: Jdbc11): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._11)
+  }
+
+
+  /**
    * 用于映射Kafka相关配置信息
    */
   @Internal
@@ -548,6 +785,94 @@ private[fire] trait AnnoManager extends Logging {
   }
 
   /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka6
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka6(kafka: Kafka6): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._6
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka7
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka7(kafka: Kafka7): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._7
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka8
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka8(kafka: Kafka8): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._8
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka9
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka9(kafka: Kafka9): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._9
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   * @param Kafka10
+   */
+  @Internal
+  def mapKafka10(kafka: Kafka10): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._10
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka11
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka11(kafka: Kafka11): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._11
+    )
+  }
+
+  /**
    * 将@RocketMQ中配置的信息映射为键值对形式
    *
    * @param RocketMQ
@@ -624,6 +949,81 @@ private[fire] trait AnnoManager extends Logging {
       rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._5)
   }
 
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ6
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ6(rocketmq: RocketMQ6): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._6)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ7
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ7(rocketmq: RocketMQ7): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._7)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ8
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ8(rocketmq: RocketMQ8): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._8)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ9
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ9(rocketmq: RocketMQ9): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._9)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ10
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ10(rocketmq: RocketMQ10): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._10)
+  }
+
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ11
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ11(rocketmq: RocketMQ11): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._11)
+  }
+
+
   /**
    * 将@Hive中配置的信息映射为键值对形式
    *
@@ -653,10 +1053,16 @@ object AnnoManager extends Logging {
   // 用于存放注册了的主键，只解析这些主键中的信息
   private[fire] lazy val registerAnnoSet = Sets.newHashSet[Class[_]](
     classOf[Hive], classOf[HBase], classOf[HBase2], classOf[HBase3], classOf[HBase4], classOf[HBase5],
-    classOf[Jdbc], classOf[Jdbc2], classOf[Jdbc3], classOf[Jdbc4], classOf[Jdbc5], classOf[Kafka],
-    classOf[Kafka2], classOf[Kafka3], classOf[Kafka4], classOf[Kafka5], classOf[RocketMQ], classOf[RocketMQ2],
-    classOf[RocketMQ3], classOf[RocketMQ4], classOf[RocketMQ5], classOf[Hudi], classOf[Hudi2], classOf[Hudi3],
-    classOf[Hudi4], classOf[Hudi5]
+    classOf[HBase6], classOf[HBase7], classOf[HBase8], classOf[HBase9], classOf[HBase10], classOf[HBase11],
+    classOf[Jdbc], classOf[Jdbc2], classOf[Jdbc3], classOf[Jdbc4], classOf[Jdbc5], classOf[Jdbc6], classOf[Jdbc7], classOf[Jdbc8], classOf[Jdbc9],
+    classOf[Jdbc10],
+    classOf[Jdbc11], classOf[Kafka],
+    classOf[Kafka2], classOf[Kafka3], classOf[Kafka4], classOf[Kafka5], classOf[Kafka6],
+    classOf[Kafka7], classOf[Kafka8], classOf[Kafka9], classOf[Kafka10], classOf[Kafka11],
+    classOf[RocketMQ], classOf[RocketMQ2],
+    classOf[RocketMQ3], classOf[RocketMQ4], classOf[RocketMQ5], classOf[RocketMQ6], classOf[RocketMQ7], classOf[RocketMQ8], classOf[RocketMQ9], classOf[RocketMQ10], classOf[RocketMQ11],
+    classOf[Hudi], classOf[Hudi2], classOf[Hudi3],
+    classOf[Hudi4], classOf[Hudi5], classOf[Hudi6], classOf[Hudi7], classOf[Hudi8], classOf[Hudi9],classOf[Hudi10], classOf[Hudi11]
   )
 
   // 用于注册所有的生命周期注解
@@ -671,7 +1077,7 @@ object AnnoManager extends Logging {
   protected[fire] def processAnno(baseFire: BaseFire): Unit = {
     tryWithLog {
       ReflectionUtils.invokeStepAnnoMethod(baseFire, this.registerAnnoMethod: _*)
-    } (this.logger, "业务逻辑代码执行完成", "业务逻辑代码执行失败", isThrow = true)
+    }(this.logger, "业务逻辑代码执行完成", "业务逻辑代码执行失败", isThrow = true)
   }
 
   /**
@@ -680,6 +1086,6 @@ object AnnoManager extends Logging {
   protected[fire] def lifeCycleAnno(baseFire: BaseFire, annoClass: Class[_ <: Annotation]): Unit = {
     tryWithLog {
       ReflectionUtils.invokeAnnoMethod(baseFire, annoClass)
-    } (this.logger, "生命周期方法调用成功", "生命周期方法调用失败", isThrow = true)
+    }(this.logger, "生命周期方法调用成功", "生命周期方法调用失败", isThrow = true)
   }
 }
