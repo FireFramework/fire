@@ -637,6 +637,7 @@ private[fire] trait AnnoManager extends Logging {
     if (noEmpty(hive.catalog())) this.put(FireHiveConf.HIVE_CATALOG_NAME, hive.catalog())
     if (noEmpty(hive.version())) this.put(FireHiveConf.HIVE_VERSION, hive.version())
     if (noEmpty(hive.partition())) this.put(FireHiveConf.DEFAULT_TABLE_PARTITION_NAME, hive.partition())
+    if (noEmpty(hive.defaultDB())) this.put(FireHiveConf.DEFAULT_DATABASE_NAME, hive.defaultDB())
 
     // 加载hdfs相关参数（必须通过@Hive注解指定hive thrift的别名）
     if (noEmpty(hive.config())) {
