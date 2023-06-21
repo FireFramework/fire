@@ -34,6 +34,7 @@ object KeyNum {
   lazy val _7 = 7
   lazy val _8 = 8
   lazy val _9 = 9
+  lazy val _10 = 10
   lazy val _11 = 11
   lazy val _12 = 12
   lazy val _13 = 13
