@@ -89,11 +89,11 @@ class HBaseApiTest extends SparkCore with HBaseTester {
 
     // get操作
     val rowKeyList = (1 to 5).map(i => i.toString)
-    val getStudentList = HBaseConnector.get(this.tableName1, classOf[Student], rowKeyList)
+    val getStudentList = HBaseConnector.get[Student](this.tableName1, rowKeyList)
     assertEquals(getStudentList.size, 5)
     getStudentList.foreach(println)
 
-    val scanList = HBaseConnector.scan(this.tableName1, classOf[Student], "2", "4")
+    val scanList = HBaseConnector.scan[Student](this.tableName1, "2", "4")
     assertEquals(scanList.size, 2)
     scanList.foreach(println)
   }
@@ -108,11 +108,11 @@ class HBaseApiTest extends SparkCore with HBaseTester {
     HBaseConnector(2).truncateTable(this.tableName2)
     val studentList1 = Student.newStudentList().toSeq
     HBaseConnector.insert(this.tableName1, studentList1)
-    val scanStudentList1 = HBaseConnector.scan(this.tableName1, classOf[Student], "1", "6")
+    val scanStudentList1 = HBaseConnector.scan[Student](this.tableName1, "1", "6")
     assertEquals(scanStudentList1.size, 5)
-    val studentList2 =Student.newStudentList()
-    HBaseConnector(2).insert(this.tableName2, studentList2: _*)
-    val scanStudentList2 = HBaseConnector(2).scan(this.tableName2, classOf[Student], "1", "6")
+    val studentList2 = Student.newStudentList()
+    HBaseConnector(2).insert[Student](this.tableName2, studentList2: _*)
+    val scanStudentList2 = HBaseConnector(2).scan[Student](this.tableName2, "1", "6")
     assertEquals(scanStudentList2.size, 5)
 
     assertEquals(LineageManager.getDatasourceLineage.size(), 1)
@@ -126,8 +126,8 @@ class HBaseApiTest extends SparkCore with HBaseTester {
   @TestStep(step = 5, desc = "多版本测试")
   def testMultiInsert: Unit = {
     val studentList = Student.newStudentList()
-    HBaseConnector(2).insert(this.tableName2, studentList: _*)
-    val students = HBaseConnector(2).get(this.tableName2, classOf[Student], "1", "2")
+    HBaseConnector(2).insert[Student](this.tableName2, studentList: _*)
+    val students = HBaseConnector(2).get[Student](this.tableName2, "1", "2")
     assertEquals(students.size, 2)
   }
 }

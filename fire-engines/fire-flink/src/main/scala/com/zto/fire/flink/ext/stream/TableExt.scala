@@ -186,7 +186,7 @@ class TableExt(table: Table) {
       val schema = table.getTableSchema
       row => {
         // 将row转为clazz对应的JavaBean
-        val hbaseBean = row.rowToBean(schema, getParamType[T])
+        val hbaseBean = row.rowToBean(schema, getGeneric[T]("TableExt.hbasePutTable"))
         if (!hbaseBean.isInstanceOf[HBaseBaseBean[T]]) throw new IllegalArgumentException("clazz参数必须是HBaseBaseBean的子类")
         hbaseBean
       }

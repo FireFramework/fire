@@ -48,7 +48,7 @@ trait HBaseTester extends SparkTester {
   protected[this] def putData: Unit = {
     this.truncate
     val studentList = Student.newStudentList()
-    this.fire.hbasePutList(this.tableName1, studentList)
+    this.fire.hbasePutList[Student](this.tableName1, studentList)
   }
 
   protected[this] def truncate: Unit = {

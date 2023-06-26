@@ -51,7 +51,7 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
    * HBase表名
    */
   def hbaseBulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
-    HBaseBulkConnector.bulkPutStream(tableName, stream.asInstanceOf[DStream[T]], keyNum)
+    HBaseBulkConnector.bulkPutStream[T](tableName, stream.asInstanceOf[DStream[T]], keyNum)
   }
 
   /**

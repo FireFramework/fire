@@ -121,20 +121,19 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * HBase表名
    * @param rdd
    * rowKey集合，类型为RDD[String]
-   * @param clazz
-   * 获取后的记录转换为目标类型（自定义的JavaBean类型）
    * @tparam E
    * 自定义JavaBean类型，必须继承自HBaseBaseBean
    * @return
    * 自定义JavaBean的对象结果集
    */
-  def bulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E]): RDD[E] = {
+  def bulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String]): RDD[E] = {
+    val clazz = getGeneric[E]("HBaseConnector.getVersions")
     requireNonEmpty(tableName, rdd, clazz)
 
     tryWithReturn {
       val rowKeyRDD = rdd.filter(StringUtils.isNotBlank(_)).map(rowKey => Bytes.toBytes(rowKey))
       val getRDD = this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
-        HBaseConnector(keyNum = this.keyNum).hbaseRow2Bean(result, clazz).getOrElse(clazz.newInstance())
+        HBaseConnector(keyNum = this.keyNum).hbaseRow2Bean[E](result).getOrElse(clazz.newInstance())
       }).filter(bean => noEmpty(bean, bean.rowKey)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
       getRDD
     }(this.logger, s"execute bulkGetRDD(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
@@ -147,17 +146,17 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * HBase表名
    * @param rdd
    * rowKey集合，类型为RDD[String]
-   * @param clazz
-   * 获取后的记录转换为目标类型（自定义的JavaBean类型）
    * @tparam E
    * 自定义JavaBean类型，必须继承自HBaseBaseBean
    * @return
    * 自定义JavaBean的对象结果集
    */
-  def bulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E]): DataFrame = {
+  def bulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String]): DataFrame = {
+    val clazz = getGeneric[E]("HBaseBulkConnector.bulkGetDF")
     requireNonEmpty(tableName, rdd, clazz)
+
     tryWithReturn {
-      val resultRdd = this.bulkGetRDD[E](tableName, rdd, clazz)
+      val resultRdd = this.bulkGetRDD[E](tableName, rdd)
       this.sparkSession.createDataFrame(resultRdd, clazz)
     }(this.logger, s"execute bulkGetDF(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
@@ -169,17 +168,16 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * HBase表名
    * @param rdd
    * rowKey集合，类型为RDD[String]
-   * @param clazz
-   * 获取后的记录转换为目标类型（自定义的JavaBean类型）
    * @tparam E
    * 自定义JavaBean类型，必须继承自HBaseBaseBean
    * @return
    * 自定义JavaBean的对象结果集
    */
-  def bulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String], clazz: Class[E]): Dataset[E] = {
+  def bulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[String]): Dataset[E] = {
+    val clazz = getGeneric[E]("HBaseBulkConnector.bulkGetDS")
     requireNonEmpty(tableName, rdd, clazz)
     tryWithReturn {
-      val resultRdd = this.bulkGetRDD[E](tableName, rdd, clazz)
+      val resultRdd = this.bulkGetRDD[E](tableName, rdd)
       this.sparkSession.createDataset(resultRdd)(Encoders.bean(clazz))
     }(this.logger, s"execute bulkGetDS(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
@@ -191,8 +189,6 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    *
    * @param tableName
    * HBase表名
-   * @param clazz
-   * 具体类型
    * @param seq
    * rowKey集合
    * @tparam E
@@ -200,12 +196,13 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * @return
    * 自定义JavaBean的对象结果集
    */
-  def bulkGetSeq[E <: HBaseBaseBean[E] : ClassTag](tableName: String, seq: Seq[String], clazz: Class[E]): RDD[E] = {
+  def bulkGetSeq[E <: HBaseBaseBean[E] : ClassTag](tableName: String, seq: Seq[String]): RDD[E] = {
+    val clazz = getGeneric[E]("HBaseBulkConnector.bulkGetSeq")
     requireNonEmpty(tableName, seq, clazz)
 
     tryWithReturn {
       val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
-      this.bulkGetRDD(tableName, rdd, clazz)
+      this.bulkGetRDD[E](tableName, rdd)
     }(this.logger, s"execute bulkGetSeq(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
 
@@ -222,6 +219,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * 数据类型为HBaseBaseBean的子类
    */
   def bulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T]): Unit = {
+    checkGeneric[T]("HBaseBulkConnector.bulkPutRDD")
     requireNonEmpty(tableName, rdd)
 
     tryWithLog {
@@ -247,11 +245,12 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * 对象类型必须是HBaseBaseBean的子类
    */
   def bulkPutSeq[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T]): Unit = {
+    checkGeneric[T]("HBaseBulkConnector.bulkPutSeq")
     requireNonEmpty(tableName, seq)
 
     tryWithLog {
       val rdd = this.sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
-      this.bulkPutRDD(tableName, rdd)
+      this.bulkPutRDD[T](tableName, rdd)
     }(this.logger, s"execute bulkPutRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -263,21 +262,19 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * HBase表名
    * @param scan
    * scan对象
-   * @param clazz
-   * 自定义JavaBean的Class对象
    * @tparam T
    * 对象类型必须是HBaseBaseBean的子类
    * @return
    * scan获取到的结果集，类型为RDD[T]
    */
-  def bulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan)(implicit canOverload: Boolean = true): RDD[T] = {
-    requireNonEmpty(tableName, scan, clazz)
+  def bulkScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan)(implicit canOverload: Boolean = true): RDD[T] = {
+    requireNonEmpty(tableName, scan)
 
     tryWithReturn {
       if (scan.getCaching == -1) {
         scan.setCaching(this.finalBatchSize)
       }
-      this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseConnector(keyNum = this.keyNum).hbaseRow2BeanList(it, clazz)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
+      this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseConnector(keyNum = this.keyNum).hbaseRow2BeanList[T](it)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
     }(this.logger, s"execute bulkScanRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -291,16 +288,14 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * rowkey的起始
    * @param stopRow
    * rowkey的结束
-   * @param clazz
-   * 自定义JavaBean的Class对象
    * @tparam T
    * 对象类型必须是HBaseBaseBean的子类
    * @return
    * scan获取到的结果集，类型为RDD[T]
    */
-  def bulkScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): RDD[T] = {
-    requireNonEmpty(tableName, clazz, startRow, stopRow)
-    this.bulkScanRDD(tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+  def bulkScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String): RDD[T] = {
+    requireNonEmpty(tableName, startRow, stopRow)
+    this.bulkScanRDD[T](tableName, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
@@ -315,7 +310,8 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * @tparam T
    * 数据类型为HBaseBaseBean的子类
    */
-  def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[T]): Unit = {
+  def bulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame): Unit = {
+    val clazz = getGeneric[T]("HBaseBulkConnector.bulkGetSeq")
     requireNonEmpty(tableName, dataFrame, clazz)
 
     val rdd = dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
@@ -352,6 +348,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * 对象类型必须是HBaseBaseBean的子类
    */
   def bulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dstream: DStream[T]): Unit = {
+    checkGeneric[T]("HBaseBulkConnector.bulkPutStream")
     requireNonEmpty(tableName, dstream)
 
     tryWithLog {
@@ -372,6 +369,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * 数据类型
    */
   def hadoopPut[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T]): Unit = {
+    checkGeneric[T]("HBaseBulkConnector.hadoopPut")
     requireNonEmpty(tableName, rdd)
 
     tryWithLog {
@@ -390,10 +388,9 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    *
    * @param tableName
    * HBase表名
-   * @param clazz
-   * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataFrame: DataFrame, clazz: Class[E]): Unit = {
+  def hadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataFrame: DataFrame): Unit = {
+    val clazz = getGeneric[E]("HBaseBulkConnector.hadoopPutDF")
     requireNonEmpty(tableName, dataFrame, clazz)
 
     val rdd = dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
@@ -426,6 +423,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * JavaBean类型
    */
   def hadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame, buildRowKey: (Row) => String): Unit = {
+    checkGeneric[T]("HBaseBulkConnector.hadoopPutDFRow")
     requireNonEmpty(tableName, df)
     val insertEmpty = HBaseConnector(keyNum = this.keyNum).getNullable[T]
     tryWithLog {

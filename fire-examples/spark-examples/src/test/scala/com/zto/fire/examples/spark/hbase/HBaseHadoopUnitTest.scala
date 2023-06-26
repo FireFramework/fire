@@ -43,7 +43,7 @@ class HBaseHadoopUnitTest extends SparkCore with HBaseTester {
   @TestStep(step = 1, desc = "testHbaseHadoopPutRDD")
   def testHbaseHadoopPutRDD: Unit = {
     val studentRDD = this.fire.createRDD(Student.newStudentList(), 2)
-    this.fire.hbaseHadoopPutRDD(this.tableName1, studentRDD, keyNum = 2)
+    this.fire.hbaseHadoopPutRDD[Student](this.tableName1, studentRDD, keyNum = 2)
     this.assertScan
   }
 
@@ -55,7 +55,7 @@ class HBaseHadoopUnitTest extends SparkCore with HBaseTester {
   def testHbaseHadoopPutDF: Unit = {
     val studentRDD = this.fire.createRDD(Student.newStudentList(), 2)
     val studentDF = this.fire.createDataFrame(studentRDD, classOf[Student])
-    this.fire.hbaseHadoopPutDF(this.tableName1, studentDF, classOf[Student])
+    this.fire.hbaseHadoopPutDF[Student](this.tableName1, studentDF)
     this.assertScan
   }
 
@@ -66,7 +66,7 @@ class HBaseHadoopUnitTest extends SparkCore with HBaseTester {
   @TestStep(step = 3, desc = "testHbaseHadoopPutDS")
   def testHbaseHadoopPutDS: Unit = {
     val studentDS = this.fire.createDataset(Student.newStudentList())(Encoders.bean(classOf[Student]))
-    this.fire.hbaseHadoopPutDS(this.tableName1, studentDS)
+    this.fire.hbaseHadoopPutDS[Student](this.tableName1, studentDS)
     this.assertScan
   }
 
@@ -89,7 +89,7 @@ class HBaseHadoopUnitTest extends SparkCore with HBaseTester {
     val studentRDD = this.fire.createRDD(Student.newStudentList(), 2)
     this.fire.createDataFrame(studentRDD, classOf[Student]).createOrReplaceTempView("student")
     // 指定rowKey构建的函数
-    sql("select age,createTime,id,length,name,sex from student").hbaseHadoopPutDFRow(this.tableName1, buildRowKey)
+    sql("select age,createTime,id,length,name,sex from student").hbaseHadoopPutDFRow[Student](this.tableName1, buildRowKey)
     this.assertScan
   }
 
@@ -106,7 +106,7 @@ class HBaseHadoopUnitTest extends SparkCore with HBaseTester {
    * 使用Spark的方式scan海量数据，并将结果集映射为RDD
    */
   private def testHBaseHadoopScanRDD: Unit = {
-    val studentRDD = this.fire.hbaseHadoopScanRDD2(this.tableName1, classOf[Student], "1", "6", keyNum = 2)
+    val studentRDD = this.fire.hbaseHadoopScanRDD2[Student](this.tableName1, "1", "6", keyNum = 2)
     assert(studentRDD.count() == 5)
   }
 
@@ -114,7 +114,7 @@ class HBaseHadoopUnitTest extends SparkCore with HBaseTester {
    * 使用Spark的方式scan海量数据，并将结果集映射为DataFrame
    */
   private def testHBaseHadoopScanDF: Unit = {
-    val studentDF = this.fire.hbaseHadoopScanDF2(this.tableName1, classOf[Student], "1", "6")
+    val studentDF = this.fire.hbaseHadoopScanDF2[Student](this.tableName1, "1", "6")
     assert(studentDF.count() == 5)
     studentDF.show()
   }
@@ -123,7 +123,7 @@ class HBaseHadoopUnitTest extends SparkCore with HBaseTester {
    * 使用Spark的方式scan海量数据，并将结果集映射为Dataset
    */
   private def testHBaseHadoopScanDS: Unit = {
-    val studentDS = this.fire.hbaseHadoopScanDS2(this.tableName1, classOf[Student], "1", "6")
+    val studentDS = this.fire.hbaseHadoopScanDS2[Student](this.tableName1, "1", "6")
     assert(studentDS.count() == 5)
   }
 }

@@ -82,12 +82,14 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * @param beans     HBaseBaseBean子类集合
    */
   def insert[T <: HBaseBaseBean[T] : ClassTag](tableName: String, beans: T*): Unit = {
+    checkGeneric[T]("HBaseConnector.insert")
     requireNonNull(tableName, beans)("参数不合法，批量HBase insert失败")
+
     var table: Table = null
     tryFinallyWithReturn {
       table = this.getTable(tableName)
       val beanList = if (this.getMultiVersion[T]) beans.filter(_ != null).map((bean: T) => new MultiVersionsBean(bean)) else beans
-      val putList = beanList.map(bean => convert2Put(bean.asInstanceOf[T], this.getNullable[T]))
+      val putList = beanList.map(bean => convert2Put[T](bean.asInstanceOf[T], this.getNullable[T]))
       this.insert(tableName, putList: _*)
     } {
       this.closeTable(table)
@@ -121,28 +123,28 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    *
    * @param tableName 表名
    * @param rowKeys   指定的多个rowKey
-   * @param clazz     目标类类型，必须是HBaseBaseBean的子类
    * @return 目标对象实例
    */
-  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeys: String*): ListBuffer[T] = {
+  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeys: String*): ListBuffer[T] = {
     val getList = for (rowKey <- rowKeys) yield HBaseConnector.buildGet(rowKey)
-    this.get[T](tableName, clazz, getList: _*)
+    this.get[T](tableName, getList: _*)
   }
 
   /**
    * 从HBase批量Get数据，并将结果封装到JavaBean中
    *
    * @param tableName 表名
-   * @param clazz     目标类类型，必须是HBaseBaseBean的子类
    * @param gets      指定的多个get对象
    * @return 目标对象实例
    */
-  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], gets: Get*)(implicit canOverload: Boolean = true): ListBuffer[T] = {
+  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, gets: Get*)(implicit canOverload: Boolean = true): ListBuffer[T] = {
+    val clazz = getGeneric[T]("HBaseConnector.get")
     requireNonNull(tableName, clazz, gets)("参数不合法，无法进行HBase Get操作")
+
     tryWithReturn {
       this.getMaxVersions[T](gets: _*)
       val resultList = this.getResult(tableName, gets: _*)
-      if (this.getMultiVersion[T]) this.hbaseMultiRow2Bean[T](resultList, clazz) else this.hbaseRow2Bean(resultList, clazz)
+      if (this.getMultiVersion[T]) this.hbaseMultiRow2Bean[T](resultList, clazz) else this.hbaseRow2Bean[T](resultList)
     }(this.logger, catchLog = s"批量 get ${hbaseClusterUrl(keyNum)}.${tableName}执行失败")
   }
 
@@ -243,13 +245,12 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * @param tableName 表名
    * @param startRow  开始行
    * @param endRow    结束行
-   * @param clazz     类型
    * @return 指定类型的List
    */
-  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, endRow: String): ListBuffer[T] = {
-    requireNonEmpty(tableName, clazz, startRow, endRow)
+  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, endRow: String): ListBuffer[T] = {
+    requireNonEmpty(tableName, startRow, endRow)
     val scan = HBaseConnector.buildScan(startRow, endRow)
-    this.scan[T](tableName, clazz, scan)
+    this.scan[T](tableName, scan)
   }
 
   /**
@@ -257,11 +258,11 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    *
    * @param tableName 表名
    * @param scan      HBase scan对象
-   * @param clazz     类型
    * @return 指定类型的List
    */
-  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): ListBuffer[T] = {
-    requireNonEmpty(tableName, clazz, scan)(s"参数不合法，scan ${hbaseClusterUrl(keyNum)}.${tableName}失败.")
+  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan): ListBuffer[T] = {
+    checkGeneric[T]("HBaseConnector.scan")
+    requireNonEmpty(tableName, scan)(s"参数不合法，scan ${hbaseClusterUrl(keyNum)}.${tableName}失败.")
 
     val list = ListBuffer[T]()
     var rsScanner: ResultScanner = null
@@ -271,10 +272,10 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       if (rsScanner != null) {
         rsScanner.foreach(rs => {
           if (this.getMultiVersion[T]) {
-            val objList = this.hbaseMultiRow2Bean[T](rs, clazz)
+            val objList = this.hbaseMultiRow2Bean[T](rs)
             if (objList != null && objList.nonEmpty) list ++= objList
           } else {
-            val obj = hbaseRow2Bean(rs, clazz)
+            val obj = hbaseRow2Bean[T](rs)
             if (obj.isDefined) list += obj.get
           }
         })
@@ -313,13 +314,15 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   /**
    * 将class中的field转为map映射
    *
-   * @param clazz Class类型
    * @return 名称与字段的映射map
    */
   @Internal
-  private[this] def getFieldNameMap[T <: HBaseBaseBean[T]](clazz: Class[T]): JMap[String, Field] = {
+  private[this] def getFieldNameMap[T <: HBaseBaseBean[T] : ClassTag](): JMap[String, Field] = {
+    val clazz = getGeneric[T]("HBaseConnector.getFieldNameMap")
     if (!this.cacheFieldMap.containsKey(clazz)) {
-      val allFields = ReflectionUtils.getAllFields(clazz).filter(t => !t._2.toString.contains(" final "))
+      val beanFields = ReflectionUtils.getAllFields(clazz).filter(t => !t._2.toString.contains(" final "))
+      val multiBeanFields = ReflectionUtils.getAllFields(classOf[MultiVersionsBean]).filter(t => !t._2.toString.contains(" final "))
+      val allFields = multiBeanFields ++ beanFields
       if (allFields != null) {
         val fieldMap = Maps.newHashMapWithExpectedSize[String, Field](allFields.size)
 
@@ -377,11 +380,11 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * 将含有多版本的cell映射为field
    *
    * @param rs       hbase 结果集
-   * @param clazz    目标类型
    * @param fieldMap 字段映射信息
    */
   @Internal
-  private[this] def multiCell2Field[T <: HBaseBaseBean[T] : ClassTag](rs: Result, clazz: Class[T], fieldMap: JMap[String, Field]): ListBuffer[T] = {
+  private[this] def multiCell2Field[T <: HBaseBaseBean[T] : ClassTag](rs: Result, fieldMap: JMap[String, Field]): ListBuffer[T] = {
+    val clazz = getGeneric[T]("HBaseConnector.multiCell2Field")
     val objList = ListBuffer[T]()
     tryWithLog {
       if (rs != null) {
@@ -406,19 +409,19 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   /**
    * 将cell中的值转为File的值
    *
-   * @param clazz    类类型
    * @param fieldMap 成员变量信息
    * @param rs       hbase查询结果集
    * @return clazz对应的结果实例
    */
   @Internal
-  private[this] def cell2Field[T <: HBaseBaseBean[T]](clazz: Class[T], fieldMap: JMap[String, Field], rs: Result): Option[T] = {
+  private[this] def cell2Field[T <: HBaseBaseBean[T] : ClassTag](fieldMap: JMap[String, Field], rs: Result): Option[T] = {
+    val clazz = getGeneric[T]("HBaseConnector.cell2Field")
     val cells = rs.rawCells
     if (cells == null) return None
 
     val obj = clazz.newInstance
     tryWithLog {
-      val rowKey = convertCells2Fields(fieldMap, obj, cells)
+      val rowKey = convertCells2Fields[T](fieldMap, obj, cells)
       val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
       requireNonEmpty(idField)(s"${clazz}中必须有名为rowKey的成员变量")
       ReflectionUtils.setAccessible(idField)
@@ -457,15 +460,14 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * 将结果映射到自定义bean中
    *
    * @param rs    HBase查询结果集
-   * @param clazz 映射的目标Class类型
    * @return 目标类型实例
    */
   @Internal
-  private[fire] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rs: Result, clazz: Class[T]): Option[T] = {
-    requireNonNull(rs, clazz)("参数不合法，HBase Row转为JavaBean失败.")
-    val fieldMap = this.getFieldNameMap(clazz)
-    requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
-    this.cell2Field(clazz, fieldMap, rs)
+  private[fire] def hbaseRow2Bean[T <: HBaseBaseBean[T] : ClassTag](rs: Result): Option[T] = {
+    requireNonNull(rs)("参数不合法，HBase Row转为JavaBean失败.")
+    val fieldMap = this.getFieldNameMap[T]
+    requireNonEmpty(fieldMap)(s"未声明任何成员变量或成员变量未声明注解@FieldName")
+    this.cell2Field[T](fieldMap, rs)
   }
 
   /**
@@ -476,13 +478,13 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * @return 目标类型实例
    */
   @Internal
-  private[fire] def hbaseRow2Bean[T <: HBaseBaseBean[T]](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
-    requireNonNull(rsArr, clazz)("参数不合法，HBase Row转为JavaBean失败.")
-    val fieldMap = this.getFieldNameMap(clazz)
-    requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
+  private[fire] def hbaseRow2Bean[T <: HBaseBaseBean[T] : ClassTag](rsArr: ListBuffer[Result]): ListBuffer[T] = {
+    requireNonNull(rsArr)("参数不合法，HBase Row转为JavaBean失败.")
+    val fieldMap = this.getFieldNameMap[T]
+    requireNonEmpty(fieldMap)(s"未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
     rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => {
-      val obj = this.cell2Field(clazz, fieldMap, rs)
+      val obj = this.cell2Field[T](fieldMap, rs)
       if (obj.isDefined) objList += obj.get
     })
     objList
@@ -492,15 +494,14 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * 将结果映射到自定义bean中
    *
    * @param rs    HBase查询结果集
-   * @param clazz 映射的目标Class类型
    * @return 目标类型实例
    */
   @Internal
-  private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T] : ClassTag](rs: Result, clazz: Class[T]): ListBuffer[T] = {
-    requireNonNull(rs, clazz)("参数不合法，HBase MultiRow转为JavaBean失败.")
-    val fieldMap = this.getFieldNameMap(classOf[MultiVersionsBean])
-    requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
-    this.multiCell2Field[T](rs, clazz, fieldMap)
+  private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T] : ClassTag](rs: Result): ListBuffer[T] = {
+    requireNonNull(rs)("参数不合法，HBase MultiRow转为JavaBean失败.")
+    val fieldMap = this.getFieldNameMap[T]
+    requireNonEmpty(fieldMap)(s"未声明任何成员变量或成员变量未声明注解@FieldName")
+    this.multiCell2Field[T](rs, fieldMap)
   }
 
   /**
@@ -513,10 +514,10 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   @Internal
   private[fire] def hbaseMultiRow2Bean[T <: HBaseBaseBean[T] : ClassTag](rsArr: ListBuffer[Result], clazz: Class[T]): ListBuffer[T] = {
     requireNonNull(rsArr, clazz)("参数不合法，HBase Row转为JavaBean失败.")
-    val fieldMap = getFieldNameMap(classOf[MultiVersionsBean])
+    val fieldMap = getFieldNameMap[T]
     requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val objList = ListBuffer[T]()
-    rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList ++= this.multiCell2Field[T](rs, clazz, fieldMap))
+    rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => objList ++= this.multiCell2Field[T](rs, fieldMap))
     objList
   }
 
@@ -524,13 +525,14 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * 将结果映射到自定义bean中
    *
    * @param it    HBase查询结果集
-   * @param clazz 映射的目标Class类型
    * @return 目标类型实例
    */
   @Internal
-  private[fire] def hbaseRow2BeanList[T <: HBaseBaseBean[T]](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
+  private[fire] def hbaseRow2BeanList[T <: HBaseBaseBean[T] : ClassTag](it: Iterator[(ImmutableBytesWritable, Result)]): Iterator[T] = {
+    val clazz = getGeneric[T]("HBaseConnector.hbaseRow2BeanList")
     requireNonNull(it, clazz)
-    val fieldMap = this.getFieldNameMap(clazz)
+
+    val fieldMap = this.getFieldNameMap[T]
     requireNonEmpty(fieldMap)(s"${clazz}中未声明任何成员变量或成员变量未声明注解@FieldName")
     val beanList = ListBuffer[T]()
     tryWithLog {
@@ -538,7 +540,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
         val cells = t._2.rawCells()
         if (cells != null) {
           val obj = clazz.newInstance()
-          val rowKey = this.convertCells2Fields(fieldMap, obj, cells)
+          val rowKey = this.convertCells2Fields[T](fieldMap, obj, cells)
           val idField = ReflectionUtils.getFieldByName(clazz, "rowKey")
           requireNonEmpty(idField)(s"${clazz}中必须有名为rowKey的成员变量")
           idField.set(obj, rowKey)
@@ -553,16 +555,16 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * 将多版本结果映射到自定义bean中
    *
    * @param it    HBase查询结果集
-   * @param clazz 映射的目标Class类型
    * @return 目标类型实例
    */
   @Internal
-  private[fire] def hbaseMultiVersionRow2BeanList[T <: HBaseBaseBean[T] : ClassTag](it: Iterator[(ImmutableBytesWritable, Result)], clazz: Class[T]): Iterator[T] = {
-    requireNonNull(it, clazz)
+  private[fire] def hbaseMultiVersionRow2BeanList[T <: HBaseBaseBean[T] : ClassTag](it: Iterator[(ImmutableBytesWritable, Result)]): Iterator[T] = {
+    requireNonNull(it)
+
     val beanList = ListBuffer[T]()
     tryWithLog {
       it.foreach(t => {
-        beanList ++= this.hbaseMultiRow2Bean[T](t._2, clazz)
+        beanList ++= this.hbaseMultiRow2Bean[T](t._2)
       })
     }(this.logger, catchLog = "将HBase多版本Row转为JavaBean过程中出现异常.")
 
@@ -647,7 +649,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    */
   @Internal
   private[fire] def convert2PutTuple[T <: HBaseBaseBean[T]](obj: T, insertEmpty: Boolean = true): (ImmutableBytesWritable, Put) = {
-    (new ImmutableBytesWritable(), convert2Put(obj, insertEmpty))
+    (new ImmutableBytesWritable(), convert2Put[T](obj, insertEmpty))
   }
 
   /**
@@ -741,7 +743,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    *
    * @param tableName 表名
    */
-  private[fire] def dropTable(tableName: String): Unit = {
+  def dropTable(tableName: String): Unit = {
     requireNonEmpty(tableName)("执行dropTable失败")
     var admin: Admin = null
     tryFinallyWithReturn {
@@ -765,7 +767,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    *
    * @param tableName 表名
    */
-  private[fire] def enableTable(tableName: String): Unit = {
+  def enableTable(tableName: String): Unit = {
     requireNonEmpty(tableName)("执行enableTable失败")
     var admin: Admin = null
     tryFinallyWithReturn {
@@ -786,7 +788,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    *
    * @param tableName 表名
    */
-  private[fire] def disableTable(tableName: String): Unit = {
+  def disableTable(tableName: String): Unit = {
     requireNonEmpty(tableName)("执行disableTable失败")
     var admin: Admin = null
     tryFinallyWithReturn {
@@ -808,7 +810,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * @param tableName      HBase表名
    * @param preserveSplits 是否保留所有的split信息
    */
-  private[fire] def truncateTable(tableName: String, preserveSplits: Boolean = true): Unit = {
+  def truncateTable(tableName: String, preserveSplits: Boolean = true): Unit = {
     requireNonEmpty(tableName, preserveSplits)("执行truncateTable失败")
     var admin: Admin = null
     tryFinallyWithReturn {
@@ -940,8 +942,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * @param rowKey    rowKey
    * @param families  多个列族
    */
-  @Internal
-  private[fire] def deleteFamilies(tableName: String, rowKey: String, families: String*): Unit = {
+  def deleteFamilies(tableName: String, rowKey: String, families: String*): Unit = {
     if (noEmpty(tableName, rowKey, families)) {
       val delete = new Delete(rowKey.getBytes(StandardCharsets.UTF_8))
       families.filter(StringUtils.isNotBlank).foreach(family => delete.addFamily(family.getBytes(StandardCharsets.UTF_8)))
@@ -967,8 +968,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * @param family     列族
    * @param qualifiers 列名
    */
-  @Internal
-  private[fire] def deleteQualifiers(tableName: String, rowKey: String, family: String, qualifiers: String*): Unit = {
+  def deleteQualifiers(tableName: String, rowKey: String, family: String, qualifiers: String*): Unit = {
     if (noEmpty(tableName, rowKey, family, qualifiers)) {
       val delete = new Delete(rowKey.getBytes(StandardCharsets.UTF_8))
       qualifiers.foreach(qualifier => delete.addColumns(family.getBytes(StandardCharsets.UTF_8), qualifier.getBytes(StandardCharsets.UTF_8)))
@@ -1038,7 +1038,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    */
   @Internal
   private[this] def getVersions[T <: HBaseBaseBean[T] : ClassTag]: Int = {
-    val clazz = getParamType[T]
+    val clazz = getGeneric[T]("HBaseConnector.getVersions")
     val hConfig = ReflectionUtils.getClassAnnotation(clazz, classOf[HConfig])
     // 仅当开启多版本的情况下versions的值才有效
     if (hConfig == null || !this.getMultiVersion[T]) 1 else hConfig.asInstanceOf[HConfig].versions

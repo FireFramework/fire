@@ -53,10 +53,10 @@ object SparkCoreLineageTest extends SparkCore {
         val timestamp = DateFormatUtils.formatCurrentDateTime()
         val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
         this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
-        HBaseConnector.get[Student](hbaseTable, classOf[Student], Seq("1"))
+        HBaseConnector.get[Student](hbaseTable, Seq("1"))
       })
       // 每个批次插100条
-      df.hbasePutDF(this.hbaseTable, classOf[Student])
+      df.hbasePutDF[Student](this.hbaseTable)
       Thread.sleep(10000)
     })
 

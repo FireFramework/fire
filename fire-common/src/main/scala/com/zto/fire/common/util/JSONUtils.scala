@@ -84,7 +84,7 @@ object JSONUtils {
    * @return
    * 目标对象实例
    */
-  def parseObject[T: ClassTag](json: String): T = this.getObjectMapper.readValue[T](json, getParamType[T])
+  def parseObject[T: ClassTag](json: String): T = this.getObjectMapper.readValue[T](json, getGeneric[T]("JSONUtils.parseObject"))
 
   /**
    * 将给定的json字符串转为T类型对象实例

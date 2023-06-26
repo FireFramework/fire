@@ -116,23 +116,21 @@ private[hbase] trait HBaseFunctions {
    *
    * @param tableName 表名
    * @param rowKeys   指定的多个rowKey
-   * @param clazz     目标类类型，必须是HBaseBaseBean的子类
    * @return 目标对象实例
    */
-  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[T] = {
-    HBaseConnector(keyNum = keyNum).get[T](tableName, clazz, rowKeys: _*)
+  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[T] = {
+    HBaseConnector(keyNum = keyNum).get[T](tableName, rowKeys: _*)
   }
 
   /**
    * 从HBase批量Get数据，并将结果封装到JavaBean中
    *
    * @param tableName 表名
-   * @param clazz     目标类类型，必须是HBaseBaseBean的子类
    * @param gets      指定的多个get对象
    * @return 目标对象实例
    */
-  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], gets: ListBuffer[Get], keyNum: Int): ListBuffer[T] = {
-    HBaseConnector(keyNum = keyNum).get[T](tableName, clazz, gets: _*)
+  def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, gets: ListBuffer[Get], keyNum: Int): ListBuffer[T] = {
+    HBaseConnector(keyNum = keyNum).get[T](tableName, gets: _*)
   }
 
   /**
@@ -189,11 +187,10 @@ private[hbase] trait HBaseFunctions {
    * @param tableName 表名
    * @param startRow  开始行
    * @param endRow    结束行
-   * @param clazz     类型
    * @return 指定类型的List
    */
-  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[T] = {
-    HBaseConnector(keyNum = keyNum).scan[T](tableName, clazz, startRow, endRow)
+  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[T] = {
+    HBaseConnector(keyNum = keyNum).scan[T](tableName, startRow, endRow)
   }
 
   /**
@@ -201,11 +198,10 @@ private[hbase] trait HBaseFunctions {
    *
    * @param tableName 表名
    * @param scan      HBase scan对象
-   * @param clazz     类型
    * @return 指定类型的List
    */
-  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int): ListBuffer[T] = {
-    HBaseConnector(keyNum = keyNum).scan[T](tableName, clazz, scan)
+  def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int): ListBuffer[T] = {
+    HBaseConnector(keyNum = keyNum).scan[T](tableName, scan)
   }
 
   /**
@@ -221,7 +217,7 @@ private[hbase] trait HBaseFunctions {
    * @param families
    * 列族
    */
-  private[fire] def createTable(tableName: String, families: Seq[String], keyNum: Int = KeyNum._1): Unit = {
+  def createTable(tableName: String, families: Seq[String], keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).createTable(tableName, families: _*)
   }
 
@@ -230,7 +226,7 @@ private[hbase] trait HBaseFunctions {
    *
    * @param tableName 表名
    */
-  private[fire] def dropTable(tableName: String, keyNum: Int = KeyNum._1): Unit = {
+  def dropTable(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).dropTable(tableName)
   }
 
@@ -239,7 +235,7 @@ private[hbase] trait HBaseFunctions {
    *
    * @param tableName 表名
    */
-  private[fire] def enableTable(tableName: String, keyNum: Int = KeyNum._1): Unit = {
+  def enableTable(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).enableTable(tableName)
   }
 
@@ -248,7 +244,7 @@ private[hbase] trait HBaseFunctions {
    *
    * @param tableName 表名
    */
-  private[fire] def disableTable(tableName: String, keyNum: Int = KeyNum._1): Unit = {
+  def disableTable(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).disableTable(tableName)
   }
 
@@ -259,7 +255,7 @@ private[hbase] trait HBaseFunctions {
    *                       表名
    * @param preserveSplits 是否保留所有的split信息
    */
-  private[fire] def truncateTable(tableName: String, preserveSplits: Boolean = true, keyNum: Int = KeyNum._1): Unit = {
+  def truncateTable(tableName: String, preserveSplits: Boolean = true, keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).truncateTable(tableName, preserveSplits)
   }
 
@@ -294,8 +290,7 @@ private[hbase] trait HBaseFunctions {
    * @param rowKey    rowKey
    * @param families  多个列族
    */
-  @Internal
-  private[fire] def deleteFamilies(tableName: String, rowKey: String, families: Seq[String], keyNum: Int = KeyNum._1): Unit = {
+  def deleteFamilies(tableName: String, rowKey: String, families: Seq[String], keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).deleteFamilies(tableName, rowKey, families: _*)
   }
 
@@ -307,8 +302,7 @@ private[hbase] trait HBaseFunctions {
    * @param family     列族
    * @param qualifiers 列名
    */
-  @Internal
-  private[fire] def deleteQualifiers(tableName: String, rowKey: String, family: String, qualifiers: Seq[String], keyNum: Int = KeyNum._1): Unit = {
+  def deleteQualifiers(tableName: String, rowKey: String, family: String, qualifiers: Seq[String], keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).deleteQualifiers(tableName, rowKey, family, qualifiers: _*)
   }
 
@@ -323,7 +317,7 @@ private[hbase] trait HBaseFunctions {
    * 校验类型合法性，class必须是HBaseBaseBean的子类
    */
   def checkClass[T: ClassTag](clazz: Class[_] = null): Unit = {
-    val finalClazz = if (clazz != null) clazz else getParamType[T]
+    val finalClazz = if (clazz != null) clazz else getGeneric[T]("HBaseFunctions.checkClass")
     if (finalClazz == null || finalClazz.getSuperclass != classOf[HBaseBaseBean[_]]) throw new IllegalArgumentException("请指定泛型类型，该泛型必须是HBaseBaseBean的子类，如：this.fire.hbasePutTable[JavaBean]")
   }
 }

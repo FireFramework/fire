@@ -18,8 +18,6 @@
 package com.zto.fire.spark.connector
 
 import com.zto.fire.common.conf.KeyNum
-
-import java.nio.charset.StandardCharsets
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
@@ -35,127 +33,125 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.storage.StorageLevel
 
+import java.nio.charset.StandardCharsets
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /**
-  * HBase-Spark桥，为Spark提供了使用Java API操作HBase的方式
-  *
-  * @author ChengLong 2019-5-10 14:39:39
-  */
+ * HBase-Spark桥，为Spark提供了使用Java API操作HBase的方式
+ *
+ * @author ChengLong 2019-5-10 14:39:39
+ */
 class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = keyNum) {
   private[this] lazy val spark = SparkSingletonFactory.getSparkSession
+
   def batchSize: Int = FireHBaseConf.hbaseBatchSize()
 
   /**
-    * 使用Java API的方式将DataFrame中的数据分多个批次插入到HBase中
-    *
-    * @param tableName
-    * HBase表名
-    * @param df
-    * DataFrame
-    * @param clazz
-    * JavaBean类型，为HBaseBaseBean的子类
-    */
-  def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], df: DataFrame): Unit = {
-    df.mapPartitions(row => SparkUtils.sparkRowToBean(row, clazz))(Encoders.bean(clazz)).foreachPartition((it: Iterator[E]) => {
-      this.multiBatchInsert(tableName, it)
+   * 使用Java API的方式将DataFrame中的数据分多个批次插入到HBase中
+   *
+   * @param tableName
+   * HBase表名
+   * @param df
+   * DataFrame
+   */
+  def hbasePutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, df: DataFrame): Unit = {
+    val clazz = getGeneric[T]("HBaseSparkBridge.hbasePutDF")
+    df.mapPartitions(row => SparkUtils.sparkRowToBean(row, clazz))(Encoders.bean(clazz)).foreachPartition((it: Iterator[T]) => {
+      this.multiBatchInsert[T](tableName, it)
     })
   }
 
   /**
-    * 使用Java API的方式将Dataset中的数据分多个批次插入到HBase中
-    *
-    * @param tableName
-    * HBase表名
-    * @param ds
-    * DataSet[E]的具体类型必须为HBaseBaseBean的子类
-    * @param clazz
-    * JavaBean类型，为HBaseBaseBean的子类
-    */
-  def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], ds: Dataset[E]): Unit = {
-    ds.foreachPartition((it: Iterator[E]) => {
-      this.multiBatchInsert(tableName, it)
+   * 使用Java API的方式将Dataset中的数据分多个批次插入到HBase中
+   *
+   * @param tableName
+   * HBase表名
+   * @param ds
+   * DataSet[E]的具体类型必须为HBaseBaseBean的子类
+   */
+  def hbasePutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, ds: Dataset[T]): Unit = {
+    checkGeneric[T]("HBaseSparkBridge.hbasePutDS")
+    ds.foreachPartition((it: Iterator[T]) => {
+      this.multiBatchInsert[T](tableName, it)
     })
   }
 
   /**
-    * 使用Java API的方式将RDD中的数据分多个批次插入到HBase中
-    *
-    * @param tableName
-    * HBase表名
-    */
+   * 使用Java API的方式将RDD中的数据分多个批次插入到HBase中
+   *
+   * @param tableName
+   * HBase表名
+   */
   def hbasePutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T]): Unit = {
+    checkGeneric[T]("HBaseSparkBridge.hbasePutRDD")
     rdd.foreachPartition(it => {
-      this.multiBatchInsert(tableName, it)
+      this.multiBatchInsert[T](tableName, it)
     })
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为DataFrame
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * scan对象
-    * @param clazz
-    * 目标类型
-    * @tparam T
-    * 目标类型
-    * @return
-    */
-  def hbaseScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): DataFrame = {
-    val beanRDD = this.hbaseScanRDD(tableName, clazz, scan)
+   * Scan指定HBase表的数据，并映射为DataFrame
+   *
+   * @param tableName
+   * HBase表名
+   * @param scan
+   * scan对象
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan): DataFrame = {
+    val clazz = getGeneric[T]("HBaseSparkBridge.hbaseScanDF")
+    val beanRDD = this.hbaseScanRDD[T](tableName, scan)
     // 将rdd转为DataFrame
     this.spark.createDataFrame(beanRDD, clazz)
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为Dataset
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * scan对象
-    * @param clazz
-    * 目标类型
-    * @tparam T
-    * 目标类型
-    * @return
-    */
-  def hbaseScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): Dataset[T] = {
-    val beanRDD = this.hbaseScanRDD(tableName, clazz, scan)
+   * Scan指定HBase表的数据，并映射为Dataset
+   *
+   * @param tableName
+   * HBase表名
+   * @param scan
+   * scan对象
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan): Dataset[T] = {
+    val clazz = getGeneric[T]("HBaseSparkBridge.hbaseScanDF")
+    val beanRDD = this.hbaseScanRDD[T](tableName, scan)
     spark.createDataset(beanRDD)(Encoders.bean(clazz))
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为Dataset
-    *
-    * @param tableName
-    *                HBase表名
-    * @param startRow
-    *                开始主键
-    * @param stopRow 结束主键
-    * @param clazz
-    *                目标类型
-    * @tparam T
-    * 目标类型
-    * @return
-    */
-  def hbaseScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): Dataset[T] = {
-    this.hbaseScanDS[T](tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+   * Scan指定HBase表的数据，并映射为Dataset
+   *
+   * @param tableName
+   *                HBase表名
+   * @param startRow
+   *                开始主键
+   * @param stopRow 结束主键
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String): Dataset[T] = {
+    checkGeneric[T]("HBaseSparkBridge.hbaseScanDS2")
+    this.hbaseScanDS[T](tableName, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * scan对象
-    * 目标类型
-    * @return
-    */
+   * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+   *
+   * @param tableName
+   * HBase表名
+   * @param scan
+   * scan对象
+   * 目标类型
+   * @return
+   */
   def hbaseHadoopScanRS(tableName: String, scan: Scan): RDD[(ImmutableBytesWritable, Result)] = {
     val hbaseConf = HBaseConnector(keyNum = this.keyNum).getConfiguration
     hbaseConf.set(TableInputFormat.INPUT_TABLE, tableName)
@@ -166,217 +162,216 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
-    *
-    * @param tableName
-    * HBase表名
-    * @param startRow
-    * rowKey开始位置
-    * @param stopRow
-    * rowKey结束位置
-    * 目标类型
-    * @return
-    */
+   * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+   *
+   * @param tableName
+   * HBase表名
+   * @param startRow
+   * rowKey开始位置
+   * @param stopRow
+   * rowKey结束位置
+   * 目标类型
+   * @return
+   */
   def hbaseHadoopScanRS2(tableName: String, startRow: String, stopRow: String): RDD[(ImmutableBytesWritable, Result)] = {
     this.hbaseHadoopScanRS(tableName, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为RDD[(T]
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * scan对象
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): RDD[T] = {
+   * Scan指定HBase表的数据，并映射为RDD[(T]
+   *
+   * @param tableName
+   * HBase表名
+   * @param scan
+   * scan对象
+   * 目标类型
+   * @return
+   */
+  def hbaseHadoopScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan): RDD[T] = {
+    checkGeneric[T]("HBaseSparkBridge.hbaseHadoopScanRDD")
     val rdd = this.hbaseHadoopScanRS(tableName, scan)
-    rdd.mapPartitions(it => HBaseConnector(keyNum = keyNum).hbaseRow2BeanList(it, clazz))
+    rdd.mapPartitions(it => HBaseConnector(keyNum = keyNum).hbaseRow2BeanList[T](it))
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为RDD[T]
-    *
-    * @param tableName
-    * HBase表名
-    * @param startRow
-    * rowKey开始位置
-    * @param stopRow
-    * rowKey结束位置
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): RDD[T] = {
-    this.hbaseHadoopScanRDD[T](tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+   * Scan指定HBase表的数据，并映射为RDD[T]
+   *
+   * @param tableName
+   * HBase表名
+   * @param startRow
+   * rowKey开始位置
+   * @param stopRow
+   * rowKey结束位置
+   * 目标类型
+   * @return
+   */
+  def hbaseHadoopScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String): RDD[T] = {
+    this.hbaseHadoopScanRDD[T](tableName, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为RDD[(T]
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * scan对象
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): DataFrame = {
-    val rdd = this.hbaseHadoopScanRDD[T](tableName, clazz, scan)
+   * Scan指定HBase表的数据，并映射为RDD[(T]
+   *
+   * @param tableName
+   * HBase表名
+   * @param scan
+   * scan对象
+   * 目标类型
+   * @return
+   */
+  def hbaseHadoopScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan): DataFrame = {
+    val clazz = getGeneric[T]("HBaseSparkBridge.hbaseHadoopScanDF")
+    val rdd = this.hbaseHadoopScanRDD[T](tableName, scan)
     this.spark.createDataFrame(rdd, clazz)
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
-    *
-    * @param tableName
-    * HBase表名
-    * @param startRow
-    * rowKey开始位置
-    * @param stopRow
-    * rowKey结束位置
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): DataFrame = {
-    this.hbaseHadoopScanDF[T](tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+   * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+   *
+   * @param tableName
+   * HBase表名
+   * @param startRow
+   * rowKey开始位置
+   * @param stopRow
+   * rowKey结束位置
+   * 目标类型
+   * @return
+   */
+  def hbaseHadoopScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String): DataFrame = {
+    this.hbaseHadoopScanDF[T](tableName, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为RDD[(T]
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * scan对象
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): Dataset[T] = {
-    val rdd = this.hbaseHadoopScanRDD[T](tableName, clazz, scan)
+   * Scan指定HBase表的数据，并映射为RDD[(T]
+   *
+   * @param tableName
+   * HBase表名
+   * @param scan
+   * scan对象
+   * 目标类型
+   * @return
+   */
+  def hbaseHadoopScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan): Dataset[T] = {
+    val clazz = getGeneric[T]("HBaseSparkBridge.hbaseHadoopScanDS")
+    val rdd = this.hbaseHadoopScanRDD[T](tableName, scan)
     this.spark.createDataset(rdd)(Encoders.bean(clazz))
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
-    *
-    * @param tableName
-    * HBase表名
-    * @param startRow
-    * rowKey开始位置
-    * @param stopRow
-    * rowKey结束位置
-    * 目标类型
-    * @return
-    */
-  def hbaseHadoopScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): Dataset[T] = {
-    this.hbaseHadoopScanDS[T](tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+   * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+   *
+   * @param tableName
+   * HBase表名
+   * @param startRow
+   * rowKey开始位置
+   * @param stopRow
+   * rowKey结束位置
+   * 目标类型
+   * @return
+   */
+  def hbaseHadoopScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String): Dataset[T] = {
+    this.hbaseHadoopScanDS[T](tableName, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
-    *
-    * @param tableName
-    * HBase表名
-    * @param startRow
-    * rowKey开始位置
-    * @param stopRow
-    * rowKey结束位置
-    * 目标类型
-    * @return
-    */
-  def hbaseScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): DataFrame = {
-    this.hbaseScanDF(tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+   * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+   *
+   * @param tableName
+   * HBase表名
+   * @param startRow
+   * rowKey开始位置
+   * @param stopRow
+   * rowKey结束位置
+   * 目标类型
+   * @return
+   */
+  def hbaseScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String): DataFrame = {
+    this.hbaseScanDF[T](tableName, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * HBase scan对象
-    * @return
-    */
-  def hbaseScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): RDD[T] = {
+   * Scan指定HBase表的数据，并映射为RDD[(ImmutableBytesWritable, Result)]
+   *
+   * @param tableName
+   * HBase表名
+   * @param scan
+   * HBase scan对象
+   * @return
+   */
+  def hbaseScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan): RDD[T] = {
+    checkGeneric[T]("HBaseSparkBridge.hbaseScanRDD")
     HBaseConnector(keyNum = this.keyNum).setScanMaxVersions[T](scan)
     val hbaseRDD = this.hbaseHadoopScanRS(tableName, scan)
     val scanRDD = hbaseRDD.mapPartitions(it => {
       if (HBaseConnector(keyNum = this.keyNum).getMultiVersion[T]) {
-        HBaseConnector(keyNum = keyNum).hbaseMultiVersionRow2BeanList[T](it, clazz)
+        HBaseConnector(keyNum = keyNum).hbaseMultiVersionRow2BeanList[T](it)
       } else {
-        HBaseConnector(keyNum = keyNum).hbaseRow2BeanList(it, clazz)
+        HBaseConnector(keyNum = keyNum).hbaseRow2BeanList[T](it)
       }
     }).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
     scanRDD
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为List
-    *
-    * @param tableName
-    * HBase表名
-    * @param scan
-    * hbase scan对象
-    * @param clazz
-    * 目标类型
-    * @tparam T
-    * 目标类型
-    * @return
-    */
-  def hbaseScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan): Seq[T] = {
-    HBaseConnector(keyNum = this.keyNum).scan(tableName, clazz, scan)
+   * Scan指定HBase表的数据，并映射为List
+   *
+   * @param tableName
+   * HBase表名
+   * @param scan
+   * hbase scan对象
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan): Seq[T] = {
+    HBaseConnector(keyNum = this.keyNum).scan[T](tableName, scan)
   }
 
   /**
-    * Scan指定HBase表的数据，并映射为List
-    *
-    * @param tableName
-    *                HBase表名
-    * @param startRow
-    *                开始主键
-    * @param stopRow 结束主键
-    * @param clazz
-    *                目标类型
-    * @tparam T
-    * 目标类型
-    * @return
-    */
-  def hbaseScanList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String): Seq[T] = {
-    this.hbaseScanList[T](tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+   * Scan指定HBase表的数据，并映射为List
+   *
+   * @param tableName
+   *                HBase表名
+   * @param startRow
+   *                开始主键
+   * @param stopRow 结束主键
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseScanList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String): Seq[T] = {
+    this.hbaseScanList[T](tableName, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
-    * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
-    *
-    * @param rowKeyRDD
-    * rdd中存放了待查询的rowKey集合
-    * @param tableName
-    * HBase表名
-    * @param clazz
-    * 目标类型
-    * @tparam T
-    * 目标类型
-    * @return
-    */
-  def hbaseGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeyRDD: RDD[String]): RDD[T] = {
+   * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+   *
+   * @param rowKeyRDD
+   * rdd中存放了待查询的rowKey集合
+   * @param tableName
+   * HBase表名
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeyRDD: RDD[String]): RDD[T] = {
+    checkGeneric[T]("HBaseSparkBridge.hbaseGetRDD")
     val getRDD = rowKeyRDD.mapPartitions(it => {
       val beanList = ListBuffer[T]()
       val getList = ListBuffer[Get]()
       it.foreach(rowKey => {
         if (StringUtils.isNotBlank(rowKey)) {
           val get = new Get(rowKey.getBytes(StandardCharsets.UTF_8))
-            getList += get
-            if (getList.size >= this.batchSize) {
-              beanList ++= HBaseConnector(keyNum = this.keyNum).get(tableName, clazz, getList: _*)
-              getList.clear()
-            }
+          getList += get
+          if (getList.size >= this.batchSize) {
+            beanList ++= HBaseConnector(keyNum = this.keyNum).get[T](tableName, getList: _*)
+            getList.clear()
+          }
         }
       })
 
       if (getList.nonEmpty) {
-        beanList ++= HBaseConnector(keyNum = this.keyNum).get(tableName, clazz, getList: _*)
+        beanList ++= HBaseConnector(keyNum = this.keyNum).get[T](tableName, getList: _*)
         getList.clear()
       }
       beanList.iterator
@@ -385,109 +380,102 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
   }
 
   /**
-    * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
-    *
-    * @param rowKeyRDD
-    * rdd中存放了待查询的rowKey集合
-    * @param tableName
-    * HBase表名
-    * @param clazz
-    * 目标类型
-    * @tparam T
-    * 目标类型
-    * @return
-    */
-  def hbaseGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeyRDD: RDD[String]): DataFrame = {
-    this.spark.createDataFrame(hbaseGetRDD(tableName, clazz, rowKeyRDD), clazz)
+   * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+   *
+   * @param rowKeyRDD
+   * rdd中存放了待查询的rowKey集合
+   * @param tableName
+   * HBase表名
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeyRDD: RDD[String]): DataFrame = {
+    val clazz = getGeneric[T]("HBaseSparkBridge.hbaseGetDF")
+    this.spark.createDataFrame(hbaseGetRDD[T](tableName, rowKeyRDD), clazz)
   }
 
   /**
-    * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
-    *
-    * @param rowKeyRDD
-    * rdd中存放了待查询的rowKey集合
-    * @param tableName
-    * HBase表名
-    * @param clazz
-    * 目标类型
-    * @tparam T
-    * 目标类型
-    * @return
-    */
-  def hbaseGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rowKeyRDD: RDD[String]): Dataset[T] = {
-    this.spark.createDataset(hbaseGetRDD(tableName, clazz, rowKeyRDD))(Encoders.bean(clazz))
+   * 通过RDD[String]批量获取对应的数据（可获取历史版本的记录）
+   *
+   * @param rowKeyRDD
+   * rdd中存放了待查询的rowKey集合
+   * @param tableName
+   * HBase表名
+   * @tparam T
+   * 目标类型
+   * @return
+   */
+  def hbaseGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeyRDD: RDD[String]): Dataset[T] = {
+    val clazz = getGeneric[T]("HBaseSparkBridge.hbaseGetDS")
+    this.spark.createDataset(hbaseGetRDD[T](tableName, rowKeyRDD))(Encoders.bean(clazz))
   }
 
   /**
-    * 使用hbase java api方式插入一个集合的数据到hbase表中
-    *
-    * @param tableName
-    * hbase表名
-    * @param seq
-    * HBaseBaseBean的子类集合
-    */
+   * 使用hbase java api方式插入一个集合的数据到hbase表中
+   *
+   * @param tableName
+   * hbase表名
+   * @param seq
+   * HBaseBaseBean的子类集合
+   */
   def hbasePutList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T]): Unit = {
     HBaseConnector(keyNum = this.keyNum).insert[T](tableName, seq: _*)
   }
 
   /**
-    * 根据rowKey查询数据，并转为List[T]
-    *
-    * @param tableName
-    * hbase表名
-    * @param seq
-    * rowKey集合
-    * @param clazz
-    * 目标类型
-    * get的版本数
-    * @return
-    * List[T]
-    */
-  def hbaseGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[Get]): Seq[T] = {
-    HBaseConnector(keyNum = this.keyNum).get[T](tableName, clazz, seq: _*)
+   * 根据rowKey查询数据，并转为List[T]
+   *
+   * @param tableName
+   * hbase表名
+   * @param seq
+   * rowKey集合
+   * @return
+   * List[T]
+   */
+  def hbaseGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[Get]): Seq[T] = {
+    HBaseConnector(keyNum = this.keyNum).get[T](tableName, seq: _*)
   }
 
   /**
-    * 根据rowKey查询数据，并转为List[T]
-    *
-    * @param tableName
-    * hbase表名
-    * @param seq
-    * rowKey集合
-    * @param clazz
-    * 目标类型
-    * @return
-    * List[T]
-    */
-  def hbaseGetList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[String]): Seq[T] = {
+   * 根据rowKey查询数据，并转为List[T]
+   *
+   * @param tableName
+   * hbase表名
+   * @param seq
+   * rowKey集合
+   * @return
+   * List[T]
+   */
+  def hbaseGetList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[String]): Seq[T] = {
     val getList = ListBuffer[Get]()
     seq.filter(StringUtils.isNotBlank).foreach(rowKey => {
-        getList += new Get(rowKey.getBytes(StandardCharsets.UTF_8))
+      getList += new Get(rowKey.getBytes(StandardCharsets.UTF_8))
     })
 
-    this.hbaseGetList[T](tableName, clazz, getList)
+    this.hbaseGetList[T](tableName, getList)
   }
 
-   /**
-    * 根据rowKey集合批量删除记录
-    *
-    * @param tableName
-    * hbase表名
-    * @param rowKeys
-    * rowKey集合
-    */
+  /**
+   * 根据rowKey集合批量删除记录
+   *
+   * @param tableName
+   * hbase表名
+   * @param rowKeys
+   * rowKey集合
+   */
   def hbaseDeleteList(tableName: String, rowKeys: Seq[String]): Unit = {
     HBaseConnector(keyNum = this.keyNum).deleteRows(tableName, rowKeys: _*)
   }
 
   /**
-    * 根据RDD[RowKey]批量删除记录
-    *
-    * @param tableName
-    * hbase表名
-    * @param rowKeyRDD
-    * rowKey集合
-    */
+   * 根据RDD[RowKey]批量删除记录
+   *
+   * @param tableName
+   * hbase表名
+   * @param rowKeyRDD
+   * rowKey集合
+   */
   def hbaseDeleteRDD(tableName: String, rowKeyRDD: RDD[String]): Unit = {
     rowKeyRDD.foreachPartition(it => {
       val rowKeyList = ListBuffer[String]()
@@ -510,25 +498,25 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
   }
 
   /**
-    * 根据Dataset[RowKey]批量删除记录
-    *
-    * @param tableName
-    * hbase表名
-    * @param dataSet
-    * rowKey集合
-    */
+   * 根据Dataset[RowKey]批量删除记录
+   *
+   * @param tableName
+   * hbase表名
+   * @param dataSet
+   * rowKey集合
+   */
   def hbaseDeleteDS(tableName: String, dataSet: Dataset[String]): Unit = {
     this.hbaseDeleteRDD(tableName, dataSet.rdd)
   }
 
   /**
-    * 按照指定的批次大小分多个批次插入数据到hbase中
-    *
-    * @param tableName
-    * hbase表名
-    * @param iterator
-    * 数据集迭代器
-    */
+   * 按照指定的批次大小分多个批次插入数据到hbase中
+   *
+   * @param tableName
+   * hbase表名
+   * @param iterator
+   * 数据集迭代器
+   */
   private def multiBatchInsert[E <: HBaseBaseBean[E] : ClassTag](tableName: String, iterator: Iterator[E]): Unit = {
     var count = 0
     val list = ListBuffer[E]()

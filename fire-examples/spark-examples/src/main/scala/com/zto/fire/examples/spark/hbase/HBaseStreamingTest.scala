@@ -13,7 +13,7 @@ import com.zto.fire.spark.anno.Streaming
   * @contact Fire框架技术交流群（钉钉）：35373471
   */
 @HBase("test")
-@Streaming(interval = 30, concurrent = 2)
+@Streaming(interval = 10, concurrent = 2)
 @HBase2(cluster = "test", scanPartitions = 30, storageLevel = "DISK_ONLY")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
@@ -29,11 +29,11 @@ object HBaseStreamingTest extends SparkStreaming {
     dstream.repartition(3).foreachRDD(rdd => {
       rdd.foreachPartition(it => {
         HBaseConnector.insert(this.tableName8, Student.newStudentList())
-        val student = HBaseConnector.get(this.tableName9, classOf[Student], Seq("1", "2"))
+        val student = HBaseConnector.get[Student](this.tableName9, Seq("1", "2"))
         student.foreach(t => logger.error("HBase1 Get结果：" + t))
 
         HBaseConnector.insert(this.tableName9, Student.newStudentList())
-        val student2 = HBaseConnector.get(this.tableName8, classOf[Student], Seq("2", "3"), keyNum = 2)
+        val student2 = HBaseConnector.get[Student](this.tableName8, Seq("2", "3"), keyNum = 2)
         student2.foreach(t => logger.error("HBase2 Get结果：" + t))
       })
     })

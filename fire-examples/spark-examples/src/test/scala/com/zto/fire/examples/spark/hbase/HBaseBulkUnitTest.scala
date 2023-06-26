@@ -51,7 +51,7 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
   @TestStep(step = 1, desc = "testHbaseBulkPutRDD")
   def testHbaseBulkPutRDD: Unit = {
     val rdd = this.fire.createRDD(Student.newStudentList(), 2)
-    this.fire.hbaseBulkPutRDD(this.tableName1, rdd)
+    this.fire.hbaseBulkPutRDD[Student](this.tableName1, rdd)
     this.assertResult
   }
 
@@ -63,7 +63,7 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
   def testHbaseBulkPutDF: Unit = {
     val rdd = this.fire.createRDD(Student.newStudentList(), 2)
     val studentDF = this.fire.createDataFrame(rdd, classOf[Student])
-    this.fire.hbaseBulkPutDF(this.tableName1, studentDF, classOf[Student])
+    this.fire.hbaseBulkPutDF[Student](this.tableName1, studentDF)
     this.assertResult
   }
 
@@ -75,7 +75,7 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
   def testHbaseBulkPutDS: Unit = {
     val rdd = this.fire.createRDD(Student.newStudentList(), 2)
     val studentDataset = this.fire.createDataset(rdd)(Encoders.bean(classOf[Student]))
-    this.fire.hbaseBulkPutDS(this.tableName1, studentDataset)
+    this.fire.hbaseBulkPutDS[Student](this.tableName1, studentDataset)
     this.assertResult
   }
 
@@ -89,7 +89,7 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
     val rowKeySeq = Seq(1.toString, 2.toString, 5.toString, 6.toString)
     this.fire.hbaseDeleteList(this.tableName1, rowKeySeq)
     val getList = rowKeySeq.map(rowKey => HBaseConnector.buildGet(rowKey))
-    val result = this.fire.hbaseGetList(this.tableName1, classOf[Student], getList)
+    val result = this.fire.hbaseGetList[Student](this.tableName1, getList)
     assert(result.isEmpty)
   }
 
@@ -104,7 +104,7 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
     val rowKeyRdd = this.fire.createRDD(rowKeySeq, 2)
     this.fire.createDataset(rowKeyRdd)(Encoders.STRING).hbaseBulkDeleteDS(this.tableName1)
     val getList = rowKeySeq.map(rowKey => HBaseConnector.buildGet(rowKey))
-    val result = this.fire.hbaseGetList(this.tableName1, classOf[Student], getList)
+    val result = this.fire.hbaseGetList[Student](this.tableName1, getList)
     assert(result.isEmpty)
   }
 
@@ -126,7 +126,7 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
    */
   private def testHBaseBulkGetSeq: Unit = {
     val seq = Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString)
-    val studentRDD = this.fire.hbaseBulkGetSeq(this.tableName1, seq, classOf[Student])
+    val studentRDD = this.fire.hbaseBulkGetSeq[Student](this.tableName1, seq)
     assert(studentRDD.count() == 5)
   }
 
@@ -135,7 +135,7 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
    */
   private def testHBaseBulkGetRDD: Unit = {
     val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString), 2)
-    val studentRDD = rowKeyRdd.hbaseBulkGetRDD(this.tableName1, classOf[Student], keyNum = 2)
+    val studentRDD = rowKeyRdd.hbaseBulkGetRDD[Student](this.tableName1, keyNum = 2)
     assert(studentRDD.count() == 5)
   }
 
@@ -144,11 +144,11 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
    */
   private def testHBaseBulkGetDF: Unit = {
     val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString, 111.toString), 2)
-    val studentDF = this.fire.hbaseBulkGetDF(this.tableName1, rowKeyRdd, classOf[Student])
+    val studentDF = this.fire.hbaseBulkGetDF[Student](this.tableName1, rowKeyRdd)
     assert(studentDF.count() == 5)
 
     val rowKeyRdd2 = this.fire.createRDD(Seq[String](), 2)
-    val studentDF2 = this.fire.hbaseBulkGetDF(this.tableName1, rowKeyRdd2, classOf[Student])
+    val studentDF2 = this.fire.hbaseBulkGetDF[Student](this.tableName1, rowKeyRdd2)
     assert(studentDF2.count() == 0)
   }
 
@@ -157,7 +157,7 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
    */
   private def testHBaseBulkGetDS: Unit = {
     val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString), 2)
-    val studentDS2 = this.fire.hbaseBulkGetDS(this.tableName1, rowKeyRdd, classOf[Student])
+    val studentDS2 = this.fire.hbaseBulkGetDS[Student](this.tableName1, rowKeyRdd)
     assert(studentDS2.count() == 5)
   }
 
@@ -165,7 +165,7 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
    * 使用bulk方式进行scan，并将结果集映射为RDD
    */
   private def testHbaseBulkScanRDD: Unit = {
-    val scanRDD = this.fire.hbaseBulkScanRDD2(this.tableName1, classOf[Student], "1", "6")
+    val scanRDD = this.fire.hbaseBulkScanRDD2[Student](this.tableName1, "1", "6")
     assert(scanRDD.count() == 5)
   }
 
@@ -173,7 +173,7 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
    * 使用bulk方式进行scan，并将结果集映射为DataFrame
    */
   private def testHbaseBulkScanDF: Unit = {
-    val scanDF = this.fire.hbaseBulkScanDF2(this.tableName1, classOf[Student], "1", "6")
+    val scanDF = this.fire.hbaseBulkScanDF2[Student](this.tableName1, "1", "6")
     assert(scanDF.count() == 5)
   }
 
@@ -181,7 +181,7 @@ class HBaseBulkUnitTest extends SparkCore with HBaseTester {
    * 使用bulk方式进行scan，并将结果集映射为Dataset
    */
   private def testHbaseBulkScanDS: Unit = {
-    val scanDS = this.fire.hbaseBulkScanDS(this.tableName1, classOf[Student], HBaseConnector.buildScan("1", "6"))
+    val scanDS = this.fire.hbaseBulkScanDS[Student](this.tableName1, HBaseConnector.buildScan("1", "6"))
     assert(scanDS.count() == 5)
   }
 

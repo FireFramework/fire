@@ -98,10 +98,10 @@ object HBaseTest extends FlinkStreaming {
   def testHBase: Unit = {
     // get操作
     val getList = ListBuffer(HBaseConnector.buildGet("1"))
-    val student = HBaseConnector.get(this.tableName, classOf[Student], getList, 1)
+    val student = HBaseConnector.get[Student](this.tableName, getList, 1)
     if (student != null) println(JSONUtils.toJSONString(student))
     // scan操作
-    val studentList = HBaseConnector.scan(this.tableName, classOf[Student], HBaseConnector.buildScan("0", "9"), 1)
+    val studentList = HBaseConnector.scan[Student](this.tableName, HBaseConnector.buildScan("0", "9"), 1)
     if (studentList != null) println(JSONUtils.toJSONString(studentList))
     // delete操作
     HBaseConnector.deleteRows(this.tableName, Seq("1"))

@@ -37,11 +37,21 @@ trait ScalaUtils {
    * @return
    * Class[T]
    */
-  def getParamType[T: ClassTag]: Class[T] = {
+  def getGeneric[T: ClassTag](method: String = ""): Class[T] = {
     val paramType = classTag[T].runtimeClass.asInstanceOf[Class[T]]
-    if (paramType == classOf[Nothing$]) throw new IllegalArgumentException("不合法的方法调用，请在方法调用时指定泛型！")
+    if (paramType == classOf[Nothing$]) throw new IllegalArgumentException(s"不合法的方法调用，请在方法调用时指定泛型：${method}[T]()")
     paramType
   }
+
+  /**
+   * 检测泛型参数是否合法
+   *
+   * @tparam T
+   * 泛型类型
+   * @return
+   * Class[T]
+   */
+  def checkGeneric[T: ClassTag](method: String = ""): Unit = this.getGeneric[T](method)
 
   /**
    * 用于判断给定的类是否为object

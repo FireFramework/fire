@@ -51,7 +51,7 @@ object LineageTest extends FlinkStreaming {
       val timestamp = DateFormatUtils.formatCurrentDateTime()
       val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
       this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
-      HBaseConnector.get[Student](hbaseTable, classOf[Student], Seq("1"))
+      HBaseConnector.get[Student](hbaseTable, Seq("1"))
       t
     }).print()
 

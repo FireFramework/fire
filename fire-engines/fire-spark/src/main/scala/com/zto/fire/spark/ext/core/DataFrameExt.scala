@@ -253,8 +253,8 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @tparam T
    * 数据类型为HBaseBaseBean的子类
    */
-  def hbaseBulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], keyNum: Int = KeyNum._1): Unit = {
-    HBaseBulkConnector.bulkPutDF[T](tableName, dataFrame, clazz, keyNum)
+  def hbaseBulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
+    HBaseBulkConnector.bulkPutDF[T](tableName, dataFrame, keyNum)
   }
 
   /**
@@ -271,17 +271,14 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
     HBaseBulkConnector.hadoopPutDFRow[T](tableName, dataFrame, buildRowKey, keyNum)
   }
 
-
   /**
    * 使用spark API的方式将DataFrame中的数据分多个批次插入到HBase中
    *
    * @param tableName
    * HBase表名
-   * @param clazz
-   * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbaseHadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = KeyNum._1): Unit = {
-    HBaseBulkConnector.hadoopPutDF[E](tableName, dataFrame, clazz, keyNum)
+  def hbaseHadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
+    HBaseBulkConnector.hadoopPutDF[E](tableName, dataFrame, keyNum)
   }
 
   /**
@@ -289,11 +286,9 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    *
    * @param tableName
    * HBase表名
-   * @param clazz
-   * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = KeyNum._1): Unit = {
-    HBaseSparkBridge(keyNum = keyNum).hbasePutDF(tableName, clazz, this.dataFrame)
+  def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutDF[E](tableName, this.dataFrame)
   }
 
   /**

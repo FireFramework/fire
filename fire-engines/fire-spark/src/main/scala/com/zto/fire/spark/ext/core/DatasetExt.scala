@@ -118,11 +118,9 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    *
    * @param tableName
    * HBase表名
-   * @param clazz
-   * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, clazz: Class[E], keyNum: Int = KeyNum._1): Unit = {
-    HBaseSparkBridge(keyNum = keyNum).hbasePutDS[E](tableName, clazz, dataset.asInstanceOf[Dataset[E]])
+  def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutDS[E](tableName, dataset.asInstanceOf[Dataset[E]])
   }
 
   /**

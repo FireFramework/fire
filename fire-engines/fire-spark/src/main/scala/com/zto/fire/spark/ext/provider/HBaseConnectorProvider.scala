@@ -44,14 +44,12 @@ trait HBaseConnectorProvider extends SparkProvider {
    * HBase表名
    * @param scan
    * scan对象
-   * @param clazz
-   * 目标类型
    * @tparam T
    * 目标类型
    * @return
    */
-  def hbaseScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = KeyNum._1): DataFrame = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseScanDF(tableName, clazz, scan)
+  def hbaseScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int = KeyNum._1): DataFrame = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanDF[T](tableName, scan)
   }
 
   /**
@@ -62,14 +60,12 @@ trait HBaseConnectorProvider extends SparkProvider {
    * @param startRow
    *                开始主键
    * @param stopRow 结束主键
-   * @param clazz
-   *                目标类型
    * @tparam T
    * 目标类型
    * @return
    */
-  def hbaseScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = KeyNum._1): DataFrame = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseScanDF2(tableName, clazz, startRow, stopRow)
+  def hbaseScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): DataFrame = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanDF2[T](tableName, startRow, stopRow)
   }
 
   /**
@@ -79,14 +75,12 @@ trait HBaseConnectorProvider extends SparkProvider {
    * HBase表名
    * @param scan
    * scan对象
-   * @param clazz
-   * 目标类型
    * @tparam T
    * 目标类型
    * @return
    */
-  def hbaseScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = KeyNum._1): Dataset[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseScanDS[T](tableName, clazz, scan)
+  def hbaseScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int = KeyNum._1): Dataset[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanDS[T](tableName, scan)
   }
 
   /**
@@ -97,14 +91,12 @@ trait HBaseConnectorProvider extends SparkProvider {
    * @param startRow
    *                开始主键
    * @param stopRow 结束主键
-   * @param clazz
-   *                目标类型
    * @tparam T
    * 目标类型
    * @return
    */
-  def hbaseScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = KeyNum._1): Dataset[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseScanDS2[T](tableName, clazz, startRow, stopRow)
+  def hbaseScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): Dataset[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanDS2[T](tableName, startRow, stopRow)
   }
 
   /**
@@ -136,11 +128,9 @@ trait HBaseConnectorProvider extends SparkProvider {
    * HBase表名
    * @param df
    * DataFrame
-   * @param clazz
-   * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, clazz: Class[E], keyNum: Int = KeyNum._1): Unit = {
-    df.hbasePutDF(tableName, clazz, keyNum)
+  def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, df: DataFrame, keyNum: Int = KeyNum._1): Unit = {
+    df.hbasePutDF[E](tableName, keyNum)
   }
 
   /**
@@ -148,11 +138,9 @@ trait HBaseConnectorProvider extends SparkProvider {
    *
    * @param tableName
    * HBase表名
-   * @param clazz
-   * JavaBean类型，为HBaseBaseBean的子类
    */
-  def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], clazz: Class[E], keyNum: Int = KeyNum._1): Unit = {
-    dataset.hbasePutDS[E](tableName, clazz, keyNum)
+  def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], keyNum: Int = KeyNum._1): Unit = {
+    dataset.hbasePutDS[E](tableName, keyNum)
   }
 
   /**
@@ -164,8 +152,8 @@ trait HBaseConnectorProvider extends SparkProvider {
    * HBase scan对象
    * @return
    */
-  def hbaseScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = KeyNum._1): RDD[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseScanRDD(tableName, clazz, scan)
+  def hbaseScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int = KeyNum._1): RDD[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanRDD[T](tableName, scan)
   }
 
   /**
@@ -180,8 +168,8 @@ trait HBaseConnectorProvider extends SparkProvider {
    * 目标类型
    * @return
    */
-  def hbaseScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = KeyNum._1): RDD[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseScanRDD(tableName, clazz, HBaseConnector.buildScan(startRow, stopRow))
+  def hbaseScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): RDD[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanRDD[T](tableName, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**
@@ -191,14 +179,12 @@ trait HBaseConnectorProvider extends SparkProvider {
    * HBase表名
    * @param scan
    * hbase scan对象
-   * @param clazz
-   * 目标类型
    * @tparam T
    * 目标类型
    * @return
    */
-  def hbaseScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], scan: Scan, keyNum: Int = KeyNum._1): Seq[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseScanList[T](tableName, clazz, scan)
+  def hbaseScanList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int = KeyNum._1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanList[T](tableName, scan)
   }
 
   /**
@@ -209,14 +195,12 @@ trait HBaseConnectorProvider extends SparkProvider {
    * @param startRow
    *                开始主键
    * @param stopRow 结束主键
-   * @param clazz
-   *                目标类型
    * @tparam T
    * 目标类型
    * @return
    */
-  def hbaseScanList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], startRow: String, stopRow: String, keyNum: Int = KeyNum._1): Seq[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseScanList2[T](tableName, clazz, startRow, stopRow)
+  def hbaseScanList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanList2[T](tableName, startRow, stopRow)
   }
 
   /**
@@ -224,14 +208,12 @@ trait HBaseConnectorProvider extends SparkProvider {
    *
    * @param tableName
    * HBase表名
-   * @param clazz
-   * 目标类型
    * @tparam T
    * 目标类型
    * @return
    */
-  def hbaseGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rdd: RDD[String], keyNum: Int = KeyNum._1): RDD[T] = {
-    rdd.hbaseGetRDD(tableName, clazz, keyNum)
+  def hbaseGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[String], keyNum: Int = KeyNum._1): RDD[T] = {
+    rdd.hbaseGetRDD[T](tableName, keyNum)
   }
 
   /**
@@ -239,14 +221,12 @@ trait HBaseConnectorProvider extends SparkProvider {
    *
    * @param tableName
    * HBase表名
-   * @param clazz
-   * 目标类型
    * @tparam T
    * 目标类型
    * @return
    */
-  def hbaseGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rdd: RDD[String], keyNum: Int = KeyNum._1): DataFrame = {
-    rdd.hbaseGetDF(tableName, clazz, keyNum)
+  def hbaseGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[String], keyNum: Int = KeyNum._1): DataFrame = {
+    rdd.hbaseGetDF[T](tableName, keyNum)
   }
 
   /**
@@ -254,14 +234,12 @@ trait HBaseConnectorProvider extends SparkProvider {
    *
    * @param tableName
    * HBase表名
-   * @param clazz
-   * 目标类型
    * @tparam T
    * 目标类型
    * @return
    */
-  def hbaseGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], rdd: RDD[String], keyNum: Int = KeyNum._1): Dataset[T] = {
-    rdd.hbaseGetDS[T](tableName, clazz, keyNum)
+  def hbaseGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[String], keyNum: Int = KeyNum._1): Dataset[T] = {
+    rdd.hbaseGetDS[T](tableName, keyNum)
   }
 
   /**
@@ -271,13 +249,11 @@ trait HBaseConnectorProvider extends SparkProvider {
    * hbase表名
    * @param seq
    * rowKey集合
-   * @param clazz
-   * 目标类型
    * @return
    * List[T]
    */
-  def hbaseGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[Get], keyNum: Int = KeyNum._1): Seq[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseGetList[T](tableName, clazz, seq)
+  def hbaseGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[Get], keyNum: Int = KeyNum._1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetList[T](tableName, seq)
   }
 
   /**
@@ -287,13 +263,11 @@ trait HBaseConnectorProvider extends SparkProvider {
    * hbase表名
    * @param seq
    * rowKey集合
-   * @param clazz
-   * 目标类型
    * @return
    * List[T]
    */
-  def hbaseGetList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, clazz: Class[T], seq: Seq[String], keyNum: Int = KeyNum._1): Seq[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseGetList2[T](tableName, clazz, seq)
+  def hbaseGetList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[String], keyNum: Int = KeyNum._1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetList2[T](tableName, seq)
   }
 
   /**

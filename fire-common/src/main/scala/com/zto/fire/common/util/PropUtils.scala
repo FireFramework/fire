@@ -391,7 +391,7 @@ object PropUtils extends Logging {
    */
   def get[T: ClassTag](key: String, default: Option[T] = Option.empty, keyNum: Int = KeyNum._1): T = {
     val value = this.getString(key, if (default.isDefined) default.get.toString else "", keyNum = keyNum)
-    val paramType = getParamType[T]
+    val paramType = getGeneric[T]("PropUtils.get")
     val property = tryWithReturn {
       paramType match {
         case _ if paramType eq classOf[Int] => value.toInt

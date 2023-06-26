@@ -37,7 +37,7 @@ public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
     @FieldName(value = "logger", disuse = true)
     private static final transient Logger logger = LoggerFactory.getLogger(MultiVersionsBean.class);
     @FieldName("multiFields")
-    private String multiFields;
+    protected String multiFields;
 
     @FieldName(value = "HBaseBaseBean", disuse = true)
     private HBaseBaseBean<?> target;
@@ -69,6 +69,7 @@ public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
 
     public MultiVersionsBean(HBaseBaseBean<?> target) {
         this.target = (HBaseBaseBean) target.buildRowKey();
+        this.target.className = target.getClass().getName();
         this.multiFields = JSONUtils.toJSONString(this.target);
     }
 

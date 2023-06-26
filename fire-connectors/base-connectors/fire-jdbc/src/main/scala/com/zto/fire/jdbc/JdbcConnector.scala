@@ -299,7 +299,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
    * sql执行参数
    */
   def queryList[T <: Object : ClassTag](sql: String, params: Seq[Any] = null): List[T] = {
-    val clazz = getParamType[T]
+    val clazz = getGeneric[T]("JdbcConnector.queryList")
     this.query[List[T]](sql, params, rs => {
       DBUtils.resultSet2BeanList(rs, clazz).toList
     })

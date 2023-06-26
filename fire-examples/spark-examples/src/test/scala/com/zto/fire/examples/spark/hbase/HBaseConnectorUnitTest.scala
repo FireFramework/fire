@@ -53,13 +53,13 @@ class HBaseConnectorUnitTest extends SparkCore with HBaseTester {
     val rowKeys = Seq("1", "2", "3", "5", "6")
     rowKeys.map(rowkey => (getList += new Get(rowkey.getBytes(StandardCharsets.UTF_8))))
     // 获取多版本形式存放的记录，并获取最新的两个版本就
-    val resultList = this.fire.hbaseGetList(this.tableName1, classOf[Student], getList)
+    val resultList = this.fire.hbaseGetList[Student](this.tableName1, getList)
     assert(resultList.size == 5)
 
-    val resultList2 = this.fire.hbaseGetList2(this.tableName1, classOf[Student], rowKeys)
+    val resultList2 = this.fire.hbaseGetList2[Student](this.tableName1, rowKeys)
     assert(resultList2.size == 5)
 
-    val scanResultList = this.fire.hbaseScanList2(this.tableName1, classOf[Student], "2", "6")
+    val scanResultList = this.fire.hbaseScanList2[Student](this.tableName1, "2", "6")
     assert(scanResultList.size == 4)
   }
 
@@ -73,14 +73,14 @@ class HBaseConnectorUnitTest extends SparkCore with HBaseTester {
     val studentList = Student.newStudentList()
     val studentRDD = this.fire.createRDD(studentList, 2)
     // 为空的字段不插入
-    studentRDD.hbasePutRDD(this.tableName1)
+    studentRDD.hbasePutRDD[Student](this.tableName1)
 
     val getList = Seq("1", "2", "3", "5", "6")
     val getRDD = this.fire.createRDD(getList, 2)
-    val resultRDD = this.fire.hbaseGetRDD(this.tableName1, classOf[Student], getRDD)
+    val resultRDD = this.fire.hbaseGetRDD[Student](this.tableName1, getRDD)
     assert(resultRDD.count() == 5)
 
-    val scanResultRdd = this.fire.hbaseScanRDD2(this.tableName1, classOf[Student], "2", "6")
+    val scanResultRdd = this.fire.hbaseScanRDD2[Student](this.tableName1, "2", "6")
     assert(scanResultRdd.count() == 4)
   }
 
@@ -92,15 +92,15 @@ class HBaseConnectorUnitTest extends SparkCore with HBaseTester {
   def testHBasePutDF: Unit = {
     val studentList = Student.newStudentList()
     val studentDF = this.fire.createDataFrame(studentList, classOf[Student])
-    studentDF.hbasePutDF(this.tableName1, classOf[Student])
+    studentDF.hbasePutDF[Student](this.tableName1)
 
     val getList = Seq("1", "2", "3", "4", "5", "6")
     val getRDD = this.fire.createRDD(getList, 3)
     // get到的结果以dataframe形式返回
-    val resultDF = this.fire.hbaseGetDF(this.tableName1, classOf[Student], getRDD)
+    val resultDF = this.fire.hbaseGetDF[Student](this.tableName1, getRDD)
     assert(resultDF.count() == 6)
 
-    val dataFrame = this.fire.hbaseScanDF2(this.tableName1, classOf[Student], "2", "6")
+    val dataFrame = this.fire.hbaseScanDF2[Student](this.tableName1, "2", "6")
     assert(dataFrame.count() == 4)
   }
 
@@ -114,16 +114,16 @@ class HBaseConnectorUnitTest extends SparkCore with HBaseTester {
     val studentList = Student.newStudentList()
     val studentDS = this.fire.createDataset(studentList)(Encoders.bean(classOf[Student]))
     // 以多版本形式插入
-    studentDS.hbasePutDS(this.tableName1, classOf[Student])
+    studentDS.hbasePutDS[Student](this.tableName1)
 
     val getList = Seq("1", "2", "3", "4", "5", "6")
     val getRDD = this.fire.createRDD(getList, 2)
     // 指定在多版本获取时只取最新的两个版本
-    val resultDS = this.fire.hbaseGetDS(this.tableName1, classOf[Student], getRDD)
+    val resultDS = this.fire.hbaseGetDS[Student](this.tableName1, getRDD)
     println(resultDS.count())
     assert(resultDS.count() == 6)
 
-    val dataSet = this.fire.hbaseScanDS2(this.tableName1, classOf[Student], "2", "6")
+    val dataSet = this.fire.hbaseScanDS2[Student](this.tableName1, "2", "6")
     assert(dataSet.count() == 4)
   }
 
@@ -139,7 +139,7 @@ class HBaseConnectorUnitTest extends SparkCore with HBaseTester {
     this.fire.hbaseDeleteList(this.tableName1, rowKeyList)
 
     val getList = rowKeyList.map(rowKey => HBaseConnector.buildGet(rowKey))
-    val result = this.fire.hbaseGetList(this.tableName1, classOf[Student], getList)
+    val result = this.fire.hbaseGetList[Student](this.tableName1, getList)
     assert(result.isEmpty)
   }
 
@@ -156,7 +156,7 @@ class HBaseConnectorUnitTest extends SparkCore with HBaseTester {
     rowKeyRDD.hbaseDeleteRDD(this.tableName1)
 
     val getList = rowKeyList.map(rowKey => HBaseConnector.buildGet(rowKey))
-    val result = this.fire.hbaseGetList(this.tableName1, classOf[Student], getList)
+    val result = this.fire.hbaseGetList[Student](this.tableName1, getList)
     assert(result.isEmpty)
   }
 
@@ -173,7 +173,7 @@ class HBaseConnectorUnitTest extends SparkCore with HBaseTester {
     rowKeyDS.hbaseDeleteDS(this.tableName1)
 
     val getList = rowKeyList.map(rowKey => HBaseConnector.buildGet(rowKey))
-    val result = this.fire.hbaseGetList(this.tableName1, classOf[Student], getList)
+    val result = this.fire.hbaseGetList[Student](this.tableName1, getList)
     assert(result.isEmpty)
   }
 
@@ -185,16 +185,17 @@ class HBaseConnectorUnitTest extends SparkCore with HBaseTester {
   def testMultiVersion: Unit = {
     val studentList = StudentMulti.newStudentMultiList()
     val studentDF = this.fire.createDataFrame(studentList, classOf[StudentMulti])
-    studentDF.hbasePutDF(this.tableName2, classOf[StudentMulti])
+    studentDF.hbasePutDF[StudentMulti](this.tableName2)
 
     val getList = Seq("1", "2", "3", "4", "5", "6")
     val getRDD = this.fire.createRDD(getList, 3)
     // get到的结果以dataframe形式返回
-    val resultDF = this.fire.hbaseGetDF(this.tableName2, classOf[StudentMulti], getRDD)
+    val resultDF = this.fire.hbaseGetDF[StudentMulti](this.tableName2, getRDD)
+    resultDF.show
     assert(resultDF.count() == 6)
 
-    val dataFrame = this.fire.hbaseScanDF2(this.tableName2, classOf[StudentMulti], "2", "6")
+    val dataFrame = this.fire.hbaseScanDF2[StudentMulti](this.tableName2, "2", "6")
+    dataFrame.show
     assert(dataFrame.count() == 4)
-    dataFrame.show()
   }
 }

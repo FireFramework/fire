@@ -21,6 +21,7 @@ import com.zto.fire.common.anno.FieldName;
 import com.zto.fire.common.bean.Generator;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.JSONUtils;
+import com.zto.fire.hbase.anno.HConfig;
 import com.zto.fire.hbase.bean.HBaseBaseBean;
 
 import java.io.Serializable;
@@ -33,8 +34,7 @@ import java.util.*;
  *
  * @author ChengLong 2019-6-20 16:06:16
  */
-// @HConfig(multiVersion = true)
-// @HConfig(nullable = true, multiVersion = true, versions = 3)
+@HConfig(nullable = true, multiVersion = false, versions = 3)
 public class Student extends HBaseBaseBean<Student> implements Generator<Student>, Serializable {
     @FieldName(disuse = true)
     private static final long serialVersionUID = 1L;

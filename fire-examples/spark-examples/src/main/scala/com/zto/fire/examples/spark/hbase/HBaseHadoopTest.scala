@@ -49,7 +49,7 @@ object HBaseHadoopTest extends SparkCore {
     */
   def testHbaseHadoopPutRDD: Unit = {
     val studentRDD = this.fire.createRDD(Student.newStudentList(), 2)
-    this.fire.hbaseHadoopPutRDD(this.tableName6, studentRDD, keyNum = 2)
+    this.fire.hbaseHadoopPutRDD[Student](this.tableName6, studentRDD, keyNum = 2)
     // 方式二：直接基于rdd进行方法调用
     // studentRDD.hbaseHadoopPutRDD(this.tableName1)
   }
@@ -61,7 +61,7 @@ object HBaseHadoopTest extends SparkCore {
     val studentRDD = this.fire.createRDD(Student.newStudentList(), 2)
     val studentDF = this.fire.createDataFrame(studentRDD, classOf[Student])
     // 由于DataFrame相较于Dataset和RDD是弱类型的数据集合，所以需要传递具体的类型classOf[Type]
-    this.fire.hbaseHadoopPutDF(this.tableName7, studentDF, classOf[Student])
+    this.fire.hbaseHadoopPutDF[Student](this.tableName7, studentDF)
     // 方式二：基于DataFrame进行方法调用
     // studentDF.hbaseHadoopPutDF(this.tableName3, classOf[Student])
   }
@@ -71,7 +71,7 @@ object HBaseHadoopTest extends SparkCore {
     */
   def testHbaseHadoopPutDS: Unit = {
     val studentDS = this.fire.createDataset(Student.newStudentList())(Encoders.bean(classOf[Student]))
-    this.fire.hbaseHadoopPutDS(this.tableName7, studentDS)
+    this.fire.hbaseHadoopPutDS[Student](this.tableName7, studentDS)
     // 方式二：基于DataFrame进行方法调用
     // studentDS.hbaseHadoopPutDS(this.tableName3)
   }
@@ -93,7 +93,7 @@ object HBaseHadoopTest extends SparkCore {
     val studentRDD = this.fire.createRDD(Student.newStudentList(), 2)
     this.fire.createDataFrame(studentRDD, classOf[Student]).createOrReplaceTempView("student")
     // 指定rowKey构建的函数
-    sql("select age,createTime,id,length,name,sex from student").hbaseHadoopPutDFRow(this.tableName7, buildRowKey)
+    sql("select age,createTime,id,length,name,sex from student").hbaseHadoopPutDFRow[Student](this.tableName7, buildRowKey)
   }
 
   /**
@@ -101,7 +101,7 @@ object HBaseHadoopTest extends SparkCore {
     */
   def testHBaseHadoopScanRDD: Unit = {
     println("===========testHBaseHadoopScanRDD===========")
-    val studentRDD = this.fire.hbaseHadoopScanRDD2(this.tableName6, classOf[Student], "1", "6", keyNum = 2)
+    val studentRDD = this.fire.hbaseHadoopScanRDD2[Student](this.tableName6, "1", "6", keyNum = 2)
     studentRDD.printEachPartition
   }
 
@@ -110,7 +110,7 @@ object HBaseHadoopTest extends SparkCore {
     */
   def testHBaseHadoopScanDF: Unit = {
     println("===========testHBaseHadoopScanDF===========")
-    val studentDF = this.fire.hbaseHadoopScanDF2(this.tableName7, classOf[Student], "1", "6")
+    val studentDF = this.fire.hbaseHadoopScanDF2[Student](this.tableName7, "1", "6")
     studentDF.show(100, false)
   }
 
@@ -119,7 +119,7 @@ object HBaseHadoopTest extends SparkCore {
     */
   def testHBaseHadoopScanDS: Unit = {
     println("===========testHBaseHadoopScanDS===========")
-    val studentDS = this.fire.hbaseHadoopScanDS2(this.tableName7, classOf[Student], "1", "6")
+    val studentDS = this.fire.hbaseHadoopScanDS2[Student](this.tableName7, "1", "6")
     studentDS.show(100, false)
   }
 

@@ -60,13 +60,13 @@ object LineageTest extends SparkStreaming {
         val timestamp = DateFormatUtils.formatCurrentDateTime()
         val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
         this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
-        HBaseConnector.get[Student](hbaseTable, classOf[Student], Seq("1"))
+        HBaseConnector.get[Student](hbaseTable, Seq("1"))
       })
 
       val studentList = Student.newStudentList()
       val studentDF = this.fire.createDataFrame(studentList, classOf[Student])
       // 每个批次插100条
-      studentDF.hbasePutDF(this.hbaseTable, classOf[Student])
+      studentDF.hbasePutDF[Student](this.hbaseTable)
     })
     dstream.print()
   }

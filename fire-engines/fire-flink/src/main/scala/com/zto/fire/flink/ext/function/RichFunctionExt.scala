@@ -51,7 +51,7 @@ class RichFunctionExt(richFunction: RichFunction) {
    */
   def addCounter[T: ClassTag](name: String, value: T): Unit = {
     requireNonEmpty(name, value)
-    getParamType[T] match {
+    getGeneric[T]("RichFunctionExt.addCounter") match {
       case valueType if valueType eq classOf[Int] => this.runtimeContext.getIntCounter(name).add(value.asInstanceOf[Int])
       case valueType if valueType eq classOf[Long] => this.runtimeContext.getLongCounter(name).add(value.asInstanceOf[Long])
       case valueType if valueType eq classOf[Double] => this.runtimeContext.getDoubleCounter(name).add(value.asInstanceOf[Double])
@@ -75,7 +75,7 @@ class RichFunctionExt(richFunction: RichFunction) {
    */
   def getState[T: ClassTag](name: String, ttlConfig: StateTtlConfig = this.defaultTTLConfig): ValueState[T] = {
     this.stateMap.mergeGet(name) {
-      val desc = new ValueStateDescriptor[T](name, getParamType[T])
+      val desc = new ValueStateDescriptor[T](name, getGeneric[T]("RichFunctionExt.getState"))
       if (ttlConfig != null) desc.enableTimeToLive(ttlConfig)
       this.runtimeContext.getState[T](desc)
     }.asInstanceOf[ValueState[T]]
@@ -86,7 +86,7 @@ class RichFunctionExt(richFunction: RichFunction) {
    */
   def getListState[T: ClassTag](name: String, ttlConfig: StateTtlConfig = this.defaultTTLConfig): ListState[T] = {
     this.stateMap.mergeGet(name) {
-      val desc = new ListStateDescriptor[T](name, getParamType[T])
+      val desc = new ListStateDescriptor[T](name, getGeneric[T]("RichFunctionExt.getListState"))
       if (ttlConfig != null) desc.enableTimeToLive(ttlConfig)
       this.runtimeContext.getListState[T](desc)
     }.asInstanceOf[ListState[T]]
@@ -97,7 +97,7 @@ class RichFunctionExt(richFunction: RichFunction) {
    */
   def getMapState[K: ClassTag, V: ClassTag](name: String, ttlConfig: StateTtlConfig = this.defaultTTLConfig): MapState[K, V] = {
     this.stateMap.mergeGet(name) {
-      val desc = new MapStateDescriptor[K, V](name, getParamType[K], getParamType[V])
+      val desc = new MapStateDescriptor[K, V](name, getGeneric[K]("RichFunctionExt.getMapState"), getGeneric[V]("RichFunctionExt.getMapState"))
       if (ttlConfig != null) desc.enableTimeToLive(ttlConfig)
       this.runtimeContext.getMapState[K, V](desc)
     }.asInstanceOf[MapState[K, V]]
@@ -110,7 +110,7 @@ class RichFunctionExt(richFunction: RichFunction) {
     this.stateMap.mergeGet(name) {
       val desc = new ReducingStateDescriptor[T](name, new ReduceFunction[T] {
         override def reduce(value1: T, value2: T): T = reduceFun(value1, value2)
-      }, getParamType[T])
+      }, getGeneric[T]("RichFunctionExt.getReducingState"))
       if (ttlConfig != null) desc.enableTimeToLive(ttlConfig)
       this.runtimeContext.getReducingState[T](desc)
     }.asInstanceOf[ReducingState[T]]
@@ -121,7 +121,7 @@ class RichFunctionExt(richFunction: RichFunction) {
    */
   def getAggregatingState[I, T: ClassTag, O](name: String, aggFunction: AggregateFunction[I, T, O], ttlConfig: StateTtlConfig = this.defaultTTLConfig): AggregatingState[I, O] = {
     this.stateMap.mergeGet(name) {
-      val desc = new AggregatingStateDescriptor[I, T, O](name, aggFunction, getParamType[T])
+      val desc = new AggregatingStateDescriptor[I, T, O](name, aggFunction, getGeneric[T]("RichFunctionExt.getAggregatingState"))
       if (ttlConfig != null) desc.enableTimeToLive(ttlConfig)
       this.runtimeContext.getAggregatingState(desc)
     }.asInstanceOf[AggregatingState[I, O]]
