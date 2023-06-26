@@ -81,7 +81,7 @@ public class MultiVersionsBean extends HBaseBaseBean<MultiVersionsBean> {
     public MultiVersionsBean buildRowKey() {
         try {
             if (this.target == null && StringUtils.isNotBlank(this.multiFields)) {
-                Map<Object, Object> map = JSONUtils.parseObject(this.multiFields, Map.class);
+                Map<String, Object> map = JSONUtils.parseObject(this.multiFields, Map.class);
                 Class<?> clazz = Class.forName(map.get("className").toString());
                 HBaseBaseBean<?> bean = (HBaseBaseBean) clazz.newInstance();
                 BeanUtils.populate(bean, map);
