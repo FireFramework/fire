@@ -360,7 +360,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * 额外的options信息
    */
   def sinkHudi(hudiTableName: String, recordKey: String,
-               precombineKey: String, partition: String, tablePath: String = "",
+               precombineKey: String, partition: String = "", tablePath: String = "",
                tableType: HoodieTableType = HoodieTableType.MERGE_ON_READ,
                operationType: HoodieOperationType = HoodieOperationType.UPSERT,
                options: JMap[String, String] = Map.empty[String, String],
