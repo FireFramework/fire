@@ -17,49 +17,9 @@
 
 package com.zto.fire.examples.spark
 
-import com.zto.fire._
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.spark.SparkStreaming
 import com.zto.fire.spark.anno.Streaming
-import org.aspectj.lang.JoinPoint
-import org.aspectj.lang.annotation.{Aspect, Before}
-
-@Aspect
-class Test {
-
-  @Before("execution(* org.apache.spark.sql.SparkSession.sql(java.lang.String)) && args(str)")
-  def setStartTimeInThreadLocal(joinPoint: JoinPoint, str: String): Unit = {
-    println("before ..." + str)
-    //println("sql=" + sqlRaw)
-  }
-
-  /*@Around("execution(public org.apache.spark.sql.Dataset<org.apache.spark.sql.Row> org.apache.spark.sql.SparkSession.sql(java.lang.String)) && args(sqlRaw)")
-  def around(pjp: ProceedingJoinPoint, sqlRaw: String): Dataset[Row] = {
-    val sql = sqlRaw.trim
-    val spark = pjp.getThis.asInstanceOf[SparkSession]
-    val userId = spark.sparkContext.sparkUser
-    val tables = getTables(sql, spark)
-    tables.foreach(x => println("table=" + x))
-    if (accessControl(userId, tables)) {
-      pjp.proceed(pjp.getArgs).asInstanceOf[Dataset[Row]]
-    } else {
-      throw new IllegalAccessException("access failed")
-    }
-  }
-
-  def getTables(query: String,
-                spark: SparkSession): Seq[String] = {
-    val logicalPlan = spark.sessionState.sqlParser.parsePlan(query)
-    import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
-    logicalPlan.collect { case r: UnresolvedRelation => r.tableName }
-  }
-
-  def accessControl(user: String,
-                    table: Seq[String]): Boolean = {
-    println("userId: " + user, "\n tableName: " + table.mkString(","))
-    true
-  }*/
-}
 
 /**
  * 基于Fire进行Spark Streaming开发
