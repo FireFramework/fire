@@ -112,6 +112,9 @@ public class FSUtils {
   }
 
   public static FileSystem getFs(String pathStr, Configuration conf, boolean localByDefault) {
+    // TODO: ------------ start：二次开发代码 --------------- //
+    prepareHadoopConf(conf);
+    // TODO: ------------ end：二次开发代码 --------------- //
     if (localByDefault) {
       return getFs(addSchemeIfLocalPath(pathStr), conf);
     }
