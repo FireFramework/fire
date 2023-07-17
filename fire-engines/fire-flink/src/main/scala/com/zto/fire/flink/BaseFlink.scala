@@ -69,7 +69,7 @@ trait BaseFlink extends BaseFire {
    * 初始化flink运行时环境
    */
   override private[fire] def createContext(conf: Any): Unit = {
-    if (FlinkUtils.isYarnApplicationMode) {
+    if (FlinkUtils.isYarnApplicationMode || FireUtils.isLocalRunMode) {
       // fire rest 服务仅支持flink的yarn-application模式
       this.restfulRegister = new RestServerManager().startRestPort(GlobalConfiguration.getRestPortAndClose)
       this.systemRestful = new FlinkSystemRestful(this, this.restfulRegister)

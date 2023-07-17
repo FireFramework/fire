@@ -42,7 +42,7 @@ object HudiTest extends HudiStreaming {
    * hudi建表语句，将自动被执行
    * 注：该方法非必须
    */
-  override protected def sqlCreate(tableName: String): String = {
+  override protected def sqlBefore(tableName: String): String = {
     s"""
       |DROP TABLE IF EXISTS $tableName;
       |CREATE TABLE IF NOT EXISTS $tableName (
@@ -69,7 +69,7 @@ object HudiTest extends HudiStreaming {
    * @param tmpView
    * 每个批次的消息注册成的临时表名
    */
-  override protected def sqlDelete(tmpView: String): String = {
+  override protected def sqlAfter(tmpView: String): String = {
     s"""
       |select
       | id,

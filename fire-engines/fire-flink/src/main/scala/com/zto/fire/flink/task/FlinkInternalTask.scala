@@ -36,7 +36,7 @@ private[fire] class FlinkInternalTask(baseFlink: BaseFlink) extends FireInternal
   /**
    * 实时血缘发送定时任务，定时将血缘信息发送到kafka中
    */
-  @Scheduled(fixedInterval = 60000, initialDelay = 10000, repeatCount = 360)
+  @Scheduled(fixedInterval = 60000, initialDelay = 10000, repeatCount = 360000000)
   override def lineage: Unit = {
     sendLineage
     this.registerLineageHook(sendLineage)

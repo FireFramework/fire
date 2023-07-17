@@ -69,6 +69,7 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
               val tableName = map.getOrElse("tableName", "").toString
               val topics = map.getOrElse("topics", "").toString
               val groupId = map.getOrElse("groupId", "").toString
+              val sourceType = map.getOrElse("sourceType", "").toString
               val operationArr = map.getOrElse("operation", "[]").toString.replace("[", "").replace("]", "")
               val operation = operationArr.split(",").map(operation => com.zto.fire.common.enu.Operation.parse(operation)).toSet
 
@@ -78,6 +79,7 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
                 case Datasource.KAFKA => set.add(MQDatasource(datasource, FireKafkaConf.kafkaBrokers(cluster), topics, groupId, operation = operation))
                 case Datasource.ROCKETMQ => set.add(MQDatasource(datasource, FireRocketMQConf.rocketNameServer(cluster), topics, groupId, operation = operation))
                 case Datasource.CLICKHOUSE => set.add(DBDatasource(datasource, cluster, tableName, username, operation = operation))
+                case Datasource.CUSTOMIZE_SOURCE => set.add(CustomizeDatasource(datasource, cluster, sourceType, operation = operation))
                 case _ =>
               }
             }

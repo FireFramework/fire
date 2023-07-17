@@ -167,6 +167,16 @@ private[fire] class LineageManager extends Logging {
           }
         }
       }
+      case ds: CustomizeDatasource => {
+        if (datasourceDesc.isInstanceOf[CustomizeDatasource]) {
+          val target = datasourceDesc.asInstanceOf[CustomizeDatasource]
+          if (ds.equals(target)) {
+            ds.operation.addAll(target.operation)
+          } else {
+            mergeSet.add(datasourceDesc)
+          }
+        }
+      }
       case _ =>
     }
     new JHashSet[DatasourceDesc](mergeSet)
@@ -256,6 +266,18 @@ private[fire] object LineageManager extends Logging {
    */
   private[fire] def addMQDatasource(datasource: String, cluster: String, topics: String, groupId: String, operation: Operation*): Unit = {
     this.manager.add(Datasource.parse(datasource), MQDatasource(datasource, cluster, topics, groupId, toOperationSet(operation: _*)))
+  }
+
+  /**
+   * 添加一条自定义数据源埋点信息
+   *
+   * @param datasource
+   * 数据源类型
+   * @param cluster
+   * 集群标识
+   */
+  private[fire] def addCustomizeDatasource(datasource: String, cluster: String, sourceType: String, operation: Operation*): Unit = {
+    this.manager.add(Datasource.parse(datasource), CustomizeDatasource(datasource, cluster, sourceType, toOperationSet(operation: _*)))
   }
 
   /**
@@ -387,6 +409,27 @@ case class MQDatasource(datasource: String, cluster: String, topics: String,
   }
 
   override def hashCode(): Int = Objects.hash(datasource, cluster, topics, groupId)
+}
+
+/**
+ * 自定义数据源
+ *
+ * @param datasource
+ * 数据源类型，参考DataSource枚举
+ * @param cluster
+ * 数据源的集群标识
+ * @param operation
+ * 数据源操作类型
+ */
+case class CustomizeDatasource(datasource: String, cluster: String, sourceType: String, operation: JSet[Operation] = new JHashSet[Operation]) extends DatasourceDesc {
+
+  override def equals(obj: Any): Boolean = {
+    if (obj == null || getClass != obj.getClass) return false
+    val target = obj.asInstanceOf[CustomizeDatasource]
+    Objects.equals(datasource, target.datasource) && Objects.equals(cluster, target.cluster) && Objects.equals(sourceType, target.sourceType)
+  }
+
+  override def hashCode(): Int = Objects.hash(datasource, cluster)
 }
 
 /**

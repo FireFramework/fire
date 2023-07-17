@@ -22,7 +22,7 @@ import com.zto.fire.common.bean.Generator
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.util.MQType.MQType
-import com.zto.fire.common.util.{KafkaUtils, LineageManager, MQType, RegularUtils, SQLUtils}
+import com.zto.fire.common.util.{KafkaUtils, LineageManager, MQType, OSUtils, RegularUtils, SQLUtils}
 import com.zto.fire.core.Api
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.connector.FlinkConnectors._
@@ -36,6 +36,7 @@ import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode
+import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer, KafkaDeserializationSchema}
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
@@ -387,7 +388,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * ReceiverInputDStream[T]
    */
   def createGenStream[T](gen: => T, qps: Long = 1000): DataStream[T] = {
-    this.env.addSource(new GenConnector(gen, qps))
+    this.addSource(new GenConnector(gen, qps))
   }
 
   /**
@@ -401,7 +402,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * DataStream[T]
    */
   def createBeanStream[T <: Generator[T] : ClassTag](qps: Long = 1000): DataStream[Generator[T]] = {
-    this.env.addSource(new BeanConnector[T](100))
+    this.addSource(new BeanConnector[T](100))
   }
 */
 
@@ -415,7 +416,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * ReceiverInputDStream[T]
    */
   def createRandomIntStream(qps: Long = 1000): DataStream[Int] = {
-    this.env.addSource(new RandomIntConnector(qps))
+    this.addSource(new RandomIntConnector(qps))
   }
 
   /**
@@ -427,7 +428,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * DataStream[T]
    */
   def createRandomLongStream(qps: Long = 1000): DataStream[Long] = {
-    this.env.addSource(new RandomLongConnector(qps))
+    this.addSource(new RandomLongConnector(qps))
   }
 
   /**
@@ -439,7 +440,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * DataStream[T]
    */
   def createRandomDoubleStream(qps: Long = 1000): DataStream[Double] = {
-    this.env.addSource(new RandomDoubleConnector(qps))
+    this.addSource(new RandomDoubleConnector(qps))
   }
 
   /**
@@ -451,7 +452,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * DataStream[T]
    */
   def createRandomFloatStream(qps: Long = 1000): DataStream[Float] = {
-    this.env.addSource(new RandomFloatConnector(qps))
+    this.addSource(new RandomFloatConnector(qps))
   }
 
   /**
@@ -463,7 +464,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * DataStream[T]
    */
   def createUUIDStream(qps: Long = 1000): DataStream[String] = {
-    this.env.addSource(new UUIDConnector(qps))
+    this.addSource(new UUIDConnector(qps))
   }
 
   /**
@@ -477,7 +478,15 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * DataStream[T]
    */
   def createJSONStream[T <: Generator[T] : ClassTag](qps: Long = 1000): DataStream[String] = {
-    this.env.addSource(new JSONConnector[T](100))
+    this.addSource(new JSONConnector[T](100))
+  }
+
+  /**
+   * 自定义Source
+   */
+  def addSource[T: TypeInformation](function: SourceFunction[T]): DataStream[T] = {
+    LineageManager.addCustomizeDatasource("customize_source", OSUtils.getIp, function.getClass.getSimpleName, FOperation.SOURCE)
+    this.env.addSource[T](function)
   }
 
   /**

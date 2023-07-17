@@ -38,14 +38,7 @@ trait BaseHudiStreaming extends SparkStreaming {
   protected lazy val repartition = this.conf.get[Int]("hudi.repartition", Some(-1))
   protected lazy val sink = this.conf.get[Boolean]("hudi.sink", Some(true))
   protected lazy val tmpView = this.conf.get[String]("hudi.tmpView", Some("msg_view"))
-
-  /**
-   * 修复hive分区元数据信息
-   */
-  @Scheduled(cron = "0 05,10,30 * * * ?")
-  private def repair: Unit = {
-    SparkSqlUtils.repairHiveTable(this.tableName)
-  }
+  protected lazy val retryOnFailure = this.conf.get[Int]("hudi.retry.onFailure", Some(1))
 
   /**
    * 检查必选的配置是否合法
@@ -68,7 +61,14 @@ trait BaseHudiStreaming extends SparkStreaming {
         |""".stripMargin)
   }
 
-  protected def sqlCreate(tableName: String): String = ""
+  /**
+   * 数据插入前执行前置SQL语句，可以是create table语句等
+   * @param tableName
+   * hudi表名
+   * @return
+   * SQL语句
+   */
+  protected def sqlBefore(tableName: String): String = ""
 
   /**
    * 待执行的SQL语句，子类应当覆盖该方法
@@ -76,5 +76,10 @@ trait BaseHudiStreaming extends SparkStreaming {
    */
   protected def sqlUpsert(tmpView: String): String = this.sqlStatement
 
-  protected def sqlDelete(tmpView: String): String = ""
+  /**
+   * 每个批次执行后执行的后置SQL语句，可以是delete、update、merge等SQL
+   * @param tmpView
+   * 临时表名
+   */
+  protected def sqlAfter(tmpView: String): String = ""
 }

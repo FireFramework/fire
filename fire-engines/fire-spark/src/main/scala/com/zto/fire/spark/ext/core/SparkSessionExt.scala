@@ -18,9 +18,10 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
+import com.zto.fire.common.enu.{Datasource, Operation => FOperation}
 import com.zto.fire.common.bean.Generator
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
-import com.zto.fire.common.util.MQType
+import com.zto.fire.common.util.{LineageManager, MQType, OSUtils}
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.core.Api
 import com.zto.fire.hudi.conf.FireHudiConf
@@ -158,10 +159,10 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
    * @return
    * key & body
    */
-  def createMQStream(processFun: RDD[String] => Unit, mqType: MQType = MQType.auto, keyNum: Int = KeyNum._1): Unit = {
-    def kafkaStream: Unit = this.createKafkaDirectStream(keyNum = keyNum).foreachRDDAtLeastOnce(rdd => processFun(rdd.map(t => t.value())))
+  def createMQStream(processFun: RDD[String] => Unit, mqType: MQType = MQType.auto, keyNum: Int = KeyNum._1)(implicit reTry: Int = 3, duration: Long = 3000, autoCommit: Boolean = true, exitOnFailure: Boolean = true): Unit = {
+    def kafkaStream: Unit = this.createKafkaDirectStream(keyNum = keyNum).foreachRDDAtLeastOnce(rdd => processFun(rdd.map(t => t.value())))(reTry, duration, autoCommit, exitOnFailure)
 
-    def rocketStream: Unit = this.createRocketMqPullStream(keyNum = keyNum).foreachRDDAtLeastOnce(rdd => processFun(rdd.map(t => new String(t.getBody))))
+    def rocketStream: Unit = this.createRocketMqPullStream(keyNum = keyNum).foreachRDDAtLeastOnce(rdd => processFun(rdd.map(t => new String(t.getBody))))(reTry, duration, autoCommit, exitOnFailure)
 
     mqType match {
       case MQType.kafka => kafkaStream
@@ -299,6 +300,7 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
    * 包装后的DStream[T]
    */
   def receiverStream[T: ClassTag](receiver: Receiver[T]): ReceiverInputDStream[T] = {
+    LineageManager.addCustomizeDatasource("customize_source", OSUtils.getIp, receiver.getClass.getSimpleName, FOperation.SOURCE)
     this.ssc.receiverStream[T](receiver)
   }
 

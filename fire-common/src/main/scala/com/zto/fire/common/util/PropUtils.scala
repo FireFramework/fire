@@ -119,9 +119,9 @@ object PropUtils extends Logging {
       var resource: InputStream = null
       try {
         resource = this.getInputStream(fullName)
-        if (resource == null && !this.configurationFiles.contains(fileName)) this.logger.warn(s"未找到配置文件[ $fullName ]，请核实！")
+        if (resource == null && !this.configurationFiles.contains(fileName)) this.logger.warn(s"未找到配置文件[ $fullName ]，若已使用注解配置，可忽略该警告")
         if (resource != null) {
-          this.logger.warn(s"${FirePS1Conf.YELLOW} -------------> loaded ${fullName} <------------- ${FirePS1Conf.DEFAULT}")
+          this.logger.info(s"${FirePS1Conf.YELLOW} -------------> loaded ${fullName} <------------- ${FirePS1Conf.DEFAULT}")
           props.load(resource)
           // 将所有的配置信息存放到settings中，并统一添加key的引擎前缀，如：
           // 如果是spark引擎，则key前缀统一添加spark. 如果是flink引擎，则统一添加flink.

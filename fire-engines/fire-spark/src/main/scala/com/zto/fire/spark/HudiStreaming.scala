@@ -18,8 +18,10 @@
 package com.zto.fire.spark
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.util.{DateFormatUtils, PropUtils}
 import com.zto.fire.hudi.enu.HoodieOperationType
+import com.zto.fire.spark.sql.SparkSqlUtils
 import org.apache.spark.rdd.RDD
 
 /**
@@ -32,27 +34,35 @@ trait HudiStreaming extends BaseHudiStreaming {
 
   override def process: Unit = {
     this.validate
-    // 执行前置SQL
-    val ddl = this.sqlCreate(this.tableName)
-    if (noEmpty(ddl)) {
-      logInfo(s"开始执行hudi前置SQL：\n $ddl")
-      sql(ddl)
+    // 1. 执行前置SQL
+    val beforeSQL = this.sqlBefore(this.tableName)
+    if (noEmpty(beforeSQL)) {
+      logInfo(s"开始执行hudi前置SQL：\n $beforeSQL")
+      sql(beforeSQL)
     }
 
     this.fire.createMQStream(rdd => {
       if (!rdd.isEmpty()) {
+        // 2. 将当前批次数据实时upsert到指定hudi表
         val cachedRDD = rdd.cache()
         logger.info(s"当前批次记录数（${DateFormatUtils.formatCurrentDateTime()}）：" + cachedRDD.count())
         if (this.sink) sinkHudi(cachedRDD)
+
+        // 3. 执行后置SQL语句，比如delete、update、merge等
+        val afterSQL = this.sqlAfter(this.tableName)
+        if (noEmpty(afterSQL)) {
+          logInfo(s"开始执行hudi后置SQL：\n $afterSQL")
+          sql(afterSQL)
+        }
         cachedRDD.uncache
       }
-    })
+    })(reTry = this.retryOnFailure)
   }
 
   /**
    * 将转换后的消息数据集插入到指定的hudi表中
    */
-  def sinkHudi(rdd: RDD[String]): Unit = {
+  protected def sinkHudi(rdd: RDD[String]): Unit = {
     // 1. 解析消息中的json
     import fire.implicits._
     val rddMsg = if (repartition > 0) rdd.toDS().repartition(repartition) else rdd.toDS()
@@ -64,18 +74,6 @@ trait HudiStreaming extends BaseHudiStreaming {
     // 3. 将用户传入的查询sql结果集写入到指定的hudi表中
     val inputDF = sql(sqlUpsert(this.tmpView)).cache()
     inputDF.sinkHudi(this.tableName, this.primaryKey, this.precombineKey, this.partitionFieldName)
-
-    // 4. 执行delete语句进行数据删除
-    val sqlDelete = this.sqlDelete(this.tmpView)
-    if (noEmpty(sqlDelete)) {
-      logInfo(s"开始执行hudi删除逻辑：\n $sqlDelete")
-      val deleteDF = sql(sqlDelete).cache()
-      // 此处不使用deleteDF.isEmpty是基于性能考虑，count会触发cache
-      if (deleteDF.count() > 0) {
-        deleteDF.sinkHudi(this.tableName, this.primaryKey, this.precombineKey, this.partitionFieldName, operationType = HoodieOperationType.DELETE)
-      }
-    }
-
     this.fire.uncache(inputDF)
   }
 }

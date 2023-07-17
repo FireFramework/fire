@@ -92,7 +92,7 @@ trait AbstractFlinkStreaming extends BaseFlink {
    */
   override def createContext(conf: Any): Unit = {
     super.createContext(conf)
-    if (FlinkUtils.isYarnApplicationMode) this.restfulRegister.startRestServer
+    if (FlinkUtils.isYarnApplicationMode || FireUtils.isLocalRunMode) this.restfulRegister.startRestServer
     val finalConf = this.buildConf(conf.asInstanceOf[Configuration])
     if (FireUtils.isLocalRunMode) {
       this.env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(finalConf)
