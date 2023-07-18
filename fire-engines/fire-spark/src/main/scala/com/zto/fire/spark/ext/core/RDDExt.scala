@@ -377,7 +377,6 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     require(this.rdd.isInstanceOf[RDD[MQRecord]], "发送消息队列的RDD必须是RDD[MQRecord]类型！")
 
     val (finalBrokers, finalTopic, finalConf) = KafkaUtils.getConfByKeyNum(params, url, topic, keyNum)
-    LineageManager.addMQDatasource(KAFKA, finalBrokers, finalTopic, "", Operation.SINK)
     this.sinkToMQ(finalConf, finalBrokers, finalTopic, null, MQType.kafka)
   }
 
@@ -401,7 +400,6 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
     require(this.rdd.isInstanceOf[RDD[MQRecord]], "发送消息队列的RDD必须是RDD[MQRecord]类型！")
 
     val (finalBrokers, finalTopic, finalTag, finalConf) = RocketMQUtils.getConfByKeyNum(url, topic, tag, params, keyNum)
-    LineageManager.addMQDatasource(ROCKETMQ, finalBrokers, finalTopic, "", Operation.SINK)
     this.sinkToMQ(finalConf, finalBrokers, finalTopic, finalTag, MQType.rocketmq)
   }
 

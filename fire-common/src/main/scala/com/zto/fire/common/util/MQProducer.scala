@@ -20,7 +20,7 @@ package com.zto.fire.common.util
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.{FireFrameworkConf, FireKafkaConf, FireRocketMQConf}
-import com.zto.fire.common.enu.JobType
+import com.zto.fire.common.enu.{Datasource, JobType, Operation}
 import com.zto.fire.predef._
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util.ShutdownHookManager.DEFAULT_PRIORITY
@@ -47,6 +47,18 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
   private var sendErrorCount = 0
   private lazy val isRelease = new AtomicBoolean(false)
   private var useKafka, useRocketmq = false
+  private lazy val topics = new JHashSet[String]()
+
+  /**
+   * 添加血缘信息
+   */
+  @Internal
+  private[this] def addLineage(topic: String): Unit = {
+    if (!this.topics.contains(topic)) {
+      this.topics.add(topic)
+      LineageManager.addMQDatasource(Datasource.parse(mqType.toString), url, topic, "", Operation.SINK)
+    }
+  }
 
   // kafka producer
   private lazy val kafkaProducer = {
@@ -104,6 +116,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
     }
 
     val kafkaRecord = record.toKafka
+    this.addLineage(record.topic)
     kafkaProducer.send(kafkaRecord, new Callback() {
       override def onCompletion(recordMetadata: RecordMetadata, exception: Exception): Unit = {
         if (exception != null) {
@@ -143,6 +156,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
     }
 
     val rocketRecord = record.toRocketMQ
+    this.addLineage(record.topic)
     this.rocketmqProducer.send(rocketRecord, new SendCallback {
       override def onSuccess(sendResult: SendResult): Unit = {
         // do nothing
@@ -251,7 +265,7 @@ object MQProducer {
    * 优化参数
    */
   def sendRecord(url: String, record: MQRecord,
-           mqType: MQType = MQType.kafka, otherConf: Map[String, String] = Map.empty): Unit = {
+                 mqType: MQType = MQType.kafka, otherConf: Map[String, String] = Map.empty): Unit = {
     val producer = this.producerMap.mergeGet(url + ":" + record.topic)(new MQProducer(url, mqType, otherConf))
     producer.send(record)
   }

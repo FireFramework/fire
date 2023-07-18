@@ -47,7 +47,6 @@ private[fire] class LineageAccumulator extends AccumulatorV2[ConcurrentHashMap[D
     */
   override def copy(): AccumulatorV2[ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]], ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]] = {
     val strAcc = new LineageAccumulator
-    // strAcc.value.putAll(this.lineageMap)
     LineageManager.mergeLineageMap(strAcc.value, this.lineageMap)
     strAcc
   }
@@ -62,7 +61,6 @@ private[fire] class LineageAccumulator extends AccumulatorV2[ConcurrentHashMap[D
    */
   override def add(v: ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
     if (FireFrameworkConf.accEnable && v.nonEmpty) {
-      // this.lineageMap.putAll(v)
       LineageManager.mergeLineageMap(this.lineageMap, v)
     }
   }
@@ -75,7 +73,7 @@ private[fire] class LineageAccumulator extends AccumulatorV2[ConcurrentHashMap[D
     */
   override def merge(other: AccumulatorV2[ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]], ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]]): Unit = {
     if (other != null && other.value.size() > 0) {
-      this.lineageMap.putAll(other.value)
+      LineageManager.mergeLineageMap(this.lineageMap, other.value)
     }
   }
 
