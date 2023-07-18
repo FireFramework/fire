@@ -18,7 +18,8 @@
 package com.zto.fire.common.util
 
 import com.zto.fire.common.anno.Internal
-import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.common.bean.MQRecord
+import com.zto.fire.common.conf.{FireFrameworkConf, FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.predef._
 import com.zto.fire.common.util.MQType.MQType
@@ -50,7 +51,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
   // kafka producer
   private lazy val kafkaProducer = {
     val props = new Properties()
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.url)
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, FireKafkaConf.kafkaBrokers(this.url))
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, this.sendTimeout.toString)
@@ -64,7 +65,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
   // rocketmq producer
   private lazy val rocketmqProducer = {
     val producer = new DefaultMQProducer("fire")
-    producer.setNamesrvAddr(this.url)
+    producer.setNamesrvAddr(FireRocketMQConf.rocketNameServer(this.url))
     producer.setSendMsgTimeout(this.sendTimeout)
     producer.start()
     this.useRocketmq = true
@@ -88,15 +89,13 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
   }
 
   /**
-   * 发送消息到kafka
+   * 将消息发送到kafka
    *
-   * @param topic
-   * 主题名称
-   * @param msg
-   * 发送的消息
+   * @param record
+   * 消息体
    */
-  def sendKafka(topic: String, msg: String): Unit = {
-    requireNonEmpty(topic, "topic不能为空")
+  def sendKafkaRecord(record: MQRecord): Unit = {
+    requireNonNull(record, record.topic, record.msg)("消息体参数不合法，请检查")
 
     if (this.sendErrorCount >= this.maxRetries) {
       this.kafkaProducer.close()
@@ -104,8 +103,8 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
       return
     }
 
-    val record = new ProducerRecord[String, String](topic, msg)
-    kafkaProducer.send(record, new Callback() {
+    val kafkaRecord = record.toKafka
+    kafkaProducer.send(kafkaRecord, new Callback() {
       override def onCompletion(recordMetadata: RecordMetadata, exception: Exception): Unit = {
         if (exception != null) {
           sendErrorCount += 1
@@ -116,26 +115,35 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
   }
 
   /**
-   * 发送消息到rocketmq
+   * 发送消息到kafka
    *
    * @param topic
    * 主题名称
    * @param msg
+   * 发送的消息
+   */
+  def sendKafka(topic: String, msg: String): Unit = {
+    this.sendKafkaRecord(MQRecord(topic, msg))
+  }
+
+  /**
+   * 将消息发送到RocketMQ
+   *
+   * @param record
    * 消息体
-   * @param tags
-   * tag
    * @param timeout
    * 发送超时时间
    */
-  def sendRocketmq(topic: String, msg: String, tags: String = "*", timeout: Long = 10000): Unit = {
-    requireNonEmpty(topic, "topic不能为空")
+  def sendRocketMQRecord(record: MQRecord, timeout: Long = 10000): Unit = {
+    requireNonNull(record, record.topic, record.msg)("消息体参数不合法，请检查")
+
     if (this.sendErrorCount >= this.maxRetries) {
       this.rocketmqProducer.shutdown()
       return
     }
 
-    val record = new Message(topic, tags, msg.getBytes(RemotingHelper.DEFAULT_CHARSET))
-    this.rocketmqProducer.send(record, new SendCallback {
+    val rocketRecord = record.toRocketMQ
+    this.rocketmqProducer.send(rocketRecord, new SendCallback {
       override def onSuccess(sendResult: SendResult): Unit = {
         // do nothing
       }
@@ -150,6 +158,35 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
   }
 
   /**
+   * 发送消息到rocketmq
+   *
+   * @param topic
+   * 主题名称
+   * @param msg
+   * 消息体
+   * @param tags
+   * tag
+   * @param timeout
+   * 发送超时时间
+   */
+  def sendRocketMQ(topic: String, msg: String, tags: String = "*", timeout: Long = 10000): Unit = {
+    this.sendRocketMQRecord(MQRecord(topic, msg, null, null, tags, 0, true))
+  }
+
+  /**
+   * 发送消息到指定的消息队列
+   *
+   * @param record
+   * 消息体
+   */
+  def send(record: MQRecord): Unit = {
+    this.mqType match {
+      case MQType.rocketmq => this.sendRocketMQRecord(record)
+      case _ => this.sendKafkaRecord(record)
+    }
+  }
+
+  /**
    * 发送消息到指定的消息队列
    *
    * @param topic
@@ -158,35 +195,33 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
    * 消息体
    */
   def send(topic: String, msg: String): Unit = {
-    this.mqType match {
-      case MQType.rocketmq => this.sendRocketmq(topic, msg)
-      case _ => this.sendKafka(topic, msg)
-    }
+    this.send(MQRecord(topic, msg))
   }
-
 }
 
 object MQProducer {
   // 用于维护多个producer实例，避免重复创建
-  private lazy val kafkaProducerMap = new JConcurrentHashMap[String, MQProducer]()
-  this.addHook() (this.release)
+  private lazy val producerMap = new JConcurrentHashMap[String, MQProducer]()
+  this.addHook()(this.release)
 
   /**
    * 释放所有使用了的producer资源，会被fire框架自动调用
    */
   @Internal
   private[fire] def release: Unit = {
-    kafkaProducerMap.foreach(t => t._2.close)
+    producerMap.foreach(t => t._2.close)
   }
 
   /**
    * 注册jvm退出前回调，在任务退出前完成消息的发出
+   *
    * @param fun
    * 消息发送逻辑
    */
+  @Internal
   private[fire] def addHook(priority: Int = ShutdownHookManager.LOW_PRIORITY)(fun: => Unit): Unit = {
     // 注册回调，在jvm退出前将所有异常发送到mq中
-    ShutdownHookManager.addShutdownHook(priority) (() => {
+    ShutdownHookManager.addShutdownHook(priority)(() => {
       fun
     })
   }
@@ -196,6 +231,7 @@ object MQProducer {
 
   /**
    * 发送消息到指定的mq topic
+   *
    * @param mqType
    * mq的类别：kafka/rocketmq
    * @param otherConf
@@ -203,19 +239,43 @@ object MQProducer {
    */
   def send(url: String, topic: String, msg: String,
            mqType: MQType = MQType.kafka, otherConf: Map[String, String] = Map.empty): Unit = {
-    val producer = this.kafkaProducerMap.mergeGet(url + ":" + topic)(new MQProducer(url, mqType, otherConf))
-    producer.send(topic, msg)
+    this.sendRecord(url, MQRecord(topic, msg), mqType, otherConf)
   }
 
   /**
-   * 将消息方式到kafka
+   * 发送消息体到指定的mq topic
+   *
+   * @param mqType
+   * mq的类别：kafka/rocketmq
+   * @param otherConf
+   * 优化参数
+   */
+  def sendRecord(url: String, record: MQRecord,
+           mqType: MQType = MQType.kafka, otherConf: Map[String, String] = Map.empty): Unit = {
+    val producer = this.producerMap.mergeGet(url + ":" + record.topic)(new MQProducer(url, mqType, otherConf))
+    producer.send(record)
+  }
+
+  /**
+   * 将消息发送到kafka
    */
   def sendKafka(url: String, topic: String, msg: String, otherConf: Map[String, String] = Map.empty): Unit = this.send(url, topic, msg, MQType.kafka, otherConf)
+
+  /**
+   * 将消息发送到kafka
+   */
+  def sendKafkaRecord(url: String, record: MQRecord, otherConf: Map[String, String] = Map.empty): Unit = this.sendRecord(url, record, MQType.kafka, otherConf)
+
 
   /**
    * 将消息发送到rocketmq
    */
   def sendRocketMQ(url: String, topic: String, msg: String, otherConf: Map[String, String] = Map.empty): Unit = this.send(url, topic, msg, MQType.rocketmq, otherConf)
+
+  /**
+   * 将消息发送到rocketmq
+   */
+  def sendRocketMQRecord(url: String, record: MQRecord, otherConf: Map[String, String] = Map.empty): Unit = this.sendRecord(url, record, MQType.rocketmq, otherConf)
 }
 
 /**

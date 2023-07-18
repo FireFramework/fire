@@ -19,10 +19,10 @@ package com.zto.fire.spark.connector
 
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.KeyNum
-import com.zto.fire.common.enu.Datasource
+import com.zto.fire.common.enu.Datasource.HBASE
+import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.util.LineageManager
 import com.zto.fire.core.connector.{Connector, ConnectorFactory}
-import com.zto.fire.common.enu.{Datasource, Operation => FOperation}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.hbase.conf.FireHBaseConf
@@ -82,7 +82,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     tryWithLog {
       val rowKeyRDD = rdd.filter(rowkey => StringUtils.isNotBlank(rowkey)).map(rowKey => Bytes.toBytes(rowKey))
       this.bulkDelete[Array[Byte]](rowKeyRDD, TableName.valueOf(tableName), rec => new Delete(rec), this.finalBatchSize)
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
     }(this.logger, s"execute bulkDeleteRDD(tableName: ${tableName}, batchSize: ${batchSize}) success. keyNum: ${keyNum}")
   }
 
@@ -99,7 +99,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     requireNonEmpty(tableName, dataset)
     tryWithLog {
       this.bulkDeleteRDD(tableName, dataset.rdd)
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
     }(this.logger, s"execute bulkDeleteDS(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
 
@@ -117,7 +117,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     tryWithLog {
       val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
       this.bulkDeleteRDD(tableName, rdd)
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
     }(this.logger, s"execute bulkDeleteList(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -142,7 +142,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       val getRDD = this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
         HBaseConnector(keyNum = this.keyNum).hbaseRow2Bean[E](result).getOrElse(clazz.newInstance())
       }).filter(bean => noEmpty(bean, bean.rowKey)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
       getRDD
     }(this.logger, s"execute bulkGetRDD(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
@@ -165,7 +165,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
 
     tryWithReturn {
       val resultRdd = this.bulkGetRDD[E](tableName, rdd)
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
       this.sparkSession.createDataFrame(resultRdd, clazz)
     }(this.logger, s"execute bulkGetDF(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
@@ -187,7 +187,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     requireNonEmpty(tableName, rdd, clazz)
     tryWithReturn {
       val resultRdd = this.bulkGetRDD[E](tableName, rdd)
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
       this.sparkSession.createDataset(resultRdd)(Encoders.bean(clazz))
     }(this.logger, s"execute bulkGetDS(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
@@ -212,7 +212,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
 
     tryWithReturn {
       val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
       this.bulkGetRDD[E](tableName, rdd)
     }(this.logger, s"execute bulkGetSeq(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
@@ -239,7 +239,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
         (putRecord: T) => {
           HBaseConnector(keyNum = this.keyNum).convert2Put[T](if (HBaseConnector(keyNum = this.keyNum).getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, HBaseConnector(keyNum = this.keyNum).getNullable[T])
         })
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
     }(this.logger, s"execute bulkPutRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -263,7 +263,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     tryWithLog {
       val rdd = this.sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
       this.bulkPutRDD[T](tableName, rdd)
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
     }(this.logger, s"execute bulkPutRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -287,7 +287,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       if (scan.getCaching == -1) {
         scan.setCaching(this.finalBatchSize)
       }
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.SCAN)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.SCAN)
       this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseConnector(keyNum = this.keyNum).hbaseRow2BeanList[T](it)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
     }(this.logger, s"execute bulkScanRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
@@ -369,7 +369,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       this.streamBulkPut[T](dstream, TableName.valueOf(tableName), (putRecord: T) => {
         HBaseConnector(keyNum = this.keyNum).convert2Put[T](if (HBaseConnector(keyNum = this.keyNum).getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, HBaseConnector(keyNum = this.keyNum).getNullable[T])
       })
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
     }(this.logger, s"execute bulkPutStream(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -395,7 +395,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
         })
         putList.iterator
       }).saveAsNewAPIHadoopDataset(this.getConfiguration(tableName))
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
     }(this.logger, s"execute hadoopPut(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -484,7 +484,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
         })
         putList.iterator
       }).saveAsNewAPIHadoopDataset(this.getConfiguration(tableName))
-      LineageManager.addDBDatasource(Datasource.HBASE.toString, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
     }(this.logger, s"execute hadoopPut(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 

@@ -216,8 +216,8 @@ private[fire] object LineageManager extends Logging {
    * @param sql
    *             待解析的sql语句
    */
-  private[fire] def addDBSql(datasource: String, cluster: String, username: String, sql: String, operation: Operation*): Unit = {
-    this.manager.addDBSqlSource(DBSqlSource(datasource, cluster, username, sql, toOperationSet(operation: _*)))
+  private[fire] def addDBSql(datasource: Datasource, cluster: String, username: String, sql: String, operation: Operation*): Unit = {
+    this.manager.addDBSqlSource(DBSqlSource(datasource.toString, cluster, username, sql, toOperationSet(operation: _*)))
   }
 
   /**
@@ -239,8 +239,8 @@ private[fire] object LineageManager extends Logging {
    * @param username
    * 连接用户名
    */
-  private[fire] def addDBDatasource(datasource: String, cluster: String, tableName: String, username: String = "", operation: Operation): Unit = {
-    this.manager.add(Datasource.parse(datasource), DBDatasource(datasource, cluster, tableName, username, toOperationSet(operation)))
+  private[fire] def addDBDatasource(datasource: Datasource, cluster: String, tableName: String, username: String = "", operation: Operation): Unit = {
+    this.manager.add(datasource, DBDatasource(datasource.toString, cluster, tableName, username, toOperationSet(operation)))
   }
 
   /**
@@ -264,8 +264,8 @@ private[fire] object LineageManager extends Logging {
    * @param groupId
    * 消费组标识
    */
-  private[fire] def addMQDatasource(datasource: String, cluster: String, topics: String, groupId: String, operation: Operation*): Unit = {
-    this.manager.add(Datasource.parse(datasource), MQDatasource(datasource, cluster, topics, groupId, toOperationSet(operation: _*)))
+  private[fire] def addMQDatasource(datasource: Datasource, cluster: String, topics: String, groupId: String, operation: Operation*): Unit = {
+    this.manager.add(datasource, MQDatasource(datasource.toString, cluster, topics, groupId, toOperationSet(operation: _*)))
   }
 
   /**
@@ -276,8 +276,8 @@ private[fire] object LineageManager extends Logging {
    * @param cluster
    * 集群标识
    */
-  private[fire] def addCustomizeDatasource(datasource: String, cluster: String, sourceType: String, operation: Operation*): Unit = {
-    this.manager.add(Datasource.parse(datasource), CustomizeDatasource(datasource, cluster, sourceType, toOperationSet(operation: _*)))
+  private[fire] def addCustomizeDatasource(datasource: Datasource, cluster: String, sourceType: String, operation: Operation*): Unit = {
+    this.manager.add(datasource, CustomizeDatasource(datasource.toString, cluster, sourceType, toOperationSet(operation: _*)))
   }
 
   /**

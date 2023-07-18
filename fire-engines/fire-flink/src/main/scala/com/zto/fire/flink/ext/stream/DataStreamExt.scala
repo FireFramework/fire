@@ -310,7 +310,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
          |""".stripMargin)
 
     // sink kafka埋点信息
-    LineageManager.addMQDatasource("kafka", finalBrokers, finalTopic, "", Operation.SINK)
+    LineageManager.addMQDatasource(Datasource.KAFKA, finalBrokers, finalTopic, "", Operation.SINK)
 
     val kafkaProducer = new FlinkKafkaProducer[String](
       finalTopic,
@@ -459,7 +459,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
 
     // 3. sink jdbc埋点信息
     // TODO: 解析sql血缘关系，包括针对表做了哪些操作，数据的流转等
-    LineageManager.addDBSql(DBUtils.dbTypeParser(jdbcConf.driverClass, jdbcConf.url), jdbcConf.url, jdbcConf.username, sql, Operation.UPDATE)
+    LineageManager.addDBSql(Datasource.parse(DBUtils.dbTypeParser(jdbcConf.driverClass, jdbcConf.url)), jdbcConf.url, jdbcConf.username, sql, Operation.UPDATE)
     (jdbcConf, connectionTimeout, columns)
   }
 }

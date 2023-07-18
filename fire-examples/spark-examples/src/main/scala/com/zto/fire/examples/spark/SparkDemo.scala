@@ -19,7 +19,7 @@ package com.zto.fire.examples.spark
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.core.anno.connector.{Hive, Kafka}
+import com.zto.fire.core.anno.connector.{Hive, Kafka, RocketMQ}
 import com.zto.fire.core.anno.lifecycle.Process
 import com.zto.fire.spark.SparkStreaming
 import com.zto.fire.spark.anno.Streaming
@@ -36,13 +36,15 @@ import com.zto.fire.spark.anno.Streaming
     |spark.ui.enabled=true
     |""")
 @Hive("thrift://localhost:9083") // 配置连接到指定的hive
-@Streaming(interval = 100, maxRatePerPartition = 100) // 100s一个Streaming batch，并限制消费速率
-@Kafka(brokers = "localhost:9092", topics = "fire", groupId = "fire")
+@Streaming(interval = 1, maxRatePerPartition = 100) // 100s一个Streaming batch，并限制消费速率
+@RocketMQ(brokers = "bigdata_test", topics = "mq_test", groupId = "fire")
 object SparkDemo extends SparkStreaming {
 
   @Process
   def kafkaSource: Unit = {
-    val dstream = this.fire.createKafkaDirectStream() 	// 使用api的方式消费kafka
-    sql("""select * from xxx""").show()
+    val dstream = this.fire.createRocketMqPullStream()
+    dstream.foreachRDD(rdd => {
+      rdd.collect().foreach(x => println("---------------------->" + new String(x.getBody)))
+    })
   }
 }

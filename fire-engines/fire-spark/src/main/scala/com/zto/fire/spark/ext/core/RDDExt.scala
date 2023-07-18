@@ -18,12 +18,15 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
+import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.common.enu.Datasource._
 import com.zto.fire.common.enu.Operation
-import com.zto.fire.common.util.{KafkaUtils, LineageManager, MQProducer}
+import com.zto.fire.common.util.MQType.MQType
+import com.zto.fire.common.util.{KafkaUtils, LineageManager, MQProducer, MQType}
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
-import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
+import com.zto.fire.spark.util.{RocketMQUtils, SparkSingletonFactory, SparkUtils}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.common.message.MessageExt
 import org.apache.spark.rdd.RDD
@@ -329,25 +332,98 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   }
 
   /**
-   * 将消息写入到Kafka中
+   * 将消息发送到指定的消息队列中
+   *
+   * @param url
+   * 消息队列的url
+   * @param topic
+   * 发送消息到指定的主题
+   * @param mqType
+   * 消息队列的类型，目前支持kafka与rocketmq
+   * @param params
+   * 额外的producer参数
+   * @param keyNum
+   * 指定配置的keyNum，可从配置或注解中获取对应配置信息
    */
-  def sinkKafka(kafkaParams: Map[String, Object] = null,
-                topic: String = null,
-                keyNum: Int = KeyNum._1): Unit = {
+  def sinkMQ[T <: MQRecord : ClassTag](params: Map[String, Object] = null,
+                                       url: String = null,
+                                       topic: String = null,
+                                       tag: String = "*",
+                                       mqType: MQType = MQType.kafka,
+                                       keyNum: Int = KeyNum._1): Unit = {
+    if (mqType == MQType.rocketmq) {
+      this.sinkKafka[T](params, url, topic, keyNum)
+    } else {
+      this.sinkRocketMQ[T](params, url, topic, tag, keyNum)
+    }
+  }
 
-    this.rdd.foreachPartition(it => {
-      // 1. 设置producer相关额外参数
-      val finalProducerConfig = KafkaUtils.getKafkaParams(kafkaParams, keyNum)
-      // 2. 获取topic
-      val finalTopic = KafkaUtils.getTopic(topic, keyNum)
-      requireNonEmpty(finalTopic)(s"Topic不能为空，请检查keyNum=${keyNum}对应的配置信息")
-      // 3. 获取kafka集群url
-      val finalBrokers = KafkaUtils.getBrokers(finalProducerConfig, keyNum)
-      requireNonEmpty(finalBrokers)(s"kafka broker地址不能为空，请检查keyNum=${keyNum}对应的配置信息")
-      // 消费kafka埋点信息
-      LineageManager.addMQDatasource("kafka", finalBrokers, finalTopic, "", Operation.SINK)
+  /**
+   * 将消息发送到指定的kafka
+   *
+   * @param url
+   * 消息队列的url
+   * @param topic
+   * 发送消息到指定的主题
+   * @param params
+   * 额外的producer参数
+   * @param keyNum
+   * 指定配置的keyNum，可从配置或注解中获取对应配置信息
+   */
+  def sinkKafka[T <: MQRecord : ClassTag](params: Map[String, Object] = null,
+                                          url: String = null,
+                                          topic: String = null,
+                                          keyNum: Int = KeyNum._1): Unit = {
+    require(this.rdd.isInstanceOf[RDD[MQRecord]], "发送消息队列的RDD必须是RDD[MQRecord]类型！")
 
-      it.foreach(msg => MQProducer.sendKafka(finalBrokers, finalTopic, msg.toString, finalProducerConfig.toMap))
+    val (finalBrokers, finalTopic, finalConf) = KafkaUtils.getConfByKeyNum(params, url, topic, keyNum)
+    LineageManager.addMQDatasource(KAFKA, finalBrokers, finalTopic, "", Operation.SINK)
+    this.sinkToMQ(finalConf, finalBrokers, finalTopic, null, MQType.kafka)
+  }
+
+  /**
+   * 将消息发送到指定的rocketmq
+   *
+   * @param url
+   * 消息队列的url
+   * @param topic
+   * 发送消息到指定的主题
+   * @param params
+   * 额外的producer参数
+   * @param keyNum
+   * 指定配置的keyNum，可从配置或注解中获取对应配置信息
+   */
+  def sinkRocketMQ[T <: MQRecord : ClassTag](params: Map[String, Object] = null,
+                                             url: String = null,
+                                             topic: String = null,
+                                             tag: String = "*",
+                                             keyNum: Int = KeyNum._1): Unit = {
+    require(this.rdd.isInstanceOf[RDD[MQRecord]], "发送消息队列的RDD必须是RDD[MQRecord]类型！")
+
+    val (finalBrokers, finalTopic, finalTag, finalConf) = RocketMQUtils.getConfByKeyNum(url, topic, tag, params, keyNum)
+    LineageManager.addMQDatasource(ROCKETMQ, finalBrokers, finalTopic, "", Operation.SINK)
+    this.sinkToMQ(finalConf, finalBrokers, finalTopic, finalTag, MQType.rocketmq)
+  }
+
+  /**
+   * 将消息发送到指定的消息队列
+   *
+   * @param url
+   * 消息队列集群url
+   * @param topic
+   * 消息队列的topic
+   * @param params
+   * producer配置信息
+   * @param mqType
+   * MQ的类型：kafka、rocketmq
+   */
+  private[this] def sinkToMQ[T <: MQRecord : ClassTag](params: Map[String, String], url: JString, topic: JString, tag: String, mqType: MQType): Unit = {
+    this.rdd.asInstanceOf[RDD[MQRecord]].foreachPartition(it => {
+      it.foreach(record => {
+        if (isEmpty(record.topic)) record.topic = topic
+        if (isEmpty(record.tag)) record.tag = tag
+        MQProducer.sendRecord(url, record, mqType, otherConf = params)
+      })
     })
   }
 }
