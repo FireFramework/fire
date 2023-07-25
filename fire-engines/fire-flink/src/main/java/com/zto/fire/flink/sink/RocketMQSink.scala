@@ -17,33 +17,36 @@
 
 package com.zto.fire.flink.sink
 
+import com.zto.fire._
+import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.KeyNum
-import com.zto.fire.hbase.HBaseConnector
-import com.zto.fire.hbase.bean.HBaseBaseBean
-import com.zto.fire.hbase.conf.FireHBaseConf
+import com.zto.fire.common.util.{MQProducer, MQType, RocketMQUtils}
 
 import scala.reflect.ClassTag
 
-
 /**
- * Flink HBase sink组件，底层基于HBaseConnector
+ * Flink RocketMQ sink组件，底层基于MQProducer
  *
- * @author ChengLong 2020-5-25 16:06:15
- * @since 1.1.0
+ * @author ChengLong 2023-07-24 10:15:57
+ * @since 2.3.8
  */
-abstract class HBaseSink[IN, T <: HBaseBaseBean[T] : ClassTag](tableName: String,
-                                                               batch: Int = 100,
-                                                               flushInterval: Long = 10000,
-                                                               keyNum: Int = KeyNum._1) extends BaseSink[IN, T](batch, flushInterval) {
+abstract class RocketMQSink[IN, T <: MQRecord : ClassTag](params: Map[String, Object],
+                                                          url: String, topic: String,
+                                                          tag: String = "*", batch: Int = 100,
+                                                          flushInterval: Long = 1000, keyNum: Int = KeyNum._1) extends BaseSink[IN, T](batch, flushInterval) {
 
-  // hbase操作失败时允许最大重试次数
-  this.maxRetry = FireHBaseConf.hbaseMaxRetry()
+  private lazy val (finalBrokers, finalTopic, finalTag, finalConf) = RocketMQUtils.getConfByKeyNum(url, topic, tag, params, keyNum)
+
 
   /**
    * 将数据sink到hbase
    * 该方法会被flush方法自动调用
    */
   override def sink(dataList: List[T]): Unit = {
-    HBaseConnector.insert[T](this.tableName, dataList, this.keyNum)
+    dataList.foreach(record => {
+      if (isEmpty(record.topic)) record.topic = finalTopic
+      if (isEmpty(record.tag)) record.tag = finalTag
+      MQProducer.sendRecord(finalBrokers, record, MQType.rocketmq, finalConf)
+    })
   }
 }

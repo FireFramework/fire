@@ -19,10 +19,12 @@ package com.zto.fire.flink.ext.stream
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
-import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.common.bean.MQRecord
+import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util._
-import com.zto.fire.flink.sink.{HBaseSink, JdbcSink}
+import com.zto.fire.flink.sink.{HBaseSink, JdbcSink, KafkaSink, RocketMQSink}
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
@@ -198,8 +200,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
         }
         params
       }
-    }).name("fire jdbc stream sink")
-    null
+    }).uid("jdbcBatchUpdate")
   }
 
   /**
@@ -225,8 +226,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
       override def map(value: T): Seq[Any] = {
         fun(value)
       }
-    }).name("fire jdbc stream sink")
-    null
+    }).uid("jdbcBatchUpdate2")
   }
 
   /**
@@ -249,7 +249,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
       value => {
         value.asInstanceOf[E]
       }
-    }
+    }.uid("hbasePutDS")
   }
 
   /**
@@ -276,19 +276,158 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
        * 将数据构建成sink的格式
        */
       override def map(value: T): E = fun(value)
-    }).name("fire hbase stream sink")
+    }).uid("hbasePutDS2")
+  }
+
+  /**
+   * 将消息发送到指定的消息队列中
+   *
+   * @param url
+   * 消息队列的url
+   * @param topic
+   * 发送消息到指定的主题
+   * @param mqType
+   * 消息队列的类型，目前支持kafka与rocketmq
+   * @param params
+   * 额外的producer参数
+   * @param keyNum
+   * 指定配置的keyNum，可从配置或注解中获取对应配置信息
+   */
+  def sinkMQ[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
+                                          url: String = null,
+                                          topic: String = null,
+                                          tag: String = "*",
+                                          mqType: MQType = MQType.kafka,
+                                          batch: Int = 100, flushInterval: Long = 1000,
+                                          keyNum: Int = KeyNum._1): DataStreamSink[_] = {
+    this.sinkMQFun[E](params, url, topic, tag, mqType, batch, flushInterval, keyNum)(_.asInstanceOf[E])
+  }
+
+  /**
+   * 将消息发送到指定的消息队列中
+   *
+   * @param url
+   * 消息队列的url
+   * @param topic
+   * 发送消息到指定的主题
+   * @param mqType
+   * 消息队列的类型，目前支持kafka与rocketmq
+   * @param params
+   * 额外的producer参数
+   * @param keyNum
+   * 指定配置的keyNum，可从配置或注解中获取对应配置信息
+   */
+  def sinkMQFun[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
+                                       url: String = null,
+                                       topic: String = null,
+                                       tag: String = "*",
+                                       mqType: MQType = MQType.kafka,
+                                       batch: Int = 100, flushInterval: Long = 1000,
+                                       keyNum: Int = KeyNum._1)(mapFunction: T => E): DataStreamSink[_] = {
+    if (mqType == MQType.rocketmq) {
+      this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval, keyNum)(mapFunction)
+    } else {
+      this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, keyNum)(mapFunction)
+    }
+  }
+
+  /**
+   * 将数据实时sink到指定的kafka topic
+   *
+   * @param params
+   * 额外的producer参数
+   * @param url
+   * 消息队列的url
+   * @param topic
+   * 发送消息到指定的主题
+   * @param keyNum
+   * 指定配置的keyNum，可从配置或注解中获取对应配置信息
+   */
+  def sinkKafka[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
+                                             url: String = null, topic: String = null,
+                                             batch: Int = 100, flushInterval: Long = 1000,
+                                             keyNum: Int = KeyNum._1): DataStreamSink[_] = {
+
+    this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, keyNum)(_.asInstanceOf[E]).uid("sinkKafka")
+  }
+
+  /**
+   * 将数据实时sink到指定的kafka topic
+   *
+   * @param params
+   * 额外的producer参数
+   * @param url
+   * 消息队列的url
+   * @param topic
+   * 发送消息到指定的主题
+   * @param keyNum
+   * 指定配置的keyNum，可从配置或注解中获取对应配置信息
+   */
+  def sinkKafkaFun[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
+                              url: String = null, topic: String = null,
+                              batch: Int = 100, flushInterval: Long = 1000,
+                              keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
+    val finalBatch = if (FireKafkaConf.kafkaSinkBatch(keyNum) > 0) FireKafkaConf.kafkaSinkBatch(keyNum) else batch
+    val finalInterval = if (FireKafkaConf.kafkaFlushInterval(keyNum) > 0) FireKafkaConf.kafkaFlushInterval(keyNum) else flushInterval
+
+    this.stream.addSink(new KafkaSink[T, E](params, url, topic, finalBatch, finalInterval, keyNum) {
+      override def map(value: T): E = fun(value)
+    }).uid("sinkKafkaFun")
+  }
+
+  /**
+   * 将数据实时sink到指定的rocketmq topic
+   *
+   * @param params
+   * 额外的producer参数
+   * @param url
+   * 消息队列的url
+   * @param topic
+   * 发送消息到指定的主题
+   * @param keyNum
+   * 指定配置的keyNum，可从配置或注解中获取对应配置信息
+   */
+  def sinkRocketMQ[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
+                                             url: String = null, topic: String = null, tag: String = "*",
+                                             batch: Int = 100, flushInterval: Long = 1000,
+                                             keyNum: Int = KeyNum._1): DataStreamSink[_] = {
+    this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval, keyNum)(_.asInstanceOf[E]).uid("sinkRocketMQ")
+  }
+
+  /**
+   * 将数据实时sink到指定的rocketmq topic
+   *
+   * @param params
+   * 额外的producer参数
+   * @param url
+   * 消息队列的url
+   * @param topic
+   * 发送消息到指定的主题
+   * @param keyNum
+   * 指定配置的keyNum，可从配置或注解中获取对应配置信息
+   */
+  def sinkRocketMQFun[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
+                                          url: String = null, topic: String = null, tag: String = "*",
+                                          batch: Int = 100, flushInterval: Long = 1000,
+                                          keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
+    val finalBatch = if (FireRocketMQConf.rocketSinkBatch(keyNum) > 0) FireRocketMQConf.rocketSinkBatch(keyNum) else batch
+    val finalInterval = if (FireRocketMQConf.rocketSinkFlushInterval(keyNum) > 0) FireRocketMQConf.rocketSinkFlushInterval(keyNum) else flushInterval
+
+    this.stream.addSink(new RocketMQSink[T, E](params, url, topic, tag, finalBatch, finalInterval, keyNum) {
+      override def map(value: T): E = fun(value)
+    }).uid("sinkRocketMQFun")
   }
 
   /**
    * 将数据写入到kafka中
    */
-  def sinkKafka[T <: String](kafkaParams: Map[String, Object] = null,
+  def sinkKafkaString[T <: String](kafkaParams: Map[String, Object] = null,
                              topic: String = null,
                              serializationSchema: SerializationSchema[String] = new SimpleStringSchema,
                              customPartitioner: FlinkKafkaPartitioner[String] = null,
                              semantic: Semantic = Semantic.AT_LEAST_ONCE,
                              kafkaProducersPoolSize: Int = FlinkKafkaProducer.DEFAULT_KAFKA_PRODUCERS_POOL_SIZE,
-                             keyNum: Int = KeyNum._1): Unit = {
+                             keyNum: Int = KeyNum._1): DataStreamSink[_] = {
 
 
     // 1. 设置producer相关额外参数
@@ -321,7 +460,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
       kafkaProducersPoolSize
     )
 
-    this.stream.asInstanceOf[DataStream[String]].addSink(kafkaProducer).uname("Fire kafka sink")
+    this.stream.asInstanceOf[DataStream[String]].addSink(kafkaProducer).uid("sinkKafkaString")
   }
 
   /**
@@ -332,8 +471,8 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
                                         serializationSchema: SerializationSchema[String] = new SimpleStringSchema,
                                         customPartitioner: FlinkKafkaPartitioner[String] = null,
                                         kafkaProducersPoolSize: Int = FlinkKafkaProducer.DEFAULT_KAFKA_PRODUCERS_POOL_SIZE,
-                                        keyNum: Int = KeyNum._1): Unit = {
-    this.sinkKafka[T](kafkaParams, topic, serializationSchema, customPartitioner, Semantic.EXACTLY_ONCE, kafkaProducersPoolSize, keyNum)
+                                        keyNum: Int = KeyNum._1): DataStreamSink[_] = {
+    this.sinkKafkaString[T](kafkaParams, topic, serializationSchema, customPartitioner, Semantic.EXACTLY_ONCE, kafkaProducersPoolSize, keyNum)
   }
 
   /**
@@ -379,7 +518,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
         .withMaxRetries(FireJdbcConf.maxRetry(keyNum).toInt)
         .build(),
       connOptions.build()
-    )).uname("Fire jdbc sink")
+    )).uid("sinkJdbc")
   }
 
   /**
@@ -429,7 +568,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
       new SerializableSupplier[XADataSource]() {
         override def get(): XADataSource = DBUtils.buildXADataSource(jdbcConf, dbType)
       }
-    ))
+    )).uid("sinkJdbcExactlyOnce")
   }
 
   /**

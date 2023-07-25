@@ -23,11 +23,10 @@ import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.jdbc.conf.FireJdbcConf
 
 /**
- * flink jdbc sink组件，底层基于JdbcConnector
+ * Flink jdbc sink组件，底层基于JdbcConnector
  *
- * @author ChengLong
+ * @author ChengLong 2020-05-22 10:37
  * @since 1.1.0
- * @create 2020-05-22 10:37
  */
 abstract class JdbcSink[IN](sql: String,
                             batch: Int = 10,
@@ -41,7 +40,7 @@ abstract class JdbcSink[IN](sql: String,
    * 将数据sink到jdbc
    * 该方法会被flush方法自动调用
    */
-  override def sink: Unit = {
-    JdbcConnector.executeBatch(sql, this.buffer, keyNum = keyNum)
+  override def sink(dataList: List[Seq[Any]]): Unit = {
+    JdbcConnector.updateBatch(sql, dataList, keyNum = keyNum)
   }
 }

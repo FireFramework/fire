@@ -103,6 +103,16 @@ public @interface Kafka6 {
     long forceAutoCommitInterval() default -1;
 
     /**
+     * sink批次大小
+     */
+    int sinkBatch() default 100;
+
+    /**
+     * 刷新频率
+     */
+    long sinkFlushInterval() default 1000;
+
+    /**
      * kafka-client参数，以key=value形式注明
      */
     String[] config() default "";

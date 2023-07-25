@@ -20,13 +20,11 @@ package com.zto.fire.spark.ext.core
 import com.zto.fire._
 import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.KeyNum
-import com.zto.fire.common.enu.Datasource._
-import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.util.MQType.MQType
-import com.zto.fire.common.util.{KafkaUtils, LineageManager, MQProducer, MQType}
+import com.zto.fire.common.util._
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
-import com.zto.fire.spark.util.{RocketMQUtils, SparkSingletonFactory, SparkUtils}
+import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.common.message.MessageExt
 import org.apache.spark.rdd.RDD
@@ -43,7 +41,7 @@ import scala.reflect.{ClassTag, classTag}
  *
  * @author ChengLong 2019-5-18 10:28:31
  */
-class RDDExt[T: ClassTag](rdd: RDD[T]) {
+class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
   private lazy val spark = SparkSingletonFactory.getSparkSession
 
   import spark.implicits._
@@ -352,9 +350,9 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
                                        mqType: MQType = MQType.kafka,
                                        keyNum: Int = KeyNum._1): Unit = {
     if (mqType == MQType.rocketmq) {
-      this.sinkKafka[T](params, url, topic, keyNum)
-    } else {
       this.sinkRocketMQ[T](params, url, topic, tag, keyNum)
+    } else {
+      this.sinkKafka[T](params, url, topic, keyNum)
     }
   }
 
@@ -383,12 +381,12 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) {
   /**
    * 将消息发送到指定的rocketmq
    *
+   * @param params
+   * 额外的producer参数
    * @param url
    * 消息队列的url
    * @param topic
    * 发送消息到指定的主题
-   * @param params
-   * 额外的producer参数
    * @param keyNum
    * 指定配置的keyNum，可从配置或注解中获取对应配置信息
    */

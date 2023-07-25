@@ -29,7 +29,7 @@ import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.connector.FlinkConnectors._
 import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvider}
 import com.zto.fire.flink.sql.FlinkSqlExtensionsParser
-import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils, RocketMQUtils, TableUtils}
+import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils, FlinkRocketMQUtils, TableUtils}
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.functions.RuntimeContext
@@ -265,7 +265,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
     require(StringUtils.isNotBlank(finalGroupId), s"RocketMQ的groupId不能为空，请在配置文件中指定：rocket.group.id$keyNum")
 
     // 详细的RocketMQ配置信息
-    val finalRocketParam = RocketMQUtils.rocketParams(rocketParam, finalTopics, finalGroupId, rocketNameServer = null, tag = tag, keyNum)
+    val finalRocketParam = FlinkRocketMQUtils.rocketParams(rocketParam, finalTopics, finalGroupId, rocketNameServer = null, tag = tag, keyNum)
     require(!finalRocketParam.isEmpty, "RocketMQ相关配置不能为空！")
     require(finalRocketParam.containsKey(RocketMQConfig.NAME_SERVER_ADDR), s"RocketMQ nameserver.address不能为空，请在配置文件中指定：rocket.brokers.name$keyNum")
 

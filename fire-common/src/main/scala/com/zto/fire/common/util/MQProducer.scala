@@ -56,6 +56,13 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
   private[this] def addLineage(topic: String): Unit = {
     if (!this.topics.contains(topic)) {
       this.topics.add(topic)
+      logInfo(
+        s"""
+           |--------> Sink ${mqType.toString} information. <--------
+           |broker: $url
+           |topic: $topic
+           |--------------------------------------------------------
+           |""".stripMargin)
       LineageManager.addMQDatasource(Datasource.parse(mqType.toString), url, topic, "", Operation.SINK)
     }
   }

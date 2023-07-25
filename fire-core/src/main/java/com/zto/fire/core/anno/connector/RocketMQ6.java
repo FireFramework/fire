@@ -63,6 +63,16 @@ public @interface RocketMQ6 {
     boolean autoCommit() default false;
 
     /**
+     * sink批次大小
+     */
+    int sinkBatch() default 100;
+
+    /**
+     * 刷新频率
+     */
+    long sinkFlushInterval() default 1000;
+
+    /**
      * RocketMQ-client参数，以key=value形式注明
      */
     String[] config() default "";

@@ -30,7 +30,7 @@ import org.apache.rocketmq.flink.RocketMQConfig
  * @since 2.0.0
  * @create 2021-5-6 14:04:53
  */
-object RocketMQUtils extends Logging {
+object FlinkRocketMQUtils extends Logging {
 
   /**
    * rocketMQ配置信息

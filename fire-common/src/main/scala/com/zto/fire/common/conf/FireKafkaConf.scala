@@ -60,6 +60,8 @@ private[fire] object FireKafkaConf {
   lazy val KAFKA_FORCE_AUTO_COMMIT = "kafka.force.autoCommit.enable"
   // 周期性提交offset的时间间隔（ms）
   lazy val KAFKA_FORCE_AUTO_COMMIT_INTERVAL = "kafka.force.autoCommit.Interval"
+  lazy val KAFKA_SINK_BATCH = "kafka.sink.batch"
+  lazy val KAFKA_SINK_FLUSH_INTERVAL = "kafka.sink.flashInterval"
 
   // 初始化kafka集群名称与地址映射
   private[fire] lazy val kafkaMap = PropUtils.sliceKeys(clusterMapConfStart)
@@ -109,6 +111,10 @@ private[fire] object FireKafkaConf {
   def kafkaForceCommit: Boolean = PropUtils.getBoolean(this.KAFKA_FORCE_AUTO_COMMIT, false)
   // 周期性提交offset的时间间隔（ms）
   def kafkaForceCommitInterval: Long = PropUtils.getLong(this.KAFKA_FORCE_AUTO_COMMIT_INTERVAL, 30000)
+  // 每次向kafka发送的批次大小
+  def kafkaSinkBatch(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.KAFKA_SINK_BATCH, -1, keyNum)
+  // 多久flush一次（ms）
+  def kafkaFlushInterval(keyNum: Int = KeyNum._1): Long = PropUtils.getLong(this.KAFKA_SINK_FLUSH_INTERVAL, -1, keyNum)
 
   def kafkaConfMapWithType(keyNum: Int = KeyNum._1): collection.immutable.Map[String, Object] = {
     val map = new collection.mutable.HashMap[String, Object]()

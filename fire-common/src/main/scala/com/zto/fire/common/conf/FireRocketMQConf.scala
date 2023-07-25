@@ -54,6 +54,8 @@ private[fire] object FireRocketMQConf {
   lazy val ROCKET_PULL_MAX_SPEED_PER_PARTITION = "rocket.pull.max.speed.per.partition"
   lazy val ROCKET_INSTANCE_ID = "rocket.consumer.instance"
   lazy val ROCKET_SINK_PARALLELISM = "rocket.sink.parallelism"
+  lazy val ROCKET_SINK_BATCH = "rocket.sink.batch"
+  lazy val ROCKET_SINK_FLUSH_INTERVAL = "rocket.sink.flashInterval"
 
   // 用于标识消费者的名称
   def rocketInstanceId(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.ROCKET_INSTANCE_ID, "", keyNum)
@@ -77,6 +79,10 @@ private[fire] object FireRocketMQConf {
   def rocketPullMaxSpeedPerPartition(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.ROCKET_PULL_MAX_SPEED_PER_PARTITION, "", keyNum)
   // sink rocketmq的并行度
   def rocketSinkParallelism(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.ROCKET_SINK_PARALLELISM, -1, keyNum)
+  // sink rocketmq的批次大小
+  def rocketSinkBatch(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.ROCKET_SINK_BATCH, -1, keyNum)
+  // sink rocketmq多久刷新一次（ms）
+  def rocketSinkFlushInterval(keyNum: Int = KeyNum._1): Long = PropUtils.getLong(this.ROCKET_SINK_FLUSH_INTERVAL, -1, keyNum)
 
   // 获取rocketMQ name server 地址
   def rocketNameServer(keyNum: Int = KeyNum._1): String = {

@@ -114,7 +114,7 @@ private[fire] class LineageManager extends Logging {
    * 添加一个数据源描述信息
    */
   private[fire] def add(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = {
-    if (!lineageEnable) return
+    if (!lineageEnable || this.lineageMap.size() > lineMaxSize) return
     val set = this.lineageMap.mergeGet(sourceType)(new JHashSet[DatasourceDesc]())
     if (set.isEmpty) set.add(datasourceDesc)
     val mergedSet = this.mergeDatasource(set, datasourceDesc)
@@ -190,7 +190,7 @@ private[fire] class LineageManager extends Logging {
   /**
    * 收集执行的sql语句
    */
-  private[fire] def addTableMeta(tableMetaSet: JSet[TableMeta]): Unit = if (lineageEnable) this.tableMetaSet.addAll(tableMetaSet)
+  private[fire] def addTableMeta(tableMetaSet: JSet[TableMeta]): Unit = if (lineageEnable && this.tableMetaSet.size() <= lineMaxSize) this.tableMetaSet.addAll(tableMetaSet)
 
   /**
    * 获取所有使用到的数据源

@@ -22,7 +22,7 @@ import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.Datasource.{KAFKA, ROCKETMQ}
 import com.zto.fire.common.util.{LineageManager, Logging}
-import com.zto.fire.spark.util.{RocketMQUtils, SparkUtils}
+import com.zto.fire.spark.util.{SparkRocketMQUtils, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.common.message.MessageExt
@@ -104,7 +104,7 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
 
     // 起始消费位点
     val confOffset = FireRocketMQConf.rocketStartingOffset(keyNum)
-    val finalConsumerStrategy = if (StringUtils.isNotBlank(confOffset)) RocketMQUtils.valueOfStrategy(confOffset) else consumerStrategy
+    val finalConsumerStrategy = if (StringUtils.isNotBlank(confOffset)) SparkRocketMQUtils.valueOfStrategy(confOffset) else consumerStrategy
 
     // 是否自动提交offset
     val finalAutoCommit = FireRocketMQConf.rocketEnableAutoCommit(keyNum)
@@ -115,7 +115,7 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
     require(StringUtils.isNotBlank(finalGroupId), s"RocketMQ的groupId不能为空，请在配置文件中指定：spark.rocket.group.id$keyNum")
 
     // 详细的RocketMQ配置信息
-    val finalRocketParam = RocketMQUtils.rocketParams(rocketParam, finalGroupId, rocketNameServer = null, tag = tag, keyNum)
+    val finalRocketParam = SparkRocketMQUtils.rocketParams(rocketParam, finalGroupId, rocketNameServer = null, tag = tag, keyNum)
     require(!finalRocketParam.isEmpty, "RocketMQ相关配置不能为空！")
     require(finalRocketParam.containsKey(RocketMQConfig.NAME_SERVER_ADDR), s"RocketMQ nameserver.addr不能为空，请在配置文件中指定：spark.rocket.brokers.name$keyNum")
     require(finalRocketParam.containsKey(RocketMQConfig.CONSUMER_TAG), s"RocketMQ tag不能为空，请在配置文件中指定：spark.rocket.consumer.tag$keyNum")

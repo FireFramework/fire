@@ -40,7 +40,7 @@ import scala.reflect.{ClassTag, classTag}
  * @author ChengLong 2023-06-05 13:47:38
  * @since 2.3.6
  */
-object FlinkConnectors extends StreamingConnectors{
+object FlinkConnectors extends StreamingConnectors {
 
 
   /**

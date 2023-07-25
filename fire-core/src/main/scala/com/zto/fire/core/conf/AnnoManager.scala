@@ -691,6 +691,7 @@ private[fire] trait AnnoManager extends Logging {
                            endingOffsets: String, autoCommit: Boolean, sessionTimeout: Long, requestTimeout: Long,
                            pollInterval: Long, startFromTimestamp: Long, startFromGroupOffsets: Boolean,
                            forceOverwriteStateOffset: Boolean, forceAutoCommit: Boolean, forceAutoCommitInterval: Long,
+                           sinkBatch: Int, sinkFlushInterval: Long,
                            config: Array[String], keyNum: Int = KeyNum._1
                           ): Unit = {
 
@@ -708,6 +709,8 @@ private[fire] trait AnnoManager extends Logging {
     this.put(KAFKA_OVERWRITE_STATE_OFFSET, forceOverwriteStateOffset, keyNum)
     this.put(KAFKA_FORCE_AUTO_COMMIT, forceAutoCommit, keyNum)
     this.put(KAFKA_FORCE_AUTO_COMMIT_INTERVAL, forceAutoCommitInterval, keyNum)
+    this.put(KAFKA_SINK_BATCH, sinkBatch, keyNum)
+    this.put(KAFKA_SINK_FLUSH_INTERVAL, sinkFlushInterval, keyNum)
     this.putConfig(kafkaConfStart, config, keyNum)
   }
 
@@ -722,7 +725,7 @@ private[fire] trait AnnoManager extends Logging {
     this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
       kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
       kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
-      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._1
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._1
     )
   }
 
@@ -737,7 +740,7 @@ private[fire] trait AnnoManager extends Logging {
     this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
       kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
       kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
-      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._2
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._2
     )
   }
 
@@ -752,7 +755,7 @@ private[fire] trait AnnoManager extends Logging {
     this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
       kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
       kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
-      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._3
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._3
     )
   }
 
@@ -767,7 +770,7 @@ private[fire] trait AnnoManager extends Logging {
     this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
       kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
       kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
-      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._4
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._4
     )
   }
 
@@ -782,7 +785,7 @@ private[fire] trait AnnoManager extends Logging {
     this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
       kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
       kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
-      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._5
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._5
     )
   }
 
@@ -797,7 +800,7 @@ private[fire] trait AnnoManager extends Logging {
     this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
       kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
       kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
-      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._6
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._6
     )
   }
 
@@ -812,7 +815,7 @@ private[fire] trait AnnoManager extends Logging {
     this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
       kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
       kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
-      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._7
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._7
     )
   }
 
@@ -827,7 +830,7 @@ private[fire] trait AnnoManager extends Logging {
     this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
       kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
       kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
-      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._8
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._8
     )
   }
 
@@ -842,7 +845,7 @@ private[fire] trait AnnoManager extends Logging {
     this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
       kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
       kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
-      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._9
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._9
     )
   }
 
@@ -855,7 +858,7 @@ private[fire] trait AnnoManager extends Logging {
     this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
       kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
       kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
-      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._10
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._10
     )
   }
 
@@ -870,7 +873,7 @@ private[fire] trait AnnoManager extends Logging {
     this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
       kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
       kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
-      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.config(), KeyNum._11
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._11
     )
   }
 
@@ -881,13 +884,15 @@ private[fire] trait AnnoManager extends Logging {
    * RocketMQ注解实例
    */
   @Internal
-  def mapRocketMQConf(brokers: String, topics: String, groupId: String, consumerTag: String, startingOffset: String, autoCommit: Boolean, config: Array[String], keyNum: Int = KeyNum._1): Unit = {
+  def mapRocketMQConf(brokers: String, topics: String, groupId: String, consumerTag: String, startingOffset: String, autoCommit: Boolean, sinkBatch: Int, sinkFlushInterval: Long, config: Array[String], keyNum: Int = KeyNum._1): Unit = {
     this.put(ROCKET_BROKERS_NAME, brokers, keyNum)
     this.put(ROCKET_TOPICS, topics, keyNum)
     this.put(ROCKET_GROUP_ID, groupId, keyNum)
     this.put(ROCKET_CONSUMER_TAG, consumerTag, keyNum)
     this.put(ROCKET_STARTING_OFFSET, startingOffset, keyNum)
     this.put(ROCKET_ENABLE_AUTO_COMMIT, autoCommit, keyNum)
+    this.put(ROCKET_SINK_BATCH, sinkBatch, keyNum)
+    this.put(ROCKET_SINK_FLUSH_INTERVAL, sinkFlushInterval, keyNum)
     this.putConfig(rocketConfStart, config, keyNum)
   }
 
@@ -900,7 +905,7 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapRocketMQ(rocketmq: RocketMQ): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
-      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._1)
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._1)
   }
 
   /**
@@ -912,7 +917,7 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapRocketMQ2(rocketmq: RocketMQ2): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
-      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._2)
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._2)
   }
 
   /**
@@ -924,7 +929,7 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapRocketMQ3(rocketmq: RocketMQ3): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
-      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._3)
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._3)
   }
 
   /**
@@ -936,7 +941,7 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapRocketMQ4(rocketmq: RocketMQ4): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
-      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._4)
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._4)
   }
 
   /**
@@ -948,7 +953,7 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapRocketMQ5(rocketmq: RocketMQ5): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
-      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._5)
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._5)
   }
 
 
@@ -961,7 +966,7 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapRocketMQ6(rocketmq: RocketMQ6): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
-      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._6)
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._6)
   }
 
   /**
@@ -973,7 +978,7 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapRocketMQ7(rocketmq: RocketMQ7): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
-      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._7)
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._7)
   }
 
   /**
@@ -985,7 +990,7 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapRocketMQ8(rocketmq: RocketMQ8): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
-      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._8)
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._8)
   }
 
   /**
@@ -997,7 +1002,7 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapRocketMQ9(rocketmq: RocketMQ9): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
-      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._9)
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._9)
   }
 
   /**
@@ -1009,7 +1014,7 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapRocketMQ10(rocketmq: RocketMQ10): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
-      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._10)
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._10)
   }
 
 
@@ -1022,7 +1027,7 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapRocketMQ11(rocketmq: RocketMQ11): Unit = {
     this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
-      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.config, KeyNum._11)
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._11)
   }
 
 
