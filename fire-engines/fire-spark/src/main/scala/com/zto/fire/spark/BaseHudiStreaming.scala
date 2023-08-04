@@ -40,6 +40,11 @@ trait BaseHudiStreaming extends SparkStreaming {
   protected lazy val tmpView = this.conf.get[String]("hudi.tmpView", Some("msg_view"))
   protected lazy val retryOnFailure = this.conf.get[Int]("hudi.retry.onFailure", Some(1))
 
+  override def before(args: Array[JString]): Unit = {
+    this.conf.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    this.conf.setProperty("spark.sql.extensions", "org.apache.spark.sql.hudi.HoodieSparkSessionExtension")
+  }
+
   /**
    * 检查必选的配置是否合法
    */

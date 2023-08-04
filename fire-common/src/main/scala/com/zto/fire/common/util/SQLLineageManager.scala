@@ -19,6 +19,7 @@ package com.zto.fire.common.util
 
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.bean.lineage.{SQLTableColumns, _}
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.predef._
 
 /**
@@ -36,7 +37,7 @@ private[fire] object SQLLineageManager {
    * 添加待执行的SQL语句
    */
   def addStatement(statement: String): Unit = {
-    if (noEmpty(statement)) this.statementSet.add(statement.trim)
+    if (noEmpty(statement) && statementSet.size() <= FireFrameworkConf.lineMaxSize) this.statementSet.add(statement.trim)
   }
 
   /**

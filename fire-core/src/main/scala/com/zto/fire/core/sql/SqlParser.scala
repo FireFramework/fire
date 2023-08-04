@@ -126,6 +126,11 @@ private[fire] trait SqlParser extends Logging {
   def isHiveTable(tableIdentifier: TableIdentifier): Boolean
 
   /**
+   * 用于判断给定的表是否为hudi表
+   */
+  def isHudiTable(tableIdentifier: TableIdentifier): Boolean
+
+  /**
    * 将库表名转为字符串
    */
   @Internal

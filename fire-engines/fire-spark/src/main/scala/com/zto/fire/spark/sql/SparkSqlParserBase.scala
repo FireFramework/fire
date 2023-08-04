@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.conf.FireFrameworkConf.lineageCollectSQLEnable
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.util.SQLLineageManager
+import com.zto.fire.common.util.{ReflectionUtils, SQLLineageManager}
 import com.zto.fire.core.sql.SqlParser
 import com.zto.fire.predef.JConcurrentHashMap
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
@@ -51,8 +51,13 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def getCatalog(tableIdentifier: TableIdentifier): Datasource = {
-    val isHive = this.isHiveTable(tableIdentifier)
-    if (isHive) Datasource.HIVE else Datasource.VIEW
+    if (this.isHiveTable(tableIdentifier)) {
+      Datasource.HIVE
+    } else if(this.isHudiTable(tableIdentifier)) {
+      Datasource.HUDI
+    } else {
+      Datasource.VIEW
+    }
   }
 
   /**
@@ -99,6 +104,18 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   }
 
   /**
+   * 用于判断给定的表是否为hudi表
+   */
+  override def isHudiTable(tableIdentifier: TableIdentifier): Boolean = {
+    try {
+      val hudiTable = catalog.getTableMetadata(toSparkTableIdentifier(tableIdentifier))
+      if (hudiTable.provider.isDefined && "hudi".equals(hudiTable.provider.get)) true else false
+    } catch {
+      case _: Throwable => false
+    }
+  }
+
+  /**
    * 将解析到的表信息添加到实时血缘中
    */
   @Internal
@@ -117,7 +134,8 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
     if (this.isTempView(identifier)) {
       SQLLineageManager.setTmpView(identifier, identifier.toString())
     }
-    if (this.isHiveTable(identifier)) {
+
+    if (this.isHiveTable(identifier) || this.isHudiTable(identifier)) {
       val metadata = this.hiveTableMetaDataMap.get(identifier.toString)
       if (metadata != null) {
         val url = metadata.storage.locationUri
@@ -144,6 +162,19 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
       TableIdentifier(tableName(1), tableName.head)
     else if (tableName.size == 1) TableIdentifier(tableName.head)
     else TableIdentifier("")
+  }
+
+  /**
+   * 从逻辑执行计划中获取库表名
+   */
+  protected def getIdentifier(table: LogicalPlan): TableIdentifier = {
+    val method = ReflectionUtils.getMethodByName(table.getClass, "multipartIdentifier")
+    val identifierSeq = method.invoke(table).asInstanceOf[Seq[String]]
+    if (identifierSeq.size == 2) {
+      TableIdentifier(identifierSeq(1), identifierSeq.head)
+    } else {
+      TableIdentifier(identifierSeq.head)
+    }
   }
 
   /**

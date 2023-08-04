@@ -17,7 +17,7 @@
 
 package com.zto.fire.common.util
 
-import com.zto.fire.common.bean.lineage.Lineage
+import com.zto.fire.common.bean.lineage.{Lineage, SQLTable, SQLTablePartitions}
 import com.zto.fire.common.conf.FireFrameworkConf._
 import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
 import com.zto.fire.predef._
@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils
 import java.util.Objects
 import java.util.concurrent._
 import scala.collection.{JavaConversions, mutable}
+import scala.reflect.ClassTag
 
 /**
  * 用于统计当前任务使用到的数据源信息，包括MQ、DB、hive等连接信息等
@@ -56,14 +57,13 @@ private[fire] class LineageManager extends Logging {
           parseCount += 1
 
           if (parseCount >= lineageRunCount && !parserExecutor.isShutdown) {
-            logger.info(s"4. 异步解析实时血缘的定时任务采样共计：${lineageRunCount}次，即将退出异步线程")
+            logger.info(s"5. 异步解析实时血缘的定时任务采样共计：${lineageRunCount}次，即将退出异步线程")
             parserExecutor.shutdown()
           }
 
           // 1. 解析jdbc sql语句
           val start = currentTime
           tryWithLog {
-
             for (_ <- 1 until dbSqlQueue.size()) {
               val sqlSource = dbSqlQueue.poll()
               if (sqlSource != null) {
@@ -104,7 +104,9 @@ private[fire] class LineageManager extends Logging {
             })
           } (logger, s"2. 开始第${parseCount}/${lineageRunCount}次解析SQL中的血缘关系", "sql血缘关系解析失败")
 
-          logger.info(s"3. 完成第${parseCount}/${lineageRunCount}次异步解析SQL埋点中的表信息，耗时：${elapsed(start)}")
+          // 3. 将SQL中的hive表映射到数据源结构中
+          LineageManager.addSQLTables(SQLLineageManager.getSQLLineage.getTables)
+          logger.info(s"4. 完成第${parseCount}/${lineageRunCount}次异步解析SQL埋点中的表信息，耗时：${elapsed(start)}")
         }
       }, lineageRunInitialDelay, lineageRunPeriod, TimeUnit.SECONDS)
     }
@@ -177,8 +179,30 @@ private[fire] class LineageManager extends Logging {
           }
         }
       }
+      case ds: HiveDatasource => {
+        if (datasourceDesc.isInstanceOf[HiveDatasource]) {
+          val target = datasourceDesc.asInstanceOf[HiveDatasource]
+          if (ds.equals(target)) {
+            ds.operation.addAll(target.operation)
+          } else {
+            mergeSet.add(datasourceDesc)
+          }
+        }
+      }
+      case ds: HudiDatasource => {
+        if (datasourceDesc.isInstanceOf[HudiDatasource]) {
+          val target = datasourceDesc.asInstanceOf[HudiDatasource]
+          if (ds.equals(target)) {
+            ds.operation.addAll(target.operation)
+            ds.set(target)
+          } else {
+            mergeSet.add(datasourceDesc)
+          }
+        }
+      }
       case _ =>
     }
+
     new JHashSet[DatasourceDesc](mergeSet)
   }
 
@@ -278,6 +302,51 @@ private[fire] object LineageManager extends Logging {
    */
   private[fire] def addCustomizeDatasource(datasource: Datasource, cluster: String, sourceType: String, operation: Operation*): Unit = {
     this.manager.add(datasource, CustomizeDatasource(datasource.toString, cluster, sourceType, toOperationSet(operation: _*)))
+  }
+
+  /**
+   * 添加一条Hive数据源埋点信息
+   *
+   * @param datasource
+   * 数据源类型
+   * @param cluster
+   * 集群标识
+   */
+  private[fire] def addHiveDatasource(datasource: Datasource, cluster: String, tableName: String, partitions: JSet[SQLTablePartitions], operation: Operation*): Unit = {
+    this.manager.add(datasource, HiveDatasource(datasource.toString, cluster, tableName, partitions, toOperationSet(operation: _*)))
+  }
+
+  /**
+   * 根据SQL血缘解析的Hive、Hudi表信息添加到数据源中
+   * @param tables
+   * SQLTable实例，来自于sql中的血缘解析
+   */
+  def addSQLTables(tables: JList[SQLTable]): Unit = {
+    // 将hive表映射到datasource血缘列表中
+    tables.filter(tab => "hive".equalsIgnoreCase(tab.getCatalog)).foreach(table => {
+      val operations = table.getOperation.map(t => Operation.parse(t))
+      this.manager.add(Datasource.HIVE, HiveDatasource(Datasource.HIVE.toString, table.getCluster, table.getPhysicalTable, table.getPartitions, operations))
+    })
+
+    // 将hudi表映射到datasource血缘列表中
+    tables.filter(tab => "hudi".equalsIgnoreCase(tab.getCatalog)).foreach(table => {
+      val operations = table.getOperation.map(t => Operation.parse(t))
+      this.manager.add(Datasource.HUDI, HudiDatasource(Datasource.HUDI.toString, table.getCluster, table.getPhysicalTable, operation = operations))
+    })
+  }
+
+  /**
+   * 添加一条Hudi数据源埋点信息
+   *
+   * @param datasource
+   * 数据源类型
+   * @param cluster
+   * 集群标识
+   */
+  private[fire] def addHudiDatasource(datasource: Datasource, cluster: String, tableName: String, tableType: String,
+                                      recordKey: String, precombineKey: String,
+                                      partition: String, operation: Operation*): Unit = {
+    this.manager.add(datasource, HudiDatasource(datasource.toString, cluster, tableName, tableType, recordKey, precombineKey, partition, toOperationSet(operation: _*)))
   }
 
   /**
@@ -405,7 +474,7 @@ case class MQDatasource(datasource: String, cluster: String, topics: String,
   override def equals(obj: Any): Boolean = {
     if (obj == null || getClass != obj.getClass) return false
     val target = obj.asInstanceOf[MQDatasource]
-    Objects.equals(datasource, target.datasource) && Objects.equals(cluster, target.cluster) && Objects.equals(topics, target.topics) && Objects.equals(groupId, target.groupId)
+    Objects.equals(datasource, target.datasource) && Objects.equals(cluster, target.cluster) && Objects.equals(topics, target.topics)
   }
 
   override def hashCode(): Int = Objects.hash(datasource, cluster, topics, groupId)
@@ -430,6 +499,64 @@ case class CustomizeDatasource(datasource: String, cluster: String, sourceType: 
   }
 
   override def hashCode(): Int = Objects.hash(datasource, cluster)
+}
+
+/**
+ * hive数据源
+ *
+ * @param datasource
+ * 数据源类型，参考DataSource枚举
+ * @param cluster
+ * 数据源的集群标识
+ * @param tableName
+ * hive表名
+ * @param operation
+ * 数据源操作类型
+ */
+case class HiveDatasource(datasource: String, cluster: String, tableName: String,
+                          partitions: JSet[SQLTablePartitions],
+                          operation: JSet[Operation] = new JHashSet[Operation]) extends DatasourceDesc {
+
+  override def equals(obj: Any): Boolean = {
+    if (obj == null || getClass != obj.getClass) return false
+    val target = obj.asInstanceOf[HiveDatasource]
+    Objects.equals(datasource, target.datasource) && Objects.equals(cluster, target.cluster) && Objects.equals(tableName, target.tableName)
+  }
+
+  override def hashCode(): Int = Objects.hash(datasource, cluster)
+}
+
+/**
+ * Hudi数据源
+ *
+ * @param datasource
+ * 数据源类型，参考DataSource枚举
+ * @param cluster
+ * 数据源的集群标识
+ * @param tableName
+ * hudi表名
+ * @param operation
+ * 数据源操作类型
+ */
+case class HudiDatasource(datasource: String, cluster: String,
+                          tableName: String, var tableType: String = null, var recordKey: String = null, var precombineKey: String = null,
+                          var partition: String = null, operation: JSet[Operation] = new JHashSet[Operation]) extends DatasourceDesc {
+  override def equals(obj: Any): Boolean = {
+    if (obj == null || getClass != obj.getClass) return false
+    val target = obj.asInstanceOf[HudiDatasource]
+    Objects.equals(datasource, target.datasource) && Objects.equals(cluster, target.cluster) && Objects.equals(tableName, target.tableName)
+  }
+
+  override def hashCode(): Int = Objects.hash(datasource, cluster)
+
+  def set(target: HudiDatasource): Unit = {
+    if (target != null) {
+      if (noEmpty(target.tableType)) this.tableType = target.tableType
+      if (noEmpty(target.recordKey)) this.recordKey = target.recordKey
+      if (noEmpty(target.precombineKey)) this.precombineKey = target.precombineKey
+      if (noEmpty(target.partition)) this.partition = target.partition
+    }
+  }
 }
 
 /**

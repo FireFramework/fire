@@ -230,6 +230,11 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
   }
 
   /**
+   * 用于判断给定的表是否为hudi表
+   */
+  def isHudiTable(tableIdentifier: TableIdentifier): Boolean = false
+
+  /**
    * 用于判断给定的表是否为hive表
    *
    * @param tableIdentifier 库表

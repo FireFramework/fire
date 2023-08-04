@@ -56,14 +56,15 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
   private[this] def addLineage(topic: String): Unit = {
     if (!this.topics.contains(topic)) {
       this.topics.add(topic)
+      val realUrl = if (MQType.rocketmq == mqType) FireRocketMQConf.rocketNameServer(url) else FireKafkaConf.kafkaBrokers(this.url)
       logInfo(
         s"""
            |--------> Sink ${mqType.toString} information. <--------
-           |broker: $url
+           |broker: $realUrl
            |topic: $topic
            |--------------------------------------------------------
            |""".stripMargin)
-      LineageManager.addMQDatasource(Datasource.parse(mqType.toString), url, topic, "", Operation.SINK)
+      LineageManager.addMQDatasource(Datasource.parse(mqType.toString), realUrl, topic, "", Operation.SINK)
     }
   }
 

@@ -24,6 +24,7 @@ import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.util.SQLLineageManager
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.logical._
+import org.apache.spark.sql.execution.command.CreateViewCommand
 import org.apache.spark.sql.execution.datasources.CreateTable
 
 /**
@@ -42,18 +43,24 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
    * 当insert xxx select或create xxx select语句时，sinkTable不为空
    */
   override def queryParser(logicalPlan: LogicalPlan, sinkTable: Option[TableIdentifier]): Unit = {
-    logicalPlan.children.foreach(child => {
-      this.queryParser(child, sinkTable)
-      var sourceTable: Option[TableIdentifier] = None
-      child match {
-        case unresolvedRelation: UnresolvedRelation =>
-          this.addCatalog(unresolvedRelation.multipartIdentifier, Operation.SELECT)
-          sourceTable = Some(toTableIdentifier(unresolvedRelation.multipartIdentifier))
-          // 如果是insert xxx select或create xxx select语句，则维护表与表之间的关系
-          if (sinkTable.isDefined) SQLLineageManager.addRelation(toTableIdentifier(unresolvedRelation.multipartIdentifier), sinkTable.get)
-        case _ => this.logger.debug(s"Parse query SQL异常，无法匹配该Statement. ")
+    logicalPlan match {
+      case statement: CreateViewStatement =>
+        this.queryParser(statement.child, sinkTable)
+      case _ => {
+        logicalPlan.children.foreach(child => {
+          this.queryParser(child, sinkTable)
+          var sourceTable: Option[TableIdentifier] = None
+          child match {
+            case unresolvedRelation: UnresolvedRelation =>
+              this.addCatalog(unresolvedRelation.multipartIdentifier, Operation.SELECT)
+              sourceTable = Some(toTableIdentifier(unresolvedRelation.multipartIdentifier))
+              // 如果是insert xxx select或create xxx select语句，则维护表与表之间的关系
+              if (sinkTable.isDefined) SQLLineageManager.addRelation(toTableIdentifier(unresolvedRelation.multipartIdentifier), sinkTable.get)
+            case _ => this.logger.debug(s"Parse query SQL异常，无法匹配该Statement. ")
+          }
+        })
       }
-    })
+    }
   }
 
   /**
@@ -103,6 +110,27 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         val partitions = createTable.tableDesc.partitionSchema.map(st => (st.dataType.toString, st.name))
         SQLLineageManager.setPartitions(identifier, partitions)
       }
+      case createTable: CreateTableStatement => {
+        val identifier = this.toTableIdentifier(createTable.tableName)
+        this.addCatalog(identifier, Operation.CREATE_TABLE)
+        sinkTable = Some(identifier)
+        // 采集建表属性信息
+        SQLLineageManager.setOptions(identifier, createTable.options)
+        // 采集分区字段信息
+        val partitions = createTable.partitioning.map(st => (st.toString, st.name))
+        SQLLineageManager.setPartitions(identifier, partitions)
+      }
+      case createView: CreateViewCommand => {
+        val identifier = toFireTableIdentifier(createView.name)
+        this.addCatalog(identifier, Operation.CREATE_VIEW)
+        SQLLineageManager.setColumns(identifier, createView.child.output.map(t => (t.name, t.dataType.toString)))
+      }
+      case createView: CreateViewStatement => {
+        val identifier = this.toTableIdentifier(createView.viewName)
+        this.addCatalog(identifier, Operation.CREATE_VIEW_AS_SELECT)
+        // 采集建表属性信息
+        sinkTable = Some(identifier)
+      }
       // rename partition语句解析
       case renamePartition: AlterTableRenamePartitionStatement => {
         this.addCatalog(renamePartition.tableName, Operation.RENAME_PARTITION_OLD)
@@ -133,8 +161,21 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
       case refreshTable: RefreshTableStatement => {
         this.addCatalog(refreshTable.tableName, Operation.REFRESH)
       }
+      case deleteFromTable: DeleteFromTable => {
+        val tableIdentifier = getIdentifier(deleteFromTable.table)
+        this.addCatalog(tableIdentifier, Operation.DELETE)
+      }
+      case updateTable: UpdateTable => {
+        val tableIdentifier = getIdentifier(updateTable.table)
+        this.addCatalog(tableIdentifier, Operation.UPDATE)
+      }
+      case mergeIntoTable: MergeIntoTable => {
+        val tableIdentifier = getIdentifier(mergeIntoTable.targetTable)
+        this.addCatalog(tableIdentifier, Operation.MERGE)
+      }
       case _ => this.logger.debug(s"Parse ddl SQL异常，无法匹配该Statement.")
     }
+
     sinkTable
   }
 

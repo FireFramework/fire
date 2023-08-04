@@ -159,7 +159,7 @@ private[fire] object FireFrameworkConf {
   // 不同引擎配置获取具体的实现
   lazy val confDeployEngine = PropUtils.getString(this.FIRE_CONF_DEPLOY_ENGINE, "")
   // 定时解析埋点SQL的执行频率（s）
-  lazy val lineageRunPeriod = PropUtils.getInt(this.FIRE_LINEAGE_RUN_PERIOD, 60)
+  lazy val lineageRunPeriod = PropUtils.getInt(this.FIRE_LINEAGE_RUN_PERIOD, 120)
   // 定时解析埋点SQL的初始延迟（s）
   lazy val lineageRunInitialDelay = PropUtils.getInt(this.FIRE_LINEAGE_RUN_INITIAL_DELAY, 60)
   // 用于存放埋点的队列最大大小，超过该大小将会被丢弃

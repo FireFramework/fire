@@ -24,7 +24,7 @@ import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.util.SQLLineageManager
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.logical._
-import org.apache.spark.sql.execution.command.AlterTableRenamePartitionCommand
+import org.apache.spark.sql.execution.command.{AlterTableRenamePartitionCommand, CreateViewCommand}
 import org.apache.spark.sql.execution.datasources.CreateTable
 
 /**
@@ -100,6 +100,10 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         val partitions = createTable.tableDesc.partitionSchema.map(st => (st.dataType.toString, st.name))
         SQLLineageManager.setPartitions(identifier, partitions)
       }
+      case createView: CreateViewCommand => {
+        val identifier = toFireTableIdentifier(createView.name)
+        this.addCatalog(identifier, Operation.CREATE_VIEW)
+      }
       // rename partition语句解析
       case renamePartition: AlterTableRenamePartitionCommand => {
         val table = this.toFireTableIdentifier(renamePartition.tableName)
@@ -108,8 +112,21 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         SQLLineageManager.setPartitions(table, renamePartition.oldPartition.toSeq)
         SQLLineageManager.setPartitions(table, renamePartition.newPartition.toSeq)
       }
+      case deleteFromTable: DeleteFromTable => {
+        val tableIdentifier = getIdentifier(deleteFromTable.table)
+        this.addCatalog(tableIdentifier, Operation.DELETE)
+      }
+      case updateTable: UpdateTable => {
+        val tableIdentifier = getIdentifier(updateTable.table)
+        this.addCatalog(tableIdentifier, Operation.UPDATE)
+      }
+      case mergeIntoTable: MergeIntoTable => {
+        val tableIdentifier = getIdentifier(mergeIntoTable.targetTable)
+        this.addCatalog(tableIdentifier, Operation.MERGE)
+      }
       case _ => this.logger.debug(s"Parse ddl SQL异常，无法匹配该Statement.")
     }
+
     sinkTable
   }
 

@@ -19,7 +19,8 @@ package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
-import com.zto.fire.common.util.{LogUtils, Logging, SQLUtils, ValueUtils}
+import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.util.{LineageManager, LogUtils, Logging, SQLUtils, ValueUtils}
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.hudi.conf.FireHudiConf
 import com.zto.fire.jdbc.JdbcConnector
@@ -378,7 +379,17 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
     // 3. 获取hudi表的hdfs存储路径
     val hudiTablePath = if (noEmpty(tablePath)) tablePath else this.tablePathMap.mergeGet(hudiTableName)(SparkSqlUtils.getTablePath(hudiTableName))
 
-    // 4. 将dataFrame数据写入到指定的hudi表中
+    // 4. hudi血缘采集
+    LineageManager.addHudiDatasource(Datasource.HUDI, hudiTablePath,
+      confOptions("hoodie.table.name"),
+      confOptions("hoodie.datasource.write.table.type"),
+      confOptions("hoodie.datasource.write.recordkey.field"),
+      confOptions("hoodie.datasource.write.precombine.field"),
+      confOptions("hoodie.datasource.write.partitionpath.field"),
+      Operation.parse(confOptions("hoodie.datasource.write.operation"))
+    )
+
+    // 5. 将dataFrame数据写入到指定的hudi表中
     dataFrame.write.format(FireHudiConf.HUDI_FORMAT)
       .options(confOptions)
       .mode(saveMode)

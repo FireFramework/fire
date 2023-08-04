@@ -96,6 +96,11 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         val partitions = createTable.tableDesc.partitionSchema.map(st => (st.dataType.toString, st.name))
         SQLLineageManager.setPartitions(identifier, partitions)
       }
+      case createView: CreateViewCommand => {
+        val identifier = toFireTableIdentifier(createView.name)
+        this.addCatalog(identifier, Operation.CREATE_VIEW)
+        SQLLineageManager.setColumns(identifier, createView.child.output.map(t => (t.name, t.dataType.toString)))
+      }
       // rename partition语句解析
       case renamePartition: AlterTableRenamePartitionCommand => {
         val tableIdentifier = this.toFireTableIdentifier(renamePartition.tableName)
@@ -128,6 +133,18 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
       case uncacheTable: UncacheTableCommand => {
         val tableIdentifier = this.toFireTableIdentifier(uncacheTable.tableIdent)
         this.addCatalog(tableIdentifier, Operation.UNCACHE)
+      }
+      case deleteFromTable: DeleteFromTable => {
+        val tableIdentifier = getIdentifier(deleteFromTable.table)
+        this.addCatalog(tableIdentifier, Operation.DELETE)
+      }
+      case updateTable: UpdateTable => {
+        val tableIdentifier = getIdentifier(updateTable.table)
+        this.addCatalog(tableIdentifier, Operation.UPDATE)
+      }
+      case mergeIntoTable: MergeIntoTable => {
+        val tableIdentifier = getIdentifier(mergeIntoTable.targetTable)
+        this.addCatalog(tableIdentifier, Operation.MERGE)
       }
       case _ => this.logger.debug(s"Parse ddl SQL异常，无法匹配该Statement.")
     }

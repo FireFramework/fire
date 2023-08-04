@@ -123,6 +123,7 @@ public class SQLTable {
 
     public void setTmpView(String tmpView) {
         this.tmpView = tmpView;
+        if ("VIEW".equalsIgnoreCase(this.catalog)) this.physicalTable = null;
     }
 
     public String getTmpView() {

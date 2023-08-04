@@ -56,7 +56,6 @@ private[fire] object DistributeSyncManager extends SyncManager {
   def collect: Unit = {
     lineageThread.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = {
-        if (!FireUtils.isEngineUp) return
         val lineageMap = LineageManager.getDatasourceLineage
         if (noEmpty(lineageMap)) {
           val json = JSONUtils.toJSONString(lineageMap)
