@@ -45,11 +45,12 @@ object PropUtils extends Logging {
   // 加载默认配置文件
   this.load(this.configurationFiles: _*)
   // 避免已被加载的配置文件被重复加载
-  private[this] lazy val alreadyLoadMap = new mutable.HashMap[String, String]()
+  private[this] lazy val alreadyLoadMap = new JConcurrentHashMap[String, String]()
   // 用于存放自适应引擎前缀的配置信息
-  private[fire] lazy val adaptiveSettingsMap = new mutable.HashMap[String, String]()
+  private[fire] lazy val adaptiveSettingsMap = new JConcurrentHashMap[String, String]()
   // 用于存放原始的配置信息
-  private[fire] lazy val originalSettingsMap = new mutable.HashMap[String, String]()
+  private[fire] lazy val originalSettingsMap = new JConcurrentHashMap[String, String]()
+  private[fire] lazy val removeKeyMap = new JConcurrentHashMap[String, String]()
   // 用于存放固定前缀，而后缀不同的配置信息
   private[this] lazy val cachedConfMap = new mutable.HashMap[String, collection.immutable.Map[String, String]]()
 
@@ -154,8 +155,8 @@ object PropUtils extends Logging {
 
   /**
    * 加载扩展的注解配置信息：
-   * @Kafka、@RocketMQ、@Hive、@HBase等
    *
+   * @Kafka、@RocketMQ、@Hive、@HBase等
    * @param clazz
    * 任务入口类
    */
@@ -184,13 +185,14 @@ object PropUtils extends Logging {
       if (isEmpty(method)) throw new RuntimeException(s"未找到getAnnoProps()方法，通过${FireFrameworkConf.FIRE_CONF_ANNO_MANAGER_CLASS}指定的类必须是com.zto.fire.core.conf.AnnoManager的子类")
       val annoProps = method.invoke(annoClazz.newInstance(), clazz)
       this.setProperties(annoProps.asInstanceOf[mutable.HashMap[String, String]])
-    } (this.logger, "成功加载注解中的配置信息！", "注解配置信息加载失败！")
+    }(this.logger, "成功加载注解中的配置信息！", "注解配置信息加载失败！")
 
     this
   }
 
   /**
    * 将多行字符串文本解析成key value的形式
+   *
    * @param value
    * 配置信息，支持井号注释与多行配置
    */
@@ -270,7 +272,7 @@ object PropUtils extends Logging {
   /**
    * 获取原生的配置信息
    */
-  private[fire] def getOriginalProperty(key: String): String = this.adaptiveSettingsMap.getOrElse(key, "")
+  private[fire] def getOriginalProperty(key: String): String = this.adaptiveSettings.getOrElse(key, "")
 
   /**
    * 将给定的配置中的值与计量单位拆分开
@@ -444,7 +446,41 @@ object PropUtils extends Logging {
     if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
       this.setAdaptiveProperty(this.adaptiveKey(key), value)
       this.originalSettingsMap.put(key, value)
+      this.addRemoveKey(key)
     }
+  }
+
+  /**
+   * 添加待移除的配置key
+   *
+   * @param key
+   * 带有减号前缀的key
+   */
+  private[this] def addRemoveKey(key: String): Unit = {
+    if (noEmpty(key) && key.startsWith("-")) {
+      this.removeKeyMap.put(key, key)
+      this.removeKeyMap.put(adaptiveKey(key), adaptiveKey(key))
+    }
+  }
+
+  /**
+   * 移除指定的配置项
+   */
+  private[this] def removeProperties: Unit = {
+    this.removeKeyMap.map(_._1).foreach(key => {
+      val removeKey = if (key.startsWith("-")) key.substring(1, key.length) else key
+      if (this.adaptiveSettingsMap.containsKey(removeKey)) {
+        this.adaptiveSettingsMap.remove(key)
+        this.adaptiveSettingsMap.remove(removeKey)
+        this.removeKeyMap.remove(key)
+        if (removeKey.startsWith("-")) logWarning(s"已移除配置信息：$removeKey")
+      }
+
+      if (this.originalSettingsMap.containsKey(removeKey)) {
+        this.originalSettingsMap.remove(key)
+        this.originalSettingsMap.remove(removeKey)
+      }
+    })
   }
 
   /**
@@ -460,7 +496,7 @@ object PropUtils extends Logging {
   /**
    * 隐蔽密码信息后返回
    */
-  def cover: Map[String, String] = this.adaptiveSettingsMap.filter(t => !t._1.contains("pass"))
+  def cover: Map[String, String] = this.adaptiveSettings.filter(t => !t._1.contains("pass"))
 
   /**
    * 打印配置文件中的kv
@@ -468,7 +504,7 @@ object PropUtils extends Logging {
   def show(loggerStyle: Boolean = true): Unit = {
     if (!FireFrameworkConf.fireConfShow) return
     LogUtils.logStyle(this.logger, "Fire configuration.")(logger => {
-      this.adaptiveSettingsMap.foreach(key => {
+      this.adaptiveSettings.foreach(key => {
         // 如果包含配置黑名单，则不打印
         if (key != null && !FireFrameworkConf.fireConfBlackList.exists(conf => key.toString.contains(conf))) {
           val conf = s"${FirePS1Conf.PINK} ${key._1} = ${key._2} ${FirePS1Conf.DEFAULT}"
@@ -486,8 +522,8 @@ object PropUtils extends Logging {
    */
   def settings: Map[String, String] = {
     val map = Map[String, String]()
-    map ++= this.originalSettingsMap
-    map ++= this.adaptiveSettingsMap
+    map ++= this.originalSettings
+    map ++= this.adaptiveSettings
     map
   }
 
@@ -498,9 +534,8 @@ object PropUtils extends Logging {
    * confMap
    */
   def adaptiveSettings: Map[String, String] = {
-    val map = Map[String, String]()
-    map ++= this.adaptiveSettingsMap
-    map
+    this.removeProperties
+    this.adaptiveSettingsMap
   }
 
   /**
@@ -510,9 +545,8 @@ object PropUtils extends Logging {
    * confMap
    */
   def originalSettings: Map[String, String] = {
-    val map = Map[String, String]()
-    map ++= this.originalSettingsMap
-    map
+    this.removeProperties
+    this.originalSettingsMap
   }
 
   /**
@@ -521,7 +555,7 @@ object PropUtils extends Logging {
   def sliceKeys(keyStart: String): immutable.Map[String, String] = {
     if (!this.cachedConfMap.contains(keyStart)) {
       val confMap = new mutable.HashMap[String, String]()
-      this.adaptiveSettingsMap.foreach(key => {
+      this.adaptiveSettings.foreach(key => {
         val adaptiveKeyStar = this.adaptiveKey(keyStart)
         if (key._1.contains(adaptiveKeyStar)) {
           val keySuffix = key._1.substring(adaptiveKeyStar.length)
@@ -617,6 +651,7 @@ object PropUtils extends Logging {
 
   /**
    * 将以指定分隔符配置的key=value的配置项拆分
+   *
    * @param conf
    * key=value的配置
    * @return
