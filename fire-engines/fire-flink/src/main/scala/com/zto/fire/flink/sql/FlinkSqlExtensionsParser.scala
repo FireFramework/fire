@@ -18,7 +18,6 @@
 package com.zto.fire.flink.sql
 
 import com.zto.fire.common.conf.FireFrameworkConf.lineageEnable
-import com.zto.fire.common.util.SQLLineageManager
 import com.zto.fire.core.sql.SqlExtensionsParser
 import com.zto.fire.flink.util.FlinkUtils
 import com.zto.fire.predef.noEmpty

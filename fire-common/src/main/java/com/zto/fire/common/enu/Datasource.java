@@ -17,7 +17,11 @@
 
 package com.zto.fire.common.enu;
 
+import com.google.common.collect.Maps;
+import com.zto.fire.common.lineage.parser.connector.*;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Map;
 
 /**
  * 数据源类型
@@ -27,12 +31,54 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2.0.0
  */
 public enum Datasource  {
+    // TODO: 添加新的数据源时务必在static代码块中添加与DatasourceDesc子类的映射关系
     HIVE(1), HBASE(2), KAFKA(3), ROCKETMQ(4), REDIS(5),
     ES(6), MYSQL(7), TIDB(8), ORACLE(9), SQLSERVER(10),
-    DB2(11), CLICKHOUSE(12), PRESTO(13), KYLIN(14), DERBY(15), VIEW(16),
-    JDBC(17), FIRE_ROCKETMQ(18), PostgreSQL(19), CUSTOMIZE_SOURCE(20), CUSTOMIZE_SINK(21), HUDI(22), UNKNOWN(404);
+    DB2(11), CLICKHOUSE(12), PRESTO(13), KYLIN(14), DERBY(15),
+    VIEW(16), JDBC(17), FIRE_ROCKETMQ(18), PostgreSQL(19),
+    CUSTOMIZE_SOURCE(20), CUSTOMIZE_SINK(21), HUDI(22), DORIS(23),
+    ICEBERG(24), UNKNOWN(404);
+
+    private static Map<Datasource, Class<?>> datasourceMap = Maps.newHashMap();
+
+    static {
+        // 将数据源信息归类，新增数据源务必在此处维护，否则会导致Flink引擎解析不到
+        datasourceMap.put(JDBC, DBDatasource.class);
+        datasourceMap.put(PostgreSQL, DBDatasource.class);
+        datasourceMap.put(MYSQL, DBDatasource.class);
+        datasourceMap.put(TIDB, DBDatasource.class);
+        datasourceMap.put(ORACLE, DBDatasource.class);
+        datasourceMap.put(SQLSERVER, DBDatasource.class);
+        datasourceMap.put(DB2, DBDatasource.class);
+        datasourceMap.put(CLICKHOUSE, DBDatasource.class);
+        datasourceMap.put(PRESTO, DBDatasource.class);
+        datasourceMap.put(KYLIN, DBDatasource.class);
+        datasourceMap.put(DERBY, DBDatasource.class);
+        datasourceMap.put(HBASE, DBDatasource.class);
+        datasourceMap.put(ES, DBDatasource.class);
+        datasourceMap.put(REDIS, DBDatasource.class);
+
+        datasourceMap.put(HIVE, HiveDatasource.class);
+        datasourceMap.put(HUDI, HudiDatasource.class);
+
+        // 消息队列类别
+        datasourceMap.put(KAFKA, MQDatasource.class);
+        datasourceMap.put(ROCKETMQ, MQDatasource.class);
+        datasourceMap.put(FIRE_ROCKETMQ, MQDatasource.class);
+
+        // 自定义connector
+        datasourceMap.put(CUSTOMIZE_SOURCE, CustomizeDatasource.class);
+        datasourceMap.put(CUSTOMIZE_SINK, CustomizeDatasource.class);
+
+        // 待归类
+        // VIEW / DORIS / ICEBERG /
+    }
 
     Datasource(int type) {
+    }
+
+    public static Class<?> toDatasource(Datasource datasource) {
+        return datasourceMap.get(datasource);
     }
 
     /**

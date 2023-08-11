@@ -20,7 +20,9 @@ package com.zto.fire.core.sql
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.conf.FireFrameworkConf._
-import com.zto.fire.common.util.{LineageManager, Logging, SQLLineageManager, SQLUtils, TableMeta, ThreadUtils}
+import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
+import com.zto.fire.common.lineage.parser.connector._
+import com.zto.fire.common.util.{Logging, SQLUtils, ThreadUtils}
 import com.zto.fire.predef._
 
 import java.util.concurrent.{CopyOnWriteArraySet, TimeUnit}
@@ -33,10 +35,6 @@ import java.util.concurrent.{CopyOnWriteArraySet, TimeUnit}
  */
 @Internal
 private[fire] trait SqlParser extends Logging {
-  // 用于临时存放解析后的库表类
-  protected[fire] lazy val tmpTableMap = new JHashMap[String, TableMeta]()
-  // 用于存放按数据源归类后的所有血缘信息
-  protected lazy val tableMetaSet = new CopyOnWriteArraySet[TableMeta]()
   protected[fire] lazy val hiveTableMap = new JConcurrentHashMap[String, Boolean]()
   protected lazy val buffer = new CopyOnWriteArraySet[String]()
   this.sqlParse
@@ -49,31 +47,10 @@ private[fire] trait SqlParser extends Logging {
     if (lineageEnable) {
       ThreadUtils.scheduleWithFixedDelay({
         this.buffer.foreach(sql => this.sqlParser(sql))
-        LineageManager.addTableMeta(this.tableMetaSet)
         this.clear
       }, lineageRunInitialDelay, lineageRunPeriod, TimeUnit.SECONDS)
     }
   }
-
-  /**
-   * 将解析后的血缘信息临时存放，并通过catalog进行归类后统一收集
-   *
-   * @param tableIdentifier
-   * 库表名
-   */
-  @Internal
-  protected def addTmpTableMeta(tableIdentifier: String, tmpTableMap: TableMeta): Unit = {
-    this.tmpTableMap += (tableIdentifier -> tmpTableMap)
-    this.collectTableMeta(tmpTableMap)
-  }
-
-  /**
-   * 用于收集并按catalog归类数据源信息
-   *
-   * @param tableMeta 数据源
-   */
-  @Internal
-  private def collectTableMeta(tableMeta: TableMeta): Unit = this.tableMetaSet += tableMeta
 
   /**
    * 清理解析后的SQL数据
@@ -81,8 +58,6 @@ private[fire] trait SqlParser extends Logging {
   @Internal
   private[this] def clear: Unit = {
     this.buffer.clear()
-    this.tmpTableMap.clear()
-    this.tableMetaSet.clear()
   }
 
   /**

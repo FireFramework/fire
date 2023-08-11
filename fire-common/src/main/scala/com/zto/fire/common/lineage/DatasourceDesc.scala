@@ -15,20 +15,12 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.util
-
-import com.zto.fire.common.ext.{JavaExt, ScalaExt}
-
-import scala.collection.convert.{WrapAsJava, WrapAsScala}
-import scala.util.control.Breaks
+package com.zto.fire.common.lineage
 
 /**
- * 各种工具API的集合类
+ * 数据源描述
  *
- * @author ChengLong
- * @since 1.0.0
- * @create 2020-12-16 16:23
+ * @author ChengLong 2023-08-09 16:51:32
+ * @since 2.0.0
  */
-trait Tools extends Breaks with ScalaTypeMap with JavaTypeMap with ValueCheck with FireFunctions with JavaExt with ScalaExt with ScalaUtils with WrapAsScala with WrapAsJava {
-
-}
+trait DatasourceDesc

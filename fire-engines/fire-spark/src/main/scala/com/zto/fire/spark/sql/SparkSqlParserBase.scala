@@ -22,7 +22,8 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.conf.FireFrameworkConf.lineageCollectSQLEnable
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.util.{ReflectionUtils, SQLLineageManager}
+import com.zto.fire.common.lineage.SQLLineageManager
+import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.core.sql.SqlParser
 import com.zto.fire.predef.JConcurrentHashMap
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}

@@ -20,7 +20,10 @@ package com.zto.fire.spark.ext.core
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.util.{LineageManager, LogUtils, Logging, SQLUtils, ValueUtils}
+import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.lineage.parser.connector.HudiConnector
+import com.zto.fire.common.util.{LogUtils, Logging, SQLUtils, ValueUtils}
+import com.zto.fire.core.anno.connector.Hudi
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.hudi.conf.FireHudiConf
 import com.zto.fire.jdbc.JdbcConnector
@@ -380,7 +383,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
     val hudiTablePath = if (noEmpty(tablePath)) tablePath else this.tablePathMap.mergeGet(hudiTableName)(SparkSqlUtils.getTablePath(hudiTableName))
 
     // 4. hudi血缘采集
-    LineageManager.addHudiDatasource(Datasource.HUDI, hudiTablePath,
+    HudiConnector.addDatasource(Datasource.HUDI, hudiTablePath,
       confOptions("hoodie.table.name"),
       confOptions("hoodie.datasource.write.table.type"),
       confOptions("hoodie.datasource.write.recordkey.field"),

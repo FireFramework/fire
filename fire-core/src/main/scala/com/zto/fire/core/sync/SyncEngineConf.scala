@@ -19,9 +19,7 @@ package com.zto.fire.core.sync
 
 import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.util.{DatasourceDesc, ReflectionUtils}
-import com.zto.fire.predef._
+import com.zto.fire.common.util.ReflectionUtils
 
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.collection.immutable

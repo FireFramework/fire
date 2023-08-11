@@ -19,11 +19,12 @@ package com.zto.fire.common.util
 
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
-import org.apache.htrace.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
-import org.apache.htrace.fasterxml.jackson.annotation.JsonInclude.Include
-import org.apache.htrace.fasterxml.jackson.annotation.PropertyAccessor
-import org.apache.htrace.fasterxml.jackson.core.JsonParser
-import org.apache.htrace.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
+import com.fasterxml.jackson.annotation.JsonInclude.Include
+import com.fasterxml.jackson.annotation.PropertyAccessor
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
 
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -38,6 +39,10 @@ object JSONUtils {
 
   private[this] lazy val objectMapperLocal = new ThreadLocal[ObjectMapper]() {
     override def initialValue(): ObjectMapper = newObjectMapperWithDefaultConf
+  }
+
+  private[this] lazy val scalaMapperLocal = new ThreadLocal[ObjectMapper]() {
+    override def initialValue(): ObjectMapper = newObjectMapperWithDefaultConf.registerModule(DefaultScalaModule)
   }
 
   /**
@@ -65,6 +70,11 @@ object JSONUtils {
    * 从线程局部变量中获取对应的ObjectMapper对象实例
    */
   def getObjectMapper: ObjectMapper = this.objectMapperLocal.get()
+
+  /**
+   * 从线程局部变量中获取对应的ObjectMapper对象实例
+   */
+  def getScalaMapper: ObjectMapper = this.scalaMapperLocal.get()
 
   /**
    * 将给定的对象解析成json字符串
@@ -99,6 +109,32 @@ object JSONUtils {
    * 目标对象实例
    */
   def parseObject[T](json: String, valueType: Class[T]): T = this.getObjectMapper.readValue[T](json, valueType)
+
+  /**
+   * 将给定的json字符串转为T类型对象实例
+   *
+   * @param json
+   * json字符串
+   * @tparam T
+   * 目标泛型类型
+   * @return
+   * 目标对象实例
+   */
+  def parseScalaObject[T: ClassTag](json: String): T = this.getScalaMapper.readValue[T](json, getGeneric[T]("JSONUtils.parseObject"))
+
+  /**
+   * 将给定的json字符串转为T类型对象实例
+   *
+   * @param json
+   * json字符串
+   * @param valueType
+   * 目标类型
+   * @tparam T
+   * 目标泛型类型
+   * @return
+   * 目标对象实例
+   */
+  def parseScalaObject[T](json: String, valueType: Class[T]): T = this.getScalaMapper.readValue[T](json, valueType)
 
 
   /**

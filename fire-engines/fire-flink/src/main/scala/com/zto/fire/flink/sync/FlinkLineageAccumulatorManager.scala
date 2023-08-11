@@ -19,15 +19,12 @@ package com.zto.fire.flink.sync
 
 import com.zto.fire._
 import com.zto.fire.common.bean.lineage.Lineage
-import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.util._
+import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
+import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.sync.LineageAccumulatorManager
-import com.zto.fire.hbase.conf.FireHBaseConf
-import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.predef.{JConcurrentHashMap, JHashSet}
 
-import java.lang.{Boolean => JBoolean}
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -46,7 +43,6 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
   private def mergeLineage(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
     // 合并来自各个TaskManager端的血缘信息
     if (lineage.nonEmpty) merge(lineage)
-
     // 合并血缘管理器中的血缘信息
     if (LineageManager.getDatasourceLineage.nonEmpty) merge(LineageManager.getDatasourceLineage)
 
@@ -57,36 +53,25 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
       lineage.foreach(each => {
         var set = this.lineageMap.get(each._1)
         if (set == null) set = new JHashSet[DatasourceDesc]()
-
         // 兼容jackson反序列化不支持HashSet与case class的问题
         if (each._2.isInstanceOf[JArrayList[_]]) {
           val datasource = each._2.asInstanceOf[JArrayList[JMap[String, _]]]
+
           datasource.foreach(map => {
             if (map.containsKey("datasource")) {
               val datasource = map.getOrElse("datasource", "").toString.toUpperCase
-              val cluster = map.getOrElse("cluster", "").toString
-              val username = map.getOrElse("username", "").toString
-              val tableName = map.getOrElse("tableName", "").toString
-              val topics = map.getOrElse("topics", "").toString
-              val groupId = map.getOrElse("groupId", "").toString
-              val sourceType = map.getOrElse("sourceType", "").toString
-              val operationArr = map.getOrElse("operation", "[]").toString.replace("[", "").replace("]", "")
-              val operation = operationArr.split(",").map(operation => com.zto.fire.common.enu.Operation.parse(operation)).toSet
-
-              Datasource.parse(datasource) match {
-                case Datasource.JDBC => set.add(DBDatasource(datasource, FireJdbcConf.jdbcUrl(cluster), tableName, username, operation = operation))
-                case Datasource.HBASE => set.add(DBDatasource(datasource, FireHBaseConf.hbaseClusterUrl(cluster), tableName, username, operation = operation))
-                case Datasource.KAFKA => set.add(MQDatasource(datasource, FireKafkaConf.kafkaBrokers(cluster), topics, groupId, operation = operation))
-                case Datasource.ROCKETMQ => set.add(MQDatasource(datasource, FireRocketMQConf.rocketNameServer(cluster), topics, groupId, operation = operation))
-                case Datasource.CLICKHOUSE => set.add(DBDatasource(datasource, cluster, tableName, username, operation = operation))
-                case Datasource.CUSTOMIZE_SOURCE => set.add(CustomizeDatasource(datasource, cluster, sourceType, operation = operation))
-                case _ =>
+              val datasourceClazz = Datasource.toDatasource(Datasource.parse(datasource))
+              if (datasourceClazz != null) {
+                val json = JSONUtils.toJSONString(map)
+                val datasourceDesc = JSONUtils.parseScalaObject(json, datasourceClazz)
+                set.add(datasourceDesc.asInstanceOf[DatasourceDesc])
               }
             }
           })
         } else {
           each._2.filter(desc => desc.toString.contains("datasource")).foreach(desc => set.add(desc))
         }
+
         if (set.nonEmpty) this.lineageMap.put(each._1, set)
       })
     }

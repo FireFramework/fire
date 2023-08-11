@@ -17,11 +17,9 @@
 
 package com.zto.fire.spark.sync
 
-import com.zto.fire._
 import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.util.{DatasourceDesc, Logging, PropUtils}
+import com.zto.fire.common.util.{Logging, PropUtils}
 import com.zto.fire.core.sync.SyncEngineConf
 import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.util.SparkUtils

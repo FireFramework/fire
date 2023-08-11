@@ -20,9 +20,11 @@ package com.zto.fire.flink.sql
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
-import com.zto.fire.common.conf.{FireHiveConf, FireKafkaConf, FireRocketMQConf}
+import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.util.{LineageManager, ReflectionUtils, SQLLineageManager}
+import com.zto.fire.common.lineage.SQLLineageManager
+import com.zto.fire.common.lineage.parser.ConnectorParserManager
+import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.core.sql.SqlParser
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
@@ -36,7 +38,7 @@ import org.apache.flink.table.catalog.ObjectPath
 import org.apache.flink.table.catalog.hive.HiveCatalog
 import org.apache.hadoop.hive.metastore.api.Table
 
-import scala.collection.JavaConversions
+import scala.collection.{JavaConversions, mutable}
 
 /**
  * Flink SQL解析器，用于解析Flink SQL语句中的库、表、分区、操作类型等信息
@@ -343,65 +345,8 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
       // 解析建表语句中的字段列表
       this.parseColumns(tableIdentifier, createTable.getColumnList)
       // 解析不同的connector血缘信息
-      this.parseConnector(tableIdentifier, properties)
+      this.parseConnector(tableIdentifier, properties, createTable.getPartitionKeyList)
     }
-  }
-
-  /**
-   * 解析不同的connector血缘信息
-   */
-  @Internal
-  private def parseConnector(tableIdentifier: TableIdentifier, properties: Map[JString, JString]): Unit = {
-    val catalog = properties.getOrElse("connector", "")
-    if (noEmpty(catalog)) {
-      SQLLineageManager.setCatalog(tableIdentifier, catalog)
-      catalog match {
-        case "kafka" => this.parseKafkaConnector(tableIdentifier, properties)
-        case "jdbc" => this.parseJDBCConnector(tableIdentifier, properties)
-        case "fire-rocketmq" => this.parseRocketMQConnector(tableIdentifier, properties)
-        case "clickhouse" => this.parseClickhouseConnector(tableIdentifier, properties)
-        case _ =>
-      }
-    }
-  }
-
-  /**
-   * 解析JDBC数据源
-   */
-  @Internal
-  protected def parseJDBCConnector(tableIdentifier: TableIdentifier, properties: Map[JString, JString]): Unit = {
-    val tableName = properties.getOrElse("table-name", "")
-    SQLLineageManager.setPhysicalTable(tableIdentifier, tableName)
-    val url = properties.getOrElse("url", "")
-    SQLLineageManager.setCluster(tableIdentifier, FireJdbcConf.jdbcUrl(url))
-    val username = properties.getOrElse("username", "")
-    LineageManager.addDBSql(Datasource.JDBC, url, username, "", Operation.CREATE_TABLE, Operation.SELECT)
-  }
-
-  /**
-   * 解析RocketMQ数据源
-   */
-  @Internal
-  protected def parseRocketMQConnector(tableIdentifier: TableIdentifier, properties: Map[JString, JString]): Unit = {
-    val url = properties.getOrElse("rocket.brokers.name", "")
-    SQLLineageManager.setCluster(tableIdentifier, FireRocketMQConf.rocketNameServer(url))
-    val topic = properties.getOrElse("rocket.topics", "")
-    SQLLineageManager.setPhysicalTable(tableIdentifier, topic)
-    val groupId = properties.getOrElse("rocket.group.id", "")
-    LineageManager.addMQDatasource(Datasource.ROCKETMQ, url, topic, groupId, Operation.CREATE_TABLE)
-  }
-
-  /**
-   * 解析kafka数据源
-   */
-  @Internal
-  protected def parseKafkaConnector(tableIdentifier: TableIdentifier, properties: Map[JString, JString]): Unit = {
-    val url = properties.getOrElse("properties.bootstrap.servers", "")
-    SQLLineageManager.setCluster(tableIdentifier, FireKafkaConf.kafkaBrokers(url))
-    val topic = properties.getOrElse("topic", "")
-    SQLLineageManager.setPhysicalTable(tableIdentifier, topic)
-    val groupId = properties.getOrElse("properties.group.id", "")
-    LineageManager.addMQDatasource(Datasource.KAFKA, url, topic, groupId, Operation.CREATE_TABLE)
   }
 
   /**
@@ -421,20 +366,6 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     this.parseSqlNode(sqlCreateTable.getTableName, Operation.CREATE_TABLE, true)
   }
 
-  /**
-   * 解析Clickhouse数据源
-   */
-  @Internal
-  protected def parseClickhouseConnector(tableIdentifier: TableIdentifier, properties: Map[JString, JString]): Unit = {
-    val url = properties.getOrElse("url", "")
-    SQLLineageManager.setCluster(tableIdentifier, url)
-    val dbName = properties.getOrElse("database-name", "")
-    val tableName = properties.getOrElse("table-name", "")
-    val physicalTable = if (tableName.contains(".")) tableName else s"$dbName.${tableName}"
-    SQLLineageManager.setPhysicalTable(tableIdentifier, physicalTable)
-    val username = properties.getOrElse("username", "")
-    LineageManager.addDBDatasource(Datasource.CLICKHOUSE, url, physicalTable, username, Operation.CREATE_TABLE)
-  }
 
   /**
    * 用于解析sql中的options
@@ -465,4 +396,19 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     }).filter(arr => arr.nonEmpty && arr.length == 2).map(t => (t(0), t(1)))
     SQLLineageManager.setColumns(tableIdentifier, columns)
   }
+
+  /**
+   * 解析不同的connector血缘信息
+   */
+  @Internal
+  private def parseConnector(tableIdentifier: TableIdentifier, properties: Map[JString, JString], partitions: SqlNodeList): Unit = {
+    val partition = partitions.getList.map(t => t.toString).mkString(",")
+    val prop = new mutable.HashMap[String, String]()
+    prop.putAll(properties)
+    if (prop.containsKey("url")) {
+      prop.put("url", FireJdbcConf.jdbcUrl(prop("url")))
+    }
+    ConnectorParserManager.parse(tableIdentifier, prop, partition)
+  }
+
 }

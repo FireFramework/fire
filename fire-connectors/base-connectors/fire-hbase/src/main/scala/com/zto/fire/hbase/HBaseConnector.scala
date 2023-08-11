@@ -22,6 +22,8 @@ import com.zto.fire.common.anno.{FieldName, Internal}
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.enu.Datasource.HBASE
 import com.zto.fire.common.enu.{Operation => FOperation}
+import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.lineage.parser.connector.HbaseConnector
 import com.zto.fire.common.util._
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.hbase.anno.HConfig
@@ -110,7 +112,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     tryFinallyWithReturn {
       table = this.getTable(tableName)
       table.put(puts)
-      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
       this.logger.info(s"HBase insert ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${puts.size}条")
     } {
       this.closeTable(table)
@@ -163,7 +165,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     var table: Table = null
     val list = ListBuffer[Result]()
     tryFinallyWithReturn {
-      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
+      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
       table = this.getTable(tableName)
       list ++= table.get(getList)
       this.logger.info(s"HBase 批量get ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${list.size}条")
@@ -205,7 +207,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     var rsScanner: ResultScanner = null
     try {
       table = this.getTable(tableName)
-      LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.SCAN)
+      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.SCAN)
       rsScanner = table.getScanner(scan)
     } catch {
       case e: Exception => {
@@ -729,7 +731,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
           tableDesc.addFamily(desc)
         }
         admin.createTable(tableDesc)
-        LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.CREATE_TABLE)
+        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.CREATE_TABLE)
         // 如果开启表缓存，则更新缓存信息
         if (this.tableExistsCacheEnable && this.tableExists(tableName)) this.cacheTableExistsMap.update(tableName, true)
       }
@@ -755,7 +757,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
         admin.deleteTable(tbName)
         // 如果开启表缓存，则更新缓存信息
         if (this.tableExistsCacheEnable && !this.tableExists(tableName)) this.cacheTableExistsMap.update(tableName, false)
-        LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DROP_TABLE)
+        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DROP_TABLE)
       }
     } {
       this.closeAdmin(admin)
@@ -776,7 +778,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName) && !admin.isTableEnabled(tbName)) {
         admin.enableTable(tbName)
-        LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.ENABLE_TABLE)
+        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.ENABLE_TABLE)
       }
     } {
       this.closeAdmin(admin)
@@ -797,7 +799,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName) && admin.isTableEnabled(tbName)) {
         admin.disableTable(tbName)
-        LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DISABLE_TABLE)
+        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DISABLE_TABLE)
       }
     } {
       this.closeAdmin(admin)
@@ -820,7 +822,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       if (admin.tableExists(tbName)) {
         this.disableTable(tableName)
         admin.truncateTable(tbName, preserveSplits)
-        LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.TRUNCATE)
+        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.TRUNCATE)
       }
     } {
       this.closeAdmin(admin)
@@ -928,7 +930,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
         })
 
         table.delete(deletes)
-        LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
+        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
       } {
         this.closeTable(table)
       }(this.logger, s"HBase deleteRows ${hbaseClusterUrl(keyNum)}.${tableName}执行成功",
@@ -952,7 +954,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       tryFinallyWithReturn {
         table = this.getTable(tableName)
         table.delete(delete)
-        LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE_FAMILY)
+        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE_FAMILY)
       } {
         this.closeTable(table)
       }(this.logger, s"HBase deleteFamilies ${hbaseClusterUrl(keyNum)}.${tableName}执行成功",
@@ -978,7 +980,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       tryFinallyWithReturn {
         table = this.getTable(tableName)
         table.delete(delete)
-        LineageManager.addDBDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE_QUALIFIER)
+        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE_QUALIFIER)
       } {
         this.closeTable(table)
       }(this.logger, s"HBase deleteQualifiers ${hbaseClusterUrl(keyNum)}.${tableName}执行成功",

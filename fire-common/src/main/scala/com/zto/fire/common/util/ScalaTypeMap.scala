@@ -17,18 +17,16 @@
 
 package com.zto.fire.common.util
 
-import com.zto.fire.common.ext.{JavaExt, ScalaExt}
-
-import scala.collection.convert.{WrapAsJava, WrapAsScala}
-import scala.util.control.Breaks
+import scala.collection.mutable
 
 /**
- * 各种工具API的集合类
+ * Scala类型映射
  *
  * @author ChengLong
- * @since 1.0.0
- * @create 2020-12-16 16:23
+ * @since 2.3.8
+ * @create 2023-08-09 15:52:40
  */
-trait Tools extends Breaks with ScalaTypeMap with JavaTypeMap with ValueCheck with FireFunctions with JavaExt with ScalaExt with ScalaUtils with WrapAsScala with WrapAsJava {
+trait ScalaTypeMap {
+  // Scala API库映射
 
 }

@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.ext
 
+import com.zto.fire.predef._
 import com.zto.fire.common.conf.FireFrameworkConf
 
 import java.util.regex.Pattern
@@ -40,6 +41,14 @@ trait ScalaExt {
     // 用于匹配带有下划线字符串的正则
     private[this] lazy val humpPattern = Pattern.compile("(.*)_(\\w)(.*)")
     private[this] lazy val maxHumpMapSize = 10000
+
+    /**
+     * 将字符串首字母大写
+     */
+    def headUpper: String = {
+      if (isEmpty(str)) return ""
+      str.replaceFirst(".", Character.toUpperCase(str.charAt(0)) + "")
+    }
 
     /**
      * 数据表字段名转换为驼峰式名字的实体类属性名

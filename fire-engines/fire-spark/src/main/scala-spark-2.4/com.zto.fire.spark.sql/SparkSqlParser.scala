@@ -21,7 +21,7 @@ import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.Operation
-import com.zto.fire.common.util.SQLLineageManager
+import com.zto.fire.common.lineage.SQLLineageManager
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.command._

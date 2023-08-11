@@ -22,6 +22,7 @@ import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.conf.FireFrameworkConf.{lineageRunCount, lineageRunInitialDelay, lineageRunPeriod}
 import com.zto.fire.common.enu.{Datasource, ThreadPoolType}
+import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
 import com.zto.fire.common.util._
 import com.zto.fire.spark.sync.DistributeSyncManager
 import com.zto.fire.spark.task.SparkSchedulerManager

@@ -17,6 +17,8 @@
 
 package com.zto.fire.common.bean.lineage;
 
+import com.zto.fire.common.util.FireUtils;
+
 import java.util.*;
 
 /**
@@ -41,6 +43,11 @@ public class SQLTable {
      * 物理表名
      */
     private String physicalTable;
+
+    /**
+     * connector类型
+     */
+    private String connector;
 
     /**
      * 在spark或flink中注册成的临时表名
@@ -123,7 +130,7 @@ public class SQLTable {
 
     public void setTmpView(String tmpView) {
         this.tmpView = tmpView;
-        if ("VIEW".equalsIgnoreCase(this.catalog)) this.physicalTable = null;
+        if ("VIEW".equalsIgnoreCase(this.catalog) && FireUtils.isSparkEngine()) this.physicalTable = null;
     }
 
     public String getTmpView() {
@@ -168,5 +175,13 @@ public class SQLTable {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public String getConnector() {
+        return connector;
+    }
+
+    public void setConnector(String connector) {
+        this.connector = connector;
     }
 }

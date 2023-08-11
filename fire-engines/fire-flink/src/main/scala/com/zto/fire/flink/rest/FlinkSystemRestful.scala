@@ -23,6 +23,7 @@ import com.zto.fire.common.enu.{Datasource, ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
 import com.zto.fire.core.rest.{RestCase, RestServerManager, SystemRestful}
 import com.zto.fire.flink.BaseFlink
+import com.zto.fire.common.lineage._
 import com.zto.fire.flink.bean.{CheckpointParams, DistributeBean}
 import com.zto.fire.flink.enu.DistributeModule
 import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager

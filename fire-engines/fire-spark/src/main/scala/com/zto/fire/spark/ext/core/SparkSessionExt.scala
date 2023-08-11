@@ -22,8 +22,10 @@ import com.zto.fire.common.bean.Generator
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.Datasource._
 import com.zto.fire.common.enu.{Operation => FOperation}
+import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.lineage.parser.connector.CustomizeConnector
 import com.zto.fire.common.util.MQType.MQType
-import com.zto.fire.common.util.{LineageManager, MQType, OSUtils}
+import com.zto.fire.common.util.{MQType, OSUtils}
 import com.zto.fire.core.Api
 import com.zto.fire.hudi.conf.FireHudiConf
 import com.zto.fire.jdbc.JdbcConnectorBridge
@@ -301,7 +303,7 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
    * 包装后的DStream[T]
    */
   def receiverStream[T: ClassTag](receiver: Receiver[T]): ReceiverInputDStream[T] = {
-    LineageManager.addCustomizeDatasource(CUSTOMIZE_SOURCE, OSUtils.getIp, receiver.getClass.getSimpleName, FOperation.SOURCE)
+    CustomizeConnector.addDatasource(CUSTOMIZE_SOURCE, OSUtils.getIp, receiver.getClass.getSimpleName, FOperation.SOURCE)
     this.ssc.receiverStream[T](receiver)
   }
 

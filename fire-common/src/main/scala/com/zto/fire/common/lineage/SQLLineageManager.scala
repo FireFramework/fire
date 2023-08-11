@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.util
+package com.zto.fire.common.lineage
 
 import com.zto.fire.common.bean.TableIdentifier
-import com.zto.fire.common.bean.lineage.{SQLTableColumns, _}
+import com.zto.fire.common.bean.lineage._
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.predef._
 
@@ -160,6 +160,18 @@ private[fire] object SQLLineageManager {
   def setCatalog(tableIdentifier: TableIdentifier, catalog: String): SQLTable = {
     this.setTableField(tableIdentifier) {
       _.setCatalog(catalog)
+    }
+  }
+
+  /**
+   * 为指定的表添加connector信息
+   *
+   * @param connector
+   * catalog信息：kafka、jdbc、hudi等
+   */
+  def setConnector(tableIdentifier: TableIdentifier, connector: String): SQLTable = {
+    this.setTableField(tableIdentifier) {
+      _.setConnector(connector)
     }
   }
 

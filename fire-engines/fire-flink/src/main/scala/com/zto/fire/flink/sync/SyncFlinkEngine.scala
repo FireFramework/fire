@@ -19,8 +19,7 @@ package com.zto.fire.flink.sync
 
 import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.util.{DatasourceDesc, ReflectionUtils}
+import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.core.sync.SyncEngineConf
 import com.zto.fire.flink.util.FlinkUtils
 import com.zto.fire.predef._

@@ -68,6 +68,11 @@
             <artifactId>jsqlparser</artifactId>
             <version>4.5</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-scala_${scala.binary.version}</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

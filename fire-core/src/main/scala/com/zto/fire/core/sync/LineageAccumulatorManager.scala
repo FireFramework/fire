@@ -20,7 +20,7 @@ package com.zto.fire.core.sync
 import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.util.DatasourceDesc
+import com.zto.fire.common.lineage.DatasourceDesc
 import com.zto.fire.predef._
 
 import java.util.concurrent.ConcurrentHashMap

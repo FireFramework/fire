@@ -2,7 +2,8 @@ package com.zto.fire.flink.sync
 
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.ThreadPoolType
-import com.zto.fire.common.util.{FireUtils, JSONUtils, LineageManager, PropUtils, ThreadUtils}
+import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.util.{JSONUtils, PropUtils, ThreadUtils}
 import com.zto.fire.core.bean.ArthasParam
 import com.zto.fire.core.plugin.ArthasDynamicLauncher
 import com.zto.fire.core.rest.SystemRestful
@@ -12,8 +13,8 @@ import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.enu.DistributeModule
 import com.zto.fire.predef._
 
-import java.util.concurrent.{ScheduledExecutorService, TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.{ScheduledExecutorService, TimeUnit}
 
 /**
  * Flink分布式数据同步管理器，用于将数据从JobManager端同步至每一个TaskManager端

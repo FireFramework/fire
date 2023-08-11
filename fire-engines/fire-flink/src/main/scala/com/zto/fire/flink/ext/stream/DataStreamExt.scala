@@ -22,6 +22,8 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.lineage.parser.connector.KafkaConnector
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util._
 import com.zto.fire.flink.sink.{HBaseSink, JdbcSink, KafkaSink, RocketMQSink}
@@ -449,7 +451,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
          |""".stripMargin)
 
     // sink kafka埋点信息
-    LineageManager.addMQDatasource(Datasource.KAFKA, finalBrokers, finalTopic, "", Operation.SINK)
+    KafkaConnector.addDatasource(Datasource.KAFKA, finalBrokers, finalTopic, "", Operation.SINK)
 
     val kafkaProducer = new FlinkKafkaProducer[String](
       finalTopic,

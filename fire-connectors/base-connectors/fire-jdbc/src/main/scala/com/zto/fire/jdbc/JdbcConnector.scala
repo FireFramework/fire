@@ -22,7 +22,8 @@ import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.zto.fire.common.enu.{Datasource, Operation => FOperation}
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireFrameworkConf, KeyNum}
-import com.zto.fire.common.util.{LineageManager, LogUtils, ReflectionUtils, StringsUtils}
+import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.util.{LogUtils, ReflectionUtils, StringsUtils}
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils

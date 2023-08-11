@@ -15,20 +15,32 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.util
+package com.zto.fire.common.lineage.parser.connector
 
-import com.zto.fire.common.ext.{JavaExt, ScalaExt}
-
-import scala.collection.convert.{WrapAsJava, WrapAsScala}
-import scala.util.control.Breaks
+import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.lineage.parser.ConnectorParser
 
 /**
- * 各种工具API的集合类
+ * JDBC类别通用父类
  *
- * @author ChengLong
- * @since 1.0.0
- * @create 2020-12-16 16:23
+ * @author ChengLong 2023-08-10 10:15:05
+ * @since 2.3.8
  */
-trait Tools extends Breaks with ScalaTypeMap with JavaTypeMap with ValueCheck with FireFunctions with JavaExt with ScalaExt with ScalaUtils with WrapAsScala with WrapAsJava {
+trait IJDBCConnector extends ConnectorParser {
 
+  /**
+   * 添加一条DB的埋点信息
+   *
+   * @param datasource
+   * 数据源类型
+   * @param cluster
+   * 集群信息
+   * @param tableName
+   * 表名
+   * @param username
+   * 连接用户名
+   */
+  def addDatasource(datasource: Datasource, cluster: String, tableName: String, username: String = "", operation: Operation): Unit = {
+    this.addDatasource(datasource, DBDatasource(datasource.toString, cluster, tableName, username, toOperationSet(operation)))
+  }
 }

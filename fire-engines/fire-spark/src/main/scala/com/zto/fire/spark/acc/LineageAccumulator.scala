@@ -20,7 +20,8 @@ package com.zto.fire.spark.acc
 import com.zto.fire._
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.util.{DatasourceDesc, LineageManager, Logging}
+import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
+import com.zto.fire.common.util.{Logging}
 import com.zto.fire.predef.JHashSet
 import org.apache.spark.util.AccumulatorV2
 

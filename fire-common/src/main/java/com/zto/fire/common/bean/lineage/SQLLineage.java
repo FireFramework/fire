@@ -17,7 +17,7 @@
 
 package com.zto.fire.common.bean.lineage;
 
-import com.zto.fire.common.util.DatasourceDesc;
+import com.zto.fire.common.lineage.DatasourceDesc;
 
 import java.util.LinkedList;
 import java.util.List;

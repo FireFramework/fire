@@ -18,7 +18,7 @@
 package com.zto.fire.examples.spark.hbase
 
 import com.zto.fire.common.anno.TestStep
-import com.zto.fire.common.util.LineageManager
+import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.core.anno.connector.{HBase, HBase2}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector

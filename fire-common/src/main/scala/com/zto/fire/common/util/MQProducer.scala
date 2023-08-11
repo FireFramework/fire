@@ -20,15 +20,14 @@ package com.zto.fire.common.util
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.{FireFrameworkConf, FireKafkaConf, FireRocketMQConf}
-import com.zto.fire.common.enu.{Datasource, JobType, Operation}
-import com.zto.fire.predef._
+import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.lineage.parser.connector.KafkaConnector
 import com.zto.fire.common.util.MQType.MQType
-import com.zto.fire.common.util.ShutdownHookManager.DEFAULT_PRIORITY
-import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
+import com.zto.fire.predef._
+import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerConfig, RecordMetadata}
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.rocketmq.client.producer.{DefaultMQProducer, SendCallback, SendResult}
-import org.apache.rocketmq.common.message.Message
-import org.apache.rocketmq.remoting.common.RemotingHelper
 
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
@@ -64,7 +63,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
            |topic: $topic
            |--------------------------------------------------------
            |""".stripMargin)
-      LineageManager.addMQDatasource(Datasource.parse(mqType.toString), realUrl, topic, "", Operation.SINK)
+      KafkaConnector.addDatasource(Datasource.parse(mqType.toString), realUrl, topic, "", Operation.SINK)
     }
   }
 
