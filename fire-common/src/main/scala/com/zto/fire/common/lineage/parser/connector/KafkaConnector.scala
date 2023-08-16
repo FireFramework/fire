@@ -18,9 +18,10 @@
 package com.zto.fire.common.lineage.parser.connector
 
 import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.bean.lineage.SQLTable
 import com.zto.fire.common.conf.FireKafkaConf
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.{DatasourceDesc, SQLLineageManager}
+import com.zto.fire.common.lineage.{DatasourceDesc, SQLLineageManager, SqlToDatasource}
 import com.zto.fire.predef._
 
 import java.util.Objects
@@ -50,7 +51,6 @@ private[fire] object KafkaConnector extends IMQConnector {
     val groupId = properties.getOrElse("properties.group.id", "")
     this.addDatasource(Datasource.KAFKA, url, topic, groupId, Operation.CREATE_TABLE)
   }
-
 }
 
 /**
@@ -77,4 +77,48 @@ case class MQDatasource(datasource: String, cluster: String, topics: String,
   }
 
   override def hashCode(): Int = Objects.hash(datasource, cluster, topics, groupId)
+}
+
+object MQDatasource extends SqlToDatasource {
+
+  /**
+   * 解析SQL血缘中的表信息并映射为数据源信息
+   * 注：1. 新增子类的名称必须来自Datasource枚举中map所定义的类型，如catalog为hudi，则Datasource枚举中映射为HudiDatasource，对应创建名为HudiDatasource的object继承该接口
+   *    2. 新增Datasource子类需实现该方法，定义如何将SQLTable映射为对应的Datasource实例
+   *
+   * @param table
+   * sql语句中使用到的表
+   * @return
+   * DatasourceDesc
+   */
+  override def mapDatasource(table: SQLTable): Unit = {
+    val operations = new JHashSet[Operation]()
+    table.getOperation.map(t => operations.add(Operation.parse(t)))
+    var groupId = ""
+
+    // 判断数据源类型
+    val datasource = if (isMatch("kafka", table)) {
+      if (noEmpty(table.getOptions)) {
+        groupId = table.getOptions.getOrDefault("properties.group.id", "")
+      }
+
+      Datasource.KAFKA
+    } else if (isMatch("fire-rocketmq", table) || isMatch("rocketmq", table)) {
+      if (noEmpty(table.getOptions)) {
+        groupId = table.getOptions.getOrDefault("rocket.group.id", "")
+        if (isEmpty(groupId)) {
+          // 兼容rocketmq-flink社区connector
+          groupId = table.getOptions.getOrDefault("consumerGroup", "")
+        }
+      }
+
+      Datasource.ROCKETMQ
+    } else {
+      Datasource.UNKNOWN
+    }
+
+    if (datasource != Datasource.UNKNOWN) {
+      KafkaConnector.addDatasource(datasource, table.getCluster, table.getPhysicalTable, groupId, operations.toSeq: _*)
+    }
+  }
 }

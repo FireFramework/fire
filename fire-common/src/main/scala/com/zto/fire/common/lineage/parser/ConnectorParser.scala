@@ -18,14 +18,14 @@
 package com.zto.fire.common.lineage.parser
 
 import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
-import com.zto.fire.common.util.{Logging, ReflectionUtils}
+import com.zto.fire.common.util.Logging
 import com.zto.fire.predef._
 
-import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
-import scala.reflect.ClassTag
 
 /**
  * 通用的connector解析
@@ -34,6 +34,18 @@ import scala.reflect.ClassTag
  * @since 2.3.8
  */
 trait ConnectorParser extends Logging {
+  // 用于统计添加到数据源列表中的记录数
+  private lazy val count = new AtomicInteger()
+
+  /**
+   * 累加添加到血缘列表中的记录总数
+   *
+   * @return
+   * true：可继续添加 false：已超额，不再添加
+   */
+  protected def canAdd: Boolean = {
+    this.count.incrementAndGet() <= FireFrameworkConf.lineageMaxSize
+  }
 
   /**
    * 解析指定的connector血缘
@@ -54,16 +66,18 @@ trait ConnectorParser extends Logging {
    * 数据源描述
    */
   def addDatasource(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = {
-    LineageManager.addDatasource(sourceType, datasourceDesc)
+    if (FireFrameworkConf.lineageEnable) LineageManager.addDatasource(sourceType, datasourceDesc)
   }
+}
+
+object ConnectorParser {
 
   /**
    * 添加多个数据源操作
    */
-  protected def toOperationSet(operation: Operation*): JHashSet[Operation] = {
+  def toOperationSet(operation: Operation*): JHashSet[Operation] = {
     val operationSet = new JHashSet[Operation]
     operation.foreach(operationSet.add)
     operationSet
   }
-
 }

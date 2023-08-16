@@ -19,6 +19,7 @@ package com.zto.fire.spark.task
 
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.util.{JSONUtils, MQProducer}
 import com.zto.fire.core.task.FireInternalTask
 import com.zto.fire.spark.BaseSpark
@@ -41,14 +42,16 @@ private[fire] class SparkInternalTask(baseSpark: BaseSpark) extends FireInternal
   /**
    * 实时血缘发送定时任务，定时将血缘信息发送到kafka中
    */
-  @Scheduled(fixedInterval = 60000, initialDelay = 10000, repeatCount = 360000000)
+  @Scheduled(fixedInterval = 120000, initialDelay = 60000, repeatCount = 360000000)
   override def lineage: Unit = {
     sendLineage
     this.registerLineageHook(sendLineage)
 
     def sendLineage: Unit = {
       if (FireFrameworkConf.lineageEnable && FireFrameworkConf.lineageSendMqEnable) {
-        MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
+        val lineageJson = JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue)
+        LineageManager.printLog("向kafka发送血缘json：" + lineageJson)
+        MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, lineageJson)
       }
     }
   }

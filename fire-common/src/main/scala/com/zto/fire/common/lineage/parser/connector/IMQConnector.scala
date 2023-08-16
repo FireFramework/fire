@@ -17,13 +17,10 @@
 
 package com.zto.fire.common.lineage.parser.connector
 
-import com.zto.fire.predef._
+import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.DatasourceDesc
 import com.zto.fire.common.lineage.parser.ConnectorParser
-import com.zto.fire.common.util.ReflectionUtils
-
-import scala.reflect.ClassTag
+import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
 
 /**
  * MQ类别通用父类
@@ -46,7 +43,9 @@ trait IMQConnector extends ConnectorParser {
    * 消费组标识
    */
   private[fire] def addDatasource(datasource: Datasource, cluster: String, topics: String, groupId: String, operation: Operation*): Unit = {
-    this.addDatasource(datasource, MQDatasource(datasource.toString, cluster, topics, groupId, toOperationSet(operation: _*)))
+    if (this.canAdd) {
+      val url = if (Datasource.ROCKETMQ == datasource) FireRocketMQConf.rocketNameServer(cluster) else FireKafkaConf.kafkaBrokers(cluster)
+      this.addDatasource(datasource, MQDatasource(datasource.toString, url, topics, groupId, toOperationSet(operation: _*)))
+    }
   }
-
 }

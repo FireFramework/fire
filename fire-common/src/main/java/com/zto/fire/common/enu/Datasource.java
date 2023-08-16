@@ -37,7 +37,7 @@ public enum Datasource  {
     DB2(11), CLICKHOUSE(12), PRESTO(13), KYLIN(14), DERBY(15),
     VIEW(16), JDBC(17), FIRE_ROCKETMQ(18), PostgreSQL(19),
     CUSTOMIZE_SOURCE(20), CUSTOMIZE_SINK(21), HUDI(22), DORIS(23),
-    ICEBERG(24), UNKNOWN(404);
+    ICEBERG(24), PAIMON(25), UNKNOWN(404);
 
     private static Map<Datasource, Class<?>> datasourceMap = Maps.newHashMap();
 
@@ -55,7 +55,6 @@ public enum Datasource  {
         datasourceMap.put(KYLIN, DBDatasource.class);
         datasourceMap.put(DERBY, DBDatasource.class);
         datasourceMap.put(HBASE, DBDatasource.class);
-        datasourceMap.put(ES, DBDatasource.class);
         datasourceMap.put(REDIS, DBDatasource.class);
 
         datasourceMap.put(HIVE, HiveDatasource.class);
@@ -71,7 +70,7 @@ public enum Datasource  {
         datasourceMap.put(CUSTOMIZE_SINK, CustomizeDatasource.class);
 
         // 待归类
-        // VIEW / DORIS / ICEBERG /
+        // VIEW / DORIS / ICEBERG / Paimon / ES
     }
 
     Datasource(int type) {
@@ -92,5 +91,10 @@ public enum Datasource  {
         } catch (Exception e) {
             return UNKNOWN;
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.name();
     }
 }

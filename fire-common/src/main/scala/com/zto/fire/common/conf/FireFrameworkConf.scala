@@ -121,6 +121,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_DEPLOY_CONF_ENABLE = "fire.deploy_conf.enable"
   lazy val FIRE_EXCEPTION_BUS_SIZE = "fire.exception_bus.size"
   lazy val FIRE_LINEAGE_ENABLE = "fire.lineage.enable"
+  lazy val FIRE_LINEAGE_DEBUG_ENABLE = "fire.lineage.debug.enable"
   lazy val FIRE_LINEAGE_COLLECT_SQL_ENABLE = "fire.lineage.collect_sql.enable"
   lazy val FIRE_LINEAGE_RUN_COUNT = "fire.lineage.run.count"
   lazy val FIRE_LINEAGE_MAX_SIZE = "fire.lineage.max.size"
@@ -163,11 +164,15 @@ private[fire] object FireFrameworkConf {
   // 定时解析埋点SQL的初始延迟（s）
   lazy val lineageRunInitialDelay = PropUtils.getInt(this.FIRE_LINEAGE_RUN_INITIAL_DELAY, 60)
   // 用于存放埋点的队列最大大小，超过该大小将会被丢弃
-  lazy val lineMaxSize = PropUtils.getInt(this.FIRE_LINEAGE_MAX_SIZE, 200)
+  lazy val lineageMaxSize = PropUtils.getInt(this.FIRE_LINEAGE_MAX_SIZE, 500)
   // 异步解析血缘线程执行的次数
-  lazy val lineageRunCount = PropUtils.getInt(this.FIRE_LINEAGE_RUN_COUNT, 10)
+  lazy val lineageRunCount = PropUtils.getInt(this.FIRE_LINEAGE_RUN_COUNT, 360)
   // 是否开启实时血缘埋点
-  lazy val lineageEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_ENABLE, true)
+  def lineageEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_ENABLE, true)
+  // 是否开启实时血缘debug模式
+  lazy val lineageDebugEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_DEBUG_ENABLE, false)
+  // 禁用血缘采集
+  def disableLineage(): Unit = PropUtils.setProperty(this.FIRE_LINEAGE_ENABLE, "false")
   lazy val lineageCollectSQLEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_COLLECT_SQL_ENABLE, true)
   lazy val lineageSendMqEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_SEND_MQ_ENABLE, false)
   lazy val lineageMQUrl = {

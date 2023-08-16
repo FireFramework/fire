@@ -18,9 +18,11 @@
 package com.zto.fire.common.lineage.parser.connector
 
 import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.bean.lineage.SQLTable
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.parser.ConnectorParser
-import com.zto.fire.common.lineage.{DatasourceDesc, SQLLineageManager}
+import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
+import com.zto.fire.common.lineage.{DatasourceDesc, SQLLineageManager, SqlToDatasource}
 import com.zto.fire.predef._
 
 import java.util.Objects
@@ -90,7 +92,7 @@ private[fire] object HudiConnector extends ConnectorParser {
   def addDatasource(datasource: Datasource, cluster: String, tableName: String,
                     tableType: String, recordKey: String, precombineKey: String,
                     partition: String, operation: Operation*): Unit = {
-    this.addDatasource(datasource, HudiDatasource(datasource.toString, cluster, tableName, tableType, recordKey, precombineKey, partition, toOperationSet(operation: _*)))
+    if (this.canAdd) this.addDatasource(datasource, HudiDatasource(datasource.toString, cluster, tableName, tableType, recordKey, precombineKey, partition, toOperationSet(operation: _*)))
   }
 }
 
@@ -117,12 +119,44 @@ case class HudiDatasource(datasource: String, cluster: String,
 
   override def hashCode(): Int = Objects.hash(datasource, cluster)
 
-  def set(target: HudiDatasource): Unit = {
+  /**
+   * 单独的set方法可用于将target中的字段值set到对应的Datasource子类中
+   * 注：若子类有些特殊字段需要被赋值，则需要覆盖此方法的实现
+   *
+   * @param target
+   * 目标对象实例
+   */
+  override def set(target: DatasourceDesc): Unit = {
     if (target != null) {
-      if (noEmpty(target.tableType)) this.tableType = target.tableType
-      if (noEmpty(target.recordKey)) this.recordKey = target.recordKey
-      if (noEmpty(target.precombineKey)) this.precombineKey = target.precombineKey
-      if (noEmpty(target.partition)) this.partition = target.partition
+      target match {
+        case targetDesc: HudiDatasource =>
+          if (noEmpty(targetDesc.tableType)) this.tableType = targetDesc.tableType
+          if (noEmpty(targetDesc.recordKey)) this.recordKey = targetDesc.recordKey
+          if (noEmpty(targetDesc.precombineKey)) this.precombineKey = targetDesc.precombineKey
+          if (noEmpty(targetDesc.partition)) this.partition = targetDesc.partition
+        case _ =>
+      }
     }
+  }
+}
+
+object HudiDatasource extends SqlToDatasource {
+
+  /**
+   * 解析SQL血缘中的表信息并映射为数据源信息
+   * 注：1. 新增子类的名称必须来自Datasource枚举中map所定义的类型，如catalog为hudi，则Datasource枚举中映射为HudiDatasource，对应创建名为HudiDatasource的object继承该接口
+   *    2. 新增Datasource子类需实现该方法，定义如何将SQLTable映射为对应的Datasource实例
+   *
+   * @param table
+   * sql语句中使用到的表
+   * @return
+   * DatasourceDesc
+   */
+  def mapDatasource(table: SQLTable): Unit = {
+    if (this.isNotMatch("hudi", table)) return
+
+    val operations = new JHashSet[Operation]()
+    table.getOperation.map(t => operations.add(Operation.parse(t)))
+    HudiConnector.addDatasource(Datasource.HUDI, HudiDatasource(Datasource.HUDI.toString, table.getCluster, table.getPhysicalTable, operation = operations))
   }
 }

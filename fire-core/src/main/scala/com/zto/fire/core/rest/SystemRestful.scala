@@ -147,7 +147,7 @@ private[fire] object SystemRestful extends Logging {
       } catch {
         case e: Exception => {
           if (this.logCount < 3) {
-            this.logger.warn(s"fire内部接口自调用失败，对用户任务无影响，可忽略", e)
+            this.logger.info(s"fire内部接口自调用失败，对任务无影响，请忽略该异常", e)
             this.logCount += 1
           }
         }

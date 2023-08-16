@@ -57,9 +57,11 @@ private[fire] object DistributeSyncManager extends SyncManager {
   def collect: Unit = {
     lineageThread.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = {
+        LineageManager.printLog(s"调用接口[$lineageUrl]定时任务已启动")
         val lineageMap = LineageManager.getDatasourceLineage
         if (noEmpty(lineageMap)) {
           val json = JSONUtils.toJSONString(lineageMap)
+          LineageManager.printLog(s"调用接口[$lineageUrl]发送血缘json：$json")
           SystemRestful.restInvoke(lineageUrl, json)
         }
 
@@ -67,7 +69,7 @@ private[fire] object DistributeSyncManager extends SyncManager {
           logger.info(s"Flink分布式血缘解析与采集任务即将退出，总计运行：${lineageRunCount.get()}次")
           lineageThread.shutdown()
         }
-        logger.info(s"完成Flink分布式血缘解析与采集：${lineageRunCount.get()}次")
+        LineageManager.printLog(s"完成Flink分布式血缘解析与采集：${lineageRunCount.get()}次")
       }
     }, FireFrameworkConf.lineageRunInitialDelay, FireFrameworkConf.lineageRunPeriod, TimeUnit.SECONDS)
   }

@@ -45,7 +45,7 @@ private[fire] object DorisConnector extends IJDBCConnector {
     val url = properties.getOrElse("url", "")
     SQLLineageManager.setCluster(tableIdentifier, url)
     val username = properties.getOrElse("username", "")
-    LineageManager.addDBSql(Datasource.JDBC, url, username, "", Operation.CREATE_TABLE)
+    if (this.canAdd) LineageManager.addDBSql(Datasource.JDBC, url, username, "", Operation.CREATE_TABLE)
   }
 
 }

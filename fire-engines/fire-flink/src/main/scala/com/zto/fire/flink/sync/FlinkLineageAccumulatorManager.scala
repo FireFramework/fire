@@ -23,7 +23,6 @@ import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.sync.LineageAccumulatorManager
-import com.zto.fire.predef.{JConcurrentHashMap, JHashSet}
 
 import java.util.concurrent.atomic.AtomicLong
 
@@ -49,14 +48,17 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
     /**
      * 合并血缘
      */
-    def merge(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
+    def merge(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = this.synchronized {
+      LineageManager.printLog(s"Flink血缘累加器merge this.lineageMap=${this.lineageMap} 待合并map：$lineage")
       lineage.foreach(each => {
-        var set = this.lineageMap.get(each._1)
-        if (set == null) set = new JHashSet[DatasourceDesc]()
-        // 兼容jackson反序列化不支持HashSet与case class的问题
-        if (each._2.isInstanceOf[JArrayList[_]]) {
-          val datasource = each._2.asInstanceOf[JArrayList[JMap[String, _]]]
+        val key = if (each._1.isInstanceOf[String]) Datasource.parse(each._1.asInstanceOf[String]) else each._1
+        val set = this.lineageMap.mergeGet(key)(new JHashSet[DatasourceDesc]())
 
+        // 兼容jackson反序列化不支持复杂泛型嵌套结构，如：JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]
+        if (each._2.isInstanceOf[JArrayList[_]]) {
+          // local模式
+          LineageManager.printLog("Flink血缘累加器：mergeLineage.local")
+          val datasource = each._2.asInstanceOf[JArrayList[JMap[String, _]]]
           datasource.foreach(map => {
             if (map.containsKey("datasource")) {
               val datasource = map.getOrElse("datasource", "").toString.toUpperCase
@@ -64,15 +66,19 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
               if (datasourceClazz != null) {
                 val json = JSONUtils.toJSONString(map)
                 val datasourceDesc = JSONUtils.parseScalaObject(json, datasourceClazz)
-                set.add(datasourceDesc.asInstanceOf[DatasourceDesc])
+                LineageManager.printLog(s"Flink血缘累加器json：$json json反序列化：$datasourceDesc")
+                LineageManager.mergeSet(set, datasourceDesc.asInstanceOf[DatasourceDesc])
               }
             }
           })
         } else {
-          each._2.filter(desc => desc.toString.contains("datasource")).foreach(desc => set.add(desc))
+          // cluster模式
+          LineageManager.printLog("Flink血缘累加器：mergeLineage.cluster")
+          each._2.filter(desc => desc.toString.contains("datasource")).foreach(desc => LineageManager.mergeSet(set, desc))
         }
 
-        if (set.nonEmpty) this.lineageMap.put(each._1, set)
+        if (set.nonEmpty) this.lineageMap.put(key, set)
+        LineageManager.printLog(s"Flink血缘累加器合并完成：${this.lineageMap}")
       })
     }
   }
@@ -93,6 +99,6 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
    * 获取收集到的血缘消息
    */
   override def getValue: Lineage = {
-    new Lineage(this.lineageMap , SQLLineageManager.getSQLLineage)
+    new Lineage(this.lineageMap, SQLLineageManager.getSQLLineage)
   }
 }

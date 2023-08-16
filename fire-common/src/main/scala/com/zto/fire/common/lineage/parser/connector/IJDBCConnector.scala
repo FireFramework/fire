@@ -19,6 +19,7 @@ package com.zto.fire.common.lineage.parser.connector
 
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.parser.ConnectorParser
+import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
 
 /**
  * JDBC类别通用父类
@@ -40,7 +41,7 @@ trait IJDBCConnector extends ConnectorParser {
    * @param username
    * 连接用户名
    */
-  def addDatasource(datasource: Datasource, cluster: String, tableName: String, username: String = "", operation: Operation): Unit = {
-    this.addDatasource(datasource, DBDatasource(datasource.toString, cluster, tableName, username, toOperationSet(operation)))
+  def addDatasource(datasource: Datasource, cluster: String, tableName: String, username: String, operation: Operation*): Unit = {
+    if (this.canAdd) this.addDatasource(datasource, DBDatasource(datasource.toString, cluster, tableName, username, toOperationSet(operation: _*)))
   }
 }

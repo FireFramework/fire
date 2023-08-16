@@ -25,6 +25,7 @@ package com.zto.fire.common.enu;
 public enum JdbcDriver {
     mysql("com.mysql.jdbc.Driver"),
     tidb("com.mysql.jdbc.Driver"),
+    doris("com.mysql.jdbc.Driver"),
     sqlserver("com.microsoft.sqlserver.jdbc.SQLServerDriver"),
     oracle("oracle.jdbc.driver.OracleDriver"),
     hive("org.apache.hive.jdbc.HiveDriver"),
@@ -36,11 +37,9 @@ public enum JdbcDriver {
     automatic("");
 
     private String driver;
-
     JdbcDriver(String driver) {
         this.driver = driver;
     }
-
     public String getDriver() {
         return driver;
     }

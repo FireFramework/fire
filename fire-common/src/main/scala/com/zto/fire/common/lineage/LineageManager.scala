@@ -20,6 +20,7 @@ package com.zto.fire.common.lineage
 import com.zto.fire.common.bean.lineage.{Lineage, SQLTable}
 import com.zto.fire.common.conf.FireFrameworkConf._
 import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
+import com.zto.fire.common.lineage.LineageManager.printLog
 import com.zto.fire.common.lineage.parser.ConnectorParserManager
 import com.zto.fire.common.lineage.parser.connector._
 import com.zto.fire.common.util._
@@ -27,7 +28,7 @@ import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 
 import java.util.concurrent._
-import scala.collection.JavaConversions
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * 用于统计当前任务使用到的数据源信息，包括MQ、DB、hive等连接信息等
@@ -43,7 +44,8 @@ private[fire] class LineageManager extends Logging {
   private lazy val dbSqlQueue = new ConcurrentLinkedQueue[DBSqlSource]()
   // 用于解析数据源的异步定时调度线程
   private lazy val parserExecutor = ThreadUtils.createThreadPool("LineageManager", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
-  private var parseCount = 0
+  private lazy val parseCount = new AtomicInteger()
+  private lazy val addDBCount = new AtomicInteger()
   // 用于收集各实时引擎执行的sql语句
   this.lineageParse()
 
@@ -54,20 +56,19 @@ private[fire] class LineageManager extends Logging {
     if (lineageEnable) {
       this.parserExecutor.scheduleWithFixedDelay(new Runnable {
         override def run(): Unit = {
-          parseCount += 1
-
-          if (parseCount >= lineageRunCount && !parserExecutor.isShutdown) {
-            logger.info(s"3. 异步解析实时血缘的定时任务采样共计：${lineageRunCount}次，即将退出异步线程")
+          if (!lineageEnable || (parseCount.incrementAndGet() >= lineageRunCount && !parserExecutor.isShutdown)) {
+            disableLineage()
             parserExecutor.shutdown()
+            printLog("实时血缘解析任务退出！")
           }
 
           // 1. 解析jdbc sql语句
-          val start = currentTime
           parseJdbcSql()
+          printLog(s"完成第${parseCount}/${lineageRunCount}次解析JDBC中的血缘信息")
 
-          // 2. 将SQL中的hive表映射到数据源结构中
-          LineageManager.addSQLTables(SQLLineageManager.getSQLLineage.getTables)
-          logger.info(s"2. 完成第${parseCount}/${lineageRunCount}次异步解析SQL埋点中的表信息，耗时：${elapsed(start)}")
+          // 2. 将SQL中使用到的的表血缘信息映射到数据源中
+          LineageManager.mapTableToDatasource(SQLLineageManager.getSQLLineage.getTables)
+          printLog(s"完成第${parseCount}/${lineageRunCount}次异步解析SQL埋点中的表信息")
         }
       }, lineageRunInitialDelay, lineageRunPeriod, TimeUnit.SECONDS)
     }
@@ -82,6 +83,7 @@ private[fire] class LineageManager extends Logging {
         val sqlSource = dbSqlQueue.poll()
         if (sqlSource != null) {
           val tableNames = SQLUtils.tableParse(sqlSource.sql)
+          printLog(s"解析JDBC SQL：${sqlSource.sql}")
           if (tableNames != null && tableNames.nonEmpty) {
             tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
               add(Datasource.parse(sqlSource.datasource), DBDatasource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, operation = sqlSource.operation))
@@ -89,18 +91,20 @@ private[fire] class LineageManager extends Logging {
           }
         }
       }
-    }(logger, s"1. 开始第${parseCount}/${lineageRunCount}次解析JDBC中的血缘信息", "jdbc血缘信息解析失败")
+    }(logger, "", "jdbc血缘信息解析失败")
   }
 
   /**
    * 添加一个数据源描述信息
    */
-  private[fire] def add(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = {
-    if (!lineageEnable || this.lineageMap.size() > lineMaxSize) return
+  private[fire] def add(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = this.synchronized {
+    if (!lineageEnable || this.lineageMap.size() > lineageMaxSize) return
+    printLog(s"1. 合并数据源add之前，lineageMap：$lineageMap 目标datasource：$datasourceDesc")
     val set = this.lineageMap.mergeGet(sourceType)(new JHashSet[DatasourceDesc]())
     if (set.isEmpty) set.add(datasourceDesc)
     val mergedSet = this.mergeDatasource(set, datasourceDesc)
     this.lineageMap.put(sourceType, mergedSet)
+    printLog(s"2. 合并数据源add之后：$lineageMap")
   }
 
   /**
@@ -113,7 +117,9 @@ private[fire] class LineageManager extends Logging {
   /**
    * 向队列中添加一条sql类型的数据源，用于后续异步解析
    */
-  private[fire] def addDBSqlSource(source: DBSqlSource): Unit = if (lineageEnable && this.dbSqlQueue.size() <= lineMaxSize) this.dbSqlQueue.offer(source)
+  private[fire] def addDBSqlSource(source: DBSqlSource): Unit = {
+    if (lineageEnable && this.addDBCount.incrementAndGet() <= lineageMaxSize) this.dbSqlQueue.offer(source)
+  }
 
   /**
    * 获取所有使用到的数据源
@@ -126,6 +132,21 @@ private[fire] class LineageManager extends Logging {
  */
 private[fire] object LineageManager extends Logging {
   private[fire] lazy val manager = new LineageManager
+
+  /**
+   * 向标准输出流打印血缘日志
+   * 注：仅用于debug协助问题定位
+   *
+   * @param msg
+   * 日志内容
+   */
+  private[fire] def printLog(msg: String): Unit = {
+    if (lineageDebugEnable) {
+      val log = s"lineage=>$msg"
+      logger.info(log)
+      println(log)
+    }
+  }
 
   /**
    * 添加一条sql记录到队列中
@@ -162,32 +183,23 @@ private[fire] object LineageManager extends Logging {
   }
 
   /**
-   * 添加多个数据源操作
-   */
-  private[fire] def toOperationSet(operation: Operation*): JHashSet[Operation] = {
-    val operationSet = new JHashSet[Operation]
-    operation.foreach(operationSet.add)
-    operationSet
-  }
-
-  /**
    * 根据SQL血缘解析的Hive、Hudi表信息添加到数据源中
    *
    * @param tables
    * SQLTable实例，来自于sql中的血缘解析
    */
-  def addSQLTables(tables: JList[SQLTable]): Unit = {
-    // 将hive表映射到datasource血缘列表中
-    tables.filter(tab => "hive".equalsIgnoreCase(tab.getCatalog)).foreach(table => {
-      val operations = new JHashSet[Operation]()
-      table.getOperation.map(t => operations.add(Operation.parse(t)))
-      this.addDatasource(Datasource.HIVE, HiveDatasource(Datasource.HIVE.toString, table.getCluster, table.getPhysicalTable, table.getPartitions, operations))
-    })
-
-    tables.filter(tab => "hudi".equalsIgnoreCase(tab.getCatalog)).foreach(table => {
-      val operations = new JHashSet[Operation]()
-      table.getOperation.map(t => operations.add(Operation.parse(t)))
-      this.addDatasource(Datasource.HUDI, HudiDatasource(Datasource.HUDI.toString, table.getCluster, table.getPhysicalTable, operation = operations))
+  private def mapTableToDatasource(tables: JList[SQLTable]): Unit = {
+    tables.filter(_ != null).foreach(table => {
+      LineageManager.printLog("1. 开始将SQLTable中的血缘信息合并到Datasource中")
+      val connector = if (noEmpty(table.getConnector)) table.getConnector else table.getCatalog
+      val datasourceClass = Datasource.toDatasource(Datasource.parse(connector))
+      if (datasourceClass != null) {
+        val method = ReflectionUtils.getMethodByName(datasourceClass, "mapDatasource")
+        if (method != null) {
+          LineageManager.printLog(s"2. 开始调用类：${datasourceClass}的方法：${method.getName} connector：${connector}")
+          method.invoke(null, table)
+        }
+      }
     })
   }
 
@@ -216,6 +228,29 @@ private[fire] object LineageManager extends Logging {
   }
 
   /**
+   * 将目标DataSourceDesc中的operation合并到set中
+   */
+  def mergeSet(set: JHashSet[DatasourceDesc], datasourceDesc: DatasourceDesc): Unit = {
+    if (set.isEmpty) {
+      set.add(datasourceDesc)
+      return
+    }
+
+    if (set.contains(datasourceDesc)) {
+      set.foreach(ds => {
+        if (ds.equals(datasourceDesc)) {
+          // 反射调用case class中的operation进行set合并
+          ConnectorParserManager.addOperation(datasourceDesc, ds)
+        }
+      })
+
+      LineageManager.printLog(s"合并前血缘set集合：$set Datasource实例：$datasourceDesc")
+      set.replace(datasourceDesc)
+      LineageManager.printLog("合并后血缘set集合：" + set)
+    }
+  }
+
+  /**
    * 合并两个血缘map
    *
    * @param current
@@ -226,6 +261,7 @@ private[fire] object LineageManager extends Logging {
    * 合并后的血缘map
    */
   def mergeLineageMap(current: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]], target: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
+    printLog(s"1. 双血缘map合并 current：$current target：$target")
     target.foreach(ds => {
       val datasourceDesc = current.mergeGet(ds._1)(ds._2)
       if (ds._2.nonEmpty) {
@@ -234,6 +270,7 @@ private[fire] object LineageManager extends Logging {
         })
       }
     })
+    printLog(s"2. 双血缘map合并 current：$current")
     current
   }
 }

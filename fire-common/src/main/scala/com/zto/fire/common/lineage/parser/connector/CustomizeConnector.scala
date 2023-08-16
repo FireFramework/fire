@@ -18,9 +18,11 @@
 package com.zto.fire.common.lineage.parser.connector
 
 import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.bean.lineage.SQLTable
 import com.zto.fire.common.conf.FireKafkaConf
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.parser.ConnectorParser
+import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
 import com.zto.fire.predef._
 
@@ -56,7 +58,7 @@ private[fire] object CustomizeConnector extends ConnectorParser {
    * 集群标识
    */
   def addDatasource(datasource: Datasource, cluster: String, sourceType: String, operation: Operation*): Unit = {
-    this.addDatasource(datasource, CustomizeDatasource(datasource.toString, cluster, sourceType, toOperationSet(operation: _*)))
+    if (this.canAdd) this.addDatasource(datasource, CustomizeDatasource(datasource.toString, cluster, sourceType, toOperationSet(operation: _*)))
   }
 }
 

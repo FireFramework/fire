@@ -49,4 +49,25 @@ trait JavaExt {
     }
   }
 
+  /**
+   * Java Set API扩展
+   * @param set
+   * set集合
+   */
+  implicit class SetExt[V](set: JSet[V]) {
+
+    /**
+     * 替代set中指定的对象实例，适用于以下场景：
+     * 实例与set中已存在的相互equals，但却是两个不同的对象
+     *
+     * @param value
+     * 待替换的实例
+     */
+    def replace(value: V): Unit = {
+      if (set.contains(value)) {
+        set.remove(value)
+        set.add(value)
+      }
+    }
+  }
 }

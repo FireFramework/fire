@@ -37,7 +37,7 @@ private[fire] object SQLLineageManager {
    * 添加待执行的SQL语句
    */
   def addStatement(statement: String): Unit = {
-    if (noEmpty(statement) && statementSet.size() <= FireFrameworkConf.lineMaxSize) this.statementSet.add(statement.trim)
+    if (noEmpty(statement) && statementSet.size() <= FireFrameworkConf.lineageMaxSize) this.statementSet.add(statement.trim)
   }
 
   /**

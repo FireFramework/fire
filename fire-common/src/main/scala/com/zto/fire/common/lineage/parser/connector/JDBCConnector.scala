@@ -18,9 +18,11 @@
 package com.zto.fire.common.lineage.parser.connector
 
 import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.bean.lineage.SQLTable
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
-import com.zto.fire.predef.{JHashSet, JSet}
+import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
+import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager, SqlToDatasource}
+import com.zto.fire.predef._
 
 import java.util.Objects
 import scala.collection.mutable
@@ -47,7 +49,7 @@ private[fire] object JDBCConnector extends IJDBCConnector {
     val url = properties.getOrElse("url", "")
     SQLLineageManager.setCluster(tableIdentifier, url)
     val username = properties.getOrElse("username", "")
-    LineageManager.addDBSql(Datasource.JDBC, url, username, "", this.toOperationSet(Operation.CREATE_TABLE, Operation.SELECT))
+    if (this.canAdd) LineageManager.addDBSql(Datasource.JDBC, url, username, "", toOperationSet(Operation.CREATE_TABLE, Operation.SELECT))
   }
 }
 
@@ -99,4 +101,42 @@ case class DBSqlSource(datasource: String, cluster: String, username: String,
   }
 
   override def hashCode(): Int = Objects.hash(datasource, cluster, username, sql)
+}
+
+object DBDatasource extends SqlToDatasource {
+
+  /**
+   * 解析SQL血缘中的表信息并映射为数据源信息
+   * 注：1. 新增子类的名称必须来自Datasource枚举中map所定义的类型，如catalog为hudi，则Datasource枚举中映射为HudiDatasource，对应创建名为HudiDatasource的object继承该接口
+   *    2. 新增Datasource子类需实现该方法，定义如何将SQLTable映射为对应的Datasource实例
+   *
+   * @param table
+   * sql语句中使用到的表
+   * @return
+   * DatasourceDesc
+   */
+  override def mapDatasource(table: SQLTable): Unit = {
+    if (table == null) return
+    var datasource: Datasource = Datasource.UNKNOWN
+
+    if (isMatch("jdbc", table)) {
+      datasource = Datasource.JDBC
+    }
+
+    if (isMatch("clickhouse", table)) {
+      datasource = Datasource.CLICKHOUSE
+    }
+
+    if (isMatch("doris", table)) {
+      datasource = Datasource.DORIS
+    }
+
+    if (Datasource.UNKNOWN == datasource) return
+
+    val options = table.getOptions
+    val username = if (noEmpty(options)) options.getOrDefault("username", "") else ""
+    val operations = new JHashSet[Operation]()
+    table.getOperation.map(t => operations.add(Operation.parse(t)))
+    JDBCConnector.addDatasource(datasource, table.getCluster, table.getPhysicalTable, username, operations.toSeq: _*)
+  }
 }

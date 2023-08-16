@@ -23,4 +23,14 @@ package com.zto.fire.common.lineage
  * @author ChengLong 2023-08-09 16:51:32
  * @since 2.0.0
  */
-trait DatasourceDesc
+trait DatasourceDesc {
+
+  /**
+   * 单独的set方法可用于将target中的字段值set到对应的Datasource子类中
+   * 注：若子类有些特殊字段需要被赋值，则需要覆盖此方法的实现
+   *
+   * @param target
+   * 目标对象实例
+   */
+  def set(target: DatasourceDesc): Unit = {}
+}

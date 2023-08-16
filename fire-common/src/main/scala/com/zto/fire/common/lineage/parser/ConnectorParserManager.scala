@@ -20,9 +20,10 @@ package com.zto.fire.common.lineage.parser
 import com.zto.fire.predef._
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.Operation
-import com.zto.fire.common.lineage.{DatasourceDesc, SQLLineageManager}
+import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
 import com.zto.fire.common.util.ReflectionUtils
 
+import java.util.concurrent.CopyOnWriteArraySet
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
@@ -66,6 +67,7 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
         if (method != null) {
           SQLLineageManager.setConnector(tableIdentifier, connector)
           method.invoke(null, tableIdentifier, properties, partitions)
+          LineageManager.printLog(s"映射SQL血缘为Datasource，反射调用类：${className.get}.parse()，connector：$connector properties：$properties")
         }
       } catch {
         case e: Throwable => logWarning(s"血缘解析失败：不支持的connector类型[$connector]", e)
@@ -83,7 +85,7 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
    * 待合并的数据源
    */
   def merge[T <: DatasourceDesc : ClassTag](datasourceList: JSet[DatasourceDesc], targetDesc: DatasourceDesc): JHashSet[DatasourceDesc] = {
-    val mergeSet = new JHashSet[DatasourceDesc](datasourceList)
+    val mergeSet = new CopyOnWriteArraySet[DatasourceDesc](datasourceList)
     mergeSet.addAll(datasourceList)
 
     mergeSet.foreach(sourceDesc => {
@@ -97,7 +99,9 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
       }
     })
 
-    mergeSet
+    val finalSet = new JHashSet[DatasourceDesc]()
+    finalSet.addAll(mergeSet)
+    finalSet
   }
 
   /**
@@ -118,40 +122,44 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
    * @param target
    * 目标数据源
    */
-  protected def addOperation(source: DatasourceDesc, target: DatasourceDesc): Unit = {
-    // 反射获取target中的操作类型
-    val targetOperationMethod = ReflectionUtils.getMethodByName(target.getClass, "operation")
-    val targetOperations = new JHashSet[Operation]()
-    if (targetOperationMethod != null) {
-      val operation = targetOperationMethod.invoke(target)
-      if (operation != null) {
-        operation match {
-          case operations: JHashSet[Operation] =>
-            targetOperations.addAll(operations)
-          case operations: mutable.Set[Operation] =>
-            targetOperations.addAll(operations)
-          case operations: collection.immutable.Set[Operation] =>
-            targetOperations.addAll(operations)
-          case _ =>
+  protected[fire] def addOperation(source: DatasourceDesc, target: DatasourceDesc): Unit = {
+    tryWithLog {
+      LineageManager.printLog(s"1. 合并operation前：source：$source target：$target")
+      // 反射获取target中的操作类型
+      val targetOperationMethod = ReflectionUtils.getMethodByName(target.getClass, "operation")
+      val targetOperations = new JHashSet[Operation]()
+      if (targetOperationMethod != null) {
+        val operation = targetOperationMethod.invoke(target)
+        if (operation != null) {
+          operation match {
+            case operations: JHashSet[Operation] =>
+              targetOperations.addAll(operations)
+            case operations: mutable.Set[Operation] =>
+              targetOperations.addAll(operations)
+            case operations: collection.immutable.Set[Operation] =>
+              targetOperations.addAll(operations)
+            case _ =>
+          }
         }
       }
-    }
 
-    if (targetOperations.isEmpty) return
+      if (targetOperations.isEmpty) return
 
-    // 将target中的operation几盒添加到source数据源中
-    val clazz = source.getClass
-    val operationMethod = ReflectionUtils.getMethodByName(clazz, "operation")
-    if (operationMethod != null) {
-      val operation = operationMethod.invoke(source)
-      val sourceOptions = if (operation != null) operation.asInstanceOf[JHashSet[Operation]] else new JHashSet[Operation]()
-      if (operation != null) {
-        val methodEq = ReflectionUtils.getMethodByName(clazz, "operation_$eq")
-        if (methodEq != null) {
-          sourceOptions.addAll(targetOperations)
-          methodEq.invoke(source, sourceOptions)
+      // 将target中的operation几盒添加到source数据源中
+      val clazz = source.getClass
+      val operationMethod = ReflectionUtils.getMethodByName(clazz, "operation")
+      if (operationMethod != null) {
+        val operation = operationMethod.invoke(source)
+        val sourceOptions = if (operation != null) operation.asInstanceOf[JHashSet[Operation]] else new JHashSet[Operation]()
+        if (operation != null) {
+          val methodEq = ReflectionUtils.getMethodByName(clazz, "operation_$eq")
+          if (methodEq != null) {
+            sourceOptions.addAll(targetOperations)
+            methodEq.invoke(source, sourceOptions)
+          }
         }
       }
-    }
+      LineageManager.printLog(s"2. 合并operation后：source：$source")
+    } (this.logger, catchLog = s"${source.getClass.getName} 血缘操作类型Set[Operation]合并失败")
   }
 }

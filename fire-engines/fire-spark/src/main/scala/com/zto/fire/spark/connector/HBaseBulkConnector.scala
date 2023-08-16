@@ -19,15 +19,12 @@ package com.zto.fire.spark.connector
 
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.KeyNum
-import com.zto.fire.common.enu.Datasource.HBASE
 import com.zto.fire.common.enu.{Operation => FOperation}
-import com.zto.fire.common.lineage.LineageManager
-import com.zto.fire.common.lineage.parser.connector.HbaseConnector
 import com.zto.fire.core.connector.{Connector, ConnectorFactory}
 import com.zto.fire.hbase.HBaseConnector
+import com.zto.fire.hbase.HBaseConnector.addHBaseDatasource
 import com.zto.fire.hbase.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.hbase.conf.FireHBaseConf
-import com.zto.fire.hbase.conf.FireHBaseConf.hbaseClusterUrl
 import com.zto.fire.predef._
 import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
@@ -83,7 +80,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     tryWithLog {
       val rowKeyRDD = rdd.filter(rowkey => StringUtils.isNotBlank(rowkey)).map(rowKey => Bytes.toBytes(rowKey))
       this.bulkDelete[Array[Byte]](rowKeyRDD, TableName.valueOf(tableName), rec => new Delete(rec), this.finalBatchSize)
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
+      addHBaseDatasource(tableName, FOperation.DELETE, keyNum)
     }(this.logger, s"execute bulkDeleteRDD(tableName: ${tableName}, batchSize: ${batchSize}) success. keyNum: ${keyNum}")
   }
 
@@ -100,7 +97,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     requireNonEmpty(tableName, dataset)
     tryWithLog {
       this.bulkDeleteRDD(tableName, dataset.rdd)
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
+      addHBaseDatasource(tableName, FOperation.DELETE, keyNum)
     }(this.logger, s"execute bulkDeleteDS(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
 
@@ -118,7 +115,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     tryWithLog {
       val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
       this.bulkDeleteRDD(tableName, rdd)
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
+      addHBaseDatasource(tableName, FOperation.DELETE, keyNum)
     }(this.logger, s"execute bulkDeleteList(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -143,7 +140,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       val getRDD = this.bulkGet[Array[Byte], E](TableName.valueOf(tableName), batchSize, rowKeyRDD, rowKey => new Get(rowKey), (result: Result) => {
         HBaseConnector(keyNum = this.keyNum).hbaseRow2Bean[E](result).getOrElse(clazz.newInstance())
       }).filter(bean => noEmpty(bean, bean.rowKey)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
+      addHBaseDatasource(tableName, FOperation.GET, keyNum)
       getRDD
     }(this.logger, s"execute bulkGetRDD(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
@@ -166,7 +163,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
 
     tryWithReturn {
       val resultRdd = this.bulkGetRDD[E](tableName, rdd)
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
+      addHBaseDatasource(tableName, FOperation.GET, keyNum)
       this.sparkSession.createDataFrame(resultRdd, clazz)
     }(this.logger, s"execute bulkGetDF(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
@@ -188,7 +185,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     requireNonEmpty(tableName, rdd, clazz)
     tryWithReturn {
       val resultRdd = this.bulkGetRDD[E](tableName, rdd)
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
+      addHBaseDatasource(tableName, FOperation.GET, keyNum)
       this.sparkSession.createDataset(resultRdd)(Encoders.bean(clazz))
     }(this.logger, s"execute bulkGetDS(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
@@ -213,7 +210,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
 
     tryWithReturn {
       val rdd = sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
+      addHBaseDatasource(tableName, FOperation.GET, keyNum)
       this.bulkGetRDD[E](tableName, rdd)
     }(this.logger, s"execute bulkGetSeq(tableName: ${tableName}, batchSize: ${finalBatchSize}) success. keyNum: ${keyNum}")
   }
@@ -240,7 +237,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
         (putRecord: T) => {
           HBaseConnector(keyNum = this.keyNum).convert2Put[T](if (HBaseConnector(keyNum = this.keyNum).getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, HBaseConnector(keyNum = this.keyNum).getNullable[T])
         })
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      addHBaseDatasource(tableName, FOperation.INSERT, keyNum)
     }(this.logger, s"execute bulkPutRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -264,7 +261,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     tryWithLog {
       val rdd = this.sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
       this.bulkPutRDD[T](tableName, rdd)
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      addHBaseDatasource(tableName, FOperation.INSERT, keyNum)
     }(this.logger, s"execute bulkPutRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -288,7 +285,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       if (scan.getCaching == -1) {
         scan.setCaching(this.finalBatchSize)
       }
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.SCAN)
+      addHBaseDatasource(tableName, FOperation.SCAN, keyNum)
       this.hbaseRDD(TableName.valueOf(tableName), scan).mapPartitions(it => HBaseConnector(keyNum = this.keyNum).hbaseRow2BeanList[T](it)).persist(StorageLevel.fromString(FireHBaseConf.hbaseStorageLevel(this.keyNum)))
     }(this.logger, s"execute bulkScanRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
@@ -370,7 +367,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       this.streamBulkPut[T](dstream, TableName.valueOf(tableName), (putRecord: T) => {
         HBaseConnector(keyNum = this.keyNum).convert2Put[T](if (HBaseConnector(keyNum = this.keyNum).getMultiVersion[T]) new MultiVersionsBean(putRecord).asInstanceOf[T] else putRecord, HBaseConnector(keyNum = this.keyNum).getNullable[T])
       })
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      addHBaseDatasource(tableName, FOperation.INSERT, keyNum)
     }(this.logger, s"execute bulkPutStream(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -396,7 +393,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
         })
         putList.iterator
       }).saveAsNewAPIHadoopDataset(this.getConfiguration(tableName))
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      addHBaseDatasource(tableName, FOperation.INSERT, keyNum)
     }(this.logger, s"execute hadoopPut(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 
@@ -485,7 +482,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
         })
         putList.iterator
       }).saveAsNewAPIHadoopDataset(this.getConfiguration(tableName))
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      addHBaseDatasource(tableName, FOperation.INSERT, keyNum)
     }(this.logger, s"execute hadoopPut(tableName: ${tableName}) success. keyNum: ${keyNum}")
   }
 

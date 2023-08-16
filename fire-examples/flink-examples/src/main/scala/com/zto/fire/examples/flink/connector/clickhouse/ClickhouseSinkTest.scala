@@ -18,6 +18,7 @@
 package com.zto.fire.examples.flink.connector.clickhouse
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.{JSONUtils, ThreadUtils}
 import com.zto.fire.core.anno.connector.Kafka
 import com.zto.fire.core.anno.lifecycle.{Process, Step1}
@@ -36,6 +37,10 @@ import java.util.concurrent.TimeUnit
  *
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
+@Config(
+  """
+    |fire.lineage.debug.enable=true
+    |""")
 @Streaming(interval = 60, disableOperatorChaining = true)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object ClickhouseSinkTest extends FlinkStreaming {
@@ -82,6 +87,6 @@ object ClickhouseSinkTest extends FlinkStreaming {
   def lineage: Unit = {
     ThreadUtils.scheduleAtFixedRate({
       println(s"累加器值：" + JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue))
-    }, 0, 60, TimeUnit.SECONDS)
+    }, 0, 30, TimeUnit.SECONDS)
   }
 }

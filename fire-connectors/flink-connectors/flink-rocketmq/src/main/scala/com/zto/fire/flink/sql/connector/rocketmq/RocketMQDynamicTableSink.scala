@@ -20,7 +20,6 @@ package com.zto.fire.flink.sql.connector.rocketmq
 import com.zto.fire.common.conf.FireRocketMQConf
 import com.zto.fire.common.enu.Datasource.ROCKETMQ
 import com.zto.fire.common.enu.{Operation => FOperation}
-import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.lineage.parser.connector.RocketmqConnector
 import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.getRocketMQProperties
 import com.zto.fire.predef._

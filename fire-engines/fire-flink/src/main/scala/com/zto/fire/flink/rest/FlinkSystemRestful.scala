@@ -86,7 +86,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
 
     try {
       this.logger.debug(s"内部请求分布式更新血缘信息，ip：${request.ip()}")
-      this.logger.debug(s"请求fire更新血缘信息：$json")
+      LineageManager.printLog(s"请求fire更新血缘信息：$json")
       val lineageMap = JSONUtils.parseObject[JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]](json)
       if (ValueUtils.noEmpty(lineageMap)) {
         FlinkLineageAccumulatorManager.add(lineageMap)

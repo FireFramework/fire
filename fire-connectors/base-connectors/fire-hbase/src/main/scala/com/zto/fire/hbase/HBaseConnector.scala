@@ -19,13 +19,13 @@ package com.zto.fire.hbase
 
 import com.google.common.collect.Maps
 import com.zto.fire.common.anno.{FieldName, Internal}
-import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.common.conf.{FireFrameworkConf, KeyNum}
 import com.zto.fire.common.enu.Datasource.HBASE
 import com.zto.fire.common.enu.{Operation => FOperation}
-import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.lineage.parser.connector.HbaseConnector
 import com.zto.fire.common.util._
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
+import com.zto.fire.hbase.HBaseConnector.addHBaseDatasource
 import com.zto.fire.hbase.anno.HConfig
 import com.zto.fire.hbase.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.hbase.conf.FireHBaseConf
@@ -43,9 +43,8 @@ import java.lang.reflect.Field
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInt, Long => JLong, Short => JShort, String => JString}
 import java.math.{BigDecimal => JBigDecimal}
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.{ScheduledExecutorService, TimeUnit, ConcurrentHashMap => JConcurrentHashMap}
+import java.util.concurrent.{TimeUnit, ConcurrentHashMap => JConcurrentHashMap}
 import java.util.{Map => JMap}
-import scala.collection.Iterator
 import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
 
@@ -112,7 +111,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     tryFinallyWithReturn {
       table = this.getTable(tableName)
       table.put(puts)
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.INSERT)
+      addHBaseDatasource(tableName, FOperation.INSERT, keyNum)
       this.logger.info(s"HBase insert ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${puts.size}条")
     } {
       this.closeTable(table)
@@ -165,7 +164,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     var table: Table = null
     val list = ListBuffer[Result]()
     tryFinallyWithReturn {
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.GET)
+      addHBaseDatasource(tableName, FOperation.GET, keyNum)
       table = this.getTable(tableName)
       list ++= table.get(getList)
       this.logger.info(s"HBase 批量get ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${list.size}条")
@@ -207,7 +206,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     var rsScanner: ResultScanner = null
     try {
       table = this.getTable(tableName)
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.SCAN)
+      addHBaseDatasource(tableName, FOperation.SCAN, keyNum)
       rsScanner = table.getScanner(scan)
     } catch {
       case e: Exception => {
@@ -462,7 +461,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   /**
    * 将结果映射到自定义bean中
    *
-   * @param rs    HBase查询结果集
+   * @param rs HBase查询结果集
    * @return 目标类型实例
    */
   @Internal
@@ -496,7 +495,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   /**
    * 将结果映射到自定义bean中
    *
-   * @param rs    HBase查询结果集
+   * @param rs HBase查询结果集
    * @return 目标类型实例
    */
   @Internal
@@ -527,7 +526,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   /**
    * 将结果映射到自定义bean中
    *
-   * @param it    HBase查询结果集
+   * @param it HBase查询结果集
    * @return 目标类型实例
    */
   @Internal
@@ -557,7 +556,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   /**
    * 将多版本结果映射到自定义bean中
    *
-   * @param it    HBase查询结果集
+   * @param it HBase查询结果集
    * @return 目标类型实例
    */
   @Internal
@@ -731,7 +730,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
           tableDesc.addFamily(desc)
         }
         admin.createTable(tableDesc)
-        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.CREATE_TABLE)
+        addHBaseDatasource(tableName, FOperation.CREATE_TABLE, keyNum)
         // 如果开启表缓存，则更新缓存信息
         if (this.tableExistsCacheEnable && this.tableExists(tableName)) this.cacheTableExistsMap.update(tableName, true)
       }
@@ -757,7 +756,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
         admin.deleteTable(tbName)
         // 如果开启表缓存，则更新缓存信息
         if (this.tableExistsCacheEnable && !this.tableExists(tableName)) this.cacheTableExistsMap.update(tableName, false)
-        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DROP_TABLE)
+        addHBaseDatasource(tableName, FOperation.DROP_TABLE, keyNum)
       }
     } {
       this.closeAdmin(admin)
@@ -778,7 +777,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName) && !admin.isTableEnabled(tbName)) {
         admin.enableTable(tbName)
-        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.ENABLE_TABLE)
+        addHBaseDatasource(tableName, FOperation.ENABLE_TABLE, keyNum)
       }
     } {
       this.closeAdmin(admin)
@@ -799,7 +798,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       val tbName = TableName.valueOf(tableName)
       if (admin.tableExists(tbName) && admin.isTableEnabled(tbName)) {
         admin.disableTable(tbName)
-        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DISABLE_TABLE)
+        addHBaseDatasource(tableName, FOperation.DISABLE_TABLE, keyNum)
       }
     } {
       this.closeAdmin(admin)
@@ -822,7 +821,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       if (admin.tableExists(tbName)) {
         this.disableTable(tableName)
         admin.truncateTable(tbName, preserveSplits)
-        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.TRUNCATE)
+        addHBaseDatasource(tableName, FOperation.TRUNCATE, keyNum)
       }
     } {
       this.closeAdmin(admin)
@@ -930,7 +929,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
         })
 
         table.delete(deletes)
-        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE)
+        addHBaseDatasource(tableName, FOperation.DELETE, keyNum)
       } {
         this.closeTable(table)
       }(this.logger, s"HBase deleteRows ${hbaseClusterUrl(keyNum)}.${tableName}执行成功",
@@ -954,7 +953,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       tryFinallyWithReturn {
         table = this.getTable(tableName)
         table.delete(delete)
-        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE_FAMILY)
+        addHBaseDatasource(tableName, FOperation.DELETE_FAMILY, keyNum)
       } {
         this.closeTable(table)
       }(this.logger, s"HBase deleteFamilies ${hbaseClusterUrl(keyNum)}.${tableName}执行成功",
@@ -980,7 +979,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       tryFinallyWithReturn {
         table = this.getTable(tableName)
         table.delete(delete)
-        HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, operation = FOperation.DELETE_QUALIFIER)
+        addHBaseDatasource(tableName, FOperation.DELETE_QUALIFIER, keyNum)
       } {
         this.closeTable(table)
       }(this.logger, s"HBase deleteQualifiers ${hbaseClusterUrl(keyNum)}.${tableName}执行成功",
@@ -1080,5 +1079,21 @@ object HBaseConnector extends ConnectorFactory[HBaseConnector] with HBaseFunctio
     val connector = new HBaseConnector(conf.asInstanceOf[Configuration], keyNum)
     logger.debug(s"创建HBaseConnector实例成功. keyNum=$keyNum")
     connector
+  }
+
+  /**
+   * 添加HBase血缘信息
+   *
+   * @param tableName
+   * HBase表名
+   * @param operation
+   * 操作类型
+   * @param keyNum
+   * keyNum
+   */
+  def addHBaseDatasource(tableName: String, operation: FOperation, keyNum: Int): Unit = {
+    if (FireFrameworkConf.lineageEnable) {
+      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, "", operation)
+    }
   }
 }

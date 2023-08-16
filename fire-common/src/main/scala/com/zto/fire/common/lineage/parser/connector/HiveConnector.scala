@@ -18,12 +18,12 @@
 package com.zto.fire.common.lineage.parser.connector
 
 import com.zto.fire.common.bean.TableIdentifier
-import com.zto.fire.common.bean.lineage.SQLTablePartitions
-import com.zto.fire.common.conf.FireKafkaConf
+import com.zto.fire.common.bean.lineage.{SQLTable, SQLTablePartitions}
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.parser.ConnectorParser
-import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
-import com.zto.fire.predef.{JHashSet, JSet}
+import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
+import com.zto.fire.common.lineage.{DatasourceDesc, SqlToDatasource}
+import com.zto.fire.predef._
 
 import java.util.Objects
 import scala.collection.mutable
@@ -55,8 +55,8 @@ private[fire] object HiveConnector extends ConnectorParser {
    * @param cluster
    * 集群标识
    */
-  private[fire] def addHiveDatasource(datasource: Datasource, cluster: String, tableName: String, partitions: JSet[SQLTablePartitions], operation: Operation*): Unit = {
-    this.addDatasource(datasource, HiveDatasource(datasource.toString, cluster, tableName, partitions, toOperationSet(operation: _*)))
+  private[fire] def addDatasource(datasource: Datasource, cluster: String, tableName: String, partitions: JSet[SQLTablePartitions], operations: JSet[Operation]): Unit = {
+    this.addDatasource(datasource, HiveDatasource(datasource.toString, cluster, tableName, partitions, operations))
   }
 }
 
@@ -85,4 +85,25 @@ case class HiveDatasource(datasource: String, cluster: String, tableName: String
   }
 
   override def hashCode(): Int = Objects.hash(datasource, cluster)
+}
+
+object HiveDatasource extends SqlToDatasource {
+
+  /**
+   * 解析SQL血缘中的表信息并映射为数据源信息
+   * 注：1. 新增子类的名称必须来自Datasource枚举中map所定义的类型，如catalog为hudi，则Datasource枚举中映射为HudiDatasource，对应创建名为HudiDatasource的object继承该接口
+   *    2. 新增Datasource子类需实现该方法，定义如何将SQLTable映射为对应的Datasource实例
+   *
+   * @param table
+   * sql语句中使用到的表
+   * @return
+   * DatasourceDesc
+   */
+  def mapDatasource(table: SQLTable): Unit = {
+    if (!"hive".equalsIgnoreCase(table.getCatalog) && !"hive".equalsIgnoreCase(table.getConnector)) return
+
+    val operations = new JHashSet[Operation]()
+    table.getOperation.map(t => operations.add(Operation.parse(t)))
+    HiveConnector.addDatasource(Datasource.HIVE, table.getCluster, table.getPhysicalTable, table.getPartitions, operations)
+  }
 }
