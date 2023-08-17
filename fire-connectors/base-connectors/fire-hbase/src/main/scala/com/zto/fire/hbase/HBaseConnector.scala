@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.{FieldName, Internal}
 import com.zto.fire.common.conf.{FireFrameworkConf, KeyNum}
 import com.zto.fire.common.enu.Datasource.HBASE
 import com.zto.fire.common.enu.{Operation => FOperation}
-import com.zto.fire.common.lineage.parser.connector.HbaseConnector
+import com.zto.fire.common.lineage.parser.connector.HbaseConnectorParser
 import com.zto.fire.common.util._
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.hbase.HBaseConnector.addHBaseDatasource
@@ -1093,7 +1093,7 @@ object HBaseConnector extends ConnectorFactory[HBaseConnector] with HBaseFunctio
    */
   def addHBaseDatasource(tableName: String, operation: FOperation, keyNum: Int): Unit = {
     if (FireFrameworkConf.lineageEnable) {
-      HbaseConnector.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, "", operation)
+      HbaseConnectorParser.addDatasource(HBASE, hbaseClusterUrl(keyNum), tableName, "", operation)
     }
   }
 }

@@ -34,7 +34,7 @@ import scala.collection.mutable
  * @author ChengLong 2023-08-10 10:41:13
  * @since 2.3.8
  */
-private[fire] object HbaseConnector extends IJDBCConnector {
+private[fire] object HbaseConnectorParser extends IJDBCConnectorParser {
 
   /**
    * 解析指定的connector血缘
@@ -45,6 +45,10 @@ private[fire] object HbaseConnector extends IJDBCConnector {
    * connector中的options信息
    */
   override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+    val url = properties.getOrElse("zookeeper.quorum", "")
+    SQLLineageManager.setCluster(tableIdentifier, url)
+    val physicalTable = properties.getOrElse("table-name", "")
+    SQLLineageManager.setPhysicalTable(tableIdentifier, physicalTable)
+    this.addDatasource(Datasource.HBASE, url, physicalTable, "", Operation.CREATE_TABLE)
   }
-
 }
