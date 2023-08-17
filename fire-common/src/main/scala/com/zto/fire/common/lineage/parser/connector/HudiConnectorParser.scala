@@ -34,7 +34,7 @@ import scala.collection.mutable
  * @author ChengLong 2023-08-09 10:12:19
  * @since 2.3.8
  */
-private[fire] object HudiConnector extends ConnectorParser {
+private[fire] object HudiConnectorParser extends ConnectorParser {
 
   /**
    * 解析指定的connector血缘
@@ -157,6 +157,6 @@ object HudiDatasource extends SqlToDatasource {
 
     val operations = new JHashSet[Operation]()
     table.getOperation.map(t => operations.add(Operation.parse(t)))
-    HudiConnector.addDatasource(Datasource.HUDI, HudiDatasource(Datasource.HUDI.toString, table.getCluster, table.getPhysicalTable, operation = operations))
+    HudiConnectorParser.addDatasource(Datasource.HUDI, HudiDatasource(Datasource.HUDI.toString, table.getCluster, table.getPhysicalTable, operation = operations))
   }
 }

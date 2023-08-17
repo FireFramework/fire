@@ -20,12 +20,12 @@ package com.zto.fire.spark.ext.core
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.LineageManager
-import com.zto.fire.common.lineage.parser.connector.HudiConnector
+import com.zto.fire.common.lineage.parser.connector.HudiConnectorParser
 import com.zto.fire.common.util.{LogUtils, Logging, SQLUtils, ValueUtils}
-import com.zto.fire.core.anno.connector.Hudi
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.hudi.conf.FireHudiConf
+import com.zto.fire.hudi.enu.{HoodieOperationType, HoodieTableType}
+import com.zto.fire.hudi.util.HudiUtils
 import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils
@@ -34,8 +34,6 @@ import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
 import com.zto.fire.spark.sql.SparkSqlUtils
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.commons.lang3.StringUtils
-import com.zto.fire.hudi.enu.{HoodieOperationType, HoodieTableType}
-import com.zto.fire.hudi.util.HudiUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.storage.StorageLevel
@@ -383,7 +381,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
     val hudiTablePath = if (noEmpty(tablePath)) tablePath else this.tablePathMap.mergeGet(hudiTableName)(SparkSqlUtils.getTablePath(hudiTableName))
 
     // 4. hudi血缘采集
-    HudiConnector.addDatasource(Datasource.HUDI, hudiTablePath,
+    HudiConnectorParser.addDatasource(Datasource.HUDI, hudiTablePath,
       confOptions("hoodie.table.name"),
       confOptions("hoodie.datasource.write.table.type"),
       confOptions("hoodie.datasource.write.recordkey.field"),

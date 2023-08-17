@@ -23,7 +23,7 @@ import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.LineageManager
-import com.zto.fire.common.lineage.parser.connector.KafkaConnector
+import com.zto.fire.common.lineage.parser.connector.KafkaConnectorParser
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util._
 import com.zto.fire.flink.sink.{HBaseSink, JdbcSink, KafkaSink, RocketMQSink}
@@ -44,7 +44,7 @@ import org.apache.flink.connector.jdbc.JdbcExactlyOnceOptions.JDBCExactlyOnceOpt
 import org.apache.flink.connector.jdbc.{JdbcConnectionOptions, JdbcExactlyOnceOptions, JdbcExecutionOptions, JdbcStatementBuilder}
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.function.AllWindowFunction
-import org.apache.flink.streaming.api.scala.{DataStream, _}
+import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer.Semantic
@@ -451,7 +451,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
          |""".stripMargin)
 
     // sink kafka埋点信息
-    KafkaConnector.addDatasource(Datasource.KAFKA, finalBrokers, finalTopic, "", Operation.SINK)
+    KafkaConnectorParser.addDatasource(Datasource.KAFKA, finalBrokers, finalTopic, "", Operation.SINK)
 
     val kafkaProducer = new FlinkKafkaProducer[String](
       finalTopic,

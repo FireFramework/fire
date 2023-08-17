@@ -35,7 +35,7 @@ import scala.collection.mutable
  * @author ChengLong 2023-08-09 10:12:19
  * @since 2.3.8
  */
-private[fire] object CustomizeConnector extends ConnectorParser {
+private[fire] object CustomizeConnectorParser extends ConnectorParser {
 
   /**
    * 解析指定的connector血缘

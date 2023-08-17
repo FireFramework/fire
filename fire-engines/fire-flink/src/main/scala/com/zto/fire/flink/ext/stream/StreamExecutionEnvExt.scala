@@ -23,7 +23,7 @@ import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.Datasource._
 import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.lineage.LineageManager
-import com.zto.fire.common.lineage.parser.connector.{CustomizeConnector, KafkaConnector, RocketmqConnector}
+import com.zto.fire.common.lineage.parser.connector.{CustomizeConnectorParser, KafkaConnectorParser, RocketmqConnectorParser}
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util.{KafkaUtils, MQType, OSUtils, RegularUtils, SQLUtils}
 import com.zto.fire.core.Api
@@ -106,7 +106,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
     properties.setProperty(FireKafkaConf.KAFKA_FORCE_AUTO_COMMIT_INTERVAL, FireKafkaConf.kafkaForceCommitInterval.toString)
 
     // 消费kafka埋点信息
-    KafkaConnector.addDatasource(KAFKA, confKafkaParams("bootstrap.servers").toString, topicsStr, confKafkaParams("group.id").toString, FOperation.SOURCE)
+    KafkaConnectorParser.addDatasource(KAFKA, confKafkaParams("bootstrap.servers").toString, topicsStr, confKafkaParams("group.id").toString, FOperation.SOURCE)
 
     deserializer match {
       case schema: JSONKeyValueDeserializationSchema =>
@@ -272,7 +272,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
     require(finalRocketParam.containsKey(RocketMQConfig.NAME_SERVER_ADDR), s"RocketMQ nameserver.address不能为空，请在配置文件中指定：rocket.brokers.name$keyNum")
 
     // 消费rocketmq埋点信息
-    RocketmqConnector.addDatasource(ROCKETMQ, finalRocketParam(RocketMQConfig.NAME_SERVER_ADDR), finalTopics, finalGroupId, FOperation.SOURCE)
+    RocketmqConnectorParser.addDatasource(ROCKETMQ, finalRocketParam(RocketMQConfig.NAME_SERVER_ADDR), finalTopics, finalGroupId, FOperation.SOURCE)
 
     val props = new Properties()
     props.putAll(finalRocketParam)
@@ -488,7 +488,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * 自定义Source
    */
   def addSource[T: TypeInformation](function: SourceFunction[T]): DataStream[T] = {
-    CustomizeConnector.addDatasource(CUSTOMIZE_SOURCE, OSUtils.getIp, function.getClass.getSimpleName, FOperation.SOURCE)
+    CustomizeConnectorParser.addDatasource(CUSTOMIZE_SOURCE, OSUtils.getIp, function.getClass.getSimpleName, FOperation.SOURCE)
     this.env.addSource[T](function)
   }
 

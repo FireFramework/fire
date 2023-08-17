@@ -17,31 +17,34 @@
 
 package com.zto.fire.common.lineage.parser.connector
 
+import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.parser.ConnectorParser
-import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
+import com.zto.fire.common.lineage.SQLLineageManager
+
+import scala.collection.mutable
 
 /**
- * JDBC类别通用父类
+ * Doris Connector血缘解析器
  *
- * @author ChengLong 2023-08-10 10:15:05
+ * @author ChengLong 2023-08-09 10:12:19
  * @since 2.3.8
  */
-trait IJDBCConnector extends ConnectorParser {
+private[fire] object DorisConnectorParser extends IJDBCConnectorParser {
 
   /**
-   * 添加一条DB的埋点信息
+   * 解析指定的connector血缘
    *
-   * @param datasource
-   * 数据源类型
-   * @param cluster
-   * 集群信息
-   * @param tableName
-   * 表名
-   * @param username
-   * 连接用户名
+   * @param tableIdentifier
+   * 表的唯一标识
+   * @param properties
+   * connector中的options信息
    */
-  def addDatasource(datasource: Datasource, cluster: String, tableName: String, username: String, operation: Operation*): Unit = {
-    if (this.canAdd) this.addDatasource(datasource, DBDatasource(datasource.toString, cluster, tableName, username, toOperationSet(operation: _*)))
+  override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+    val tableName = properties.getOrElse("table.identifier", "")
+    SQLLineageManager.setPhysicalTable(tableIdentifier, tableName)
+    val url = properties.getOrElse("fenodes", "")
+    SQLLineageManager.setCluster(tableIdentifier, url)
+    val username = properties.getOrElse("username", "")
+    if (this.canAdd) this.addDatasource(Datasource.DORIS, url, tableName, username, Operation.CREATE_TABLE)
   }
 }

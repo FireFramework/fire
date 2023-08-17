@@ -20,7 +20,7 @@ package com.zto.fire.flink.sql.connector.rocketmq
 import com.zto.fire.common.conf.FireRocketMQConf
 import com.zto.fire.common.enu.Datasource.ROCKETMQ
 import com.zto.fire.common.enu.{Operation => FOperation}
-import com.zto.fire.common.lineage.parser.connector.RocketmqConnector
+import com.zto.fire.common.lineage.parser.connector.RocketmqConnectorParser
 import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.getRocketMQProperties
 import com.zto.fire.predef._
 import org.apache.flink.api.common.serialization.SerializationSchema
@@ -73,7 +73,7 @@ class RocketMQDynamicTableSink(physicalDataType: DataType,
     val sinkParallelism = tableOptions.getOrElse(FireRocketMQConf.ROCKET_SINK_PARALLELISM, null)
 
     // 消费rocketmq埋点信息
-    RocketmqConnector.addDatasource(ROCKETMQ, nameserver, topic, "", FOperation.SINK)
+    RocketmqConnectorParser.addDatasource(ROCKETMQ, nameserver, topic, "", FOperation.SINK)
 
     val keyDeserialization = createSerialization(context, keyDecodingFormat, keyProjection, keyPrefix)
     val valueDeserialization = createSerialization(context, valueDecodingFormat, valueProjection, null)

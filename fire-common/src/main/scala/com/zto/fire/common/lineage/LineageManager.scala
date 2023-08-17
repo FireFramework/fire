@@ -196,12 +196,19 @@ private[fire] object LineageManager extends Logging {
         LineageManager.printLog("1. 开始将SQLTable中的血缘信息合并到Datasource中")
         val connector = if (noEmpty(table.getConnector)) table.getConnector else table.getCatalog
         val datasourceClass = Datasource.toDatasource(Datasource.parse(connector))
+
         if (datasourceClass != null) {
           val method = ReflectionUtils.getMethodByName(datasourceClass, "mapDatasource")
           if (method != null) {
             LineageManager.printLog(s"2. 开始调用类：${datasourceClass}的方法：${method.getName} connector：${connector}")
             method.invoke(null, table)
+          } else {
+            LineageManager.printLog(s"类：${datasourceClass}中未定义mapDatasource()方法，请检查！")
           }
+        } else {
+          val log = s"未找到匹配的connector：${connector}，无法将SQLTable映射为Datasource，请检查Datasource中静态代码块映射关系！"
+          logWarning(log)
+          LineageManager.printLog(log)
         }
       })
     } (this.logger, catchLog = "将SQLTable血缘信息映射为Datasource数据源信息失败！")

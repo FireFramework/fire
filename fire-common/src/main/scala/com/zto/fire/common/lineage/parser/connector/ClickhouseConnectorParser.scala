@@ -18,19 +18,18 @@
 package com.zto.fire.common.lineage.parser.connector
 
 import com.zto.fire.common.bean.TableIdentifier
-import com.zto.fire.common.conf.FireRocketMQConf
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.SQLLineageManager
+import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
 
 import scala.collection.mutable
 
 /**
- * RocketMQ Connector血缘解析器
+ * Clickhouse Connector血缘解析器
  *
  * @author ChengLong 2023-08-09 10:12:19
  * @since 2.3.8
  */
-private[fire] object RocketmqConnector extends IMQConnector {
+private[fire] object ClickhouseConnectorParser extends IJDBCConnectorParser {
 
   /**
    * 解析指定的connector血缘
@@ -41,12 +40,13 @@ private[fire] object RocketmqConnector extends IMQConnector {
    * connector中的options信息
    */
   override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
-    val url = properties.getOrElse("rocket.brokers.name", "")
-    SQLLineageManager.setCluster(tableIdentifier, FireRocketMQConf.rocketNameServer(url))
-    val topic = properties.getOrElse("rocket.topics", "")
-    SQLLineageManager.setPhysicalTable(tableIdentifier, topic)
-    val groupId = properties.getOrElse("rocket.group.id", "")
-    this.addDatasource(Datasource.ROCKETMQ, url, topic, groupId, Operation.CREATE_TABLE)
+    val url = properties.getOrElse("url", "")
+    SQLLineageManager.setCluster(tableIdentifier, url)
+    val dbName = properties.getOrElse("database-name", "")
+    val tableName = properties.getOrElse("table-name", "")
+    val physicalTable = if (tableName.contains(".")) tableName else s"$dbName.${tableName}"
+    SQLLineageManager.setPhysicalTable(tableIdentifier, physicalTable)
+    val username = properties.getOrElse("username", "")
+    if (this.canAdd) this.addDatasource(Datasource.CLICKHOUSE, url, physicalTable, username, Operation.CREATE_TABLE)
   }
-
 }

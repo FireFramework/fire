@@ -34,7 +34,9 @@ import scala.reflect.ClassTag
  * @since 2.3.8
  */
 private[fire] object ConnectorParserManager extends ConnectorParser {
-  private lazy val packageName = "com.zto.fire.common.lineage.parser.connector"
+  private lazy val abstractMethod = "parse"
+  private lazy val packageSuffix = "ConnectorParser"
+  private lazy val packagePrefix = "com.zto.fire.common.lineage.parser.connector"
 
   /**
    * 根据connector名称获取完整的包名与类型信息
@@ -47,7 +49,25 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
   private[this] def getClassName(connector: String): Option[String] = {
     if (isEmpty(connector)) return None
 
-    Some(s"${packageName}.${connector.replaceAll("fire-", "").toLowerCase.headUpper}Connector")
+    val conn = connector.toLowerCase
+    val connectorType = if (conn.contains("kafka")) {
+      // 支持：'connector'='kafka' | 'connector'='upsert-kafka'等
+      "kafka"
+    } else if (conn.contains("hbase")) {
+      // 支持：'connector'='hbase-1.4' | 'connector'='hbase-2.2'等
+      "hbase"
+    } else if (conn.contains("rocketmq")) {
+      // 支持：'connector'='fire-rocketmq' | 'connector'='rocketmq'等
+      "rocketmq"
+    } else if (conn.equalsIgnoreCase("-cdc")) {
+      // 支持：'connector'='mysql-cdc' | 'connector'='oracle-cdc'等任意cdc connector
+      "cdc"
+    } else {
+      // 支持标准命名，比如'connector'='hudi' | 'connector'='doris' | 'connector'='clickhouse'等
+      conn
+    }
+
+    Some(s"${packagePrefix}.${connectorType.headUpper}${packageSuffix}")
   }
 
   /**
@@ -61,10 +81,11 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
   override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
     val connector = properties.getOrElse("connector", "")
     val className = this.getClassName(connector)
+    LineageManager.printLog(s"获取connector：${connector}对应的解析类：${className}")
 
     tryWithLog {
       if (className.isDefined) {
-        val method = ReflectionUtils.getMethodByName(className.get, "parse")
+        val method = ReflectionUtils.getMethodByName(className.get, abstractMethod)
         if (method != null) {
           SQLLineageManager.setConnector(tableIdentifier, connector)
           method.invoke(null, tableIdentifier, properties, partitions)

@@ -17,41 +17,44 @@
 
 package com.zto.fire.common.lineage.parser.connector
 
-import com.zto.fire.common.bean.TableIdentifier
-import com.zto.fire.common.bean.lineage.SQLTable
-import com.zto.fire.common.conf.FireKafkaConf
-import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.{DatasourceDesc, SQLLineageManager, SqlToDatasource}
 import com.zto.fire.predef._
+import com.zto.fire.common.bean.lineage.SQLTable
+import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf}
+import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.lineage.{DatasourceDesc, SqlToDatasource}
+import com.zto.fire.common.lineage.parser.ConnectorParser
+import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
 
 import java.util.Objects
-import scala.collection.mutable
 
 /**
- * Kafka Connector血缘解析器
+ * MQ类别通用父类
  *
- * @author ChengLong 2023-08-09 10:12:19
+ * @author ChengLong 2023-08-10 10:15:05
  * @since 2.3.8
  */
-private[fire] object KafkaConnector extends IMQConnector {
+trait IMQConnectorParser extends ConnectorParser {
 
   /**
-   * 解析指定的connector血缘
+   * 添加一条MQ的埋点信息
    *
-   * @param tableIdentifier
-   * 表的唯一标识
-   * @param properties
-   * connector中的options信息
+   * @param datasource
+   * 数据源类型
+   * @param cluster
+   * 集群标识
+   * @param topics
+   * 主题列表
+   * @param groupId
+   * 消费组标识
    */
-  override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
-    val url = properties.getOrElse("properties.bootstrap.servers", "")
-    SQLLineageManager.setCluster(tableIdentifier, FireKafkaConf.kafkaBrokers(url))
-    val topic = properties.getOrElse("topic", "")
-    SQLLineageManager.setPhysicalTable(tableIdentifier, topic)
-    val groupId = properties.getOrElse("properties.group.id", "")
-    this.addDatasource(Datasource.KAFKA, url, topic, groupId, Operation.CREATE_TABLE)
+  private[fire] def addDatasource(datasource: Datasource, cluster: String, topics: String, groupId: String, operation: Operation*): Unit = {
+    if (this.canAdd) {
+      val url = if (Datasource.ROCKETMQ == datasource) FireRocketMQConf.rocketNameServer(cluster) else FireKafkaConf.kafkaBrokers(cluster)
+      this.addDatasource(datasource, MQDatasource(datasource.toString, url, topics, groupId, toOperationSet(operation: _*)))
+    }
   }
 }
+
 
 /**
  * MQ类型数据源，如：kafka、RocketMQ等
@@ -118,7 +121,7 @@ object MQDatasource extends SqlToDatasource {
     }
 
     if (datasource != Datasource.UNKNOWN) {
-      KafkaConnector.addDatasource(datasource, table.getCluster, table.getPhysicalTable, groupId, operations.toSeq: _*)
+      KafkaConnectorParser.addDatasource(datasource, table.getCluster, table.getPhysicalTable, groupId, operations.toSeq: _*)
     }
   }
 }

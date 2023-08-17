@@ -17,41 +17,40 @@
 
 package com.zto.fire.common.lineage.parser.connector
 
-import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.predef._
 import com.zto.fire.common.bean.lineage.SQLTable
 import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.lineage.{DatasourceDesc, SqlToDatasource}
+import com.zto.fire.common.lineage.parser.ConnectorParser
 import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
-import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager, SqlToDatasource}
-import com.zto.fire.predef._
 
 import java.util.Objects
-import scala.collection.mutable
 
 /**
- * JDBC Connector血缘解析器
+ * JDBC类别通用父类
  *
- * @author ChengLong 2023-08-09 10:12:19
+ * @author ChengLong 2023-08-10 10:15:05
  * @since 2.3.8
  */
-private[fire] object JDBCConnector extends IJDBCConnector {
+trait IJDBCConnectorParser extends ConnectorParser {
 
   /**
-   * 解析指定的connector血缘
+   * 添加一条DB的埋点信息
    *
-   * @param tableIdentifier
-   * 表的唯一标识
-   * @param properties
-   * connector中的options信息
+   * @param datasource
+   * 数据源类型
+   * @param cluster
+   * 集群信息
+   * @param tableName
+   * 表名
+   * @param username
+   * 连接用户名
    */
-  override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
-    val tableName = properties.getOrElse("table-name", "")
-    SQLLineageManager.setPhysicalTable(tableIdentifier, tableName)
-    val url = properties.getOrElse("url", "")
-    SQLLineageManager.setCluster(tableIdentifier, url)
-    val username = properties.getOrElse("username", "")
-    if (this.canAdd) LineageManager.addDBSql(Datasource.JDBC, url, username, "", toOperationSet(Operation.CREATE_TABLE, Operation.SELECT))
+  def addDatasource(datasource: Datasource, cluster: String, tableName: String, username: String, operation: Operation*): Unit = {
+    if (this.canAdd) this.addDatasource(datasource, DBDatasource(datasource.toString, cluster, tableName, username, toOperationSet(operation: _*)))
   }
 }
+
 
 /**
  * 面向数据库类型的数据源，带有tableName
@@ -131,12 +130,32 @@ object DBDatasource extends SqlToDatasource {
       datasource = Datasource.DORIS
     }
 
+    if (isMatch("hbase", table)) {
+      datasource = Datasource.HBASE
+    }
+
+    if (isMatch("mysql-cdc", table)) {
+      datasource = Datasource.MYSQL
+    }
+
+    if (isMatch("oracle-cdc", table)) {
+      datasource = Datasource.ORACLE
+    }
+
+    if (isMatch("mongodb-cdc", table)) {
+      datasource = Datasource.MONGODB
+    }
+
+    if (isMatch("postgres-cdc", table)) {
+      datasource = Datasource.PostgreSQL
+    }
+
     if (Datasource.UNKNOWN == datasource) return
 
     val options = table.getOptions
     val username = if (noEmpty(options)) options.getOrDefault("username", "") else ""
     val operations = new JHashSet[Operation]()
     table.getOperation.map(t => operations.add(Operation.parse(t)))
-    JDBCConnector.addDatasource(datasource, table.getCluster, table.getPhysicalTable, username, operations.toSeq: _*)
+    JDBCConnectorParser.addDatasource(datasource, table.getCluster, table.getPhysicalTable, username, operations.toSeq: _*)
   }
 }

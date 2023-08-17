@@ -17,19 +17,20 @@
 
 package com.zto.fire.common.lineage.parser.connector
 
+import com.zto.fire.predef._
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
+import com.zto.fire.common.lineage.SQLLineageManager
 
 import scala.collection.mutable
 
 /**
- * Doris Connector血缘解析器
+ * JDBC Connector血缘解析器
  *
  * @author ChengLong 2023-08-09 10:12:19
  * @since 2.3.8
  */
-private[fire] object DorisConnector extends IJDBCConnector {
+private[fire] object JDBCConnectorParser extends IJDBCConnectorParser {
 
   /**
    * 解析指定的connector血缘
@@ -40,12 +41,20 @@ private[fire] object DorisConnector extends IJDBCConnector {
    * connector中的options信息
    */
   override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+    // 兼容mysql-cdc connector与flink标准的jdbc connector的血缘解析
     val tableName = properties.getOrElse("table-name", "")
-    SQLLineageManager.setPhysicalTable(tableIdentifier, tableName)
-    val url = properties.getOrElse("url", "")
-    SQLLineageManager.setCluster(tableIdentifier, url)
+    val dbName = properties.getOrElse("database-name", "")
+    val physicalTable = if (noEmpty(dbName)) s"$dbName.$tableName" else tableName
+    SQLLineageManager.setPhysicalTable(tableIdentifier, physicalTable)
+
+    val url = properties.getOrElse("url", properties.getOrElse("hostname", ""))
+    val port = properties.getOrElse("port", "")
+    val cluster = if (noEmpty(port)) s"$url:$port" else url
+    SQLLineageManager.setCluster(tableIdentifier, cluster)
+
     val username = properties.getOrElse("username", "")
-    if (this.canAdd) LineageManager.addDBSql(Datasource.JDBC, url, username, "", Operation.CREATE_TABLE)
+
+    if (this.canAdd) this.addDatasource(Datasource.JDBC, cluster, physicalTable, username, Operation.CREATE_TABLE)
   }
 
 }

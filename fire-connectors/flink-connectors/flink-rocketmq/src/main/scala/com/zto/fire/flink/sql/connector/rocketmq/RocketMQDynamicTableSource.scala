@@ -23,7 +23,7 @@ import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.getRocketMQProperties
 import com.zto.fire.predef._
 import com.zto.fire.common.enu.{Operation => FOperation}
-import com.zto.fire.common.lineage.parser.connector.RocketmqConnector
+import com.zto.fire.common.lineage.parser.connector.RocketmqConnectorParser
 import org.apache.flink.api.common.serialization.DeserializationSchema
 import org.apache.flink.table.connector.ChangelogMode
 import org.apache.flink.table.connector.format.DecodingFormat
@@ -98,7 +98,7 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
     if (noEmpty(startOffset)) properties.setProperty(RocketMQConfig.CONSUMER_OFFSET_RESET_TO, startOffset)
 
     // 消费rocketmq埋点信息
-    RocketmqConnector.addDatasource(ROCKETMQ, nameserver, topic, groupId, FOperation.SOURCE)
+    RocketmqConnectorParser.addDatasource(ROCKETMQ, nameserver, topic, groupId, FOperation.SOURCE)
 
     val keyDeserialization = createDeserialization(context, keyDecodingFormat, keyProjection, keyPrefix)
     val valueDeserialization = createDeserialization(context, valueDecodingFormat, valueProjection, null)

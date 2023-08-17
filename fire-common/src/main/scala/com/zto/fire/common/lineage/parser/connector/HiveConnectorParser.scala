@@ -21,7 +21,6 @@ import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.bean.lineage.{SQLTable, SQLTablePartitions}
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.parser.ConnectorParser
-import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
 import com.zto.fire.common.lineage.{DatasourceDesc, SqlToDatasource}
 import com.zto.fire.predef._
 
@@ -34,7 +33,7 @@ import scala.collection.mutable
  * @author ChengLong 2023-08-09 10:12:19
  * @since 2.3.8
  */
-private[fire] object HiveConnector extends ConnectorParser {
+private[fire] object HiveConnectorParser extends ConnectorParser {
 
   /**
    * 解析指定的connector血缘
@@ -104,6 +103,6 @@ object HiveDatasource extends SqlToDatasource {
 
     val operations = new JHashSet[Operation]()
     table.getOperation.map(t => operations.add(Operation.parse(t)))
-    HiveConnector.addDatasource(Datasource.HIVE, table.getCluster, table.getPhysicalTable, table.getPartitions, operations)
+    HiveConnectorParser.addDatasource(Datasource.HIVE, table.getCluster, table.getPhysicalTable, table.getPartitions, operations)
   }
 }

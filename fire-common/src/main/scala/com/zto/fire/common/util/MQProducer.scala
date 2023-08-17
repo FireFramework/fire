@@ -21,8 +21,7 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.{FireFrameworkConf, FireKafkaConf, FireRocketMQConf}
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.LineageManager
-import com.zto.fire.common.lineage.parser.connector.KafkaConnector
+import com.zto.fire.common.lineage.parser.connector.KafkaConnectorParser
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.predef._
 import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerConfig, RecordMetadata}
@@ -63,7 +62,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
            |topic: $topic
            |--------------------------------------------------------
            |""".stripMargin)
-      KafkaConnector.addDatasource(Datasource.parse(mqType.toString), realUrl, topic, "", Operation.SINK)
+      KafkaConnectorParser.addDatasource(Datasource.parse(mqType.toString), realUrl, topic, "", Operation.SINK)
     }
   }
 
