@@ -45,7 +45,7 @@ import scala.collection.mutable.ListBuffer
 object SQLUtils extends Logging {
   private[this] val beforeWorld = "(?i)(from|join|update|into table|table|into|exists|desc|like|if)"
   private[this] val reg = s"${beforeWorld}\\s+(\\w+\\.\\w+|\\w+)".r
-  private[this] val passwordReg = "'password'='.+'"
+  private[this] val passwordReg = "'password'\\s*=\\s*'.+'"
 
   /**
    * 利用正则表达式解析SQL中用到的表名
