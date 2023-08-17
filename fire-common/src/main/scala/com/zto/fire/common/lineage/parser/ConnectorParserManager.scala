@@ -61,18 +61,17 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
   override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
     val connector = properties.getOrElse("connector", "")
     val className = this.getClassName(connector)
-    if (className.isDefined) {
-      try {
+
+    tryWithLog {
+      if (className.isDefined) {
         val method = ReflectionUtils.getMethodByName(className.get, "parse")
         if (method != null) {
           SQLLineageManager.setConnector(tableIdentifier, connector)
           method.invoke(null, tableIdentifier, properties, partitions)
           LineageManager.printLog(s"映射SQL血缘为Datasource，反射调用类：${className.get}.parse()，connector：$connector properties：$properties")
         }
-      } catch {
-        case e: Throwable => logWarning(s"血缘解析失败：不支持的connector类型[$connector]", e)
       }
-    }
+    }(this.logger, catchLog = s"血缘解析失败：不支持的connector类型[$connector]")
   }
 
   /**
@@ -160,6 +159,6 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
         }
       }
       LineageManager.printLog(s"2. 合并operation后：source：$source")
-    } (this.logger, catchLog = s"${source.getClass.getName} 血缘操作类型Set[Operation]合并失败")
+    }(this.logger, catchLog = s"${source.getClass.getName} 血缘操作类型Set[Operation]合并失败")
   }
 }

@@ -84,6 +84,7 @@ private[fire] class LineageManager extends Logging {
         if (sqlSource != null) {
           val tableNames = SQLUtils.tableParse(sqlSource.sql)
           printLog(s"解析JDBC SQL：${sqlSource.sql}")
+
           if (tableNames != null && tableNames.nonEmpty) {
             tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
               add(Datasource.parse(sqlSource.datasource), DBDatasource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, operation = sqlSource.operation))
@@ -99,6 +100,7 @@ private[fire] class LineageManager extends Logging {
    */
   private[fire] def add(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = this.synchronized {
     if (!lineageEnable || this.lineageMap.size() > lineageMaxSize) return
+
     printLog(s"1. 合并数据源add之前，lineageMap：$lineageMap 目标datasource：$datasourceDesc")
     val set = this.lineageMap.mergeGet(sourceType)(new JHashSet[DatasourceDesc]())
     if (set.isEmpty) set.add(datasourceDesc)
@@ -189,18 +191,20 @@ private[fire] object LineageManager extends Logging {
    * SQLTable实例，来自于sql中的血缘解析
    */
   private def mapTableToDatasource(tables: JList[SQLTable]): Unit = {
-    tables.filter(_ != null).foreach(table => {
-      LineageManager.printLog("1. 开始将SQLTable中的血缘信息合并到Datasource中")
-      val connector = if (noEmpty(table.getConnector)) table.getConnector else table.getCatalog
-      val datasourceClass = Datasource.toDatasource(Datasource.parse(connector))
-      if (datasourceClass != null) {
-        val method = ReflectionUtils.getMethodByName(datasourceClass, "mapDatasource")
-        if (method != null) {
-          LineageManager.printLog(s"2. 开始调用类：${datasourceClass}的方法：${method.getName} connector：${connector}")
-          method.invoke(null, table)
+    tryWithLog {
+      tables.filter(_ != null).foreach(table => {
+        LineageManager.printLog("1. 开始将SQLTable中的血缘信息合并到Datasource中")
+        val connector = if (noEmpty(table.getConnector)) table.getConnector else table.getCatalog
+        val datasourceClass = Datasource.toDatasource(Datasource.parse(connector))
+        if (datasourceClass != null) {
+          val method = ReflectionUtils.getMethodByName(datasourceClass, "mapDatasource")
+          if (method != null) {
+            LineageManager.printLog(s"2. 开始调用类：${datasourceClass}的方法：${method.getName} connector：${connector}")
+            method.invoke(null, table)
+          }
         }
-      }
-    })
+      })
+    } (this.logger, catchLog = "将SQLTable血缘信息映射为Datasource数据源信息失败！")
   }
 
   /**

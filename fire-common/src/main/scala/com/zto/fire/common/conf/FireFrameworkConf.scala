@@ -147,7 +147,6 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_JOB_AUTO_START = "fire.job.autoStart"
   lazy val FIRE_ACC_SYNC_MAX_SIZE = "fire.acc.sync.max.size"
 
-
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
    * 不同数据配置使用统一的前缀：fire.lineage.datasource.map.
@@ -160,21 +159,21 @@ private[fire] object FireFrameworkConf {
   // 不同引擎配置获取具体的实现
   lazy val confDeployEngine = PropUtils.getString(this.FIRE_CONF_DEPLOY_ENGINE, "")
   // 定时解析埋点SQL的执行频率（s）
-  lazy val lineageRunPeriod = PropUtils.getInt(this.FIRE_LINEAGE_RUN_PERIOD, 120)
+  def lineageRunPeriod: Int = PropUtils.getInt(this.FIRE_LINEAGE_RUN_PERIOD, 120)
   // 定时解析埋点SQL的初始延迟（s）
-  lazy val lineageRunInitialDelay = PropUtils.getInt(this.FIRE_LINEAGE_RUN_INITIAL_DELAY, 60)
+  def lineageRunInitialDelay: Int = PropUtils.getInt(this.FIRE_LINEAGE_RUN_INITIAL_DELAY, 60)
   // 用于存放埋点的队列最大大小，超过该大小将会被丢弃
-  lazy val lineageMaxSize = PropUtils.getInt(this.FIRE_LINEAGE_MAX_SIZE, 500)
+  def lineageMaxSize: Int = PropUtils.getInt(this.FIRE_LINEAGE_MAX_SIZE, 500)
   // 异步解析血缘线程执行的次数
-  lazy val lineageRunCount = PropUtils.getInt(this.FIRE_LINEAGE_RUN_COUNT, 360)
+  def lineageRunCount: Int = PropUtils.getInt(this.FIRE_LINEAGE_RUN_COUNT, 360)
   // 是否开启实时血缘埋点
-  def lineageEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_ENABLE, true)
+  def lineageEnable: Boolean = PropUtils.getBoolean(this.FIRE_LINEAGE_ENABLE, true)
   // 是否开启实时血缘debug模式
-  lazy val lineageDebugEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_DEBUG_ENABLE, false)
+  def lineageDebugEnable: Boolean = PropUtils.getBoolean(this.FIRE_LINEAGE_DEBUG_ENABLE, false)
   // 禁用血缘采集
   def disableLineage(): Unit = PropUtils.setProperty(this.FIRE_LINEAGE_ENABLE, "false")
-  lazy val lineageCollectSQLEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_COLLECT_SQL_ENABLE, true)
-  lazy val lineageSendMqEnable = PropUtils.getBoolean(this.FIRE_LINEAGE_SEND_MQ_ENABLE, false)
+  def lineageCollectSQLEnable: Boolean = PropUtils.getBoolean(this.FIRE_LINEAGE_COLLECT_SQL_ENABLE, true)
+  def lineageSendMqEnable: Boolean = PropUtils.getBoolean(this.FIRE_LINEAGE_SEND_MQ_ENABLE, false)
   lazy val lineageMQUrl = {
     val url = PropUtils.getString(this.FIRE_LINEAGE_SEND_MQ_URL, "")
     FireKafkaConf.kafkaBrokers(url)
@@ -250,7 +249,6 @@ private[fire] object FireFrameworkConf {
   lazy val configCenterTestAddress = PropUtils.getString(this.FIRE_CONFIG_CENTER_REGISTER_CONF_TEST_ADDRESS)
   // 任务的唯一标识
   lazy val configCenterAppId = PropUtils.getString(this.FIRE_CONFIG_CENTER_APP_ID)
-
 
   // fire框架rest接口服务最大线程数
   lazy val restfulMaxThread = PropUtils.getInt(this.FIRE_RESTFUL_MAX_THREAD, 5)
