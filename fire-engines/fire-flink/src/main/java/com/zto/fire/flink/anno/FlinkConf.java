@@ -17,10 +17,7 @@
 
 package com.zto.fire.flink.anno;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * 基于注解进行任务的配置，支持纯注解方式进行Flink相关参数配置
@@ -28,6 +25,7 @@ import java.lang.annotation.Target;
  * @author ChengLong 2022-08-18 08:57:23
  * @since 2.3.2
  */
+@Inherited
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FlinkConf {

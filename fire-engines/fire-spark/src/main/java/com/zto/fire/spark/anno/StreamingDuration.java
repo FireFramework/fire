@@ -1,9 +1,6 @@
 package com.zto.fire.spark.anno;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * Spark Streaming任务的批次时间
@@ -11,6 +8,7 @@ import java.lang.annotation.Target;
  * @author ChengLong 2021年8月3日19:39:28
  * @since 2.1.1
  */
+@Inherited
 @Deprecated
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

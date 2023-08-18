@@ -17,10 +17,7 @@
 
 package com.zto.fire.core.anno.connector;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * 基于注解进行RocketMQ connector配置，优先级低于配置文件，高于@Config注解
@@ -28,6 +25,7 @@ import java.lang.annotation.Target;
  * @author ChengLong 2022-06-16 14:18:34
  * @since 2.2.2
  */
+@Inherited
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RocketMQ7 {

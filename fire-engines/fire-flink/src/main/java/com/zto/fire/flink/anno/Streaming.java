@@ -20,10 +20,7 @@ package com.zto.fire.flink.anno;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.streaming.api.CheckpointingMode;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 import static org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup;
 
@@ -33,6 +30,7 @@ import static org.apache.flink.streaming.api.environment.CheckpointConfig.Extern
  * @author ChengLong 2022-04-26 11:16:00
  * @since 2.2.2
  */
+@Inherited
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Streaming {

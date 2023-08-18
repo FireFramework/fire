@@ -1,9 +1,6 @@
 package com.zto.fire.spark.anno;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * 基于注解的方式配置Spark Streaming任务
@@ -12,6 +9,7 @@ import java.lang.annotation.Target;
  * @date 2022-04-30 21:44:19
  * @since 2.2.1
  */
+@Inherited
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Streaming {

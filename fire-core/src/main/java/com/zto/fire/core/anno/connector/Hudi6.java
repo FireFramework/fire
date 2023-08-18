@@ -17,10 +17,7 @@
 
 package com.zto.fire.core.anno.connector;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * 基于注解进行hudi参数配置，支持纯注解方式进行任务的参数配置以及指定多个配置文件
@@ -28,6 +25,7 @@ import java.lang.annotation.Target;
  * @author ChengLong 2023-03-28 17:11:06
  * @since 2.3.5
  */
+@Inherited
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Hudi6 {
