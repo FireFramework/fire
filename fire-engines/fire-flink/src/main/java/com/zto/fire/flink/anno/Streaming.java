@@ -17,6 +17,7 @@
 
 package com.zto.fire.flink.anno;
 
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.streaming.api.CheckpointingMode;
 
 import java.lang.annotation.ElementType;
@@ -105,4 +106,9 @@ public @interface Streaming {
      * 是否使用statementSet
      */
     boolean useStatementSet() default true;
+
+    /**
+     * Flink任务运行模式
+     */
+    RuntimeExecutionMode executionMode() default RuntimeExecutionMode.STREAMING;
 }

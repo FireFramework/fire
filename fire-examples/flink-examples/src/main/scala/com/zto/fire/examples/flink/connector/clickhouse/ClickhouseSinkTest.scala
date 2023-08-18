@@ -37,10 +37,6 @@ import java.util.concurrent.TimeUnit
  *
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Config(
-  """
-    |fire.lineage.debug.enable=true
-    |""")
 @Streaming(interval = 60, disableOperatorChaining = true)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object ClickhouseSinkTest extends FlinkStreaming {
