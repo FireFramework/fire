@@ -35,6 +35,7 @@ import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.accumulators.SimpleAccumulator
+import org.apache.flink.api.common.eventtime.{SerializableTimestampAssigner, WatermarkStrategy}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.common.serialization.{SerializationSchema, SimpleStringSchema}
 import org.apache.flink.api.common.typeinfo.TypeInformation
@@ -57,6 +58,7 @@ import org.apache.flink.util.function.SerializableSupplier
 
 import java.lang.reflect.Field
 import java.sql.PreparedStatement
+import java.time.Duration
 import javax.sql.XADataSource
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -296,12 +298,12 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
    * 指定配置的keyNum，可从配置或注解中获取对应配置信息
    */
   def sinkMQ[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
-                                          url: String = null,
-                                          topic: String = null,
-                                          tag: String = "*",
-                                          mqType: MQType = MQType.kafka,
-                                          batch: Int = 100, flushInterval: Long = 1000,
-                                          keyNum: Int = KeyNum._1): DataStreamSink[_] = {
+                                       url: String = null,
+                                       topic: String = null,
+                                       tag: String = "*",
+                                       mqType: MQType = MQType.kafka,
+                                       batch: Int = 100, flushInterval: Long = 1000,
+                                       keyNum: Int = KeyNum._1): DataStreamSink[_] = {
     this.sinkMQFun[E](params, url, topic, tag, mqType, batch, flushInterval, keyNum)(_.asInstanceOf[E])
   }
 
@@ -320,12 +322,12 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
    * 指定配置的keyNum，可从配置或注解中获取对应配置信息
    */
   def sinkMQFun[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
-                                       url: String = null,
-                                       topic: String = null,
-                                       tag: String = "*",
-                                       mqType: MQType = MQType.kafka,
-                                       batch: Int = 100, flushInterval: Long = 1000,
-                                       keyNum: Int = KeyNum._1)(mapFunction: T => E): DataStreamSink[_] = {
+                                          url: String = null,
+                                          topic: String = null,
+                                          tag: String = "*",
+                                          mqType: MQType = MQType.kafka,
+                                          batch: Int = 100, flushInterval: Long = 1000,
+                                          keyNum: Int = KeyNum._1)(mapFunction: T => E): DataStreamSink[_] = {
     if (mqType == MQType.rocketmq) {
       this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval, keyNum)(mapFunction)
     } else {
@@ -346,9 +348,9 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
    * 指定配置的keyNum，可从配置或注解中获取对应配置信息
    */
   def sinkKafka[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
-                                             url: String = null, topic: String = null,
-                                             batch: Int = 100, flushInterval: Long = 1000,
-                                             keyNum: Int = KeyNum._1): DataStreamSink[_] = {
+                                          url: String = null, topic: String = null,
+                                          batch: Int = 100, flushInterval: Long = 1000,
+                                          keyNum: Int = KeyNum._1): DataStreamSink[_] = {
 
     this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, keyNum)(_.asInstanceOf[E]).uid("sinkKafka")
   }
@@ -366,9 +368,9 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
    * 指定配置的keyNum，可从配置或注解中获取对应配置信息
    */
   def sinkKafkaFun[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
-                              url: String = null, topic: String = null,
-                              batch: Int = 100, flushInterval: Long = 1000,
-                              keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
+                                             url: String = null, topic: String = null,
+                                             batch: Int = 100, flushInterval: Long = 1000,
+                                             keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
     val finalBatch = if (FireKafkaConf.kafkaSinkBatch(keyNum) > 0) FireKafkaConf.kafkaSinkBatch(keyNum) else batch
     val finalInterval = if (FireKafkaConf.kafkaFlushInterval(keyNum) > 0) FireKafkaConf.kafkaFlushInterval(keyNum) else flushInterval
 
@@ -409,9 +411,9 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
    * 指定配置的keyNum，可从配置或注解中获取对应配置信息
    */
   def sinkRocketMQFun[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
-                                          url: String = null, topic: String = null, tag: String = "*",
-                                          batch: Int = 100, flushInterval: Long = 1000,
-                                          keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
+                                                url: String = null, topic: String = null, tag: String = "*",
+                                                batch: Int = 100, flushInterval: Long = 1000,
+                                                keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
     val finalBatch = if (FireRocketMQConf.rocketSinkBatch(keyNum) > 0) FireRocketMQConf.rocketSinkBatch(keyNum) else batch
     val finalInterval = if (FireRocketMQConf.rocketSinkFlushInterval(keyNum) > 0) FireRocketMQConf.rocketSinkFlushInterval(keyNum) else flushInterval
 
@@ -424,12 +426,12 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
    * 将数据写入到kafka中
    */
   def sinkKafkaString[T <: String](kafkaParams: Map[String, Object] = null,
-                             topic: String = null,
-                             serializationSchema: SerializationSchema[String] = new SimpleStringSchema,
-                             customPartitioner: FlinkKafkaPartitioner[String] = null,
-                             semantic: Semantic = Semantic.AT_LEAST_ONCE,
-                             kafkaProducersPoolSize: Int = FlinkKafkaProducer.DEFAULT_KAFKA_PRODUCERS_POOL_SIZE,
-                             keyNum: Int = KeyNum._1): DataStreamSink[_] = {
+                                   topic: String = null,
+                                   serializationSchema: SerializationSchema[String] = new SimpleStringSchema,
+                                   customPartitioner: FlinkKafkaPartitioner[String] = null,
+                                   semantic: Semantic = Semantic.AT_LEAST_ONCE,
+                                   kafkaProducersPoolSize: Int = FlinkKafkaProducer.DEFAULT_KAFKA_PRODUCERS_POOL_SIZE,
+                                   keyNum: Int = KeyNum._1): DataStreamSink[_] = {
 
 
     // 1. 设置producer相关额外参数
@@ -602,5 +604,25 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
     // TODO: 解析sql血缘关系，包括针对表做了哪些操作，数据的流转等
     LineageManager.addDBSql(Datasource.parse(DBUtils.dbTypeParser(jdbcConf.driverClass, jdbcConf.url)), jdbcConf.url, jdbcConf.username, sql, Operation.UPDATE)
     (jdbcConf, connectionTimeout, columns)
+  }
+
+  /**
+   * 为无序的流分配watermark
+   *
+   * @param extractTimestampFun
+   * 从流的时间戳字段中抽取时间戳的函数，调用者需主动实现如何提取
+   * @param maxOutOfOrderness
+   * 运行最大的乱序时间，默认1s
+   * @return
+   */
+  def assignOutOfOrdernessWatermarks(extractTimestampFun: T => Long, maxOutOfOrderness: Duration = Duration.ofSeconds(3)): DataStream[T] = {
+    stream.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness[T](maxOutOfOrderness)
+      .withTimestampAssigner(
+        new SerializableTimestampAssigner[T] {
+          override def extractTimestamp(t: T, l: Long): Long = {
+            extractTimestampFun(t)
+          }
+        }
+      ))
   }
 }
