@@ -298,7 +298,10 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._1))
     this.hudiParallelism(hudi.parallelism(), KeyNum._1)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._1)
-    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._1)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), KeyNum._1)
+    if (noEmpty(hudi.clustringColumns())) {
+      this.toHudiConf(("hoodie.clustering.plan.strategy.sort.columns", hudi.clustringColumns()), KeyNum._1)
+    }
   }
 
   /**
@@ -315,7 +318,10 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._2))
     this.hudiParallelism(hudi.parallelism(), KeyNum._2)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._2)
-    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._2)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), KeyNum._2)
+    if (noEmpty(hudi.clustringColumns())) {
+      this.toHudiConf(("hoodie.clustering.plan.strategy.sort.columns", hudi.clustringColumns()), KeyNum._2)
+    }
   }
 
   /**
@@ -332,7 +338,10 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._3))
     this.hudiParallelism(hudi.parallelism(), KeyNum._3)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._3)
-    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._3)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), KeyNum._3)
+    if (noEmpty(hudi.clustringColumns())) {
+      this.toHudiConf(("hoodie.clustering.plan.strategy.sort.columns", hudi.clustringColumns()), KeyNum._3)
+    }
   }
 
   /**
@@ -349,7 +358,10 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._4))
     this.hudiParallelism(hudi.parallelism(), KeyNum._4)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._4)
-    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._4)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), KeyNum._4)
+    if (noEmpty(hudi.clustringColumns())) {
+      this.toHudiConf(("hoodie.clustering.plan.strategy.sort.columns", hudi.clustringColumns()), KeyNum._4)
+    }
   }
 
   /**
@@ -366,7 +378,10 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._5))
     this.hudiParallelism(hudi.parallelism(), KeyNum._5)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._5)
-    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._5)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), KeyNum._5)
+    if (noEmpty(hudi.clustringColumns())) {
+      this.toHudiConf(("hoodie.clustering.plan.strategy.sort.columns", hudi.clustringColumns()), KeyNum._5)
+    }
   }
 
   /**
@@ -383,7 +398,10 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._6))
     this.hudiParallelism(hudi.parallelism(), KeyNum._6)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._6)
-    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._6)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), KeyNum._6)
+    if (noEmpty(hudi.clustringColumns())) {
+      this.toHudiConf(("hoodie.clustering.plan.strategy.sort.columns", hudi.clustringColumns()), KeyNum._6)
+    }
   }
 
 
@@ -401,7 +419,10 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._7))
     this.hudiParallelism(hudi.parallelism(), KeyNum._7)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._7)
-    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._7)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), KeyNum._7)
+    if (noEmpty(hudi.clustringColumns())) {
+      this.toHudiConf(("hoodie.clustering.plan.strategy.sort.columns", hudi.clustringColumns()), KeyNum._7)
+    }
   }
 
 
@@ -419,7 +440,10 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._8))
     this.hudiParallelism(hudi.parallelism(), KeyNum._8)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._8)
-    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._8)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), KeyNum._8)
+    if (noEmpty(hudi.clustringColumns())) {
+      this.toHudiConf(("hoodie.clustering.plan.strategy.sort.columns", hudi.clustringColumns()), KeyNum._8)
+    }
   }
 
 
@@ -437,8 +461,10 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._9))
     this.hudiParallelism(hudi.parallelism(), KeyNum._9)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._9)
-    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._9)
-
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), KeyNum._9)
+    if (noEmpty(hudi.clustringColumns())) {
+      this.toHudiConf(("hoodie.clustering.plan.strategy.sort.columns", hudi.clustringColumns()), KeyNum._9)
+    }
   }
 
   /**
@@ -455,8 +481,10 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._10))
     this.hudiParallelism(hudi.parallelism(), KeyNum._10)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._10)
-    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._10)
-
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), KeyNum._10)
+    if (noEmpty(hudi.clustringColumns())) {
+      this.toHudiConf(("hoodie.clustering.plan.strategy.sort.columns", hudi.clustringColumns()), KeyNum._10)
+    }
   }
 
   /**
@@ -473,9 +501,11 @@ private[fire] trait AnnoManager extends Logging {
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._11))
     this.hudiParallelism(hudi.parallelism(), KeyNum._11)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._11)
-    this.hudiClusterConf(hudi.clusterCommits(), hudi.clusterSchedule(), KeyNum._11)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), KeyNum._11)
+    if (noEmpty(hudi.clustringColumns())) {
+      this.toHudiConf(("hoodie.clustering.plan.strategy.sort.columns", hudi.clustringColumns()), KeyNum._11)
+    }
   }
-
 
   /**
    * 统一设置hudi任务各项参数的并行度
@@ -501,7 +531,7 @@ private[fire] trait AnnoManager extends Logging {
    * 用于配置hudi任务的compaction参数
    */
   @Internal
-  private[this] def hudiClusterConf(clusterCommits: Int, clusterSchedule: Boolean, keyNum: Int): Unit = {
+  private[this] def hudiClusteringConf(clusterCommits: Int, clusterSchedule: Boolean, keyNum: Int): Unit = {
     if (clusterCommits > 0) {
       this.toHudiConf(("hoodie.clustering.inline.max.commits", clusterCommits.toString), keyNum)
 

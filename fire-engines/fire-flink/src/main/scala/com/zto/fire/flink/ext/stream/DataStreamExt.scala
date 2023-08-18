@@ -607,22 +607,27 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
   }
 
   /**
-   * 为无序的流分配watermark
+   * 为无序流分配watermark
    *
    * @param extractTimestampFun
    * 从流的时间戳字段中抽取时间戳的函数，调用者需主动实现如何提取
    * @param maxOutOfOrderness
-   * 运行最大的乱序时间，默认1s
+   * 允许最大的乱序时间，默认1s
+   * @param idleTimeout
+   * 允许水位线生成最大的空闲时间
    * @return
    */
-  def assignOutOfOrdernessWatermarks(extractTimestampFun: T => Long, maxOutOfOrderness: Duration = Duration.ofSeconds(3)): DataStream[T] = {
-    stream.assignTimestampsAndWatermarks(WatermarkStrategy.forBoundedOutOfOrderness[T](maxOutOfOrderness)
+  def assignOutOfOrdernessWatermarks(extractTimestampFun: T => Long, maxOutOfOrderness: Duration = Duration.ofSeconds(3), idleTimeout: Duration = Duration.ofSeconds(0)): DataStream[T] = {
+    val strategy = WatermarkStrategy.forBoundedOutOfOrderness[T](maxOutOfOrderness)
       .withTimestampAssigner(
         new SerializableTimestampAssigner[T] {
-          override def extractTimestamp(t: T, l: Long): Long = {
-            extractTimestampFun(t)
+          override def extractTimestamp(currentElement: T, previousElementTimestamp: Long): Long = {
+            extractTimestampFun(currentElement)
           }
         }
-      ))
+      )
+
+    val finalStrategy = if (idleTimeout.isZero || idleTimeout.isNegative) strategy else strategy.withIdleness(idleTimeout)
+    stream.assignTimestampsAndWatermarks(finalStrategy)
   }
 }

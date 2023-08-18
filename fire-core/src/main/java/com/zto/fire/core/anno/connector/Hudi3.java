@@ -69,7 +69,7 @@ public @interface Hudi3 {
      * hoodie.clustering.inline=true
      * hoodie.clustering.inline.max.commits=xxx
      */
-    int clusterCommits() default -1;
+    int clusteringCommits() default -1;
 
     /**
      * 是否只做clustering的调度计划，适用于有独立的离线的clustering任务场景下开启
@@ -77,5 +77,10 @@ public @interface Hudi3 {
      * hoodie.clustering.inline=false
      * hoodie.clustering.schedule.inline=true
      */
-    boolean clusterSchedule() default false;
+    boolean clusteringSchedule() default false;
+
+    /**
+     * clustering的字段列表：hoodie.clustering.plan.strategy.sort.columns
+     */
+    String clustringColumns() default "";
 }

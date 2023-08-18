@@ -27,6 +27,7 @@ import org.apache.flink.streaming.api.watermark.Watermark;
  *
  * @author ChengLong 2020-4-17 17:18:33
  */
+@Deprecated
 public abstract class FirePeriodicWatermarks<T> implements AssignerWithPeriodicWatermarks<T> {
     // 用于计算水位线值，若为0则取当前系统时间
     protected long maxTimestamp = 0;
