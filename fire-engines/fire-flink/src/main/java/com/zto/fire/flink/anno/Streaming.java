@@ -111,4 +111,9 @@ public @interface Streaming {
      * Flink任务运行模式
      */
     RuntimeExecutionMode executionMode() default RuntimeExecutionMode.STREAMING;
+
+    /**
+     * watermark生成周期
+     */
+    int watermarkInterval() default -1;
 }

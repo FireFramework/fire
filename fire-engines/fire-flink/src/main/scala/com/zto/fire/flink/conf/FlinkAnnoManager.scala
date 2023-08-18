@@ -56,7 +56,8 @@ private[fire] class FlinkAnnoManager extends AnnoManager {
     this.put(OPERATOR_CHAINING_ENABLE, !streaming.disableOperatorChaining())
     this.put(FLINK_STATE_TTL_DAYS, streaming.stateTTL())
     this.put(FLINK_SQL_USE_STATEMENT_SET, streaming.useStatementSet())
-    this.put("execution.runtime-mode", streaming.executionMode().toString)
+    this.put(FLINK_RUNTIME_MODE, streaming.executionMode().toString)
+    this.put(FLINK_AUTO_WATERMARK_INTERVAL, streaming.watermarkInterval())
   }
 
   /**
