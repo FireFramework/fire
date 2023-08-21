@@ -87,7 +87,6 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
       if (className.isDefined) {
         val method = ReflectionUtils.getMethodByName(className.get, abstractMethod)
         if (method != null) {
-          SQLLineageManager.setConnector(tableIdentifier, connector)
           method.invoke(null, tableIdentifier, properties, partitions)
           LineageManager.printLog(s"映射SQL血缘为Datasource，反射调用类：${className.get}.parse()，connector：$connector properties：$properties")
         }

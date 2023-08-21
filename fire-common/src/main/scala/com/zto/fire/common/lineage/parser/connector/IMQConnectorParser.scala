@@ -95,8 +95,6 @@ object MQDatasource extends SqlToDatasource {
    * DatasourceDesc
    */
   override def mapDatasource(table: SQLTable): Unit = {
-    val operations = new JHashSet[Operation]()
-    table.getOperation.map(t => operations.add(Operation.parse(t)))
     var groupId = ""
 
     // 判断数据源类型
@@ -121,7 +119,7 @@ object MQDatasource extends SqlToDatasource {
     }
 
     if (datasource != Datasource.UNKNOWN) {
-      KafkaConnectorParser.addDatasource(datasource, table.getCluster, table.getPhysicalTable, groupId, operations.toSeq: _*)
+      KafkaConnectorParser.addDatasource(datasource, table.getCluster, table.getPhysicalTable, groupId, table.getOperationType.toSeq: _*)
     }
   }
 }

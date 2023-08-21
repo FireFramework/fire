@@ -154,8 +154,6 @@ object DBDatasource extends SqlToDatasource {
 
     val options = table.getOptions
     val username = if (noEmpty(options)) options.getOrDefault("username", "") else ""
-    val operations = new JHashSet[Operation]()
-    table.getOperation.map(t => operations.add(Operation.parse(t)))
-    JDBCConnectorParser.addDatasource(datasource, table.getCluster, table.getPhysicalTable, username, operations.toSeq: _*)
+    JDBCConnectorParser.addDatasource(datasource, table.getCluster, table.getPhysicalTable, username, table.getOperationType.toSeq: _*)
   }
 }

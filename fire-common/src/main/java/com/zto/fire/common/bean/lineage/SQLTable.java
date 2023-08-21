@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.bean.lineage;
 
+import com.zto.fire.common.enu.Operation;
 import com.zto.fire.common.util.FireUtils;
 
 import java.util.*;
@@ -151,6 +152,14 @@ public class SQLTable {
 
     public Set<String> getOperation() {
         return operation;
+    }
+
+    public Set<Operation> getOperationType() {
+        Set<Operation> sets = new HashSet<>();
+        for (String oper : this.getOperation()) {
+            sets.add(Operation.parse(oper));
+        }
+        return sets;
     }
 
     public void setColumns(HashSet<SQLTableColumns> columns) {

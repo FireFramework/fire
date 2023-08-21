@@ -155,8 +155,6 @@ object HudiDatasource extends SqlToDatasource {
   def mapDatasource(table: SQLTable): Unit = {
     if (this.isNotMatch("hudi", table)) return
 
-    val operations = new JHashSet[Operation]()
-    table.getOperation.map(t => operations.add(Operation.parse(t)))
-    HudiConnectorParser.addDatasource(Datasource.HUDI, HudiDatasource(Datasource.HUDI.toString, table.getCluster, table.getPhysicalTable, operation = operations))
+    HudiConnectorParser.addDatasource(Datasource.HUDI, HudiDatasource(Datasource.HUDI.toString, table.getCluster, table.getPhysicalTable, operation = table.getOperationType))
   }
 }

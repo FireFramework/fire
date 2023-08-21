@@ -17,23 +17,25 @@
 
 package com.zto.fire.common.lineage.parser.connector
 
-import com.zto.fire.common.bean.TableIdentifier
-import com.zto.fire.common.bean.lineage.{SQLTable, SQLTablePartitions}
-import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.parser.ConnectorParser
-import com.zto.fire.common.lineage.{DatasourceDesc, SqlToDatasource}
 import com.zto.fire.predef._
+import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.bean.lineage.SQLTable
+import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.lineage.{DatasourceDesc, SqlToDatasource}
+import com.zto.fire.common.lineage.parser.ConnectorParser
+import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
 
 import java.util.Objects
 import scala.collection.mutable
 
 /**
- * Hive Connector血缘解析器
+ * 虚拟数据connector通用解析器
  *
- * @author ChengLong 2023-08-09 10:12:19
- * @since 2.3.8
+ * @author ChengLong
+ * @Date 2023/8/21 09:23
+ * @version 2.3.
  */
-private[fire] object HiveConnectorParser extends ConnectorParser {
+trait IVirtualConnectorParser  extends ConnectorParser {
 
   /**
    * 解析指定的connector血缘
@@ -44,49 +46,43 @@ private[fire] object HiveConnectorParser extends ConnectorParser {
    * connector中的options信息
    */
   override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+    val connector = properties.getOrElse("connector", "")
+    if (noEmpty(connector)) {
+      this.addDatasource(Datasource.parse(connector), Operation.CREATE_TABLE)
+    }
   }
 
   /**
-   * 添加一条Hive数据源埋点信息
+   * 添加一条虚拟数据源埋点信息
    *
    * @param datasource
    * 数据源类型
-   * @param cluster
-   * 集群标识
    */
-  private[fire] def addDatasource(datasource: Datasource, cluster: String, tableName: String, partitions: JSet[SQLTablePartitions], operations: JSet[Operation]): Unit = {
-    this.addDatasource(datasource, HiveDatasource(datasource.toString, cluster, tableName, partitions, operations))
+  def addDatasource(datasource: Datasource, operation: Operation*): Unit = {
+    if (this.canAdd) this.addDatasource(datasource, VirtualDatasource(datasource.toString, toOperationSet(operation: _*)))
   }
 }
 
-
-
 /**
- * hive数据源
+ * 虚拟数据源
  *
  * @param datasource
  * 数据源类型，参考DataSource枚举
- * @param cluster
- * 数据源的集群标识
- * @param tableName
- * hive表名
  * @param operation
  * 数据源操作类型（必须是var变量，否则合并不成功）
  */
-case class HiveDatasource(datasource: String, cluster: String, tableName: String,
-                          partitions: JSet[SQLTablePartitions],
-                          var operation: JSet[Operation] = new JHashSet[Operation]) extends DatasourceDesc {
+case class VirtualDatasource(datasource: String, var operation: JSet[Operation] = new JHashSet[Operation]) extends DatasourceDesc {
 
   override def equals(obj: Any): Boolean = {
     if (obj == null || getClass != obj.getClass) return false
-    val target = obj.asInstanceOf[HiveDatasource]
-    Objects.equals(datasource, target.datasource) && Objects.equals(cluster, target.cluster) && Objects.equals(tableName, target.tableName)
+    val target = obj.asInstanceOf[VirtualDatasource]
+    Objects.equals(datasource, target.datasource)
   }
 
-  override def hashCode(): Int = Objects.hash(datasource, cluster)
+  override def hashCode(): Int = Objects.hash(datasource)
 }
 
-object HiveDatasource extends SqlToDatasource {
+object VirtualDatasource extends SqlToDatasource {
 
   /**
    * 解析SQL血缘中的表信息并映射为数据源信息
@@ -98,9 +94,15 @@ object HiveDatasource extends SqlToDatasource {
    * @return
    * DatasourceDesc
    */
-  def mapDatasource(table: SQLTable): Unit = {
-    if (!"hive".equalsIgnoreCase(table.getCatalog) && !"hive".equalsIgnoreCase(table.getConnector)) return
+  override def mapDatasource(table: SQLTable): Unit = {
+    val operationSet = table.getOperationType
 
-    HiveConnectorParser.addDatasource(Datasource.HIVE, table.getCluster, table.getPhysicalTable, table.getPartitions, table.getOperationType)
+    if (this.isMatch("datagen", table)) {
+      DatagenConnectorParser.addDatasource(Datasource.DATAGEN, operationSet.toSeq: _*)
+    }
+
+    if (this.isMatch("print", table)) {
+      DatagenConnectorParser.addDatasource(Datasource.PRINT, operationSet.toSeq: _*)
+    }
   }
 }

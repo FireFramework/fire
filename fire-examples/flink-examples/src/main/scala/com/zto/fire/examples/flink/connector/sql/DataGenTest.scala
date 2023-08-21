@@ -1,8 +1,12 @@
 package com.zto.fire.examples.flink.connector.sql
 
+import com.zto.fire.common.util.{JSONUtils, ThreadUtils}
 import com.zto.fire.core.anno.lifecycle.{Step1, Step2, Step3}
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
+import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
+
+import java.util.concurrent.TimeUnit
 
 /**
  * DataGen connector使用
@@ -27,7 +31,7 @@ object DataGenTest extends FlinkStreaming {
          |   sex Boolean
          |) WITH (
          |   'connector' = 'datagen',
-         |   'rows-per-second'='100', -- 5000/s
+         |   'rows-per-second'='1', -- 5000/s
          |   'fields.id.min'='1', -- id字段，1到1000之间
          |   'fields.id.max'='1000',
          |   'fields.name.length'='5', -- name字段，长度为5
@@ -56,5 +60,9 @@ object DataGenTest extends FlinkStreaming {
          |from ${this.dataGenTable}
          |group by id, name, age, createTime, sex
          |""".stripMargin)
+
+    ThreadUtils.scheduleAtFixedRate({
+      println(s"\n\n\n" + JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue))
+    }, 0, 20, TimeUnit.SECONDS)
   }
 }

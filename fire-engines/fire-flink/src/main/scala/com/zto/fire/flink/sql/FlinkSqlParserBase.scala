@@ -319,6 +319,10 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     val tableIdentifier = this.toFireTableIdentifier(createTable.getTableName, false)
     SQLLineageManager.setTmpView(tableIdentifier, tableIdentifier.identifier)
     this.parseSqlNode(createTable.getTableName, Operation.CREATE_TABLE)
+    // 解析建表语句中的with参数列表
+    val properties = this.parseOptions(tableIdentifier, createTable.getPropertyList)
+    // 解析connector类型
+    this.parseConnectorType(tableIdentifier, properties)
 
     // 从Flink 1.16开始移除getTableLike方法，为了兼容，使用反射进行判断
     val getTableLikeMethod = ReflectionUtils.getMethodByName(classOf[SqlCreateTable], "getTableLike")
@@ -340,12 +344,22 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
      * 用于解析create table语句
      */
     def parseCreateTableStatement: Unit = {
-      // 解析建表语句中的with参数列表
-      val properties = this.parseOptions(tableIdentifier, createTable.getPropertyList)
       // 解析建表语句中的字段列表
       this.parseColumns(tableIdentifier, createTable.getColumnList)
       // 解析不同的connector血缘信息
       this.parseConnector(tableIdentifier, properties, createTable.getPartitionKeyList)
+    }
+  }
+
+  /**
+   * 解析建表语句中指定的connector类型，并采集到SQL血缘中
+   */
+  private[this] def parseConnectorType(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
+    if (noEmpty(properties)) {
+      val connector = properties.getOrElse("connector", "")
+      if (noEmpty(connector)) {
+        SQLLineageManager.setConnector(tableIdentifier, connector)
+      }
     }
   }
 
