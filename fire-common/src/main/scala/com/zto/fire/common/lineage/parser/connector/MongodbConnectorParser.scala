@@ -21,6 +21,7 @@ import com.zto.fire.predef._
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.SQLLineageManager
+import com.zto.fire.common.util.RegularUtils
 
 import scala.collection.mutable
 
@@ -65,7 +66,7 @@ private[fire] object MongodbConnectorParser extends IJDBCConnectorParser {
    */
   def hideSensitive(url: String): String = {
     val (_, password) = this.parseMongoDBUrl(url)
-    url.replaceAll(password, "")
+    if (isEmpty(password)) url else url.replaceAll(password, RegularUtils.hidePassword)
   }
 
   /**
@@ -85,7 +86,7 @@ private[fire] object MongodbConnectorParser extends IJDBCConnectorParser {
     val url = properties.getOrElse("uri", "")
     val (username, password) = this.parseMongoDBUrl(url)
 
-    SQLLineageManager.setCluster(tableIdentifier, this.hideSensitive(url))
+    SQLLineageManager.setCluster(tableIdentifier, url)
     if (this.canAdd) this.addDatasource(Datasource.MONGODB, url, tableName, username, Operation.CREATE_TABLE)
   }
 }

@@ -25,4 +25,5 @@ object RegularUtils {
   lazy val withDatasourceReg = """'datasource'\s*=\s*'[A-Za-z0-9_]+'""".r
   // 多条sql语句的截取
   lazy val sqlSplit = """;\s"""
+  lazy val hidePassword = "******"
 }

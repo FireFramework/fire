@@ -117,7 +117,6 @@ object DBDatasource extends SqlToDatasource {
   override def mapDatasource(table: SQLTable): Unit = {
     if (table == null) return
     var datasource: Datasource = Datasource.UNKNOWN
-    var cluster = table.getCluster
 
     if (isMatch("jdbc", table)) {
       datasource = Datasource.JDBC
@@ -145,7 +144,6 @@ object DBDatasource extends SqlToDatasource {
 
     if (isMatch("mongodb-cdc", table)) {
       datasource = Datasource.MONGODB
-      cluster = MongodbConnectorParser.hideSensitive(cluster)
     }
 
     if (isMatch("postgres-cdc", table)) {
@@ -156,6 +154,6 @@ object DBDatasource extends SqlToDatasource {
 
     val options = table.getOptions
     val username = if (noEmpty(options)) options.getOrDefault("username", "") else ""
-    JDBCConnectorParser.addDatasource(datasource, cluster, table.getPhysicalTable, username, table.getOperationType.toSeq: _*)
+    JDBCConnectorParser.addDatasource(datasource, table.getCluster, table.getPhysicalTable, username, table.getOperationType.toSeq: _*)
   }
 }

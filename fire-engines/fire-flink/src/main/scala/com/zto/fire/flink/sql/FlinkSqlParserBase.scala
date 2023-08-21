@@ -24,7 +24,7 @@ import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.SQLLineageManager
 import com.zto.fire.common.lineage.parser.ConnectorParserManager
-import com.zto.fire.common.util.ReflectionUtils
+import com.zto.fire.common.util.{ReflectionUtils, RegularUtils}
 import com.zto.fire.core.sql.SqlParser
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
@@ -391,7 +391,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
   @Internal
   protected def parseOptions(tableIdentifier: TableIdentifier, options: SqlNodeList): Map[String, String] = {
     val props = options.getList.map(t => t.toString.replace("'", "").split("="))
-      .filter(t => t.nonEmpty && t.length == 2).map(t => if (t(0).contains("password")) (t(0).trim, "******") else (t(0).trim, t(1).trim)).toMap
+      .filter(t => t.nonEmpty && t.length == 2).map(t => if (t(0).contains("password")) (t(0).trim, RegularUtils.hidePassword) else (t(0).trim, t(1).trim)).toMap
     SQLLineageManager.setOptions(tableIdentifier, props)
     props
   }

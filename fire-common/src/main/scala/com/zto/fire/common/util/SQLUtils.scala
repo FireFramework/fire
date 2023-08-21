@@ -18,6 +18,7 @@
 package com.zto.fire.common.util
 
 import com.zto.fire.common.enu.{Operation, SqlSemantic}
+import com.zto.fire.common.lineage.parser.connector.MongodbConnectorParser
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import net.sf.jsqlparser.expression.Expression
@@ -109,7 +110,9 @@ object SQLUtils extends Logging {
    * 替换敏感信息后的SQL语句
    */
   def hideSensitive(sql: String): String = {
-    sql.replaceAll(passwordReg, "'password'='******'")
+    val sensitiveSql = sql.replaceAll(passwordReg, s"'password'='${RegularUtils.hidePassword}'")
+    val tmpSQL = MongodbConnectorParser.hideSensitive(sensitiveSql)
+    tmpSQL
   }
 
   /**
