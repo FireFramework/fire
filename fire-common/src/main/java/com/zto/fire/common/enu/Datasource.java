@@ -37,7 +37,8 @@ public enum Datasource {
     DB2(11), CLICKHOUSE(12), PRESTO(13), KYLIN(14), DERBY(15),
     VIEW(16), JDBC(17), FIRE_ROCKETMQ(18), PostgreSQL(19),
     CUSTOMIZE_SOURCE(20), CUSTOMIZE_SINK(21), HUDI(22), DORIS(23),
-    ICEBERG(24), PAIMON(25), MONGODB(26), PRINT(27), DATAGEN(28), UNKNOWN(404);
+    ICEBERG(24), PAIMON(25), MONGODB(26), PRINT(27), DATAGEN(28),
+    FILESYSTEM(29), UNKNOWN(404);
 
     private static Map<Datasource, Class<?>> datasourceMap = Maps.newHashMap();
 
@@ -59,8 +60,10 @@ public enum Datasource {
         datasourceMap.put(MONGODB, DBDatasource.class);
         datasourceMap.put(DORIS, DBDatasource.class);
 
+        // 文件类
         datasourceMap.put(HIVE, HiveDatasource.class);
         datasourceMap.put(HUDI, HudiDatasource.class);
+        datasourceMap.put(FILESYSTEM, FilesystemDatasource.class);
 
         // 消息队列类别
         datasourceMap.put(KAFKA, MQDatasource.class);
