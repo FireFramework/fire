@@ -205,7 +205,7 @@ private[fire] object LineageManager extends Logging {
           } else {
             LineageManager.printLog(s"类：${datasourceClass}中未定义mapDatasource()方法，请检查！")
           }
-        } else {
+        } else if (!"view".equalsIgnoreCase(connector)) {
           val log = s"未找到匹配的connector：${connector}，无法将SQLTable映射为Datasource，请检查Datasource中静态代码块映射关系！"
           logWarning(log)
           LineageManager.printLog(log)

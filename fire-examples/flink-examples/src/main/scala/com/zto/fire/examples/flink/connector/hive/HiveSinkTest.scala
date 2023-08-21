@@ -18,7 +18,13 @@
 package com.zto.fire.examples.flink.connector.hive
 
 import com.zto.fire._
+import com.zto.fire.common.util.{JSONUtils, ThreadUtils}
+import com.zto.fire.core.anno.connector.Hive
 import com.zto.fire.flink.FlinkStreaming
+import com.zto.fire.flink.anno.Streaming
+import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
+
+import java.util.concurrent.TimeUnit
 
 /**
  * 基于fire框架进行Flink SQL开发<br/>
@@ -30,55 +36,54 @@ import com.zto.fire.flink.FlinkStreaming
  * @create 2021-01-18 17:24
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
+@Hive("fat")
+@Streaming(10)
 object HiveSinkTest extends FlinkStreaming {
 
   // 具体的业务逻辑放到process方法中
   override def process: Unit = {
     this.fire.disableOperatorChaining()
+    ThreadUtils.scheduleAtFixedRate({
+      println(s"\n\n\n" + JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue))
+    }, 0, 20, TimeUnit.SECONDS)
     sql(
       """
-        |CREATE TABLE t_student (
-        |  `table` STRING,
-        |  `before` ROW(`id` bigint, `age` int, `name` string, `length` double, `createTime` string),	-- 嵌套json的声明方式，使用ROW()，这么写很麻烦，但没办法
-        |  `after` ROW(id bigint, age int, name string, length double, createTime string)
-        |) WITH (
-        |  'connector' = 'kafka',								-- 用于指定connector的类型
-        |  'topic' = 'fire',										-- 消费的topic名称为fire
-        |  'properties.bootstrap.servers' = 'kafka-server:9092',	-- kafka的broker地址
-        |  'properties.group.id' = 'fire',						-- 当前flink sql任务所使用的groupId
-        |  'scan.startup.mode' = 'earliest-offset',				-- 指定从什么位置开始消费
-        |  'format' = 'json'										-- 指定解析的kafka消息为json格式
+        |CREATE table source (
+        |  id int,
+        |  name string,
+        |  age int,
+        |  createTime string
+        |) with (
+        | 'connector'='fire-rocketmq',
+        | 'format'='json',
+        | 'rocket.brokers.name'='bigdata_test',
+        | 'rocket.topics'='fire',
+        | 'rocket.group.id'='fire11',
+        | 'rocket.consumer.tag'='*'
         |)
-        |""".stripMargin)
-    sql(
-      """
-        |create view v_student as
-        |select
-        |	t.`table` as table_name,
-        |	after.id as id, 									-- 解析ROW类型声明的嵌套字段，直接以点的方式一级一级指定
-        |	after.age as age,
-        |	after.name as name,
-        |	after.length as length,
-        |	after.createTime as create_time
-        |from t_student t
         |""".stripMargin)
     this.fire.useHiveCatalog()
     println(this.tableEnv.getCurrentCatalog)
+
     sql(
       """
-        |CREATE TABLE if not exists tmp.flink_hive_sink (
-        |  id BIGINT,
-        |  name STRING,
-        |  age INT
-        |) PARTITIONED BY (ds STRING) STORED AS textfile TBLPROPERTIES (
-        |  'sink.partition-commit.trigger'='partition-time',               -- 分区触发提交
-        |  'sink.partition-commit.delay'='0 s',      -- 提交延迟
-        |  'sink.partition-commit.policy.kind'='metastore,success-file'    -- 提交类型
+        |CREATE TABLE if not exists tmp.zfs_upload_record_topic_fire (
+        |  id int,
+        |  name string,
+        |  age int,
+        |  createTime string
+        |) PARTITIONED BY (ds STRING) STORED AS orc TBLPROPERTIES (
+        | 'partition.time-extractor.timestamp-pattern'='ds',
+        | 'sink.partition-commit.trigger'='process-time',
+        | 'sink.partition-commit.delay'='1 min',
+        | 'sink.partition-commit.policy.kind'='metastore,success-file'
         |)
         |""".stripMargin)
     sql(
       """
-        |INSERT INTO TABLE hive.tmp.flink_hive_sink SELECT id, name, age, DATE_FORMAT(create_time, 'yyyyMMdd') FROM default_catalog.default_database.v_student
+        |INSERT INTO TABLE hive.tmp.zfs_upload_record_topic_fire
+        |SELECT id, name, age, createTime, '20230821' as ds
+        |FROM default_catalog.default_database.source
         |""".stripMargin)
   }
 }

@@ -33,6 +33,7 @@ import org.apache.calcite.sql._
 import org.apache.flink.sql.parser.SqlProperty
 import org.apache.flink.sql.parser.ddl._
 import org.apache.flink.sql.parser.dml._
+import org.apache.flink.sql.parser.hive.dml.RichSqlHiveInsert
 import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 import org.apache.flink.table.catalog.ObjectPath
 import org.apache.flink.table.catalog.hive.HiveCatalog
@@ -96,7 +97,8 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
       case sqlCreateDatabase: SqlCreateDatabase => this.parseSqlNode(sqlCreateDatabase.getDatabaseName, Operation.CREATE_DATABASE, true)
       case sqlAlterTableRename: SqlAlterTableRename => this.parseSqlNode(sqlAlterTableRename.getTableName, Operation.RENAME_TABLE_OLD, true)
       case sqlCreateTable: SqlCreateTable => this.parseHiveCreateTable(sqlCreateTable)
-      case _ => this.logger.info(s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql")
+      case sqlHiveInsert: RichSqlHiveInsert => this.parseHiveInsert(sqlHiveInsert)
+      case e => this.logger.info(s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql")
     }
   }
 
@@ -270,6 +272,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
         SQLLineageManager.setPhysicalTable(tableIdentifier, tableIdentifier.toString)
         SQLLineageManager.setTmpView(tableIdentifier, tableIdentifier.toString)
         SQLLineageManager.setCatalog(tableIdentifier, this.getCatalog(identifier).toString)
+        SQLLineageManager.setConnector(tableIdentifier, "hive")
         if (hive.getSd != null) {
           // 获取表存储路径
           SQLLineageManager.setCluster(tableIdentifier, hive.getSd.getLocation)
@@ -380,6 +383,18 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     this.parseSqlNode(sqlCreateTable.getTableName, Operation.CREATE_TABLE, true)
   }
 
+  /**
+   * 用于解析hive表插入血缘
+   */
+  def parseHiveInsert(sqlHiveInsert: RichSqlHiveInsert): Unit = {
+    this.parseSqlNode(sqlHiveInsert.getTargetTable, Operation.INSERT_INTO, isHive = true)
+    this.parsePartitions(sqlHiveInsert.getTargetTable.asInstanceOf[SqlIdentifier], Seq(sqlHiveInsert.getStaticPartitions))
+    this.parseSqlNode(sqlHiveInsert.getSource, Operation.SELECT, targetTable = Some(sqlHiveInsert.getTargetTable))
+    /*if (sqlHiveInsert.getSource.isInstanceOf[SqlSelect]) {
+      val select: SqlSelect = sqlHiveInsert.getSource.asInstanceOf[SqlSelect]
+      this.parseSqlNode(select, Operation.SELECT, true, Some(sqlHiveInsert.getTargetTable))
+    }*/
+  }
 
   /**
    * 用于解析sql中的options
