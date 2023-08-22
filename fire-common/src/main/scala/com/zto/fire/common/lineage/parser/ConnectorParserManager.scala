@@ -62,6 +62,9 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
     } else if (conn.equalsIgnoreCase("-cdc")) {
       // 支持：'connector'='mysql-cdc' | 'connector'='oracle-cdc'等任意cdc connector
       "cdc"
+    } else if (conn.contains("elasticsearch")) {
+      // 支持：'connector' = 'elasticsearch-6' | 'connector' = 'elasticsearch-7'
+      "elasticsearch"
     } else {
       // 支持标准命名，比如'connector'='hudi' | 'connector'='doris' | 'connector'='clickhouse'等
       conn

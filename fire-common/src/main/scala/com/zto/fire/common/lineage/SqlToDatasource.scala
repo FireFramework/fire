@@ -51,8 +51,8 @@ trait SqlToDatasource {
    */
   protected def isMatch(connector: String, table: SQLTable): Boolean = {
     if (isEmpty(connector, table)) return false
-    if (noEmpty(table.getConnector) && connector.equalsIgnoreCase(table.getConnector)) return true
-    if (noEmpty(table.getCatalog) && connector.equalsIgnoreCase(table.getCatalog)) return true
+    if (noEmpty(table.getConnector) && (connector.equalsIgnoreCase(table.getConnector) || connector.contains(table.getConnector))) return true
+    if (noEmpty(table.getCatalog) && (connector.equalsIgnoreCase(table.getCatalog) || connector.contains(table.getCatalog))) return true
 
     false
   }

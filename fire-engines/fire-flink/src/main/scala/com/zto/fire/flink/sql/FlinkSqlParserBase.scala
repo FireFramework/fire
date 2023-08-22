@@ -378,7 +378,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     if (noEmpty(properties)) {
       val connector = properties.getOrElse("connector", properties.getOrElse("type", ""))
       if (noEmpty(connector)) {
-        SQLLineageManager.setConnector(tableIdentifier, connector)
+        SQLLineageManager.setConnector(tableIdentifier, connector.split("-")(0))
       }
     }
   }

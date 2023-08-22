@@ -17,10 +17,6 @@
 
 package com.zto.fire.common.lineage.parser.connector
 
-import com.zto.fire.common.bean.TableIdentifier
-
-import scala.collection.mutable
-
 /**
  * 数据随机生成器connector血缘解析器
  *

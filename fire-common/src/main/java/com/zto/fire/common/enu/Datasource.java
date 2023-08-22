@@ -33,7 +33,7 @@ import java.util.Map;
 public enum Datasource {
     // TODO: 添加新的数据源时务必在static代码块中添加与DatasourceDesc子类的映射关系
     HIVE(1), HBASE(2), KAFKA(3), ROCKETMQ(4), REDIS(5),
-    ES(6), MYSQL(7), TIDB(8), ORACLE(9), SQLSERVER(10),
+    ELASTICSEARCH(6), MYSQL(7), TIDB(8), ORACLE(9), SQLSERVER(10),
     DB2(11), CLICKHOUSE(12), PRESTO(13), KYLIN(14), DERBY(15),
     VIEW(16), JDBC(17), FIRE_ROCKETMQ(18), PostgreSQL(19),
     CUSTOMIZE_SOURCE(20), CUSTOMIZE_SINK(21), HUDI(22), DORIS(23),
@@ -59,6 +59,7 @@ public enum Datasource {
         datasourceMap.put(REDIS, DBDatasource.class);
         datasourceMap.put(MONGODB, DBDatasource.class);
         datasourceMap.put(DORIS, DBDatasource.class);
+        datasourceMap.put(ELASTICSEARCH, DBDatasource.class);
 
         // 文件类
         datasourceMap.put(HIVE, HiveDatasource.class);

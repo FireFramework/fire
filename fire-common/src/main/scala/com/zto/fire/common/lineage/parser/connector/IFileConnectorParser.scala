@@ -43,7 +43,7 @@ trait IFileConnectorParser extends ConnectorParser {
    * 集群标识
    */
   private[fire] def addDatasource(datasource: Datasource, cluster: String, tableName: String, partitions: JSet[SQLTablePartitions], operation: Operation*): Unit = {
-    this.addDatasource(datasource, FileDatasource(datasource.toString, cluster, tableName, partitions, toOperationSet(operation: _*)))
+    if (this.canAdd) this.addDatasource(datasource, FileDatasource(datasource.toString, cluster, tableName, partitions, toOperationSet(operation: _*)))
   }
 }
 

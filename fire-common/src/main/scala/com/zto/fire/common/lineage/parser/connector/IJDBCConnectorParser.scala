@@ -150,6 +150,10 @@ object DBDatasource extends SqlToDatasource {
       datasource = Datasource.PostgreSQL
     }
 
+    if (isMatch("elasticsearch", table)) {
+      datasource = Datasource.ELASTICSEARCH
+    }
+
     if (Datasource.UNKNOWN == datasource) return
 
     val options = table.getOptions
