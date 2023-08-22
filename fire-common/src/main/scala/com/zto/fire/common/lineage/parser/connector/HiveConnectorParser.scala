@@ -26,7 +26,6 @@ import com.zto.fire.common.lineage.{DatasourceDesc, SqlToDatasource}
 import com.zto.fire.predef._
 
 import java.util.Objects
-import scala.collection.mutable
 
 /**
  * Hive Connector血缘解析器
@@ -38,13 +37,14 @@ private[fire] object HiveConnectorParser extends ConnectorParser {
 
   /**
    * 解析指定的connector血缘
+   * 注：可获取到主键、分区字段等信息：SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey
    *
    * @param tableIdentifier
    * 表的唯一标识
    * @param properties
    * connector中的options信息
    */
-  override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+  override def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
   }
 
   /**
@@ -59,7 +59,6 @@ private[fire] object HiveConnectorParser extends ConnectorParser {
     this.addDatasource(datasource, HiveDatasource(datasource.toString, cluster, tableName, partitions, toOperationSet(operation: _*)))
   }
 }
-
 
 
 /**
@@ -92,7 +91,7 @@ object HiveDatasource extends SqlToDatasource {
   /**
    * 解析SQL血缘中的表信息并映射为数据源信息
    * 注：1. 新增子类的名称必须来自Datasource枚举中map所定义的类型，如catalog为hudi，则Datasource枚举中映射为HudiDatasource，对应创建名为HudiDatasource的object继承该接口
-   *    2. 新增Datasource子类需实现该方法，定义如何将SQLTable映射为对应的Datasource实例
+   * 2. 新增Datasource子类需实现该方法，定义如何将SQLTable映射为对应的Datasource实例
    *
    * @param table
    * sql语句中使用到的表

@@ -22,8 +22,6 @@ import com.zto.fire.common.conf.FireKafkaConf
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.SQLLineageManager
 
-import scala.collection.mutable
-
 /**
  * Kafka Connector血缘解析器
  *
@@ -34,13 +32,14 @@ private[fire] object KafkaConnectorParser extends IMQConnectorParser {
 
   /**
    * 解析指定的connector血缘
+   * 注：可获取到主键、分区字段等信息：SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey
    *
    * @param tableIdentifier
    * 表的唯一标识
    * @param properties
    * connector中的options信息
    */
-  override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+  override def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
     val url = properties.getOrElse("properties.bootstrap.servers", "")
     SQLLineageManager.setCluster(tableIdentifier, FireKafkaConf.kafkaBrokers(url))
     val topic = properties.getOrElse("topic", "")

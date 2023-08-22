@@ -26,7 +26,6 @@ import com.zto.fire.common.lineage.parser.ConnectorParser
 import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
 
 import java.util.Objects
-import scala.collection.mutable
 
 /**
  * 虚拟数据connector通用解析器
@@ -39,13 +38,14 @@ trait IVirtualConnectorParser  extends ConnectorParser {
 
   /**
    * 解析指定的connector血缘
+   * 注：可获取到主键、分区字段等信息：SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey
    *
    * @param tableIdentifier
    * 表的唯一标识
    * @param properties
    * connector中的options信息
    */
-  override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+  override def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
     val connector = properties.getOrElse("connector", "")
     if (noEmpty(connector)) {
       this.addDatasource(Datasource.parse(connector), Operation.CREATE_TABLE)

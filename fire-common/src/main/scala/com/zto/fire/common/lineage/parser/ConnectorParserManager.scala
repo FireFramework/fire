@@ -17,11 +17,11 @@
 
 package com.zto.fire.common.lineage.parser
 
-import com.zto.fire.predef._
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.Operation
-import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
+import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
 import com.zto.fire.common.util.ReflectionUtils
+import com.zto.fire.predef._
 
 import java.util.concurrent.CopyOnWriteArraySet
 import scala.collection.mutable
@@ -72,13 +72,14 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
 
   /**
    * 解析指定的connector血缘
+   * 注：可获取到主键、分区字段等信息：SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey
    *
    * @param tableIdentifier
    * 表的唯一标识
    * @param properties
    * connector中的options信息
    */
-  override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+  override def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
     val connector = properties.getOrElse("connector", "")
     val className = this.getClassName(connector)
     LineageManager.printLog(s"获取connector：${connector}对应的解析类：${className}")
@@ -87,7 +88,7 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
       if (className.isDefined) {
         val method = ReflectionUtils.getMethodByName(className.get, abstractMethod)
         if (method != null) {
-          method.invoke(null, tableIdentifier, properties, partitions)
+          method.invoke(null, tableIdentifier, properties)
           LineageManager.printLog(s"映射SQL血缘为Datasource，反射调用类：${className.get}.parse()，connector：$connector properties：$properties")
         }
       }

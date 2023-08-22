@@ -98,7 +98,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
       case sqlAlterTableRename: SqlAlterTableRename => this.parseSqlNode(sqlAlterTableRename.getTableName, Operation.RENAME_TABLE_OLD, true)
       case sqlCreateTable: SqlCreateTable => this.parseHiveCreateTable(sqlCreateTable)
       case sqlHiveInsert: RichSqlHiveInsert => this.parseHiveInsert(sqlHiveInsert)
-      case e => this.logger.info(s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql")
+      case _ => this.logger.info(s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql")
     }
   }
 
@@ -273,6 +273,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
         SQLLineageManager.setTmpView(tableIdentifier, tableIdentifier.toString)
         SQLLineageManager.setCatalog(tableIdentifier, this.getCatalog(identifier).toString)
         SQLLineageManager.setConnector(tableIdentifier, "hive")
+
         if (hive.getSd != null) {
           // 获取表存储路径
           SQLLineageManager.setCluster(tableIdentifier, hive.getSd.getLocation)
@@ -314,6 +315,16 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
   }
 
   /**
+   * 解析建表语句中的分区字段
+   */
+  def parsePartitionField(tableIdentifier: TableIdentifier, createTable: SqlCreateTable): JSet[String] = {
+    val partitionField = new JHashSet[String]()
+    createTable.getPartitionKeyList.getList.foreach(t => partitionField.add(t.toString))
+    SQLLineageManager.setPartitionField(tableIdentifier, partitionField)
+    partitionField
+  }
+
+  /**
    * 解析flink create table语句
    */
   @Internal
@@ -322,10 +333,16 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     val tableIdentifier = this.toFireTableIdentifier(createTable.getTableName, false)
     SQLLineageManager.setTmpView(tableIdentifier, tableIdentifier.identifier)
     this.parseSqlNode(createTable.getTableName, Operation.CREATE_TABLE)
+    // 解析主键字段
+    this.parsePrimaryKey(tableIdentifier, createTable)
+    // 解析分区字段
+    this.parsePartitionField(tableIdentifier, createTable)
     // 解析建表语句中的with参数列表
     val properties = this.parseOptions(tableIdentifier, createTable.getPropertyList)
     // 解析connector类型
     this.parseConnectorType(tableIdentifier, properties)
+    // 根据connector类型进行单独的解析
+    ConnectorParserManager.parse(tableIdentifier, properties)
 
     // 从Flink 1.16开始移除getTableLike方法，为了兼容，使用反射进行判断
     val getTableLikeMethod = ReflectionUtils.getMethodByName(classOf[SqlCreateTable], "getTableLike")
@@ -350,7 +367,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
       // 解析建表语句中的字段列表
       this.parseColumns(tableIdentifier, createTable.getColumnList)
       // 解析不同的connector血缘信息
-      this.parseConnector(tableIdentifier, properties, createTable.getPartitionKeyList)
+      this.parseConnector(tableIdentifier, properties)
     }
   }
 
@@ -390,10 +407,6 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     this.parseSqlNode(sqlHiveInsert.getTargetTable, Operation.INSERT_INTO, isHive = true)
     this.parsePartitions(sqlHiveInsert.getTargetTable.asInstanceOf[SqlIdentifier], Seq(sqlHiveInsert.getStaticPartitions))
     this.parseSqlNode(sqlHiveInsert.getSource, Operation.SELECT, targetTable = Some(sqlHiveInsert.getTargetTable))
-    /*if (sqlHiveInsert.getSource.isInstanceOf[SqlSelect]) {
-      val select: SqlSelect = sqlHiveInsert.getSource.asInstanceOf[SqlSelect]
-      this.parseSqlNode(select, Operation.SELECT, true, Some(sqlHiveInsert.getTargetTable))
-    }*/
   }
 
   /**
@@ -420,24 +433,55 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def parseColumns(tableIdentifier: TableIdentifier, columnList: SqlNodeList): Unit = {
-    val columns = columnList.toList.map(sqlNode => {
-      sqlNode.toString.replace("`", "").split(" ")
-    }).filter(arr => arr.nonEmpty && arr.length == 2).map(t => (t(0), t(1)))
+    val columns = columnList.toList.map(extractColumn).filter(arr => arr.nonEmpty && arr.length == 2).map(t => (t(0), t(1)))
     SQLLineageManager.setColumns(tableIdentifier, columns)
+  }
+
+  /**
+   * 解析建表语句中的主键字段
+   */
+  def parsePrimaryKey(tableIdentifier: TableIdentifier, createTable: SqlCreateTable): JSet[String] = {
+    val primaryKey = new JHashSet[String]()
+
+    // 从PRIMARY KEY (dt, hh, user_id) NOT ENFORCED的语句中解析
+    createTable.getTableConstraints.filter(_.isPrimaryKey).foreach(constraint => {
+      constraint.getColumnNames.foreach(primaryKey.add)
+    })
+
+    // 从字段列表中解析：id int PRIMARY KEY NOT ENFORCED
+    createTable.getColumnList.toList.filter(_.toString.toLowerCase.contains("primary key")).map(sqlNode => {
+      val columnPair = extractColumn(sqlNode)
+      if (noEmpty(columnPair) && columnPair.length > 0) {
+        primaryKey.add(columnPair(0))
+      }
+    })
+
+    SQLLineageManager.setPrimarykey(tableIdentifier, primaryKey)
+    primaryKey
+  }
+
+  /**
+   * 从SqlNode中提取字段信息
+   */
+  @Internal
+  private[this] def extractColumn(sqlNode: SqlNode): Array[String] = {
+    sqlNode.toString.replaceAll(" PRIMARY KEY", "")
+      .replaceAll(" primary key", "")
+      .replaceAll(" NOT ENFORCED", "")
+      .replaceAll(" not enforced", "")
+      .replace("`", "")
+      .split(" ")
   }
 
   /**
    * 解析不同的connector血缘信息
    */
   @Internal
-  private def parseConnector(tableIdentifier: TableIdentifier, properties: Map[JString, JString], partitions: SqlNodeList): Unit = {
-    val partition = partitions.getList.map(t => t.toString).mkString(",")
+  private def parseConnector(tableIdentifier: TableIdentifier, properties: Map[JString, JString]): Unit = {
     val prop = new mutable.HashMap[String, String]()
     prop.putAll(properties)
     if (prop.containsKey("url")) {
       prop.put("url", FireJdbcConf.jdbcUrl(prop("url")))
     }
-    ConnectorParserManager.parse(tableIdentifier, prop, partition)
   }
-
 }

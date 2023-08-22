@@ -17,12 +17,10 @@
 
 package com.zto.fire.common.lineage.parser.connector
 
-import com.zto.fire.predef._
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.SQLLineageManager
-
-import scala.collection.mutable
+import com.zto.fire.predef._
 
 /**
  * JDBC Connector血缘解析器
@@ -34,13 +32,14 @@ private[fire] object JDBCConnectorParser extends IJDBCConnectorParser {
 
   /**
    * 解析指定的connector血缘
+   * 注：可获取到主键、分区字段等信息：SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey
    *
    * @param tableIdentifier
    * 表的唯一标识
    * @param properties
    * connector中的options信息
    */
-  override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+  override def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
     // 兼容mysql-cdc connector与flink标准的jdbc connector的血缘解析
     val tableName = properties.getOrElse("table-name", "")
     val dbName = properties.getOrElse("database-name", "")

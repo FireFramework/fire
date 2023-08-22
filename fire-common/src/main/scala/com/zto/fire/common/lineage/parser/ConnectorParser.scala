@@ -25,7 +25,6 @@ import com.zto.fire.common.util.Logging
 import com.zto.fire.predef._
 
 import java.util.concurrent.atomic.AtomicInteger
-import scala.collection.mutable
 
 /**
  * 通用的connector解析
@@ -49,13 +48,14 @@ trait ConnectorParser extends Logging {
 
   /**
    * 解析指定的connector血缘
+   * 注：可获取到主键、分区字段等信息：SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey
    *
    * @param tableIdentifier
    * 表的唯一标识
    * @param properties
    * connector中的options信息
    */
-  def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit
+  def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit
 
   /**
    * 添加数据源信息

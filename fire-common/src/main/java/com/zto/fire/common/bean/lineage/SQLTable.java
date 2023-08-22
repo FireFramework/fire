@@ -80,11 +80,23 @@ public class SQLTable {
      */
     private Set<SQLTablePartitions> partitions;
 
+    /**
+     * 主键字段
+     */
+    private Set<String> primaryKey;
+
+    /**
+     * 分区字段
+     */
+    private Set<String> partitionField;
+
     public SQLTable() {
         this.operation = new HashSet<>();
         this.columns = new HashSet<>();
         this.options = new HashMap<>();
         this.partitions = new HashSet<>();
+        this.primaryKey = new HashSet<>();
+        this.partitionField = new HashSet<>();
     }
 
     public SQLTable(String physicalTable) {
@@ -93,7 +105,8 @@ public class SQLTable {
     }
 
     public SQLTable(String catalog, String cluster, String physicalTable, String tmpView, String comment,
-                    HashMap<String, String> options, HashSet<String> operation, HashSet<SQLTableColumns> columns, HashSet<SQLTablePartitions> partitions) {
+                    HashMap<String, String> options, HashSet<String> operation, HashSet<SQLTableColumns> columns,
+                    HashSet<SQLTablePartitions> partitions, HashSet<String> partitionField, HashSet<String> primaryKey) {
         this.catalog = catalog;
         this.cluster = cluster;
         this.physicalTable = physicalTable;
@@ -102,7 +115,9 @@ public class SQLTable {
         this.operation = operation;
         this.columns = columns;
         this.partitions = partitions;
+        this.partitionField = partitionField;
         this.comment = comment;
+        this.primaryKey = primaryKey;
     }
 
     public void setCatalog(String catalog) {
@@ -192,5 +207,21 @@ public class SQLTable {
 
     public void setConnector(String connector) {
         this.connector = connector;
+    }
+
+    public Set<String> getPrimaryKey() {
+        return primaryKey;
+    }
+
+    public void setPrimaryKey(Set<String> primaryKey) {
+        this.primaryKey = primaryKey;
+    }
+
+    public Set<String> getPartitionField() {
+        return partitionField;
+    }
+
+    public void setPartitionField(Set<String> partitionField) {
+        this.partitionField = partitionField;
     }
 }

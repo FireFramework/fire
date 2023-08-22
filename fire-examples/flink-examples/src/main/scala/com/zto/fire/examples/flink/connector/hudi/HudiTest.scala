@@ -35,25 +35,8 @@ object HudiTest extends FlinkStreaming {
   def kafkaSource: Unit = {
     sql(
       """
-        |CREATE table source (
-        |  id int,
-        |  name string,
-        |  age int,
-        |  createTime string
-        |) with (
-        | 'connector'='fire-rocketmq',
-        | 'format'='json',
-        | 'rocket.brokers.name'='bigdata_test',
-        | 'rocket.topics'='fire',
-        | 'rocket.group.id'='fire11',
-        | 'rocket.consumer.tag'='*'
-        |)
-        |""".stripMargin)
-
-    sql(
-      """
         |create table if not exists `t_hudi_flink`(
-        |  id int,
+        |  id int PRIMARY KEY NOT ENFORCED,
         |  name string,
         |  age int,
         |  createTime string,
@@ -79,7 +62,22 @@ object HudiTest extends FlinkStreaming {
         |  'hoodie.bucket.index.num.buckets'='2'
         |)
         |""".stripMargin)
-
+    sql(
+      """
+        |CREATE table source (
+        |  id int,
+        |  name string,
+        |  age int,
+        |  createTime string
+        |) with (
+        | 'connector'='fire-rocketmq',
+        | 'format'='json',
+        | 'rocket.brokers.name'='bigdata_test',
+        | 'rocket.topics'='fire',
+        | 'rocket.group.id'='fire11',
+        | 'rocket.consumer.tag'='*'
+        |)
+        |""".stripMargin)
     sql(
       """
         |insert into t_hudi_flink

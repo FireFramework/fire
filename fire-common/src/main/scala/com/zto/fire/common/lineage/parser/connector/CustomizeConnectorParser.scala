@@ -18,16 +18,13 @@
 package com.zto.fire.common.lineage.parser.connector
 
 import com.zto.fire.common.bean.TableIdentifier
-import com.zto.fire.common.bean.lineage.SQLTable
-import com.zto.fire.common.conf.FireKafkaConf
 import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.lineage.DatasourceDesc
 import com.zto.fire.common.lineage.parser.ConnectorParser
 import com.zto.fire.common.lineage.parser.ConnectorParser.toOperationSet
-import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
 import com.zto.fire.predef._
 
 import java.util.Objects
-import scala.collection.mutable
 
 /**
  * Customize Connector血缘解析器
@@ -39,13 +36,14 @@ private[fire] object CustomizeConnectorParser extends ConnectorParser {
 
   /**
    * 解析指定的connector血缘
+   * 注：可获取到主键、分区字段等信息：SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey
    *
    * @param tableIdentifier
    * 表的唯一标识
    * @param properties
    * connector中的options信息
    */
-  override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+  override def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
 
   }
 

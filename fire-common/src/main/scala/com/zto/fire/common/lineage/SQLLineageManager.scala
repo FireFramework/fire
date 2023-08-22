@@ -176,6 +176,30 @@ private[fire] object SQLLineageManager {
   }
 
   /**
+   * 为指定的表添加主键信息
+   *
+   * @param primaryKey
+   * 主键字段
+   */
+  def setPrimarykey(tableIdentifier: TableIdentifier, primaryKey: JSet[String]): SQLTable = {
+    this.setTableField(tableIdentifier) {
+      _.setPrimaryKey(primaryKey)
+    }
+  }
+
+  /**
+   * 为指定的表添加分区字段名称
+   *
+   * @param partitionField
+   * 分区字段名称
+   */
+  def setPartitionField(tableIdentifier: TableIdentifier, partitionField: JSet[String]): SQLTable = {
+    this.setTableField(tableIdentifier) {
+      _.setPartitionField(partitionField)
+    }
+  }
+
+  /**
    * 为指定的表添加comment信息
    *
    * @param comment

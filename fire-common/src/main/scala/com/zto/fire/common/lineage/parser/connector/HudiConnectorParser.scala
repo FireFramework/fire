@@ -26,7 +26,6 @@ import com.zto.fire.common.lineage.{DatasourceDesc, SQLLineageManager, SqlToData
 import com.zto.fire.predef._
 
 import java.util.Objects
-import scala.collection.mutable
 
 /**
  * Hudi Connector血缘解析器
@@ -38,17 +37,21 @@ private[fire] object HudiConnectorParser extends ConnectorParser {
 
   /**
    * 解析指定的connector血缘
+   * 注：可获取到主键、分区字段等信息：SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey
    *
    * @param tableIdentifier
    * 表的唯一标识
    * @param properties
    * connector中的options信息
    */
-  override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+  override def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
     val path = properties.getOrElse("path", "")
     SQLLineageManager.setCluster(tableIdentifier, path)
 
-    var recordkey = properties.getOrElse("hoodie.datasource.write.recordkey.field", "")
+    // 从建表语句的主键中获取
+    var recordkey = SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey.mkString(",")
+    // 如果主键中未指定，则从with的选项中获取
+    if (isEmpty(recordkey)) recordkey = properties.getOrElse("hoodie.datasource.write.recordkey.field", "")
     if (isEmpty(recordkey)) recordkey = properties.getOrElse("hoodie.datasource.write.recordkey.field", "")
 
     var precombineField = properties.getOrElse("write.precombine.field", "")
@@ -62,7 +65,7 @@ private[fire] object HudiConnectorParser extends ConnectorParser {
       properties("table.type"),
       recordkey,
       precombineField,
-      partitions,
+      SQLLineageManager.getTableInstance(tableIdentifier).getPartitionField.mkString(","),
       Operation.CREATE_TABLE
     )
   }
@@ -91,8 +94,8 @@ private[fire] object HudiConnectorParser extends ConnectorParser {
    */
   def addDatasource(datasource: Datasource, cluster: String, tableName: String,
                     tableType: String, recordKey: String, precombineKey: String,
-                    partition: String, operation: Operation*): Unit = {
-    if (this.canAdd) this.addDatasource(datasource, HudiDatasource(datasource.toString, cluster, tableName, tableType, recordKey, precombineKey, partition, toOperationSet(operation: _*)))
+                    partitionField: String, operation: Operation*): Unit = {
+    if (this.canAdd) this.addDatasource(datasource, HudiDatasource(datasource.toString, cluster, tableName, tableType, recordKey, precombineKey, partitionField, toOperationSet(operation: _*)))
   }
 }
 
@@ -110,7 +113,7 @@ private[fire] object HudiConnectorParser extends ConnectorParser {
  */
 case class HudiDatasource(datasource: String, cluster: String,
                           tableName: String, var tableType: String = null, var recordKey: String = null, var precombineKey: String = null,
-                          var partition: String = null, var operation: JSet[Operation] = new JHashSet[Operation]) extends DatasourceDesc {
+                          var partitionField: String = null, var operation: JSet[Operation] = new JHashSet[Operation]) extends DatasourceDesc {
   override def equals(obj: Any): Boolean = {
     if (obj == null || getClass != obj.getClass) return false
     val target = obj.asInstanceOf[HudiDatasource]
@@ -133,7 +136,7 @@ case class HudiDatasource(datasource: String, cluster: String,
           if (noEmpty(targetDesc.tableType)) this.tableType = targetDesc.tableType
           if (noEmpty(targetDesc.recordKey)) this.recordKey = targetDesc.recordKey
           if (noEmpty(targetDesc.precombineKey)) this.precombineKey = targetDesc.precombineKey
-          if (noEmpty(targetDesc.partition)) this.partition = targetDesc.partition
+          if (noEmpty(targetDesc.partitionField)) this.partitionField = targetDesc.partitionField
         case _ =>
       }
     }
@@ -155,6 +158,6 @@ object HudiDatasource extends SqlToDatasource {
   def mapDatasource(table: SQLTable): Unit = {
     if (this.isNotMatch("hudi", table)) return
 
-    HudiConnectorParser.addDatasource(Datasource.HUDI, HudiDatasource(Datasource.HUDI.toString, table.getCluster, table.getPhysicalTable, operation = table.getOperationType))
+    HudiConnectorParser.addDatasource(Datasource.HUDI, HudiDatasource(Datasource.HUDI.toString, table.getCluster, table.getPhysicalTable, partitionField = table.getPartitionField.mkString(","), operation = table.getOperationType))
   }
 }

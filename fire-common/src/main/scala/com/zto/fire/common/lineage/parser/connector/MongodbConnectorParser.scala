@@ -23,8 +23,6 @@ import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.SQLLineageManager
 import com.zto.fire.common.util.RegularUtils
 
-import scala.collection.mutable
-
 /**
  * Mongodb Connector血缘解析器
  *
@@ -71,13 +69,14 @@ private[fire] object MongodbConnectorParser extends IJDBCConnectorParser {
 
   /**
    * 解析指定的connector血缘
+   * 注：可获取到主键、分区字段等信息：SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey
    *
    * @param tableIdentifier
    * 表的唯一标识
    * @param properties
    * connector中的options信息
    */
-  override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
+  override def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
     val dbName = properties.getOrElse("database", "")
     val collection = properties.getOrElse("collection", "")
     val tableName = if (noEmpty(dbName)) s"$dbName.$collection" else collection
