@@ -80,7 +80,7 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
    * connector中的options信息
    */
   override def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
-    val connector = properties.getOrElse("connector", "")
+    val connector = properties.getOrElse("connector", properties.getOrElse("type", ""))
     val className = this.getClassName(connector)
     LineageManager.printLog(s"获取connector：${connector}对应的解析类：${className}")
 

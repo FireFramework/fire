@@ -257,10 +257,10 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
     SQLLineageManager.setOperation(identifier, operation.toString)
 
     // Flink临时表血缘解析
-    if (this.isTempView(identifier)) {
-      SQLLineageManager.setCatalog(identifier, this.getCatalog(identifier).toString)
-      SQLLineageManager.setTmpView(identifier, identifier.toString())
-    }
+    //if (this.isTempView(identifier)) {
+    SQLLineageManager.setCatalog(identifier, this.getCatalog(identifier).toString)
+    SQLLineageManager.setTmpView(identifier, identifier.toString())
+    //}
 
     // Hive表血缘解析
     if (this.isHiveTable(identifier)) {

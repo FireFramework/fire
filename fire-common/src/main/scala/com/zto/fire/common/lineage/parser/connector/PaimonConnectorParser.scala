@@ -28,12 +28,12 @@ import com.zto.fire.predef._
 import java.util.Objects
 
 /**
- * Hudi Connector血缘解析器
+ * Paimon Connector血缘解析器
  *
- * @author ChengLong 2023-08-09 10:12:19
+ * @author ChengLong 2023-08-22 16:01:42
  * @since 2.3.8
  */
-private[fire] object HudiConnectorParser extends ConnectorParser {
+private[fire] object PaimonConnectorParser extends ConnectorParser {
 
   /**
    * 解析指定的connector血缘
@@ -45,47 +45,25 @@ private[fire] object HudiConnectorParser extends ConnectorParser {
    * connector中的options信息
    */
   override def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
-    val path = properties.getOrElse("path", "")
-    SQLLineageManager.setCluster(tableIdentifier, path)
+    val url = properties.getOrElse("warehouse", "")
+    SQLLineageManager.setCluster(tableIdentifier, "")
+    SQLLineageManager.setPhysicalTable(tableIdentifier, tableIdentifier.identifier)
 
     // 从建表语句的主键中获取
-    var recordkey = SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey.mkString(",")
-    // 如果主键中未指定，则从with的选项中获取
-    if (isEmpty(recordkey)) recordkey = properties.getOrElse("hoodie.datasource.write.recordkey.field", "")
-    if (isEmpty(recordkey)) recordkey = properties.getOrElse("hoodie.datasource.write.recordkey.field", "")
+    val primaryKey = SQLLineageManager.getTableInstance(tableIdentifier).getPrimaryKey.mkString(",")
+    val bucketKey = properties.getOrElse("bucket-key", "")
 
-    var precombineField = properties.getOrElse("write.precombine.field", "")
-    if (isEmpty(precombineField)) precombineField = properties.getOrElse("precombine.field", "")
-
-    val hudiTable = this.getTableNameByPath(path)
-    SQLLineageManager.setPhysicalTable(tableIdentifier, hudiTable)
-
-    this.addDatasource(Datasource.HUDI, path,
-      hudiTable,
-      properties("table.type"),
-      recordkey,
-      precombineField,
+    this.addDatasource(Datasource.PAIMON, url,
+      tableIdentifier.identifier,
+      primaryKey,
+      bucketKey,
       SQLLineageManager.getTableInstance(tableIdentifier).getPartitionField.mkString(","),
       Operation.CREATE_TABLE
     )
   }
 
   /**
-   * 根据hudi表存储路径获取表名
-   *
-   * @param path
-   * hudi表存储url
-   * @return
-   * hudi表名
-   */
-  private[this] def getTableNameByPath(path: String): String = {
-    if (isEmpty(path)) return ""
-    val elements = path.split("/")
-    elements(elements.length - 1)
-  }
-
-  /**
-   * 添加一条Hudi数据源埋点信息
+   * 添加一条Paimon数据源埋点信息
    *
    * @param datasource
    * 数据源类型
@@ -93,31 +71,32 @@ private[fire] object HudiConnectorParser extends ConnectorParser {
    * 集群标识
    */
   def addDatasource(datasource: Datasource, cluster: String, tableName: String,
-                    tableType: String, recordKey: String, precombineKey: String,
+                    primaryKey: String, bucketKey: String,
                     partitionField: String, operation: Operation*): Unit = {
-    if (this.canAdd) this.addDatasource(datasource, HudiDatasource(datasource.toString, cluster, tableName, tableType, recordKey, precombineKey, partitionField, toOperationSet(operation: _*)))
+    if (this.canAdd) this.addDatasource(datasource, PaimonDatasource(datasource.toString, cluster, tableName, primaryKey, bucketKey, partitionField, toOperationSet(operation: _*)))
   }
 }
 
 /**
- * Hudi数据源
+ * Paimon数据源
  *
  * @param datasource
  * 数据源类型，参考DataSource枚举
  * @param cluster
  * 数据源的集群标识
  * @param tableName
- * hudi表名
+ * Paimon表名
  * @param operation
  * 数据源操作类型（必须是var变量，否则合并不成功）
  */
-case class HudiDatasource(datasource: String, cluster: String,
-                          tableName: String, var tableType: String = null, var recordKey: String = null, var precombineKey: String = null,
-                          var partitionField: String = null, var operation: JSet[Operation] = new JHashSet[Operation]) extends DatasourceDesc {
+case class PaimonDatasource(datasource: String, cluster: String,
+                            tableName: String, var primaryKey: String = null,
+                            var bucketKey: String = null,
+                            var partitionField: String = null, var operation: JSet[Operation] = new JHashSet[Operation]) extends DatasourceDesc {
   override def equals(obj: Any): Boolean = {
     if (obj == null || getClass != obj.getClass) return false
-    val target = obj.asInstanceOf[HudiDatasource]
-    Objects.equals(datasource, target.datasource) && Objects.equals(cluster, target.cluster) && Objects.equals(tableName, target.tableName)
+    val target = obj.asInstanceOf[PaimonDatasource]
+    Objects.equals(datasource, target.datasource) && Objects.equals(tableName, target.tableName)
   }
 
   override def hashCode(): Int = Objects.hash(datasource, cluster)
@@ -132,10 +111,9 @@ case class HudiDatasource(datasource: String, cluster: String,
   override def set(target: DatasourceDesc): Unit = {
     if (target != null) {
       target match {
-        case targetDesc: HudiDatasource =>
-          if (noEmpty(targetDesc.tableType)) this.tableType = targetDesc.tableType
-          if (noEmpty(targetDesc.recordKey)) this.recordKey = targetDesc.recordKey
-          if (noEmpty(targetDesc.precombineKey)) this.precombineKey = targetDesc.precombineKey
+        case targetDesc: PaimonDatasource =>
+          if (noEmpty(targetDesc.primaryKey)) this.primaryKey = targetDesc.primaryKey
+          if (noEmpty(targetDesc.bucketKey)) this.bucketKey = targetDesc.bucketKey
           if (noEmpty(targetDesc.partitionField)) this.partitionField = targetDesc.partitionField
         case _ =>
       }
@@ -143,12 +121,12 @@ case class HudiDatasource(datasource: String, cluster: String,
   }
 }
 
-object HudiDatasource extends SqlToDatasource {
+object PaimonDatasource extends SqlToDatasource {
 
   /**
    * 解析SQL血缘中的表信息并映射为数据源信息
    * 注：1. 新增子类的名称必须来自Datasource枚举中map所定义的类型，如catalog为hudi，则Datasource枚举中映射为HudiDatasource，对应创建名为HudiDatasource的object继承该接口
-   *    2. 新增Datasource子类需实现该方法，定义如何将SQLTable映射为对应的Datasource实例
+   *  2. 新增Datasource子类需实现该方法，定义如何将SQLTable映射为对应的Datasource实例
    *
    * @param table
    * sql语句中使用到的表
@@ -156,8 +134,8 @@ object HudiDatasource extends SqlToDatasource {
    * DatasourceDesc
    */
   def mapDatasource(table: SQLTable): Unit = {
-    if (this.isNotMatch("hudi", table)) return
+    if (this.isNotMatch("paimon", table)) return
 
-    HudiConnectorParser.addDatasource(Datasource.HUDI, HudiDatasource(Datasource.HUDI.toString, table.getCluster, table.getPhysicalTable, recordKey = table.getPrimaryKey.mkString(","), partitionField = table.getPartitionField.mkString(","), operation = table.getOperationType))
+    PaimonConnectorParser.addDatasource(Datasource.PAIMON, table.getCluster, table.getPhysicalTable, table.getPrimaryKey.mkString(","), "", table.getPartitionField.mkString(","), table.getOperationType.toSeq :_*)
   }
 }

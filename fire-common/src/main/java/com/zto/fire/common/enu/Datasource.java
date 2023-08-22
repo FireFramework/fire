@@ -65,6 +65,7 @@ public enum Datasource {
         datasourceMap.put(HUDI, HudiDatasource.class);
         datasourceMap.put(FILESYSTEM, FileDatasource.class);
         datasourceMap.put(ICEBERG, FileDatasource.class);
+        datasourceMap.put(PAIMON, PaimonDatasource.class);
 
         // 消息队列类别
         datasourceMap.put(KAFKA, MQDatasource.class);
