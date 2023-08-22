@@ -63,7 +63,8 @@ public enum Datasource {
         // 文件类
         datasourceMap.put(HIVE, HiveDatasource.class);
         datasourceMap.put(HUDI, HudiDatasource.class);
-        datasourceMap.put(FILESYSTEM, FilesystemDatasource.class);
+        datasourceMap.put(FILESYSTEM, FileDatasource.class);
+        datasourceMap.put(ICEBERG, FileDatasource.class);
 
         // 消息队列类别
         datasourceMap.put(KAFKA, MQDatasource.class);

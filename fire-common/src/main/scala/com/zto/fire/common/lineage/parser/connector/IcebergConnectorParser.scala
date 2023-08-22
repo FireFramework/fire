@@ -29,12 +29,12 @@ import java.util.{Collections, Objects}
 import scala.collection.mutable
 
 /**
- * FileSystem Connector血缘解析器
+ * Iceberg Connector血缘解析器
  *
- * @author ChengLong 2023-08-21 13:21:35
+ * @author ChengLong 2023-08-22 09:47:12
  * @since 2.3.8
  */
-private[fire] object FilesystemConnectorParser extends IFileConnectorParser {
+private[fire] object IcebergConnectorParser extends IFileConnectorParser {
 
   /**
    * 解析指定的connector血缘
@@ -45,11 +45,15 @@ private[fire] object FilesystemConnectorParser extends IFileConnectorParser {
    * connector中的options信息
    */
   override def parse(tableIdentifier: TableIdentifier, properties: mutable.Map[String, String], partitions: String): Unit = {
-    val path = properties.getOrElse("path", "")
-    SQLLineageManager.setCluster(tableIdentifier, path)
-    SQLLineageManager.setPhysicalTable(tableIdentifier, tableIdentifier.identifier)
+    val cluster = properties.getOrElse("warehouse", "")
+    SQLLineageManager.setCluster(tableIdentifier, cluster)
 
-    this.addDatasource(Datasource.FILESYSTEM, path,
+    val dbName = properties.getOrElse("catalog-database", "")
+    val tableName = properties.getOrElse("catalog-table", "")
+    val physicalTable = if (noEmpty(dbName)) s"$dbName.$tableName" else tableName
+    SQLLineageManager.setPhysicalTable(tableIdentifier, physicalTable)
+
+    this.addDatasource(Datasource.ICEBERG, cluster,
       tableIdentifier.identifier,
       Collections.emptySet[SQLTablePartitions](),
       Operation.CREATE_TABLE
