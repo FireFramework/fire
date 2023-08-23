@@ -104,5 +104,9 @@ object VirtualDatasource extends SqlToDatasource {
     if (this.isMatch("print", table)) {
       DatagenConnectorParser.addDatasource(Datasource.PRINT, operationSet.toSeq: _*)
     }
+
+    if (this.isMatch("blackhole", table)) {
+      DatagenConnectorParser.addDatasource(Datasource.BLACKHOLE, operationSet.toSeq: _*)
+    }
   }
 }
