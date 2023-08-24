@@ -38,7 +38,7 @@ public enum Datasource {
     VIEW(16), JDBC(17), FIRE_ROCKETMQ(18), PostgreSQL(19),
     CUSTOMIZE_SOURCE(20), CUSTOMIZE_SINK(21), HUDI(22), DORIS(23),
     ICEBERG(24), PAIMON(25), MONGODB(26), PRINT(27), DATAGEN(28),
-    FILESYSTEM(29), BLACKHOLE(30), UNKNOWN(404);
+    FILESYSTEM(29), BLACKHOLE(30), DYNAMODB(31), FIREHOSE(32), KINESIS(33),UNKNOWN(404);
 
     private static Map<Datasource, Class<?>> datasourceMap = Maps.newHashMap();
 
@@ -67,6 +67,9 @@ public enum Datasource {
         datasourceMap.put(FILESYSTEM, FileDatasource.class);
         datasourceMap.put(ICEBERG, FileDatasource.class);
         datasourceMap.put(PAIMON, PaimonDatasource.class);
+        datasourceMap.put(DYNAMODB, FileDatasource.class);
+        datasourceMap.put(FIREHOSE, FileDatasource.class);
+        datasourceMap.put(KINESIS, FileDatasource.class);
 
         // 消息队列类别
         datasourceMap.put(KAFKA, MQDatasource.class);

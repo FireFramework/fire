@@ -85,12 +85,30 @@ object FileDatasource extends SqlToDatasource {
    * DatasourceDesc
    */
   def mapDatasource(table: SQLTable): Unit = {
+    var datasource = Datasource.UNKNOWN
+
     if (this.isMatch("filesystem", table)) {
-      FilesystemConnectorParser.addDatasource(Datasource.FILESYSTEM, table.getCluster, table.getPhysicalTable, table.getPartitions, table.getOperationType.toSeq: _*)
+      datasource = Datasource.FILESYSTEM
     }
 
     if (this.isMatch("iceberg", table)) {
-      IcebergConnectorParser.addDatasource(Datasource.ICEBERG, table.getCluster, table.getPhysicalTable, table.getPartitions, table.getOperationType.toSeq: _*)
+      datasource = Datasource.ICEBERG
+    }
+
+    if (this.isMatch("dynamodb", table)) {
+      datasource = Datasource.DYNAMODB
+    }
+
+    if (this.isMatch("firehose", table)) {
+      datasource = Datasource.FIREHOSE
+    }
+
+    if (this.isMatch("kinesis", table)) {
+      datasource = Datasource.KINESIS
+    }
+
+    if (Datasource.UNKNOWN != datasource) {
+      FilesystemConnectorParser.addDatasource(datasource, table.getCluster, table.getPhysicalTable, table.getPartitions, table.getOperationType.toSeq: _*)
     }
   }
 }
