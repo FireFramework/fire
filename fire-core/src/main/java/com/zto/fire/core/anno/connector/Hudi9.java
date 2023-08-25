@@ -81,4 +81,9 @@ public @interface Hudi9 {
      * clustering的字段列表：hoodie.clustering.plan.strategy.sort.columns
      */
     String clustringColumns() default "";
+
+    /**
+     * 基于多少个分区进行clustering执行计划的生成：hoodie.clustering.plan.strategy.daybased.lookback.partitions
+     */
+    int clusteringPartitions() default -1;
 }
