@@ -32,13 +32,18 @@ import java.util.Map;
  */
 public enum Datasource {
     // TODO: 添加新的数据源时务必在static代码块中添加与DatasourceDesc子类的映射关系
-    HIVE(1), HBASE(2), KAFKA(3), ROCKETMQ(4), REDIS(5),
-    ELASTICSEARCH(6), MYSQL(7), TIDB(8), ORACLE(9), SQLSERVER(10),
-    DB2(11), CLICKHOUSE(12), PRESTO(13), KYLIN(14), DERBY(15),
-    VIEW(16), JDBC(17), FIRE_ROCKETMQ(18), PostgreSQL(19),
-    CUSTOMIZE_SOURCE(20), CUSTOMIZE_SINK(21), HUDI(22), DORIS(23),
-    ICEBERG(24), PAIMON(25), MONGODB(26), PRINT(27), DATAGEN(28),
-    FILESYSTEM(29), BLACKHOLE(30), DYNAMODB(31), FIREHOSE(32), KINESIS(33),UNKNOWN(404);
+    HIVE("hive"), HBASE("hbase"), KAFKA("kafka"),
+    ROCKETMQ("rocketmq"), REDIS("redis"), KINESIS("kinesis"),
+    MYSQL("mysql"), TIDB("tidb"), ORACLE("oracle"),
+    SQLSERVER("sqlserver"), DB2("db2"), CLICKHOUSE("clickhouse"),
+    PRESTO("presto"), KYLIN("kylin"), DERBY("derby"),
+    VIEW("view"), JDBC("jdbc"), FIRE_ROCKETMQ("fire_rocketmq"),
+    PostgreSQL("postgresql"), CUSTOMIZE_SOURCE("customize_source"),
+    CUSTOMIZE_SINK("customize_sink"), HUDI("hudi"), DORIS("doris"),
+    ICEBERG("iceberg"), PAIMON("paimon"), MONGODB("mongodb"),
+    PRINT("print"), DATAGEN("datagen"), FILESYSTEM("filesystem"),
+    BLACKHOLE("blackhole"), DYNAMODB("dynamodb"), FIREHOSE("firehouse"),
+    ELASTICSEARCH("elasticsearch"), UNKNOWN("unknown");
 
     private static Map<Datasource, Class<?>> datasourceMap = Maps.newHashMap();
 
@@ -79,6 +84,7 @@ public enum Datasource {
         // 自定义connector
         datasourceMap.put(CUSTOMIZE_SOURCE, CustomizeDatasource.class);
         datasourceMap.put(CUSTOMIZE_SINK, CustomizeDatasource.class);
+        datasourceMap.put(UNKNOWN, UnknownDatasource.class);
 
         // 虚拟connector
         datasourceMap.put(DATAGEN, VirtualDatasource.class);
@@ -86,10 +92,10 @@ public enum Datasource {
         datasourceMap.put(BLACKHOLE, VirtualDatasource.class);
 
         // 待归类
-        // VIEW / ICEBERG / Paimon / ES
+        // VIEW
     }
 
-    Datasource(int type) {
+    Datasource(String type) {
     }
 
     public static Class<?> toDatasource(Datasource datasource) {

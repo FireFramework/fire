@@ -19,6 +19,7 @@ package com.zto.fire.common.lineage.parser
 
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.Operation
+import com.zto.fire.common.lineage.parser.connector.UnknownConnectorParser
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
 import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.predef._
@@ -89,7 +90,10 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
 
     tryWithLog {
       if (className.isDefined) {
-        val method = ReflectionUtils.getMethodByName(className.get, abstractMethod)
+        var parserClass = ReflectionUtils.forName(className.get)
+        if (isEmpty(parserClass)) parserClass = UnknownConnectorParser.getClass
+
+        val method = ReflectionUtils.getMethodByName(parserClass, abstractMethod)
         if (method != null) {
           method.invoke(null, tableIdentifier, properties)
           LineageManager.printLog(s"映射SQL血缘为Datasource，反射调用类：${className.get}.parse()，connector：$connector properties：$properties")
