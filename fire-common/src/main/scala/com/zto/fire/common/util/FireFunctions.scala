@@ -85,7 +85,7 @@ trait FireFunctions extends Serializable with Logging  {
    * @param hook
    * 是否将捕获到的异常信息发送到消息队列
    */
-  def tryWithLog(block: => Unit)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog, isThrow: Boolean = false, hook: Boolean = true): Unit = {
+  def tryWithLog(block: => Unit)(logger: Logger = this.logger, tryLog: String = tryLog, catchLog: String = catchLog, isThrow: Boolean = true, hook: Boolean = true): Unit = {
     try {
       elapsed(tryLog, logger)(block)
     } catch {
@@ -173,12 +173,18 @@ trait FireFunctions extends Serializable with Logging  {
     try {
       elapsed[Unit](tryLog, logger)(block)
     } catch {
-      case t: Throwable => if (hook) ExceptionBus.offAndLogError(logger, catchLog, t)
+      case t: Throwable => {
+        if (hook) ExceptionBus.offAndLogError(logger, catchLog, t)
+        throw t
+      }
     } finally {
       try {
         finallyBlock
       } catch {
-        case t: Throwable => if (hook) ExceptionBus.offAndLogError(logger, catchLog, t)
+        case t: Throwable => {
+          if (hook) ExceptionBus.offAndLogError(logger, catchLog, t)
+          throw t
+        }
       }
     }
   }
