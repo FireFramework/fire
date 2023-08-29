@@ -40,11 +40,11 @@ private[fire] object RocketmqConnectorParser extends IMQConnectorParser {
    * connector中的options信息
    */
   override def parse(tableIdentifier: TableIdentifier, properties: Map[String, String]): Unit = {
-    val url = properties.getOrElse("rocket.brokers.name", "")
+    val url = properties.getOrElse("rocket.brokers.name", properties.getOrElse("nameServerAddress", ""))
     SQLLineageManager.setCluster(tableIdentifier, FireRocketMQConf.rocketNameServer(url))
-    val topic = properties.getOrElse("rocket.topics", "")
+    val topic = properties.getOrElse("rocket.topics", properties.getOrElse("topic", ""))
     SQLLineageManager.setPhysicalTable(tableIdentifier, topic)
-    val groupId = properties.getOrElse("rocket.group.id", "")
+    val groupId = properties.getOrElse("rocket.group.id", properties.getOrElse("consumerGroup", ""))
     this.addDatasource(Datasource.ROCKETMQ, url, topic, groupId, Operation.CREATE_TABLE)
   }
 
