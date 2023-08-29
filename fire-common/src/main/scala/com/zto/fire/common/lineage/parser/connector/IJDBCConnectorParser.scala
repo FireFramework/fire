@@ -154,6 +154,10 @@ object DBDatasource extends SqlToDatasource {
       datasource = Datasource.ELASTICSEARCH
     }
 
+    if (isMatch("opensearch", table)) {
+      datasource = Datasource.OPENSEARCH
+    }
+
     if (Datasource.UNKNOWN == datasource) return
 
     val options = table.getOptions

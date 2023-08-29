@@ -53,7 +53,14 @@ private[fire] object ElasticsearchConnectorParser extends IJDBCConnectorParser {
     val physicalTable = if (noEmpty(dbName)) s"$dbName.$tableName" else tableName
     SQLLineageManager.setPhysicalTable(tableIdentifier, physicalTable)
     val username = properties.getOrElse("username", "")
+    val connector = properties.getOrElse("connector", properties.getOrElse("type", ""))
 
-    if (this.canAdd) this.addDatasource(Datasource.ELASTICSEARCH, url, physicalTable, username, Operation.CREATE_TABLE)
+    val datasource = if (connector.contains("opensearch")) {
+      Datasource.OPENSEARCH
+    } else {
+      Datasource.ELASTICSEARCH
+    }
+
+    if (this.canAdd) this.addDatasource(datasource, url, physicalTable, username, Operation.CREATE_TABLE)
   }
 }
