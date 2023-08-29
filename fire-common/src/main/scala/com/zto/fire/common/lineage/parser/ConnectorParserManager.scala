@@ -60,10 +60,10 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
     } else if (conn.contains("rocketmq")) {
       // 支持：'connector'='fire-rocketmq' | 'connector'='rocketmq'等
       "rocketmq"
-    } else if (conn.equalsIgnoreCase("-cdc")) {
+    } else if (conn.contains("-cdc")) {
       // 支持：'connector'='mysql-cdc' | 'connector'='oracle-cdc'等任意cdc connector
       "cdc"
-    } else if (conn.contains("elasticsearch")) {
+    } else if (conn.contains("elasticsearch") || conn.contains("opensearch")) {
       // 支持：'connector' = 'elasticsearch-6' | 'connector' = 'elasticsearch-7'
       "elasticsearch"
     } else {
@@ -71,7 +71,17 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
       conn
     }
 
-    Some(s"${packagePrefix}.${connectorType.headUpper}${packageSuffix}")
+    connect(connectorType)
+  }
+
+  /**
+   * 拼接类全限定名称
+   * @param connectorType
+   * connector类型
+   * @return
+   */
+  private[this] def connect(connectorType: JString): Option[String] = {
+    Some(s"${packagePrefix}.${connectorType.toLowerCase.headUpper}${packageSuffix}")
   }
 
   /**
@@ -91,7 +101,7 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
     tryWithLog {
       if (className.isDefined) {
         var parserClass = ReflectionUtils.forName(className.get)
-        if (isEmpty(parserClass)) parserClass = UnknownConnectorParser.getClass
+        if (isEmpty(parserClass)) parserClass = ReflectionUtils.forName(connect("Unknown").get)
 
         val method = ReflectionUtils.getMethodByName(parserClass, abstractMethod)
         if (method != null) {

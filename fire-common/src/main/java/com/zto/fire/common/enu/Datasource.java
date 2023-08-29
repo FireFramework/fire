@@ -43,7 +43,7 @@ public enum Datasource {
     ICEBERG("iceberg"), PAIMON("paimon"), MONGODB("mongodb"),
     PRINT("print"), DATAGEN("datagen"), FILESYSTEM("filesystem"),
     BLACKHOLE("blackhole"), DYNAMODB("dynamodb"), FIREHOSE("firehouse"),
-    ELASTICSEARCH("elasticsearch"), UNKNOWN("unknown");
+    ELASTICSEARCH("elasticsearch"), OPENSEARCH("opensearch"), UNKNOWN("unknown");
 
     private static Map<Datasource, Class<?>> datasourceMap = Maps.newHashMap();
 
@@ -65,6 +65,7 @@ public enum Datasource {
         datasourceMap.put(MONGODB, DBDatasource.class);
         datasourceMap.put(DORIS, DBDatasource.class);
         datasourceMap.put(ELASTICSEARCH, DBDatasource.class);
+        datasourceMap.put(OPENSEARCH, DBDatasource.class);
 
         // 文件类
         datasourceMap.put(HIVE, HiveDatasource.class);
