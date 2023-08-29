@@ -28,7 +28,7 @@ import com.zto.fire.predef._
  * @author ChengLong 2023-08-09 10:12:19
  * @since 2.3.8
  */
-private[fire] object JDBCConnectorParser extends IJDBCConnectorParser {
+private[fire] object JdbcConnectorParser extends IJDBCConnectorParser {
 
   /**
    * 解析指定的connector血缘

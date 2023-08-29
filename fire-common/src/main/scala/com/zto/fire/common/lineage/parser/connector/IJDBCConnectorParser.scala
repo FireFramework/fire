@@ -158,6 +158,6 @@ object DBDatasource extends SqlToDatasource {
 
     val options = table.getOptions
     val username = if (noEmpty(options)) options.getOrDefault("username", "") else ""
-    JDBCConnectorParser.addDatasource(datasource, table.getCluster, table.getPhysicalTable, username, table.getOperationType.toSeq: _*)
+    JdbcConnectorParser.addDatasource(datasource, table.getCluster, table.getPhysicalTable, username, table.getOperationType.toSeq: _*)
   }
 }
