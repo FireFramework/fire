@@ -33,7 +33,7 @@ import scala.reflect.ClassTag
  */
 abstract class HBaseSink[IN, T <: HBaseBaseBean[T] : ClassTag](tableName: String,
                                                                batch: Int = 100,
-                                                               flushInterval: Long = 10000,
+                                                               flushInterval: Long = 5000,
                                                                keyNum: Int = KeyNum._1) extends BaseSink[IN, T](batch, flushInterval) {
 
   // hbase操作失败时允许最大重试次数

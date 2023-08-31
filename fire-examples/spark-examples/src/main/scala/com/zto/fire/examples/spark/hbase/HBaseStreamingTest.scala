@@ -12,9 +12,9 @@ import com.zto.fire.spark.anno.Streaming
   * @author ChengLong 2019-5-26 13:21:59
   * @contact Fire框架技术交流群（钉钉）：35373471
   */
-@HBase("test")
+@HBase("fat")
 @Streaming(interval = 10, concurrent = 2)
-@HBase2(cluster = "test", scanPartitions = 30, storageLevel = "DISK_ONLY")
+@HBase2(cluster = "fat", scanPartitions = 30, storageLevel = "DISK_ONLY")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HBaseStreamingTest extends SparkStreaming {

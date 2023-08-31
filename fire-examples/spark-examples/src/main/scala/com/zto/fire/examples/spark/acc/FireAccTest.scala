@@ -20,7 +20,7 @@ package com.zto.fire.examples.spark.acc
 import com.zto.fire._
 import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.util.{DateFormatUtils, PropUtils, ThreadUtils}
-import com.zto.fire.core.anno.connector.{Hive, Kafka}
+import com.zto.fire.core.anno.connector.{Hive, Kafka, RocketMQ}
 import com.zto.fire.spark.SparkStreaming
 import com.zto.fire.spark.anno.Streaming
 
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
  */
 @Streaming(10)
 @Hive("fat")
-@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object FireAccTest extends SparkStreaming {
   val key = "fire.partitions"
@@ -44,7 +44,7 @@ object FireAccTest extends SparkStreaming {
     if (this.args != null) {
       this.args.foreach(arg => println(arg + " "))
     }
-    val dstream = this.fire.createKafkaDirectStream()
+    val dstream = this.fire.createRocketMqPullStream()
     dstream.foreachRDD(rdd => {
       rdd.coalesce(this.conf.getInt(key, 10)).foreachPartition(t => {
         println("conf=" + this.conf.getInt(key, 10) + " PropUtils=" + PropUtils.getString(key))

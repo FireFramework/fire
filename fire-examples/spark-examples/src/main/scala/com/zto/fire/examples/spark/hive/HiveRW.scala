@@ -59,7 +59,7 @@ object HiveRW extends SparkStreaming {
 
     sql(
       """
-        |create table tmp.baseorganize_fire (
+        |create table if exists tmp.baseorganize_fire (
         |    id bigint,
         |    name string,
         |    age int

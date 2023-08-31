@@ -32,8 +32,8 @@ import org.apache.spark.sql.{Encoders, Row}
   * @author ChengLong 2019-5-18 09:20:52
   *  @contact Fire框架技术交流群（钉钉）：35373471
   */
-@HBase("test")
-@HBase2(cluster = "test", scanPartitions = 3, storageLevel = "DISK_ONLY")
+@HBase("fat")
+@HBase2(cluster = "fat", scanPartitions = 3, storageLevel = "DISK_ONLY")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HBaseBulkTest extends SparkCore {
   private val tableName3 = "fire_test_3"

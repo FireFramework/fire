@@ -35,7 +35,7 @@ import scala.reflect.ClassTag
 abstract class KafkaSink[IN, T <: MQRecord : ClassTag](params: Map[String, Object],
                                                        url: String, topic: String,
                                                        batch: Int = 100,
-                                                       flushInterval: Long = 1000,
+                                                       flushInterval: Long = 5000,
                                                        keyNum: Int = KeyNum._1) extends BaseSink[IN, T](batch, flushInterval) {
 
   private lazy val (finalBrokers, finalTopic, finalConf) = KafkaUtils.getConfByKeyNum(params, url, topic, keyNum)

@@ -35,8 +35,8 @@ import scala.collection.mutable.ListBuffer
   * @author ChengLong 2019-5-9 09:37:25
   * @contact Fire框架技术交流群（钉钉）：35373471
   */
-@HBase("test")
-@HBase2(cluster = "test", scanPartitions = 3, storageLevel = "DISK_ONLY")
+@HBase("fat")
+@HBase2(cluster = "fat", scanPartitions = 3, storageLevel = "DISK_ONLY")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HBaseConnectorTest extends SparkCore {
   private val tableName1 = "fire_test_1"

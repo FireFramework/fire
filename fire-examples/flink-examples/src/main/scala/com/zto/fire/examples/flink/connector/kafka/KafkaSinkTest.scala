@@ -30,13 +30,9 @@ object KafkaSinkTest extends FlinkStreaming {
     // dstream.sinkKafkaString(keyNum = 2).uname("sinkKafkaString")
 
     // 将数据发送到@Kafka5对应的topic：mq_test
-    // dstream.map(t => MQRecord(t)).sinkKafka(keyNum = 5, batch = 10, flushInterval = 2000).uname("sinkKafka")
+    dstream.map(t => MQRecord(t)).sinkKafka(keyNum = 5, batch = 10, flushInterval = 2000).uname("sinkKafka")
 
     // 将数据发送到@RocketMQ3配置的topic以及partition 2这个分区中：mq_test
     dstream.map(t => MQRecord(t, key = "topic", partition = 2)).sinkRocketMQ(keyNum = 3).uname("sinkRocketMQ")
-
-    ThreadUtils.scheduleAtFixedRate({
-      println(s"累加器值：" + JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue))
-    }, 0, 10, TimeUnit.SECONDS)
   }
 }

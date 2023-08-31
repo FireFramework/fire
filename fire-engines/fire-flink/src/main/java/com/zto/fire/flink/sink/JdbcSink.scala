@@ -29,8 +29,8 @@ import com.zto.fire.jdbc.conf.FireJdbcConf
  * @since 1.1.0
  */
 abstract class JdbcSink[IN](sql: String,
-                            batch: Int = 10,
-                            flushInterval: Long = 1000,
+                            batch: Int = 100,
+                            flushInterval: Long = 5000,
                             keyNum: Int = KeyNum._1) extends BaseSink[IN, Seq[Any]](batch, flushInterval) {
 
   // jdbc操作失败时允许最大重试次数

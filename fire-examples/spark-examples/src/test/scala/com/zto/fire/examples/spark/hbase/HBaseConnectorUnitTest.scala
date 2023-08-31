@@ -36,8 +36,8 @@ import scala.collection.mutable.ListBuffer
   *
   * @author ChengLong 2019-5-9 09:37:25
   */
-@HBase("test")
-@HBase2(cluster = "test", scanPartitions = 3, storageLevel = "DISK_ONLY")
+@HBase("fat")
+@HBase2(cluster = "fat", scanPartitions = 3, storageLevel = "DISK_ONLY")
 class HBaseConnectorUnitTest extends SparkCore with HBaseTester {
 
   /**

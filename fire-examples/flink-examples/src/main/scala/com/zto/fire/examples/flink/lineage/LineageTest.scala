@@ -31,7 +31,7 @@ import org.apache.flink.api.scala._
 
 import java.util.concurrent.TimeUnit
 
-@HBase("test")
+@HBase("fat")
 @Config("""fire.lineage.run.initialDelay=10""")
 @Streaming(interval = 60, unaligned = true, parallelism = 2) // 100s做一次checkpoint，开启非对齐checkpoint
 @RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")

@@ -34,8 +34,8 @@ import org.junit.Test
  * @since 2.2.2
  * @date 2022-05-11 13:51:22
  */
-@HBase("test")
-@HBase2(cluster = "test", scanPartitions = 3, storageLevel = "DISK_ONLY")
+@HBase("fat")
+@HBase2(cluster = "fat", scanPartitions = 3, storageLevel = "DISK_ONLY")
 class HBaseApiTest extends SparkCore with HBaseTester {
 
   /**

@@ -88,18 +88,18 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
    */
   def invokeConfigCenter(className: String): JMap[ConfigureLevel, JMap[String, String]] = {
     if (!FireFrameworkConf.configCenterEnable || (FireUtils.isLocalRunMode && !FireFrameworkConf.configCenterLocalEnable)) return this.configCenterProperties
-
     val param = buildRequestParam(className)
     // 尝试从生产环境配置中心获取参数列表
     var json = this.invoke(FireFrameworkConf.configCenterProdAddress, param)
     // 如果生产环境接口调用失败，可能存在网络隔离，则从测试环境配置中心获取参数列表
     if (isEmpty(json)) json = this.invoke(FireFrameworkConf.configCenterTestAddress, param)
+    if (FireFrameworkConf.fireConfShow) this.logger.info(s"成功获取配置中心配置信息：$json")
+
     if (isEmpty(json)) {
       // 考虑到任务的重要配置可能存放在配置中心，在接口不通的情况下发布任务存在风险，因此会强制任务退出
       this.logger.error("配置中心注册接口不可用导致任务发布失败。如仍需紧急发布，请确保任务配置与配置中心保存一直，并在common.properties中添加以下参数：fire.config_center.enable=false")
       FireUtils.exitError
     } else {
-      if (FireFrameworkConf.fireConfShow) this.logger.info(s"成功获取配置中心配置信息：$json")
       val param = JSONUtils.parseObject[ConfigurationParam](json)
       if (noEmpty(param, param.getCode, param.getContent) && param.getCode == 200) {
         this.configCenterProperties.putAll(param.getContent)

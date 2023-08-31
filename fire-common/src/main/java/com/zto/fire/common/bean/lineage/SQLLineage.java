@@ -17,8 +17,6 @@
 
 package com.zto.fire.common.bean.lineage;
 
-import com.zto.fire.common.lineage.DatasourceDesc;
-
 import java.util.LinkedList;
 import java.util.List;
 
@@ -28,7 +26,7 @@ import java.util.List;
  * @author ChengLong 2022-09-01 13:30:22
  * @since 2.3.2
  */
-public class SQLLineage implements DatasourceDesc {
+public class SQLLineage {
 
     /**
      * 待解析的SQL语句

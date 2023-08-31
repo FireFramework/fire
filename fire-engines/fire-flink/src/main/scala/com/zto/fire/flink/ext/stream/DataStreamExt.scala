@@ -204,7 +204,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
         }
         params
       }
-    }).uid("jdbcBatchUpdate")
+    })
   }
 
   /**
@@ -230,7 +230,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
       override def map(value: T): Seq[Any] = {
         fun(value)
       }
-    }).uid("jdbcBatchUpdate2")
+    })
   }
 
   /**
@@ -253,7 +253,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
       value => {
         value.asInstanceOf[E]
       }
-    }.uid("hbasePutDS")
+    }
   }
 
   /**
@@ -280,7 +280,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
        * 将数据构建成sink的格式
        */
       override def map(value: T): E = fun(value)
-    }).uid("hbasePutDS2")
+    })
   }
 
   /**
@@ -349,10 +349,10 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
    */
   def sinkKafka[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
                                           url: String = null, topic: String = null,
-                                          batch: Int = 100, flushInterval: Long = 1000,
+                                          batch: Int = 1000, flushInterval: Long = 5000,
                                           keyNum: Int = KeyNum._1): DataStreamSink[_] = {
 
-    this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, keyNum)(_.asInstanceOf[E]).uid("sinkKafka")
+    this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, keyNum)(_.asInstanceOf[E])
   }
 
   /**
@@ -369,14 +369,14 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
    */
   def sinkKafkaFun[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
                                              url: String = null, topic: String = null,
-                                             batch: Int = 100, flushInterval: Long = 1000,
+                                             batch: Int = 1000, flushInterval: Long = 5000,
                                              keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
     val finalBatch = if (FireKafkaConf.kafkaSinkBatch(keyNum) > 0) FireKafkaConf.kafkaSinkBatch(keyNum) else batch
     val finalInterval = if (FireKafkaConf.kafkaFlushInterval(keyNum) > 0) FireKafkaConf.kafkaFlushInterval(keyNum) else flushInterval
 
     this.stream.addSink(new KafkaSink[T, E](params, url, topic, finalBatch, finalInterval, keyNum) {
       override def map(value: T): E = fun(value)
-    }).uid("sinkKafkaFun")
+    })
   }
 
   /**
@@ -393,9 +393,9 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
    */
   def sinkRocketMQ[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
                                              url: String = null, topic: String = null, tag: String = "*",
-                                             batch: Int = 100, flushInterval: Long = 1000,
+                                             batch: Int = 1000, flushInterval: Long = 5000,
                                              keyNum: Int = KeyNum._1): DataStreamSink[_] = {
-    this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval, keyNum)(_.asInstanceOf[E]).uid("sinkRocketMQ")
+    this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval, keyNum)(_.asInstanceOf[E])
   }
 
   /**
@@ -412,14 +412,14 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
    */
   def sinkRocketMQFun[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
                                                 url: String = null, topic: String = null, tag: String = "*",
-                                                batch: Int = 100, flushInterval: Long = 1000,
+                                                batch: Int = 1000, flushInterval: Long = 5000,
                                                 keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
     val finalBatch = if (FireRocketMQConf.rocketSinkBatch(keyNum) > 0) FireRocketMQConf.rocketSinkBatch(keyNum) else batch
     val finalInterval = if (FireRocketMQConf.rocketSinkFlushInterval(keyNum) > 0) FireRocketMQConf.rocketSinkFlushInterval(keyNum) else flushInterval
 
     this.stream.addSink(new RocketMQSink[T, E](params, url, topic, tag, finalBatch, finalInterval, keyNum) {
       override def map(value: T): E = fun(value)
-    }).uid("sinkRocketMQFun")
+    })
   }
 
   /**
@@ -464,7 +464,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
       kafkaProducersPoolSize
     )
 
-    this.stream.asInstanceOf[DataStream[String]].addSink(kafkaProducer).uid("sinkKafkaString")
+    this.stream.asInstanceOf[DataStream[String]].addSink(kafkaProducer)
   }
 
   /**
@@ -522,7 +522,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
         .withMaxRetries(FireJdbcConf.maxRetry(keyNum).toInt)
         .build(),
       connOptions.build()
-    )).uid("sinkJdbc")
+    ))
   }
 
   /**
@@ -572,7 +572,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
       new SerializableSupplier[XADataSource]() {
         override def get(): XADataSource = DBUtils.buildXADataSource(jdbcConf, dbType)
       }
-    )).uid("sinkJdbcExactlyOnce")
+    ))
   }
 
   /**

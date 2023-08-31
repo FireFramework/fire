@@ -33,8 +33,8 @@ import org.junit.Test
   * @date 2022-05-11 15:01:10 
   * @since 2.2.2
   */
-@HBase("test")
-@HBase2(cluster = "test", scanPartitions = 3)
+@HBase("fat")
+@HBase2(cluster = "fat", scanPartitions = 3)
 class HBaseBulkUnitTest extends SparkCore with HBaseTester {
 
   /**

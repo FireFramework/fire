@@ -180,7 +180,7 @@ private[fire] object FireUtils extends Serializable with Logging {
   def isLocalRunMode: Boolean = {
     if (RunMode.LOCAL == FireUtils.runMode) {
       true
-    } else if (RunMode.AUTO == this.runMode &&  OSUtils.isLocal) {
+    } else if (RunMode.AUTO == this.runMode && OSUtils.isLocal) {
       true
     } else false
   }

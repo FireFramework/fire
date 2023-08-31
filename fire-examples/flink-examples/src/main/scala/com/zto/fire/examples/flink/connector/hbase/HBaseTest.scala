@@ -21,9 +21,9 @@ import scala.collection.mutable.ListBuffer
  * @create 2020-5-25 16:32:50
  */
 @Checkpoint(30)
-@HBase("test")
-@HBase2("test") // 对应keyNum=2的Hbase集群地址
-@HBase3("test") // 对应keyNum=3的Hbase集群地址
+@HBase("fat")
+@HBase2("fat") // 对应keyNum=2的Hbase集群地址
+@HBase3("fat") // 对应keyNum=3的Hbase集群地址
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HBaseTest extends FlinkStreaming {

@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
  *
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@HBase("test")
+@HBase("fat")
 @Config(
   """
     |fire.lineage.run.initialDelay=10
