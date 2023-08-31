@@ -265,7 +265,7 @@
             <properties>
                 <spark.version>2.4.8</spark.version>
                 <spark.major.version>2.4</spark.major.version>
-                <jackson.version>2.6.7</jackson.version>
+                <jackson.version>2.6.7.1</jackson.version>
                 <hudi.bundle.version></hudi.bundle.version>
             </properties>
             <dependencies>
