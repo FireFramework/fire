@@ -82,24 +82,26 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def hiveSqlParser(sql: String): Unit = {
-    FlinkUtils.sqlNodeParser(sql, FlinkUtils.calciteHiveParserConfig) match {
-      case sqlAddPartitions: SqlAddPartitions => {
-        this.parseSqlNode(sqlAddPartitions.getTableName, Operation.ADD_PARTITION, true)
-        this.parsePartitions(sqlAddPartitions.getTableName, sqlAddPartitions.getPartSpecs)
+    tryWithLog {
+      FlinkUtils.sqlNodeParser(sql, FlinkUtils.calciteHiveParserConfig) match {
+        case sqlAddPartitions: SqlAddPartitions => {
+          this.parseSqlNode(sqlAddPartitions.getTableName, Operation.ADD_PARTITION, true)
+          this.parsePartitions(sqlAddPartitions.getTableName, sqlAddPartitions.getPartSpecs)
+        }
+        case sqlDropPartitions: SqlDropPartitions => {
+          this.parseSqlNode(sqlDropPartitions.getTableName, Operation.DROP_PARTITION, true)
+          this.parsePartitions(sqlDropPartitions.getTableName, sqlDropPartitions.getPartSpecs)
+        }
+        case sqlDropTable: SqlDropTable => this.parseSqlNode(sqlDropTable.getTableName, Operation.DROP_TABLE, true)
+        case sqlDropDatabase: SqlDropDatabase => this.parseSqlNode(sqlDropDatabase.getDatabaseName, Operation.DROP_DATABASE)
+        case sqlAlterTable: SqlAlterTable => this.parseSqlNode(sqlAlterTable.getTableName, Operation.ALTER_TABLE, true)
+        case sqlCreateDatabase: SqlCreateDatabase => this.parseSqlNode(sqlCreateDatabase.getDatabaseName, Operation.CREATE_DATABASE, true)
+        case sqlAlterTableRename: SqlAlterTableRename => this.parseSqlNode(sqlAlterTableRename.getTableName, Operation.RENAME_TABLE_OLD, true)
+        case sqlCreateTable: SqlCreateTable => this.parseHiveCreateTable(sqlCreateTable)
+        case sqlHiveInsert: RichSqlHiveInsert => this.parseHiveInsert(sqlHiveInsert)
+        case _ => this.logger.info(s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql")
       }
-      case sqlDropPartitions: SqlDropPartitions => {
-        this.parseSqlNode(sqlDropPartitions.getTableName, Operation.DROP_PARTITION, true)
-        this.parsePartitions(sqlDropPartitions.getTableName, sqlDropPartitions.getPartSpecs)
-      }
-      case sqlDropTable: SqlDropTable => this.parseSqlNode(sqlDropTable.getTableName, Operation.DROP_TABLE, true)
-      case sqlDropDatabase: SqlDropDatabase => this.parseSqlNode(sqlDropDatabase.getDatabaseName, Operation.DROP_DATABASE)
-      case sqlAlterTable: SqlAlterTable => this.parseSqlNode(sqlAlterTable.getTableName, Operation.ALTER_TABLE, true)
-      case sqlCreateDatabase: SqlCreateDatabase => this.parseSqlNode(sqlCreateDatabase.getDatabaseName, Operation.CREATE_DATABASE, true)
-      case sqlAlterTableRename: SqlAlterTableRename => this.parseSqlNode(sqlAlterTableRename.getTableName, Operation.RENAME_TABLE_OLD, true)
-      case sqlCreateTable: SqlCreateTable => this.parseHiveCreateTable(sqlCreateTable)
-      case sqlHiveInsert: RichSqlHiveInsert => this.parseHiveInsert(sqlHiveInsert)
-      case _ => this.logger.info(s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql")
-    }
+    } (this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", isThrow = false, hook = false)
   }
 
   /**

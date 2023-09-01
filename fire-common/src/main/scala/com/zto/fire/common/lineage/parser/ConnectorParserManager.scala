@@ -109,7 +109,7 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
           LineageManager.printLog(s"映射SQL血缘为Datasource，反射调用类：${className.get}.parse()，connector：$connector properties：$properties")
         }
       }
-    }(this.logger, catchLog = s"血缘解析失败：不支持的connector类型[$connector]")
+    }(this.logger, catchLog = s"血缘解析失败：不支持的connector类型[$connector]", isThrow = false, hook = false)
   }
 
   /**
@@ -197,6 +197,6 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
         }
       }
       LineageManager.printLog(s"2. 合并operation后：source：$source")
-    }(this.logger, catchLog = s"${source.getClass.getName} 血缘操作类型Set[Operation]合并失败")
+    }(this.logger, catchLog = s"${source.getClass.getName} 血缘操作类型Set[Operation]合并失败", isThrow = false, hook = false)
   }
 }

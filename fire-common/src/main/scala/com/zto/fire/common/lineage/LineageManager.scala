@@ -92,7 +92,7 @@ private[fire] class LineageManager extends Logging {
           }
         }
       }
-    }(logger, "", "jdbc血缘信息解析失败")
+    }(logger, "", "jdbc血缘信息解析失败", isThrow = false, hook = false)
   }
 
   /**
@@ -211,7 +211,7 @@ private[fire] object LineageManager extends Logging {
           LineageManager.printLog(log)
         }
       })
-    } (this.logger, catchLog = "将SQLTable血缘信息映射为Datasource数据源信息失败！")
+    } (this.logger, catchLog = "将SQLTable血缘信息映射为Datasource数据源信息失败！", isThrow = false, hook = false)
   }
 
   /**
