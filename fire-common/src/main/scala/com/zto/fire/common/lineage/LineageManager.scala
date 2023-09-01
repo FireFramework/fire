@@ -242,7 +242,7 @@ private[fire] object LineageManager extends Logging {
    * 将目标DataSourceDesc中的operation合并到set中
    */
   def mergeSet(set: JHashSet[DatasourceDesc], datasourceDesc: DatasourceDesc): Unit = {
-    if (set.isEmpty) {
+    if (set.isEmpty || !set.contains(datasourceDesc)) {
       set.add(datasourceDesc)
       return
     }

@@ -48,7 +48,7 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
     /**
      * 合并血缘
      */
-    def merge(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = this.synchronized {
+    def merge(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
       LineageManager.printLog(s"Flink血缘累加器merge this.lineageMap=${this.lineageMap} 待合并map：$lineage")
       lineage.foreach(each => {
         val key = if (each._1.isInstanceOf[String]) Datasource.parse(each._1.asInstanceOf[String]) else each._1
