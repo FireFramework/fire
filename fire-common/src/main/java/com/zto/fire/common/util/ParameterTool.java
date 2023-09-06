@@ -207,6 +207,196 @@ public class ParameterTool {
         return data.get(key);
     }
 
+    /**
+     * Returns the String value for the given key. If the key does not exist it will throw a {@link
+     * RuntimeException}.
+     */
+    public String getRequired(String key) {
+        addToDefaults(key, null);
+        String value = get(key);
+        if (value == null) {
+            throw new RuntimeException("No data for required key '" + key + "'");
+        }
+        return value;
+    }
+
+    /**
+     * Returns the String value for the given key. If the key does not exist it will return the
+     * given default value.
+     */
+    public String get(String key, String defaultValue) {
+        addToDefaults(key, defaultValue);
+        String value = get(key);
+        if (value == null) {
+            return defaultValue;
+        } else {
+            return value;
+        }
+    }
+
+    // -------------- Integer
+
+    /**
+     * Returns the Integer value for the given key. The method fails if the key does not exist or
+     * the value is not an Integer.
+     */
+    public int getInt(String key) {
+        addToDefaults(key, null);
+        String value = getRequired(key);
+        return Integer.parseInt(value);
+    }
+
+    /**
+     * Returns the Integer value for the given key. If the key does not exists it will return the
+     * default value given. The method fails if the value is not an Integer.
+     */
+    public int getInt(String key, int defaultValue) {
+        addToDefaults(key, Integer.toString(defaultValue));
+        String value = get(key);
+        if (value == null) {
+            return defaultValue;
+        }
+        return Integer.parseInt(value);
+    }
+
+    // -------------- LONG
+
+    /** Returns the Long value for the given key. The method fails if the key does not exist. */
+    public long getLong(String key) {
+        addToDefaults(key, null);
+        String value = getRequired(key);
+        return Long.parseLong(value);
+    }
+
+    /**
+     * Returns the Long value for the given key. If the key does not exists it will return the
+     * default value given. The method fails if the value is not a Long.
+     */
+    public long getLong(String key, long defaultValue) {
+        addToDefaults(key, Long.toString(defaultValue));
+        String value = get(key);
+        if (value == null) {
+            return defaultValue;
+        }
+        return Long.parseLong(value);
+    }
+
+    // -------------- FLOAT
+
+    /** Returns the Float value for the given key. The method fails if the key does not exist. */
+    public float getFloat(String key) {
+        addToDefaults(key, null);
+        String value = getRequired(key);
+        return Float.valueOf(value);
+    }
+
+    /**
+     * Returns the Float value for the given key. If the key does not exists it will return the
+     * default value given. The method fails if the value is not a Float.
+     */
+    public float getFloat(String key, float defaultValue) {
+        addToDefaults(key, Float.toString(defaultValue));
+        String value = get(key);
+        if (value == null) {
+            return defaultValue;
+        } else {
+            return Float.valueOf(value);
+        }
+    }
+
+    // -------------- DOUBLE
+
+    /** Returns the Double value for the given key. The method fails if the key does not exist. */
+    public double getDouble(String key) {
+        addToDefaults(key, null);
+        String value = getRequired(key);
+        return Double.valueOf(value);
+    }
+
+    /**
+     * Returns the Double value for the given key. If the key does not exists it will return the
+     * default value given. The method fails if the value is not a Double.
+     */
+    public double getDouble(String key, double defaultValue) {
+        addToDefaults(key, Double.toString(defaultValue));
+        String value = get(key);
+        if (value == null) {
+            return defaultValue;
+        } else {
+            return Double.valueOf(value);
+        }
+    }
+
+    // -------------- BOOLEAN
+
+    /** Returns the Boolean value for the given key. The method fails if the key does not exist. */
+    public boolean getBoolean(String key) {
+        addToDefaults(key, null);
+        String value = getRequired(key);
+        return Boolean.valueOf(value);
+    }
+
+    /**
+     * Returns the Boolean value for the given key. If the key does not exists it will return the
+     * default value given. The method returns whether the string of the value is "true" ignoring
+     * cases.
+     */
+    public boolean getBoolean(String key, boolean defaultValue) {
+        addToDefaults(key, Boolean.toString(defaultValue));
+        String value = get(key);
+        if (value == null) {
+            return defaultValue;
+        } else {
+            return Boolean.valueOf(value);
+        }
+    }
+
+    // -------------- SHORT
+
+    /** Returns the Short value for the given key. The method fails if the key does not exist. */
+    public short getShort(String key) {
+        addToDefaults(key, null);
+        String value = getRequired(key);
+        return Short.valueOf(value);
+    }
+
+    /**
+     * Returns the Short value for the given key. If the key does not exists it will return the
+     * default value given. The method fails if the value is not a Short.
+     */
+    public short getShort(String key, short defaultValue) {
+        addToDefaults(key, Short.toString(defaultValue));
+        String value = get(key);
+        if (value == null) {
+            return defaultValue;
+        } else {
+            return Short.valueOf(value);
+        }
+    }
+
+    // -------------- BYTE
+
+    /** Returns the Byte value for the given key. The method fails if the key does not exist. */
+    public byte getByte(String key) {
+        addToDefaults(key, null);
+        String value = getRequired(key);
+        return Byte.valueOf(value);
+    }
+
+    /**
+     * Returns the Byte value for the given key. If the key does not exists it will return the
+     * default value given. The method fails if the value is not a Byte.
+     */
+    public byte getByte(String key, byte defaultValue) {
+        addToDefaults(key, Byte.toString(defaultValue));
+        String value = get(key);
+        if (value == null) {
+            return defaultValue;
+        } else {
+            return Byte.valueOf(value);
+        }
+    }
+
     protected void addToDefaults(String key, String value) {
         final String currentValue = defaultData.get(key);
         if (currentValue == null) {
