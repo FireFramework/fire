@@ -209,9 +209,6 @@
 
         <profile>
             <id>scala-2.12</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <scala.binary.version>2.12</scala.binary.version>
                 <scala.exclusion.version>2.11</scala.exclusion.version>

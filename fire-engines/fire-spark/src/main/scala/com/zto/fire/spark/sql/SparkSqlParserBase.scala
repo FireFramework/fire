@@ -30,7 +30,6 @@ import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.{TableIdentifier => SparkTableIdentifier}
-import org.apache.spark.sql.execution.datasources.CreateTable
 
 
 /**
@@ -47,49 +46,6 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
 
   /**
    * 用于判断给定的表是否为hive表
-   *
-   * @param tableIdentifier 库表
-   */
-  @Internal
-  protected def getCatalog(tableIdentifier: TableIdentifier): Datasource = {
-    if (this.isHiveTable(tableIdentifier)) {
-      Datasource.HIVE
-    } else if(this.isHudiTable(tableIdentifier)) {
-      Datasource.HUDI
-    } else {
-      Datasource.VIEW
-    }
-  }
-
-  /**
-   * 将Fire的TableIdentifier转为Spark的TableIdentifier
-   */
-  @Internal
-  private[fire] def toSparkTableIdentifier(tableIdentifier: TableIdentifier): SparkTableIdentifier = {
-    val db = if (isEmpty(tableIdentifier.database)) None else Some(tableIdentifier.database)
-    SparkTableIdentifier(tableIdentifier.table, db)
-  }
-
-  /**
-   * 将Spark的TableIdentifier转为Fire的TableIdentifier
-   */
-  @Internal
-  private[fire] def toFireTableIdentifier(tableIdentifier: SparkTableIdentifier): TableIdentifier = {
-    TableIdentifier(tableIdentifier.unquotedString)
-  }
-
-  /**
-   * 用于判断表是否存在
-   */
-  @Internal
-  private[fire] def tableExists(tableIdentifier: TableIdentifier): Boolean = {
-    tryWithReturn {
-      this.catalog.tableExists(toSparkTableIdentifier(tableIdentifier))
-    } (this.logger, catchLog = s"判断${tableIdentifier}是否存在发生异常", hook = false)
-  }
-
-  /**
-   * 用于判断给定的表是否为hive表
    */
   @Internal
   override def isHiveTable(tableIdentifier: TableIdentifier): Boolean = {
@@ -100,7 +56,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
           catalog.getTableMetadata(toSparkTableIdentifier(tableIdentifier))
         }
         if (hiveTable.provider.isDefined && "hive".equals(hiveTable.provider.get)) true else false
-      } (this.logger, catchLog = s"判断${tableIdentifier}是否为hive表失败", hook = false)
+      }(this.logger, catchLog = s"判断${tableIdentifier}是否为hive表失败", hook = false)
     }
   }
 
@@ -113,6 +69,58 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
       if (hudiTable.provider.isDefined && "hudi".equals(hudiTable.provider.get)) true else false
     } catch {
       case _: Throwable => false
+    }
+  }
+
+  /**
+   * SQL语法校验
+   *
+   * @param sql
+   * sql statement
+   * @return
+   * true：校验成功 false：校验失败
+   */
+  def sqlLegal(sql: String): Boolean = SparkUtils.sqlLegal(sql)
+
+  /**
+   * 用于解析SparkSql中的库表信息
+   */
+  @Internal
+  override def sqlParser(sql: String): Unit = {
+    if (isEmpty(sql)) return
+    tryWithLog {
+      this.logger.debug(s"开始解析sql语句：$sql")
+      SparkUtils.sqlValidate(sql)
+      val logicalPlan = this.spark.sessionState.sqlParser.parsePlan(sql)
+      if (lineageCollectSQLEnable) SQLLineageManager.addStatement(sql)
+      this.sqlParser(logicalPlan)
+    }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", isThrow = false, hook = false)
+  }
+
+  /**
+   * 用于解析SparkSql中的库表信息
+   */
+  @Internal
+  def sqlParser(logicalPlan: LogicalPlan): Unit = {
+    tryWithLog {
+      val sinkTable = this.ddlParser(logicalPlan)
+      this.queryParser(logicalPlan, sinkTable)
+    }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错", isThrow = false, hook = false)
+  }
+
+  /**
+   * 用于判断给定的表是否为hive表
+   *
+   * @param tableIdentifier 库表
+   */
+  @Internal
+  protected def getCatalog(tableIdentifier: TableIdentifier): Datasource = {
+    if (this.isHiveTable(tableIdentifier)) {
+      Datasource.HIVE
+    } else if (this.isHudiTable(tableIdentifier)) {
+      Datasource.HUDI
+    } else {
+      Datasource.VIEW
     }
   }
 
@@ -179,39 +187,6 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   }
 
   /**
-   * SQL语法校验
-   * @param sql
-   * sql statement
-   * @return
-   * true：校验成功 false：校验失败
-   */
-  def sqlLegal(sql: String): Boolean = SparkUtils.sqlLegal(sql)
-
-  /**
-   * 用于解析SparkSql中的库表信息
-   */
-  @Internal
-  override def sqlParser(sql: String): Unit = {
-    if (isEmpty(sql)) return
-    tryWithLog {
-      this.logger.debug(s"开始解析sql语句：$sql")
-      SparkUtils.sqlValidate(sql)
-      val logicalPlan = this.spark.sessionState.sqlParser.parsePlan(sql)
-      if (lineageCollectSQLEnable) SQLLineageManager.addStatement(sql)
-      this.sqlParser(logicalPlan)
-    } (this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", isThrow = false, hook = false)
-  }
-
-  /**
-   * 用于解析SparkSql中的库表信息
-   */
-  @Internal
-  def sqlParser(logicalPlan: LogicalPlan): Unit = {
-    val sinkTable = this.ddlParser(logicalPlan)
-    this.queryParser(logicalPlan, sinkTable)
-  }
-
-  /**
    * 用于解析查询sql中的库表信息
    *
    * @param sinkTable
@@ -227,4 +202,31 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def ddlParser(logicalPlan: LogicalPlan): Option[TableIdentifier]
+
+  /**
+   * 将Fire的TableIdentifier转为Spark的TableIdentifier
+   */
+  @Internal
+  private[fire] def toSparkTableIdentifier(tableIdentifier: TableIdentifier): SparkTableIdentifier = {
+    val db = if (isEmpty(tableIdentifier.database)) None else Some(tableIdentifier.database)
+    SparkTableIdentifier(tableIdentifier.table, db)
+  }
+
+  /**
+   * 将Spark的TableIdentifier转为Fire的TableIdentifier
+   */
+  @Internal
+  private[fire] def toFireTableIdentifier(tableIdentifier: SparkTableIdentifier): TableIdentifier = {
+    TableIdentifier(tableIdentifier.unquotedString)
+  }
+
+  /**
+   * 用于判断表是否存在
+   */
+  @Internal
+  private[fire] def tableExists(tableIdentifier: TableIdentifier): Boolean = {
+    tryWithReturn {
+      this.catalog.tableExists(toSparkTableIdentifier(tableIdentifier))
+    }(this.logger, catchLog = s"判断${tableIdentifier}是否存在发生异常", hook = false)
+  }
 }
