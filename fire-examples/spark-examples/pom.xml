@@ -97,12 +97,6 @@
             <version>${jackson.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
-            <scope>${maven.scope}</scope>
-        </dependency>
         <!-- spark相关依赖 -->
         <dependency>
             <groupId>org.apache.spark</groupId>
