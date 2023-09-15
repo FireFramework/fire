@@ -54,12 +54,7 @@ object HiveRW extends SparkStreaming {
   def ddl: Unit = {
     sql(
       """
-        |drop table if exists tmp.baseorganize_fire
-        |""".stripMargin)
-
-    sql(
-      """
-        |create table if exists tmp.baseorganize_fire (
+        |create table if not exists tmp.baseorganize_fire (
         |    id bigint,
         |    name string,
         |    age int

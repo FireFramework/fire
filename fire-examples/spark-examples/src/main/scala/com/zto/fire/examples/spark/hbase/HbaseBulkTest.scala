@@ -18,7 +18,7 @@
 package com.zto.fire.examples.spark.hbase
 
 import com.zto.fire._
-import com.zto.fire.core.anno.connector.{HBase, HBase2}
+import com.zto.fire.core.anno.connector.{HBase, HBase2, Hive}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.SparkCore
@@ -32,6 +32,7 @@ import org.apache.spark.sql.{Encoders, Row}
   * @author ChengLong 2019-5-18 09:20:52
   *  @contact Fire框架技术交流群（钉钉）：35373471
   */
+@Hive("fat")
 @HBase("fat")
 @HBase2(cluster = "fat", scanPartitions = 3, storageLevel = "DISK_ONLY")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
