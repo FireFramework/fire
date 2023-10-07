@@ -525,6 +525,8 @@ private[fire] trait AnnoManager extends Logging {
         this.toHudiConf(("hoodie.compact.inline", "false"), keyNum)
         this.toHudiConf(("hoodie.compact.schedule.inline", "true"), keyNum)
       } else {
+        // 当开启同步compaction时，需关闭推测机制，推测机制的执行会导致compaction不稳定
+        PropUtils.setProperty("spark.speculation", "false")
         this.toHudiConf(("hoodie.compact.inline", "true"), keyNum)
         this.toHudiConf(("hoodie.compact.schedule.inline", "false"), keyNum)
       }
