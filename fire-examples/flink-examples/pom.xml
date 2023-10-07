@@ -26,7 +26,7 @@
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-examples</artifactId>
-        <version>2.3.8-SNAPSHOT</version>
+        <version>2.3.9-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -39,59 +39,8 @@
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>fire-common_${scala.binary.version}</artifactId>
+            <artifactId>fire-bundle-flink_${flink.reference}</artifactId>
             <version>${fire.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-core_${scala.binary.version}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-enhance-arthas_${scala.binary.version}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-flink_${flink.reference}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-enhance-flink_${flink.reference}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-connector-hbase_${scala.binary.version}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-connector-jdbc_${scala.binary.version}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-connector-flink-rocketmq_${flink.reference}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
-        <!--<dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-connector-flink-rocketmq-apache_${flink.reference}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>-->
-        <dependency>
-            <groupId>com.zto.fire</groupId>
-            <artifactId>fire-connector-flink-clickhouse_${flink.reference}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.sparkjava</groupId>
-            <artifactId>spark-core</artifactId>
-            <version>${sparkjava.version}</version>
         </dependency>
 
         <!-- flink计算引擎相关依赖 -->

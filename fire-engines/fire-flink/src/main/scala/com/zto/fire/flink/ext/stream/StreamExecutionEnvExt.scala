@@ -22,10 +22,9 @@ import com.zto.fire.common.bean.Generator
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.Datasource._
 import com.zto.fire.common.enu.{Operation => FOperation}
-import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.lineage.parser.connector.{CustomizeConnectorParser, KafkaConnectorParser, RocketmqConnectorParser}
 import com.zto.fire.common.util.MQType.MQType
-import com.zto.fire.common.util.{KafkaUtils, MQType, OSUtils, RegularUtils, SQLUtils}
+import com.zto.fire.common.util._
 import com.zto.fire.core.Api
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.connector.FlinkConnectors._
@@ -41,9 +40,9 @@ import org.apache.flink.api.scala._
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
-import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer, KafkaDeserializationSchema}
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaTopicPartition
-import org.apache.flink.streaming.util.serialization.{JSONKeyValueDeserializationSchema, KeyedDeserializationSchema}
+import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer, KafkaDeserializationSchema}
+import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema
 import org.apache.flink.table.api.{StatementSet, Table, TableResult}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.flink.common.serialization.SimpleTagKeyValueDeserializationSchema

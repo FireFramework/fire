@@ -26,11 +26,45 @@
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-parent</artifactId>
-        <version>2.3.8-SNAPSHOT</version>
+        <version>2.3.9-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
+    <profiles>
+        <!-- scala profile -->
+        <profile>
+            <id>scala-2.11</id>
+            <properties>
+                <scala.binary.version>2.11</scala.binary.version>
+                <scala.exclusion.version>2.12</scala.exclusion.version>
+                <scala.minor.version>8</scala.minor.version>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>scala-2.12</id>
+            <properties>
+                <scala.binary.version>2.12</scala.binary.version>
+                <scala.exclusion.version>2.11</scala.exclusion.version>
+                <scala.minor.version>13</scala.minor.version>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>scala-2.13</id>
+            <properties>
+                <scala.binary.version>2.13</scala.binary.version>
+                <scala.minor.version>10</scala.minor.version>
+            </properties>
+        </profile>
+    </profiles>
+
     <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-scala_${scala.binary.version}</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${scala.binary.version}</artifactId>
@@ -46,27 +80,27 @@
         <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
+            <version>${httpclient.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.3.3</version>
+            <version>${httpcomponents.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
-            <version>4.4.3</version>
+            <version>${httpcomponents.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.htrace</groupId>
             <artifactId>htrace-core</artifactId>
-            <version>3.2.0-incubating</version>
+            <version>${htrace.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.jsqlparser</groupId>
             <artifactId>jsqlparser</artifactId>
-            <version>4.5</version>
+            <version>${jsqlparser.version}</version>
         </dependency>
     </dependencies>
     <build>

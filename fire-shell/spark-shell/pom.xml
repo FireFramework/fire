@@ -9,7 +9,7 @@
     <parent>
         <artifactId>fire-shell</artifactId>
         <groupId>com.zto.fire</groupId>
-        <version>2.3.8-SNAPSHOT</version>
+        <version>2.3.9-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -179,17 +179,17 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.5</version>
+            <version>${commons-lang3.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.4</version>
+            <version>${commonsio.version}</version>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
+            <version>${log4j.version}</version>
         </dependency>
 
         <!-- rocketmq相关依赖 -->

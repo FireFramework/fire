@@ -25,14 +25,13 @@
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-flink-connectors</artifactId>
-        <version>2.3.8-SNAPSHOT</version>
+        <version>2.3.9-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <properties>
         <spotless.version>2.4.2</spotless.version>
         <jaxb-api.version>2.3.1</jaxb-api.version>
-        <rocketmq.schema.registry.version>0.1.0</rocketmq.schema.registry.version>
     </properties>
 
     <dependencies>
@@ -58,13 +57,13 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-java</artifactId>
             <version>${flink.version}</version>
-            <scope>provided</scope>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-java${contains.scala.binary.version}</artifactId>
             <version>${flink.version}</version>
-            <scope>provided</scope>
+            <scope>${maven.scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
