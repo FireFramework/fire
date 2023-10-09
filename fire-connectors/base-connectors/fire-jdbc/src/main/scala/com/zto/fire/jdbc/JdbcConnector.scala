@@ -58,11 +58,12 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
    */
   override protected[fire] def open(): Unit = {
     tryWithLog {
-      // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
-      this.logger.info(s"准备初始化数据库连接池[ ${FireJdbcConf.jdbcUrl(keyNum)} ]")
       // 支持url和别名两种配置方式
-      this.url = if (isEmpty(FireJdbcConf.jdbcUrl(keyNum)) && noEmpty(this.conf, this.conf.url)) this.conf.url else FireJdbcConf.jdbcUrl(keyNum)
+      this.url = if (noEmpty(this.conf, this.conf.url) && isEmpty(FireJdbcConf.jdbcUrl(keyNum))) this.conf.url else FireJdbcConf.jdbcUrl(keyNum)
       require(noEmpty(this.url), s"数据库url不能为空，keyNum=${this.keyNum}")
+      // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
+      this.logger.info(s"准备初始化数据库连接池[ ${this.url} ]")
+
       val driverClass = if (isEmpty(FireJdbcConf.driverClass(keyNum)) && noEmpty(this.conf) && noEmpty(this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
       val autoDriver = if (isEmpty(driverClass)) DBUtils.parseDriverByUrl(this.url) else driverClass
       require(noEmpty(autoDriver), s"数据库driverClass不能为空，keyNum=${this.keyNum}")
