@@ -57,6 +57,15 @@ private[fire] object FireRocketMQConf {
   lazy val ROCKET_SINK_BATCH = "rocket.sink.batch"
   lazy val ROCKET_SINK_FLUSH_INTERVAL = "rocket.sink.flashInterval"
 
+  // 是否使状态中存放的offset不生效（请谨慎配置，用于rocketmq集群迁移等不正常状况的运维）
+  lazy val ROCKET_OVERWRITE_STATE_OFFSET = "rocket.force.overwrite.stateOffset.enable"
+  lazy val ROCKET_START_FROM_TIMESTAMP = "rocket.StartFromTimestamp"
+
+  // 设置从指定的时间戳开始消费
+  def startFromTimestamp(keyNum: Int = KeyNum._1): Long = PropUtils.getLong(this.ROCKET_START_FROM_TIMESTAMP, -1)
+  // 是否强制覆盖状态中存放的offset
+  def overwriteStateOffsetEnable(keyNum: Int = KeyNum._1): Boolean = PropUtils.getBoolean(this.ROCKET_OVERWRITE_STATE_OFFSET, false)
+
   // 用于标识消费者的名称
   def rocketInstanceId(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.ROCKET_INSTANCE_ID, "", keyNum)
   // rocket-client配置信息

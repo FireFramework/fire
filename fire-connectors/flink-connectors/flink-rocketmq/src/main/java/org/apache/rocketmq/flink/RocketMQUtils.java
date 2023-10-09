@@ -18,7 +18,10 @@
 
 package org.apache.rocketmq.flink;
 
-import java.util.Properties;
+import org.apache.rocketmq.common.message.MessageQueue;
+
+import java.lang.management.ManagementFactory;
+import java.util.*;
 
 public final class RocketMQUtils {
 
@@ -32,5 +35,39 @@ public final class RocketMQUtils {
 
     public static boolean getBoolean(Properties props, String key, boolean defaultValue) {
         return Boolean.parseBoolean(props.getProperty(key, String.valueOf(defaultValue)));
+    }
+
+    public static String getInstanceName(String... args) {
+        if (null != args && args.length > 0) {
+            return String.join("_", args);
+        }
+        return ManagementFactory.getRuntimeMXBean().getName() + "_" + System.nanoTime();
+    }
+
+    /**
+     * Average Hashing queue algorithm Refer:
+     * org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragely
+     */
+    public static List<MessageQueue> allocate(
+            Collection<MessageQueue> mqSet, int numberOfParallelTasks, int indexOfThisTask) {
+        ArrayList<MessageQueue> mqAll = new ArrayList<>(mqSet);
+        Collections.sort(mqAll);
+        List<MessageQueue> result = new ArrayList<>();
+        int mod = mqAll.size() % numberOfParallelTasks;
+        int averageSize =
+                mqAll.size() <= numberOfParallelTasks
+                        ? 1
+                        : (mod > 0 && indexOfThisTask < mod
+                        ? mqAll.size() / numberOfParallelTasks + 1
+                        : mqAll.size() / numberOfParallelTasks);
+        int startIndex =
+                (mod > 0 && indexOfThisTask < mod)
+                        ? indexOfThisTask * averageSize
+                        : indexOfThisTask * averageSize + mod;
+        int range = Math.min(averageSize, mqAll.size() - startIndex);
+        for (int i = 0; i < range; i++) {
+            result.add(mqAll.get((startIndex + i) % mqAll.size()));
+        }
+        return result;
     }
 }

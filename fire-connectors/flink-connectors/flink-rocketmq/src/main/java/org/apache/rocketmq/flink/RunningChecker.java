@@ -22,6 +22,7 @@ import java.io.Serializable;
 
 public class RunningChecker implements Serializable {
     private volatile boolean isRunning = false;
+    private volatile RuntimeException exception = null;
 
     public boolean isRunning() {
         return isRunning;
@@ -29,5 +30,13 @@ public class RunningChecker implements Serializable {
 
     public void setRunning(boolean running) {
         isRunning = running;
+    }
+
+    public void setException(RuntimeException exception) {
+        this.exception = exception;
+    }
+
+    public RuntimeException getException() {
+        return exception;
     }
 }

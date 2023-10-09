@@ -80,10 +80,13 @@ public class RocketMQConfig {
     public static final int DEFAULT_CONSUMER_PULL_POOL_SIZE = 20;
 
     public static final String CONSUMER_BATCH_SIZE = "consumer.batch.size";
+    public static final String MAX_PULL_SIZE = "max.pull.size";
     public static final int DEFAULT_CONSUMER_BATCH_SIZE = 32;
 
     public static final String CONSUMER_DELAY_WHEN_MESSAGE_NOT_FOUND = "consumer.delay.when.message.not.found";
     public static final int DEFAULT_CONSUMER_DELAY_WHEN_MESSAGE_NOT_FOUND = 10;
+
+    public static final String WATERMARK = "watermark";
 
     public static final String MSG_DELAY_LEVEL = "msg.delay.level";
     public static final int MSG_DELAY_LEVEL00 = 0; // no delay
