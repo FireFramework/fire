@@ -370,6 +370,8 @@
                             <include>com.fasterxml.jackson.module:*</include>
                             <include>com.fasterxml.jackson.core:*</include>
                             <include>org.apache.rocketmq:*</include>
+                            <!-- rocketmq需要引入，否则报：Could not initialize class Could not initialize class org.apache.rocketmq.common.message.MessageClientIDSetter -->
+                            <include>commons-validator:*</include>
                             <include>commons-httpclient:*</include>
                             <include>org.apache.httpcomponents:*</include>
                             <include>org.apache.htrace:*</include>
@@ -394,6 +396,7 @@
                             <include>com.esotericsoftware:*</include>
                             <include>com.github.oshi:*</include>
                             <include>org.apache.curator:*</include>
+                            <include>org.eclipse.jetty:*</include>
                         </includes>
                     </artifactSet>
                     <filters>
