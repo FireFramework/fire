@@ -22,17 +22,15 @@ import java.util.concurrent.Callable;
 
 public class RetryUtil {
     private static final Logger log = LoggerFactory.getLogger(RetryUtil.class);
-    private RunningChecker runningChecker;
-    private final long INITIAL_BACKOFF = 2000;
-    private final long MAX_BACKOFF = 30000;
-    private int maxAttempts = 6;
-    private int retries = 1;
 
-    public RetryUtil(RunningChecker runningChecker) {
-        this.runningChecker = runningChecker;
-    }
+    private static final long INITIAL_BACKOFF = 200;
+    private static final long MAX_BACKOFF = 5000;
+    private static final int MAX_ATTEMPTS = 3;
+    public static final boolean DEBUG = false;
 
-    public void waitForMs(long sleepMs) {
+    private RetryUtil() {}
+
+    public static void waitForMs(long sleepMs) {
         try {
             Thread.sleep(sleepMs);
         } catch (InterruptedException e) {
@@ -40,17 +38,29 @@ public class RetryUtil {
         }
     }
 
-    public <T> T call(Callable<T> callable, String errorMsg) throws RuntimeException {
+    public static <T> T call(Callable<T> callable, String errorMsg) throws RuntimeException {
+        return call(callable, errorMsg, null);
+    }
+
+    public static <T> T call(Callable<T> callable, String errorMsg, RunningChecker runningChecker)
+            throws RuntimeException {
         long backoff = INITIAL_BACKOFF;
+        int retries = 0;
         do {
             try {
                 return callable.call();
             } catch (Exception ex) {
-                if (retries >= maxAttempts) {
-                    runningChecker.setException(new RuntimeException(ex));
+                if (retries >= MAX_ATTEMPTS) {
+                    if (null != runningChecker) {
+                        runningChecker.setRunning(false);
+                    }
                     throw new RuntimeException(ex);
                 }
-                log.error("{}, retry {}/{}", errorMsg, retries, maxAttempts, ex);
+                if (DEBUG) {
+                    log.debug("{}, retry {}/{}", errorMsg, retries, MAX_ATTEMPTS, ex);
+                } else {
+                    log.error("{}, retry {}/{}", errorMsg, retries, MAX_ATTEMPTS, ex);
+                }
                 retries++;
             }
             waitForMs(backoff);
@@ -58,12 +68,7 @@ public class RetryUtil {
         } while (true);
     }
 
-    public void setRetries(int retries) {
-        this.retries = retries;
+    public static void setRetries(int retries) {
+        retries = retries;
     }
-
-    public void setMaxAttempts(int maxAttempts) {
-        this.maxAttempts = maxAttempts;
-    }
-
 }

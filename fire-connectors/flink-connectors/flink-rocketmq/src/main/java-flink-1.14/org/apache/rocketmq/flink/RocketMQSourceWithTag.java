@@ -14,6 +14,7 @@
 package org.apache.rocketmq.flink;
 
 import avro.shaded.com.google.common.base.Preconditions;
+import avro.shaded.com.google.common.collect.Lists;
 import com.alibaba.fastjson.JSON;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.zto.fire.common.conf.FireRocketMQConf;
@@ -99,6 +100,8 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
      * Data for pending but uncommitted offsets.
      */
     private LinkedMap pendingOffsetsToCommit;
+    private Map<MessageQueue, Long> lastedOffsetsToCommit;
+    private Map<MessageQueue, Long> lastedOffsetsToStateBackend;
     private LinkedMap pendingTimestampToCommit;
     private Map<MessageQueue, Long> timestampTable;
     private Properties props;
@@ -110,6 +113,8 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
     private transient volatile boolean restored;
     private transient boolean enableCheckpoint;
     private volatile Object checkPointLock;
+
+    private SourceContext context;
 
     private Meter tpsMetric;
     private String resolveType;
@@ -151,6 +156,12 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
 
         if (pendingOffsetsToCommit == null) {
             pendingOffsetsToCommit = new LinkedMap();
+        }
+        if (lastedOffsetsToCommit == null) {
+            lastedOffsetsToCommit = new LinkedMap();
+        }
+        if (lastedOffsetsToStateBackend == null) {
+            lastedOffsetsToStateBackend = new LinkedMap();
         }
         if (pendingTimestampToCommit == null) {
             pendingTimestampToCommit = new LinkedMap();
@@ -194,6 +205,8 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         int indexOfThisSubTask = getRuntimeContext().getIndexOfThisSubtask();
         DefaultMQPullConsumer consumer = new DefaultMQPullConsumer(group);
         RocketMQConfig.buildConsumerConfigs(props, consumer);
+        /*consumer.setPersistConsumerOffsetInterval(getInteger(props,
+                CONSUMER_OFFSET_PERSIST_INTERVAL, 1000 * 60 * 60));*/
 
         // set unique instance name, avoid exception:
         // https://help.aliyun.com/document_detail/29646.html
@@ -212,16 +225,13 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
 
     @Override
     public void run(SourceContext context) throws Exception {
-        String tag =
-                props.getProperty(RocketMQConfig.CONSUMER_TAG, RocketMQConfig.DEFAULT_CONSUMER_TAG);
-        int pullBatchSize = getInteger(props, MAX_PULL_SIZE, DEFAULT_CONSUMER_BATCH_SIZE);
-
+        this.context = context;
         final RuntimeContext ctx = getRuntimeContext();
         // The lock that guarantees that record emission and state updates are atomic,
         // from the view of taking a checkpoint.
         int taskNumber = ctx.getNumberOfParallelSubtasks();
         int taskIndex = ctx.getIndexOfThisSubtask();
-        LOG.info("Source run NumberOfTotalTask={}, IndexOfThisSubTask={}, pullBatchSize={}", taskNumber, taskIndex, pullBatchSize);
+        LOG.info("Source run NumberOfTotalTask={}, IndexOfThisSubTask={}, pullBatchSize={}", taskNumber, taskIndex);
 
         timer.scheduleAtFixedRate(
                 () -> {
@@ -235,8 +245,6 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         if (!offsetTable.isEmpty()) {
             props.setProperty(RocketMQConfig.CONSUMER_OFFSET_RESET_TO, CONSUMER_OFFSET_EARLIEST);
         }
-
-        long recallTime = FireRocketMQConf.startFromTimestamp(1);
 
         bakConsumer.start();
         Collection<MessageQueue> totalQueues = bakConsumer.fetchSubscribeMessageQueues(topic);
@@ -263,83 +271,91 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         consumer.start();
 
         for (MessageQueue mq : messageQueues) {
-            this.executor.execute(
-                    () -> {
-                        RetryUtil retryUtil = new RetryUtil(runningChecker);
-                        retryUtil.call(
-                                () -> {
-                                    while (runningChecker.isRunning()) {
-                                        try {
-                                            long offset = getMessageQueueOffset(mq, recallTime);
-                                            PullResult pullResult =
-                                                    consumer.pullBlockIfNotFound(
-                                                            mq, tag, offset, pullBatchSize);
-
-                                            boolean found = false;
-                                            switch (pullResult.getPullStatus()) {
-                                                case FOUND:
-                                                    List<MessageExt> messages = pullResult.getMsgFoundList();
-                                                    if (pullBatchSize != messages.size())
-                                                        LOG.debug("Pull from rocketmq records is: {}", messages.size());
-                                                    for (MessageExt msg : messages) {
-                                                        byte[] tag1 = msg.getTags() != null ? msg.getTags().getBytes(StandardCharsets.UTF_8) : null;
-                                                        byte[] key = msg.getKeys() != null ? msg.getKeys().getBytes(StandardCharsets.UTF_8) : null;
-                                                        byte[] value = msg.getBody();
-                                                        OUT data = schema.deserializeTagKeyAndValue(tag1, key, value);
-
-                                                        // output and state update are atomic
-                                                        synchronized (checkPointLock) {
-                                                            context.collectWithTimestamp(data, msg.getBornTimestamp());
-                                                        }
-                                                    }
-                                                    found = true;
-                                                    break;
-                                                case NO_MATCHED_MSG:
-                                                    LOG.debug(
-                                                            "No matched message after offset {} for queue {}",
-                                                            offset,
-                                                            mq);
-                                                    break;
-                                                case NO_NEW_MSG:
-                                                    LOG.debug(
-                                                            "No new message after offset {} for queue {}",
-                                                            offset,
-                                                            mq);
-                                                    break;
-                                                case OFFSET_ILLEGAL:
-                                                    LOG.warn(
-                                                            "Offset {} is illegal for queue {}",
-                                                            offset,
-                                                            mq);
-                                                    break;
-                                                default:
-                                                    break;
-                                            }
-
-                                            synchronized (checkPointLock) {
-                                                updateMessageQueueOffset(
-                                                        mq, pullResult.getNextBeginOffset());
-                                            }
-
-                                            if (!found) {
-                                                retryUtil.waitForMs(
-                                                        RocketMQConfig
-                                                                .DEFAULT_CONSUMER_DELAY_WHEN_MESSAGE_NOT_FOUND);
-                                            }
-                                            // 不报错了，重置次数
-                                            retryUtil.setRetries(1);
-                                        } catch (Exception e) {
-                                            LOG.error("messageQueues " + mq + " run error.", e);
-                                            throw new RuntimeException(e);
-                                        }
-                                    }
-                                    return true;
-                                },
-                                "RuntimeException");
-                    });
+            consumerPerMessageQueue(mq);
         }
 
         awaitTermination();
+    }
+
+    private void consumerPerMessageQueue(MessageQueue mq) {
+        String tag =
+                props.getProperty(RocketMQConfig.CONSUMER_TAG, RocketMQConfig.DEFAULT_CONSUMER_TAG);
+        int pullBatchSize = getInteger(props, MAX_PULL_SIZE, DEFAULT_CONSUMER_BATCH_SIZE);
+        long recallTime = FireRocketMQConf.startFromTimestamp(1);
+
+        this.executor.execute(
+                () -> {
+                    RetryUtil.call(
+                            () -> {
+                                while (runningChecker.isRunning()) {
+                                    try {
+                                        long offset = getMessageQueueOffset(mq, recallTime);
+                                        PullResult pullResult =
+                                                consumer.pullBlockIfNotFound(
+                                                        mq, tag, offset, pullBatchSize);
+
+                                        boolean found = false;
+                                        switch (pullResult.getPullStatus()) {
+                                            case FOUND:
+                                                List<MessageExt> messages = pullResult.getMsgFoundList();
+                                                if (pullBatchSize != messages.size())
+                                                    LOG.debug("Pull from rocketmq records is: {}", messages.size());
+                                                for (MessageExt msg : messages) {
+                                                    byte[] tag1 = msg.getTags() != null ? msg.getTags().getBytes(StandardCharsets.UTF_8) : null;
+                                                    byte[] key = msg.getKeys() != null ? msg.getKeys().getBytes(StandardCharsets.UTF_8) : null;
+                                                    byte[] value = msg.getBody();
+                                                    OUT data = schema.deserializeTagKeyAndValue(tag1, key, value);
+
+                                                    // output and state update are atomic
+                                                    synchronized (checkPointLock) {
+                                                        context.collectWithTimestamp(data, msg.getBornTimestamp());
+                                                    }
+                                                }
+                                                found = true;
+                                                break;
+                                            case NO_MATCHED_MSG:
+                                                LOG.debug(
+                                                        "No matched message after offset {} for queue {}",
+                                                        offset,
+                                                        mq);
+                                                break;
+                                            case NO_NEW_MSG:
+                                                LOG.debug(
+                                                        "No new message after offset {} for queue {}",
+                                                        offset,
+                                                        mq);
+                                                break;
+                                            case OFFSET_ILLEGAL:
+                                                LOG.warn(
+                                                        "Offset {} is illegal for queue {}",
+                                                        offset,
+                                                        mq);
+                                                break;
+                                            default:
+                                                break;
+                                        }
+
+                                        synchronized (checkPointLock) {
+                                            updateMessageQueueOffset(
+                                                    mq, pullResult.getNextBeginOffset());
+                                        }
+
+                                        if (!found) {
+                                            RetryUtil.waitForMs(
+                                                    RocketMQConfig
+                                                            .DEFAULT_CONSUMER_DELAY_WHEN_MESSAGE_NOT_FOUND);
+                                        }
+                                        // 不报错了，重置次数
+                                        RetryUtil.setRetries(1);
+                                    } catch (Exception e) {
+                                        LOG.error("messageQueues " + mq + " run error.", e);
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                                return true;
+                            },
+                            "RuntimeException");
+                });
     }
 
     private void awaitTermination() throws InterruptedException {
@@ -464,41 +480,80 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
             return;
         }
 
-        RetryUtil retryUtil = new RetryUtil(runningChecker);
-        retryUtil.setMaxAttempts(2);
-        // Discovery topic Route change when snapshot
-        retryUtil.call(() -> {
-                    Collection<MessageQueue> totalQueues =
-                            consumer.fetchSubscribeMessageQueues(topic);
-                    int taskNumber = getRuntimeContext().getNumberOfParallelSubtasks();
-                    int taskIndex = getRuntimeContext().getIndexOfThisSubtask();
-                    List<MessageQueue> newQueues = RocketMQUtils.allocate(totalQueues, taskNumber, taskIndex);
-                    Collections.sort(newQueues);
-                    LOG.info("Old messageQueues：" + JSON.toJSONString(messageQueues));
-                    LOG.info("New messageQueues：" + JSON.toJSONString(newQueues));
+        Map<MessageQueue, Long> currentOffsets;
+        boolean isChanged = false;
+        List<MessageQueue> tmpQueues = new ArrayList<>();
+        try {
+            // Discovers topic route change when snapshot
+            RetryUtil.call(
+                    () -> {
+                        Collection<MessageQueue> totalQueues = consumer.fetchSubscribeMessageQueues(topic);
+                        int taskNumber = getRuntimeContext().getNumberOfParallelSubtasks();
+                        int taskIndex = getRuntimeContext().getIndexOfThisSubtask();
+                        List<MessageQueue> newQueues =
+                                RocketMQUtils.allocate(totalQueues, taskNumber, taskIndex);
+                        Collections.sort(newQueues);
+                        LOG.debug(taskIndex + " Topic route is same.");
+                        if (!messageQueues.equals(newQueues)) {
+                            if (tmpQueues.isEmpty()) tmpQueues.addAll(newQueues);
+                            LOG.error("检测到MessageQueue发生变化\n before:{}\n after:{}", JSON.toJSONString(messageQueues), JSON.toJSONString(newQueues));
+                            throw new RuntimeException();
+                        }
+                        return true;
+                    },
+                    "RuntimeException due to topic route changed");
 
-                    if (!messageQueues.equals(newQueues)) {
-                        String logInfo = "Topic " + this.topic + " route has changed [" + (newQueues.size() - messageQueues.size()) + "], old messageQueues[" + messageQueues + "], new messageQueues[" + newQueues + "]";
-                        LOG.error(logInfo);
-                        throw new RuntimeException(logInfo);
-                    }
-                    return true;
-                },
-                "RuntimeException due to topic route changed");
-
-        unionOffsetStates.clear();
-        HashMap<MessageQueue, Long> currentOffsets = new HashMap<>(offsetTable.size());
-        HashMap<MessageQueue, Long> currentTimestamp = new HashMap<>(offsetTable.size());
-        for (Map.Entry<MessageQueue, Long> entry : offsetTable.entrySet()) {
-            unionOffsetStates.add(Tuple2.of(entry.getKey(), entry.getValue()));
-            currentOffsets.put(entry.getKey(), entry.getValue());
-            currentTimestamp.put(entry.getKey(), timestampTable.get(entry.getKey()));
+            unionOffsetStates.clear();
+            currentOffsets = new HashMap<>(offsetTable.size());
+        } catch (RuntimeException e) {
+            LOG.warn("Retry failed multiple times for topic route change, keep previous offset.");
+            // If the retry fails for multiple times, the message queue and its offset in the
+            // previous checkpoint will be retained.
+            List<Tuple2<MessageQueue, Long>> unionOffsets =
+                    Lists.newArrayList(unionOffsetStates.get().iterator());
+            Map<MessageQueue, Long> queueOffsets = new HashMap<>(unionOffsets.size());
+            unionOffsets.forEach(queueOffset -> queueOffsets.put(queueOffset.f0, queueOffset.f1));
+            currentOffsets = new HashMap<>(unionOffsets.size() + offsetTable.size());
+            currentOffsets.putAll(queueOffsets);
+            isChanged = true;
+            Collections.sort(tmpQueues);
+            for (MessageQueue queue : tmpQueues) {
+                if (!messageQueues.contains(queue)) {
+                    consumerPerMessageQueue(queue);
+                    LOG.warn("消费新的MessageQueue：" + JSON.toJSONString(queue));
+                }
+            }
+            messageQueues = tmpQueues;
         }
 
+        for (Map.Entry<MessageQueue, Long> entry : offsetTable.entrySet()) {
+            if (this.lastedOffsetsToStateBackend.containsKey(entry.getKey())) {
+                // 当本次提交的offset大于等于上一次的offset时，才会更新状态
+                if (entry.getValue() >= this.lastedOffsetsToStateBackend.get(entry.getKey())) {
+                    unionOffsetStates.add(Tuple2.of(entry.getKey(), entry.getValue()));
+                    this.lastedOffsetsToStateBackend.put(entry.getKey(), entry.getValue());
+                    LOG.info("持久化offset到StateBackend，key=" + entry.getKey() + " value=" + entry.getValue());
+                } else {
+                    LOG.error("checkpoint时发现持久化到状态中的offset小于上一次：\n before:{}\n after:{}", JSON.toJSONString(lastedOffsetsToStateBackend), JSON.toJSONString(entry));
+                }
+            } else {
+                unionOffsetStates.add(Tuple2.of(entry.getKey(), entry.getValue()));
+                this.lastedOffsetsToStateBackend.put(entry.getKey(), entry.getValue());
+                LOG.info("持久化offset到StateBackend，key=" + entry.getKey() + " value=" + entry.getValue());
+            }
+
+            currentOffsets.put(entry.getKey(), entry.getValue());
+        }
         pendingOffsetsToCommit.put(context.getCheckpointId(), currentOffsets);
-        pendingTimestampToCommit.put(context.getCheckpointId(), currentTimestamp);
-        LOG.info("Snapshotted state, last processed offsets: {}, checkpoint id: {}, timestamp: {}",
-                offsetTable, context.getCheckpointId(), context.getCheckpointTimestamp());
+        LOG.info(
+                "Snapshot state, last processed offsets: {}, checkpoint id: {}, timestamp: {}",
+                offsetTable,
+                context.getCheckpointId(),
+                context.getCheckpointTimestamp());
+        if (isChanged) {
+            LOG.error("检测到发生变化，将以本次checkpoint失败为代价自动重调度感知消费新增的MessageQueue");
+            System.exit(-1);
+        }
     }
 
     @Override
@@ -506,21 +561,28 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         LOG.info("initialize State ...");
 
         this.unionOffsetStates = context.getOperatorStateStore().getUnionListState(
-                                new ListStateDescriptor<>(
-                                        OFFSETS_STATE_NAME,
-                                        TypeInformation.of(
-                                                new TypeHint<Tuple2<MessageQueue, Long>>() {
-                                                })));
+                new ListStateDescriptor<>(
+                        OFFSETS_STATE_NAME,
+                        TypeInformation.of(
+                                new TypeHint<Tuple2<MessageQueue, Long>>() {
+                                })));
         this.restored = context.isRestored();
 
         if (restored) {
             if (restoredOffsets == null) {
                 restoredOffsets = new ConcurrentHashMap<>();
             }
+            if (lastedOffsetsToCommit == null) {
+                lastedOffsetsToCommit = new LinkedMap();
+            }
+            if (lastedOffsetsToStateBackend == null) {
+                lastedOffsetsToStateBackend = new LinkedMap();
+            }
             for (Tuple2<MessageQueue, Long> mqOffsets : unionOffsetStates.get()) {
                 if (!restoredOffsets.containsKey(mqOffsets.f0)
                         || restoredOffsets.get(mqOffsets.f0) < mqOffsets.f1) {
                     restoredOffsets.put(mqOffsets.f0, mqOffsets.f1);
+                    lastedOffsetsToStateBackend.put(mqOffsets.f0, mqOffsets.f1);
                 }
             }
             LOG.info(
@@ -564,7 +626,17 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         }
 
         for (Map.Entry<MessageQueue, Long> entry : offsets.entrySet()) {
-            consumer.updateConsumeOffset(entry.getKey(), entry.getValue());
+            if (lastedOffsetsToCommit.containsKey(entry.getKey())) {
+                if (entry.getValue() >= lastedOffsetsToCommit.get(entry.getKey())) {
+                    consumer.updateConsumeOffset(entry.getKey(), entry.getValue());
+                    lastedOffsetsToCommit.put(entry.getKey(), entry.getValue());
+                    LOG.info("持久化offset到rocketmq，key=" + entry.getKey() + " value=" + entry.getValue());
+                }
+            } else {
+                consumer.updateConsumeOffset(entry.getKey(), entry.getValue());
+                lastedOffsetsToCommit.put(entry.getKey(), entry.getValue());
+                LOG.info("持久化offset到rocketmq，key=" + entry.getKey() + " value=" + entry.getValue());
+            }
         }
 
         Map<MessageQueue, Long> timestamp = new HashMap<>();
