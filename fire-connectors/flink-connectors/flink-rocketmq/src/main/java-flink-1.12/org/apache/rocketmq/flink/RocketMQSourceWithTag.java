@@ -115,6 +115,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
     private volatile Object checkPointLock;
 
     private SourceContext context;
+    private boolean isChanged = false;
 
     private Meter tpsMetric;
     private String resolveType;
@@ -481,7 +482,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         }
 
         Map<MessageQueue, Long> currentOffsets;
-        boolean isChanged = false;
+
         List<MessageQueue> tmpQueues = new ArrayList<>();
         try {
             // Discovers topic route change when snapshot
@@ -550,10 +551,6 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                 offsetTable,
                 context.getCheckpointId(),
                 context.getCheckpointTimestamp());
-        if (isChanged) {
-            LOG.error("检测到发生变化，将以本次checkpoint失败为代价自动重调度感知消费新增的MessageQueue");
-            System.exit(-1);
-        }
     }
 
     @Override
@@ -604,6 +601,11 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         if (!runningChecker.isRunning()) {
             LOG.info("notifyCheckpointComplete() called on closed source; returning null.");
             return;
+        }
+
+        if (isChanged) {
+            LOG.error("检测到发生变化，将以本次checkpoint失败为代价自动重调度感知消费新增的MessageQueue");
+            System.exit(-1);
         }
 
         final int posInMap = pendingOffsetsToCommit.indexOf(checkpointId);
