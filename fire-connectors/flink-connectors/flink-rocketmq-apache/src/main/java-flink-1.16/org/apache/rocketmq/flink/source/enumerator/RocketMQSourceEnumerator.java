@@ -351,7 +351,7 @@ public class RocketMQSourceEnumerator
                         offset = consumer.committed(mq);
                         if (offset < 0) {
                             throw new IllegalArgumentException(
-                                    "Unknown value for CONSUMER_OFFSET_RESET_TO.");
+                                    "Unknown value for CONSUMER_OFFSET_RESET_TO. Current value is " + initialOffset);
                         }
                 }
             }

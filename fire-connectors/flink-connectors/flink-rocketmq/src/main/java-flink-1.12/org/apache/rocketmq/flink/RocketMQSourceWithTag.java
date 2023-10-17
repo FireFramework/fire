@@ -407,7 +407,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                         break;
                     default:
                         throw new IllegalArgumentException(
-                                "Unknown value for CONSUMER_OFFSET_RESET_TO.");
+                                "Unknown value for CONSUMER_OFFSET_RESET_TO. Current value is " + initialOffset);
                 }
             }
         }
