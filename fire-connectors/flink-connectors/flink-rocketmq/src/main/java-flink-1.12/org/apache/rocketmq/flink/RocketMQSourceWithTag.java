@@ -533,14 +533,14 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                 if (entry.getValue() >= this.lastedOffsetsToStateBackend.get(entry.getKey())) {
                     unionOffsetStates.add(Tuple2.of(entry.getKey(), entry.getValue()));
                     this.lastedOffsetsToStateBackend.put(entry.getKey(), entry.getValue());
-                    LOG.info("持久化offset到StateBackend，key=" + entry.getKey() + " value=" + entry.getValue());
+                    LOG.info("Commit offset to StateBackend，key=" + entry.getKey() + " value=" + entry.getValue());
                 } else {
                     LOG.error("checkpoint时发现持久化到状态中的offset小于上一次：\n before:{}\n after:{}", JSON.toJSONString(lastedOffsetsToStateBackend), JSON.toJSONString(entry));
                 }
             } else {
                 unionOffsetStates.add(Tuple2.of(entry.getKey(), entry.getValue()));
                 this.lastedOffsetsToStateBackend.put(entry.getKey(), entry.getValue());
-                LOG.info("持久化offset到StateBackend，key=" + entry.getKey() + " value=" + entry.getValue());
+                LOG.info("Commit offset to StateBackend，key=" + entry.getKey() + " value=" + entry.getValue());
             }
 
             currentOffsets.put(entry.getKey(), entry.getValue());
@@ -604,7 +604,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         }
 
         if (isChanged) {
-            LOG.error("检测到发生变化，将以本次checkpoint失败为代价自动重调度感知消费新增的MessageQueue");
+            LOG.warn("检测到MessageQueue列表发生变化，当前flink任务将自动restarting确保消费到新增队列.");
             System.exit(-1);
         }
 
@@ -632,12 +632,12 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                 if (entry.getValue() >= lastedOffsetsToCommit.get(entry.getKey())) {
                     consumer.updateConsumeOffset(entry.getKey(), entry.getValue());
                     lastedOffsetsToCommit.put(entry.getKey(), entry.getValue());
-                    LOG.info("持久化offset到rocketmq，key=" + entry.getKey() + " value=" + entry.getValue());
+                    LOG.info("Commit offset to rocketmq，key=" + entry.getKey() + " value=" + entry.getValue());
                 }
             } else {
                 consumer.updateConsumeOffset(entry.getKey(), entry.getValue());
                 lastedOffsetsToCommit.put(entry.getKey(), entry.getValue());
-                LOG.info("持久化offset到rocketmq，key=" + entry.getKey() + " value=" + entry.getValue());
+                LOG.info("Commit offset to rocketmq，key=" + entry.getKey() + " value=" + entry.getValue());
             }
         }
 
