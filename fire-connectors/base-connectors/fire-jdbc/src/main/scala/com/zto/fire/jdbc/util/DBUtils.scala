@@ -72,13 +72,13 @@ object DBUtils extends Logging {
             if (columnMap.containsKey(fieldName)) {
               val fieldType = columnMap.get(fieldName)
               fieldType match {
-                case Types.INTEGER | Types.SMALLINT=> field.set(obj, rs.getInt(fieldName))
+                case Types.INTEGER | Types.SMALLINT | Types.TINYINT => field.set(obj, rs.getInt(fieldName))
                 case Types.VARCHAR | Types.CHAR | Types.LONGVARCHAR => field.set(obj, rs.getString(fieldName))
                 case Types.BIGINT => field.set(obj, rs.getLong(fieldName))
                 case Types.FLOAT => field.set(obj, rs.getFloat(fieldName))
                 case Types.DOUBLE => field.set(obj, rs.getDouble(fieldName))
                 case Types.DECIMAL => field.set(obj, rs.getBigDecimal(fieldName))
-                case Types.BOOLEAN | Types.TINYINT | Types.BIT => field.set(obj, rs.getBoolean(fieldName))
+                case Types.BOOLEAN | Types.BIT => field.set(obj, rs.getBoolean(fieldName))
                 case Types.DATE => field.set(obj, rs.getDate(fieldName))
                 case Types.TIME => field.set(obj, rs.getTime(fieldName))
                 case Types.TIMESTAMP => field.set(obj, rs.getTimestamp(fieldName))
