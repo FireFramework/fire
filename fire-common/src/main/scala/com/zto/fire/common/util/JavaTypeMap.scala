@@ -27,6 +27,7 @@ package com.zto.fire.common.util
 trait JavaTypeMap {
   // Java API库映射
   type JInt = java.lang.Integer
+  type JByte = java.lang.Byte
   type JLong = java.lang.Long
   type JBoolean = java.lang.Boolean
   type JChar = java.lang.Character

@@ -70,20 +70,23 @@ object DBUtils extends Logging {
           if (!(anno != null && anno.disuse())) {
             val fieldName = if (anno != null && StringUtils.isNotBlank(anno.value())) anno.value() else field.getName
             if (columnMap.containsKey(fieldName)) {
-              val fieldType = columnMap.get(fieldName)
-              fieldType match {
-                case Types.INTEGER | Types.SMALLINT | Types.TINYINT => field.set(obj, rs.getInt(fieldName))
-                case Types.VARCHAR | Types.CHAR | Types.LONGVARCHAR => field.set(obj, rs.getString(fieldName))
-                case Types.BIGINT => field.set(obj, rs.getLong(fieldName))
-                case Types.FLOAT => field.set(obj, rs.getFloat(fieldName))
-                case Types.DOUBLE => field.set(obj, rs.getDouble(fieldName))
-                case Types.DECIMAL | Types.NUMERIC => field.set(obj, rs.getBigDecimal(fieldName))
-                case Types.BOOLEAN | Types.BIT => field.set(obj, rs.getBoolean(fieldName))
-                case Types.DATE => field.set(obj, rs.getDate(fieldName))
-                case Types.TIME => field.set(obj, rs.getTime(fieldName))
-                case Types.TIMESTAMP => field.set(obj, rs.getTimestamp(fieldName))
-                case _ => logger.error(s"ResultSet转换成JavaBean过程中遇到不支持的类型，字段名称：${fieldName}，字段类型：${fieldType}")
-              }
+              val fieldType = field.getType
+              if (fieldType eq classOf[JString]) field.set(obj, rs.getString(fieldName))
+              else if (fieldType eq classOf[JInt]) field.set(obj, rs.getInt(fieldName))
+              else if (fieldType eq classOf[JDouble]) field.set(obj, rs.getDouble(fieldName))
+              else if (fieldType eq classOf[JLong]) field.set(obj, rs.getLong(fieldName))
+              else if (fieldType eq classOf[JBigDecimal]) field.set(obj, rs.getBigDecimal(fieldName))
+              else if (fieldType eq classOf[JFloat]) field.set(obj, rs.getFloat(fieldName))
+              else if (fieldType eq classOf[JBoolean]) field.set(obj, rs.getBoolean(fieldName))
+              else if (fieldType eq classOf[JShort]) field.set(obj, rs.getShort(fieldName))
+              else if (fieldType eq classOf[java.sql.Date]) field.set(obj, rs.getDate(fieldName))
+              else if (fieldType eq classOf[java.sql.Time]) field.set(obj, rs.getTime(fieldName))
+              else if (fieldType eq classOf[java.sql.Timestamp]) field.set(obj, rs.getTimestamp(fieldName))
+              else if (fieldType eq classOf[JByte]) field.set(obj, rs.getByte(fieldName))
+              else if (fieldType eq classOf[java.sql.Array]) field.set(obj, rs.getArray(fieldName))
+              else if (fieldType eq classOf[java.sql.Blob]) field.set(obj, rs.getBlob(fieldName))
+              else if (fieldType eq classOf[java.sql.Clob]) field.set(obj, rs.getClob(fieldName))
+              else throw new IllegalArgumentException(s"JDBC查询存在不兼容的数据类型，JavaBean中字段名称：${fieldName} 字段类型：${fieldType}")
             }
           }
         })
