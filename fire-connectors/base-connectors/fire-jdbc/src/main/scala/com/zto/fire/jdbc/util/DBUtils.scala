@@ -77,7 +77,7 @@ object DBUtils extends Logging {
                 case Types.BIGINT => field.set(obj, rs.getLong(fieldName))
                 case Types.FLOAT => field.set(obj, rs.getFloat(fieldName))
                 case Types.DOUBLE => field.set(obj, rs.getDouble(fieldName))
-                case Types.DECIMAL => field.set(obj, rs.getBigDecimal(fieldName))
+                case Types.DECIMAL | Types.NUMERIC => field.set(obj, rs.getBigDecimal(fieldName))
                 case Types.BOOLEAN | Types.BIT => field.set(obj, rs.getBoolean(fieldName))
                 case Types.DATE => field.set(obj, rs.getDate(fieldName))
                 case Types.TIME => field.set(obj, rs.getTime(fieldName))
@@ -115,7 +115,6 @@ object DBUtils extends Logging {
       }
     }
     if (retVal.isFailure) this.logger.warn(s"ResultSet结果集中未找到列名：${columnName}，请保证ResultSet与JavaBean中的字段一一对应，耗时：${elapsed(start)}")
-    rs.getMetaData
     retVal.isSuccess
   }
 
