@@ -25,7 +25,7 @@
     <modules>
         <module>flink-clickhouse</module>
         <module>flink-rocketmq</module>
-        <module>flink-rocketmq-apache</module>
+        <!--<module>flink-rocketmq-apache</module>-->
     </modules>
 
     <parent>

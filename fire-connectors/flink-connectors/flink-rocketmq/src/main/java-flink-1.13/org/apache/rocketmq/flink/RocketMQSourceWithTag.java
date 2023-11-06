@@ -143,9 +143,11 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         if (offsetTable == null) {
             offsetTable = new ConcurrentHashMap<>();
         }
+
         if (restoredOffsets == null) {
             restoredOffsets = new ConcurrentHashMap<>();
         }
+
         if (timestampTable == null) {
             timestampTable = new ConcurrentHashMap<>();
         }
@@ -180,26 +182,37 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
             timer = Executors.newSingleThreadScheduledExecutor();
         }
 
-        runningChecker = new RunningChecker();
+        if (runningChecker == null) {
+            runningChecker = new RunningChecker();
+        }
 
-        final ThreadFactory threadFactory =
-                new ThreadFactoryBuilder()
-                        .setDaemon(true)
-                        .setNameFormat("rmq-pull-thread-%d")
-                        .build();
-        executor = Executors.newCachedThreadPool(threadFactory);
+        if (executor == null) {
+            final ThreadFactory threadFactory =
+                    new ThreadFactoryBuilder()
+                            .setDaemon(true)
+                            .setNameFormat("rmq-pull-thread-%d")
+                            .build();
+            executor = Executors.newCachedThreadPool(threadFactory);
+        }
 
-        bakConsumer = pullConsumer("bak");
-        consumer = pullConsumer("official");
+        if (bakConsumer == null) {
+            bakConsumer = pullConsumer("bak");
+        }
 
-        Counter outputCounter =
-                getRuntimeContext()
-                        .getMetricGroup()
-                        .counter(MetricUtils.METRICS_TPS + "_counter", new SimpleCounter());
-        tpsMetric =
-                getRuntimeContext()
-                        .getMetricGroup()
-                        .meter(MetricUtils.METRICS_TPS, new MeterView(outputCounter, 60));
+        if (consumer == null) {
+            consumer = pullConsumer("official");
+        }
+
+        if (tpsMetric == null) {
+            Counter outputCounter =
+                    getRuntimeContext()
+                            .getMetricGroup()
+                            .counter(MetricUtils.METRICS_TPS + "_counter", new SimpleCounter());
+            tpsMetric =
+                    getRuntimeContext()
+                            .getMetricGroup()
+                            .meter(MetricUtils.METRICS_TPS, new MeterView(outputCounter, 60));
+        }
     }
 
     private DefaultMQPullConsumer pullConsumer(String type) {
@@ -351,6 +364,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                                     } catch (Exception e) {
                                         LOG.error("messageQueues " + mq + " run error.", e);
                                         throw new RuntimeException(e);
+                                        // System.exit(-1);
                                     }
                                 }
                                 return true;
@@ -433,26 +447,88 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
 
     @Override
     public void cancel() {
-        LOG.debug("cancel ...");
-        runningChecker.setRunning(false);
-
-        if (pullConsumerScheduleService != null) {
-            pullConsumerScheduleService.shutdown();
+        LOG.warn("RocketMQ Connector cancel ...");
+        if (runningChecker != null) {
+            runningChecker.setRunning(false);
         }
+
+        try {
+            if (executor != null && !executor.isShutdown()) {
+                executor.shutdownNow();
+                executor = null;
+            }
+        } catch (Exception e) {
+            LOG.error("RocketMQ source executor线程池shutdown失败", e);
+        }
+
+        try {
+            if (timer != null && !timer.isShutdown()) {
+                timer.shutdownNow();
+                timer = null;
+            }
+        } catch (Exception e) {
+            LOG.error("RocketMQ source timer线程池shutdown失败", e);
+        }
+
+        try {
+            if (pullConsumerScheduleService != null) {
+                pullConsumerScheduleService.shutdown();
+                pullConsumerScheduleService = null;
+            }
+        } catch (Exception e) {
+            LOG.error("RocketMQ source pullConsumerScheduleService线程池shutdown失败", e);
+        }
+
+        try {
+            if (consumer != null) {
+                consumer.shutdown();
+                consumer = null;
+            }
+        } catch (Exception e) {
+            LOG.error("RocketMQ source consumer消费者shutdown失败", e);
+        }
+
+        try {
+            if (bakConsumer != null) {
+                bakConsumer.shutdown();
+                bakConsumer = null;
+            }
+        } catch (Exception e) {
+            LOG.error("RocketMQ source bakConsumer消费者shutdown失败", e);
+        }
+
         if (offsetTable != null) {
             offsetTable.clear();
         }
+
         if (restoredOffsets != null) {
             restoredOffsets.clear();
         }
+
         if (pendingOffsetsToCommit != null) {
             pendingOffsetsToCommit.clear();
+        }
+
+        if (pendingTimestampToCommit != null) {
+            pendingTimestampToCommit.clear();
+        }
+
+        if (timestampTable != null) {
+            timestampTable.clear();
+        }
+
+        if (lastedOffsetsToCommit != null) {
+            lastedOffsetsToCommit.clear();
+        }
+
+        if (lastedOffsetsToStateBackend != null) {
+            lastedOffsetsToStateBackend.clear();
         }
     }
 
     @Override
     public void close() throws Exception {
-        LOG.debug("close ...");
+        LOG.warn("RocketMQ connector close ...");
         // pretty much the same logic as cancelling
         try {
             cancel();
