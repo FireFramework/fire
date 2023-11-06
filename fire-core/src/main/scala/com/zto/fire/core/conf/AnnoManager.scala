@@ -488,6 +488,7 @@ private[fire] trait AnnoManager extends Logging {
       this.toHudiConf(("hoodie.delete.shuffle.parallelism", parallelism.toString), keyNum)
       this.toHudiConf(("hoodie.markers.delete.parallelism", parallelism.toString), keyNum)
       this.toHudiConf(("hoodie.rollback.parallelism", parallelism.toString), keyNum)
+      this.toHudiConf(("hoodie.cleaner.parallelism", parallelism.toString), keyNum)
     }
   }
 
