@@ -421,7 +421,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def parseOptions(tableIdentifier: TableIdentifier, options: SqlNodeList): Map[String, String] = {
-    val props = options.getList.map(t => t.toString.replace("'", "").split("="))
+    val props = options.getList.map(t => t.toString.replace("'", "").split("=", 2))
       .filter(t => t.nonEmpty && t.length == 2).map(t => if (t(0).contains("password")) (t(0).trim, RegularUtils.hidePassword) else (t(0).trim, t(1).trim)).toMap
     SQLLineageManager.setOptions(tableIdentifier, props)
     props

@@ -56,6 +56,21 @@ object FlinkSqlLineageTest extends FlinkStreaming {
     // 已知的connector
     sql(
       """
+        |CREATE TABLE dim_usr_dept (
+        |    id BIGINT
+        |  , dept_id BIGINT
+        |  , dept_name STRING
+        |  , PRIMARY KEY (id) NOT ENFORCED
+        |) WITH (
+        |    'connector' = 'jdbc'
+        |  , 'url' = 'jdbc:mysql://localhost:3306/db?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai'
+        |  , 'table-name' = 't_user'
+        |  , 'username' = 'root'
+        |  , 'password' = '******'
+        |)
+        |""".stripMargin)
+    sql(
+      """
         |CREATE TABLE t_kinesis (
         |  `user_id` BIGINT,
         |  `item_id` BIGINT,
