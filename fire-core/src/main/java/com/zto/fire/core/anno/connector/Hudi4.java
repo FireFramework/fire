@@ -115,5 +115,5 @@ public @interface Hudi4 {
     /**
      * clean保留的版本数
      */
-    int cleanerCommitsRetained() default 10;
+    int cleanerCommitsRetained() default -1;
 }

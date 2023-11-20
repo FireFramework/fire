@@ -580,7 +580,9 @@ private[fire] trait AnnoManager extends Logging {
   private[this] def hudiCleanConf(cleanAsync: Boolean, cleanerPolicy: String, cleanerCommitsRetained: Int, keyNum: Int): Unit = {
     this.toHudiConf(("hoodie.clean.async", cleanAsync.toString), keyNum)
     this.toHudiConf(("hoodie.cleaner.policy", cleanerPolicy), keyNum)
-    this.toHudiConf(("hoodie.cleaner.commits.retained", cleanerCommitsRetained.toString), keyNum)
+    if (cleanerCommitsRetained > 0) {
+      this.toHudiConf(("hoodie.cleaner.commits.retained", cleanerCommitsRetained.toString), keyNum)
+    }
   }
 
   /**
