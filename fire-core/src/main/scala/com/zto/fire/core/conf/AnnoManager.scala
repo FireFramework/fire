@@ -296,7 +296,12 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._1))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._1))
+    // 统一的并行度设置
     this.hudiParallelism(hudi.parallelism(), KeyNum._1)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._1)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._1)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._1)
     this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._1)
   }
@@ -313,7 +318,12 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._2))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._2))
+    // 统一的并行度设置
     this.hudiParallelism(hudi.parallelism(), KeyNum._2)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._2)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._2)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._2)
     this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._2)
   }
@@ -330,7 +340,12 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._3))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._3))
+    // 统一的并行度设置
     this.hudiParallelism(hudi.parallelism(), KeyNum._3)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._3)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._3)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._3)
     this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._3)
   }
@@ -347,7 +362,12 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._4))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._4))
+    // 统一的并行度设置
     this.hudiParallelism(hudi.parallelism(), KeyNum._4)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._4)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._4)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._4)
     this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._4)
   }
@@ -364,7 +384,12 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._5))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._5))
+    // 统一的并行度设置
     this.hudiParallelism(hudi.parallelism(), KeyNum._5)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._5)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._5)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._5)
     this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._5)
   }
@@ -381,7 +406,12 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._6))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._6))
+    // 统一的并行度设置
     this.hudiParallelism(hudi.parallelism(), KeyNum._6)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._6)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._6)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._6)
     this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._6)
   }
@@ -398,7 +428,12 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._7))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._7))
+    // 统一的并行度设置
     this.hudiParallelism(hudi.parallelism(), KeyNum._7)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._7)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._7)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._7)
     this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._7)
   }
@@ -415,7 +450,12 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._8))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._8))
+    // 统一的并行度设置
     this.hudiParallelism(hudi.parallelism(), KeyNum._8)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._8)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._8)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._8)
     this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._8)
   }
@@ -432,7 +472,12 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._9))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._9))
+    // 统一的并行度设置
     this.hudiParallelism(hudi.parallelism(), KeyNum._9)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._9)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._9)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._9)
     this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._9)
   }
@@ -449,7 +494,12 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._10))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._10))
+    // 统一的并行度设置
     this.hudiParallelism(hudi.parallelism(), KeyNum._10)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._10)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._10)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._10)
     this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._10)
   }
@@ -466,7 +516,12 @@ private[fire] trait AnnoManager extends Logging {
     PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._11))
     // 解析通过注解配置的单项配置信息
     hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._11))
+    // 统一的并行度设置
     this.hudiParallelism(hudi.parallelism(), KeyNum._11)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._11)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._11)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._11)
     this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._11)
   }
@@ -489,7 +544,43 @@ private[fire] trait AnnoManager extends Logging {
       this.toHudiConf(("hoodie.markers.delete.parallelism", parallelism.toString), keyNum)
       this.toHudiConf(("hoodie.rollback.parallelism", parallelism.toString), keyNum)
       this.toHudiConf(("hoodie.cleaner.parallelism", parallelism.toString), keyNum)
+      this.toHudiConf(("hoodie.finalize.write.parallelism", parallelism.toString), keyNum)
     }
+  }
+
+  /**
+   * 布隆过滤器参数调优
+   * @param parallelism
+   * 并行度
+   * @param useBloomIndexBucketized
+   * 是否使用基于bucket的仿数据倾斜模式
+   */
+  @Internal
+  private[this] def hudiBloomIndexConf(parallelism: Int, useBloomIndexBucketized: Boolean, bloomkeysPerBucket: Int, keyNum: Int): Unit = {
+    if (parallelism > 0) {
+      this.toHudiConf(("hoodie.bloom.index.parallelism", parallelism.toString), keyNum)
+    }
+    if (bloomkeysPerBucket > 0) {
+      this.toHudiConf(("hoodie.bloom.index.keys.per.bucket", bloomkeysPerBucket.toString), keyNum)
+    }
+    this.toHudiConf(("hoodie.bloom.index.bucketized.checking", useBloomIndexBucketized.toString), keyNum)
+  }
+
+  /**
+   * hudi clean相关配置
+   *
+   * @param cleanAsync
+   * 是否开启异步clean
+   * @param cleanerPolicy
+   * clean的策略
+   * @param cleanerCommitsRetained
+   * clean保留的最大版本数
+   */
+  @Internal
+  private[this] def hudiCleanConf(cleanAsync: Boolean, cleanerPolicy: String, cleanerCommitsRetained: Int, keyNum: Int): Unit = {
+    this.toHudiConf(("hoodie.clean.async", cleanAsync.toString), keyNum)
+    this.toHudiConf(("hoodie.cleaner.policy", cleanerPolicy), keyNum)
+    this.toHudiConf(("hoodie.cleaner.commits.retained", cleanerCommitsRetained.toString), keyNum)
   }
 
   /**

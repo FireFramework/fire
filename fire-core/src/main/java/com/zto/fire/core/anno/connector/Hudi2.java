@@ -86,4 +86,34 @@ public @interface Hudi2 {
      * 基于多少个分区进行clustering执行计划的生成：hoodie.clustering.plan.strategy.daybased.lookback.partitions
      */
     int clusteringPartitions() default -1;
+
+    /**
+     * 当使用布隆索引时是否开启基于Bucketized的仿数据倾斜
+     */
+    boolean useBloomIndexBucketized() default true;
+
+    /**
+     * 布隆索引并行度，优先级高于parallelism
+     */
+    int bloomIndexParallelism() default -1;
+
+    /**
+     * 布隆过滤器每个bucket的key数
+     */
+    int bloomkeysPerBucket() default -1;
+
+    /**
+     * 是否启用异步clean
+     */
+    boolean cleanerAsync() default true;
+
+    /**
+     * clean的策略：KEEP_LATEST_FILE_VERSIONS、KEEP_LATEST_COMMITS
+     */
+    String cleanerPolicy() default "KEEP_LATEST_FILE_VERSIONS";
+
+    /**
+     * clean保留的版本数
+     */
+    int cleanerCommitsRetained() default 10;
 }
