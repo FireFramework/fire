@@ -75,7 +75,7 @@ private[fire] trait AnnoManager extends Logging {
 
       // 如果keyNum>1则将数值添加到key的结尾
       val realKey = if (keyNum > 1) fixKey + keyNum else fixKey
-      val isNumeric = StringsUtils.isNumeric(fixValue)
+      val isNumeric = if (value.isInstanceOf[Int] || value.isInstanceOf[Long]) true else false
 
       // 约定注解中指定的配置的值如果为-1，表示不使用该项配置，通常-1表示默认值
       if (!isNumeric || (isNumeric && fixValue.toLong != -1)) {
