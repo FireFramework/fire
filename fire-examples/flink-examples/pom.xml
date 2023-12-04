@@ -260,6 +260,21 @@
             <version>11.2.0.3</version>
             <scope>${maven.scope}</scope>
         </dependency>
+        <dependency>
+            <groupId>com.ververica</groupId>
+            <artifactId>flink-sql-connector-sqlserver-cdc</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.doris</groupId>
+            <artifactId>flink-doris-connector-1.15</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>chill_2.12</artifactId>
+            <version>0.10.0</version>
+        </dependency>
     </dependencies>
 
     <build>

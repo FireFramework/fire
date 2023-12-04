@@ -170,6 +170,16 @@
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
             <version>${hive.flink.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.calcite</groupId>
+                    <artifactId>calcite</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.calcite</groupId>
+                    <artifactId>calcite-core</artifactId>
+                </exclusion>
+            </exclusions>
             <scope>${maven.scope}</scope>
         </dependency>
 
