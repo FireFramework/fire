@@ -78,14 +78,15 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
           for (x <- results) {
             SQLLineageManager.addColRelation(x.getSourceColumn, x.getTargetColumn)
           }
+          SQLLineageManager.addRelation(TableIdentifier(results.last.getSourceTable), TableIdentifier(results.last.getTargetTable))
         }
         case createView: SqlCreateView => {
           this.parseSqlNode(createView.getViewName, Operation.CREATE_VIEW)
           this.parseSqlNode(createView.getQuery, Operation.SELECT)
         }
         case createTable: SqlCreateTable =>
-          stableEnv.executeSql(sql)
           parseCreateTable(createTable)
+          stableEnv.executeSql(sql)
         case _ => this.hiveSqlParser(sql)
       }
     } catch {

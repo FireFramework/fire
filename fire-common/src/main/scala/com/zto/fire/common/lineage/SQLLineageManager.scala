@@ -53,6 +53,14 @@ private[fire] object SQLLineageManager {
     this.relationSet.add(new SQLTableRelations(srcTableIdentifier.toString, sinkTableIdentifier.toString))
   }
 
+  /**
+   * 维护表与表字段之间的关系
+   *
+   * @param sourceColumn
+   * 数据来源表
+   * @param targetColumn
+   * 目标表
+   */
   def addColRelation(sourceColumn: String, targetColumn: String): Unit = {
     this.colRelationSet.add(new SQLTableColumnsRelations(sourceColumn, targetColumn))
   }
