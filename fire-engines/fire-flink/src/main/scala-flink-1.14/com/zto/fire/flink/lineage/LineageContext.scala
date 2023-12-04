@@ -44,7 +44,7 @@ class LineageContext(tableEnv: TableEnvironmentImpl) {
       val targetColumn = targetColumnList.get(index)
 
       val relColumnOriginSet = metadataQuery.getColumnOrigins(optRelNode, index).asScala
-      if (relColumnOriginSet.isEmpty) {
+      if (relColumnOriginSet.nonEmpty) {
         for (rco: RelColumnOrigin <- relColumnOriginSet) {
           // table
           val table = rco.getOriginTable

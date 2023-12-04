@@ -45,7 +45,7 @@ class LineageContext(tableEnv: TableEnvironmentImpl) {
       val relColumnOriginSet = metadataQuery.getColumnOrigins(optRelNode, index)
       import scala.collection.JavaConversions._
 
-      if (!relColumnOriginSet.isEmpty) {
+      if (!relColumnOriginSet.nonEmpty) {
         for (rco: RelColumnOrigin <- relColumnOriginSet) {
           // table
           val table = rco.getOriginTable
