@@ -27,14 +27,19 @@ import com.zto.fire.common.lineage.parser.ConnectorParserManager
 import com.zto.fire.common.util.{ReflectionUtils, RegularUtils}
 import com.zto.fire.core.sql.SqlParser
 import com.zto.fire.flink.conf.FireFlinkConf
+import com.zto.fire.flink.lineage.LineageContext
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import org.apache.calcite.sql._
+import org.apache.flink.configuration.Configuration
 import org.apache.flink.sql.parser.SqlProperty
 import org.apache.flink.sql.parser.ddl._
 import org.apache.flink.sql.parser.dml._
 import org.apache.flink.sql.parser.hive.dml.RichSqlHiveInsert
+import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.table.api.EnvironmentSettings
 import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
+import org.apache.flink.table.api.internal.TableEnvironmentImpl
 import org.apache.flink.table.catalog.ObjectPath
 import org.apache.flink.table.catalog.hive.HiveCatalog
 import org.apache.hadoop.hive.metastore.api.Table
@@ -52,6 +57,13 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
   // calcite parser config
   protected lazy val tableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[StreamTableEnvironment]
   protected lazy val hiveTableMetaDataMap = new JConcurrentHashMap[String, Table]()
+  private val env: StreamExecutionEnvironment = FlinkSingletonFactory.getStreamEnv
+
+  private val configuration = new Configuration
+  configuration.setBoolean("table.dynamic-table-options.enabled", true)
+  private val settings = EnvironmentSettings.newInstance.inStreamingMode.build
+  private val stableEnv: TableEnvironmentImpl = StreamTableEnvironment.create(env, settings).asInstanceOf[TableEnvironmentImpl]
+  private val context = new LineageContext(stableEnv)
 
   /**
    * 用于解析给定的SQL语句
@@ -59,17 +71,21 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
   override def sqlParser(sql: String): Unit = {
     try {
       FlinkUtils.sqlNodeParser(sql) match {
-        case select: SqlSelect => this.parseSqlNode(select)
+        case select: SqlSelect =>
+          this.parseSqlNode(select)
         case insert: RichSqlInsert => {
-          this.parseSqlNode(insert.getTargetTable, Operation.INSERT_INTO)
-          this.parsePartitions(insert.getTargetTable.asInstanceOf[SqlIdentifier], Seq(insert.getStaticPartitions))
-          this.parseSqlNode(insert.getSource, Operation.SELECT, targetTable = Some(insert.getTargetTable))
+          val results = context.analyzeLineage(sql)
+          for (x <- results) {
+            SQLLineageManager.addColRelation(x.getSourceColumn, x.getTargetColumn)
+          }
         }
         case createView: SqlCreateView => {
           this.parseSqlNode(createView.getViewName, Operation.CREATE_VIEW)
           this.parseSqlNode(createView.getQuery, Operation.SELECT)
         }
-        case createTable: SqlCreateTable => parseCreateTable(createTable)
+        case createTable: SqlCreateTable =>
+          stableEnv.executeSql(sql)
+          parseCreateTable(createTable)
         case _ => this.hiveSqlParser(sql)
       }
     } catch {
@@ -101,7 +117,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
         case sqlHiveInsert: RichSqlHiveInsert => this.parseHiveInsert(sqlHiveInsert)
         case _ => this.logger.info(s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql")
       }
-    } (this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", isThrow = false, hook = false)
+    }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", isThrow = false, hook = false)
   }
 
   /**
@@ -231,7 +247,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
             hiveCatalog.tableExists(this.toFlinkTableIdentifier(tableIdentifier))
           }
         } else false
-      } (this.logger, catchLog = s"判断${tableIdentifier}是否为hive表失败", hook = false)
+      }(this.logger, catchLog = s"判断${tableIdentifier}是否为hive表失败", hook = false)
     }
   }
 
@@ -414,6 +430,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
 
   /**
    * 用于解析sql中的options
+   *
    * @param tableIdentifier
    * 表名
    * @param options
@@ -429,6 +446,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
 
   /**
    * 解析字段列表信息
+   *
    * @param tableIdentifier
    * 表名
    * @param columnList

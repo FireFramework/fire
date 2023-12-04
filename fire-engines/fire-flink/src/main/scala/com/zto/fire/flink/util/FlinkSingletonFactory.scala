@@ -72,4 +72,7 @@ object FlinkSingletonFactory extends SingletonFactory {
    * TableEnv实例
    */
   private[fire] def getTableEnv: TableEnvironment = this.tableEnv
+
+  private [fire] def getStreamEnv: StreamExecutionEnvironment = this.streamEnv
+
 }

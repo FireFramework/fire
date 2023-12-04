@@ -627,5 +627,7 @@ private[fire] object StreamExecutionEnvExt {
   /**
    * 创建并返回StatementSet对象实例
    */
-  def createStatementSet: StatementSet = FlinkSingletonFactory.getTableEnv.createStatementSet()
+  def createStatementSet: StatementSet =
+
+    FlinkSingletonFactory.getTableEnv.createStatementSet()
 }
