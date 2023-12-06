@@ -250,7 +250,12 @@ class MQPullInputDStream(
   /**
     * Asynchronously maintains & sends new rate limits to the receiver through the receiver tracker.
     */
-  override protected[streaming] val rateController: Option[RateController] = {
+  override protected[streaming] val rateController: Option[RateController] = this.rateControllerFun()
+
+  /**
+   * Asynchronously maintains & sends new rate limits to the receiver through the receiver tracker.
+   */
+  protected[streaming] def rateControllerFun(): Option[RateController] = {
     if (RateController.isBackPressureEnabled(_ssc.conf)) {
       Some(new DirectMQRateController(id,
         RateEstimator.create(_ssc.conf, context.graph.batchDuration)))
@@ -264,7 +269,7 @@ class MQPullInputDStream(
     */
   private def maxMessagesPerPartition(
      offsets: Map[TopicQueueId, Map[String, Long]]): Option[Map[TopicQueueId, Map[String, Long]]] = {
-    val estimatedRateLimit = rateController.map(_.getLatestRate().toInt)
+    val estimatedRateLimit = rateControllerFun().map(_.getLatestRate().toInt)
 
     var lagPerPartition = Map[TopicQueueId, Long]()
     var totalLag = 0L

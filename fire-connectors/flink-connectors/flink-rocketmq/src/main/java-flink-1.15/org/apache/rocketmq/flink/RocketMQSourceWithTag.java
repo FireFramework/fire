@@ -399,7 +399,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
             }
 
             LOG.info("队列：{}-{}, 回溯时间：{}, 当前位点：{}", mq.getBrokerName(), mq.getQueueId(), recallTime, offset);
-            if (!restored || offset < 0 || recallTime > 0) {
+            if (offset < 0 || recallTime > 0) {
                 String initialOffset = props.getProperty(RocketMQConfig.CONSUMER_OFFSET_RESET_TO, CONSUMER_OFFSET_LATEST);
 
                 switch (initialOffset) {
