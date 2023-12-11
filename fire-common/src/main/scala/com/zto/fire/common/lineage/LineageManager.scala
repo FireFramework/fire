@@ -132,7 +132,7 @@ private[fire] class LineageManager extends Logging {
 /**
  * 对外暴露API，用于收集并处理各种埋点信息
  */
-private[fire] object LineageManager extends Logging {
+object LineageManager extends Logging {
   private[fire] lazy val manager = new LineageManager
 
   /**
@@ -222,8 +222,20 @@ private[fire] object LineageManager extends Logging {
    * @param datasourceDesc
    * 数据源描述
    */
-  def addDatasource(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = {
+  private[fire] def addDatasource(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = {
     this.manager.add(sourceType, datasourceDesc)
+  }
+
+  /**
+   * 添加数据源信息
+   *
+   * @param sourceType
+   * 数据源类型
+   * @param datasourceDesc
+   * 数据源描述
+   */
+  def addLineage(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = {
+    this.addDatasource(sourceType, datasourceDesc)
   }
 
   /**
@@ -241,7 +253,7 @@ private[fire] object LineageManager extends Logging {
   /**
    * 将目标DataSourceDesc中的operation合并到set中
    */
-  def mergeSet(set: JHashSet[DatasourceDesc], datasourceDesc: DatasourceDesc): Unit = {
+  private[fire] def mergeSet(set: JHashSet[DatasourceDesc], datasourceDesc: DatasourceDesc): Unit = {
     if (set.isEmpty || !set.contains(datasourceDesc)) {
       set.add(datasourceDesc)
       return
@@ -271,7 +283,7 @@ private[fire] object LineageManager extends Logging {
    * @return
    * 合并后的血缘map
    */
-  def mergeLineageMap(current: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]], target: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
+  private[fire] def mergeLineageMap(current: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]], target: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
     printLog(s"1. 双血缘map合并 current：$current target：$target")
     target.foreach(ds => {
       val datasourceDesc = current.mergeGet(ds._1)(ds._2)
