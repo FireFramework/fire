@@ -40,7 +40,7 @@ public enum Datasource {
     VIEW("view"), JDBC("jdbc"), FIRE_ROCKETMQ("fire_rocketmq"),
     PostgreSQL("postgresql"), CUSTOMIZE_SOURCE("customize_source"),
     CUSTOMIZE_SINK("customize_sink"), HUDI("hudi"), DORIS("doris"),
-    ICEBERG("iceberg"), PAIMON("paimon"), MONGODB("mongodb"),
+    STARROCKS("starrocks"), ICEBERG("iceberg"), PAIMON("paimon"), MONGODB("mongodb"),
     PRINT("print"), DATAGEN("datagen"), FILESYSTEM("filesystem"),
     BLACKHOLE("blackhole"), DYNAMODB("dynamodb"), FIREHOSE("firehouse"),
     ELASTICSEARCH("elasticsearch"), OPENSEARCH("opensearch"), UNKNOWN("unknown");
@@ -66,6 +66,7 @@ public enum Datasource {
         datasourceMap.put(DORIS, DBDatasource.class);
         datasourceMap.put(ELASTICSEARCH, DBDatasource.class);
         datasourceMap.put(OPENSEARCH, DBDatasource.class);
+        datasourceMap.put(STARROCKS, DBDatasource.class);
 
         // 文件类
         datasourceMap.put(HIVE, HiveDatasource.class);
