@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.bean.lineage;
 
+import java.util.HashSet;
 import java.util.Objects;
 
 /**
@@ -37,12 +38,16 @@ public class SQLTableRelations {
      */
     private String sinkTable;
 
+    private HashSet<SQLTableColumnsRelations> sqlTableColumnsRelations;
+
     public SQLTableRelations() {
     }
 
-    public SQLTableRelations(String srcTable, String sinkTable) {
+
+    public SQLTableRelations(String srcTable, String sinkTable, HashSet<SQLTableColumnsRelations> sqlTableColumnsRelations) {
         this.srcTable = srcTable;
         this.sinkTable = sinkTable;
+        this.sqlTableColumnsRelations = sqlTableColumnsRelations;
     }
 
     public void setSrcTable(String srcTable) {
@@ -61,20 +66,24 @@ public class SQLTableRelations {
         return sinkTable;
     }
 
+    public HashSet<SQLTableColumnsRelations> getSqlTableColumnsRelations() {
+        return sqlTableColumnsRelations;
+    }
+
+    public void setSqlTableColumnsRelations(HashSet<SQLTableColumnsRelations> sqlTableColumnsRelations) {
+        this.sqlTableColumnsRelations = sqlTableColumnsRelations;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         SQLTableRelations that = (SQLTableRelations) o;
-        return Objects.equals(srcTable, that.srcTable) && Objects.equals(sinkTable, that.sinkTable);
+        return Objects.equals(srcTable, that.srcTable) && Objects.equals(sinkTable, that.sinkTable) && Objects.equals(sqlTableColumnsRelations, that.sqlTableColumnsRelations);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(srcTable, sinkTable);
+        return Objects.hash(srcTable, sinkTable, sqlTableColumnsRelations);
     }
 }

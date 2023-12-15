@@ -32,7 +32,6 @@ private[fire] object SQLLineageManager {
   private lazy val statementSet = new JHashSet[String]()
   private lazy val relationSet = new JHashSet[SQLTableRelations]()
   private lazy val tableLineageMap = new JConcurrentHashMap[String, SQLTable]()
-  private lazy val colRelationSet = new JHashSet[SQLTableColumnsRelations]()
 
   /**
    * 添加待执行的SQL语句
@@ -49,8 +48,8 @@ private[fire] object SQLLineageManager {
    * @param sinkTable
    * 目标表
    */
-  def addRelation(srcTableIdentifier: TableIdentifier, sinkTableIdentifier: TableIdentifier): Unit = {
-    this.relationSet.add(new SQLTableRelations(srcTableIdentifier.toString, sinkTableIdentifier.toString))
+  def addRelation(srcTableIdentifier: TableIdentifier, sinkTableIdentifier: TableIdentifier, relationSet: JHashSet[SQLTableColumnsRelations]): Unit = {
+    this.relationSet.add(new SQLTableRelations(srcTableIdentifier.toString, sinkTableIdentifier.toString, relationSet))
   }
 
   /**
@@ -61,9 +60,7 @@ private[fire] object SQLLineageManager {
    * @param targetColumn
    * 目标表
    */
-  def addColRelation(sourceColumn: String, targetColumn: String): Unit = {
-    this.colRelationSet.add(new SQLTableColumnsRelations(sourceColumn, targetColumn))
-  }
+
 
   /**
    * 获取SQL血缘信息
@@ -73,7 +70,6 @@ private[fire] object SQLLineageManager {
     sqlLineage.setStatements(this.statementSet.toList)
     sqlLineage.setTables(this.tableLineageMap.values().toList)
     sqlLineage.setRelations(this.relationSet.toList)
-    sqlLineage.setColRelations(this.colRelationSet.toList)
     sqlLineage
   }
 

@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.zto.fire.flink.lineage
 
 import com.zto.fire.common.bean.lineage.LineageResult
@@ -17,7 +34,11 @@ import scala.collection.JavaConverters.{asScalaBufferConverter, asScalaSetConver
 import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
 
-
+/**
+ * flink sql 解析入口
+ *
+ * @author wsczm
+ */
 class LineageContext(tableEnv: TableEnvironmentImpl) extends Logging {
 
   private def validateSchema(sinkTable: String, relNode: RelNode, sinkFieldList: util.List[String]): Unit = {
@@ -40,14 +61,11 @@ class LineageContext(tableEnv: TableEnvironmentImpl) extends Logging {
       .map(tableColumn => tableColumn.getName)
       .toList
       .asJava
-
     validateSchema(sinkTable, optRelNode, targetColumnList)
     val metadataQuery = optRelNode.getCluster.getMetadataQuery
     val resultList = ListBuffer[LineageResult]()
-
     for (index <- 0 until targetColumnList.size) {
       val targetColumn = targetColumnList.get(index)
-
       val relColumnOriginSet = metadataQuery.getColumnOrigins(optRelNode, index).asScala
       if (relColumnOriginSet.nonEmpty) {
         for (rco: RelColumnOrigin <- relColumnOriginSet) {
@@ -74,8 +92,11 @@ class LineageContext(tableEnv: TableEnvironmentImpl) extends Logging {
 
   }
 
+  /**
+   * @param sql
+   * insert into sql
+   */
   def analyzeLineage(sql: String) = {
-
     RelMetadataQueryBase.THREAD_PROVIDERS.set(JaninoRelMetadataProvider.of(FlinkDefaultRelMetadataProvider.INSTANCE))
     val parsed = parseStatement(sql)
     val sinkTable = parsed._1
@@ -93,10 +114,7 @@ class LineageContext(tableEnv: TableEnvironmentImpl) extends Logging {
       case _ =>
         throw new TableException("Only insert is supported now.")
     }
-
-
   }
-
   private def parseValidateConvert(singleSql: String) = {
     RelMetadataQueryBase.THREAD_PROVIDERS.set(JaninoRelMetadataProvider.of(FlinkDefaultRelMetadataProvider.INSTANCE))
     val operations: util.List[Operation] = tableEnv.getParser.parse(singleSql)

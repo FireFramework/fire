@@ -20,6 +20,7 @@ package com.zto.fire.flink.sql
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.bean.lineage.SQLTableColumnsRelations
 import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.SQLLineageManager
@@ -30,6 +31,7 @@ import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.lineage.LineageContext
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import com.zto.fire.jdbc.conf.FireJdbcConf
+import com.zto.fire.predef.JHashSet
 import org.apache.calcite.sql._
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.sql.parser.SqlProperty
@@ -75,10 +77,11 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
           this.parseSqlNode(select)
         case insert: RichSqlInsert => {
           val results = context.analyzeLineage(sql)
+          val relationses = new JHashSet[SQLTableColumnsRelations]()
           for (x <- results) {
-            SQLLineageManager.addColRelation(x.getSourceColumn, x.getTargetColumn)
+            relationses.add(new SQLTableColumnsRelations(x.getSourceColumn, x.getTargetColumn))
           }
-          SQLLineageManager.addRelation(TableIdentifier(results.last.getSourceTable), TableIdentifier(results.last.getTargetTable))
+          SQLLineageManager.addRelation(TableIdentifier(results.last.getSourceTable), TableIdentifier(results.last.getTargetTable), relationses)
         }
         case createView: SqlCreateView => {
           this.parseSqlNode(createView.getViewName, Operation.CREATE_VIEW)
@@ -150,7 +153,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
         val tableIdentifier = toFireTableIdentifier(sqlIdentifier, isHive)
         this.addCatalog(tableIdentifier, operation)
         if (targetTable.isDefined) {
-          SQLLineageManager.addRelation(tableIdentifier, TableIdentifier(targetTable.get.toString))
+          SQLLineageManager.addRelation(tableIdentifier, TableIdentifier(targetTable.get.toString),null)
         }
       }
       case sqlNodeList: SqlNodeList => JavaConversions.asScalaBuffer(sqlNodeList.getList).foreach(this.parseSqlNode(_))

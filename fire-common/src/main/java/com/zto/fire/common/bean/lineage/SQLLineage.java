@@ -42,12 +42,11 @@ public class SQLLineage {
      * 描述表与表之前的数据血缘关系
      */
     private List<SQLTableRelations> relations;
-    private List<SQLTableColumnsRelations> colRelations;
+
     public SQLLineage() {
         this.statements = new LinkedList<>();
         this.tables = new LinkedList<>();
         this.relations = new LinkedList<>();
-        this.colRelations = new LinkedList<>();
     }
 
     public List<String> getStatements() {
@@ -72,14 +71,6 @@ public class SQLLineage {
 
     public List<SQLTableRelations> getRelations() {
         return relations;
-    }
-
-    public List<SQLTableColumnsRelations> getColRelations() {
-        return colRelations;
-    }
-
-    public void setColRelations(List<SQLTableColumnsRelations> colRelations) {
-        this.colRelations = colRelations;
     }
 
 }

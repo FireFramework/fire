@@ -17,7 +17,7 @@
 
 package com.zto.fire.examples.flink
 
-import com.zto.fire.core.anno.lifecycle.{Step1, Step2, Step3}
+import com.zto.fire.core.anno.lifecycle.{Step1, Step2, Step3, Step4, Step5, Step6}
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
 
@@ -81,4 +81,48 @@ object FlinkSQLDemo extends FlinkStreaming {
          |group by id, name, age, createTime, sex
          |""".stripMargin)
   }
+
+  @Step4("定义源表表结构")
+  def sourceTable1: Unit = {
+    sql(
+      s"""
+         | CREATE TABLE t_student1 (
+         |   id BIGINT,
+         |   name STRING,
+         |   age INT,
+         |   createTime TIMESTAMP(13),
+         |   sex Boolean
+         |) WITH (
+         |   'connector' = 'datagen',
+         |   'rows-per-second'='100', -- 5000/s
+         |   'fields.id.min'='1', -- id字段，1到1000之间
+         |   'fields.id.max'='1000',
+         |   'fields.name.length'='5', -- name字段，长度为5
+         |   'fields.age.min'='1', -- age字段，1到120岁
+         |   'fields.age.max'='120'
+         |)
+         |""".stripMargin)
+  }
+
+  @Step5("定义目标表结构")
+  def destTable1: Unit = {
+    sql(
+      s"""
+         |CREATE TABLE t_print_table1 WITH ('connector' = 'print')
+         |LIKE t_student (EXCLUDING ALL)
+         |""".stripMargin)
+  }
+
+  @Step6("执行insert语句")
+  def insertStatement1: Unit = {
+    sql(
+      s"""
+         |insert into t_print_table1
+         |select
+         | id, name, age, createTime, sex
+         |from t_student1
+         |group by id, name, age, createTime, sex
+         |""".stripMargin)
+  }
+
 }
