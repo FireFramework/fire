@@ -19,6 +19,7 @@
 
 package org.apache.calcite.rel.metadata;
 
+import lombok.Getter;
 import org.apache.calcite.plan.RelOptTable;
 
 /**
@@ -36,6 +37,11 @@ import org.apache.calcite.plan.RelOptTable;
 public class RelColumnOrigin {
     // ~ Instance fields --------------------------------------------------------
 
+    /**
+     * -- GETTER --
+     *  Returns table of origin.
+     */
+    @Getter
     private final RelOptTable originTable;
 
     private final int iOriginColumn;
@@ -71,13 +77,7 @@ public class RelColumnOrigin {
     }
 
     // ~ Methods ----------------------------------------------------------------
-
-    /**
-     * Returns table of origin.
-     */
-    public RelOptTable getOriginTable() {
-        return originTable;
-    }
+    // TODO: ------------ start：二次开发代码 --------------- //
 
     /**
      * Returns the 0-based index of column in origin table; whether this ordinal
@@ -105,6 +105,7 @@ public class RelColumnOrigin {
         return transform;
     }
 
+    // TODO: ------------ end：二次开发代码 --------------- //
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof RelColumnOrigin)) {

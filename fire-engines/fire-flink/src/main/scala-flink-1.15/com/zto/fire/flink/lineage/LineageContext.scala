@@ -28,14 +28,17 @@ import org.apache.flink.table.operations.{Operation, SinkModifyOperation}
 import org.apache.flink.table.planner.operations.PlannerQueryOperation
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider
 import org.apache.flink.table.planner.plan.schema.TableSourceTable
-
 import java.util
 import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
+import scala.collection.JavaConversions._
 
 
 class LineageContext(tableEnv: TableEnvironmentImpl) {
 
+  /**
+   * Sql 字段检验
+   */
   private def validateSchema(sinkTable: String, relNode: RelNode, sinkFieldList: util.List[String]): Unit = {
     val queryFieldList = relNode.getRowType.getFieldNames
     if (queryFieldList.size() != sinkFieldList.size()) {
@@ -48,6 +51,11 @@ class LineageContext(tableEnv: TableEnvironmentImpl) {
     }
   }
 
+  /**
+   * 获取血缘关系
+   * @param sinkTable
+   * @param optRelNode
+   */
   def buildFiledLineageResult(sinkTable: String, optRelNode: RelNode):ListBuffer[LineageResult] = {
     val targetColumnList = tableEnv.from(sinkTable)
       .getResolvedSchema
@@ -55,13 +63,9 @@ class LineageContext(tableEnv: TableEnvironmentImpl) {
     validateSchema(sinkTable, optRelNode, targetColumnList)
     val metadataQuery = optRelNode.getCluster.getMetadataQuery
     val resultList = ListBuffer[LineageResult]()
-
     for (index <- 0 until targetColumnList.size) {
       val targetColumn = targetColumnList.get(index)
-
       val relColumnOriginSet = metadataQuery.getColumnOrigins(optRelNode, index)
-      import scala.collection.JavaConversions._
-
       if (!relColumnOriginSet.nonEmpty) {
         for (rco: RelColumnOrigin <- relColumnOriginSet) {
           // table
@@ -83,12 +87,15 @@ class LineageContext(tableEnv: TableEnvironmentImpl) {
       }
     }
     resultList
-
-
   }
 
+  /**
+   * 获取血缘关系
+   * @param sql INSERT INTO
+   * 1、获取 RelNode
+   * 2、根据RelNode 构造血缘
+   */
   def analyzeLineage(sql: String) = {
-
     RelMetadataQueryBase.THREAD_PROVIDERS.set(JaninoRelMetadataProvider.of(FlinkDefaultRelMetadataProvider.INSTANCE))
     val parsed = parseStatement(sql)
     val sinkTable = parsed._1
@@ -96,6 +103,10 @@ class LineageContext(tableEnv: TableEnvironmentImpl) {
     buildFiledLineageResult(sinkTable, oriRelNode)
   }
 
+  /**
+   * 根据SqlNode和元数据信息构建关系表达式RelNode树
+   * @param singleSql INSERT INTO
+   */
   private def parseStatement(singleSql: String): Tuple2[String, RelNode] = {
     val operation = parseValidateConvert(singleSql)
     operation match {
@@ -106,10 +117,12 @@ class LineageContext(tableEnv: TableEnvironmentImpl) {
       case _ =>
         throw new TableException("Only insert is supported now.")
     }
-
-
   }
 
+  /**
+   * 获取Sql对应的 Operation 类型
+   * @param singleSql INSERT INTO
+   */
   private def parseValidateConvert(singleSql: String) = {
     RelMetadataQueryBase.THREAD_PROVIDERS.set(JaninoRelMetadataProvider.of(FlinkDefaultRelMetadataProvider.INSTANCE))
     val operations: util.List[Operation] = tableEnv.getParser.parse(singleSql)

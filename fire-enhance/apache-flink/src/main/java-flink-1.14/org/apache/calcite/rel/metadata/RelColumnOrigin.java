@@ -68,7 +68,7 @@ public class RelColumnOrigin {
         this.isDerived = isDerived;
         this.transform = transform;
     }
-
+    // TODO: ------------ start：二次开发代码 --------------- //
     // ~ Methods ----------------------------------------------------------------
 
     /**
@@ -87,6 +87,7 @@ public class RelColumnOrigin {
     public int getOriginColumnOrdinal() {
         return iOriginColumn;
     }
+    // TODO: ------------ end：二次开发代码 --------------- //
 
     /**
      * Consider the query <code>select a+b as c, d as e from t</code>. The

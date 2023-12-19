@@ -148,7 +148,7 @@ public class RelMdColumnOrigins implements MetadataHandler<BuiltInMetadata.Colum
         }
         return set;
     }
-
+    // TODO: ------------ start：二次开发代码 --------------- //
     /**
      * Support the field blood relationship of table function
      */
@@ -321,7 +321,7 @@ public class RelMdColumnOrigins implements MetadataHandler<BuiltInMetadata.Colum
         final Set<RelColumnOrigin> set = getMultipleColumns(rexNode, input, mq);
         return createDerivedColumnOrigins(set);
     }
-
+    // TODO: ------------ end：二次开发代码 --------------- //
     public Set<RelColumnOrigin> getColumnOrigins(Filter rel,
             RelMetadataQuery mq, int iOutputColumn) {
         return mq.getColumnOrigins(rel.getInput(), iOutputColumn);
