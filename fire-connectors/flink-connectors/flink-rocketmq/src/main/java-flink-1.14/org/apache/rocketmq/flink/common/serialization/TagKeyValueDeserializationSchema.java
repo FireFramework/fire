@@ -18,6 +18,7 @@
 package org.apache.rocketmq.flink.common.serialization;
 
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
+import org.apache.rocketmq.common.message.MessageExt;
 
 import java.io.Serializable;
 
@@ -27,5 +28,5 @@ import java.io.Serializable;
  */
 public interface TagKeyValueDeserializationSchema<T> extends ResultTypeQueryable<T>, Serializable {
 
-    T deserializeTagKeyAndValue(byte[] tag, byte[] key, byte[] value);
+    T deserializeTagKeyAndValue(MessageExt msg);
 }

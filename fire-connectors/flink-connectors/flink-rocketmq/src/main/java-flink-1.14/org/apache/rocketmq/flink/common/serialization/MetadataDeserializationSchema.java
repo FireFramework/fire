@@ -21,29 +21,22 @@ package org.apache.rocketmq.flink.common.serialization;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.rocketmq.common.message.MessageExt;
-import scala.Tuple3;
-
-import java.nio.charset.StandardCharsets;
 
 /**
- * 反序列化MessageExt，将tag、key、value以tuple3方式返回
+ * 反序列化MessageExt，将消息体中包含的key、tag、topic、timestamp等元数据信息返回
  *
  * @author ChengLong 2021-5-10 09:44:55
  */
-public class SimpleTagKeyValueDeserializationSchema implements TagKeyValueDeserializationSchema<Tuple3<String, String, String>> {
+public class MetadataDeserializationSchema implements TagKeyValueDeserializationSchema<MessageExt> {
 
     @Override
-    public Tuple3<String, String, String> deserializeTagKeyAndValue(MessageExt msg) {
-        String tag = msg.getTags();
-        String key = msg.getKeys();
-        byte[] value = msg.getBody();
-        String valueString = value != null ? new String(value, StandardCharsets.UTF_8) : null;
-
-        return new Tuple3<>(tag, key, valueString);
+    public MessageExt deserializeTagKeyAndValue(MessageExt msg) {
+        return msg;
     }
 
     @Override
-    public TypeInformation<Tuple3<String, String, String>> getProducedType() {
-        return TypeInformation.of(new TypeHint<Tuple3<String,String, String>>(){});
+    public TypeInformation<MessageExt> getProducedType() {
+        return TypeInformation.of(new TypeHint<MessageExt>(){});
     }
+
 }

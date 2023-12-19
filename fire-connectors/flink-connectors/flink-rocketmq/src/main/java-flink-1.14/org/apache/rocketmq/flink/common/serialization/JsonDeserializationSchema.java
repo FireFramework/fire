@@ -17,12 +17,15 @@
 
 package org.apache.rocketmq.flink.common.serialization;
 
+import com.alibaba.fastjson.JSONObject;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.data.RowData;
+import org.apache.rocketmq.common.message.MessageExt;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 将rocketmq消息反序列化成RowData
@@ -38,13 +41,22 @@ public class JsonDeserializationSchema implements TagKeyValueDeserializationSche
     }
 
     @Override
-    public RowData deserializeTagKeyAndValue(byte[] tag, byte[] key, byte[] value) {
-        /*String keyString = key != null ? new String(key, StandardCharsets.UTF_8) : null;
-        String valueString = value != null ? new String(value, StandardCharsets.UTF_8) : null;*/
+    public RowData deserializeTagKeyAndValue(MessageExt msg) {
+        byte[] value = msg.getBody();
+        String valueString = value != null ? new String(value, StandardCharsets.UTF_8) : null;
+
         if (value != null) {
             try {
+                JSONObject json = JSONObject.parseObject(valueString);
+                json.put("topic", msg.getTopic());
+                json.put("partition", msg.getQueueId());
+                json.put("offset", msg.getQueueOffset());
+                json.put("timestamp", msg.getBornTimestamp());
+                json.put("key", msg.getKeys());
+                json.put("tag", msg.getTags());
+                byte[] bytes = json.toJSONString().getBytes(StandardCharsets.UTF_8);
                 // 调用sql connector的format进行反序列化
-                return this.value.deserialize(value);
+                return this.value.deserialize(bytes);
             } catch (IOException e) {
                 e.printStackTrace();
             }

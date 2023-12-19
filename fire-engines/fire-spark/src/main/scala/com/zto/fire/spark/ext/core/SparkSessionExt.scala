@@ -138,6 +138,81 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
    * @return
    * rocketMQ DStream
    */
+  def createRocketMqPullStreamWithMeta(rocketParam: JMap[String, String] = null,
+                               groupId: String = this.appName,
+                               topics: String = null,
+                               tag: String = null,
+                               consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
+                               locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
+                               instance: String = "",
+                               keyNum: Int = KeyNum._1): InputDStream[MessageExt] = {
+    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum)
+  }
+
+  /**
+   * 构建RocketMQ拉取消息的DStream流，仅获取消息体中的key和value
+   *
+   * @param rocketParam
+   * rocketMQ相关消费参数
+   * @param groupId
+   * groupId
+   * @param topics
+   * topic列表
+   * @param consumerStrategy
+   * 从何处开始消费
+   * @return
+   * rocketMQ DStream
+   */
+  def createRocketMqPullStreamWithKey(rocketParam: JMap[String, String] = null,
+                                      groupId: String = this.appName,
+                                      topics: String = null,
+                                      tag: String = null,
+                                      consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
+                                      locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
+                                      instance: String = "",
+                                      keyNum: Int = KeyNum._1): DStream[(String, String)] = {
+    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum).map(t => (t.getTags, new String(t.getBody)))
+  }
+
+  /**
+   * 构建RocketMQ拉取消息的DStream流，获取消息中的tag、key以及value
+   *
+   * @param rocketParam
+   * rocketMQ相关消费参数
+   * @param groupId
+   * groupId
+   * @param topics
+   * topic列表
+   * @param consumerStrategy
+   * 从何处开始消费
+   * @return
+   * rocketMQ DStream
+   */
+  def createRocketMqPullStreamWithTag(rocketParam: JMap[String, String] = null,
+                               groupId: String = this.appName,
+                               topics: String = null,
+                               tag: String = null,
+                               consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
+                               locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
+                               instance: String = "",
+                               keyNum: Int = KeyNum._1): DStream[(String, String, String)] = {
+    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum).map(t => (t.getTags, t.getKeys, new String(t.getBody)))
+  }
+
+  /**
+   * 构建RocketMQ拉取消息的DStream流
+   *
+   * @param rocketParam
+   * rocketMQ相关消费参数
+   * @param groupId
+   * groupId
+   * @param topics
+   * topic列表
+   * @param consumerStrategy
+   * 从何处开始消费
+   * @return
+   * rocketMQ DStream
+   */
   def createRocketMqPullStream(rocketParam: JMap[String, String] = null,
                                groupId: String = this.appName,
                                topics: String = null,

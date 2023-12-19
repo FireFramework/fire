@@ -45,7 +45,8 @@ import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer, KafkaDes
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema
 import org.apache.flink.table.api.{StatementSet, Table, TableResult}
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.rocketmq.flink.common.serialization.SimpleTagKeyValueDeserializationSchema
+import org.apache.rocketmq.common.message.MessageExt
+import org.apache.rocketmq.flink.common.serialization.{MetadataDeserializationSchema, SimpleTagKeyValueDeserializationSchema}
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSourceWithTag}
 
 import java.util.Properties
@@ -255,6 +256,37 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                                       topics: String = null,
                                       tag: String = null,
                                       keyNum: Int = KeyNum._1): DataStream[(String, String, String)] = {
+    val props = buildRocketMQProps(rocketParam, groupId, topics, tag, keyNum)
+
+    this.env.addSource(new RocketMQSourceWithTag[(String, String, String)](new SimpleTagKeyValueDeserializationSchema, props)).name("RocketMQ Source")
+  }
+
+  /**
+   * 构建RocketMQ拉取消息的DStream流，获取消息中的tag、key以及value等相关元数据信息
+   *
+   * @param rocketParam
+   * rocketMQ相关消费参数
+   * @param groupId
+   * groupId
+   * @param topics
+   * topic列表
+   * @return
+   * rocketMQ DStream
+   */
+  def createRocketMqPullStreamWithMeta(rocketParam: Map[String, String] = null,
+                                      groupId: String = null,
+                                      topics: String = null,
+                                      tag: String = null,
+                                      keyNum: Int = KeyNum._1): DataStream[MessageExt] = {
+    val props = buildRocketMQProps(rocketParam, groupId, topics, tag, keyNum)
+
+    this.env.addSource(new RocketMQSourceWithTag[MessageExt](new MetadataDeserializationSchema, props)).name("RocketMQ Source Meta")
+  }
+
+  /**
+   * 根据参数构建消费所需的参数
+   */
+  private[this] def buildRocketMQProps(rocketParam: Map[JString, JString], groupId: JString, topics: JString, tag: JString, keyNum: Int) = {
     // 获取topic信息，配置文件优先级高于代码中指定的
     val confTopics = FireRocketMQConf.rocketTopics(keyNum)
     val finalTopics = if (StringUtils.isNotBlank(confTopics)) confTopics else topics
@@ -275,8 +307,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
 
     val props = new Properties()
     props.putAll(finalRocketParam)
-
-    this.env.addSource(new RocketMQSourceWithTag[(String, String, String)](new SimpleTagKeyValueDeserializationSchema, props)).name("RocketMQ Source")
+    props
   }
 
   /**
