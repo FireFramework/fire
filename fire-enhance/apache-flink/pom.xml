@@ -162,6 +162,12 @@
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-exec</artifactId>
       <version>${hive.apache.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.calcite</groupId>
+          <artifactId>calcite-core</artifactId>
+        </exclusion>
+      </exclusions>
       <scope>${maven.scope}</scope>
     </dependency>
 
@@ -218,12 +224,12 @@
       <version>${curator.verrsion}</version>
     </dependency>
 
-    <dependency>
+<!--    <dependency>
       <groupId>org.apache.calcite</groupId>
       <artifactId>calcite-core</artifactId>
       <version>${calcite.version}</version>
       <scope>${maven.scope}</scope>
-    </dependency>
+    </dependency>-->
   </dependencies>
 
   <build>

@@ -21,9 +21,9 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.conf.FireFrameworkConf._
 import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
-import com.zto.fire.common.lineage.parser.connector._
 import com.zto.fire.common.util.{Logging, SQLUtils, ThreadUtils}
 import com.zto.fire.predef._
+
 
 import java.util.concurrent.{CopyOnWriteArraySet, TimeUnit}
 
@@ -46,7 +46,8 @@ private[fire] trait SqlParser extends Logging {
   protected def sqlParse: Unit = {
     if (lineageEnable) {
       ThreadUtils.scheduleWithFixedDelay({
-        this.buffer.foreach(sql => this.sqlParser(sql))
+        this.buffer.foreach(
+          sql => this.sqlParser(sql))
         this.clear
       }, lineageRunInitialDelay, lineageRunPeriod, TimeUnit.SECONDS)
     }
