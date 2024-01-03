@@ -75,12 +75,6 @@ class LineageContext(tableEnv: TableEnvironmentImpl) {
           val ordinal = rco.getOriginColumnOrdinal
           val fieldNames = table.asInstanceOf[TableSourceTable].contextResolvedTable.getResolvedSchema.getColumnNames
           val sourceColumn = fieldNames.get(ordinal)
-          println("----------------------------------------------------------")
-          println("Source table: {}", sourceTable)
-          println("Source column: {}", sourceColumn)
-          if (StringUtils.isNotEmpty(rco.getTransform)) {
-            println("transform: {}", rco.getTransform)
-          }
           // add record
           resultList += new LineageResult(sourceTable, sourceColumn, sinkTable, targetColumn, rco.getTransform)
         }

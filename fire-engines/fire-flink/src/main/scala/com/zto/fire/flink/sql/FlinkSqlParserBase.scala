@@ -76,12 +76,14 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
         case select: SqlSelect =>
           this.parseSqlNode(select)
         case insert: RichSqlInsert => {
-          val results = context.analyzeLineage(sql)
-          val relationses = new JHashSet[SQLTableColumnsRelations]()
-          for (x <- results) {
-            relationses.add(new SQLTableColumnsRelations(x.getSourceColumn, x.getTargetColumn))
-          }
-          SQLLineageManager.addRelation(TableIdentifier(results.last.getSourceTable), TableIdentifier(results.last.getTargetTable), relationses)
+          tryWithLog {
+            val results = context.analyzeLineage(sql)
+            val relationses = new JHashSet[SQLTableColumnsRelations]()
+            for (x <- results) {
+              relationses.add(new SQLTableColumnsRelations(x.getSourceColumn, x.getTargetColumn))
+            }
+            SQLLineageManager.addRelation(TableIdentifier(results.last.getSourceTable), TableIdentifier(results.last.getTargetTable), relationses)
+          } (this.logger, "血缘解析：RichSqlInsert解析失败")
         }
         case createView: SqlCreateView => {
           this.parseSqlNode(createView.getViewName, Operation.CREATE_VIEW)

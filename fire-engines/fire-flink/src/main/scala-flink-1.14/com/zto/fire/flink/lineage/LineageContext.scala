@@ -79,12 +79,6 @@ class LineageContext(tableEnv: TableEnvironmentImpl) {
           val ordinal = rco.getOriginColumnOrdinal
           val fieldNames = table.asInstanceOf[TableSourceTable].catalogTable.getResolvedSchema.getColumnNames
           val sourceColumn = fieldNames.get(ordinal)
-          println("----------------------------------------------------------")
-          println("Source table: {}", sourceTable)
-          println("Source column: {}", sourceColumn)
-          if (StringUtils.isNotEmpty(rco.getTransform)) {
-            println("transform: {}", rco.getTransform)
-          }
           // add record
           resultList += new LineageResult(sourceTable, sourceColumn, sinkTable, targetColumn, rco.getTransform)
         }
@@ -95,11 +89,12 @@ class LineageContext(tableEnv: TableEnvironmentImpl) {
 
   /**
    * 获取血缘关系
+   *
    * @param sql INSERT INTO
-   * 1、获取 RelNode
-   * 2、根据RelNode 构造血缘
+   *            1、获取 RelNode
+   *            2、根据RelNode 构造血缘
    */
-  def analyzeLineage(sql: String) = {
+  def analyzeLineage(sql: String): ListBuffer[LineageResult] = {
     RelMetadataQueryBase.THREAD_PROVIDERS.set(JaninoRelMetadataProvider.of(FlinkDefaultRelMetadataProvider.INSTANCE))
     val parsed = parseStatement(sql)
     val sinkTable = parsed._1
@@ -125,9 +120,10 @@ class LineageContext(tableEnv: TableEnvironmentImpl) {
 
   /**
    * 获取Sql对应的 Operation 类型
+   *
    * @param singleSql INSERT INTO
    */
-  private def parseValidateConvert(singleSql: String) = {
+  private def parseValidateConvert(singleSql: String): Operation = {
     RelMetadataQueryBase.THREAD_PROVIDERS.set(JaninoRelMetadataProvider.of(FlinkDefaultRelMetadataProvider.INSTANCE))
     val operations: util.List[Operation] = tableEnv.getParser.parse(singleSql)
     if (operations.size() != 1) {

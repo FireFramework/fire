@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.lineage
 
+import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.lineage.{Lineage, SQLTable}
 import com.zto.fire.common.conf.FireFrameworkConf._
 import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
@@ -29,6 +30,7 @@ import org.apache.commons.lang3.StringUtils
 
 import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
+import scala.collection.JavaConversions
 
 /**
  * 用于统计当前任务使用到的数据源信息，包括MQ、DB、hive等连接信息等
@@ -229,13 +231,56 @@ object LineageManager extends Logging {
   /**
    * 添加数据源信息
    *
-   * @param sourceType
-   * 数据源类型
    * @param datasourceDesc
    * 数据源描述
+   * @param operations
+   * 操作类型
    */
-  def addLineage(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = {
-    this.addDatasource(sourceType, datasourceDesc)
+  def addLineage(datasourceDesc: DatasourceDesc, operations: Operation*): Unit = {
+    if (isEmpty(datasourceDesc)) return
+
+    this.addDatasource(this.getDatasourceType(datasourceDesc), this.mergeOperations(datasourceDesc, operations: _*))
+  }
+
+
+  /**
+   * 为指定数据源添加Operation类型
+   * @param datasource
+   * 数据源
+   * @param targetOperations
+   * 操作类型集合
+   */
+  @Internal
+  private[this] def mergeOperations(datasource: DatasourceDesc, targetOperations: Operation*): DatasourceDesc = {
+    if (isEmpty(datasource, targetOperations)) return datasource
+
+    // 将target中的operation几盒添加到source数据源中
+    val clazz = datasource.getClass
+    val operationMethod = ReflectionUtils.getMethodByName(clazz, "operation")
+    if (operationMethod != null) {
+      val operation = operationMethod.invoke(datasource)
+      val sourceOptions = if (operation != null) operation.asInstanceOf[JHashSet[Operation]] else new JHashSet[Operation]()
+      if (operation != null) {
+        val methodEq = ReflectionUtils.getMethodByName(clazz, "operation_$eq")
+        if (methodEq != null) {
+          sourceOptions.addAll(JavaConversions.setAsJavaSet(targetOperations.toSet))
+          methodEq.invoke(datasource, sourceOptions)
+        }
+      }
+    }
+    datasource
+  }
+
+  /**
+   * 获取Datasouce具体的数据源类型
+   */
+  @Internal
+  private[this] def getDatasourceType(datasource: DatasourceDesc): Datasource = {
+    if (isEmpty(datasource)) return Datasource.UNKNOWN
+    val datasourceField = ReflectionUtils.getFieldByName(datasource.getClass, "datasource")
+    if (isEmpty(datasourceField)) return Datasource.UNKNOWN
+
+    Datasource.parse(datasourceField.get(datasource).toString)
   }
 
   /**

@@ -38,16 +38,16 @@ public class SQLTableRelations {
      */
     private String sinkTable;
 
-    private HashSet<SQLTableColumnsRelations> sqlTableColumnsRelations;
+    private HashSet<SQLTableColumnsRelations> columnsRelations;
 
     public SQLTableRelations() {
     }
 
 
-    public SQLTableRelations(String srcTable, String sinkTable, HashSet<SQLTableColumnsRelations> sqlTableColumnsRelations) {
+    public SQLTableRelations(String srcTable, String sinkTable, HashSet<SQLTableColumnsRelations> columnsRelations) {
         this.srcTable = srcTable;
         this.sinkTable = sinkTable;
-        this.sqlTableColumnsRelations = sqlTableColumnsRelations;
+        this.columnsRelations = columnsRelations;
     }
 
     public void setSrcTable(String srcTable) {
@@ -67,11 +67,11 @@ public class SQLTableRelations {
     }
 
     public HashSet<SQLTableColumnsRelations> getSqlTableColumnsRelations() {
-        return sqlTableColumnsRelations;
+        return columnsRelations;
     }
 
-    public void setSqlTableColumnsRelations(HashSet<SQLTableColumnsRelations> sqlTableColumnsRelations) {
-        this.sqlTableColumnsRelations = sqlTableColumnsRelations;
+    public void setSqlTableColumnsRelations(HashSet<SQLTableColumnsRelations> columnsRelations) {
+        this.columnsRelations = columnsRelations;
     }
 
     @Override
@@ -79,11 +79,11 @@ public class SQLTableRelations {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SQLTableRelations that = (SQLTableRelations) o;
-        return Objects.equals(srcTable, that.srcTable) && Objects.equals(sinkTable, that.sinkTable) && Objects.equals(sqlTableColumnsRelations, that.sqlTableColumnsRelations);
+        return Objects.equals(srcTable, that.srcTable) && Objects.equals(sinkTable, that.sinkTable) && Objects.equals(columnsRelations, that.columnsRelations);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(srcTable, sinkTable, sqlTableColumnsRelations);
+        return Objects.hash(srcTable, sinkTable, columnsRelations);
     }
 }

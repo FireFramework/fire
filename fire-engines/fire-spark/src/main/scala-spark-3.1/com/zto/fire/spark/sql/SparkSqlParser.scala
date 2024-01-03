@@ -79,7 +79,7 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
       case renameTable: RenameTableStatement => {
         this.addCatalog(renameTable.oldName, Operation.RENAME_TABLE_OLD)
         this.addCatalog(renameTable.newName, Operation.RENAME_TABLE_NEW)
-        SQLLineageManager.addRelation(toTableIdentifier(renameTable.oldName), toTableIdentifier(renameTable.newName))
+        SQLLineageManager.addRelation(toTableIdentifier(renameTable.oldName), toTableIdentifier(renameTable.newName), null)
       }
       // create table as select语句解析
       case createTableAsSelect: CreateTableAsSelectStatement => {

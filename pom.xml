@@ -724,20 +724,6 @@
             <version>${oshi.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjrt</artifactId>
-            <version>${aspectj.version}</version>
-            <scope>${maven.scope}</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjweaver</artifactId>
-            <version>${aspectj.version}</version>
-            <scope>${maven.scope}</scope>
-        </dependency>
     </dependencies>
 
     <repositories>
@@ -950,35 +936,6 @@
                         <include>**/*.scala</include>
                     </includes>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>aspectj-maven-plugin</artifactId>
-                <version>1.14.0</version>
-                <configuration>
-                    <complianceLevel>1.8</complianceLevel>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <showWeaveInfo>true</showWeaveInfo>
-                    <Xlint>ignore</Xlint>
-                    <encoding>UTF-8</encoding>
-                    <skip>true</skip>
-                    <forceAjcCompile>true</forceAjcCompile>
-                    <weaveDirectories>
-                        <weaveDirectory>${project.build.outputDirectory}</weaveDirectory>
-                    </weaveDirectories>
-                </configuration>
-                <executions>
-                    <execution>
-                        <configuration>
-                            <skip>false</skip>
-                        </configuration>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>

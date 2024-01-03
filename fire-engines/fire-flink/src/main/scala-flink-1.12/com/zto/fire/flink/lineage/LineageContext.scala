@@ -82,12 +82,6 @@ class LineageContext(tableEnv: TableEnvironmentImpl) extends Logging {
           val ordinal = rco.getOriginColumnOrdinal
           val fieldNames = table.asInstanceOf[TableSourceTable].catalogTable.getSchema.getFieldNames
           val sourceColumn = fieldNames(ordinal)
-          this.logger.info("----------------------------------------------------------")
-          this.logger.info("Source table: {}", sourceTable)
-          this.logger.info("Source column: {}", sourceColumn)
-          if (StringUtils.isNotEmpty(rco.getTransform)) {
-            this.logger.info("transform: {}", rco.getTransform)
-          }
           // add record
           resultList += new LineageResult(sourceTable, sourceColumn, sinkTable, targetColumn, rco.getTransform)
         }

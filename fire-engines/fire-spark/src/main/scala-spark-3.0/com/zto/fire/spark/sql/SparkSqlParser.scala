@@ -55,7 +55,7 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
               this.addCatalog(unresolvedRelation.multipartIdentifier, Operation.SELECT)
               sourceTable = Some(toTableIdentifier(unresolvedRelation.multipartIdentifier))
               // 如果是insert xxx select或create xxx select语句，则维护表与表之间的关系
-              if (sinkTable.isDefined) SQLLineageManager.addRelation(toTableIdentifier(unresolvedRelation.multipartIdentifier), sinkTable.get)
+              if (sinkTable.isDefined) SQLLineageManager.addRelation(toTableIdentifier(unresolvedRelation.multipartIdentifier), sinkTable.get, null)
             case _ => this.logger.debug(s"Parse query SQL异常，无法匹配该Statement. ")
           }
         })
@@ -89,7 +89,7 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
       case renameTable: RenameTableStatement => {
         this.addCatalog(renameTable.oldName, Operation.RENAME_TABLE_OLD)
         this.addCatalog(renameTable.newName, Operation.RENAME_TABLE_NEW)
-        SQLLineageManager.addRelation(toTableIdentifier(renameTable.oldName), toTableIdentifier(renameTable.newName))
+        SQLLineageManager.addRelation(toTableIdentifier(renameTable.oldName), toTableIdentifier(renameTable.newName), null)
       }
       // create table as select语句解析
       case createTableAsSelect: CreateTableAsSelectStatement => {
