@@ -98,7 +98,7 @@ object MQDatasource extends SqlToDatasource {
     var groupId = ""
 
     // 判断数据源类型
-    val datasource = if (isMatch("kafka", table)) {
+    val datasource = if (isMatch("kafka", table) || table.getConnector.contains("kafka")) {
       if (noEmpty(table.getOptions)) {
         groupId = table.getOptions.getOrDefault("properties.group.id", "")
       }

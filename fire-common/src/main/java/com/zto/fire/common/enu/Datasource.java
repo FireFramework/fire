@@ -32,7 +32,7 @@ import java.util.Map;
  */
 public enum Datasource {
     // TODO: 添加新的数据源时务必在static代码块中添加与DatasourceDesc子类的映射关系
-    HIVE("hive"), HBASE("hbase"), KAFKA("kafka"),
+    HIVE("hive"), HBASE("hbase"), KAFKA("kafka"), UPSERT_KAFKA("upsert-kafka"),
     ROCKETMQ("rocketmq"), REDIS("redis"), KINESIS("kinesis"),
     MYSQL("mysql"), TIDB("tidb"), ORACLE("oracle"),
     SQLSERVER("sqlserver"), DB2("db2"), CLICKHOUSE("clickhouse"),
@@ -80,6 +80,7 @@ public enum Datasource {
 
         // 消息队列类别
         datasourceMap.put(KAFKA, MQDatasource.class);
+        datasourceMap.put(UPSERT_KAFKA, MQDatasource.class);
         datasourceMap.put(ROCKETMQ, MQDatasource.class);
         datasourceMap.put(FIRE_ROCKETMQ, MQDatasource.class);
 
