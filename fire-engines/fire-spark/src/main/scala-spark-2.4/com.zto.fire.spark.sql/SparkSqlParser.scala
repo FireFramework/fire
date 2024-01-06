@@ -52,7 +52,7 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
           this.addCatalog(tableIdentifier, Operation.SELECT)
           sourceTable = Some(tableIdentifier)
           // 如果是insert xxx select或create xxx select语句，则维护表与表之间的关系
-          if (sinkTable.isDefined) SQLLineageManager.addRelation(tableIdentifier, sinkTable.get)
+          if (sinkTable.isDefined) SQLLineageManager.addRelation(tableIdentifier, sinkTable.get, null)
         case _ => this.logger.debug(s"Parse query SQL异常，无法匹配该Statement. ")
       }
     })
@@ -84,7 +84,7 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         val newTableIdentifier = toFireTableIdentifier(renameTableEvent.newName)
         this.addCatalog(tableIdentifier, Operation.RENAME_TABLE_OLD)
         this.addCatalog(newTableIdentifier, Operation.RENAME_TABLE_NEW)
-        SQLLineageManager.addRelation(tableIdentifier, newTableIdentifier)
+        SQLLineageManager.addRelation(tableIdentifier, newTableIdentifier, null)
       // create table语句解析
       case createTable: CreateTable => {
         val identifier = this.toFireTableIdentifier(createTable.tableDesc.identifier)

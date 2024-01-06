@@ -48,19 +48,9 @@ private[fire] object SQLLineageManager {
    * @param sinkTable
    * 目标表
    */
-  def addRelation(srcTableIdentifier: TableIdentifier, sinkTableIdentifier: TableIdentifier, relationSet: JHashSet[SQLTableColumnsRelations]): Unit = {
+  def addRelation(srcTableIdentifier: TableIdentifier, sinkTableIdentifier: TableIdentifier, relationSet: JHashSet[SQLTableColumnsRelations] = null): Unit = {
     this.relationSet.add(new SQLTableRelations(srcTableIdentifier.toString, sinkTableIdentifier.toString, relationSet))
   }
-
-  /**
-   * 维护表与表字段之间的关系
-   *
-   * @param sourceColumn
-   * 数据来源表
-   * @param targetColumn
-   * 目标表
-   */
-
 
   /**
    * 获取SQL血缘信息
