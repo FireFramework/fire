@@ -40,7 +40,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hudi</groupId>
-            <artifactId>hudi-spark-bundle_${scala.binary.version}</artifactId>
+            <artifactId>hudi-spark${hudi.bundle.version}-bundle_${scala.binary.version}</artifactId>
             <version>${hudi.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>

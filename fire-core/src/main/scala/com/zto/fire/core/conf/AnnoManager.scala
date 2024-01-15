@@ -300,6 +300,8 @@ private[fire] trait AnnoManager extends Logging {
     this.hudiParallelism(hudi.parallelism(), KeyNum._1)
     // 布隆索引相关设置
     this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._1)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._1)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._1)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._1)
@@ -322,6 +324,8 @@ private[fire] trait AnnoManager extends Logging {
     this.hudiParallelism(hudi.parallelism(), KeyNum._2)
     // 布隆索引相关设置
     this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._2)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._2)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._2)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._2)
@@ -344,6 +348,8 @@ private[fire] trait AnnoManager extends Logging {
     this.hudiParallelism(hudi.parallelism(), KeyNum._3)
     // 布隆索引相关设置
     this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._3)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._3)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._3)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._3)
@@ -366,6 +372,8 @@ private[fire] trait AnnoManager extends Logging {
     this.hudiParallelism(hudi.parallelism(), KeyNum._4)
     // 布隆索引相关设置
     this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._4)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._4)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._4)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._4)
@@ -388,6 +396,8 @@ private[fire] trait AnnoManager extends Logging {
     this.hudiParallelism(hudi.parallelism(), KeyNum._5)
     // 布隆索引相关设置
     this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._5)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._5)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._5)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._5)
@@ -410,6 +420,8 @@ private[fire] trait AnnoManager extends Logging {
     this.hudiParallelism(hudi.parallelism(), KeyNum._6)
     // 布隆索引相关设置
     this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._6)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._6)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._6)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._6)
@@ -432,6 +444,8 @@ private[fire] trait AnnoManager extends Logging {
     this.hudiParallelism(hudi.parallelism(), KeyNum._7)
     // 布隆索引相关设置
     this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._7)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._7)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._7)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._7)
@@ -454,6 +468,8 @@ private[fire] trait AnnoManager extends Logging {
     this.hudiParallelism(hudi.parallelism(), KeyNum._8)
     // 布隆索引相关设置
     this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._8)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._8)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._8)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._8)
@@ -476,6 +492,8 @@ private[fire] trait AnnoManager extends Logging {
     this.hudiParallelism(hudi.parallelism(), KeyNum._9)
     // 布隆索引相关设置
     this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._9)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._9)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._9)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._9)
@@ -498,6 +516,8 @@ private[fire] trait AnnoManager extends Logging {
     this.hudiParallelism(hudi.parallelism(), KeyNum._10)
     // 布隆索引相关设置
     this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._10)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._10)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._10)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._10)
@@ -520,6 +540,8 @@ private[fire] trait AnnoManager extends Logging {
     this.hudiParallelism(hudi.parallelism(), KeyNum._11)
     // 布隆索引相关设置
     this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._11)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._11)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._11)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._11)
@@ -564,6 +586,17 @@ private[fire] trait AnnoManager extends Logging {
       this.toHudiConf(("hoodie.bloom.index.keys.per.bucket", bloomkeysPerBucket.toString), keyNum)
     }
     this.toHudiConf(("hoodie.bloom.index.bucketized.checking", useBloomIndexBucketized.toString), keyNum)
+  }
+
+  /**
+   * 是否开启记录级索引
+   */
+  @Internal
+  private[this] def hudiRecordIndexConf(useRecordIndex: Boolean, keyNum: Int): Unit = {
+    if (useRecordIndex) {
+      this.toHudiConf(("hoodie.metadata.record.index.enable", useRecordIndex.toString), keyNum)
+      this.toHudiConf(("hoodie.index.type", "RECORD_INDEX"), keyNum)
+    }
   }
 
   /**

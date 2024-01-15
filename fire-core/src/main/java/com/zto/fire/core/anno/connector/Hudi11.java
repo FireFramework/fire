@@ -116,4 +116,11 @@ public @interface Hudi11 {
      * clean保留的版本数
      */
     int cleanerCommitsRetained() default -1;
+
+    /**
+     * 是否开启记录级索引（> hudi 0.14.0）
+     * hoodie.metadata.record.index.enable=true 和 hoodie.index.type=RECORD_INDEX
+     */
+    boolean useRecordIndex() default false;
+
 }

@@ -73,7 +73,7 @@
         <hive.flink.version>1.2.1</hive.flink.version>
         <hive.version>1.1.0</hive.version>
         <hive.group>org.apache.hive</hive.group>
-        <commonsio.version>2.4</commonsio.version>
+        <commonsio.version>2.11.0</commonsio.version>
         <commons-lang3.version>3.5</commons-lang3.version>
         <log4j.version>1.2.17</log4j.version>
         <kryo.version>4.0.0</kryo.version>
@@ -649,6 +649,13 @@
             <properties>
                 <hudi.version>0.13.0</hudi.version>
                 <hudi.major.version>0.13</hudi.major.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>hudi-1.0.0</id>
+            <properties>
+                <hudi.version>1.0.0-beta1</hudi.version>
+                <hudi.major.version>1.0</hudi.major.version>
             </properties>
         </profile>
     </profiles>
