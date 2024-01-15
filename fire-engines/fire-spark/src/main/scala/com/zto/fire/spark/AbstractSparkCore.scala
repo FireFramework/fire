@@ -17,7 +17,6 @@
 
 package com.zto.fire.spark
 
-import com.zto.fire.predef._
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.PropUtils
@@ -45,7 +44,6 @@ class AbstractSparkCore extends BaseSpark {
     } finally {
       // 退出前触发一次血缘采集分析，避免spark core短时任务执行来不及采集血缘
       AccumulatorManager.collectDistributeLineage(false)
-
     }
   }
 
