@@ -133,6 +133,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_LINEAGE_SEND_MQ_TOPIC = "fire.lineage.send.mq.topic"
   lazy val FIRE_LINEAGE_ACTIVE_STAGE_THRESHOLD = "fire.lineage.active.stage.threshold"
   lazy val FIRE_LINEAGE_DISTRIBUTE_COLLECT_PERIOD = "fire.lineage.distribute.collect.period"
+  lazy val FIRE_LINEAGE_SHUTDOWN_SLEEP = "fire.lineage.shutdown.sleep"
   lazy val FIRE_CONF_ADAPTIVE_PREFIX = "fire.conf.adaptive.prefix"
   lazy val FIRE_ANALYSIS_ARTHAS_ENABLE = "fire.analysis.arthas.enable"
   lazy val FIRE_ANALYSIS_ARTHAS_CONTAINER_ENABLE = "fire.analysis.arthas.container.enable"
@@ -181,6 +182,8 @@ private[fire] object FireFrameworkConf {
     FireKafkaConf.kafkaBrokers(url)
   }
   lazy val lineageTopic = PropUtils.getString(this.FIRE_LINEAGE_SEND_MQ_TOPIC)
+  // 当任务退出前睡眠多久以保障血缘的解析（s）
+  lazy val lineageShutdownSleep = PropUtils.getInt(this.FIRE_LINEAGE_SHUTDOWN_SLEEP, 5)
   // 血缘分布式采集频率
   lazy val lineageDistributeCollectPeriod = PropUtils.getInt(this.FIRE_LINEAGE_DISTRIBUTE_COLLECT_PERIOD, 120)
   // 血缘采集stage触发的阈值，当活跃的stage少于该阈值时会被触发

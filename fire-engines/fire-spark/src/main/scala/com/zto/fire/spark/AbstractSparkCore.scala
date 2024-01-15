@@ -43,7 +43,10 @@ class AbstractSparkCore extends BaseSpark {
       case e: Exception => throw e
     } finally {
       // 退出前触发一次血缘采集分析，避免spark core短时任务执行来不及采集血缘
-      AccumulatorManager.collectDistributeLineage(false)
+      if (FireFrameworkConf.accEnable && FireFrameworkConf.lineageEnable) {
+        Thread.sleep(FireFrameworkConf.lineageShutdownSleep * 1000)
+        AccumulatorManager.collectDistributeLineage(false)
+      }
     }
   }
 
