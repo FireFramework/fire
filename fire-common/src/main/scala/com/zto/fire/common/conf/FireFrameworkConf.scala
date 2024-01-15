@@ -131,6 +131,8 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_LINEAGE_SEND_MQ_ENABLE = "fire.lineage.send.mq.enable"
   lazy val FIRE_LINEAGE_SEND_MQ_URL = "fire.lineage.send.mq.url"
   lazy val FIRE_LINEAGE_SEND_MQ_TOPIC = "fire.lineage.send.mq.topic"
+  lazy val FIRE_LINEAGE_ACTIVE_STAGE_THRESHOLD = "fire.lineage.active.stage.threshold"
+  lazy val FIRE_LINEAGE_DISTRIBUTE_COLLECT_PERIOD = "fire.lineage.distribute.collect.period"
   lazy val FIRE_CONF_ADAPTIVE_PREFIX = "fire.conf.adaptive.prefix"
   lazy val FIRE_ANALYSIS_ARTHAS_ENABLE = "fire.analysis.arthas.enable"
   lazy val FIRE_ANALYSIS_ARTHAS_CONTAINER_ENABLE = "fire.analysis.arthas.container.enable"
@@ -159,13 +161,13 @@ private[fire] object FireFrameworkConf {
   // 不同引擎配置获取具体的实现
   lazy val confDeployEngine = PropUtils.getString(this.FIRE_CONF_DEPLOY_ENGINE, "")
   // 定时解析埋点SQL的执行频率（s）
-  def lineageRunPeriod: Int = PropUtils.getInt(this.FIRE_LINEAGE_RUN_PERIOD, 120)
+  def lineageRunPeriod: Int = PropUtils.getInt(this.FIRE_LINEAGE_RUN_PERIOD, 5)
   // 定时解析埋点SQL的初始延迟（s）
-  def lineageRunInitialDelay: Int = PropUtils.getInt(this.FIRE_LINEAGE_RUN_INITIAL_DELAY, 60)
+  def lineageRunInitialDelay: Int = PropUtils.getInt(this.FIRE_LINEAGE_RUN_INITIAL_DELAY, 5)
   // 用于存放埋点的队列最大大小，超过该大小将会被丢弃
   def lineageMaxSize: Int = PropUtils.getInt(this.FIRE_LINEAGE_MAX_SIZE, 500)
   // 异步解析血缘线程执行的次数
-  def lineageRunCount: Int = PropUtils.getInt(this.FIRE_LINEAGE_RUN_COUNT, 360)
+  def lineageRunCount: Int = PropUtils.getInt(this.FIRE_LINEAGE_RUN_COUNT, 36000)
   // 是否开启实时血缘埋点
   def lineageEnable: Boolean = PropUtils.getBoolean(this.FIRE_LINEAGE_ENABLE, true)
   // 是否开启实时血缘debug模式
@@ -179,6 +181,10 @@ private[fire] object FireFrameworkConf {
     FireKafkaConf.kafkaBrokers(url)
   }
   lazy val lineageTopic = PropUtils.getString(this.FIRE_LINEAGE_SEND_MQ_TOPIC)
+  // 血缘分布式采集频率
+  lazy val lineageDistributeCollectPeriod = PropUtils.getInt(this.FIRE_LINEAGE_DISTRIBUTE_COLLECT_PERIOD, 120)
+  // 血缘采集stage触发的阈值，当活跃的stage少于该阈值时会被触发
+  lazy val lineageActiveStageThreshold = PropUtils.getInt(this.FIRE_LINEAGE_ACTIVE_STAGE_THRESHOLD, 2)
   // 每个jvm实例内部queue用于存放异常对象数最大大小，避免队列过大造成内存溢出
   lazy val exceptionBusSize = PropUtils.getInt(this.FIRE_EXCEPTION_BUS_SIZE, 1000)
   // 是否将配置同步到executor、taskmanager端

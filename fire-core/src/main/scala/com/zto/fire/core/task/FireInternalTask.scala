@@ -75,7 +75,7 @@ private[fire] abstract class FireInternalTask(baseFire: BaseFire) extends Serial
    */
   def registerLineageHook(block: => Unit): Unit = {
     if (this.registerLineageHook.compareAndSet(false, true)) {
-      ShutdownHookManager.addShutdownHook(ShutdownHookManager.HEIGHT_PRIORITY)(() => block)
+      ShutdownHookManager.addShutdownHook(ShutdownHookManager.DEFAULT_PRIORITY)(() => block)
     }
   }
 }

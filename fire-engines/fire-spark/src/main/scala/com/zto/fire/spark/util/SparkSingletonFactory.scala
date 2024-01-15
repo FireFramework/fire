@@ -27,6 +27,8 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.StreamingContext
 
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
+
 /**
  * 单例工厂，用于创建单例的对象
  * Created by ChengLong on 2018-04-25.
@@ -36,6 +38,8 @@ object SparkSingletonFactory extends SingletonFactory {
   private[this] var streamingContext: StreamingContext = _
   @transient private[this] var hbaseContext: HBaseBulkConnector = _
   private[fire] var isStart: Boolean = false
+  // 用于统计Active的executor数
+  private[fire] var executorActiveCount = new AtomicInteger(0)
 
   /**
    * 获取Spark引擎状态
@@ -106,4 +110,10 @@ object SparkSingletonFactory extends SingletonFactory {
     this.hbaseContext
   }
 
+  /**
+   * 获取当前活跃的stage id列表
+   */
+  def getActiveStageIds: Array[Int] = {
+    this.sparkSession.sparkContext.statusTracker.getActiveStageIds()
+  }
 }

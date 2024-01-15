@@ -358,7 +358,9 @@ object SparkUtils extends Logging {
   /**
    * 获取applicationId
    */
-  def getApplicationId: String = spark.sparkContext.applicationId
+  def getApplicationId: String = if (spark != null) {
+    spark.sparkContext.applicationId
+  } else ""
 
   /**
    * 获取spark版本号

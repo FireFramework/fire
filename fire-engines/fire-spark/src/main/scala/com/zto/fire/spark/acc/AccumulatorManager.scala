@@ -20,13 +20,13 @@ package com.zto.fire.spark.acc
 import com.zto.fire.predef._
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.conf.FireFrameworkConf.{lineageRunCount, lineageRunInitialDelay, lineageRunPeriod}
+import com.zto.fire.common.conf.FireFrameworkConf.{lineageDistributeCollectPeriod, lineageRunCount, lineageRunInitialDelay, lineageRunPeriod}
 import com.zto.fire.common.enu.{Datasource, ThreadPoolType}
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
 import com.zto.fire.common.util._
-import com.zto.fire.spark.sync.DistributeSyncManager
+import com.zto.fire.spark.sync.{DistributeSyncManager, SparkLineageAccumulatorManager}
 import com.zto.fire.spark.task.SparkSchedulerManager
-import com.zto.fire.spark.util.SparkUtils
+import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.util.LongAccumulator
@@ -425,13 +425,8 @@ private[fire] object AccumulatorManager extends Logging  {
 
     this.lineageThread.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = {
-        if (SparkUtils.isDriver) {
-          // driver端采集
-          addLineage(LineageManager.getDatasourceLineage)
-          // executor端分布式采集
-          DistributeSyncManager.sync({
-            addLineage(LineageManager.getDatasourceLineage)
-          })
+        if (SparkSingletonFactory.isStart && SparkUtils.isDriver) {
+          collectDistributeLineage()
 
           if (lineageRunCount.incrementAndGet() > FireFrameworkConf.lineageRunCount) {
             logger.info(s"Spark分布式血缘解析与采集任务即将退出，总计运行：${lineageRunCount.get()}次")
@@ -440,6 +435,22 @@ private[fire] object AccumulatorManager extends Logging  {
           logger.info(s"完成Spark分布式血缘解析与采集：${lineageRunCount.get()}次")
         }
       }
-    }, lineageRunInitialDelay + 10, lineageRunPeriod, TimeUnit.SECONDS)
+    }, lineageRunInitialDelay, lineageDistributeCollectPeriod, TimeUnit.SECONDS)
+  }
+
+  /**
+   * 分布式采集driver与executor的血缘信息
+   * 注：该操作会触发stage
+   */
+  private[fire] def collectDistributeLineage(isAsync: Boolean = true): Unit = {
+    if (!FireFrameworkConf.accEnable || !FireFrameworkConf.lineageEnable) return
+
+    // driver端采集
+    addLineage(LineageManager.getDatasourceLineage)
+    // executor端分布式采集
+    DistributeSyncManager.sync({
+      addLineage(LineageManager.getDatasourceLineage)
+    }, isAsync)
+    LineageManager.printLog(s"完成分布式血缘采集分析：${JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue)}")
   }
 }

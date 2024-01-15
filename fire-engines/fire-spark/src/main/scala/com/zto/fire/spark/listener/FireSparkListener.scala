@@ -81,6 +81,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
   override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
     this.baseSpark.onExecutorAdded(executorAdded)
     if (this.baseSpark.jobType != JobType.SPARK_CORE) this.needRegister.compareAndSet(false, true)
+    SparkSingletonFactory.executorActiveCount.incrementAndGet()
     this.logger.debug(s"executor[${executorAdded.executorId}] added. host: [${executorAdded.executorInfo.executorHost}].", this.module)
   }
 
@@ -89,6 +90,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
    */
   override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
     this.baseSpark.onExecutorRemoved(executorRemoved)
+    SparkSingletonFactory.executorActiveCount.decrementAndGet()
     this.logger.debug(s"executor[${executorRemoved.executorId}] removed. reason: [${executorRemoved.reason}].", this.module)
   }
 

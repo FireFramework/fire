@@ -274,7 +274,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
             pullConsumerScheduleService = null;
         }
 
-        if (discoveryService != null) {
+        if (discoveryService != null && !discoveryService.isShutdown()) {
             discoveryService.shutdown();
             discoveryService = null;
         }
