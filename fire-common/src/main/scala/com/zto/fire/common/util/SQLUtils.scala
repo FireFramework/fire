@@ -44,7 +44,7 @@ import scala.collection.mutable.ListBuffer
  * @create 2020-11-26 15:09
  */
 object SQLUtils extends Logging {
-  private[this] val beforeWorld = "(?i)(from|join|update|into table|table|into|exists|desc|like|if)"
+  private[this] val beforeWorld = "(?i)(from|join|into table|^\\s*update|table|into|exists|desc|like|if)"
   private[this] val reg = s"${beforeWorld}\\s+(\\w+\\.\\w+|\\w+)".r
   private[this] val passwordReg = "'password'\\s*=\\s*'.+'"
 
