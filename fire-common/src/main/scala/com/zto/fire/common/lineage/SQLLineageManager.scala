@@ -134,8 +134,10 @@ private[fire] object SQLLineageManager {
    * 字段列表
    */
   def setColumns(tableIdentifier: TableIdentifier, columns: Seq[(String, String)]): SQLTable = {
-    this.setTableField(tableIdentifier) {
-      _.getColumns.addAll(columns.map(t => new SQLTableColumns(t._1, t._2)))
+    this.setTableField(tableIdentifier) { table =>
+      if (FireFrameworkConf.lineageColumnEnable) {
+        table.getColumns.addAll(columns.map(t => new SQLTableColumns(t._1, t._2)))
+      }
     }
   }
 
