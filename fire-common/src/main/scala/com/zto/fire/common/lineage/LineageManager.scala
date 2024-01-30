@@ -84,14 +84,13 @@ private[fire] class LineageManager extends Logging {
       for (_ <- 1 until dbSqlQueue.size()) {
         val sqlSource = dbSqlQueue.poll()
         if (sqlSource != null) {
-          val tableNames = SQLUtils.tableParse(sqlSource.sql)
           printLog(s"解析JDBC SQL：${sqlSource.sql}")
-
-          if (tableNames != null && tableNames.nonEmpty) {
-            tableNames.filter(StringUtils.isNotBlank).foreach(tableName => {
-              add(Datasource.parse(sqlSource.datasource), DBDatasource(sqlSource.datasource, sqlSource.cluster, tableName, sqlSource.username, operation = sqlSource.operation))
-            })
-          }
+          val jdbcLineages = SQLUtils.parseLineage(sqlSource.sql)
+          jdbcLineages.foreach(lineage => {
+            val operations = new JHashSet[Operation]()
+            operations.add(lineage._2)
+            add(Datasource.parse(sqlSource.datasource), DBDatasource(sqlSource.datasource, sqlSource.cluster, lineage._1, sqlSource.username, operation = operations))
+          })
         }
       }
     }(logger, "", "jdbc血缘信息解析失败", isThrow = false, hook = false)

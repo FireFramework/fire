@@ -443,7 +443,7 @@ private[fire] object AccumulatorManager extends Logging  {
    * 注：该操作会触发stage
    */
   private[fire] def collectDistributeLineage(isAsync: Boolean = true): Unit = {
-    if (!FireFrameworkConf.accEnable || !FireFrameworkConf.lineageEnable) return
+    if (!FireFrameworkConf.accEnable || !FireFrameworkConf.lineageEnable || SparkUtils.isContextStopped) return
 
     // driver端采集
     addLineage(LineageManager.getDatasourceLineage)

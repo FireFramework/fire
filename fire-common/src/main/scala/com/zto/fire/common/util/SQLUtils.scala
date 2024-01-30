@@ -25,13 +25,18 @@ import net.sf.jsqlparser.expression.Expression
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression
 import net.sf.jsqlparser.expression.operators.relational.{EqualsTo, ExpressionList}
 import net.sf.jsqlparser.parser.CCJSqlParserUtil
-import net.sf.jsqlparser.schema.Column
+import net.sf.jsqlparser.schema.{Column, Table}
 import net.sf.jsqlparser.statement.Statement
+import net.sf.jsqlparser.statement.alter.{Alter, RenameTableStatement}
+import net.sf.jsqlparser.statement.create.table.CreateTable
 import net.sf.jsqlparser.statement.delete.Delete
+import net.sf.jsqlparser.statement.drop.Drop
+import net.sf.jsqlparser.statement.grant.Grant
 import net.sf.jsqlparser.statement.insert.Insert
 import net.sf.jsqlparser.statement.merge.Merge
 import net.sf.jsqlparser.statement.replace.Replace
-import net.sf.jsqlparser.statement.select.{PlainSelect, SelectExpressionItem}
+import net.sf.jsqlparser.statement.select.{PlainSelect, Select, SelectBody, SelectExpressionItem, SubSelect}
+import net.sf.jsqlparser.statement.truncate.Truncate
 import net.sf.jsqlparser.statement.update.Update
 
 import scala.collection.mutable.ListBuffer
@@ -137,6 +142,186 @@ object SQLUtils extends Logging {
     }
 
     columns.map(_.getColumnName).toList
+  }
+
+  /**
+   * 用于解析SQL语句中的血缘信息
+   *
+   * @return
+   * dml语句中字段的列表
+   */
+  def parseLineage(sql: String): List[(String, Operation)] = {
+    val lineages = new ListBuffer[(String, Operation)]()
+
+    tryWithLog {
+      CCJSqlParserUtil.parse(sql) match {
+        case s: Select => lineages ++= this.parseSelectLineage(s)
+        case a: Alter => lineages ++= this.parseAlterLineage(a)
+        case c: CreateTable => lineages ++= this.parseCreateTableLineage(c)
+        case d: Drop => lineages ++= this.parseDropLineage(d)
+        case t: Truncate => lineages ++= this.parseTruncateLineage(t)
+        case r: RenameTableStatement => lineages ++= this.parseRenameTableLineage(r)
+        case i: Insert => lineages ++= this.parseInsertLineage(i)
+        case r: Replace => lineages ++= this.parseReplaceLineage(r)
+        case u: Update => lineages ++= this.parseUpdateLineage(u)
+        case d: Delete => lineages ++= this.parseDeleteLineage(d)
+        case m: Merge => lineages ++= this.parseMergeLineage(m)
+        case _ => this.logWarning(s"发现未能解析血缘的JDBC SQL语句：$sql")
+      }
+    } (this.logger, catchLog = s"JDBC sql血缘解析失败：$sql")
+
+    lineages.filter(t => noEmpty(t._1)).toList
+  }
+
+  /**
+   * 解析merge语句中的血缘信息
+   */
+  private[this] def parseMergeLineage(m: Merge): JHashSet[(String, Operation)] = {
+    val tables = new JHashSet[(String, Operation)]()
+    tables.add((this.getTableName(m.getTable), Operation.MERGE))
+    if (m.getUsingSelect != null) {
+      this.parseSelectBodyLineage(m.getUsingSelect.getSelectBody, tables)
+    }
+
+    if (m.getUsingTable != null) {
+      tables.add((this.getTableName(m.getUsingTable), Operation.SELECT))
+    }
+
+    tables
+  }
+
+  /**
+   * 解析delete语句中的血缘信息
+   */
+  private[this] def parseDeleteLineage(d: Delete): JHashSet[(String, Operation)] = {
+    val tables = new JHashSet[(String, Operation)]()
+    tables.add((this.getTableName(d.getTable), Operation.DELETE))
+    tables
+  }
+
+  /**
+   * 解析update语句中的血缘信息
+   */
+  private[this] def parseUpdateLineage(u: Update): JHashSet[(String, Operation)] = {
+    val tables = new JHashSet[(String, Operation)]()
+    tables.add((this.getTableName(u.getTable), Operation.UPDATE))
+    tables.addAll(this.parseSelectLineage(u.getSelect))
+    tables
+  }
+
+  /**
+   * 解析replace语句中的血缘信息
+   */
+  private[this] def parseReplaceLineage(r: Replace): JHashSet[(String, Operation)] = {
+    val tables = new JHashSet[(String, Operation)]()
+    tables.add((this.getTableName(r.getTable), Operation.REPLACE_INTO))
+    if (r.getItemsList != null && r.getItemsList.isInstanceOf[SubSelect]) {
+      this.parseSelectBodyLineage(r.getItemsList.asInstanceOf[SubSelect].getSelectBody, tables)
+    }
+
+    tables
+  }
+
+  /**
+   * 解析insert语句中的血缘信息
+   */
+  private[this] def parseInsertLineage(i: Insert): JHashSet[(String, Operation)] = {
+    val tables = new JHashSet[(String, Operation)]()
+    tables.add((this.getTableName(i.getTable), Operation.INSERT))
+    tables.addAll(this.parseSelectLineage(i.getSelect))
+    tables
+  }
+
+  /**
+   * 解析rename table语句中的血缘信息
+   */
+  private[this] def parseRenameTableLineage(r: RenameTableStatement): JHashSet[(String, Operation)] = {
+    val tables = new JHashSet[(String, Operation)]()
+    r.getTableNames.foreach(t => {
+      tables.add((this.getTableName(t.getKey), Operation.RENAME_TABLE_OLD))
+      tables.add((this.getTableName(t.getValue), Operation.RENAME_TABLE_NEW))
+    })
+    tables
+  }
+
+  /**
+   * 解析Truncate语句中的血缘信息
+   */
+  private[this] def parseTruncateLineage(t: Truncate): JHashSet[(String, Operation)] = {
+    val tables = new JHashSet[(String, Operation)]()
+    tables.add((this.getTableName(t.getTable), Operation.TRUNCATE))
+    tables
+  }
+
+  /**
+   * 解析Alter语句中的血缘信息
+   */
+  private[this] def parseDropLineage(d: Drop): JHashSet[(String, Operation)] = {
+    val tables = new JHashSet[(String, Operation)]()
+    tables.add((this.getTableName(d.getName), Operation.DROP_TABLE))
+    tables
+  }
+
+  /**
+   * 解析Alter语句中的血缘信息
+   */
+  private[this] def parseCreateTableLineage(c: CreateTable): JHashSet[(String, Operation)] = {
+    val tables = new JHashSet[(String, Operation)]()
+    tables.add((this.getTableName(c.getTable), Operation.CREATE_TABLE))
+    tables
+  }
+
+  /**
+   * 获取表名
+   */
+  private[this] def getTableName(table: Table): String = {
+    if (table == null) return ""
+    if (isEmpty(table.getName)) return ""
+
+    val tableName = if (noEmpty(table.getDatabase, table.getDatabase.toString)) s"${table.getDatabase.getDatabaseName}.${table.getName}" else table.getName
+    tableName.replaceAll("`", "")
+  }
+
+  /**
+   * 解析Alter语句中的血缘信息
+   */
+  private[this] def parseAlterLineage(a: Alter): JHashSet[(String, Operation)] = {
+    val tables = new JHashSet[(String, Operation)]()
+    tables.add((this.getTableName(a.getTable), Operation.ALTER_TABLE))
+    tables
+  }
+
+  /**
+   * 解析select语句中的血缘信息
+   */
+  private[this] def parseSelectLineage(s: Select): JHashSet[(String, Operation)] = {
+    val tables = new JHashSet[(JString, Operation)]()
+    if (s == null) return tables
+    this.parseSelectBodyLineage(s.getSelectBody, tables)
+
+    tables
+  }
+
+  /**
+   * 解析SelectBody结构中的血缘信息
+   */
+  private def parseSelectBodyLineage(body: SelectBody, tables: JHashSet[(JString, Operation)]): Unit = {
+    if (body.isInstanceOf[PlainSelect]) {
+      val plainSelect = body.asInstanceOf[PlainSelect]
+      val fromItem = plainSelect.getFromItem
+      if (fromItem != null && fromItem.isInstanceOf[Table]) {
+        tables.add((this.getTableName(fromItem.asInstanceOf[Table]), Operation.SELECT))
+      }
+
+      val joins = plainSelect.getJoins
+      if (joins != null && joins.nonEmpty) {
+        joins.filter(t => t != null && t.getRightItem != null).foreach(join => {
+          if (join.getRightItem.isInstanceOf[Table]) {
+            tables.add((this.getTableName(join.getRightItem.asInstanceOf[Table]), Operation.SELECT))
+          }
+        })
+      }
+    }
   }
 
   /**

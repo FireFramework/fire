@@ -22,7 +22,7 @@ import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.util.{ExceptionBus, Logging}
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.HBaseBulkConnector
-import com.zto.fire.spark.util.SparkSingletonFactory
+import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.common.message.MessageExt
 import org.apache.rocketmq.spark.{CanCommitOffsets => RocketCanCommitOffsets}
@@ -139,7 +139,11 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
         ExceptionBus.post(retValue.failed.get)
         this.logger.error(s"批次[${batchTime}]执行失败，offset未提交，任务将退出")
         this.logger.error(s"异常堆栈：${ExceptionBus.stackTrace(retValue.failed.get)}")
-        SparkSingletonFactory.getStreamingContext.stop(true, false)
+        try {
+          SparkSingletonFactory.getStreamingContext.stop(SparkUtils.isContextStarted, false)
+        } finally {
+          System.exit(-1)
+        }
       }
     })
   }
