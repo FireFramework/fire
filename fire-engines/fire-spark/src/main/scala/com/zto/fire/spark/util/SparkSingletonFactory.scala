@@ -70,6 +70,14 @@ object SparkSingletonFactory extends SingletonFactory {
   }
 
   /**
+   * 获取SparkContext实例
+   */
+  def getSparkContext: SparkContext = {
+    if (this.sparkSession == null) return null
+    this.sparkSession.sparkContext
+  }
+
+  /**
    * SparkSession赋值
    */
   private[fire] def setSparkSession(sparkSession: SparkSession): Unit = this.synchronized {

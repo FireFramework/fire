@@ -48,6 +48,24 @@ object SparkUtils extends Logging {
   private lazy val spark = SparkSingletonFactory.getSparkSession
 
   /**
+   * 判断SparkContext是否已启动
+   */
+  def isContextStarted: Boolean = {
+    val context = SparkSingletonFactory.getSparkContext
+    if (context == null) return false
+    context.isStarted
+  }
+
+  /**
+   * 判断SparkContext是否已停止
+   */
+  def isContextStopped: Boolean = {
+    val context = SparkSingletonFactory.getSparkContext
+    if (context == null) return true
+    context.isStopped
+  }
+
+  /**
    * SQL语法校验，如果语法错误，则返回错误堆栈
    * @param sql
    * sql statement

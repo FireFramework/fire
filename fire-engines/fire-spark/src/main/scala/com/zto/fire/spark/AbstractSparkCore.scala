@@ -19,7 +19,7 @@ package com.zto.fire.spark
 
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.JobType
-import com.zto.fire.common.util.PropUtils
+import com.zto.fire.common.util.{FireUtils, PropUtils}
 import com.zto.fire.spark.acc.AccumulatorManager
 
 /**
@@ -36,18 +36,8 @@ class AbstractSparkCore extends BaseSpark {
     * Spark配置信息
     */
   override def init(conf: Any = null, args: Array[String] = null): Unit = {
-    try {
-      super.init(conf, args)
-      this.processAll
-    } catch {
-      case e: Exception => throw e
-    } finally {
-      // 退出前触发一次血缘采集分析，避免spark core短时任务执行来不及采集血缘
-      if (FireFrameworkConf.accEnable && FireFrameworkConf.lineageEnable) {
-        Thread.sleep(FireFrameworkConf.lineageShutdownSleep * 1000)
-        AccumulatorManager.collectDistributeLineage(false)
-      }
-    }
+    super.init(conf, args)
+    this.processAll
   }
 
   /**

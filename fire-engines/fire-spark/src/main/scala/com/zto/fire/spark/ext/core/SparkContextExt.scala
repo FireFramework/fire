@@ -28,4 +28,14 @@ import org.apache.spark.SparkContext
   */
 class SparkContextExt(sc: SparkContext) {
 
+  /**
+   * 判断SparkContext是否已启动
+   *
+   * @return
+   * true：Spark上下文初始化完成 false:已销毁
+   */
+  def isStarted: Boolean = {
+    if (sc == null) return false
+    !sc.isStopped
+  }
 }
