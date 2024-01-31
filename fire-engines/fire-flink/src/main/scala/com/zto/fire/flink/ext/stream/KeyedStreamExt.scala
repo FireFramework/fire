@@ -17,7 +17,8 @@
 
 package com.zto.fire.flink.ext.stream
 
-import org.apache.flink.streaming.api.TimeCharacteristic
+import com.zto.fire.common.enu.TimeCharacteristic
+import org.apache.flink.streaming.api.{TimeCharacteristic => FlinkTimeCharacteristic}
 import org.apache.flink.streaming.api.scala.{KeyedStream, WindowedStream}
 import org.apache.flink.streaming.api.windowing.assigners._
 import org.apache.flink.streaming.api.windowing.time.Time
@@ -43,7 +44,49 @@ class KeyedStreamExt[T, K](keyedStream: KeyedStream[T, K]) {
    *                           时区
    * @param timeCharacteristic 时间类别
    */
-  def slidingTimeWindow[W <: Window](size: Time, slide: Time, offset: Time = Time.milliseconds(0), timeCharacteristic: TimeCharacteristic = TimeCharacteristic.ProcessingTime): WindowedStream[T, K, W] = {
+  @deprecated("use windowSliding()", "2.4.3")
+  def slidingTimeWindow[W <: Window](size: Time, slide: Time, offset: Time = Time.milliseconds(0), timeCharacteristic: FlinkTimeCharacteristic = FlinkTimeCharacteristic.ProcessingTime): WindowedStream[T, K, W] = {
+    this.windowSliding[W](size, slide, offset, TimeCharacteristic.valueOf(timeCharacteristic.toString))
+  }
+
+  /**
+   * 创建滚动窗口窗口
+   *
+   * @param size
+   *                           窗口的大小
+   * @param offset
+   *                           时区
+   * @param timeCharacteristic 时间类别
+   */
+  @deprecated("use windowTumbling()", "2.4.3")
+  def tumblingTimeWindow[W <: Window](size: Time, offset: Time = Time.milliseconds(0), timeCharacteristic: FlinkTimeCharacteristic = FlinkTimeCharacteristic.ProcessingTime): WindowedStream[T, K, W] = {
+    this.windowTumbling[W](size, offset, TimeCharacteristic.valueOf(timeCharacteristic.toString))
+  }
+
+  /**
+   * 创建session会话窗口
+   *
+   * @param size
+   *                           超时时间
+   * @param timeCharacteristic 时间类别
+   */
+  @deprecated("use windowSession()", "2.4.3")
+  def sessionTimeWindow[W <: Window](size: Time, timeCharacteristic: FlinkTimeCharacteristic = FlinkTimeCharacteristic.ProcessingTime): WindowedStream[T, K, W] = {
+    this.windowSession[W](size, TimeCharacteristic.valueOf(timeCharacteristic.toString))
+  }
+
+  /**
+   * 创建滑动窗口
+   *
+   * @param size
+   *                           窗口的大小
+   * @param slide
+   *                           窗口滑动间隔
+   * @param offset
+   *                           时区
+   * @param timeCharacteristic 时间类别
+   */
+  def windowSliding[W <: Window](size: Time, slide: Time, offset: Time = Time.milliseconds(0), timeCharacteristic: TimeCharacteristic = TimeCharacteristic.ProcessingTime): WindowedStream[T, K, W] = {
     if (timeCharacteristic == TimeCharacteristic.EventTime) {
       keyedStream.window(SlidingEventTimeWindows.of(size, slide, offset).asInstanceOf[WindowAssigner[T, W]])
     } else {
@@ -60,7 +103,7 @@ class KeyedStreamExt[T, K](keyedStream: KeyedStream[T, K]) {
    *                           时区
    * @param timeCharacteristic 时间类别
    */
-  def tumblingTimeWindow[W <: Window](size: Time, offset: Time = Time.milliseconds(0), timeCharacteristic: TimeCharacteristic = TimeCharacteristic.ProcessingTime): WindowedStream[T, K, W] = {
+  def windowTumbling[W <: Window](size: Time, offset: Time = Time.milliseconds(0), timeCharacteristic: TimeCharacteristic = TimeCharacteristic.ProcessingTime): WindowedStream[T, K, W] = {
     if (timeCharacteristic == TimeCharacteristic.EventTime) {
       keyedStream.window(TumblingEventTimeWindows.of(size, offset).asInstanceOf[WindowAssigner[T, W]])
     } else {
@@ -75,7 +118,7 @@ class KeyedStreamExt[T, K](keyedStream: KeyedStream[T, K]) {
    *                           超时时间
    * @param timeCharacteristic 时间类别
    */
-  def sessionTimeWindow[W <: Window](size: Time, timeCharacteristic: TimeCharacteristic = TimeCharacteristic.ProcessingTime): WindowedStream[T, K, W] = {
+  def windowSession[W <: Window](size: Time, timeCharacteristic: TimeCharacteristic = TimeCharacteristic.ProcessingTime): WindowedStream[T, K, W] = {
     if (timeCharacteristic == TimeCharacteristic.EventTime) {
       keyedStream.window(EventTimeSessionWindows.withGap(size).asInstanceOf[WindowAssigner[T, W]])
     } else {

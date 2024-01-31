@@ -19,12 +19,13 @@ package com.zto.fire.examples.flink.stream
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.common.enu.TimeCharacteristic
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.Kafka
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.FlinkStreaming
+import com.zto.fire.flink.anno.Streaming
 import org.apache.flink.api.scala._
-import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.windowing.time.Time
 
@@ -35,12 +36,7 @@ import org.apache.flink.streaming.api.windowing.time.Time
  *
  * @author ChengLong 2020-4-18 14:34:58
  */
-@Config(
-  """
-    |flink.fire.rest.filter.enable       =       false
-    |flink.default.parallelism           =       8
-    |flink.max.parallelism               =       8
-    |""")
+@Streaming(parallelism = 8)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire", autoCommit = true)
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object WindowTest extends FlinkStreaming {
@@ -48,6 +44,20 @@ object WindowTest extends FlinkStreaming {
   override def process: Unit = {
     val dstream = this.fire.createKafkaDirectStream().map(t => JSONUtils.parseObject[Student](t)).map(s => (s.getName, s.getAge))
     this.testTimeWindow(dstream)
+  }
+
+  /**
+   * 时间窗口
+   */
+  def testTimeWindow(dstream: DataStream[(String, Integer)]): Unit = {
+    // 窗口的宽度为1s，每隔1s钟处理过去1s的数据，这1s的时间内窗口中的记录数可多可少
+    dstream.timeWindowAll(Time.seconds(1)).sum(1).print()
+    // 创建一个基于process时间（支持event时间）的滑动窗口，窗口大小为10秒，每隔5秒创建一个
+    dstream.keyBy(_._1).windowSliding(Time.seconds(10), Time.seconds(5), timeCharacteristic = TimeCharacteristic.ProcessingTime).sum(1).printToErr()
+    // 创建一个滚动窗口
+    dstream.keyBy(_._1).windowTumbling(Time.seconds(10)).sum(1).print()
+    // 创建一个session会话窗口，当5秒内没有消息进入，则单独划分一个窗口
+    dstream.keyBy(_._1).windowSession(Time.seconds(5)).sum(1).printToErr()
   }
 
   /**
@@ -68,19 +78,5 @@ object WindowTest extends FlinkStreaming {
   def testCountWindowAll(dstream: DataStream[(String, Integer)]): Unit = {
     // 表示每2条计算一次，每次将计算好的两条记录结果打印
     dstream.countWindowAll(2).sum(1).print()
-  }
-
-  /**
-   * 时间窗口
-   */
-  def testTimeWindow(dstream: DataStream[(String, Integer)]): Unit = {
-    // 窗口的宽度为1s，每隔1s钟处理过去1s的数据，这1s的时间内窗口中的记录数可多可少
-    dstream.timeWindowAll(Time.seconds(1)).sum(1).print()
-    // 创建一个基于process时间（支持event时间）的滑动窗口，窗口大小为10秒，每隔5秒创建一个
-    dstream.keyBy(_._1).slidingTimeWindow(Time.seconds(10), Time.seconds(5), timeCharacteristic = TimeCharacteristic.ProcessingTime).sum(1).printToErr()
-    // 创建一个滚动窗口
-    dstream.keyBy(_._1).tumblingTimeWindow(Time.seconds(10)).sum(1).print()
-    // 创建一个session会话窗口，当5秒内没有消息进入，则单独划分一个窗口
-    dstream.keyBy(_._1).sessionTimeWindow(Time.seconds(5)).sum(1).printToErr()
   }
 }
