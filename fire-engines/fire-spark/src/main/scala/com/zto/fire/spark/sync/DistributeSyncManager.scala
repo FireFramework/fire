@@ -37,7 +37,7 @@ object DistributeSyncManager extends SyncManager {
    * 获取当前任务的executor数
    */
   private[fire] def getInitExecutors: Int = {
-    if (SparkSingletonFactory.executorActiveCount.get() == 0) {
+    if (SparkSingletonFactory.executorActiveCount.get() <= 0) {
       this.sc.getConf.get("spark.executor.instances", if (OSUtils.isLinux) "100" else "10").toInt
     } else {
       SparkSingletonFactory.executorActiveCount.get()
