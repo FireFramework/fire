@@ -21,7 +21,7 @@ import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.Operation
-import com.zto.fire.common.lineage.SQLLineageManager
+import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.command.{AlterTableDropPartitionCommand, CacheTableCommand, CreateViewCommand, RefreshTableCommand, UncacheTableCommand}
@@ -52,7 +52,7 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
           sourceTable = Some(toTableIdentifier(unresolvedRelation.multipartIdentifier))
           // 如果是insert xxx select或create xxx select语句，则维护表与表之间的关系
           if (sinkTable.isDefined) SQLLineageManager.addRelation(toTableIdentifier(unresolvedRelation.multipartIdentifier), sinkTable.get)
-        case _ => this.logger.debug(s"Parse query SQL异常，无法匹配该Statement. ")
+        case _ => LineageManager.printLog(s"Parse query SQL异常，无法匹配该Statement. $child")
       }
     })
   }
@@ -140,7 +140,7 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         val tableIdentifier = getIdentifier(mergeIntoTable.targetTable)
         this.addCatalog(tableIdentifier, Operation.MERGE)
       }
-      case _ => this.logger.debug(s"Parse ddl SQL异常，无法匹配该Statement.")
+      case _ => LineageManager.printLog(s"Parse ddl SQL异常，无法匹配该Statement. $logicalPlan")
     }
 
     sinkTable

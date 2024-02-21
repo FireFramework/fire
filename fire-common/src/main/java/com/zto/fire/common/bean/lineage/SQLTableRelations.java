@@ -66,11 +66,11 @@ public class SQLTableRelations {
         return sinkTable;
     }
 
-    public HashSet<SQLTableColumnsRelations> getSqlTableColumnsRelations() {
+    public HashSet<SQLTableColumnsRelations> getColumnsRelations() {
         return columnsRelations;
     }
 
-    public void setSqlTableColumnsRelations(HashSet<SQLTableColumnsRelations> columnsRelations) {
+    public void setColumnsRelations(HashSet<SQLTableColumnsRelations> columnsRelations) {
         this.columnsRelations = columnsRelations;
     }
 

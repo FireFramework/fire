@@ -21,8 +21,9 @@ import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.Operation
-import com.zto.fire.common.lineage.SQLLineageManager
+import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
 import org.apache.spark.sql.catalyst.analysis._
+import org.apache.spark.sql.catalyst.catalog.HiveTableRelation
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.command.CreateViewCommand
 import org.apache.spark.sql.execution.datasources.CreateTable
@@ -46,6 +47,8 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
     logicalPlan match {
       case statement: CreateViewStatement =>
         this.queryParser(statement.child, sinkTable)
+      case statement: CreateViewCommand =>
+        this.queryParser(statement.child, sinkTable)
       case _ => {
         logicalPlan.children.foreach(child => {
           this.queryParser(child, sinkTable)
@@ -56,7 +59,13 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
               sourceTable = Some(toTableIdentifier(unresolvedRelation.multipartIdentifier))
               // 如果是insert xxx select或create xxx select语句，则维护表与表之间的关系
               if (sinkTable.isDefined) SQLLineageManager.addRelation(toTableIdentifier(unresolvedRelation.multipartIdentifier), sinkTable.get, null)
-            case _ => this.logger.debug(s"Parse query SQL异常，无法匹配该Statement. ")
+            case hiveTableRelation: HiveTableRelation =>
+              val tableIdentifier = toFireTableIdentifier(hiveTableRelation.tableMeta.identifier)
+              this.addCatalog(tableIdentifier, Operation.SELECT)
+              sourceTable = Some(tableIdentifier)
+              // 如果是insert xxx select或create xxx select语句，则维护表与表之间的关系
+              if (sinkTable.isDefined) SQLLineageManager.addRelation(tableIdentifier, sinkTable.get, null)
+            case _ => LineageManager.printLog(s"Parse query SQL异常，无法匹配该Statement. $child")
           }
         })
       }
@@ -124,6 +133,8 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         val identifier = toFireTableIdentifier(createView.name)
         this.addCatalog(identifier, Operation.CREATE_VIEW)
         SQLLineageManager.setColumns(identifier, createView.child.output.map(t => (t.name, t.dataType.toString)))
+        // 采集建表属性信息
+        sinkTable = Some(identifier)
       }
       case createView: CreateViewStatement => {
         val identifier = this.toTableIdentifier(createView.viewName)
@@ -173,7 +184,7 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         val tableIdentifier = getIdentifier(mergeIntoTable.targetTable)
         this.addCatalog(tableIdentifier, Operation.MERGE)
       }
-      case _ => this.logger.debug(s"Parse ddl SQL异常，无法匹配该Statement.")
+      case _ => LineageManager.printLog(s"Parse ddl SQL异常，无法匹配该Statement. $logicalPlan")
     }
 
     sinkTable

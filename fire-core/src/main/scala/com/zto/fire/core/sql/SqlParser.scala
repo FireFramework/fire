@@ -46,8 +46,10 @@ private[fire] trait SqlParser extends Logging {
   protected def sqlParse: Unit = {
     if (lineageEnable) {
       ThreadUtils.scheduleWithFixedDelay({
-        this.buffer.foreach(
-          sql => this.sqlParser(sql))
+        this.buffer.foreach(sql => {
+          this.sqlParser(sql)
+          LineageManager.printLog(s"定时解析SQL血缘：$sql")
+        })
         this.clear
       }, lineageRunInitialDelay, lineageRunPeriod, TimeUnit.SECONDS)
     }
@@ -68,7 +70,10 @@ private[fire] trait SqlParser extends Logging {
   def sqlParse(sql: String): Unit = {
     if (lineageEnable && noEmpty(sql)) {
       val hideSensitiveSQL = SQLUtils.hideSensitive(sql)
-      if (lineageCollectSQLEnable) SQLLineageManager.addStatement(hideSensitiveSQL)
+      if (lineageCollectSQLEnable) {
+        SQLLineageManager.addStatement(hideSensitiveSQL)
+        LineageManager.printLog(s"采集SQL文本：$hideSensitiveSQL")
+      }
       this.buffer += hideSensitiveSQL
     }
   }

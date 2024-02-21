@@ -23,7 +23,7 @@ import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.bean.lineage.SQLTableColumnsRelations
 import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.SQLLineageManager
+import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
 import com.zto.fire.common.lineage.parser.ConnectorParserManager
 import com.zto.fire.common.util.{ReflectionUtils, RegularUtils}
 import com.zto.fire.core.sql.SqlParser
@@ -121,7 +121,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
         case sqlAlterTableRename: SqlAlterTableRename => this.parseSqlNode(sqlAlterTableRename.getTableName, Operation.RENAME_TABLE_OLD, true)
         case sqlCreateTable: SqlCreateTable => this.parseHiveCreateTable(sqlCreateTable)
         case sqlHiveInsert: RichSqlHiveInsert => this.parseHiveInsert(sqlHiveInsert)
-        case _ => this.logger.info(s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql")
+        case _ => LineageManager.printLog(s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql")
       }
     }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", isThrow = false, hook = false)
   }

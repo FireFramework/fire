@@ -1,5 +1,6 @@
 package com.zto.fire.spark.sql
 
+import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.util.{ExceptionBus, Logging}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions.Expression
@@ -19,6 +20,7 @@ private[fire] class SparkSqlExtensionsParserBase(sparkSession: SparkSession, par
   def parsePlan(sqlText: String): LogicalPlan = {
     try {
       SparkSqlParser.sqlParse(sqlText)
+      LineageManager.printLog(s"采集SQL文本：${sqlText}")
       parser.parsePlan(sqlText)
     } catch {
       case e: Throwable =>

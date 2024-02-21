@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.conf.FireFrameworkConf.lineageCollectSQLEnable
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.SQLLineageManager
+import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
 import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.core.sql.SqlParser
 import com.zto.fire.predef.JConcurrentHashMap
@@ -102,10 +102,18 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    */
   @Internal
   def sqlParser(logicalPlan: LogicalPlan): Unit = {
-    tryWithLog {
-      val sinkTable = this.ddlParser(logicalPlan)
-      this.queryParser(logicalPlan, sinkTable)
-    }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错", isThrow = false, hook = false)
+    var sinkTable: Option[TableIdentifier] = None
+    try {
+      sinkTable = this.ddlParser(logicalPlan)
+    } catch {
+      case e: Throwable => {
+        LineageManager.printLog(s"可忽略异常：实时血缘解析SQL报错，logicalPlan: ${logicalPlan}")
+      }
+    } finally {
+      tryWithLog {
+        this.queryParser(logicalPlan, sinkTable)
+      }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，logicalPlan: ${logicalPlan}", isThrow = false, hook = false)
+    }
   }
 
   /**
