@@ -262,6 +262,11 @@ private[spark] class DirectKafkaInputDStream[K, V](
   override def start(): Unit = {
     val c = consumer
     paranoidPoll(c)
+    Runtime.getRuntime.addShutdownHook(new Thread("KafkaConsumerHook") {
+      override def run(): Unit = {
+        DirectKafkaInputDStream.this.stop()
+      }
+    })
     if (currentOffsets.isEmpty) {
       currentOffsets = c.assignment().asScala.map { tp =>
         tp -> c.position(tp)
@@ -271,7 +276,9 @@ private[spark] class DirectKafkaInputDStream[K, V](
 
   override def stop(): Unit = this.synchronized {
     if (kc != null) {
+      logInfo("Invoke kafka consumer.close()")
       kc.close()
+      kc = null
     }
   }
 
