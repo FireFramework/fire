@@ -37,7 +37,7 @@ import com.zto.fire.flink.anno.Streaming
     |""")
 @Hive("thrift://localhost:9083") // 配置连接到指定的hive*/
 @Streaming(interval = 100, unaligned = true, parallelism = 4) // 100s做一次checkpoint，开启非对齐checkpoint
-@Kafka(brokers = "10.50.0.35:9092", topics = "mo_alarm_event", groupId = "fire1")
+@Kafka(brokers = "test", topics = "mo_alarm_event", groupId = "fire1")
 object FlinkDemo extends FlinkStreaming {
 
   @Process
