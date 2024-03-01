@@ -353,15 +353,16 @@ object LineageManager extends Logging {
     var sqlParserMethod: Method = null
 
     if (FireUtils.isSparkEngine) {
-      sqlParserMethod = ReflectionUtils.getMethodByName("com.zto.fire.spark.sql.SparkSqlParser$", "sqlParse")
+      sqlParserMethod = ReflectionUtils.getMethodByName("com.zto.fire.spark.sql.SparkSqlParser", "sqlParse")
     }
 
     if (FireUtils.isFlinkEngine) {
-      sqlParserMethod = ReflectionUtils.getMethodByName("com.zto.fire.flink.sql.FlinkSqlParser$", "sqlParse")
+      sqlParserMethod = ReflectionUtils.getMethodByName("com.zto.fire.flink.sql.FlinkSqlParser", "sqlParse")
     }
 
     if (sqlParserMethod != null) {
       sqlParserMethod.invoke(null, sql)
+      printLog(s"引擎主动调用采集SQL：$sql")
     }
   }
 }
