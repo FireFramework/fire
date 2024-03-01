@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.security.UserProvider;
+import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -303,15 +304,22 @@ public class ConnectionFactoryEnhance {
 
   private Connection getConnectionInternalInstance(final Configuration conf)
           throws IOException {
+    String user = conf.get("hbase.user", "");
+    User.SecureHadoopUser secureHadoopUser = null;
+    if (!user.isEmpty()) {
+      UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
+      secureHadoopUser = new User.SecureHadoopUser(ugi);
+    }
+
     HConnectionKey connectionKey = new HConnectionKey(conf);
     synchronized (CONNECTION_INSTANCES_CACHE) {
       Connection connection = CONNECTION_INSTANCES_CACHE.get(connectionKey);
       if (connection == null) {
-        connection = ConnectionFactoryEnhance.createConnection(conf);
+        connection = ConnectionFactoryEnhance.createConnection(conf, secureHadoopUser);
         CONNECTION_INSTANCES_CACHE.put(connectionKey, connection);
       } else if (connection.isClosed()) {
         deleteConnection(connectionKey);
-        connection = ConnectionFactoryEnhance.createConnection(conf);
+        connection = ConnectionFactoryEnhance.createConnection(conf, secureHadoopUser);
         CONNECTION_INSTANCES_CACHE.put(connectionKey, connection);
       }
       return connection;

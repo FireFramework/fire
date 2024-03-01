@@ -36,6 +36,7 @@ private[fire] object FireHBaseConf {
   lazy val HBBASE_COLUMN_FAMILY_KEY = "hbase.column.family"
   lazy val HBASE_MAX_RETRY = "hbase.max.retry"
   lazy val HBASE_CLUSTER_URL = "hbase.cluster"
+  lazy val HBASE_USER = "hbase.user"
   lazy val HBASE_DURABILITY = "hbase.durability"
   // fire框架针对hbase操作后数据集的缓存策略，配置列表详见：StorageLevel.scala（配置不区分大小写）
   lazy val FIRE_HBASE_STORAGE_LEVEL = "fire.hbase.storage.level"
@@ -75,6 +76,8 @@ private[fire] object FireHBaseConf {
   def hbaseMaxRetry(keyNum: Int = KeyNum._1): Long = PropUtils.getLong(this.HBASE_MAX_RETRY, 3, keyNum)
   // hbase集群名称
   def hbaseCluster(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.HBASE_CLUSTER_URL, "", keyNum)
+  // HBase用户名
+  def hbaseUser(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.HBASE_USER, "", keyNum)
 
   /**
    * 根据给定的HBase集群别名获取对应的hbase.zookeeper.quorum地址

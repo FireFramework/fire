@@ -523,6 +523,7 @@ object HBaseBulkConnector extends ConnectorFactory[HBaseBulkConnector] with HBas
    */
   override protected def create(conf: Any = null, keyNum: Int = KeyNum._1): HBaseBulkConnector = {
     val hadoopConf = if (conf != null) conf.asInstanceOf[Configuration] else HBaseConnector.getConfiguration(keyNum)
+    hadoopConf.set(FireHBaseConf.HBASE_USER, FireHBaseConf.hbaseUser(keyNum))
     val connector = new HBaseBulkConnector(SparkSingletonFactory.getSparkSession.sparkContext, hadoopConf, keyNum)
     connector
   }

@@ -26,8 +26,8 @@ import com.zto.fire.common.lineage.parser.ConnectorParserManager
 import com.zto.fire.common.lineage.parser.connector._
 import com.zto.fire.common.util._
 import com.zto.fire.predef._
-import org.apache.commons.lang3.StringUtils
 
+import java.lang.reflect.Method
 import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.JavaConversions
@@ -339,6 +339,30 @@ object LineageManager extends Logging {
     })
     printLog(s"2. 双血缘map合并 current：$current")
     current
+  }
+
+  /**
+   * 用于采集计算引擎中执行的sql语句
+   *
+   * @param sql
+   * sql 脚本
+   */
+  def addSql(sql: String): Unit = {
+    if (isEmpty(sql)) return
+
+    var sqlParserMethod: Method = null
+
+    if (FireUtils.isSparkEngine) {
+      sqlParserMethod = ReflectionUtils.getMethodByName("com.zto.fire.spark.sql.SparkSqlParser$", "sqlParse")
+    }
+
+    if (FireUtils.isFlinkEngine) {
+      sqlParserMethod = ReflectionUtils.getMethodByName("com.zto.fire.flink.sql.FlinkSqlParser$", "sqlParse")
+    }
+
+    if (sqlParserMethod != null) {
+      sqlParserMethod.invoke(null, sql)
+    }
   }
 }
 

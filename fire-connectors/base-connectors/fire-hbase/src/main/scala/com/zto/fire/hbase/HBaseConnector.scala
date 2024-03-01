@@ -37,7 +37,9 @@ import org.apache.hadoop.hbase._
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.io.compress.Compression
+import org.apache.hadoop.hbase.security.User
 import org.apache.hadoop.hbase.util.Bytes
+import org.apache.hadoop.security.UserGroupInformation
 
 import java.lang.reflect.Field
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInt, Long => JLong, Short => JShort, String => JString}
@@ -304,7 +306,16 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   @Internal
   def initConnection: Connection = {
     tryWithReturn {
-      ConnectionFactory.createConnection(this.getConfiguration)
+      val user = hbaseUser(keyNum)
+      var secureHadoopUser: User.SecureHadoopUser = null
+
+      if (noEmpty(user)) {
+        logger.info(s"hbase访问用户名：$user")
+        val ugi = UserGroupInformation.createRemoteUser(user)
+        secureHadoopUser = new User.SecureHadoopUser(ugi);
+      }
+
+      ConnectionFactory.createConnection(this.getConfiguration, secureHadoopUser)
     }(logger, s"成功创建HBase ${hbaseClusterUrl(keyNum)}集群connection.", s"获取HBase ${hbaseClusterUrl(keyNum)}集群connection失败.")
   }
 

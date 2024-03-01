@@ -41,6 +41,11 @@ public @interface HBase4 {
     String cluster() default "";
 
     /**
+     * HBase访问用户名：hbase.user
+     */
+    String user() default "";
+
+    /**
      * 列族名称：hbase.column.family
      */
     String family() default "";

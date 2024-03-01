@@ -138,12 +138,13 @@ private[fire] trait AnnoManager extends Logging {
    * 对应注解中的config
    */
   @Internal
-  private def mapHBaseConf(value: String, cluster: String, family: String, batchSize: Int,
+  private def mapHBaseConf(value: String, cluster: String, user: String, family: String, batchSize: Int,
                            scanPartitions: Int, storageLevel: String, maxRetries: Int, durability: String,
                            tableMetaCache: Boolean, config: Array[String], keyNum: Int = KeyNum._1): Unit = {
 
     this.put("hbase.cluster", value, keyNum)
     this.put("hbase.cluster", cluster, keyNum)
+    this.put("hbase.user", user, keyNum)
     this.put("hbase.column.family", family, keyNum)
     this.put("fire.hbase.batch.size", batchSize, keyNum)
     this.put("fire.hbase.scan.partitions", scanPartitions, keyNum)
@@ -161,7 +162,7 @@ private[fire] trait AnnoManager extends Logging {
    * HBase注解实例
    */
   @Internal
-  def mapHBase(hbase: HBase): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._1)
+  def mapHBase(hbase: HBase): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._1)
 
   /**
    * 将@HBase中配置的信息映射为键值对形式
@@ -170,7 +171,7 @@ private[fire] trait AnnoManager extends Logging {
    * HBase注解实例
    */
   @Internal
-  def mapHBase2(hbase: HBase2): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._2)
+  def mapHBase2(hbase: HBase2): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._2)
 
   /**
    * 将@HBase中配置的信息映射为键值对形式
@@ -179,7 +180,7 @@ private[fire] trait AnnoManager extends Logging {
    * HBase注解实例
    */
   @Internal
-  def mapHBase3(hbase: HBase3): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._3)
+  def mapHBase3(hbase: HBase3): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._3)
 
   /**
    * 将@HBase中配置的信息映射为键值对形式
@@ -188,7 +189,7 @@ private[fire] trait AnnoManager extends Logging {
    * HBase注解实例
    */
   @Internal
-  def mapHBase4(hbase: HBase4): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._4)
+  def mapHBase4(hbase: HBase4): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._4)
 
   /**
    * 将@HBase中配置的信息映射为键值对形式
@@ -197,7 +198,7 @@ private[fire] trait AnnoManager extends Logging {
    * HBase注解实例
    */
   @Internal
-  def mapHBase5(hbase: HBase5): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._5)
+  def mapHBase5(hbase: HBase5): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._5)
 
   /**
    * 将@HBase中配置的信息映射为键值对形式
@@ -205,7 +206,7 @@ private[fire] trait AnnoManager extends Logging {
    * @param HBase6
    */
   @Internal
-  def mapHBase6(hbase: HBase6): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._6)
+  def mapHBase6(hbase: HBase6): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._6)
 
 
   /**
@@ -214,7 +215,7 @@ private[fire] trait AnnoManager extends Logging {
    * @param HBase7
    */
   @Internal
-  def mapHBase7(hbase: HBase7): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._7)
+  def mapHBase7(hbase: HBase7): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._7)
 
 
   /**
@@ -223,7 +224,7 @@ private[fire] trait AnnoManager extends Logging {
    * @param HBase8
    */
   @Internal
-  def mapHBase8(hbase: HBase8): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._8)
+  def mapHBase8(hbase: HBase8): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._8)
 
 
   /**
@@ -232,7 +233,7 @@ private[fire] trait AnnoManager extends Logging {
    * @param HBase9
    */
   @Internal
-  def mapHBase9(hbase: HBase9): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._9)
+  def mapHBase9(hbase: HBase9): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._9)
 
   /**
    * 将@HBase中配置的信息映射为键值对形式
@@ -240,7 +241,7 @@ private[fire] trait AnnoManager extends Logging {
    * @param HBase10
    */
   @Internal
-  def mapHBase10(hbase: HBase10): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._10)
+  def mapHBase10(hbase: HBase10): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._10)
 
 
   /**
@@ -249,7 +250,7 @@ private[fire] trait AnnoManager extends Logging {
    * @param HBase11
    */
   @Internal
-  def mapHBase11(hbase: HBase11): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._11)
+  def mapHBase11(hbase: HBase11): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._11)
 
 
   /**
