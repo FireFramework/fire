@@ -79,7 +79,7 @@ trait AbstractFlinkStreaming extends BaseFlink {
   override protected[fire] def loadSqlConf(): Unit = {
     val tableConfig = this.steamTableEnv.getConfig.getConfiguration
     PropUtils.loadSqlConfig(this.getClass).foreach(kv => {
-      logInfo(s"\nExecute: ${kv._1}=${kv._2}")
+      logInfo(s"\nExecute: set ${kv._1}=${kv._2}")
       tableConfig.setString(kv._1, kv._2)
     })
   }
