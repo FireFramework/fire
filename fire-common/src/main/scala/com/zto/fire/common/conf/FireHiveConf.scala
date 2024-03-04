@@ -35,7 +35,6 @@ private[fire] object FireHiveConf {
   lazy val HIVE_CATALOG_NAME = "hive.catalog.name"
   lazy val HIVE_CLUSTER_MAP_PREFIX = "fire.hive.cluster.map."
   lazy val HIVE_SITE_PATH_MAP_PREFIX = "fire.hive.site.path.map."
-  lazy val HIVE_CONF_PREFIX = "hive.conf."
   // 默认的库名
   lazy val DEFAULT_DATABASE_NAME = "fire.hive.default.database.name"
   // 默认的数据库名称
@@ -55,8 +54,6 @@ private[fire] object FireHiveConf {
   lazy val hiveVersion = PropUtils.getString(this.HIVE_VERSION, "1.1.0")
   // hive catalog名称
   lazy val hiveCatalogName = PropUtils.getString(this.HIVE_CATALOG_NAME, "hive")
-  // hive的set配置，如：this.spark.sql("set hive.exec.dynamic.partition=true")
-  lazy val hiveConfMap = PropUtils.sliceKeys(this.HIVE_CONF_PREFIX)
   lazy val defaultDB = PropUtils.getString(this.DEFAULT_DATABASE_NAME)
   lazy val partitionName = PropUtils.getString(this.DEFAULT_TABLE_PARTITION_NAME, this.defaultPartitionName)
 

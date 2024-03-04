@@ -19,7 +19,7 @@ package com.zto.fire.spark
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
-import com.zto.fire.common.util.{FireUtils, OSUtils, PropUtils, SQLUtils}
+import com.zto.fire.common.util.{FireUtils, PropUtils, SQLUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.spark.acc.AccumulatorManager
@@ -183,7 +183,16 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     this._conf = tmpConf
     this.deployConf
     this.logger.info("<-- 完成Spark运行时信息初始化 -->")
-    SparkUtils.executeHiveConfSQL(this._spark)
+  }
+
+  /**
+   * 加载SQL set statement参数
+   */
+  override protected[fire] def loadSqlConf(): Unit = {
+    PropUtils.loadSqlConfig(this.getClass).foreach(kv => {
+      logInfo(s"\nExecute: set ${kv._1}=${kv._2}")
+      this.fire.sql(s"set ${kv._1}=${kv._2}")
+    })
   }
 
   /**

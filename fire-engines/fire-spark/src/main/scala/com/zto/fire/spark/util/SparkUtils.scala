@@ -556,17 +556,6 @@ object SparkUtils extends Logging {
   }
 
   /**
-   * 从配置文件中读取并执行hive set的sql
-   */
-  def executeHiveConfSQL(spark: SparkSession): Unit = {
-    if (spark != null) {
-      val confMap = FireHiveConf.hiveConfMap
-      confMap.foreach(kv => spark.sql(s"set ${kv._1}=${kv._2}"))
-      LogUtils.logMap(this.logger, confMap, "Execute hive sql conf.")
-    }
-  }
-
-  /**
    * 分配次执行指定的业务逻辑
    *
    * @param rdd

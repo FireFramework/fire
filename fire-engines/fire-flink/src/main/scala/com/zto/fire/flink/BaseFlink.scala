@@ -100,6 +100,13 @@ trait BaseFlink extends BaseFire {
   def buildConf(conf: Configuration): Configuration
 
   /**
+   * 加载SQL set statement参数
+   */
+  override protected[fire] def loadSqlConf(): Unit = {
+
+  }
+
+  /**
    * 生命周期方法：用于回收资源
    */
   override def stop: Unit = {

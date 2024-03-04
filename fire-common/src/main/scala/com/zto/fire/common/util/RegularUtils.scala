@@ -26,4 +26,5 @@ object RegularUtils {
   // 多条sql语句的截取
   lazy val sqlSplit = """;\s"""
   lazy val hidePassword = "******"
+  lazy val removeSet = "\\s*[sS][eE][tT]\\s*"
 }

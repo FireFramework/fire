@@ -17,19 +17,18 @@
 
 package com.zto.fire.common.util
 
-import com.zto.fire.common.anno.{Config, Internal}
+import com.zto.fire.common.anno.{Config, Internal, SqlConfig}
 import com.zto.fire.common.conf._
 import com.zto.fire.common.enu.ConfigureLevel
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.LoggerFactory
 
 import java.io.{FileInputStream, InputStream, StringReader}
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.collection.mutable.{ArrayBuffer, Map}
 import scala.collection.{immutable, mutable}
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.ClassTag
 
 /**
  * 读取配置文件工具类
@@ -246,6 +245,29 @@ object PropUtils extends Logging {
     this.setProperties(centerConfig.getOrDefault(ConfigureLevel.URGENT, Map.empty[String, String]))
 
     this
+  }
+
+  /**
+   * 用于获取SqlConfig注解中set statement语句
+   */
+  def loadSqlConfig(baseFire: Class[_]): Map[String, String] = {
+    val statementMap = mutable.Map[String, String]()
+
+    // 加载基于注解的配置
+    tryWithLog {
+      val sqlConfig = ReflectionUtils.getClassAnnotation(baseFire, classOf[SqlConfig])
+      if (sqlConfig != null) {
+        val confText = sqlConfig.asInstanceOf[SqlConfig].value
+        if (noEmpty(confText)) {
+          val mapConf: mutable.Map[JString, JString] = PropUtils.parseTextConfig(confText.replaceAll(RegularUtils.removeSet, ""))
+          statementMap ++= mapConf
+        }
+      }
+    }(this.logger, "获取Sql set statement成功", "获取Sql set statement失败", isThrow = true)
+
+    // 加载配置文件中的配置
+    statementMap.addAll(FireFrameworkConf.sqlConfMap)
+    statementMap
   }
 
   /**

@@ -108,6 +108,11 @@ trait BaseFire extends Logging {
   }
 
   /**
+   * 加载SQL set statement参数
+   */
+  protected[fire] def loadSqlConf(): Unit
+
+  /**
    * 用于将不同引擎的配置信息、累计器信息等传递到executor端或taskmanager端
    */
   protected def deployConf(): Unit = {
@@ -161,6 +166,7 @@ trait BaseFire extends Logging {
    */
   protected[fire] def processAll: Unit = {
     tryWithLog({
+      this.loadSqlConf()
       this.process()
       AnnoManager.processAnno(this)
     }) (this.logger, "业务逻辑代码执行完成", "业务逻辑代码执行失败", isThrow = true)
