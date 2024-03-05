@@ -69,8 +69,6 @@ private[fire] object FireFlinkConf {
   lazy val FLINK_SQL_WITH_REPLACE_MODE_ENABLE = "flink.sql_with.replaceMode.enable"
   lazy val FLINK_STATE_CLEAN_HDFS_URL = "flink.state.clean.hdfs.url"
 
-  // flink sql相关配置
-  lazy val FLINK_SQL_CONF_PREFIX = "flink.sql.conf."
   // udf自动注册
   lazy val FLINK_SQL_UDF_CONF_PREFIX = "flink.sql.udf.conf."
   lazy val FLINK_SQL_UDF_ENABLE = "flink.sql.udf.fireUdf.enable"
@@ -93,7 +91,7 @@ private[fire] object FireFlinkConf {
   lazy val autoTypeRegistrationEnable = PropUtils.getBoolean(this.FLINK_AUTO_TYPE_REGISTRATION_ENABLE, true)
   lazy val forceAvroEnable = PropUtils.getBoolean(this.FLINK_FORCE_AVRO_ENABLE, false)
   lazy val forceKryoEnable = PropUtils.getBoolean(this.FLINK_FORCE_KRYO_ENABLE, false)
-  lazy val genericTypesEnable = PropUtils.getBoolean(this.FLINK_GENERIC_TYPES_ENABLE, false)
+  lazy val genericTypesEnable = PropUtils.getBoolean(this.FLINK_GENERIC_TYPES_ENABLE, true)
   lazy val objectReuseEnable = PropUtils.getBoolean(this.FLINK_OBJECT_REUSE_ENABLE, false)
   lazy val autoWatermarkInterval = PropUtils.getLong(this.FLINK_AUTO_WATERMARK_INTERVAL, -1)
   lazy val closureCleanerLevel = PropUtils.getString(this.FLINK_CLOSURE_CLEANER_LEVEL)
@@ -122,8 +120,6 @@ private[fire] object FireFlinkConf {
   lazy val streamCheckpointTolerableFailureNumber = PropUtils.getInt(this.FLINK_STREAM_CHECKPOINT_TOLERABLE_FAILURE_NUMBER, 0)
   lazy val streamCheckpointExternalized = PropUtils.getString(this.FLINK_STREAM_CHECKPOINT_EXTERNALIZED, "RETAIN_ON_CANCELLATION")
 
-  // flink sql相关配置
-  lazy val flinkSqlConfig = PropUtils.sliceKeys(this.FLINK_SQL_CONF_PREFIX)
   // 用于自动注册udf jar包中的函数
   lazy val flinkUdfList = PropUtils.sliceKeys(this.FLINK_SQL_UDF_CONF_PREFIX)
   // 是否启用fire udf注册功能
