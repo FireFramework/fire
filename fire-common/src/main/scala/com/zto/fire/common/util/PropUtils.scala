@@ -266,7 +266,7 @@ object PropUtils extends Logging {
     }(this.logger, "获取Sql set statement成功", "获取Sql set statement失败", isThrow = true)
 
     // 加载配置文件中的配置
-    statementMap.addAll(FireFrameworkConf.sqlConfMap)
+    statementMap ++= FireFrameworkConf.sqlConfMap
     statementMap
   }
 

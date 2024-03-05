@@ -151,6 +151,8 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_JOB_AUTO_START = "fire.job.autoStart"
   lazy val FIRE_ACC_SYNC_MAX_SIZE = "fire.acc.sync.max.size"
   lazy val FIRE_SQL_CONF_PREFIX = "fire.sql_conf."
+  lazy val FIRE_SQL_CONF_PREFIX2 = "sql.conf."
+  lazy val HIVE_CONF_PREFIX = "hive.conf."
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -324,5 +326,5 @@ private[fire] object FireFrameworkConf {
   lazy val jobAutoStart = PropUtils.getBoolean(this.FIRE_JOB_AUTO_START, true)
   lazy val accSyncMaxSize = PropUtils.getLong(this.FIRE_ACC_SYNC_MAX_SIZE, 100)
   // sql的set配置，如：this.spark.sql("set hive.exec.dynamic.partition=true")
-  lazy val sqlConfMap = PropUtils.sliceKeys(this.FIRE_SQL_CONF_PREFIX)
+  lazy val sqlConfMap = PropUtils.sliceKeys(this.FIRE_SQL_CONF_PREFIX) ++ PropUtils.sliceKeys(this.FIRE_SQL_CONF_PREFIX2) ++ PropUtils.sliceKeys(this.HIVE_CONF_PREFIX)
 }

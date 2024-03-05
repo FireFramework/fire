@@ -122,8 +122,7 @@ trait AbstractFlinkStreaming extends BaseFlink {
     } else {
       StreamTableEnvironment.create(this.env, builder.inStreamingMode().build())
     }
-    val tableConfig = this.tableEnv.getConfig.getConfiguration
-    FireFlinkConf.flinkSqlConfig.filter(kv => noEmpty(kv, kv._1, kv._2)).foreach(kv => tableConfig.setString(kv._1, kv._2))
+
     if (StringUtils.isNotBlank(FireHiveConf.getMetastoreUrl)) {
       this.tableEnv.registerCatalog(FireHiveConf.hiveCatalogName, this.hiveCatalog)
     }
