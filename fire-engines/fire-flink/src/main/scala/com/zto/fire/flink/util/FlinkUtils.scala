@@ -202,7 +202,7 @@ object FlinkUtils extends Serializable with Logging {
       config.disableForceKryo()
     }
 
-    // flink.generic.types.enable=true  默认值为：false
+    // flink.generic.types.enable=true  默认值为：true
     if (FireFlinkConf.genericTypesEnable) {
       config.enableGenericTypes()
     } else {
