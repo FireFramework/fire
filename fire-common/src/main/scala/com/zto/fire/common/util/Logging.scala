@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.util
 
+import com.zto.fire.common.conf.FirePS1Conf
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
@@ -34,7 +35,7 @@ trait Logging {
   protected def logger: Logger = log_
 
   protected def logInfo(msg: => String): Unit = {
-    if (this.logger.isInfoEnabled) this.logger.info(msg)
+    if (this.logger.isInfoEnabled) this.logger.info(FirePS1Conf.wrap(msg, FirePS1Conf.BLUE))
   }
 
   protected def logDebug(msg: => String): Unit = {
@@ -46,11 +47,11 @@ trait Logging {
   }
 
   protected def logWarning(msg: => String): Unit = {
-    if (this.logger.isWarnEnabled) this.logger.warn(msg)
+    if (this.logger.isWarnEnabled) this.logger.warn(FirePS1Conf.wrap(msg, FirePS1Conf.YELLOW))
   }
 
   protected def logError(msg: => String): Unit = {
-    if (this.logger.isErrorEnabled) this.logger.error(msg)
+    if (this.logger.isErrorEnabled) this.logger.error(FirePS1Conf.wrap(msg, FirePS1Conf.RED))
   }
 
   protected def logInfo(msg: => String, throwable: Throwable): Unit = {

@@ -96,7 +96,7 @@ private[fire] class RestServerManager extends Logging {
       // 释放Socket占用的端口给RestServer使用，避免被其他服务所占用
       if (socket != null && !socket.isClosed) socket.close()
       restList.filter(_ != null).foreach(rest => {
-        if (FireFrameworkConf.fireRestUrlShow) logger.info(s"---------> start rest: ${FirePS1Conf.wrap(restPrefix + rest.path, FirePS1Conf.BLUE, FirePS1Conf.UNDER_LINE)} successfully. <---------")
+        if (FireFrameworkConf.fireRestUrlShow) logger.info(s"---------> start rest: ${FirePS1Conf.wrap(restPrefix + rest.path, FirePS1Conf.BLUE + FirePS1Conf.UNDER_LINE)} successfully. <---------")
         rest.method match {
           case "get" | "GET" => Spark.get(rest.path, new Route {
             override def handle(request: Request, response: Response): AnyRef = {

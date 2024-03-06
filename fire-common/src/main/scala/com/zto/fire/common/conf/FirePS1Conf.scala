@@ -17,6 +17,8 @@
 
 package com.zto.fire.common.conf
 
+import com.zto.fire.common.util.OSUtils
+
 /**
  * 颜色预定义
  *
@@ -40,7 +42,7 @@ private[fire] object FirePS1Conf {
   lazy val FLICKER = "\u001B[5m"
 
   /**
-   * 包裹处理
+   * 包装处理
    *
    * @param str
    * 原字符串
@@ -49,7 +51,9 @@ private[fire] object FirePS1Conf {
    * @return
    * wrap后的字符串
    */
-  def wrap(str: String, ps1: String*): String = {
+  def wrap(str: String, ps1: String): String = {
+    if (!OSUtils.isLocal) return str
+
     val printStr = new StringBuilder()
     ps1.foreach(ps => {
       printStr.append(ps)

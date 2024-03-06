@@ -215,10 +215,10 @@ object ThreadUtils extends Logging {
       this.poolMap.foreach(pool => {
         if (pool != null && pool._2 != null && !pool._2.isShutdown) {
           pool._2.shutdownNow()
-          this.logger.info(s"${FirePS1Conf.GREEN}---> 完成线程池[ ${pool._1} ]的资源回收. <---${FirePS1Conf.DEFAULT}")
+          this.logger.info(s"${FirePS1Conf.wrap(s"---> 完成线程池[ ${pool._1} ]的资源回收. <---", FirePS1Conf.GREEN)}")
         }
       })
     }
-    this.logger.info(s"${FirePS1Conf.PINK}---> 完成所有线程池回收，总计：${poolNum}个. <---${FirePS1Conf.DEFAULT}")
+    this.logger.info(s"${FirePS1Conf.wrap(s"---> 完成所有线程池回收，总计：${poolNum}个. <---", FirePS1Conf.GREEN)}")
   }
 }

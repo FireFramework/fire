@@ -63,7 +63,7 @@ trait FireFunctions extends Serializable with Logging  {
         case _ if retryNum > 1 => {
           Thread.sleep(duration)
           count += 1
-          logger.info(s"${FirePS1Conf.RED}第${count}次执行. 时间:${DateFormatUtils.formatCurrentDateTime()}. 间隔:${duration}.${FirePS1Conf.DEFAULT}")
+          logger.info(s"${FirePS1Conf.wrap(s"第${count}次执行. 时间:${DateFormatUtils.formatCurrentDateTime()}. 间隔:${duration}.", FirePS1Conf.RED)}")
           redo(retryNum - 1, duration)(fun)
         }
         case util.Failure(e) => throw e

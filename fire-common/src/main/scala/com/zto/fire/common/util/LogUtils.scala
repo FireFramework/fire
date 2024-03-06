@@ -48,10 +48,10 @@ object LogUtils extends Logging {
   def logStyle(logger: Logger, title: String = "", style: String = "-", level: Level = Level.INFO)(fun: Logger => Unit): Unit = {
     if (logger != null) {
       val styleRepeat = StringUtils.repeat(style, 19)
-      val titleStart = styleRepeat + s"${FirePS1Conf.GREEN}> start: " + title + s" <${FirePS1Conf.DEFAULT}" + styleRepeat
+      val titleStart = styleRepeat + FirePS1Conf.wrap("start: " + title + s" <", FirePS1Conf.GREEN) + styleRepeat
       this.logLevel(logger, titleStart, level)
       fun(logger)
-      val titleEnd = styleRepeat + s"${FirePS1Conf.GREEN}> end:   " + title + s" <${FirePS1Conf.DEFAULT}" + styleRepeat
+      val titleEnd = styleRepeat + FirePS1Conf.wrap("> end:   " + title, FirePS1Conf.GREEN) + styleRepeat
       this.logLevel(logger, titleEnd, level)
     }
   }

@@ -20,7 +20,7 @@ package com.zto.fire.common.util
 import com.google.common.collect.EvictingQueue
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.analysis.ExceptionMsg
-import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.predef._
 import org.slf4j.Logger
 
@@ -110,7 +110,7 @@ object ExceptionBus extends Logging {
   private[fire] def offAndLogError(logger: Logger, msg: String, t: Throwable, sql: String = ""): Unit = {
     this.post(t, sql)
     if (noEmpty(msg)) {
-      if (logger != null) logger.error(msg, t) else t.printStackTrace()
+      if (logger != null) logger.error(FirePS1Conf.wrap(msg, FirePS1Conf.RED), t) else t.printStackTrace()
     }
   }
 
@@ -122,7 +122,7 @@ object ExceptionBus extends Logging {
     val stackTraceInfo = new StringBuilder()
     stackTraceInfo.append(t.toString + "\n")
     t.getStackTrace.foreach(trace => stackTraceInfo.append("\tat " + trace + "\n"))
-    stackTraceInfo.toString
+    FirePS1Conf.wrap(stackTraceInfo.toString, FirePS1Conf.RED)
   }
 
 }

@@ -206,7 +206,7 @@ private[fire] object FireUtils extends Serializable with Logging {
    */
   private[fire] def splash: Unit = {
     if (!isSplash) {
-      val engineVersion = if (this.isSparkEngine) s"spark version:${this.engineVersion}" else s"flink version:${this.engineVersion}"
+      val engineVersion = if (this.isSparkEngine) s"spark version:${FirePS1Conf.wrap(this.engineVersion, FirePS1Conf.PINK)}" else s"flink version:${FirePS1Conf.wrap(this.engineVersion, FirePS1Conf.PINK)}"
       val info =
         """
           |       ___                       ___           ___
@@ -221,9 +221,9 @@ private[fire] object FireUtils extends Serializable with Logging {
           |                 \/__/        |:|  |        \:\__\
           |                               \|__|         \/__/     version
           |
-          |""".stripMargin.replace("version", s"fire version:${FirePS1Conf.PINK + this.fireVersion + FirePS1Conf.GREEN} $engineVersion")
+          |""".stripMargin.replace("version", s"fire version:${FirePS1Conf.wrap(this.fireVersion, FirePS1Conf.PINK)}  ${FirePS1Conf.wrap(engineVersion, FirePS1Conf.GREEN)}")
 
-      this.logger.warn(FirePS1Conf.GREEN + info + FirePS1Conf.DEFAULT)
+      this.logger.warn(FirePS1Conf.wrap(info, FirePS1Conf.GREEN))
       this.isSplash = true
     }
   }

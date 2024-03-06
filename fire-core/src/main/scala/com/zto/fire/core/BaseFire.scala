@@ -141,7 +141,7 @@ trait BaseFire extends Logging {
     this.parseParameter(args)
     this.before(args)
     FireUtils._jobType = this.jobType
-    this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成用户资源初始化，任务类型：${this.jobType.getJobTypeDesc} <--- ${FirePS1Conf.DEFAULT}")
+    this.logger.info(s" ${FirePS1Conf.wrap(s"---> 完成用户资源初始化，任务类型：${this.jobType.getJobTypeDesc} <---", FirePS1Conf.YELLOW)}")
     this.args = args
     this.createContext(conf)
   }
@@ -193,8 +193,8 @@ trait BaseFire extends Logging {
       ThreadUtils.shutdown
       Spark.stop()
       SchedulerManager.shutdown(stopGracefully)
-      this.logger.info(s" ${FirePS1Conf.YELLOW}---> 完成fire资源回收 <---${FirePS1Conf.DEFAULT}")
-      this.logger.info(s"总耗时：${FirePS1Conf.RED}${elapsed(launchTime)}${FirePS1Conf.DEFAULT} The end...${FirePS1Conf.DEFAULT}")
+      this.logger.info(s" ${FirePS1Conf.wrap(s"---> 完成fire资源回收 <---", FirePS1Conf.YELLOW)}")
+      this.logger.info(s"总耗时：${FirePS1Conf.wrap(s"${elapsed(launchTime)} ", FirePS1Conf.RED)} The end...")
       if (FireFrameworkConf.shutdownExit) {
         val exitStatus = if (FireUtils.isStreamingJob) -1 else 0
         System.exit(exitStatus)

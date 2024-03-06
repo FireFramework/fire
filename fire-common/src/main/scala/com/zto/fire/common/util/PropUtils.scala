@@ -121,7 +121,7 @@ object PropUtils extends Logging {
         resource = this.getInputStream(fullName)
         if (resource == null && !this.configurationFiles.contains(fileName)) this.logger.warn(s"未找到配置文件[ $fullName ]，若已使用注解配置，可忽略该警告")
         if (resource != null) {
-          this.logger.info(s"${FirePS1Conf.YELLOW} -------------> loaded ${fullName} <------------- ${FirePS1Conf.DEFAULT}")
+          this.logger.info(s"${FirePS1Conf.wrap(s"-------------> loaded ${fullName} <-------------", FirePS1Conf.YELLOW)}")
           props.load(resource)
           // 将所有的配置信息存放到settings中，并统一添加key的引擎前缀，如：
           // 如果是spark引擎，则key前缀统一添加spark. 如果是flink引擎，则统一添加flink.
@@ -529,7 +529,7 @@ object PropUtils extends Logging {
       this.adaptiveSettings.foreach(key => {
         // 如果包含配置黑名单，则不打印
         if (key != null && !FireFrameworkConf.fireConfBlackList.exists(conf => key.toString.contains(conf))) {
-          val conf = s"${FirePS1Conf.PINK} ${key._1} = ${key._2} ${FirePS1Conf.DEFAULT}"
+          val conf = s"${FirePS1Conf.wrap(s"${key._1} = ${key._2}", FirePS1Conf.PINK)}"
           if (loggerStyle) logger.info(s">> $conf") else println(conf)
         }
       })

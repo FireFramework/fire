@@ -389,7 +389,7 @@ public class ReflectionUtils {
                             desc = "开始执行";
                         }
                         String step = annotationClass.getSimpleName();
-                        logger.warn(FirePS1Conf.GREEN() + " " + step + ". " + desc + " " + FirePS1Conf.DEFAULT());
+                        logger.warn(FirePS1Conf.wrap(step + ". " + desc, FirePS1Conf.GREEN()));
 
                         long start = System.currentTimeMillis();
                         Object skipError = getAnnoFieldValue(anno, "skipError");
@@ -398,7 +398,7 @@ public class ReflectionUtils {
                             successCount += 1;
                         } catch (Exception e) {
                             long end = System.currentTimeMillis();
-                            logger.error(FirePS1Conf.RED() + " " + step + ". 执行报错！耗时："+ (readable(end - start, UnitFormatUtils.TimeUnitEnum.MS))  + " " + FirePS1Conf.DEFAULT() + "\n", e);
+                            logger.error(FirePS1Conf.wrap(step + ". 执行报错！耗时："+ (readable(end - start, UnitFormatUtils.TimeUnitEnum.MS)), FirePS1Conf.RED()) + "\n", e);
                             boolean isSkip = Boolean.parseBoolean(skipError.toString());
                             failedCount += 1;
                             if (!isSkip) {
@@ -406,14 +406,14 @@ public class ReflectionUtils {
                             }
                         }
                         long end = System.currentTimeMillis();
-                        logger.warn(FirePS1Conf.GREEN() + " " + step + ". 执行耗时：" + (readable(end - start, UnitFormatUtils.TimeUnitEnum.MS)) + " " + FirePS1Conf.DEFAULT() + "\n");
+                        logger.warn(FirePS1Conf.wrap(step + ". 执行耗时：" + (readable(end - start, UnitFormatUtils.TimeUnitEnum.MS)), FirePS1Conf.GREEN()));
                     }
                 }
             }
             long finalEnd = System.currentTimeMillis();
             long allCount = successCount + failedCount;
             if (allCount > 0) {
-                logger.warn(FirePS1Conf.GREEN() + " Finished. 总计：" + allCount + "个 成功：" + successCount + "个 失败：" + failedCount + "个, 执行耗时：" + (readable(finalEnd - begin, UnitFormatUtils.TimeUnitEnum.MS)) + " " + FirePS1Conf.DEFAULT() + "\n");
+                logger.warn(" Finished. 总计：" + allCount + "个 成功：" + successCount + "个 失败：" + failedCount + "个, 执行耗时：" + (readable(finalEnd - begin, UnitFormatUtils.TimeUnitEnum.MS)), FirePS1Conf.GREEN());
             }
         } catch (Exception e) {
             logger.error("反射调用方法失败，请检查：" + target.getClass().getName());

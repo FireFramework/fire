@@ -20,6 +20,7 @@ package com.zto.fire.common.lineage
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.lineage.{Lineage, SQLTable, SQLTablePartitions}
 import com.zto.fire.common.conf.FireFrameworkConf._
+import com.zto.fire.common.conf.FirePS1Conf
 import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
 import com.zto.fire.common.lineage.LineageManager.printLog
 import com.zto.fire.common.lineage.parser.ConnectorParserManager
@@ -27,7 +28,6 @@ import com.zto.fire.common.lineage.parser.connector._
 import com.zto.fire.common.util._
 import com.zto.fire.predef._
 
-import java.lang.reflect.Method
 import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.JavaConversions
@@ -163,8 +163,12 @@ object LineageManager extends Logging {
    */
   def print(interval: Long = 60, pretty: Boolean = true): Unit = {
     ThreadUtils.runLoop({
-      val lineage = FireUtils.invokeEngineApi[Lineage](sparkLineageAccumulatorManager, flinkLineageAccumulatorManager, "getValue")
-      val jsonLineage = s"血缘：\n${JSONUtils.toJSONString(lineage, pretty)}"
+      val lineage = FireUtils.invokeEngineApi[Lineage](this.sparkLineageAccumulatorManager, this.flinkLineageAccumulatorManager, "getValue")
+      val jsonLineage = FirePS1Conf.wrap(s"""
+                            |------------------- 血缘信息（${DateFormatUtils.formatCurrentDateTime()}）：----------------------
+                            |${JSONUtils.toJSONString(lineage, pretty)}
+                            |""".stripMargin, FirePS1Conf.GREEN)
+
       println(jsonLineage)
       logInfo(jsonLineage)
     }, interval)

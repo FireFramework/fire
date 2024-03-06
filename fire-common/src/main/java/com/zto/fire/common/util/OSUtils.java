@@ -41,6 +41,7 @@ public class OSUtils {
     private static Random random = new Random();
     private static final String OSNAME = "os.name";
     private static final Logger logger = LoggerFactory.getLogger(OSUtils.class);
+    private static Boolean isLocal = null;
 
     private OSUtils() {
     }
@@ -157,7 +158,11 @@ public class OSUtils {
      * 本地环境包括：Windows、Mac OS
      */
     public static boolean isLocal() {
-        return isWindows() || isMac();
+        if (OSUtils.isLocal == null) {
+            OSUtils.isLocal = isWindows() || isMac();
+        }
+
+        return OSUtils.isLocal;
     }
 
     /**

@@ -50,14 +50,14 @@ private[fire] abstract class FireInternalTask(baseFire: BaseFire) extends Serial
           val jvmInfo = runtimeInfo.getJvmInfo
           val cpuInfo = runtimeInfo.getCpuInfo
           val threadInfo = runtimeInfo.getThreadInfo
-          logger.info(
-            s"""${FirePS1Conf.PINK}
+          logger.info(FirePS1Conf.wrap(
+            s"""
                |GC      -> YGC: ${jvmInfo.getMinorGCCount}   YGCT: ${UnitFormatUtils.readable(jvmInfo.getMinorGCTime, UnitFormatUtils.TimeUnitEnum.MS)}    FGC: ${jvmInfo.getFullGCCount}   FGCT: ${UnitFormatUtils.readable(jvmInfo.getFullGCTime, UnitFormatUtils.TimeUnitEnum.MS)}
                |OnHeap  -> Total: ${UnitFormatUtils.readable(jvmInfo.getMemoryTotal, DateUnitEnum.BYTE)}    Used: ${UnitFormatUtils.readable(jvmInfo.getMemoryUsed, DateUnitEnum.BYTE)}   Free: ${UnitFormatUtils.readable(jvmInfo.getMemoryFree, DateUnitEnum.BYTE)}   HeapMax: ${UnitFormatUtils.readable(jvmInfo.getHeapMaxSize, DateUnitEnum.BYTE)}   HeapUsed: ${UnitFormatUtils.readable(jvmInfo.getHeapUseSize, DateUnitEnum.BYTE)}    Committed: ${UnitFormatUtils.readable(jvmInfo.getHeapCommitedSize, DateUnitEnum.BYTE)}
                |OffHeap -> Total: ${UnitFormatUtils.readable(jvmInfo.getNonHeapMaxSize, DateUnitEnum.BYTE)}   Used: ${UnitFormatUtils.readable(jvmInfo.getNonHeapUseSize, DateUnitEnum.BYTE)}   Committed: ${UnitFormatUtils.readable(jvmInfo.getNonHeapCommittedSize, DateUnitEnum.BYTE)}
                |CPUInfo -> Load: ${cpuInfo.getCpuLoad}   LoadAverage: ${cpuInfo.getLoadAverage.mkString(",")}   IoWait: ${cpuInfo.getIoWait}   IrqTick: ${cpuInfo.getIrqTick}
-               |Thread  -> Total: ${threadInfo.getTotalCount}    TotalStarted: ${threadInfo.getTotalStartedCount}   Peak: ${threadInfo.getPeakCount}   Deamon: ${threadInfo.getDeamonCount}   CpuTime: ${UnitFormatUtils.readable(threadInfo.getCpuTime, UnitFormatUtils.TimeUnitEnum.MS)}    UserTime: ${UnitFormatUtils.readable(threadInfo.getUserTime, UnitFormatUtils.TimeUnitEnum.MS)} ${FirePS1Conf.DEFAULT}
-               |""".stripMargin)
+               |Thread  -> Total: ${threadInfo.getTotalCount}    TotalStarted: ${threadInfo.getTotalStartedCount}   Peak: ${threadInfo.getPeakCount}   Deamon: ${threadInfo.getDeamonCount}   CpuTime: ${UnitFormatUtils.readable(threadInfo.getCpuTime, UnitFormatUtils.TimeUnitEnum.MS)}    UserTime: ${UnitFormatUtils.readable(threadInfo.getUserTime, UnitFormatUtils.TimeUnitEnum.MS)}}
+               |""".stripMargin, FirePS1Conf.PINK))
         })
       } catch {
         case _: Throwable => this.doJvmMonitor.set(false)

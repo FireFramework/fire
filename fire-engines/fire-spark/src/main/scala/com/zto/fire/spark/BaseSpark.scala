@@ -18,7 +18,7 @@
 package com.zto.fire.spark
 
 import com.zto.fire._
-import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf, FirePS1Conf}
 import com.zto.fire.common.util.{FireUtils, PropUtils, SQLUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
@@ -102,7 +102,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
    */
   override protected[fire] final def shutdown(stopGracefully: Boolean = true, inListener: Boolean = false): Unit = {
     try {
-      this.logger.info("<-- 完成用户资源回收 -->")
+      this.logger.info(FirePS1Conf.wrap("<-- 完成用户资源回收 -->", FirePS1Conf.GREEN))
 
       if (!inListener) {
         // 事件监听器中无法进行上下文的关闭
