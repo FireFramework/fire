@@ -18,7 +18,7 @@
 package com.zto.fire.common.lineage
 
 import com.zto.fire.common.anno.Internal
-import com.zto.fire.common.bean.lineage.{Lineage, SQLTable}
+import com.zto.fire.common.bean.lineage.{Lineage, SQLTable, SQLTablePartitions}
 import com.zto.fire.common.conf.FireFrameworkConf._
 import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
 import com.zto.fire.common.lineage.LineageManager.printLog
@@ -241,6 +241,338 @@ object LineageManager extends Logging {
     this.addDatasource(this.getDatasourceType(datasourceDesc), this.mergeOperations(datasourceDesc, operations: _*))
   }
 
+  // ----------------------------------------------- 数仓数据源 ---------------------------------------------------------- //
+
+  /**
+   * 添加Hive数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addHiveLineage(cluster: String, tableName: String, partitions: JSet[SQLTablePartitions], operations: Operation*): Unit = {
+    this.addLineage(HiveDatasource(Datasource.HIVE.toString, cluster, tableName, partitions, null), operations: _*)
+  }
+
+  /**
+   * 添加Hudi数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addHudiLineage(tableName: String, tableType: String, recordKey: String, precombineKey: String, partitionField: String, operations: Operation*): Unit = {
+    this.addLineage(HudiDatasource(Datasource.HUDI.toString, tableName, tableType, recordKey, precombineKey, partitionField), operations: _*)
+  }
+
+  /**
+   * 添加FileSystem数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addFileSystemLineage(datasource: Datasource, cluster: String, tableName: String,
+                           partitions: JSet[SQLTablePartitions], operations: Operation*): Unit = {
+    this.addLineage(FileDatasource(datasource.toString, cluster, tableName, partitions), operations: _*)
+  }
+
+
+  /**
+   * 添加Iceberg数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addIcebergLineage(cluster: String, tableName: String, operations: Operation*): Unit = {
+    this.addFileSystemLineage(Datasource.ICEBERG, cluster, tableName, null, operations: _*)
+  }
+
+  /**
+   * 添加Paimon数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addPaimonLineage(cluster: String, tableName: String, primaryKey: String,
+                       bucketKey: String, partitionField: String, operations: Operation*): Unit = {
+    this.addLineage(PaimonDatasource(Datasource.PAIMON.toString, cluster, tableName, primaryKey , bucketKey, partitionField), operations: _*)
+  }
+
+  /**
+   * 添加Dynamodb数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addDynamodbLineage(cluster: String, tableName: String, operations: Operation*): Unit = {
+    this.addFileSystemLineage(Datasource.DYNAMODB, cluster, tableName, null, operations: _*)
+  }
+
+  /**
+   * 添加Firehose数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addFirehoseLineage(cluster: String, tableName: String, operations: Operation*): Unit = {
+    this.addFileSystemLineage(Datasource.FIREHOSE, cluster, tableName, null, operations: _*)
+  }
+
+  /**
+   * 添加Kinesis数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addKinesisLineage(cluster: String, tableName: String, operations: Operation*): Unit = {
+    this.addFileSystemLineage(Datasource.KINESIS, cluster, tableName, null, operations: _*)
+  }
+
+  // ----------------------------------------------- 虚拟数据源 ---------------------------------------------------------- //
+
+  /**
+   * 添加datagen数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addDataGenLineage(operations: Operation*): Unit = {
+    this.addLineage(VirtualDatasource(Datasource.DATAGEN.toString), operations: _*)
+  }
+
+  /**
+   * 添加print数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addPrintLineage(operations: Operation*): Unit = {
+    this.addLineage(VirtualDatasource(Datasource.PRINT.toString), operations: _*)
+  }
+
+  /**
+   * 添加BlackHole数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addBlackHoleLineage(operations: Operation*): Unit = {
+    this.addLineage(VirtualDatasource(Datasource.BLACKHOLE.toString), operations: _*)
+  }
+
+  // ----------------------------------------------- 自定义数据源 ---------------------------------------------------------- //
+
+  /**
+   * 添加CustomizeSource数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addCustomizeSourceLineage(datasource: String, cluster: String, sourceType: String, operations: Operation*): Unit = {
+    this.addLineage(CustomizeDatasource(datasource, cluster, sourceType), operations: _*)
+  }
+
+  /**
+   * 添加CustomizeSink数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addCustomizeSinkLineage(datasource: String, cluster: String, sourceType: String, operations: Operation*): Unit = {
+    this.addLineage(CustomizeDatasource(datasource, cluster, sourceType), operations: _*)
+  }
+
+  // ----------------------------------------------- 消息队列数据源 ---------------------------------------------------------- //
+
+  /**
+   * 添加Kafka数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addKafkaLineage(cluster: String, topics: String, groupId: String, operations: Operation*): Unit = {
+    this.addLineage(MQDatasource("kafka", cluster, topics, groupId), operations: _*)
+  }
+
+  /**
+   * 添加RocketMQ数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addRocketMQLineage(cluster: String, topics: String, groupId: String, operations: Operation*): Unit = {
+    this.addLineage(MQDatasource("rocketmq", cluster, topics, groupId), operations: _*)
+  }
+
+  // ----------------------------------------------- 数据库类型数据源 ---------------------------------------------------------- //
+
+  /**
+   * 添加数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addDBLineage(dbType: Datasource, cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addLineage(DBDatasource(dbType.toString, cluster, tableName, username), operations: _*)
+  }
+
+
+  /**
+   * 添加HBase数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addHBaseLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.HBASE, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addMySQLLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.MYSQL, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加tidb数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addTidbLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.TIDB, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加Oracle数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addOracleLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.ORACLE, cluster, tableName, username, operations: _*)  }
+
+  /**
+   * 添加DB2数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addDB2Lineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.DB2, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加Clickhouse数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addClickhouseLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.CLICKHOUSE, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加SQLServer数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addSQLServerLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.SQLSERVER, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加Presto数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addPrestoLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.PRESTO, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加Kylin数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addKylinLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.KYLIN, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加Derby数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addDerbyLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.DERBY, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加Redis数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addRedisLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.REDIS, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加MongoDB数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addMongoDBLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.MONGODB, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加Doris数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addDorisLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.DORIS, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加ES数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addESLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.ELASTICSEARCH, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加Doris数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addOpenSearchLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.OPENSEARCH, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加StarRocks数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addStarRocksLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.STARROCKS, cluster, tableName, username, operations: _*)
+  }
 
   /**
    * 为指定数据源添加Operation类型
