@@ -76,7 +76,7 @@ object ThreadUtils extends Logging {
         while (true) {
           fun
           logger.debug(s"Loop invoke runAsThreadLoop as ${Thread.currentThread().getName}. Delay is ${delay}s.")
-          Thread.sleep(delay * 1000)
+          Thread.sleep(Math.abs(delay * 1000))
         }
       }
     })

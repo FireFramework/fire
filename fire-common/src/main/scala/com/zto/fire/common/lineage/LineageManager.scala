@@ -135,6 +135,10 @@ private[fire] class LineageManager extends Logging {
  */
 object LineageManager extends Logging {
   private[fire] lazy val manager = new LineageManager
+  private lazy val sparkSqlParser = "com.zto.fire.spark.sql.SparkSqlParser"
+  private lazy val flinkSqlParser = "com.zto.fire.flink.sql.FlinkSqlParser"
+  private lazy val sparkLineageAccumulatorManager = "com.zto.fire.spark.sync.SparkLineageAccumulatorManager"
+  private lazy val flinkLineageAccumulatorManager = "com.zto.fire.flink.sync.FlinkLineageAccumulatorManager"
 
   /**
    * 向标准输出流打印血缘日志
@@ -150,6 +154,30 @@ object LineageManager extends Logging {
       println(log)
     }
   }
+
+  /**
+   * 周期性的打印血缘json到master端
+   *
+   * @param interval
+   * 时间间隔
+   */
+  def print(interval: Long = 60): Unit = {
+    ThreadUtils.runLoop({
+      val lineage = FireUtils.invokeEngineApi[Lineage](sparkLineageAccumulatorManager, flinkLineageAccumulatorManager, "getValue")
+      val jsonLineage = s"血缘：\n${JSONUtils.toJSONString(lineage)}"
+      println(jsonLineage)
+      logInfo(jsonLineage)
+    }, interval)
+  }
+
+  /**
+   * 周期性的打印血缘json到master端
+   *
+   * @param interval
+   * 时间间隔
+   */
+  def show(interval: Long = 60): Unit = this.print(interval)
+
 
   /**
    * 添加一条sql记录到队列中
@@ -240,6 +268,29 @@ object LineageManager extends Logging {
 
     this.addDatasource(this.getDatasourceType(datasourceDesc), this.mergeOperations(datasourceDesc, operations: _*))
   }
+
+  // ----------------------------------------------- SQL数据源 ---------------------------------------------------------- //
+
+  /**
+   * 用于采集计算引擎中执行的sql语句
+   *
+   * @param sql
+   * sql 脚本
+   */
+  def addSql(sql: String): Unit = {
+    if (isEmpty(sql)) return
+
+    FireUtils.invokeEngineApi[Unit](this.sparkSqlParser, this.flinkSqlParser, "sqlParse", Array[Class[_]](classOf[String]), Array[Object](sql))
+    printLog(s"引擎主动调用采集SQL：$sql")
+  }
+
+  /**
+   * 用于采集计算引擎中执行的sql语句
+   *
+   * @param sql
+   * sql 脚本
+   */
+  def addSqlLineage(sql: String): Unit = this.addSql(sql)
 
   // ----------------------------------------------- 数仓数据源 ---------------------------------------------------------- //
 
@@ -671,31 +722,6 @@ object LineageManager extends Logging {
     })
     printLog(s"2. 双血缘map合并 current：$current")
     current
-  }
-
-  /**
-   * 用于采集计算引擎中执行的sql语句
-   *
-   * @param sql
-   * sql 脚本
-   */
-  def addSql(sql: String): Unit = {
-    if (isEmpty(sql)) return
-
-    var sqlParserMethod: Method = null
-
-    if (FireUtils.isSparkEngine) {
-      sqlParserMethod = ReflectionUtils.getMethodByName("com.zto.fire.spark.sql.SparkSqlParser", "sqlParse")
-    }
-
-    if (FireUtils.isFlinkEngine) {
-      sqlParserMethod = ReflectionUtils.getMethodByName("com.zto.fire.flink.sql.FlinkSqlParser", "sqlParse")
-    }
-
-    if (sqlParserMethod != null) {
-      sqlParserMethod.invoke(null, sql)
-      printLog(s"引擎主动调用采集SQL：$sql")
-    }
   }
 }
 

@@ -131,15 +131,31 @@ private[fire] object FireUtils extends Serializable with Logging {
    */
   @Internal
   private[this] def invokeEngineUtils[T](methodName: JString, parameterTypes: Array[Class[_]] = Array[Class[_]](), args: Array[Object] = Array[Object]()): T = {
+    this.invokeEngineApi[T](this.sparkUtils, this.flinkUtils, methodName, parameterTypes, args)
+  }
+
+  /**
+   * 反射调用不同引擎上层的方法
+   *
+   * @param sparkApiName
+   * Spark 相关api类名称
+   * @param flinkApiName
+   * Flink 相关api类名称
+   * @param methodName
+   * spark或flink的API方法名
+   * @return
+   */
+  @Internal
+  private[fire] def invokeEngineApi[T](sparkApiName: String, flinkApiName: String, methodName: JString, parameterTypes: Array[Class[_]] = Array[Class[_]](), args: Array[Object] = Array[Object]()): T = {
     tryWithReturn {
       if (this.isSparkEngine) {
-        val getVersionMethod = ReflectionUtils.getMethodByParameter(Class.forName(sparkUtils), methodName, parameterTypes: _*)
+        val getVersionMethod = ReflectionUtils.getMethodByParameter(Class.forName(sparkApiName), methodName, parameterTypes: _*)
         getVersionMethod.invoke(null, args: _*).asInstanceOf[T]
       } else {
-        val getVersionMethod = ReflectionUtils.getMethodByParameter(Class.forName(flinkUtils), methodName, parameterTypes: _*)
+        val getVersionMethod = ReflectionUtils.getMethodByParameter(Class.forName(flinkApiName), methodName, parameterTypes: _*)
         getVersionMethod.invoke(null, args: _*).asInstanceOf[T]
       }
-    } (this.logger, catchLog = s"反射调用工具类方法[$methodName]失败")
+    } (this.logger, catchLog = s"反射调用方法[$methodName]失败！")
   }
 
   /**
