@@ -80,9 +80,19 @@ object JSONUtils {
    * 将给定的对象解析成json字符串
    *
    * @param obj 任意的对象实例
+   * @param pretty 格式化输出
    * @return json字符串
    */
-  def toJSONString(obj: Object): String = this.getObjectMapper.writeValueAsString(obj)
+  def toJSONString(obj: Object, pretty: Boolean): String = this.getObjectMapper.configure(SerializationFeature.INDENT_OUTPUT, pretty).writeValueAsString(obj)
+
+
+  /**
+   * 将给定的对象解析成json字符串
+   *
+   * @param obj 任意的对象实例
+   * @return json字符串
+   */
+  def toJSONString(obj: Object): String = this.toJSONString(obj, false)
 
   /**
    * 将给定的json字符串转为T类型对象实例

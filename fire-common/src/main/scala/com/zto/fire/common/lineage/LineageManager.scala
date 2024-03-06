@@ -161,10 +161,10 @@ object LineageManager extends Logging {
    * @param interval
    * 时间间隔
    */
-  def print(interval: Long = 60): Unit = {
+  def print(interval: Long = 60, pretty: Boolean = true): Unit = {
     ThreadUtils.runLoop({
       val lineage = FireUtils.invokeEngineApi[Lineage](sparkLineageAccumulatorManager, flinkLineageAccumulatorManager, "getValue")
-      val jsonLineage = s"血缘：\n${JSONUtils.toJSONString(lineage)}"
+      val jsonLineage = s"血缘：\n${JSONUtils.toJSONString(lineage, pretty)}"
       println(jsonLineage)
       logInfo(jsonLineage)
     }, interval)
