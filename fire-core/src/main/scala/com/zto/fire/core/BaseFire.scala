@@ -19,6 +19,7 @@ package com.zto.fire.core
 
 import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
 import com.zto.fire.common.enu.JobType
+import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.util.{FireUtils, _}
 import com.zto.fire.core.anno.lifecycle.{After, Before}
 import com.zto.fire.core.conf.AnnoManager
@@ -169,6 +170,7 @@ trait BaseFire extends Logging {
       this.loadSqlConf()
       this.process()
       AnnoManager.processAnno(this)
+      if (FireFrameworkConf.lineageDebugEnable) LineageManager.show()
     }) (this.logger, "业务逻辑代码执行完成", "业务逻辑代码执行失败", isThrow = true)
   }
 
