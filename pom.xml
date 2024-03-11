@@ -22,7 +22,7 @@
     <groupId>com.zto.fire</groupId>
     <artifactId>fire-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.4.3-SNAPSHOT</version>
+    <version>2.4.4-SNAPSHOT</version>
     <name>Fire : </name>
     <description>Fire framework is a development framework for real-time computing task development . The framework provides a simple and easy to use API that can significantly reduce the development threshold of Spark and Flink and improve development efficiency.</description>
     <url>https://github.com/fire-framework/fire</url>
@@ -95,6 +95,7 @@
         <derby.version>10.13.1.1</derby.version>
         <jsqlparser.version>4.5</jsqlparser.version>
         <htrace.version>3.2.0-incubating</htrace.version>
+        <build.dest>pub</build.dest>
         <httpcomponents.version>4.3.3</httpcomponents.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <rocketmq.schema.registry.version>0.1.0</rocketmq.schema.registry.version>
@@ -658,6 +659,35 @@
                 <hudi.major.version>1.0</hudi.major.version>
             </properties>
         </profile>
+        <!-- include zto env -->
+        <profile>
+            <id>zto-env</id>
+            <properties>
+                <build.dest>zto</build.dest>
+            </properties>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <!-- 中通内部集群环境依赖，编译报错可直接注释掉，不影响开源社区使用 -->
+                <dependency>
+                    <groupId>com.zto.bigdata</groupId>
+                    <artifactId>cluster-env</artifactId>
+                    <version>1.0.4-SNAPSHOT</version>
+                </dependency>
+            </dependencies>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>true</filtering>
+                        <includes>
+                            <include>conf-test.properties</include>
+                        </includes>
+                    </resource>
+                </resources>
+            </build>
+        </profile>
     </profiles>
 
     <dependencies>
@@ -870,6 +900,7 @@
                             <sources>
                                 <source>src/main/java</source>
                                 <source>src/main/scala</source>
+                                <source>src/main/scala-${build.dest}</source>
                                 <source>src/main/java-spark-${spark.major.version}</source>
                                 <source>src/main/scala-spark-${spark.major.version}</source>
                                 <source>src/main/java-flink-${flink.major.version}</source>
@@ -891,6 +922,7 @@
                             <sources>
                                 <source>src/test/java</source>
                                 <source>src/test/scala</source>
+                                <source>src/main/scala-${build.dest}</source>
                                 <source>src/test/java-spark-${spark.major.version}</source>
                                 <source>src/test/scala-spark-${spark.major.version}</source>
                                 <source>src/test/java-flink-${flink.major.version}</source>

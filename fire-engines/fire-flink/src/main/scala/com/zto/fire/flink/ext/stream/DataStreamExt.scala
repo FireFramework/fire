@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
 import com.zto.fire.common.lineage.parser.connector.KafkaConnectorParser
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util._
@@ -44,6 +44,7 @@ import org.apache.flink.connector.jdbc.JdbcConnectionOptions.JdbcConnectionOptio
 import org.apache.flink.connector.jdbc.JdbcExactlyOnceOptions.JDBCExactlyOnceOptionsBuilder
 import org.apache.flink.connector.jdbc.{JdbcConnectionOptions, JdbcExactlyOnceOptions, JdbcExecutionOptions, JdbcStatementBuilder}
 import org.apache.flink.streaming.api.datastream.DataStreamSink
+import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.scala.function.AllWindowFunction
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
@@ -69,7 +70,7 @@ import scala.reflect.ClassTag
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class DataStreamExt[T](stream: DataStream[T]) extends Logging {
+class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](stream) with Logging {
   lazy val tableEnv = FlinkSingletonFactory.getTableEnv.asInstanceOf[StreamTableEnvironment]
 
   /**
@@ -174,7 +175,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
                       batch: Int = 10,
                       flushInterval: Long = 1000,
                       keyNum: Int = KeyNum._1): DataStreamSink[T] = {
-    this.stream.addSink(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
+    this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       var fieldMap: java.util.Map[String, Field] = _
       var clazz: Class[_] = _
 
@@ -226,7 +227,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
                        batch: Int = 10,
                        flushInterval: Long = 1000,
                        keyNum: Int = KeyNum._1)(fun: T => Seq[Any]): DataStreamSink[T] = {
-    this.stream.addSink(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
+    this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       override def map(value: T): Seq[Any] = {
         fun(value)
       }
@@ -275,7 +276,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
                                                     flushInterval: Long = 3000,
                                                     keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
     HBaseConnector.checkClass[E]()
-    this.stream.addSink(new HBaseSink[T, E](tableName, batch, flushInterval, keyNum) {
+    this.addSinkWrap(new HBaseSink[T, E](tableName, batch, flushInterval, keyNum) {
       /**
        * 将数据构建成sink的格式
        */
@@ -374,7 +375,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
     val finalBatch = if (FireKafkaConf.kafkaSinkBatch(keyNum) > 0) FireKafkaConf.kafkaSinkBatch(keyNum) else batch
     val finalInterval = if (FireKafkaConf.kafkaFlushInterval(keyNum) > 0) FireKafkaConf.kafkaFlushInterval(keyNum) else flushInterval
 
-    this.stream.addSink(new KafkaSink[T, E](params, url, topic, finalBatch, finalInterval, keyNum) {
+    this.addSinkWrap(new KafkaSink[T, E](params, url, topic, finalBatch, finalInterval, keyNum) {
       override def map(value: T): E = fun(value)
     })
   }
@@ -417,7 +418,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
     val finalBatch = if (FireRocketMQConf.rocketSinkBatch(keyNum) > 0) FireRocketMQConf.rocketSinkBatch(keyNum) else batch
     val finalInterval = if (FireRocketMQConf.rocketSinkFlushInterval(keyNum) > 0) FireRocketMQConf.rocketSinkFlushInterval(keyNum) else flushInterval
 
-    this.stream.addSink(new RocketMQSink[T, E](params, url, topic, tag, finalBatch, finalInterval, keyNum) {
+    this.addSinkWrap(new RocketMQSink[T, E](params, url, topic, tag, finalBatch, finalInterval, keyNum) {
       override def map(value: T): E = fun(value)
     })
   }
@@ -510,7 +511,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends Logging {
 
     // 将流式数据实时写入到指定的关系型数据源中
     import org.apache.flink.connector.jdbc.JdbcSink
-    stream.addSink(JdbcSink.sink(sql,
+    this.addSinkWrap(JdbcSink.sink(sql,
       new JdbcStatementBuilder[T]() {
         override def accept(stat: PreparedStatement, bean: T): Unit = {
           DBUtils.setPreparedStatement(columnList, stat, bean)

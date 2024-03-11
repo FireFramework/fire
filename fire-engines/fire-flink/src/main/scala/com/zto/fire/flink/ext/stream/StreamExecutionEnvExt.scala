@@ -60,7 +60,7 @@ import scala.reflect.ClassTag
  * @author ChengLong 2020年1月7日 09:18:21
  * @since 0.4.1
  */
-class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with TableApi with JdbcConnectorBridge
+class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends StreamExecutionEnvHelperImpl(env) with Api with TableApi with JdbcConnectorBridge
   with HBaseConnectorProvider with JdbcFlinkProvider {
   private[fire] lazy val tableEnv = FlinkSingletonFactory.getTableEnv
 
@@ -170,7 +170,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
     if (FireKafkaConf.offsetLargest.equalsIgnoreCase(FireKafkaConf.kafkaStartingOffset(keyNum))) kafkaConsumer.setStartFromLatest()
     // 从topic中指定的group上次消费的位置开始消费，必须配置group.id参数
     if (FireKafkaConf.kafkaStartFromGroupOffsets(keyNum)) kafkaConsumer.setStartFromGroupOffsets()
-    this.env.addSource(kafkaConsumer)
+    this.addSourceWrap(kafkaConsumer)
   }
 
   /**
@@ -258,7 +258,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                                       keyNum: Int = KeyNum._1): DataStream[(String, String, String)] = {
     val props = buildRocketMQProps(rocketParam, groupId, topics, tag, keyNum)
 
-    this.env.addSource(new RocketMQSourceWithTag[(String, String, String)](new SimpleTagKeyValueDeserializationSchema, props)).name("RocketMQ Source")
+    this.addSourceWrap(new RocketMQSourceWithTag[(String, String, String)](new SimpleTagKeyValueDeserializationSchema, props)).name("RocketMQ Source")
   }
 
   /**
@@ -280,7 +280,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
                                       keyNum: Int = KeyNum._1): DataStream[MessageExt] = {
     val props = buildRocketMQProps(rocketParam, groupId, topics, tag, keyNum)
 
-    this.env.addSource(new RocketMQSourceWithTag[MessageExt](new MetadataDeserializationSchema, props)).name("RocketMQ Source Meta")
+    this.addSourceWrap(new RocketMQSourceWithTag[MessageExt](new MetadataDeserializationSchema, props)).name("RocketMQ Source Meta")
   }
 
   /**
@@ -449,7 +449,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * ReceiverInputDStream[T]
    */
   def createRandomIntStream(qps: Long = 1000): DataStream[Int] = {
-    this.addSource(new RandomIntConnector(qps))
+    this.addCustomizeSource(new RandomIntConnector(qps))
   }
 
   /**
@@ -461,7 +461,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * DataStream[T]
    */
   def createRandomLongStream(qps: Long = 1000): DataStream[Long] = {
-    this.addSource(new RandomLongConnector(qps))
+    this.addCustomizeSource(new RandomLongConnector(qps))
   }
 
   /**
@@ -473,7 +473,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * DataStream[T]
    */
   def createRandomDoubleStream(qps: Long = 1000): DataStream[Double] = {
-    this.addSource(new RandomDoubleConnector(qps))
+    this.addCustomizeSource(new RandomDoubleConnector(qps))
   }
 
   /**
@@ -485,7 +485,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * DataStream[T]
    */
   def createRandomFloatStream(qps: Long = 1000): DataStream[Float] = {
-    this.addSource(new RandomFloatConnector(qps))
+    this.addCustomizeSource(new RandomFloatConnector(qps))
   }
 
   /**
@@ -497,7 +497,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * DataStream[T]
    */
   def createUUIDStream(qps: Long = 1000): DataStream[String] = {
-    this.addSource(new UUIDConnector(qps))
+    this.addCustomizeSource(new UUIDConnector(qps))
   }
 
   /**
@@ -511,15 +511,15 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends Api with Ta
    * DataStream[T]
    */
   def createJSONStream[T <: Generator[T] : ClassTag](qps: Long = 1000): DataStream[String] = {
-    this.addSource(new JSONConnector[T](100))
+    this.addCustomizeSource(new JSONConnector[T](100))
   }
 
   /**
    * 自定义Source
    */
-  def addSource[T: TypeInformation](function: SourceFunction[T]): DataStream[T] = {
+  private[fire] def addCustomizeSource[T: TypeInformation](function: SourceFunction[T]): DataStream[T] = {
     CustomizeConnectorParser.addDatasource(CUSTOMIZE_SOURCE, OSUtils.getIp, function.getClass.getSimpleName, FOperation.SOURCE)
-    this.env.addSource[T](function)
+    this.addSourceWrap[T](function)
   }
 
   /**
