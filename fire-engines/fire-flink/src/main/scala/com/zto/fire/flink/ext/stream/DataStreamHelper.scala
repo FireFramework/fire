@@ -56,7 +56,23 @@ abstract class DataStreamHelper[T](stream: DataStream[T]) {
   /**
    * 添加sink数据源，并维护血缘信息
    */
-  def addSinkLineage(sinkFunction: SinkFunction[T])(datasourceDesc: DatasourceDesc, operations: Operation*): DataStreamSink[T] = {
+  def addSinkLineage(sinkFunction: SinkFunction[T])(lineageFun: => Unit): DataStreamSink[T] = {
+    lineageFun
+    this.addSinkWrap(sinkFunction)
+  }
+
+  /**
+   * 添加sink数据源，并维护血缘信息
+   */
+  def addSinkLineage(fun: T => Unit)(lineageFun: => Unit): DataStreamSink[T] = {
+    lineageFun
+    this.addSinkWrap(fun)
+  }
+
+  /**
+   * 添加sink数据源，并维护血缘信息
+   */
+  def addSinkLineage2(sinkFunction: SinkFunction[T])(datasourceDesc: DatasourceDesc, operations: Operation*): DataStreamSink[T] = {
     requireNonNull(datasourceDesc, operations)("血缘信息不能为空，请维护血缘信息！")
     LineageManager.addLineage(datasourceDesc, operations: _*)
     this.addSinkWrap(sinkFunction)
@@ -65,7 +81,7 @@ abstract class DataStreamHelper[T](stream: DataStream[T]) {
   /**
    * 添加sink数据源，并维护血缘信息
    */
-  def addSinkLineage(fun: T => Unit)(datasourceDesc: DatasourceDesc, operations: Operation*): DataStreamSink[T] = {
+  def addSinkLineage2(fun: T => Unit)(datasourceDesc: DatasourceDesc, operations: Operation*): DataStreamSink[T] = {
     requireNonNull(datasourceDesc, operations)("血缘信息不能为空，请维护血缘信息！")
     LineageManager.addLineage(datasourceDesc, operations: _*)
     this.addSinkWrap(fun)

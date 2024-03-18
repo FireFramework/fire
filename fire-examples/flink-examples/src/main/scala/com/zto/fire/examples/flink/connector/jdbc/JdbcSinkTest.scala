@@ -56,8 +56,6 @@ object JdbcSinkTest extends FlinkStreaming {
     // 5. 如果是将数据写入其他数据源，可通过keyNum=xxx指定：
     //    dstream.sinkJdbc(sql, keyNum=3)表示将数据写入@Jdbc3所配置的数据源中
     dstream.sinkJdbc(sql)
-    dstream.addSinkLineage(x => println("lineage=>" + x))(new VirtualDatasource("print"), Operation.SINK)
-    dstream.addSink(x => println("原生：" + x))
 
     // sinkJdbcExactlyOnce支持仅一次的语义，默认支持mysql，如果是Oracle或PostgreSQL，可通过参数指定：
     // dstream.sinkJdbcExactlyOnce(sql, dbType = Datasource.ORACLE, keyNum=2)

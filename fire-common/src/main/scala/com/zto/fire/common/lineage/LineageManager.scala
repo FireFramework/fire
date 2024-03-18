@@ -20,7 +20,7 @@ package com.zto.fire.common.lineage
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.lineage.{Lineage, SQLTable, SQLTablePartitions}
 import com.zto.fire.common.conf.FireFrameworkConf._
-import com.zto.fire.common.conf.FirePS1Conf
+import com.zto.fire.common.conf.{FireHiveConf, FireKafkaConf, FirePS1Conf, FireRocketMQConf}
 import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
 import com.zto.fire.common.lineage.LineageManager.printLog
 import com.zto.fire.common.lineage.parser.ConnectorParserManager
@@ -304,8 +304,8 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addHiveLineage(cluster: String, tableName: String, partitions: JSet[SQLTablePartitions], operations: Operation*): Unit = {
-    this.addLineage(HiveDatasource(Datasource.HIVE.toString, cluster, tableName, partitions, null), operations: _*)
+  def addHiveLineage(tableName: String, operations: Operation*): Unit = {
+    this.addLineage(HiveDatasource(Datasource.HIVE.toString, FireHiveConf.hiveCluster, tableName, null, null), operations: _*)
   }
 
   /**
@@ -389,8 +389,8 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addDataGenLineage(operations: Operation*): Unit = {
-    this.addLineage(VirtualDatasource(Datasource.DATAGEN.toString), operations: _*)
+  def addDataGenLineage: Unit = {
+    this.addLineage(VirtualDatasource(Datasource.DATAGEN.toString), Operation.SOURCE)
   }
 
   /**
@@ -399,8 +399,8 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addPrintLineage(operations: Operation*): Unit = {
-    this.addLineage(VirtualDatasource(Datasource.PRINT.toString), operations: _*)
+  def addPrintLineage: Unit = {
+    this.addLineage(VirtualDatasource(Datasource.PRINT.toString), Operation.SINK)
   }
 
   /**
@@ -409,8 +409,8 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addBlackHoleLineage(operations: Operation*): Unit = {
-    this.addLineage(VirtualDatasource(Datasource.BLACKHOLE.toString), operations: _*)
+  def addBlackHoleLineage: Unit = {
+    this.addLineage(VirtualDatasource(Datasource.BLACKHOLE.toString), Operation.SINK)
   }
 
   // ----------------------------------------------- 自定义数据源 ---------------------------------------------------------- //
@@ -421,8 +421,8 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addCustomizeSourceLineage(datasource: String, cluster: String, sourceType: String, operations: Operation*): Unit = {
-    this.addLineage(CustomizeDatasource(datasource, cluster, sourceType), operations: _*)
+  def addCustomizeSourceLineage(datasource: String, cluster: String, sourceType: String): Unit = {
+    this.addLineage(CustomizeDatasource(datasource, cluster, sourceType), Operation.SOURCE)
   }
 
   /**
@@ -431,8 +431,8 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addCustomizeSinkLineage(datasource: String, cluster: String, sourceType: String, operations: Operation*): Unit = {
-    this.addLineage(CustomizeDatasource(datasource, cluster, sourceType), operations: _*)
+  def addCustomizeSinkLineage(datasource: String, cluster: String, sourceType: String): Unit = {
+    this.addLineage(CustomizeDatasource(datasource, cluster, sourceType), Operation.SINK)
   }
 
   // ----------------------------------------------- 消息队列数据源 ---------------------------------------------------------- //
@@ -443,7 +443,19 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addKafkaLineage(cluster: String, topics: String, groupId: String, operations: Operation*): Unit = {
+  def addKafkaLineage(keyNum: Int, operations: Operation*): Unit = {
+    lazy val (finalBrokers, finalTopic, _) = KafkaUtils.getConfByKeyNum(null, null, null, keyNum)
+    this.addLineage(MQDatasource("kafka", finalBrokers, finalTopic, FireKafkaConf.kafkaGroupId(keyNum)), operations: _*)
+  }
+
+
+  /**
+   * 添加Kafka数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addKafkaLineage2(cluster: String, topics: String, groupId: String, operations: Operation*): Unit = {
     this.addLineage(MQDatasource("kafka", cluster, topics, groupId), operations: _*)
   }
 
@@ -453,7 +465,18 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addRocketMQLineage(cluster: String, topics: String, groupId: String, operations: Operation*): Unit = {
+  def addRocketMQLineage(keyNum: Int, operations: Operation*): Unit = {
+    val (finalBrokers, finalTopic, _, _) = RocketMQUtils.getConfByKeyNum(null, null, null, null, keyNum)
+    this.addLineage(MQDatasource("rocketmq", finalBrokers, finalTopic, FireRocketMQConf.rocketGroupId(keyNum)), operations: _*)
+  }
+
+  /**
+   * 添加RocketMQ数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addRocketMQLineage2(cluster: String, topics: String, groupId: String, operations: Operation*): Unit = {
     this.addLineage(MQDatasource("rocketmq", cluster, topics, groupId), operations: _*)
   }
 
@@ -465,19 +488,10 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addDBLineage(dbType: Datasource, cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addLineage(DBDatasource(dbType.toString, cluster, tableName, username), operations: _*)
-  }
-
-
-  /**
-   * 添加HBase数据源信息
-   *
-   * @param operations
-   * 操作类型
-   */
-  def addHBaseLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.HBASE, cluster, tableName, username, operations: _*)
+  def addDBLineage(dbType: Datasource, tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    val url = PropUtils.getString("db.jdbc.url", "", keyNum)
+    val username = PropUtils.getString("db.jdbc.user", "", keyNum)
+    this.addLineage(DBDatasource(dbType.toString, url, tableName, username), operations: _*)
   }
 
   /**
@@ -486,8 +500,48 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addMySQLLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.MYSQL, cluster, tableName, username, operations: _*)
+  def addDBLineage2(dbType: Datasource, cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addLineage(DBDatasource(dbType.toString, cluster, tableName, username), operations: _*)
+  }
+
+  /**
+   * 添加HBase数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addHBaseLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.HBASE, PropUtils.getString("hbase.cluster", "", keyNum), tableName, PropUtils.getString("hbase.user", "", keyNum), operations: _*)
+  }
+
+  /**
+   * 添加HBase数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addHBaseLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.HBASE, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addMySQLLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.MYSQL, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addMySQLLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.MYSQL, cluster, tableName, username, operations: _*)
   }
 
   /**
@@ -496,8 +550,18 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addTidbLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.TIDB, cluster, tableName, username, operations: _*)
+  def addTidbLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.TIDB, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加tidb数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addTidbLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.TIDB, cluster, tableName, username, operations: _*)
   }
 
   /**
@@ -506,8 +570,19 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addOracleLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.ORACLE, cluster, tableName, username, operations: _*)  }
+  def addOracleLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.ORACLE, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加Oracle数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addOracleLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.ORACLE, cluster, tableName, username, operations: _*)
+  }
 
   /**
    * 添加DB2数据库数据源信息
@@ -515,8 +590,18 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addDB2Lineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.DB2, cluster, tableName, username, operations: _*)
+  def addDB2Lineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.DB2, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加DB2数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addDB2Lineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.DB2, cluster, tableName, username, operations: _*)
   }
 
   /**
@@ -525,8 +610,18 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addClickhouseLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.CLICKHOUSE, cluster, tableName, username, operations: _*)
+  def addClickhouseLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.CLICKHOUSE, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加Clickhouse数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addClickhouseLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.CLICKHOUSE, cluster, tableName, username, operations: _*)
   }
 
   /**
@@ -535,28 +630,18 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addSQLServerLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.SQLSERVER, cluster, tableName, username, operations: _*)
+  def addSQLServerLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.SQLSERVER, tableName, keyNum, operations: _*)
   }
 
   /**
-   * 添加Presto数据库数据源信息
+   * 添加SQLServer数据库数据源信息
    *
    * @param operations
    * 操作类型
    */
-  def addPrestoLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.PRESTO, cluster, tableName, username, operations: _*)
-  }
-
-  /**
-   * 添加Kylin数据库数据源信息
-   *
-   * @param operations
-   * 操作类型
-   */
-  def addKylinLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.KYLIN, cluster, tableName, username, operations: _*)
+  def addSQLServerLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.SQLSERVER, cluster, tableName, username, operations: _*)
   }
 
   /**
@@ -565,8 +650,58 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addDerbyLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.DERBY, cluster, tableName, username, operations: _*)
+  def addDerbyLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.DERBY, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加Derby数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addDerbyLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.DERBY, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加Presto数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addPrestoLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.PRESTO, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加Presto数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addPrestoLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.PRESTO, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加Kylin数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addKylinLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.KYLIN, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加Kylin数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addKylinLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.KYLIN, cluster, tableName, username, operations: _*)
   }
 
   /**
@@ -576,7 +711,7 @@ object LineageManager extends Logging {
    * 操作类型
    */
   def addRedisLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.REDIS, cluster, tableName, username, operations: _*)
+    this.addDBLineage2(Datasource.REDIS, cluster, tableName, username, operations: _*)
   }
 
   /**
@@ -586,7 +721,7 @@ object LineageManager extends Logging {
    * 操作类型
    */
   def addMongoDBLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.MONGODB, cluster, tableName, username, operations: _*)
+    this.addDBLineage2(Datasource.MONGODB, cluster, tableName, username, operations: _*)
   }
 
   /**
@@ -596,7 +731,7 @@ object LineageManager extends Logging {
    * 操作类型
    */
   def addDorisLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.DORIS, cluster, tableName, username, operations: _*)
+    this.addDBLineage2(Datasource.DORIS, cluster, tableName, username, operations: _*)
   }
 
   /**
@@ -606,7 +741,7 @@ object LineageManager extends Logging {
    * 操作类型
    */
   def addESLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.ELASTICSEARCH, cluster, tableName, username, operations: _*)
+    this.addDBLineage2(Datasource.ELASTICSEARCH, cluster, tableName, username, operations: _*)
   }
 
   /**
@@ -616,7 +751,7 @@ object LineageManager extends Logging {
    * 操作类型
    */
   def addOpenSearchLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.OPENSEARCH, cluster, tableName, username, operations: _*)
+    this.addDBLineage2(Datasource.OPENSEARCH, cluster, tableName, username, operations: _*)
   }
 
   /**
@@ -626,7 +761,7 @@ object LineageManager extends Logging {
    * 操作类型
    */
   def addStarRocksLineage(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
-    this.addDBLineage(Datasource.STARROCKS, cluster, tableName, username, operations: _*)
+    this.addDBLineage2(Datasource.STARROCKS, cluster, tableName, username, operations: _*)
   }
 
   /**

@@ -58,7 +58,23 @@ abstract class StreamExecutionEnvHelper(env: StreamExecutionEnvironment) {
   /**
    * 添加source数据源的同时维护血缘信息
    */
-  def addSourceLineage[T: TypeInformation](function: SourceContext[T] => Unit)(datasourceDesc: DatasourceDesc, operations: Operation*): DataStream[T] = {
+  def addSourceLineage[T: TypeInformation](function: SourceContext[T] => Unit)(lineageFun: => Unit): DataStream[T] = {
+    lineageFun
+    this.addSourceWrap[T](function)
+  }
+
+  /**
+   * 添加source数据源的同时维护血缘信息
+   */
+  def addSourceLineage[T: TypeInformation](function: SourceFunction[T])(lineageFun: => Unit): DataStream[T] = {
+    lineageFun
+    this.addSourceWrap[T](function)
+  }
+
+  /**
+   * 添加source数据源的同时维护血缘信息
+   */
+  def addSourceLineage2[T: TypeInformation](function: SourceContext[T] => Unit)(datasourceDesc: DatasourceDesc, operations: Operation*): DataStream[T] = {
     requireNonNull(datasourceDesc, operations)("血缘信息不能为空，请维护血缘信息！")
     LineageManager.addLineage(datasourceDesc, operations: _*)
     this.addSourceWrap[T](function)
@@ -67,10 +83,9 @@ abstract class StreamExecutionEnvHelper(env: StreamExecutionEnvironment) {
   /**
    * 添加source数据源的同时维护血缘信息
    */
-  def addSourceLineage[T: TypeInformation](function: SourceFunction[T])(datasourceDesc: DatasourceDesc, operations: Operation*): DataStream[T] = {
+  def addSourceLineage2[T: TypeInformation](function: SourceFunction[T])(datasourceDesc: DatasourceDesc, operations: Operation*): DataStream[T] = {
     requireNonNull(datasourceDesc, operations)("血缘信息不能为空，请维护血缘信息！")
     LineageManager.addLineage(datasourceDesc, operations: _*)
     this.addSourceWrap[T](function)
   }
-
 }

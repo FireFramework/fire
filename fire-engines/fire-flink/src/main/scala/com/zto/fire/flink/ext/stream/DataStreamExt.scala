@@ -461,7 +461,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
       kafkaProducersPoolSize
     )
 
-    this.stream.asInstanceOf[DataStream[String]].addSinkLineage(kafkaProducer)(MQDatasource(Datasource.KAFKA.toString, finalBrokers, finalTopic, ""), Operation.SINK)
+    this.stream.asInstanceOf[DataStream[String]].addSinkLineage2(kafkaProducer)(MQDatasource(Datasource.KAFKA.toString, finalBrokers, finalTopic, ""), Operation.SINK)
   }
 
   /**
