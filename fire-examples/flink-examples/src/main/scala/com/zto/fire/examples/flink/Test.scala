@@ -17,42 +17,45 @@
 
 package com.zto.fire.examples.flink
 
+import com.zto.VersionTest
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
+import com.zto.fire.common.enu.Operation
+import com.zto.fire.common.lineage.parser.connector.MQDatasource
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.core.anno.lifecycle.Process
-import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
+import org.apache.flink.api.scala._
+import org.apache.flink.streaming.api.functions.source.SourceFunction
+
+import scala.util.Random
 
 
+@Config(
+  """
+    |fire.lineage.debug.enable=true
+    |""")
 @Streaming(interval = 20, disableOperatorChaining = true, parallelism = 2)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 object Test extends FlinkStreaming {
 
   @Process
   def kafkaSource: Unit = {
-    // 基于JavaBean创建json流（根据JavaBean序列化为json），JavaBean必须实现Generator接口
-    val jsonStream = this.fire.createJSONStream[Student](1)
-    jsonStream.print
+    println("version=" + VersionTest.version())
+    val stream = this.fire.addSourceLineage(new SourceFunction[Int] {
+      val random = new Random()
+      override def run(ctx: SourceFunction.SourceContext[Int]): Unit = {
+        while (true) {
+          ctx.collect(random.nextInt(1000))
+          Thread.sleep(1000)
+        }
+      }
 
-    // 创建uuid流
-    val uuidStream = this.fire.createUUIDStream(qps = 1)
-    uuidStream.print
+      override def cancel(): Unit = ???
+    })(MQDatasource("kafka", "localhost:9092", "fire", "fire"), Operation.SOURCE)
 
-    // 创建Int型随机数流
-    val intStream = this.fire.createRandomIntStream(1)
-    intStream.print
 
-    // 创建Long型随机数流
-    val longStream = this.fire.createRandomLongStream(1)
-    longStream.print
-
-    // 创建Double型随机数流
-    val doubleStream = this.fire.createRandomDoubleStream(1)
-    doubleStream.print
-
-    // 创建Float型随机数流
-    val flaotStream = this.fire.createRandomFloatStream(1)
-    flaotStream.print
+    stream.print()
   }
 }

@@ -22,8 +22,8 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.{Datasource, Operation}
-import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
-import com.zto.fire.common.lineage.parser.connector.KafkaConnectorParser
+import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.lineage.parser.connector.MQDatasource
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util._
 import com.zto.fire.flink.sink.{HBaseSink, JdbcSink, KafkaSink, RocketMQSink}
@@ -44,9 +44,8 @@ import org.apache.flink.connector.jdbc.JdbcConnectionOptions.JdbcConnectionOptio
 import org.apache.flink.connector.jdbc.JdbcExactlyOnceOptions.JDBCExactlyOnceOptionsBuilder
 import org.apache.flink.connector.jdbc.{JdbcConnectionOptions, JdbcExactlyOnceOptions, JdbcExecutionOptions, JdbcStatementBuilder}
 import org.apache.flink.streaming.api.datastream.DataStreamSink
-import org.apache.flink.streaming.api.functions.sink.SinkFunction
-import org.apache.flink.streaming.api.scala.function.AllWindowFunction
 import org.apache.flink.streaming.api.scala._
+import org.apache.flink.streaming.api.scala.function.AllWindowFunction
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer.Semantic
@@ -453,9 +452,6 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
          |topic: $finalTopic
          |""".stripMargin)
 
-    // sink kafka埋点信息
-    KafkaConnectorParser.addDatasource(Datasource.KAFKA, finalBrokers, finalTopic, "", Operation.SINK)
-
     val kafkaProducer = new FlinkKafkaProducer[String](
       finalTopic,
       serializationSchema,
@@ -465,7 +461,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
       kafkaProducersPoolSize
     )
 
-    this.stream.asInstanceOf[DataStream[String]].addSink(kafkaProducer)
+    this.stream.asInstanceOf[DataStream[String]].addSinkLineage(kafkaProducer)(MQDatasource(Datasource.KAFKA.toString, finalBrokers, finalTopic, ""), Operation.SINK)
   }
 
   /**
@@ -558,7 +554,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
 
     // 将流式数据实时写入到指定的关系型数据源中
     import org.apache.flink.connector.jdbc.JdbcSink
-    stream.addSink(JdbcSink.exactlyOnceSink(sql,
+    stream.addSinkWrap(JdbcSink.exactlyOnceSink(sql,
       new JdbcStatementBuilder[T]() {
         override def accept(stat: PreparedStatement, bean: T): Unit = {
           DBUtils.setPreparedStatement(columns, stat, bean)

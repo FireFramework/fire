@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit
 @Streaming(interval = 10, concurrent = 2, backpressure = true, maxRatePerPartition = 100)
 @RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @RocketMQ2(brokers = "bigdata_test", topics = "fire", groupId = "fire2")
-@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "oynZtP#bw7gF8i")
+@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
 object LineageTest extends HudiStreaming {
   private val hbaseTable = "fire_test_1"
   private lazy val tableName2 = "spark_test"

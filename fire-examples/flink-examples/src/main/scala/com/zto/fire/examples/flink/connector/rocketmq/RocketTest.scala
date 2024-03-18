@@ -19,6 +19,7 @@ package com.zto.fire.examples.flink.connector.rocketmq
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.core.anno.connector.{RocketMQ, RocketMQ2}
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.{Checkpoint, Streaming}
@@ -39,9 +40,10 @@ import org.apache.flink.api.scala._
 object RocketTest extends FlinkStreaming {
 
   override def process: Unit = {
+    LineageManager.show(30)
     // 1. createRocketMqPullStreamWithTag()返回的是三元组，分别是：(tag, key, value)
     this.fire.createRocketMqPullStreamWithTag().setParallelism(1).map(t => {
-      this.logInfo("消息：" + t._3)
+      println("消息：" + t._3)
       t._3
     }).print()
 

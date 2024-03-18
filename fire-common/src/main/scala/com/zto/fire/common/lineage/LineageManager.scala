@@ -81,7 +81,7 @@ private[fire] class LineageManager extends Logging {
    */
   private[this] def parseJdbcSql(): Unit = {
     tryWithLog {
-      for (_ <- 1 until dbSqlQueue.size()) {
+      for (_ <- 0 until dbSqlQueue.size()) {
         val sqlSource = dbSqlQueue.poll()
         if (sqlSource != null) {
           printLog(s"解析JDBC SQL：${sqlSource.sql}")

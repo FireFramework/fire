@@ -34,8 +34,8 @@ import org.apache.spark.sql.{Encoders, Row}
 @Config(
   """
     |# 用于区分不同的hbase集群: batch/streaming/old
-    |spark.hbase.cluster                =       test
-    |spark.hbase.cluster2               =       test
+    |spark.hbase.cluster                =       fat
+    |spark.hbase.cluster2               =       fat
     |# 通过HBase scan后repartition的分区数，需根据scan后的数据量做配置
     |spark.fire.hbase.scan.partitions   =       3
     |spark.fire.hbase.storage.level     =       DISK_ONLY

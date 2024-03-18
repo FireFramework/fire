@@ -2,16 +2,11 @@ package com.zto.fire.examples.flink.connector.kafka
 
 import com.zto.fire._
 import com.zto.fire.common.bean.MQRecord
-import org.apache.flink.api.scala._
-import com.zto.fire.common.util.{JSONUtils, ThreadUtils}
 import com.zto.fire.core.anno.connector.{Kafka, Kafka2, Kafka5, RocketMQ3}
 import com.zto.fire.core.anno.lifecycle.Process
-import com.zto.fire.examples.bean.Student
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
-import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
-
-import java.util.concurrent.TimeUnit
+import org.apache.flink.api.scala._
 
 @Streaming(interval = 30, disableOperatorChaining = true)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")

@@ -48,7 +48,8 @@ class TableExt(table: Table) {
    * 逐条打印每行记录
    */
   def show(): Unit = {
-    this.table.addSink(row => println(row))
+    import com.zto.fire._
+    this.table.toChangelogStream.addSinkWrap(row => println(row))
   }
 
   /**
@@ -211,7 +212,7 @@ class TableExt(table: Table) {
                      keyNum: Int = KeyNum._1)(fun: Row => T): DataStreamSink[_] = {
     import com.zto.fire._
     HBaseConnector.checkClass[T]()
-    this.table.toRetractStreamSingle.addSink(new HBaseSink[Row, T](tableName, batch, flushInterval, keyNum) {
+    this.table.toRetractStreamSingle.addSinkWrap(new HBaseSink[Row, T](tableName, batch, flushInterval, keyNum) {
       override def map(value: Row): T = fun(value)
     }).name("fire hbase sink")
   }

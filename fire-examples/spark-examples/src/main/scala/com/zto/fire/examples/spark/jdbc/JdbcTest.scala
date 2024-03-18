@@ -32,8 +32,8 @@ import org.apache.spark.sql.SaveMode
  * @author ChengLong 2019-6-17 15:17:38
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
-@Jdbc2(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
+@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire?useSSL=true", username = "root", password = "root")
+@Jdbc2(url = "jdbc:mysql://mysql-server:3306/fire?useSSL=true", username = "root", password = "root")
 object JdbcTest extends SparkCore {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "t_cluster_info"

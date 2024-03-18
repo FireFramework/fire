@@ -123,6 +123,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_LINEAGE_ENABLE = "fire.lineage.enable"
   lazy val FIRE_LINEAGE_COLUMN_ENABLE = "fire.lineage.column.enable"
   lazy val FIRE_LINEAGE_DEBUG_ENABLE = "fire.lineage.debug.enable"
+  lazy val FIRE_LINEAGE_DEBUG_PRINT_ENABLE = "fire.lineage.debug.print"
   lazy val FIRE_LINEAGE_COLLECT_SQL_ENABLE = "fire.lineage.collect_sql.enable"
   lazy val FIRE_LINEAGE_RUN_COUNT = "fire.lineage.run.count"
   lazy val FIRE_LINEAGE_MAX_SIZE = "fire.lineage.max.size"
@@ -179,6 +180,8 @@ private[fire] object FireFrameworkConf {
   def lineageColumnEnable: Boolean = PropUtils.getBoolean(this.FIRE_LINEAGE_COLUMN_ENABLE, false)
   // 是否开启实时血缘debug模式
   def lineageDebugEnable: Boolean = PropUtils.getBoolean(this.FIRE_LINEAGE_DEBUG_ENABLE, false)
+  // 打印血缘json到stdout
+  def lineageDebugPrintEnable: Boolean = PropUtils.getBoolean(this.FIRE_LINEAGE_DEBUG_PRINT_ENABLE, false)
   // 禁用血缘采集
   def disableLineage(): Unit = PropUtils.setProperty(this.FIRE_LINEAGE_ENABLE, "false")
   def lineageCollectSQLEnable: Boolean = PropUtils.getBoolean(this.FIRE_LINEAGE_COLLECT_SQL_ENABLE, true)

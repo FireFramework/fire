@@ -71,7 +71,7 @@ object SimpleSqlDemo extends FlinkStreaming {
         |  PRIMARY KEY (id) NOT ENFORCED							-- 指定主键字段，如果insert语句后面的select代码聚合算子（group by），则必须指定主键，用于数据的更新操作
         |) WITH (
         |   'connector' = 'jdbc',								-- 指定当前connector为jdbc类型
-        |   'url' = 'jdbc:mysql://mysql-server:3306/fire',		-- jdbc的url
+        |   'url' = 'jdbc:mysql://mysql-server:3306/fire?useSSL=true',		-- jdbc的url
         |   'table-name' = 'flink_sql_test',						-- 指定往哪张数据库表中写数据，表示往mysql的名为flink_sql_test的表插入或更新数据
         |   'driver' = 'com.mysql.jdbc.Driver',					-- jdbc的驱动类名
         |   'username' = 'root',									-- jdbc的用户名
@@ -91,7 +91,7 @@ object SimpleSqlDemo extends FlinkStreaming {
         |  PRIMARY KEY (id) NOT ENFORCED							-- 指定主键字段，如果insert语句后面的select代码聚合算子（group by），则必须指定主键，用于数据的更新操作
         |) WITH (
         |   'connector' = 'jdbc',								-- 指定当前connector为jdbc类型
-        |   'url' = 'jdbc:mysql://mysql-server:3306/fire',		-- jdbc的url
+        |   'url' = 'jdbc:mysql://mysql-server:3306/fire?useSSL=true',		-- jdbc的url
         |   'table-name' = 'flink_sql_test2',						-- 指定往哪张数据库表中写数据，表示往mysql的名为flink_sql_test的表插入或更新数据
         |   'driver' = 'com.mysql.jdbc.Driver',					-- jdbc的驱动类名
         |   'username' = 'root',									-- jdbc的用户名

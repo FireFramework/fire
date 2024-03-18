@@ -33,8 +33,8 @@ import org.junit.Test
  * @date 2022-05-12 13:49:24
  * @since 2.2.2
  */
-@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
-@Jdbc2(url = "jdbc:mysql://mysql-server:3306/fire", username = "root", password = "root")
+@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire?useSSL=true", username = "root", password = "root")
+@Jdbc2(url = "jdbc:mysql://mysql-server:3306/fire?useSSL=true", username = "root", password = "root")
 class JdbcUnitTest extends SparkCore with SparkTester {
   lazy val tableName = "spark_test"
 

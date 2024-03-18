@@ -170,7 +170,7 @@ trait BaseFire extends Logging {
       this.loadSqlConf()
       this.process()
       AnnoManager.processAnno(this)
-      if (FireFrameworkConf.lineageDebugEnable) LineageManager.show()
+      if (FireFrameworkConf.lineageDebugEnable || FireFrameworkConf.lineageDebugPrintEnable) LineageManager.show()
     }) (this.logger, "业务逻辑代码执行完成", "业务逻辑代码执行失败", isThrow = true)
   }
 
