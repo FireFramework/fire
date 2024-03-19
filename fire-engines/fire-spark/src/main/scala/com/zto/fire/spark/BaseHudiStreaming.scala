@@ -18,10 +18,6 @@
 package com.zto.fire.spark
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Scheduled
-import com.zto.fire.common.util.DateFormatUtils
-import com.zto.fire.spark.sql.SparkSqlUtils
-import org.apache.spark.rdd.RDD
 
 /**
  * 通用的Spark Streaming实时入湖父类
@@ -39,6 +35,7 @@ trait BaseHudiStreaming extends SparkStreaming {
   protected lazy val sink = this.conf.get[Boolean]("hudi.sink", Some(true))
   protected lazy val tmpView = this.conf.get[String]("hudi.tmpView", Some("msg_view"))
   protected lazy val retryOnFailure = this.conf.get[Int]("hudi.retry.onFailure", Some(1))
+  protected lazy val retainDays = this.conf.getInt("hudi.table.retain.days", 32)
 
   override def before(args: Array[JString]): Unit = {
     this.conf.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
@@ -55,15 +52,15 @@ trait BaseHudiStreaming extends SparkStreaming {
     requireNonEmpty(sqlUpsert(this.tmpView))("解析临时表的SQL语句不能为空，请通过hudi.sql指定该配置")
     logInfo(
       s"""
-        |-----------------hudi参数-----------------
-        |hudi表名(hudi.tableName)                 :$tableName
-        |hudi表主键（hudi.primaryKey）          　 :$primaryKey
-        |hudi表预聚合字段(hudi.precombineKey)      :$precombineKey
-        |hudi表分区字段(hudi.partitionFieldName）  :$partitionFieldName
-        |消息视图名称(hudi.tmpView)                :$tmpView
-        |解析kafka的sql(hudi.sql)                 :\n ${sqlUpsert(tmpView)}
-        |-----------------------------------------
-        |""".stripMargin)
+         |-----------------hudi参数-----------------
+         |hudi表名(hudi.tableName)                 :$tableName
+         |hudi表主键（hudi.primaryKey）          　 :$primaryKey
+         |hudi表预聚合字段(hudi.precombineKey)      :$precombineKey
+         |hudi表分区字段(hudi.partitionFieldName）  :$partitionFieldName
+         |消息视图名称(hudi.tmpView)                :$tmpView
+         |解析kafka的sql(hudi.sql)                 :\n ${sqlUpsert(tmpView)}
+         |-----------------------------------------
+         |""".stripMargin)
   }
 
   /**
@@ -87,4 +84,9 @@ trait BaseHudiStreaming extends SparkStreaming {
    * 临时表名
    */
   protected def sqlAfter(tmpView: String): String = ""
+
+  /**
+   * TODO 删除历史分区，存储在实时集群的数据是外部表，只会删除分区，并不会删除数据，待解决
+   */
+
 }

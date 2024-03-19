@@ -123,4 +123,98 @@ public @interface Hudi3 {
      */
     boolean useRecordIndex() default false;
 
+    /**
+     * 是否使用hbase index
+     * HbaseIndex 相关参数
+     *
+     * hoodie.index.type=HBASE
+     * hoodie.index.hbase.zkport=2181
+     * hoodie.index.hbase.zkquorum=hzpl004138023-hadoop-zh.ztosys.com,hzpl004138041-hadoop-zh.ztosys.com,hzpl004138024-hadoop-zh.ztosys.com,hzpl004138042-hadoop-zh.ztosys.com,hzpl004138051-hadoop-zh.ztosys.com
+     * hoodie.index.hbase.zknode.path=/hbase
+     * hoodie.index.hbase.table=hudi:xxxxx
+     * hoodie.index.hbase.get.batch.size=2000
+     * hoodie.index.hbase.put.batch.size=2000
+     * hoodie.index.hbase.put.batch.size.autocompute=true
+     * hoodie.index.hbase.qps.fraction=0.5
+     * hoodie.index.hbase.max.qps.per.region.server=50000
+     * hoodie.index.hbase.qps.allocator.class=org.apache.hudi.index.hbase.DefaultHBaseQPSResourceAllocator
+     * hoodie.index.hbase.rollback.sync=true
+     * hoodie.hbase.index.update.partition.path=true
+     *
+     */
+    boolean useHbaseIndex() default false;
+
+    /**
+     * hbase默认连接端口
+     * @return
+     */
+    int hbasePort() default 2181;
+
+    /**
+     * hbase 连接地址
+     * @return
+     */
+    String hbaseZkQuorum() default "";
+
+    /**
+     * hbasezkNode路径
+     * @return
+     */
+    String hbaseZkNodePath() default  "/hbase";
+
+    /**
+     * hbase 中tableName
+     * @return
+     */
+    String hbaseTable() default "";
+
+    /**
+     * get操作的批次大小
+     * @return
+     */
+    long hbaseGetBatchSize() default 1000;
+
+    /**
+     * put操作的批次大小
+     * @return
+     */
+    long hbasePutBatchSize() default 1000;
+
+    /**
+     *
+     * @return
+     */
+    boolean hbasePutBatchSizeAutoCompute() default false;
+
+    /**
+     * Property to set maximum QPS allowed per Region Server
+     * should be same across various jobs
+     * @return
+     */
+    long hbaseMaxQpsPerRegionServer() default 50000;
+
+    /**
+     * set the fraction of the global share of QPS that should be allocated to this job
+     * @return
+     */
+    float hbaseQpsFraction() default 0.2f;
+
+    /**
+     * rollback method will delete the last failed task index
+     * @return
+     */
+    boolean hbaseRollbackSync() default true;
+
+    /**
+     * delete old record in old paritition insert in new partition
+     * @return
+     */
+    boolean hbaseUpdatePartitionPath() default true;
+
+    /**
+     * 默认hbaseQpsAllocatorClass
+     * @return
+     */
+    String hbaseQpsAllocatorClass() default "org.apache.hudi.index.hbase.DefaultHBaseQPSResourceAllocator";
+
 }
