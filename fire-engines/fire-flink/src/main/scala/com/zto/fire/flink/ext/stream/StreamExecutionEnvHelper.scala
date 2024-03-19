@@ -20,10 +20,13 @@ package com.zto.fire.flink.ext.stream
 import com.zto.fire._
 import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
+import org.apache.flink.annotation.Experimental
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.api.connector.source.{Source, SourceSplit}
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
-import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment, asScalaStream}
 
 /**
  * 用于包装flink addSource与addSink api，实现血缘采集
@@ -53,6 +56,39 @@ abstract class StreamExecutionEnvHelper(env: StreamExecutionEnvironment) {
    */
   protected[fire] def addSourceWrap[T: TypeInformation](function: SourceContext[T] => Unit): DataStream[T] = {
     this.env.addSource[T](function)
+  }
+
+  /**
+   * Create a DataStream using a [[Source]].
+   */
+  protected[fire] def fromSourceWrap[T: TypeInformation](
+                                      source: Source[T, _ <: SourceSplit, _],
+                                      watermarkStrategy: WatermarkStrategy[T],
+                                      sourceName: String): DataStream[T] = {
+    this.env.fromSource[T](source, watermarkStrategy, sourceName)
+  }
+
+  /**
+   * 添加source数据源的同时维护血缘信息
+   */
+  def fromSourceLineage[T: TypeInformation](
+                                          source: Source[T, _ <: SourceSplit, _],
+                                          watermarkStrategy: WatermarkStrategy[T],
+                                          sourceName: String)(lineageFun: => Unit): DataStream[T] = {
+    lineageFun
+    this.fromSourceWrap[T](source, watermarkStrategy, sourceName)
+  }
+
+  /**
+   * 添加source数据源的同时维护血缘信息
+   */
+  def fromSourceLineage2[T: TypeInformation](
+                                             source: Source[T, _ <: SourceSplit, _],
+                                             watermarkStrategy: WatermarkStrategy[T],
+                                             sourceName: String)(datasourceDesc: DatasourceDesc, operations: Operation*): DataStream[T] = {
+    requireNonNull(datasourceDesc, operations)("血缘信息不能为空，请维护血缘信息！")
+    LineageManager.addLineage(datasourceDesc, operations: _*)
+    this.fromSourceWrap[T](source, watermarkStrategy, sourceName)
   }
 
   /**
