@@ -59,6 +59,10 @@ object LineageTest extends FlinkStreaming {
       t
     }).print()
 
+    /*this.fire.fromSourceLineage(source, WatermarkStrategy.noWatermarks(), "kafka") {
+      LineageManager.addKafkaLineage(keyNum = 1, Operation.SOURCE)
+    }*/
+
     // 方式一：
     dstream.addSinkLineage(x => println("addSinkLineage.addBlackHoleLineage=>" + x)) {
       LineageManager.addBlackHoleLineage
