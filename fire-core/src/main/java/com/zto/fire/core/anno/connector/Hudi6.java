@@ -129,7 +129,7 @@ public @interface Hudi6 {
      *
      * hoodie.index.type=HBASE
      * hoodie.index.hbase.zkport=2181
-     * hoodie.index.hbase.zkquorum=hzpl004138023-hadoop-zh.ztosys.com,hzpl004138041-hadoop-zh.ztosys.com,hzpl004138024-hadoop-zh.ztosys.com,hzpl004138042-hadoop-zh.ztosys.com,hzpl004138051-hadoop-zh.ztosys.com
+     * hoodie.index.hbase.zkquorum=ip
      * hoodie.index.hbase.zknode.path=/hbase
      * hoodie.index.hbase.table=hudi:xxxxx
      * hoodie.index.hbase.get.batch.size=2000
@@ -142,7 +142,7 @@ public @interface Hudi6 {
      * hoodie.hbase.index.update.partition.path=true
      *
      */
-    boolean useHbaseIndex() default false;
+    boolean useHBaseIndex() default false;
 
     /**
      * hbase默认连接端口
