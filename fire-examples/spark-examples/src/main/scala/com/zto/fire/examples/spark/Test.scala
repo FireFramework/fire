@@ -46,10 +46,10 @@ object Test extends SparkStreaming {
     val stream = this.fire.createKafkaDirectStream()
     stream.foreachRDD(rdd => {
       rdd.foreachPartition(it => {
-        LineageManager.addPrintLineage(Operation.SINK)
+//        LineageManager.addPrintLineage(Operation.SINK)
       })
     })
-    LineageManager.addMySQLLineage("jdbc://localhost:3306/fire", "t_user", "root", Operation.INSERT_INTO)
+//    LineageManager.addMySQLLineage("jdbc://localhost:3306/fire", "t_user", "root", Operation.INSERT_INTO)
     stream.print()
     LineageManager.addSql("""select * from tmp.baseorganize""")
     LineageManager.print(10)
