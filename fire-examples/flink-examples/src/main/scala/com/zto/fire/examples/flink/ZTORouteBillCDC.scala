@@ -119,7 +119,7 @@ object ZTORouteBillCDC extends FlinkStreaming {
          |) WITH (
          | 'connector' = 'rocketmq',
          | 'topic' = 'ROUTE_BILL_BINLOG',
-         | 'properties.bootstrap.servers' = '10.9.15.40:9876;10.9.63.237:9876',
+         | 'properties.bootstrap.servers' = 'ip:9876',
          | 'properties.group.id' = 'ROUTE_BILL_BINLOG_FLINK_CONSUMER_VERIFY',
          | 'scan.startup.mode' = 'earliest-offset',
          | 'zdtp-json.cdc-write-hive' = 'false',
