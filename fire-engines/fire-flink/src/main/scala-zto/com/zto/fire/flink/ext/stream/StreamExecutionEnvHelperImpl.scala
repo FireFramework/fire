@@ -17,7 +17,9 @@
 
 package com.zto.fire.flink.ext.stream
 
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.api.connector.source.{Source, SourceSplit}
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
@@ -50,5 +52,15 @@ class StreamExecutionEnvHelperImpl(env: StreamExecutionEnvironment) extends Stre
    */
   override protected[fire] def addSourceWrap[T: TypeInformation](function: SourceContext[T] => Unit): DataStream[T] = {
     this.env.$source[T](function)
+  }
+
+  /**
+   * Create a DataStream using a [[Source]].
+   */
+  override protected[fire] def fromSourceWrap[T: TypeInformation](
+                                                          source: Source[T, _ <: SourceSplit, _],
+                                                          watermarkStrategy: WatermarkStrategy[T],
+                                                          sourceName: String): DataStream[T] = {
+    this.env.$fromSource[T](source, watermarkStrategy, sourceName)
   }
 }

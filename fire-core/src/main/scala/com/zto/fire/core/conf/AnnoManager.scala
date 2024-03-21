@@ -304,7 +304,7 @@ private[fire] trait AnnoManager extends Logging {
     // 记录级索引相关设置
     this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._1)
     // hbase索引相关设置
-    this.hudiHbaseIndexConf(hudi.useHbaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
       , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._1)
     // clean相关设置
@@ -332,7 +332,7 @@ private[fire] trait AnnoManager extends Logging {
     // 记录级索引相关设置
     this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._2)
     // hbase索引相关设置
-    this.hudiHbaseIndexConf(hudi.useHbaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
       , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._2)
     // clean相关设置
@@ -360,7 +360,7 @@ private[fire] trait AnnoManager extends Logging {
     // 记录级索引相关设置
     this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._3)
     // hbase索引相关设置
-    this.hudiHbaseIndexConf(hudi.useHbaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
       , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._3)
     // clean相关设置
@@ -388,7 +388,7 @@ private[fire] trait AnnoManager extends Logging {
     // 记录级索引相关设置
     this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._4)
     // hbase索引相关设置
-    this.hudiHbaseIndexConf(hudi.useHbaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
       , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._4)
     // clean相关设置
@@ -416,7 +416,7 @@ private[fire] trait AnnoManager extends Logging {
     // 记录级索引相关设置
     this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._5)
     // hbase索引相关设置
-    this.hudiHbaseIndexConf(hudi.useHbaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
       , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._5)
     // clean相关设置
@@ -444,7 +444,7 @@ private[fire] trait AnnoManager extends Logging {
     // 记录级索引相关设置
     this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._6)
     // hbase索引相关设置
-    this.hudiHbaseIndexConf(hudi.useHbaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
       , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._6)
     // clean相关设置
@@ -472,7 +472,7 @@ private[fire] trait AnnoManager extends Logging {
     // 记录级索引相关设置
     this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._7)
     // hbase索引相关设置
-    this.hudiHbaseIndexConf(hudi.useHbaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
       , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._7)
     // clean相关设置
@@ -500,7 +500,7 @@ private[fire] trait AnnoManager extends Logging {
     // 记录级索引相关设置
     this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._8)
     // hbase索引相关设置
-    this.hudiHbaseIndexConf(hudi.useHbaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
       , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._8)
     // clean相关设置
@@ -528,7 +528,7 @@ private[fire] trait AnnoManager extends Logging {
     // 记录级索引相关设置
     this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._9)
     // hbase索引相关设置
-    this.hudiHbaseIndexConf(hudi.useHbaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
       , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._9)
     // clean相关设置
@@ -556,7 +556,7 @@ private[fire] trait AnnoManager extends Logging {
     // 记录级索引相关设置
     this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._10)
     // hbase索引相关设置
-    this.hudiHbaseIndexConf(hudi.useHbaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
       , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._10)
     // clean相关设置
@@ -584,7 +584,7 @@ private[fire] trait AnnoManager extends Logging {
     // 记录级索引相关设置
     this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._11)
     // hbase索引相关设置
-    this.hudiHbaseIndexConf(hudi.useHbaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
       , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._11)
     // clean相关设置
@@ -664,17 +664,28 @@ private[fire] trait AnnoManager extends Logging {
    * @param keyNum
    */
   @Internal
-  private[this] def hudiHbaseIndexConf(useHbaseIndex: Boolean, hbaseZkQuorum: String, hbasePort: Int
+  private[this] def hudiHBaseIndexConf(useHBaseIndex: Boolean, hbaseZkQuorum: String, hbasePort: Int
                                        , hbaseTable: String , hbaseZkNodePath: String, hbaseRollbackSync: Boolean
                                        , hbaseUpdatePartitionPath: Boolean, hbaseGetBatchSize: Long
                                        , hbasePutBatchSize: Long, hbasePutBatchSizeAutoCompute: Boolean
                                        , hbaseMaxQpsPerRegionServer: Long, hbaseQpsFraction: Float
-                                       , hbaseQpsAllocatorClass: String,hbaseIndexUser:String, keyNum: Int) {
-    if (useHbaseIndex) {
+                                       , hbaseQpsAllocatorClass: String, hbaseIndexUser:String, keyNum: Int) {
+    if (useHBaseIndex) {
       requireNonEmpty(hbaseZkQuorum,hbaseTable,hbaseIndexUser){"Hudi Hbase Index需要指定zk集群地址和对应的hbase表名"}
       this.toHudiConf(("hoodie.index.type", "HBASE"), keyNum)
       this.toHudiConf(("hoodie.index.hbase.zkport", hbasePort.toString), keyNum)
-      this.toHudiConf(("hoodie.index.hbase.zkquorum", hbaseZkQuorum), keyNum)
+      // 获取zk地址
+      var zkUrl = hbaseZkQuorum
+      if (noEmpty(zkUrl) && !zkUrl.contains(".")) {
+        val hbaseClusterMap = PropUtils.sliceKeys("fire.hbase.cluster.map.")
+        if (noEmpty(hbaseClusterMap)) {
+          val zkAddress = hbaseClusterMap.getOrElse(zkUrl, "")
+          if (noEmpty(zkAddress) && zkAddress.contains(":2181")) {
+            zkUrl = zkAddress.replaceAll(":2181", "")
+          }
+        }
+      }
+      this.toHudiConf(("hoodie.index.hbase.zkquorum", zkUrl), keyNum)
       this.toHudiConf(("hoodie.index.hbase.zknode.path", hbaseZkNodePath), keyNum)
       this.toHudiConf(("hoodie.index.hbase.table", hbaseTable), keyNum)
       this.toHudiConf(("hoodie.index.hbase.put.batch.size.autocompute", hbasePutBatchSizeAutoCompute.toString), keyNum)
