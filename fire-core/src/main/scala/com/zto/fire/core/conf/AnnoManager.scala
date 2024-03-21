@@ -671,7 +671,7 @@ private[fire] trait AnnoManager extends Logging {
                                        , hbaseMaxQpsPerRegionServer: Long, hbaseQpsFraction: Float
                                        , hbaseQpsAllocatorClass: String, hbaseIndexUser:String, keyNum: Int) {
     if (useHBaseIndex) {
-      requireNonEmpty(hbaseZkQuorum,hbaseTable,hbaseIndexUser){"Hudi Hbase Index需要指定zk集群地址和对应的hbase表名"}
+      requireNonEmpty(hbaseZkQuorum,hbaseTable){"Hudi Hbase Index需要指定zk集群地址和对应的hbase表名"}
       this.toHudiConf(("hoodie.index.type", "HBASE"), keyNum)
       this.toHudiConf(("hoodie.index.hbase.zkport", hbasePort.toString), keyNum)
       // 获取zk地址
