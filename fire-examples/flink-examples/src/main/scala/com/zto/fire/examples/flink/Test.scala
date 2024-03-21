@@ -17,7 +17,7 @@
 
 package com.zto.fire.examples.flink
 
-import com.zto.VersionTest
+//import com.zto.VersionTest
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.common.enu.Operation
@@ -42,20 +42,20 @@ object Test extends FlinkStreaming {
 
   @Process
   def kafkaSource: Unit = {
-    println("version=" + VersionTest.version())
-    val stream = this.fire.addSourceLineage(new SourceFunction[Int] {
-      val random = new Random()
-      override def run(ctx: SourceFunction.SourceContext[Int]): Unit = {
-        while (true) {
-          ctx.collect(random.nextInt(1000))
-          Thread.sleep(1000)
-        }
-      }
-
-      override def cancel(): Unit = ???
-    })(MQDatasource("kafka", "localhost:9092", "fire", "fire"), Operation.SOURCE)
-
-
-    stream.print()
+//    println("version=" + VersionTest.version())
+//    val stream = this.fire.addSourceLineage(new SourceFunction[Int] {
+//      val random = new Random()
+//      override def run(ctx: SourceFunction.SourceContext[Int]): Unit = {
+//        while (true) {
+//          ctx.collect(random.nextInt(1000))
+//          Thread.sleep(1000)
+//        }
+//      }
+//
+//      override def cancel(): Unit = ???
+//    })(MQDatasource("kafka", "localhost:9092", "fire", "fire"), Operation.SOURCE)
+//
+//
+//    stream.print()
   }
 }

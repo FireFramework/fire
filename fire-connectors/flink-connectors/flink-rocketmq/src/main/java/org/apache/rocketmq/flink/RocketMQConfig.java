@@ -52,6 +52,7 @@ public class RocketMQConfig {
     public static final String PRODUCER_RETRY_TIMES = "producer.retry.times";
     public static final int DEFAULT_PRODUCER_RETRY_TIMES = 3;
 
+    public static final String OFFSET_AUTO_COMMIT = "offset.auto.commit";
     public static final String PRODUCER_TIMEOUT = "producer.timeout";
     public static final int DEFAULT_PRODUCER_TIMEOUT = 3000; // 3 seconds
 

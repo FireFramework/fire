@@ -1,0 +1,3 @@
+## 解析中通zdtp采集的binlog，添加了带出binlog中RowKind功能以及在table properties中添加参数，
+## 可以让binlog下游写hive
+com.zto.fire.flink.formats.json.ZDTPJsonFormatFactory

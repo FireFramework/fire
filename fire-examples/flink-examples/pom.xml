@@ -32,6 +32,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>fire-connector-flink-format-zdtp_1.14_2.12</artifactId>
+            <version>${fire.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${scala.binary.version}</artifactId>
             <version>${kafka.version}</version>
