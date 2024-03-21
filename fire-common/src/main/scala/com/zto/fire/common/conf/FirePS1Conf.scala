@@ -52,7 +52,7 @@ private[fire] object FirePS1Conf {
    * wrap后的字符串
    */
   def wrap(str: String, ps1: String): String = {
-    if (!OSUtils.isLocal) return str
+    // if (!OSUtils.isLocal) return str
 
     val printStr = new StringBuilder()
     ps1.foreach(ps => {
