@@ -217,4 +217,8 @@ public @interface Hudi3 {
      */
     String hbaseQpsAllocatorClass() default "org.apache.hudi.index.hbase.DefaultHBaseQPSResourceAllocator";
 
+    /**
+     * hbase Index User
+     */
+    String hbaseIndexUser() default "";
 }

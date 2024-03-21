@@ -306,7 +306,7 @@ private[fire] trait AnnoManager extends Logging {
     // hbase索引相关设置
     this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
-      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(), KeyNum._1)
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._1)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._1)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._1)
@@ -334,7 +334,7 @@ private[fire] trait AnnoManager extends Logging {
     // hbase索引相关设置
     this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
-      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(), KeyNum._2)
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._2)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._2)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._2)
@@ -362,7 +362,7 @@ private[fire] trait AnnoManager extends Logging {
     // hbase索引相关设置
     this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
-      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(), KeyNum._3)
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._3)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._3)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._3)
@@ -390,7 +390,7 @@ private[fire] trait AnnoManager extends Logging {
     // hbase索引相关设置
     this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
-      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(), KeyNum._4)
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._4)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._4)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._4)
@@ -418,7 +418,7 @@ private[fire] trait AnnoManager extends Logging {
     // hbase索引相关设置
     this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
-      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(), KeyNum._5)
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._5)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._5)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._5)
@@ -446,7 +446,7 @@ private[fire] trait AnnoManager extends Logging {
     // hbase索引相关设置
     this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
-      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(), KeyNum._6)
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._6)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._6)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._6)
@@ -474,7 +474,7 @@ private[fire] trait AnnoManager extends Logging {
     // hbase索引相关设置
     this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
-      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(), KeyNum._7)
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._7)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._7)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._7)
@@ -502,7 +502,7 @@ private[fire] trait AnnoManager extends Logging {
     // hbase索引相关设置
     this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
-      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(), KeyNum._8)
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._8)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._8)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._8)
@@ -530,7 +530,7 @@ private[fire] trait AnnoManager extends Logging {
     // hbase索引相关设置
     this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
-      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(), KeyNum._9)
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._9)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._9)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._9)
@@ -558,7 +558,7 @@ private[fire] trait AnnoManager extends Logging {
     // hbase索引相关设置
     this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
-      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(), KeyNum._10)
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._10)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._10)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._10)
@@ -586,7 +586,7 @@ private[fire] trait AnnoManager extends Logging {
     // hbase索引相关设置
     this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
       , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
-      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(), KeyNum._11)
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._11)
     // clean相关设置
     this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._11)
     this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._11)
@@ -669,8 +669,9 @@ private[fire] trait AnnoManager extends Logging {
                                        , hbaseUpdatePartitionPath: Boolean, hbaseGetBatchSize: Long
                                        , hbasePutBatchSize: Long, hbasePutBatchSizeAutoCompute: Boolean
                                        , hbaseMaxQpsPerRegionServer: Long, hbaseQpsFraction: Float
-                                       , hbaseQpsAllocatorClass: String, keyNum: Int) {
+                                       , hbaseQpsAllocatorClass: String, hbaseIndexUser:String, keyNum: Int) {
     if (useHBaseIndex) {
+      requireNonEmpty(hbaseZkQuorum,hbaseTable){"Hudi Hbase Index需要指定zk集群地址和对应的hbase表名"}
       this.toHudiConf(("hoodie.index.type", "HBASE"), keyNum)
       this.toHudiConf(("hoodie.index.hbase.zkport", hbasePort.toString), keyNum)
       // 获取zk地址
@@ -695,6 +696,7 @@ private[fire] trait AnnoManager extends Logging {
       this.toHudiConf(("hoodie.index.hbase.qps.fraction", hbaseQpsFraction.toString), keyNum)
       this.toHudiConf(("hoodie.index.hbase.max.qps.per.region.server", hbaseMaxQpsPerRegionServer.toString), keyNum)
       this.toHudiConf(("hoodie.index.hbase.qps.allocator.class", hbaseQpsAllocatorClass), keyNum)
+      this.toHudiConf(("hoodie.index.hbase.user", hbaseIndexUser), keyNum)
     }
   }
 

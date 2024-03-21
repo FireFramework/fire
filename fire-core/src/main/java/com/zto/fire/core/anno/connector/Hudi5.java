@@ -216,5 +216,8 @@ public @interface Hudi5 {
      * @return
      */
     String hbaseQpsAllocatorClass() default "org.apache.hudi.index.hbase.DefaultHBaseQPSResourceAllocator";
-
+    /**
+     * hbase Index User
+     */
+    String hbaseIndexUser() default "";
 }
