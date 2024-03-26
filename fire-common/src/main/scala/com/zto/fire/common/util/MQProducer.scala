@@ -117,7 +117,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
 
     if (this.sendErrorCount >= this.maxRetries) {
       this.kafkaProducer.close()
-      logger.error(s"异常信息发送MQ重试${this.sendErrorCount}次仍失败，将退出异常信息发送！")
+      logError(s"异常信息发送MQ重试${this.sendErrorCount}次仍失败，将退出异常信息发送！")
       return
     }
 
@@ -127,7 +127,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
       override def onCompletion(recordMetadata: RecordMetadata, exception: Exception): Unit = {
         if (exception != null) {
           sendErrorCount += 1
-          logger.warn("Send msg to kafka failed!", exception)
+          logWarning("Send msg to kafka failed!", exception)
         } else sendErrorCount = 0
       }
     })
@@ -171,7 +171,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
       override def onException(exception: Throwable): Unit = {
         if (exception != null) {
           sendErrorCount += 1
-          logger.warn("Send msg to rocketmq failed!", exception)
+          logWarning("Send msg to rocketmq failed!", exception)
         } else sendErrorCount = 0
       }
     }, timeout)

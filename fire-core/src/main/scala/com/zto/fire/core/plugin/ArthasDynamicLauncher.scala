@@ -37,7 +37,7 @@ private[fire] object ArthasDynamicLauncher extends ArthasLauncher {
   private[this] def install: ArthasLauncher = {
     val launcher = FireFrameworkConf.arthasLauncher
     requireNonEmpty(launcher)(s"Arthas启动器不能为空，请通过${FireFrameworkConf.FIRE_ARTHAS_LAUNCHER}进行配置")
-    this.logger.info(s"Arthas启动器${launcher}初始化成功！")
+    logInfo(s"Arthas启动器${launcher}初始化成功！")
     Class.forName(launcher).newInstance().asInstanceOf[ArthasLauncher]
   }
 

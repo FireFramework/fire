@@ -54,7 +54,7 @@ private[fire] object ArthasManager extends Logging {
    */
   def stopArthas: Unit = {
     if (this.isStopped.compareAndSet(false, true) && this.inProcessing.compareAndSet(false, true)) {
-      this.logger.info("开始关闭Arthas相关服务")
+      logInfo("开始关闭Arthas相关服务")
       tryFinallyWithReturn {
         val bootstrap = ReflectionUtils.getFieldByName(classOf[ArthasAgent], "bootstrap").get(null)
         if (bootstrap != null) {
@@ -76,7 +76,7 @@ private[fire] object ArthasManager extends Logging {
    */
   def startArthas(resourceId: String): Unit = {
     if (this.isStarted.compareAndSet(false, true) && this.inProcessing.compareAndSet(false, true)) {
-      this.logger.info("开始启动Arthas相关服务")
+      logInfo("开始启动Arthas相关服务")
       ThreadUtils.run {
         tryWithLog {
           val configMap = new JHashMap[String, String]()

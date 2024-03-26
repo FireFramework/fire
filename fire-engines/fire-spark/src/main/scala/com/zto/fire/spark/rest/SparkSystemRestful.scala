@@ -28,9 +28,7 @@ import com.zto.fire.spark.{BaseSpark, bean}
 import org.apache.commons.lang3.StringUtils
 import spark._
 import com.zto.fire._
-import com.zto.fire.core.bean.ArthasParam
 import com.zto.fire.spark.bean.{ColumnMeta, FunctionMeta, SparkInfo}
-import com.zto.fire.spark.plugin.SparkArthasLauncher
 import com.zto.fire.spark.sync.SyncSparkEngine
 
 import java.util
@@ -77,8 +75,8 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def setConf(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/setConf")
-      this.logger.info(s"请求fire更新配置信息：$json")
+      logInfo(s"Ip address ${request.ip()} request /system/setConf")
+      logInfo(s"请求fire更新配置信息：$json")
       val confMap = JSONUtils.parseObject[java.util.HashMap[String, String]](json)
       if (ValueUtils.noEmpty(confMap)) {
         PropUtils.setProperties(confMap)
@@ -88,7 +86,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       ResultMsg.buildSuccess("配置信息已更新", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[setConf] 设置配置信息失败：json=$json", e)
+        logError(s"[setConf] 设置配置信息失败：json=$json", e)
         ResultMsg.buildError("设置配置信息失败", ErrorCode.ERROR)
       }
     }
@@ -101,7 +99,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def listFunctions(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/listFunctions")
+      logInfo(s"Ip address ${request.ip()} request /system/listFunctions")
       // 参数合法性检查
       val dbName = JSONUtils.getValue(json, "dbName", "")
 
@@ -116,11 +114,11 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
           funList.add(new FunctionMeta(fun.description, fun.database, fun.name, fun.className, fun.isTemporary))
         })
       }
-      this.logger.info(s"[listFunctions] 获取[$dbName]函数信息成功：json=$json")
+      logInfo(s"[listFunctions] 获取[$dbName]函数信息成功：json=$json")
       ResultMsg.buildSuccess(funList, s"获取[$dbName]函数信息成功")
     } catch {
       case e: Exception => {
-        this.logger.error(s"[log] 获取函数信息失败：json=$json", e)
+        logInfo(s"[log] 获取函数信息失败：json=$json", e)
         ResultMsg.buildError("获取函数信息失败", ErrorCode.ERROR)
       }
     }
@@ -133,7 +131,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def listColumns(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/listColumns")
+      logInfo(s"Ip address ${request.ip()} request /system/listColumns")
       // 参数合法性检查
       val dbName = JSONUtils.getValue(json, "dbName", "memory")
       val tableName = JSONUtils.getValue(json, "tableName", "")
@@ -162,11 +160,11 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
         columnList.add(meta)
       })
 
-      this.logger.info(s"[listColumns] 获取[$dbName.$tableName]字段信息成功：json=$json")
+      logInfo(s"[listColumns] 获取[$dbName.$tableName]字段信息成功：json=$json")
       ResultMsg.buildSuccess(columnList, s"获取[$dbName.$tableName]字段信息成功")
     } catch {
       case e: Exception => {
-        this.logger.error(s"[log] 获取表字段信息失败：json=$json", e)
+        logError(s"[log] 获取表字段信息失败：json=$json", e)
         ResultMsg.buildError("获取表字段信息失败", ErrorCode.ERROR)
       }
     }
@@ -179,7 +177,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def listTables(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/listTables")
+      logInfo(s"Ip address ${request.ip()} request /system/listTables")
       // 参数合法性检查
       val dbName = JSONUtils.getValue(json, "dbName", "memory")
       if (StringUtils.isBlank(dbName)) {
@@ -202,11 +200,11 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
           }
         })
       }
-      this.logger.info(s"[listTables] 获取[$dbName]表元数据信息成功：json=$json")
+      logInfo(s"[listTables] 获取[$dbName]表元数据信息成功：json=$json")
       ResultMsg.buildSuccess(tableList, s"获取[$dbName]表元数据信息成功")
     } catch {
       case e: Exception => {
-        this.logger.error(s"[log] 获取表元数据信息失败：json=$json", e)
+        logError(s"[log] 获取表元数据信息失败：json=$json", e)
         ResultMsg.buildError("获取表元数据信息失败", ErrorCode.ERROR)
       }
     }
@@ -218,18 +216,18 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   @Rest("/system/listDatabases")
   def listDatabases(request: Request, response: Response): AnyRef = {
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/listDatabases")
+      logInfo(s"Ip address ${request.ip()} request /system/listDatabases")
       // 获取所有的数据库名称
       val dbList = new util.LinkedList[String]()
       this.baseSpark.catalog.listDatabases().collect().foreach(db => dbList.add(db.name))
       // 由于spark临时表没有库名，此处约定memory统一作为临时表所在的库
       dbList.add("memory")
 
-      this.logger.info(s"[listDatabases] 获取数据库列表成功")
+      logInfo(s"[listDatabases] 获取数据库列表成功")
       ResultMsg.buildSuccess(dbList, "获取数据库列表成功")
     } catch {
       case e: Exception => {
-        this.logger.error(s"[log] 获取数据库列表失败", e)
+        logError(s"[log] 获取数据库列表失败", e)
         ResultMsg.buildError("获取数据库列表失败", ErrorCode.ERROR)
       }
     }
@@ -242,13 +240,13 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def counter(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/counter")
+      logInfo(s"Ip address ${request.ip()} request /system/counter")
       val counter = this.baseSpark.acc.getCounter
-      this.logger.info(s"[counter] 获取单值累加器成功：counter=$counter")
+      logInfo(s"[counter] 获取单值累加器成功：counter=$counter")
       ResultMsg.buildSuccess(counter, "获取单值累加器成功")
     } catch {
       case e: Exception => {
-        this.logger.error(s"[log] 获取单值累加器失败：json=$json", e)
+        logError(s"[log] 获取单值累加器失败：json=$json", e)
         ResultMsg.buildError("获取多值累加器失败", ErrorCode.ERROR)
       }
     }
@@ -261,12 +259,12 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def multiCounter(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/multiCounter")
-      this.logger.info(s"[multiCounter] 获取多值累加器成功")
+      logInfo(s"Ip address ${request.ip()} request /system/multiCounter")
+      logInfo(s"[multiCounter] 获取多值累加器成功")
       ResultMsg.buildSuccess(this.baseSpark.acc.getMultiCounter, "获取多值累加器成功")
     } catch {
       case e: Exception => {
-        this.logger.error(s"[log] 获取多值累加器失败：json=$json", e)
+        logError(s"[log] 获取多值累加器失败：json=$json", e)
         ResultMsg.buildError("获取多值累加器失败", ErrorCode.ERROR)
       }
     }
@@ -279,18 +277,18 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def multiTimer(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/multiTimer")
+      logInfo(s"Ip address ${request.ip()} request /system/multiTimer")
       val cells = new util.HashSet[Table.Cell[String, String, Long]]()
       cells.addAll(this.baseSpark.acc.getMultiTimer.cellSet())
       val clear = JSONUtils.getValue(json, "clear", false)
 
       if (clear) this.baseSpark.acc.multiTimer.reset
-      this.logger.info(s"[multiTimer] 获取timer累加器成功")
+      logInfo(s"[multiTimer] 获取timer累加器成功")
 
       ResultMsg.buildSuccess(cells, "获取timer累加器成功")
     } catch {
       case e: Exception => {
-        this.logger.error(s"[log] 获取timer累加器失败：json=$json", e)
+        logError(s"[log] 获取timer累加器失败：json=$json", e)
         ResultMsg.buildError("获取timer累加器失败", ErrorCode.ERROR)
       }
     }
@@ -303,7 +301,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def log(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/log")
+      logInfo(s"Ip address ${request.ip()} request /system/log")
       val logs = new StringBuilder("[")
       this.baseSpark.acc.getLog.iterator().foreach(log => {
         logs.append(log + ",")
@@ -313,16 +311,16 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       val clear = JSONUtils.getValue(json, "clear", false)
       if (clear) this.baseSpark.acc.logAccumulator.reset
 
-      if (logs.length > 0 && logs.endsWith(",")) {
-        this.logger.info(s"[log] 日志获取成功：json=$json")
+      if (logs.nonEmpty && logs.endsWith(",")) {
+        logInfo(s"[log] 日志获取成功：json=$json")
         ResultMsg.buildSuccess(logs.substring(0, logs.length - 1) + "]", "日志获取成功")
       } else {
-        this.logger.info(s"[log] 日志记录数为空：json=$json")
+        logInfo(s"[log] 日志记录数为空：json=$json")
         ResultMsg.buildError("日志记录数为空", ErrorCode.NOT_FOUND)
       }
     } catch {
       case e: Exception => {
-        this.logger.error(s"[log] 日志获取失败：json=$json", e)
+        logError(s"[log] 日志获取失败：json=$json", e)
         ResultMsg.buildError("日志获取失败", ErrorCode.ERROR)
       }
     }
@@ -335,7 +333,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def env(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/env")
+      logInfo(s"Ip address ${request.ip()} request /system/env")
       val envInfo = new StringBuilder("[")
       this.baseSpark.acc.getEnv.iterator().foreach(env => {
         envInfo.append(env + ",")
@@ -346,15 +344,15 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       if (clear) this.baseSpark.acc.logAccumulator.reset
 
       if (envInfo.length > 0 && envInfo.endsWith(",")) {
-        this.logger.info(s"[env] 运行时信息获取成功：json=$json")
+        logInfo(s"[env] 运行时信息获取成功：json=$json")
         ResultMsg.buildSuccess(envInfo.substring(0, envInfo.length - 1) + "]", "运行时信息获取成功")
       } else {
-        this.logger.info(s"[env] 运行时信息记录数为空：json=$json")
+        logInfo(s"[env] 运行时信息记录数为空：json=$json")
         ResultMsg.buildError("运行时信息记录数为空", ErrorCode.NOT_FOUND)
       }
     } catch {
       case e: Exception => {
-        this.logger.error(s"[env] 运行时信息获取失败：json=$json", e)
+        logError(s"[env] 运行时信息获取失败：json=$json", e)
         ResultMsg.buildError("运行时信息获取失败", ErrorCode.ERROR)
       }
     }
@@ -367,18 +365,18 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def kill(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/kill")
+      logInfo(s"Ip address ${request.ip()} request /system/kill")
       // 参数校验与参数获取
       val stopGracefully = JSONUtils.getValue(json, "stopGracefully", true)
       this.baseSpark.after()
       this.baseSpark.shutdown(stopGracefully)
       ProcessUtil.executeCmds(s"yarn application -kill ${this.baseSpark.applicationId}", s"kill -9 ${OSUtils.getPid}")
-      this.logger.info(s"[kill] kill任务成功：json=$json")
+      logInfo(s"[kill] kill任务成功：json=$json")
       FireUtils.exitNormal
       ResultMsg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[kill] 执行kill任务失败：json=$json", e)
+        logError(s"[kill] 执行kill任务失败：json=$json", e)
         ResultMsg.buildError("执行kill任务失败", ErrorCode.ERROR)
       }
     }
@@ -391,20 +389,20 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def cancelJob(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/cancelJob")
+      logInfo(s"Ip address ${request.ip()} request /system/cancelJob")
       // 参数校验与参数获取
       val jobId = JSONUtils.getValue(json, "id", -1)
       if (jobId <= 0) {
-        this.logger.warn(s"[cancelJob] 参数不合法：json=$json")
+        logWarning(s"[cancelJob] 参数不合法：json=$json")
         return ResultMsg.buildError(s"参数不合法：json=$json", ErrorCode.ERROR)
       }
 
       this.baseSpark.sc.cancelJob(jobId, s"被管控平台kill：${DateFormatUtils.formatCurrentDateTime()}")
-      this.logger.info(s"[cancelJob] kill job成功：json=$json")
+      logInfo(s"[cancelJob] kill job成功：json=$json")
       ResultMsg.buildSuccess("kill job 成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[cancelJob] kill job失败：json=$json", e)
+        logError(s"[cancelJob] kill job失败：json=$json", e)
         ResultMsg.buildError("kill job失败", ErrorCode.ERROR)
       }
     }
@@ -417,20 +415,20 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def cancelStage(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/cancelStage")
+      logInfo(s"Ip address ${request.ip()} request /system/cancelStage")
       // 参数校验与参数获取
       val stageId = JSONUtils.getValue(json, "id", -1)
       if (stageId <= 0) {
-        this.logger.warn(s"[cancelStage] 参数不合法：json=$json")
+        logWarning(s"[cancelStage] 参数不合法：json=$json")
         return ResultMsg.buildError(s"参数不合法：json=$json", ErrorCode.ERROR)
       }
 
       this.baseSpark.sc.cancelStage(stageId, s"被管控平台kill：${DateFormatUtils.formatCurrentDateTime()}")
-      this.logger.info(s"[cancelStage] kill stage[${stageId}] 成功：json=$json")
+      logInfo(s"[cancelStage] kill stage[${stageId}] 成功：json=$json")
       ResultMsg.buildSuccess("kill stage 成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[cancelStage] kill stage失败：json=$json", e)
+        logError(s"[cancelStage] kill stage失败：json=$json", e)
         ResultMsg.buildError("kill stage失败", ErrorCode.ERROR)
       }
     }
@@ -444,27 +442,27 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def sql(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/sql")
+      logInfo(s"Ip address ${request.ip()} request /system/sql")
       // 参数校验与参数获取
       val sql = JSONUtils.getValue(json, "sql", "")
 
       // sql合法性检查
       if (StringUtils.isBlank(sql) || !sql.toLowerCase.trim.startsWith("select ")) {
-        this.logger.warn(s"[sql] sql不合法，在线调试功能只支持查询操作：json=$json")
+        logWarning(s"[sql] sql不合法，在线调试功能只支持查询操作：json=$json")
         return ResultMsg.buildError(s"sql不合法，在线调试功能只支持查询操作", ErrorCode.ERROR)
       }
 
       if (this.baseSpark == null || this.baseSpark._spark == null) {
-        this.logger.warn(s"[sql] 系统正在初始化，请稍后再试：json=$json")
+        logWarning(s"[sql] 系统正在初始化，请稍后再试：json=$json")
         return "系统正在初始化，请稍后再试"
       }
 
       val sqlResult = this.baseSpark._spark.sql(sql.replace("memory.", "")).limit(1000).showString()
-      this.logger.info(s"成功执行以下查询：${sql}\n执行结果如下：\n" + sqlResult)
+      logInfo(s"成功执行以下查询：${sql}\n执行结果如下：\n" + sqlResult)
       ResultMsg.buildSuccess(sqlResult, ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[sql] 执行用户sql失败：json=$json", e)
+        logError(s"[sql] 执行用户sql失败：json=$json", e)
         ResultMsg.buildError("执行用户sql失败，异常堆栈：" + ExceptionBus.stackTrace(e), ErrorCode.ERROR)
       }
     }
@@ -477,7 +475,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
   def sparkInfo(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/sparkInfo")
+      logInfo(s"Ip address ${request.ip()} request /system/sparkInfo")
       if (this.sparkInfoBean == null) {
         this.sparkInfoBean = new SparkInfo
         this.sparkInfoBean.setAppName(this.baseSpark.appName)
@@ -507,11 +505,11 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       this.sparkInfoBean.setUptime(DateFormatUtils.runTime(FireUtils.launchTime))
       this.sparkInfoBean.setBatchDuration(this.baseSpark.batchDuration + "")
       this.sparkInfoBean.setTimestamp(DateFormatUtils.formatCurrentDateTime())
-      this.logger.info(s"[sparkInfo] 获取spark信息成功：json=$json")
+      logInfo(s"[sparkInfo] 获取spark信息成功：json=$json")
       ResultMsg.buildSuccess(JSONUtils.toJSONString(this.sparkInfoBean), ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[sparkInfo] 获取spark信息失败：json=$json", e)
+        logError(s"[sparkInfo] 获取spark信息失败：json=$json", e)
         ResultMsg.buildError("获取spark信息失败", ErrorCode.ERROR)
       }
     }

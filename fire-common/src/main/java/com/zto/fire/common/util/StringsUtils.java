@@ -20,7 +20,6 @@ package com.zto.fire.common.util;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,6 +29,8 @@ import java.util.regex.Pattern;
  * @author ChengLong 2019-4-11 09:06:26
  */
 public class StringsUtils {
+    public final static String BLANK = " ";
+
     private StringsUtils() {
     }
 

@@ -17,11 +17,12 @@
 
 package org.apache.hadoop.hbase.spark
 
+import com.zto.fire.common.util.Logging
+
 import java.io._
 import java.net.InetSocketAddress
 import java.util
 import java.util.UUID
-
 import javax.management.openmbean.KeyAlreadyExistsException
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -43,7 +44,6 @@ import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.{SerializableWritable, SparkContext}
-import org.apache.spark.internal.Logging
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -927,7 +927,7 @@ class HBaseContext(@transient sc: SparkContext,
         }
       }
       if (null == loc) {
-        if (log.isTraceEnabled) {
+        if (logger.isTraceEnabled) {
           logTrace("failed to get region location, so use default writer: " +
             Bytes.toString(rowKey))
         }
@@ -939,13 +939,13 @@ class HBaseContext(@transient sc: SparkContext,
           familyHFileWriteOptionsMapInternal,
           hfileCompression)
       } else {
-        if (log.isDebugEnabled) {
+        if (logger.isDebugEnabled) {
           logDebug("first rowkey: [" + Bytes.toString(rowKey) + "]")
         }
         val initialIsa =
           new InetSocketAddress(loc.getHostname, loc.getPort)
         if (initialIsa.isUnresolved) {
-          if (log.isTraceEnabled) {
+          if (logger.isTraceEnabled) {
             logTrace("failed to resolve bind address: " + loc.getHostname + ":"
               + loc.getPort + ", so use default writer")
           }
@@ -957,7 +957,7 @@ class HBaseContext(@transient sc: SparkContext,
             familyHFileWriteOptionsMapInternal,
             hfileCompression)
         } else {
-          if(log.isDebugEnabled) {
+          if(logger.isDebugEnabled) {
             logDebug("use favored nodes writer: " + initialIsa.getHostString)
           }
           getNewHFileWriter(family,

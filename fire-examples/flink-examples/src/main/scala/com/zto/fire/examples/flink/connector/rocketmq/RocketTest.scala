@@ -18,11 +18,10 @@
 package com.zto.fire.examples.flink.connector.rocketmq
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Config
 import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.core.anno.connector.{RocketMQ, RocketMQ2}
 import com.zto.fire.flink.FlinkStreaming
-import com.zto.fire.flink.anno.{Checkpoint, Streaming}
+import com.zto.fire.flink.anno.Streaming
 import org.apache.flink.api.scala._
 
 /**
@@ -55,6 +54,6 @@ object RocketTest extends FlinkStreaming {
 
     // 从另一个rocketmq中消费数据，keyNum=2对应@RocketMQ2注解中的配置
     val dstream2 = this.fire.createMQStream(keyNum = 2)
-    dstream2.printToErr("keyNum2=>")
+    dstream2.print("keyNum2=>")
   }
 }

@@ -423,8 +423,8 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
                   keyNum: Int = KeyNum._1): Unit = {
     val finalFormat = if (noEmpty(FireSparkConf.datasourceFormat(keyNum))) FireSparkConf.datasourceFormat(keyNum) else format
     val finalLoadParam = if (noEmpty(FireSparkConf.datasourceLoadParam(keyNum))) FireSparkConf.datasourceLoadParam(keyNum).split(",").toSeq else loadParams
-    this.logger.info(s"--> Spark DataSource read api参数信息（keyNum=$keyNum）<--")
-    this.logger.info(s"format=${finalFormat} loadParams=${finalLoadParam}")
+    logInfo(s"--> Spark DataSource read api参数信息（keyNum=$keyNum）<--")
+    logInfo(s"format=${finalFormat} loadParams=${finalLoadParam}")
 
     requireNonEmpty(finalFormat, finalLoadParam)
     SparkSingletonFactory.getSparkSession.read.format(format).options(SparkUtils.optionsEnhance(options, keyNum)).load(finalLoadParam: _*)

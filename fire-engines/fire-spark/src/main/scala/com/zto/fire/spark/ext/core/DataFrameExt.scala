@@ -123,7 +123,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
   @deprecated("use jdbcUpdateBatch", "fire 2.3.3")
   def jdbcBatchUpdate(sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = KeyNum._1): Unit = {
     if (ValueUtils.isEmpty(sql)) {
-      logger.error("执行jdbcBatchUpdate失败，sql语句不能为空")
+      logError("执行jdbcBatchUpdate失败，sql语句不能为空")
       return
     }
 

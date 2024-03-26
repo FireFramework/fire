@@ -27,11 +27,10 @@ import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 
-import java.sql.{Date, PreparedStatement, ResultSet, Types}
+import java.sql.{Date, PreparedStatement, ResultSet}
 import java.util.Properties
 import javax.sql.XADataSource
 import scala.collection.mutable.ListBuffer
-import scala.reflect.ClassTag
 import scala.util.Try
 
 /**
@@ -94,7 +93,7 @@ object DBUtils extends Logging {
       }
     } catch {
       case e: Exception =>
-        logger.error("ResultSet转换成JavaBean过程中出现异常.", e)
+        logError("ResultSet转换成JavaBean过程中出现异常.", e)
         throw e
     }
     list
@@ -117,7 +116,7 @@ object DBUtils extends Logging {
         rs.findColumn(columnName)
       }
     }
-    if (retVal.isFailure) this.logger.warn(s"ResultSet结果集中未找到列名：${columnName}，请保证ResultSet与JavaBean中的字段一一对应，耗时：${elapsed(start)}")
+    if (retVal.isFailure) logWarning(s"ResultSet结果集中未找到列名：${columnName}，请保证ResultSet与JavaBean中的字段一一对应，耗时：${elapsed(start)}")
     retVal.isSuccess
   }
 

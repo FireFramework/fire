@@ -17,7 +17,7 @@
 
 package com.zto.fire.common.util
 
-import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
@@ -58,7 +58,7 @@ object ThreadUtils extends Logging {
   def run(fun: => Unit): Unit = {
     this.cachedPool.execute(new Runnable {
       override def run(): Unit = fun
-      logger.debug(s"Invoke runAsThread as ${Thread.currentThread().getName}.")
+      logDebug(s"Invoke runAsThread as ${Thread.currentThread().getName}.")
     })
   }
 
@@ -75,7 +75,7 @@ object ThreadUtils extends Logging {
       override def run(): Unit = {
         while (true) {
           fun
-          logger.debug(s"Loop invoke runAsThreadLoop as ${Thread.currentThread().getName}. Delay is ${delay}s.")
+          logDebug(s"Loop invoke runAsThreadLoop as ${Thread.currentThread().getName}. Delay is ${delay}s.")
           Thread.sleep(Math.abs(delay * 1000))
         }
       }
@@ -113,7 +113,7 @@ object ThreadUtils extends Logging {
     // 处理传入的函数
     def wrapFun(): Unit = {
       fun
-      this.logger.debug(s"Loop invoke runAsSchedule as ${Thread.currentThread().getName}. Delay is ${period}${timeUnit.name()}.")
+      logDebug(s"Loop invoke runAsSchedule as ${Thread.currentThread().getName}. Delay is ${period}${timeUnit.name()}.")
     }
   }
 
@@ -191,7 +191,7 @@ object ThreadUtils extends Logging {
       val threadPool = this.poolMap.get(poolName)
       if (threadPool != null && !threadPool.isShutdown) {
         threadPool.shutdownNow()
-        this.logger.debug(s"关闭线程池：${poolName}")
+        logDebug(s"关闭线程池：${poolName}")
       }
     }
   }
@@ -202,7 +202,7 @@ object ThreadUtils extends Logging {
   def shutdown(pool: ExecutorService): Unit = {
     if (pool != null && !pool.isShutdown) {
       pool.shutdown()
-      this.logger.debug(s"关闭线程池：${pool}")
+      logDebug(s"关闭线程池：${pool}")
     }
   }
 
@@ -215,10 +215,10 @@ object ThreadUtils extends Logging {
       this.poolMap.foreach(pool => {
         if (pool != null && pool._2 != null && !pool._2.isShutdown) {
           pool._2.shutdownNow()
-          this.logger.info(s"${FirePS1Conf.wrap(s"---> 完成线程池[ ${pool._1} ]的资源回收. <---", FirePS1Conf.GREEN)}")
+          logInfo(s"---> 完成线程池[ ${pool._1} ]的资源回收. <---")
         }
       })
     }
-    this.logger.info(s"${FirePS1Conf.wrap(s"---> 完成所有线程池回收，总计：${poolNum}个. <---", FirePS1Conf.GREEN)}")
+    logInfo(s"---> 完成所有线程池回收，总计：${poolNum}个. <---")
   }
 }

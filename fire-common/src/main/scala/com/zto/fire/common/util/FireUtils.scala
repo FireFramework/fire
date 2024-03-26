@@ -32,6 +32,7 @@ import com.zto.fire.predef._
  */
 private[fire] object FireUtils extends Serializable with Logging {
   private[fire] var isSplash = false
+  private[fire] var _isMaster: Option[Boolean] = None
   private[fire] var _jobType: JobType = JobType.UNDEFINED
   private[fire] val _launchTime = System.currentTimeMillis()
   private[this] lazy val sparkUtils = "com.zto.fire.spark.util.SparkUtils"
@@ -122,6 +123,18 @@ private[fire] object FireUtils extends Serializable with Logging {
    * 2. Flink: ExecutionEnv
    */
   def isEngineDown: Boolean = !invokeEngineUtils[Boolean]("isEngineDown")
+
+  /**
+   * 用于判断是否为主节点
+   * 1. Spark：driver
+   * 2. Flink: JobManager
+   */
+  def isMaster: Boolean = {
+    if (_isMaster.isEmpty) {
+      _isMaster = Some(invokeEngineUtils[Boolean]("isMaster"))
+    }
+    _isMaster.get
+  }
 
   /**
    * 反射调用不同引擎上层的工具方法
@@ -223,7 +236,7 @@ private[fire] object FireUtils extends Serializable with Logging {
           |
           |""".stripMargin.replace("version", s"fire version:${FirePS1Conf.wrap(this.fireVersion, FirePS1Conf.PINK)}  ${FirePS1Conf.wrap(engineVersion, FirePS1Conf.GREEN)}")
 
-      this.logger.warn(FirePS1Conf.wrap(info, FirePS1Conf.GREEN))
+      logInfo(info)
       this.isSplash = true
     }
   }

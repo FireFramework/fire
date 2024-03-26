@@ -19,7 +19,7 @@ package com.zto.fire.flink
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
-import com.zto.fire.common.util.{FireUtils, OSUtils, ParameterTool, PropUtils}
+import com.zto.fire.common.util.{FireUtils, PropUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
 import com.zto.fire.flink.conf.FireFlinkConf
@@ -84,7 +84,7 @@ trait BaseFlink extends BaseFire {
       // 根据所选的hive，进行对应hdfs的HA参数设置
       FireHDFSConf.hdfsHAConf.foreach(prop => hiveConf.set(prop._1, prop._2))
       this.hiveCatalog = new HiveCatalog(FireHiveConf.hiveCatalogName, FireHiveConf.defaultDB, hiveConf, FireHiveConf.hiveVersion)
-      this.logger.info(s"enabled flink-hive support. catalogName is ${FireHiveConf.hiveCatalogName}")
+      logInfo(s"enabled flink-hive support. catalogName is ${FireHiveConf.hiveCatalogName}")
     }
   }
 

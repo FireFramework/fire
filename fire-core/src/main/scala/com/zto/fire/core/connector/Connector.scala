@@ -21,8 +21,7 @@ import com.zto.fire.common.conf.{FireFrameworkConf, KeyNum}
 
 import java.util.concurrent.ConcurrentHashMap
 import com.zto.fire.predef._
-import com.zto.fire.common.util.ShutdownHookManager
-import org.slf4j.{Logger, LoggerFactory}
+import com.zto.fire.common.util.{Logging, ShutdownHookManager}
 
 /**
  * connector父接口，约定了open与close方法，子类需要根据具体
@@ -32,8 +31,7 @@ import org.slf4j.{Logger, LoggerFactory}
  * @since 2.0.0
  * @create 2020-11-27 10:32
  */
-trait Connector extends Serializable {
-  protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
+trait Connector extends Serializable with Logging {
   this.hook()
 
   /**
@@ -75,11 +73,9 @@ abstract class FireConnector(keyNum: Int = KeyNum._1) extends Connector
 /**
  * 用于根据指定的keyNum创建不同的connector实例
  */
-abstract class ConnectorFactory[T <: Connector] extends Serializable {
+abstract class ConnectorFactory[T <: Connector] extends Serializable with Logging {
   @transient
   private[fire] lazy val instanceMap = new ConcurrentHashMap[Int, T]()
-  @transient
-  protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * 约定创建connector子类实例的方法

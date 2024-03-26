@@ -49,7 +49,7 @@ object ScheduleTest extends SparkStreaming {
    */
   @Scheduled(cron = "0/5 * * * * ?", scope = "driver", concurrent = false, startAt = "2021-01-21 11:30:00", initialDelay = 60000)
   def loadTable: Unit = {
-    this.logger.info("更新维表动作")
+    logInfo("更新维表动作")
   }
 
   /**
@@ -58,7 +58,7 @@ object ScheduleTest extends SparkStreaming {
    */
   @Scheduled(cron = "0/5 * * * * ?", scope = "all", concurrent = false)
   def test2: Unit = {
-    this.logger.info("executorId=" + SparkUtils.getExecutorId + "====方法 test2() 每5秒执行====" + DateFormatUtils.formatCurrentDateTime())
+    logInfo("executorId=" + SparkUtils.getExecutorId + "====方法 test2() 每5秒执行====" + DateFormatUtils.formatCurrentDateTime())
   }
 
 

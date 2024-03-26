@@ -18,10 +18,7 @@
 package com.zto.fire.spark
 
 import com.zto.fire._
-import com.zto.fire.common.anno.Scheduled
-import com.zto.fire.common.util.{DateFormatUtils, PropUtils}
-import com.zto.fire.hudi.enu.HoodieOperationType
-import com.zto.fire.spark.sql.SparkSqlUtils
+import com.zto.fire.common.util.DateFormatUtils
 import org.apache.spark.rdd.RDD
 
 /**
@@ -45,7 +42,7 @@ trait HudiStreaming extends BaseHudiStreaming {
       if (!rdd.isEmpty()) {
         // 2. 将当前批次数据实时upsert到指定hudi表
         val cachedRDD = rdd.cache()
-        logger.info(s"当前批次记录数（${DateFormatUtils.formatCurrentDateTime()}）：" + cachedRDD.count())
+        logInfo(s"当前批次记录数（${DateFormatUtils.formatCurrentDateTime()}）：" + cachedRDD.count())
         if (this.sink) sinkHudi(cachedRDD)
 
         // 3. 执行后置SQL语句，比如delete、update、merge等

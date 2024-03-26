@@ -19,8 +19,8 @@ package com.zto.fire.flink
 
 import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
-import com.zto.fire.common.enu.{JobType, RunMode}
-import com.zto.fire.common.util.{FireUtils, OSUtils, PropUtils}
+import com.zto.fire.common.enu.JobType
+import com.zto.fire.common.util.{FireUtils, PropUtils}
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
@@ -133,7 +133,7 @@ trait AbstractFlinkStreaming extends BaseFlink {
     // 自动注册配置文件中指定的udf函数
     if (FireFlinkConf.flinkUdfEnable) {
       FireFlinkConf.flinkUdfList.filter(udf => noEmpty(udf, udf._1, udf._2)).foreach(udf => {
-        this.logger.info(s"register udf function [ ${udf._1} ] with class [ ${udf._2} ].")
+        logInfo(s"register udf function [ ${udf._1} ] with class [ ${udf._2} ].")
         this.tableEnv.createTemporarySystemFunction(udf._1, Class.forName(udf._2).asInstanceOf[Class[ScalarFunction]])
       })
     }

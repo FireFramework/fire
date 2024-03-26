@@ -18,10 +18,9 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
-import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.Datasource.{KAFKA, ROCKETMQ}
-import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.lineage.parser.connector.{KafkaConnectorParser, RocketmqConnectorParser}
 import com.zto.fire.common.util.Logging
 import com.zto.fire.spark.util.{SparkRocketMQUtils, SparkUtils}
@@ -62,7 +61,7 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
     val confTopic = FireKafkaConf.kafkaTopics(keyNum)
     val finalKafkaTopic = if (StringUtils.isNotBlank(confTopic)) SparkUtils.topicSplit(confTopic) else topics
     require(finalKafkaTopic != null && finalKafkaTopic.nonEmpty, s"kafka topic不能为空，请在配置文件中指定：spark.kafka.topics$keyNum")
-    this.logger.info(s"kafka topic is $finalKafkaTopic")
+    logInfo(s"kafka topic is $finalKafkaTopic")
 
     val confKafkaParams = com.zto.fire.common.util.KafkaUtils.kafkaParams(kafkaParams, groupId, keyNum = keyNum)
     require(confKafkaParams.nonEmpty, "kafka相关配置不能为空！")

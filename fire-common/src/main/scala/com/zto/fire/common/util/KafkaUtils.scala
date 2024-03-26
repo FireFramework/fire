@@ -87,15 +87,15 @@ object KafkaUtils extends Logging {
         kafkaConsumer.assign(topicPartitions)
         // 获取每个partition指定时间戳的偏移量
         val map = kafkaConsumer.offsetsForTimes(timestampsToSearch)
-        this.logger.info("根据时间戳获取偏移量：map.size={}", map.size())
+        logInfo(s"根据时间戳获取偏移量：map.size=${map.size()}")
         var offsetTimestamp: OffsetAndTimestamp = null
-        this.logger.info("开始设置各分区初始偏移量...")
+        logInfo("开始设置各分区初始偏移量...")
         for (entry <- map.entrySet) { // 如果设置的查询偏移量的时间点大于最大的索引记录时间，那么value就为空
           offsetTimestamp = entry.getValue
           if (offsetTimestamp != null) { // 设置读取消息的偏移量
             val offset: java.lang.Long = offsetTimestamp.offset
             kafkaConsumer.seek(entry.getKey, offset)
-            this.logger.info("seek: id=" + entry.getKey.partition + " offset=" + offset)
+            logInfo(s"seek: id=${entry.getKey.partition} offset=${offset}")
           }
         }
       } else { // 如果未指定时间戳，则直接获取消息
@@ -114,7 +114,7 @@ object KafkaUtils extends Logging {
         }
       }
     } catch {
-      case e: Exception => logger.error("获取消息失败", e)
+      case e: Exception => logError("获取消息失败", e)
     } finally {
       if (kafkaConsumer != null) kafkaConsumer.close()
     }

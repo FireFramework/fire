@@ -63,14 +63,14 @@ class SQLExt(sql: String) extends Logging {
     val withMap = withMapCache.getOrElse(keyNum, PropUtils.sliceKeysByNum(FireFlinkConf.FLINK_SQL_WITH_PREFIX, keyNum))
     // 当sql语句中没有指定with表达式并且没有配置with参数，则进行提示
     if (withMap.isEmpty && withMatcher.isEmpty) {
-      this.logger.error(s"未搜索到keyNum=${keyNum}对应的sql配置列表，请以${FireFlinkConf.FLINK_SQL_WITH_PREFIX}开头，以${keyNum}结尾进行配置")
+      logError(s"未搜索到keyNum=${keyNum}对应的sql配置列表，请以${FireFlinkConf.FLINK_SQL_WITH_PREFIX}开头，以${keyNum}结尾进行配置")
       return sql
     }
 
     // 替换create table语句中的with表达式，并返回最终的sql
     val fixSql = if (withMatcher.isDefined) withPattern.replaceAllIn(sql, "") else sql
     val finalSQL = buildWith(fixSql, withMap)
-    if (FireFlinkConf.sqlLogEnable) logger.debug(s"完整SQL语句：$finalSQL")
+    if (FireFlinkConf.sqlLogEnable) logDebug(s"完整SQL语句：$finalSQL")
     finalSQL
   }
 

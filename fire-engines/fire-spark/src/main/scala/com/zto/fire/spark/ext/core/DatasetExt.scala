@@ -186,8 +186,8 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
     val finalIsSaveTable = if (noEmpty(FireSparkConf.datasourceIsSaveTable(keyNum))) FireSparkConf.datasourceIsSaveTable(keyNum).toBoolean else isSaveTable
     requireNonEmpty(dataset, finalFormat, finalSaveMode, finalSaveParam, finalIsSaveTable)
 
-    this.logger.info(s"--> Spark DataSource write api参数信息（keyNum=$keyNum）<--")
-    this.logger.info(s"format=${finalFormat} saveMode=${finalSaveMode} save参数=${finalSaveParam} saveToTable=${finalIsSaveTable}")
+    logInfo(s"--> Spark DataSource write api参数信息（keyNum=$keyNum）<--")
+    logInfo(s"format=${finalFormat} saveMode=${finalSaveMode} save参数=${finalSaveParam} saveToTable=${finalIsSaveTable}")
 
     val writer = dataset.write.format(finalFormat).options(SparkUtils.optionsEnhance(options, keyNum)).mode(finalSaveMode)
     if (!isSaveTable) {

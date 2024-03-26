@@ -18,7 +18,7 @@
 package com.zto.fire.core.rest
 
 import com.zto.fire.common.bean.rest.ResultMsg
-import com.zto.fire.common.conf.{FireFrameworkConf, FirePS1Conf}
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.ErrorCode
 import com.zto.fire.common.util._
 import com.zto.fire.predef._
@@ -96,7 +96,7 @@ private[fire] class RestServerManager extends Logging {
       // 释放Socket占用的端口给RestServer使用，避免被其他服务所占用
       if (socket != null && !socket.isClosed) socket.close()
       restList.filter(_ != null).foreach(rest => {
-        if (FireFrameworkConf.fireRestUrlShow) logger.info(s"---------> start rest: ${FirePS1Conf.wrap(restPrefix + rest.path, FirePS1Conf.BLUE + FirePS1Conf.UNDER_LINE)} successfully. <---------")
+        if (FireFrameworkConf.fireRestUrlShow) logInfo(s"---------> start rest: ${restPrefix + rest.path} successfully. <---------")
         rest.method match {
           case "get" | "GET" => Spark.get(rest.path, new Route {
             override def handle(request: Request, response: Response): AnyRef = {
@@ -142,12 +142,12 @@ private[fire] class RestServerManager extends Logging {
     val auth = request.headers("Authorization")
     try {
       if (!EncryptUtils.checkAuth(auth, this.mainClassName)) {
-        this.logger.warn(s"非法请求：用户身份校验失败！ip=${request.ip()} auth=$auth")
+        logWarning(s"非法请求：用户身份校验失败！ip=${request.ip()} auth=$auth")
         ResultMsg.buildError(s"非法请求：用户身份校验失败！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
       }
     } catch {
       case e: Exception => {
-        this.logger.error(s"非法请求：请检查请求参数！ip=${request.ip()} auth=$auth", e)
+        logError(s"非法请求：请检查请求参数！ip=${request.ip()} auth=$auth", e)
         ResultMsg.buildError(s"非法请求：请检查请求参数！ip=${request.ip()}", ErrorCode.UNAUTHORIZED)
       }
     }

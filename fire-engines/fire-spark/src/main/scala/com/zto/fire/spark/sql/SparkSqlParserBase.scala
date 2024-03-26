@@ -89,7 +89,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   override def sqlParser(sql: String): Unit = {
     if (isEmpty(sql)) return
     tryWithLog {
-      this.logger.debug(s"开始解析sql语句：$sql")
+      logDebug(s"开始解析sql语句：$sql")
       SparkUtils.sqlValidate(sql)
       val logicalPlan = this.spark.sessionState.sqlParser.parsePlan(sql)
       if (lineageCollectSQLEnable) SQLLineageManager.addStatement(sql)

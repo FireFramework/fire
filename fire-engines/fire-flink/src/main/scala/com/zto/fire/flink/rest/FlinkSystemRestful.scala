@@ -67,12 +67,12 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
    */
   @Rest("/system/arthas")
   override def arthas(request: Request, response: Response): AnyRef = {
-    this.logger.info(s"Ip address ${request.ip()} request /system/arthas")
+    logInfo(s"Ip address ${request.ip()} request /system/arthas")
     val retVal = super.arthas(request, response)
     val json = request.body()
     if (JSONUtils.getValue[Boolean](json, "distribute", false)) {
       this.distributeJson = JSONUtils.toJSONString(new DistributeBean(DistributeModule.ARTHAS, request.body))
-      this.logger.info("开始分布式分发：" + this.distributeJson)
+      logInfo("开始分布式分发：" + this.distributeJson)
     }
     retVal
   }
@@ -85,7 +85,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
     val json = request.body
 
     try {
-      this.logger.debug(s"内部请求分布式更新血缘信息，ip：${request.ip()}")
+      logDebug(s"内部请求分布式更新血缘信息，ip：${request.ip()}")
       LineageManager.printLog(s"请求fire更新血缘信息：$json")
       if (noEmpty(json)) {
         val lineageMap = JSONUtils.parseObject[JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]](json)
@@ -96,7 +96,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
       ResultMsg.buildSuccess("血缘信息已更新", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[collectLineage] 设置血缘信息失败：json=$json", e)
+        logError(s"[collectLineage] 设置血缘信息失败：json=$json", e)
         ResultMsg.buildError("设置血缘信息失败", ErrorCode.ERROR)
       }
     }
@@ -107,7 +107,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
    */
   @Rest("/system/distributeSync")
   def distributeSync(request: Request, response: Response): AnyRef = {
-    this.logger.debug(s"内部请求分布式更新信息，ip：${request.ip()}")
+    logDebug(s"内部请求分布式更新信息，ip：${request.ip()}")
     this.distributeJson
   }
 
@@ -118,8 +118,8 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
   def setConf(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/setConf")
-      this.logger.info(s"请求fire更新配置信息：$json")
+      logInfo(s"Ip address ${request.ip()} request /system/setConf")
+      logInfo(s"请求fire更新配置信息：$json")
       val confMap = JSONUtils.parseObject[JHashMap[String, String]](json)
       if (ValueUtils.noEmpty(confMap)) {
         PropUtils.setProperties(confMap)
@@ -128,7 +128,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
       ResultMsg.buildSuccess("配置信息已更新", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[setConf] 设置配置信息失败：json=$json", e)
+        logError(s"[setConf] 设置配置信息失败：json=$json", e)
         ResultMsg.buildError("设置配置信息失败", ErrorCode.ERROR)
       }
     }
@@ -142,7 +142,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
   def checkpoint(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/checkpoint")
+      logInfo(s"Ip address ${request.ip()} request /system/checkpoint")
       val checkpointParams = JSONUtils.parseObject[CheckpointParams](json)
 
       val clazz = classOf[CheckpointCoordinator]
@@ -164,11 +164,11 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
         }
       }
 
-      this.logger.info(s"[checkpoint] 执行checkpoint热修改成功：interval=${checkpointParams.getInterval} timeout=${checkpointParams.getTimeout} minPauseBetween=${checkpointParams.getMinPauseBetween} json=$json", "rest")
+      logInfo(s"[checkpoint] 执行checkpoint热修改成功：interval=${checkpointParams.getInterval} timeout=${checkpointParams.getTimeout} minPauseBetween=${checkpointParams.getMinPauseBetween} json=$json")
       ResultMsg.buildSuccess(s"执行checkpoint热修改成功：interval=${checkpointParams.getInterval} timeout=${checkpointParams.getTimeout} minPauseBetween=${checkpointParams.getMinPauseBetween}", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[checkpoint] 执行checkpoint热修改失败：json=$json", e)
+        logError(s"[checkpoint] 执行checkpoint热修改失败：json=$json", e)
         ResultMsg.buildError("执行checkpoint热修改失败", ErrorCode.ERROR)
       }
     }
@@ -181,14 +181,14 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
   def kill(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/kill")
+      logInfo(s"Ip address ${request.ip()} request /system/kill")
       // 参数校验与参数获取
       this.baseFlink.shutdown()
-      this.logger.info(s"[kill] kill任务成功：json=$json")
+      logInfo(s"[kill] kill任务成功：json=$json")
       ResultMsg.buildSuccess("任务停止成功", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[kill] 执行kill任务失败：json=$json", e)
+        logError(s"[kill] 执行kill任务失败：json=$json", e)
         ResultMsg.buildError("执行kill任务失败", ErrorCode.ERROR)
       }
     }
@@ -201,25 +201,25 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
   def sql(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/sql")
+      logInfo(s"Ip address ${request.ip()} request /system/sql")
       // 参数校验与参数获取
       val sql = JSONUtils.getValue(json, "sql", "")
 
       // sql合法性检查
       if (StringUtils.isBlank(sql) || !sql.toLowerCase.trim.startsWith("select ")) {
-        this.logger.warn(s"[sql] sql不合法，在线调试功能只支持查询操作：json=$json")
+        logWarning(s"[sql] sql不合法，在线调试功能只支持查询操作：json=$json")
         return ResultMsg.buildError(s"sql不合法，在线调试功能只支持查询操作", ErrorCode.ERROR)
       }
 
       if (this.baseFlink == null) {
-        this.logger.warn(s"[sql] 系统正在初始化，请稍后再试：json=$json")
+        logWarning(s"[sql] 系统正在初始化，请稍后再试：json=$json")
         return "系统正在初始化，请稍后再试"
       }
 
       ""
     } catch {
       case e: Exception => {
-        this.logger.error(s"[sql] 执行用户sql失败：json=$json", e)
+        logError(s"[sql] 执行用户sql失败：json=$json", e)
         ResultMsg.buildError("执行用户sql失败，异常堆栈：" + ExceptionBus.stackTrace(e), ErrorCode.ERROR)
       }
     }

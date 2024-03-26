@@ -1,9 +1,5 @@
 package com.zto.fire.flink.util
 
-import java.io.{BufferedInputStream, DataInputStream, File, FileInputStream}
-import java.net.URI
-import java.util.Date
-import java.util.regex.{Matcher, Pattern}
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.util.UnitFormatUtils.DateUnitEnum
@@ -17,6 +13,10 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs._
 import org.apache.log4j.{Level, Logger}
 
+import java.io.{BufferedInputStream, DataInputStream, File, FileInputStream}
+import java.net.URI
+import java.util.Date
+import java.util.regex.{Matcher, Pattern}
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -108,7 +108,7 @@ protected[fire] class StateCleanerUtils extends Logging {
 					sharedState.map(t => t._2).filter(_.isInstanceOf[FileStateHandle]).map(_.asInstanceOf[FileStateHandle])
 						.foreach(t => {
 							val filePath = t.getFilePath
-							this.logger.info("parseManagedKeyedState:" + filePath)
+							logInfo("parseManagedKeyedState:" + filePath)
 							this.inuserSet.add(filePath.getPath)
 						})
 				}
@@ -126,7 +126,7 @@ protected[fire] class StateCleanerUtils extends Logging {
 		if (isEmpty(operatorSubtaskState)) {
 			operatorSubtaskState.getManagedOperatorState.map(_.getDelegateStateHandle).filter(_.isInstanceOf[FileStateHandle]).map(_.asInstanceOf[FileStateHandle]).foreach(fileStateHandle => {
 				val filePath = fileStateHandle.getFilePath
-				this.logger.info("parseManagedKeyedState:" + filePath)
+				logInfo("parseManagedKeyedState:" + filePath)
 				this.inuserSet.add(filePath.getPath)
 			})
 		}
@@ -149,14 +149,14 @@ protected[fire] class StateCleanerUtils extends Logging {
 				val matcher: Matcher = checkpoint_pattern.matcher(status.getPath().toUri.getPath + "/")
 				if (matcher.find) {
 					this.files += status
-					this.logger.info(status.getPath().toUri.getPath)
+					logInfo(status.getPath().toUri.getPath)
 					val timeFlag = if (this.useAccessTime) status.getAccessTime else status.getModificationTime
 					// 只分析最近访问时间在配置的metadataTtl之后的metadata文件，也就是说默认62天之前仍未被访问或修改的metadata文件将会被删除
 					if (status.getPath.getName.endsWith("_metadata") && (timeFlag > this.checkpointTTLStamp)) {
 						// 获取metadata在hdfs上的相对路径
 						val metadataPath = status.getPath.toString.replace(this.hdfs, "")
 						this.inuserSet.add(metadataPath)
-						this.logger.info(s"开始分析metadata文件：${metadataPath}")
+						logInfo(s"开始分析metadata文件：${metadataPath}")
 
 						// 是否复用同一个本地元数据的路径，如果复用，则分析完成后就会被下一个元数据文件覆盖，否则会保留所有的metadata文件
 						val localPath = if (this.overwrite) this.localCheckpointBaseDir + "/_metadata" else this.localCheckpointBaseDir + metadataPath
@@ -167,8 +167,8 @@ protected[fire] class StateCleanerUtils extends Logging {
 					}
 				}
 			}
-			this.logger.info(s"此次分析metadata文件数共计：${count}")
-			this.logger.info(s"此次inuserSet文件数共计：${inuserSet.size()}")
+			logInfo(s"此次分析metadata文件数共计：${count}")
+			logInfo(s"此次inuserSet文件数共计：${inuserSet.size()}")
 		}(if (fs != null) fs.close())(this.logger, catchLog = "分析metadata文件发生异常", finallyCatchLog = "FileSystem.close()失败")
 	}
 
@@ -193,18 +193,18 @@ protected[fire] class StateCleanerUtils extends Logging {
 						val destPath = new Path(s"${this.archiveDir}/${DateFormatUtils.formatCurrentDate()}/$subPath")
 						fs.mkdirs(destPath)
 						fs.rename(status.getPath, destPath)
-						this.logger.info(s"移动状态文件：${status.getPath.toString} to ${destPath.toString}")
+						logInfo(s"移动状态文件：${status.getPath.toString} to ${destPath.toString}")
 					} else {
 						// 非保守模式下，直接删除失效的状态文件
 						fs.delete(status.getPath, true)
-						this.logger.info(s"删除状态文件：${status.getPath}")
+						logInfo(s"删除状态文件：${status.getPath}")
 					}
 					count += 1
 					blockSize += status.getBlockSize
 				}
 			})
 
-			this.logger.info(s"清理过期文件数：${count}，释放磁盘空间：${UnitFormatUtils.readable(blockSize, DateUnitEnum.BYTE)}")
+			logInfo(s"清理过期文件数：${count}，释放磁盘空间：${UnitFormatUtils.readable(blockSize, DateUnitEnum.BYTE)}")
 		}(if (fs != null) fs.close())(this.logger, catchLog = "删除/归档checkpoint文件过程中发生异常", finallyCatchLog = "FileSystem.close()失败")
 	}
 
@@ -237,7 +237,7 @@ protected[fire] class StateCleanerUtils extends Logging {
 			// 遍历 OperatorState，这里的每个 OperatorState 对应一个 Flink 任务的 Operator 算子
 			// 不要与 OperatorState  和 KeyedState 混淆，不是一个层级的概念
 			checkpointMetadata.getOperatorStates.filter(_.getStateSize > 0).foreach(operatorState => {
-				this.logger.debug(s"算子状态：${operatorState}")
+				logDebug(s"算子状态：${operatorState}")
 				// 遍历当前算子的所有 subtask
 				operatorState.getStates.foreach(operatorSubtaskState => {
 					// 解析 operatorSubtaskState 的 ManagedKeyedState
@@ -267,10 +267,10 @@ protected[fire] class StateCleanerUtils extends Logging {
 				if (timeFlag < this.archiveTTLStamp) {
 					fs.delete(file.getPath, true)
 					count += 1
-					this.logger.info(s"清理checkpoint归档目录成功：${file.getPath}，归档时间：${DateFormatUtils.formatDateTime(new Date(timeFlag))}")
+					logInfo(s"清理checkpoint归档目录成功：${file.getPath}，归档时间：${DateFormatUtils.formatDateTime(new Date(timeFlag))}")
 				}
 			})
-			this.logger.info(s"本次清理checkpoint归档目录共计：${count}个")
+			logInfo(s"本次清理checkpoint归档目录共计：${count}个")
 		}(if (fs != null) fs.close())(this.logger, catchLog = "清理checkpoint归档目录出现异常", finallyCatchLog = "FileSystem.close()失败")
 	}
 
@@ -299,11 +299,11 @@ protected[fire] class StateCleanerUtils extends Logging {
 					if (size == 0) {
 						fs.delete(file.getPath, true)
 						count += 1
-						this.logger.info(s"清理空文件夹：${file.getPath}，空文件时间：${DateFormatUtils.formatDateTime(new Date(file.getAccessTime))}")
+						logInfo(s"清理空文件夹：${file.getPath}，空文件时间：${DateFormatUtils.formatDateTime(new Date(file.getAccessTime))}")
 					}
 				})
 			})
-			this.logger.info(s"本次清理空文件夹共计：${count}个")
+			logInfo(s"本次清理空文件夹共计：${count}个")
 		}(if (fs != null) fs.close())(this.logger, catchLog = "清理空文件过程中出现异常", finallyCatchLog = "FileSystem.close()失败")
 	}
 
@@ -336,11 +336,11 @@ protected[fire] class StateCleanerUtils extends Logging {
 
 						fs.delete(file.getPath, true)
 						count += 1
-						this.logger.info(s"清理savepoint目录成功：${file.getPath}，savepoint时间：${DateFormatUtils.formatDateTime(new Date(timeFlag))}")
+						logInfo(s"清理savepoint目录成功：${file.getPath}，savepoint时间：${DateFormatUtils.formatDateTime(new Date(timeFlag))}")
 					}
 				})
 			})
-			this.logger.info(s"本次清理savepoint共计：${count}个")
+			logInfo(s"本次清理savepoint共计：${count}个")
 		}(if (fs != null) fs.close())(this.logger, catchLog = "清理savepoint文件过程中出现异常", finallyCatchLog = "FileSystem.close()失败")
 	}
 
@@ -360,10 +360,10 @@ protected[fire] class StateCleanerUtils extends Logging {
 				if (timeFlag < this.completedTTLStamp) {
 					fs.delete(file.getPath, true)
 					count += 1
-					this.logger.info(s"清理completed job目录成功：${file.getPath}，completed job时间：${DateFormatUtils.formatDateTime(new Date(timeFlag))}")
+					logInfo(s"清理completed job目录成功：${file.getPath}，completed job时间：${DateFormatUtils.formatDateTime(new Date(timeFlag))}")
 				}
 			})
-			this.logger.info(s"本次清理completed job共计：${count}个")
+			logInfo(s"本次清理completed job共计：${count}个")
 		}(if (fs != null) fs.close())(this.logger, catchLog = "清理清理completed job文件过程中出现异常", finallyCatchLog = "FileSystem.close()失败")
 	}
 
@@ -372,18 +372,18 @@ protected[fire] class StateCleanerUtils extends Logging {
 	 */
 	protected def run(): Unit = {
 		elapsed[Unit]("step 5. 清理完毕，执行结束", this.logger) {
-			this.logger.info("开始执行新checkpoint与savepoint清理程序...")
-			this.logger.warn(s"step 1. 开始解析${checkpointTTL}天内增量checkpoint metadata文件并分析直接的血缘关系.")
+			("开始执行新checkpoint与savepoint清理程序...")
+			logWarning(s"step 1. 开始解析${checkpointTTL}天内增量checkpoint metadata文件并分析直接的血缘关系.")
 			this.recursionCheckpointDir()
-			this.logger.warn("step 2. 开始归档历史的checkpoint文件.")
+			logWarning("step 2. 开始归档历史的checkpoint文件.")
 			this.cleanCheckpoint()
-			this.logger.warn(s"step 3. 开始清理${archiveTTL}天前过期的checkpoint归档文件.")
+			logWarning(s"step 3. 开始清理${archiveTTL}天前过期的checkpoint归档文件.")
 			this.deleteArchive()
-			this.logger.warn("step 3. 开始清理checkpoint空文件夹.")
+			logWarning("step 3. 开始清理checkpoint空文件夹.")
 			this.deleteEmptyDir()
-			this.logger.warn(s"step 4. 开始清理${savepointTTL}天前过期的savepoint文件.")
+			logWarning(s"step 4. 开始清理${savepointTTL}天前过期的savepoint文件.")
 			this.deleteSavepoint()
-			this.logger.warn(s"step 5. 开始清理${completedTTL}天前过期的completed job文件.")
+			logWarning(s"step 5. 开始清理${completedTTL}天前过期的completed job文件.")
 			this.deleteCompleteJobs()
 		}
 	}

@@ -66,7 +66,7 @@ private[fire] object DistributeSyncManager extends SyncManager {
         }
 
         if (lineageRunCount.incrementAndGet() > FireFrameworkConf.lineageRunCount) {
-          logger.info(s"Flink分布式血缘解析与采集任务即将退出，总计运行：${lineageRunCount.get()}次")
+          logInfo(s"Flink分布式血缘解析与采集任务即将退出，总计运行：${lineageRunCount.get()}次")
           lineageThread.shutdown()
         }
         LineageManager.printLog(s"完成Flink分布式血缘解析与采集：${lineageRunCount.get()}次")
@@ -81,7 +81,7 @@ private[fire] object DistributeSyncManager extends SyncManager {
     if (noEmpty(json)) {
       val confMap = JSONUtils.parseObject[JMap[String, String]](json)
       PropUtils.setProperties(confMap)
-      this.logger.info(s"本次分布式更新配置数：${confMap.size()}个")
+      logInfo(s"本次分布式更新配置数：${confMap.size()}个")
     }
   }
 }

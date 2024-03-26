@@ -62,7 +62,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       this.url = if (noEmpty(this.conf) && noEmpty(this.conf.url) && isEmpty(FireJdbcConf.jdbcUrl(keyNum))) this.conf.url else FireJdbcConf.jdbcUrl(keyNum)
       require(noEmpty(this.url), s"数据库url不能为空，keyNum=${this.keyNum}")
       // 从配置文件中读取配置信息，并设置到ComboPooledDataSource对象中
-      this.logger.info(s"准备初始化数据库连接池[ ${this.url} ]")
+      logInfo(s"准备初始化数据库连接池[ ${this.url} ]")
 
       val driverClass = if (isEmpty(FireJdbcConf.driverClass(keyNum)) && noEmpty(this.conf) && noEmpty(this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
       val autoDriver = if (isEmpty(driverClass)) DBUtils.parseDriverByUrl(this.url) else driverClass
@@ -71,7 +71,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       val password = if (isEmpty(FireJdbcConf.password(keyNum)) && noEmpty(this.conf, this.conf.password)) this.conf.password else FireJdbcConf.password(keyNum)
       // 识别数据源类型是oracle、mysql等
       this.dbType = DBUtils.dbTypeParser(autoDriver, this.url)
-      logger.info(s"Fire框架识别到当前jdbc数据源标识为：${this.dbType}，keyNum=${this.keyNum}")
+      logInfo(s"Fire框架识别到当前jdbc数据源标识为：${this.dbType}，keyNum=${this.keyNum}")
 
       // 创建c3p0数据库连接池实例
       val pool = new ComboPooledDataSource(true)
@@ -89,7 +89,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       // 加载以db.c3p0.conf.为前缀的配置项
       this.installDBPoolProperties(pool, this.keyNum)
       this.connPool = pool
-      this.logger.info(s"创建数据库连接池[ $keyNum ] driver: ${this.dbType}")
+      this.logInfo(s"创建数据库连接池[ $keyNum ] driver: ${this.dbType}")
     }(this.logger, s"数据库连接池创建成功", s"初始化数据库连接池[ $keyNum ]失败")
   }
 
@@ -121,14 +121,14 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
               case "int" => method.invoke(pool, new JInt(prop._2))
               case "boolean" => method.invoke(pool, new JBoolean(prop._2))
               case "java.lang.String" => method.invoke(pool, prop._2)
-              case _ => this.logger.error(s"暂不支持的c3p0配置参数类型：${upperConf} 当前仅支持int、boolean、String")
+              case _ => logError(s"暂不支持的c3p0配置参数类型：${upperConf} 当前仅支持int、boolean、String")
             }
           } else {
-            this.logger.warn(s"数据库连接池不支持的配置：${FireJdbcConf.JDBC_C3P0_CONF_PREFIX + prop._1}=${prop._2}，请核实！")
+            logWarning(s"数据库连接池不支持的配置：${FireJdbcConf.JDBC_C3P0_CONF_PREFIX + prop._1}=${prop._2}，请核实！")
           }
         })
       } catch {
-        case exception: Exception => this.logger.error("设置c3p0参数过程中出现异常，请检查以db.c3p0.conf.开头的配置项！", exception)
+        case exception: Exception => logError("设置c3p0参数过程中出现异常，请检查以db.c3p0.conf.开头的配置项！", exception)
       }
     }
   }
@@ -139,7 +139,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
   override protected def close(): Unit = {
     if (this.connPool != null) {
       this.connPool.close()
-      logger.debug(s"释放jdbc 连接池成功. keyNum=$keyNum")
+      logDebug(s"释放jdbc 连接池成功. keyNum=$keyNum")
     }
   }
 
@@ -153,7 +153,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
   def getConnection: Connection = {
     tryWithReturn {
       val connection = this.connPool.getConnection
-      this.logger.debug(s"获取数据库连接[ ${keyNum} ]成功")
+      logDebug(s"获取数据库连接[ ${keyNum} ]成功")
       connection
     }(this.logger, catchLog = s"获取数据库连接[ ${FireJdbcConf.jdbcUrl(keyNum)} ]发生异常，请检查配置文件")
   }
@@ -192,7 +192,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       }
       retVal = stat.executeUpdate
       if (commit) conn.commit()
-      this.logger.info(s"executeUpdate success. keyNum: ${keyNum} count: $retVal")
+      this.logInfo(s"executeUpdate success. keyNum: ${keyNum} count: $retVal")
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
@@ -264,7 +264,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       val retVal = stat.executeBatch
       if (commit) conn.commit()
       count = retVal.sum
-      this.logger.info(s"executeBatch success. keyNum: ${keyNum} count: $count")
+      this.logInfo(s"executeBatch success. keyNum: ${keyNum} count: $count")
       retVal
     } {
       this.release(sql, conn, stat, null, closeConnection)
@@ -345,7 +345,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
         })
       }
       rs = stat.executeQuery
-      this.logger.info(s"executeQuery success. keyNum: ${keyNum} count: ${DBUtils.rowCount(rs)}")
+      this.logInfo(s"executeQuery success. keyNum: ${keyNum} count: ${DBUtils.rowCount(rs)}")
       callback(rs)
     } {
       this.release(sql, conn, stat, rs)
@@ -384,7 +384,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       if (rs != null) rs.close()
     } catch {
       case e: SQLException => {
-        this.logger.error(s"close jdbc ResultSet failed. keyNum: ${keyNum}", e)
+        logError(s"close jdbc ResultSet failed. keyNum: ${keyNum}", e)
         throw e
       }
     } finally {
@@ -392,7 +392,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
         if (stat != null) stat.close()
       } catch {
         case e: SQLException => {
-          this.logger.error(s"close jdbc statement failed. keyNum: ${keyNum}", e)
+          logError(s"close jdbc statement failed. keyNum: ${keyNum}", e)
           throw e
         }
       } finally {
@@ -400,7 +400,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
           if (conn != null && closeConnection) conn.close()
         } catch {
           case e: SQLException => {
-            this.logger.error(s"close jdbc connection failed. keyNum: ${keyNum}", e)
+            logError(s"close jdbc connection failed. keyNum: ${keyNum}", e)
             throw e
           }
         }
@@ -465,7 +465,7 @@ object JdbcConnector extends ConnectorFactory[JdbcConnector] with JdbcFunctions 
   override protected def create(conf: Any = null, keyNum: Int = KeyNum._1): JdbcConnector = {
     requireNonEmpty(keyNum)
     val connector = new JdbcConnector(conf.asInstanceOf[JdbcConf], keyNum)
-    logger.debug(s"创建JdbcConnector实例成功. keyNum=$keyNum")
+    logDebug(s"创建JdbcConnector实例成功. keyNum=$keyNum")
     connector
   }
 }

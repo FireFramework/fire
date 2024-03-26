@@ -127,13 +127,13 @@ abstract class BaseSink[IN, OUT](batch: Int, flushInterval: Long) extends RichSi
             val data = this.buffer.poll()
             if (data != null) this.dataList += data
           }
-          this.logger.info(s"${sinkLabel}执行flush操作 sink.size=${this.dataList.size} batch=${this.batch} flushInterval=${this.flushInterval}")
+          logInfo(s"${sinkLabel}执行flush操作 sink.size=${this.dataList.size} batch=${this.batch} flushInterval=${this.flushInterval}")
           this.sink(this.dataList.toList)
           this.dataList.clear()
         }
       } catch {
         case e: Exception => {
-          this.logger.error(s"${sinkLabel}数据sink失败！", e)
+          logError(s"${sinkLabel}数据sink失败！", e)
           this.flushException = e
         }
       }

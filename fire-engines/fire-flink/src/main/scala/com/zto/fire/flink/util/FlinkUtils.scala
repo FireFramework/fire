@@ -18,25 +18,24 @@
 package com.zto.fire.flink.util
 
 import com.google.common.collect.HashBasedTable
-import com.zto.fire.{JHashMap, JStringBuilder, noEmpty}
-import com.zto.fire.common.anno.{FieldName, Internal}
+import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.util._
 import com.zto.fire.flink.bean.FlinkTableSchema
 import com.zto.fire.flink.conf.FireFlinkConf
-import com.zto.fire.flink.sql.{FlinkSqlExtensionsParser, FlinkSqlParser}
+import com.zto.fire.flink.sql.FlinkSqlExtensionsParser
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.predef._
+import com.zto.fire.{JHashMap, JStringBuilder, noEmpty}
 import org.apache.calcite.avatica.util.{Casing, Quoting}
-import org.apache.commons.lang3.StringUtils
-import org.apache.calcite.avatica.util.{Casing, Quoting}
-import org.apache.calcite.sql.{SqlNodeList, _}
-import org.apache.flink.table.api.{SqlDialect => FlinkSqlDialect}
+import org.apache.calcite.sql._
 import org.apache.calcite.sql.parser.{SqlParser => CalciteParser}
+import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
 import org.apache.flink.runtime.util.EnvironmentInformation
 import org.apache.flink.sql.parser.hive.impl.FlinkHiveSqlParserImpl
 import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl
+import org.apache.flink.table.api.{SqlDialect => FlinkSqlDialect}
 import org.apache.flink.table.data.binary.BinaryStringData
 import org.apache.flink.table.data.{DecimalData, GenericRowData, RowData}
 import org.apache.flink.table.types.logical.RowType
@@ -252,7 +251,7 @@ object FlinkUtils extends Serializable with Logging {
   def loadUdfJar: Unit = {
     val udfJarUrl = PropUtils.getString(FireFlinkConf.FLINK_SQL_CONF_UDF_JARS, "")
     if (StringUtils.isBlank(udfJarUrl)) {
-      logger.warn(udfJarUrl, s"flink udf jar包路径不能为空，请在配置文件中通过：${FireFlinkConf.FLINK_SQL_CONF_UDF_JARS}=/path/to/udf.jar 指定")
+      logWarning(s"flink udf jar包路径不能为空，请在配置文件中通过：${FireFlinkConf.FLINK_SQL_CONF_UDF_JARS}=/path/to/udf.jar 指定")
       return
     }
 
@@ -272,11 +271,18 @@ object FlinkUtils extends Serializable with Logging {
         val method = envClass.getMethod("isJobManager")
         jobManager = Some((method.invoke(null) + "").toBoolean)
       } else {
-        logger.error("未找到方法：EnvironmentInformation.isJobManager()")
+        logError("未找到方法：EnvironmentInformation.isJobManager()")
       }
     }
     jobManager.getOrElse(true)
   }
+
+  /**
+   * 用于判断当前是否为driver
+   *
+   * @return true: driver false: executor
+   */
+  def isMaster: Boolean = this.isJobManager
 
   /**
    * 判断当前环境是否为TaskManager
@@ -293,7 +299,7 @@ object FlinkUtils extends Serializable with Logging {
         val method = globalConfClass.getMethod("getRunMode")
         this.mode = Some(method.invoke(null) + "")
       } else {
-        logger.error("未找到方法：GlobalConfiguration.getRunMode()")
+        logError("未找到方法：GlobalConfiguration.getRunMode()")
       }
     }
     val deployMode = this.mode.getOrElse("yarn-per-job")
@@ -461,7 +467,7 @@ object FlinkUtils extends Serializable with Logging {
    */
   def sqlWithReplace(originalSql: String): String = {
     val replacedSql = this.replaceSqlAlias(this.sqlWithConfReplace(originalSql))
-    logger.debug("Flink Sql with options替换成功，最终SQL：" + replacedSql)
+    logDebug("Flink Sql with options替换成功，最终SQL：" + replacedSql)
     replacedSql
   }
 

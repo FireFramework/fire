@@ -125,20 +125,20 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
             // 提交kafka的offset
             case dstream: CanCommitOffsets => {
               rdd.kafkaCommitOffsets(dstream.asInstanceOf[DStream[ConsumerRecord[String, String]]])
-              this.logger.info(s"批次[${batchTime}]执行成功，kafka offset提交成功")
+              logInfo(s"批次[${batchTime}]执行成功，kafka offset提交成功")
             }
             // 提交rocketmq的offset
             case dstream: RocketCanCommitOffsets => {
               rdd.rocketCommitOffsets(dstream.asInstanceOf[InputDStream[MessageExt]])
-              this.logger.info(s"批次[${batchTime}]执行成功，rocketmq offset提交成功")
+              logInfo(s"批次[${batchTime}]执行成功，rocketmq offset提交成功")
             }
             case _ => throw new IllegalArgumentException("DStream必须为最原始的source流，不能经过transformation算子做转换！")
           }
         }
       } else if (exitOnFailure) {
         ExceptionBus.post(retValue.failed.get)
-        this.logger.error(s"批次[${batchTime}]执行失败，offset未提交，任务将退出")
-        this.logger.error(s"异常堆栈：${ExceptionBus.stackTrace(retValue.failed.get)}")
+        logError(s"批次[${batchTime}]执行失败，offset未提交，任务将退出")
+        logError(s"异常堆栈：${ExceptionBus.stackTrace(retValue.failed.get)}")
         try {
           SparkSingletonFactory.getStreamingContext.stop(SparkUtils.isContextStarted, false)
         } finally {

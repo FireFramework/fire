@@ -18,7 +18,7 @@
 package com.zto.fire.spark
 
 import com.zto.fire._
-import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf, FirePS1Conf}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, FireHiveConf}
 import com.zto.fire.common.util.{FireUtils, PropUtils, SQLUtils}
 import com.zto.fire.core.BaseFire
 import com.zto.fire.core.rest.RestServerManager
@@ -76,7 +76,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     }
     SparkSingletonFactory.setAppName(this.appName)
     super.boot
-    this.logger.info("<-- 完成fire框架初始化 -->")
+    logInfo("<-- 完成fire框架初始化 -->")
   }
 
   /**
@@ -102,7 +102,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
    */
   override protected[fire] final def shutdown(stopGracefully: Boolean = true, inListener: Boolean = false): Unit = {
     try {
-      this.logger.info(FirePS1Conf.wrap("<-- 完成用户资源回收 -->", FirePS1Conf.GREEN))
+      logInfo(s"<-- 完成用户资源回收 -->")
 
       if (!inListener) {
         // 事件监听器中无法进行上下文的关闭
@@ -147,7 +147,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
 
     // 设置hive metastore地址
     val hiveMetastoreUrl = FireHiveConf.getMetastoreUrl
-    if (StringUtils.isBlank(hiveMetastoreUrl)) this.logger.warn("当前任务未指定hive连接信息，将不会连接hive metastore。如需使用hive，请通过spark.hive.cluster=xxx指定。")
+    if (StringUtils.isBlank(hiveMetastoreUrl)) logWarning("当前任务未指定hive连接信息，将不会连接hive metastore。如需使用hive，请通过spark.hive.cluster=xxx指定。")
     if (StringUtils.isNotBlank(hiveMetastoreUrl)) {
       tmpConf.set("hive.metastore.uris", hiveMetastoreUrl)
       // 关联所连接的hive集群，根据预制方案启用HDFS HA
@@ -182,7 +182,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     this.webUI = SparkUtils.getWebUI(this._spark)
     this._conf = tmpConf
     this.deployConf
-    this.logger.info("<-- 完成Spark运行时信息初始化 -->")
+    logInfo("<-- 完成Spark运行时信息初始化 -->")
   }
 
   /**
@@ -227,7 +227,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
         this.sc.parallelize(1 to executors, executors).foreachPartition(i => SparkSchedulerManager.getInstance().registerTasks(instances: _*))
       }
     } catch {
-      case e: Throwable => this.logger.error("定时任务注册失败.", e)
+      case e: Throwable => logError("定时任务注册失败.", e)
     }
   }
 

@@ -119,9 +119,9 @@ object PropUtils extends Logging {
       var resource: InputStream = null
       try {
         resource = this.getInputStream(fullName)
-        if (resource == null && !this.configurationFiles.contains(fileName)) this.logger.warn(s"未找到配置文件[ $fullName ]，若已使用注解配置，可忽略该警告")
+        if (resource == null && !this.configurationFiles.contains(fileName)) this.logWarning(s"未找到配置文件[ $fullName ]，若已使用注解配置，可忽略该警告")
         if (resource != null) {
-          this.logger.info(s"${FirePS1Conf.wrap(s"-------------> loaded ${fullName} <-------------", FirePS1Conf.YELLOW)}")
+          this.logInfo(s"-------------> loaded ${fullName} <-------------")
           props.load(resource)
           // 将所有的配置信息存放到settings中，并统一添加key的引擎前缀，如：
           // 如果是spark引擎，则key前缀统一添加spark. 如果是flink引擎，则统一添加flink.
@@ -530,7 +530,7 @@ object PropUtils extends Logging {
         // 如果包含配置黑名单，则不打印
         if (key != null && !FireFrameworkConf.fireConfBlackList.exists(conf => key.toString.contains(conf))) {
           val conf = s"${FirePS1Conf.wrap(s"${key._1} = ${key._2}", FirePS1Conf.PINK)}"
-          if (loggerStyle) logger.info(s">> $conf") else println(conf)
+          if (loggerStyle) logInfo(s">> $conf") else println(conf)
         }
       })
     })
@@ -629,8 +629,8 @@ object PropUtils extends Logging {
     val map = method.invoke(null).asInstanceOf[immutable.Map[String, String]]
     if (map.nonEmpty) {
       this.setProperties(map.filter(kv => !kv._1.contains(FireFrameworkConf.FIRE_REST_SERVER_SECRET)))
-      logger.info(s"完成计算引擎配置信息的同步，总计：${map.size}条")
-      map.foreach(k => logger.debug("合并：k=" + k._1 + " v=" + k._2))
+      logInfo(s"完成计算引擎配置信息的同步，总计：${map.size}条")
+      map.foreach(k => logDebug("合并：k=" + k._1 + " v=" + k._2))
     }
   }
 

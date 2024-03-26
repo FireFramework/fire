@@ -114,7 +114,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       table = this.getTable(tableName)
       table.put(puts)
       addHBaseDatasource(tableName, FOperation.INSERT, keyNum)
-      this.logger.info(s"HBase insert ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${puts.size}条")
+      logInfo(s"HBase insert ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${puts.size}条")
     } {
       this.closeTable(table)
     }(this.logger, "HBase insert",
@@ -169,7 +169,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       addHBaseDatasource(tableName, FOperation.GET, keyNum)
       table = this.getTable(tableName)
       list ++= table.get(getList)
-      this.logger.info(s"HBase 批量get ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${list.size}条")
+      logInfo(s"HBase 批量get ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${list.size}条")
       list
     } {
       this.closeTable(table)
@@ -189,7 +189,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     val getList = for (rowKey <- rowKeyList) yield HBaseConnector.buildGet(rowKey)
     val starTime = currentTime
     val resultList = this.getResult(tableName, getList: _*)
-    logger.info(s"HBase 批量get ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${resultList.size}条, 耗时：${elapsed(starTime)}")
+    logInfo(s"HBase 批量get ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${resultList.size}条, 耗时：${elapsed(starTime)}")
     resultList
   }
 
@@ -214,7 +214,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       case e: Exception => {
         // 当执行scan失败时，向上抛异常之前，避免ResultScanner对象因异常无法得到有效的关闭
         // 因此在发生异常时会尝试关闭ResultScanner对象
-        logger.error(s"执行scan ${hbaseClusterUrl(keyNum)}.${tableName}失败", e)
+        logError(s"执行scan ${hbaseClusterUrl(keyNum)}.${tableName}失败", e)
         try {
           this.closeResultScanner(rsScanner)
         } finally {
@@ -284,7 +284,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
           }
         })
       }
-      this.logger.info(s"HBase scan ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${list.size}条")
+      logInfo(s"HBase scan ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${list.size}条")
       list
     } {
       this.closeResultScanner(rsScanner)
@@ -310,7 +310,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       var secureHadoopUser: User.SecureHadoopUser = null
 
       if (noEmpty(user)) {
-        logger.info(s"hbase访问用户名：$user")
+        logInfo(s"hbase访问用户名：$user")
         val ugi = UserGroupInformation.createRemoteUser(user)
         secureHadoopUser = new User.SecureHadoopUser(ugi);
       }
@@ -894,7 +894,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     if (this.tableExistsCacheEnable) {
       // 如果走缓存
       if (!this.cacheTableExistsMap.containsKey(tableName)) {
-        this.logger.debug(s"已缓存${tableName}是否存在信息，后续将走缓存.")
+        logDebug(s"已缓存${tableName}是否存在信息，后续将走缓存.")
         this.cacheTableExistsMap.put(tableName, this.tableExists(tableName))
       }
       this.cacheTableExistsMap.get(tableName)
@@ -915,7 +915,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     tryFinallyWithReturn {
       admin = this.getConnection.getAdmin
       val isExists = admin.tableExists(TableName.valueOf(tableName))
-      this.logger.debug(s"HBase tableExists ${hbaseClusterUrl(keyNum)}.${tableName}获取成功")
+      logDebug(s"HBase tableExists ${hbaseClusterUrl(keyNum)}.${tableName}获取成功")
       isExists
     } {
       closeAdmin(admin)
@@ -1009,9 +1009,9 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
         cacheTableExistsMap.foreach(kv => {
           cacheTableExistsMap.update(kv._1, tableExists(kv._1))
           // 将用到的表信息加入到数据源管理器中
-          logger.debug(s"定时reload HBase表：${kv._1} 信息成功.")
+          logDebug(s"定时reload HBase表：${kv._1} 信息成功.")
         })
-        logger.debug(s"定时reload HBase耗时：${elapsed(start)}")
+        logDebug(s"定时reload HBase耗时：${elapsed(start)}")
       }, tableExistCacheInitialDelay(this.keyNum), tableExistCachePeriod(this.keyNum), TimeUnit.SECONDS)
     }
   }
@@ -1028,7 +1028,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
 
     // 以spark.fire.hbase.conf.xxx[keyNum]开头的配置信息
     PropUtils.sliceKeysByNum(hbaseConfPrefix, keyNum).foreach(kv => {
-      logger.info(s"hbase configuration: key=${kv._1} value=${kv._2}")
+      logInfo(s"hbase configuration: key=${kv._1} value=${kv._2}")
       finalConf.set(kv._1, kv._2)
     })
 
@@ -1042,7 +1042,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   override protected def close(): Unit = {
     if (this.connection != null && !this.connection.isClosed) {
       this.connection.close()
-      logger.debug(s"释放HBase connection成功. keyNum=$keyNum")
+      logDebug(s"释放HBase connection成功. keyNum=$keyNum")
     }
   }
 
@@ -1088,7 +1088,7 @@ object HBaseConnector extends ConnectorFactory[HBaseConnector] with HBaseFunctio
   override protected def create(conf: Any = null, keyNum: Int = KeyNum._1): HBaseConnector = {
     requireNonEmpty(keyNum)
     val connector = new HBaseConnector(conf.asInstanceOf[Configuration], keyNum)
-    logger.debug(s"创建HBaseConnector实例成功. keyNum=$keyNum")
+    logDebug(s"创建HBaseConnector实例成功. keyNum=$keyNum")
     connector
   }
 

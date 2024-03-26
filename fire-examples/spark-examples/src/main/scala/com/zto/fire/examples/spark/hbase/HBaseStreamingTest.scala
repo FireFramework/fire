@@ -30,11 +30,11 @@ object HBaseStreamingTest extends SparkStreaming {
       rdd.foreachPartition(it => {
         HBaseConnector.insert(this.tableName8, Student.newStudentList())
         val student = HBaseConnector.get[Student](this.tableName9, Seq("1", "2"))
-        student.foreach(t => logger.error("HBase1 Get结果：" + t))
+        student.foreach(t => logError("HBase1 Get结果：" + t))
 
         HBaseConnector.insert(this.tableName9, Student.newStudentList())
         val student2 = HBaseConnector.get[Student](this.tableName8, Seq("2", "3"), keyNum = 2)
-        student2.foreach(t => logger.error("HBase2 Get结果：" + t))
+        student2.foreach(t => logError("HBase2 Get结果：" + t))
       })
     })
   }

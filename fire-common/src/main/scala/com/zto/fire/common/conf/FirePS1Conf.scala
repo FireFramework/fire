@@ -17,7 +17,7 @@
 
 package com.zto.fire.common.conf
 
-import com.zto.fire.common.util.OSUtils
+import com.zto.fire.common.util.{FireUtils, OSUtils, StringsUtils}
 
 /**
  * 颜色预定义
@@ -35,6 +35,7 @@ private[fire] object FirePS1Conf {
   lazy val BLUE = "\u001B[34m"
   lazy val PURPLE = "\u001B[35m"
   lazy val PINK = "\u001B[35m"
+
   // 字体相关
   lazy val HIGH_LIGHT = "\u001B[1m"
   lazy val ITALIC = "\u001B[3m"
@@ -52,12 +53,13 @@ private[fire] object FirePS1Conf {
    * wrap后的字符串
    */
   def wrap(str: String, ps1: String): String = {
-    // if (!OSUtils.isLocal) return str
+    if (!OSUtils.isLocal && !FireUtils.isMaster) return str
 
-    val printStr = new StringBuilder()
-    ps1.foreach(ps => {
-      printStr.append(ps)
-    })
-    printStr.append(str + DEFAULT).toString()
+    val printStr = new StringBuilder(ps1)
+    printStr
+      .append(StringsUtils.BLANK)
+      .append(str)
+      .append(StringsUtils.BLANK)
+      .append(this.DEFAULT).toString()
   }
 }

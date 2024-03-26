@@ -59,7 +59,7 @@ private[fire] object SyncEngineConfHelper extends SyncEngineConf {
     Class.forName(FireFrameworkConf.confDeployEngine)
   } catch {
     case e: Exception =>
-      logger.error(s"未找到引擎配置获取实现类${FireFrameworkConf.confDeployEngine}，无法进行配置同步", e)
+      logError(s"未找到引擎配置获取实现类${FireFrameworkConf.confDeployEngine}，无法进行配置同步", e)
       throw e
   }
   private lazy val instance = syncEngineClass.newInstance()

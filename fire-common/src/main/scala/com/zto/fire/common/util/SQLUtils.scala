@@ -20,24 +20,22 @@ package com.zto.fire.common.util
 import com.zto.fire.common.enu.{Operation, SqlSemantic}
 import com.zto.fire.common.lineage.parser.connector.MongodbConnectorParser
 import com.zto.fire.predef._
-import org.apache.commons.lang3.StringUtils
 import net.sf.jsqlparser.expression.Expression
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression
 import net.sf.jsqlparser.expression.operators.relational.{EqualsTo, ExpressionList}
 import net.sf.jsqlparser.parser.CCJSqlParserUtil
 import net.sf.jsqlparser.schema.{Column, Table}
-import net.sf.jsqlparser.statement.Statement
 import net.sf.jsqlparser.statement.alter.{Alter, RenameTableStatement}
 import net.sf.jsqlparser.statement.create.table.CreateTable
 import net.sf.jsqlparser.statement.delete.Delete
 import net.sf.jsqlparser.statement.drop.Drop
-import net.sf.jsqlparser.statement.grant.Grant
 import net.sf.jsqlparser.statement.insert.Insert
 import net.sf.jsqlparser.statement.merge.Merge
 import net.sf.jsqlparser.statement.replace.Replace
-import net.sf.jsqlparser.statement.select.{PlainSelect, Select, SelectBody, SelectExpressionItem, SubSelect}
+import net.sf.jsqlparser.statement.select._
 import net.sf.jsqlparser.statement.truncate.Truncate
 import net.sf.jsqlparser.statement.update.Update
+import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable.ListBuffer
 
@@ -85,7 +83,7 @@ object SQLUtils extends Logging {
     var result: Option[T] = None
     this.splitSql(sql).filter(noEmpty(_)).foreach(statement => {
       if (noEmpty(statement)) {
-        logger.debug("当前执行sql：\n" + statement)
+        logDebug("当前执行sql：\n" + statement)
         result = Some(block(statement))
       }
     })

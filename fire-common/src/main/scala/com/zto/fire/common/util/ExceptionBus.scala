@@ -77,7 +77,7 @@ object ExceptionBus extends Logging {
       msg._1.foreach(t => {
         MQProducer.send(mqUrl, mqTopic, new ExceptionMsg(t._2, t._3).toString)
       })
-      logger.debug(s"异常诊断：本轮发送异常共计${msg._1.size}个.")
+      logDebug(s"异常诊断：本轮发送异常共计${msg._1.size}个.")
     }
   }
 
@@ -99,7 +99,7 @@ object ExceptionBus extends Logging {
     val list = this.queue.toList
     this.queue.clear()
     queueSize.set(0)
-    this.logger.debug(s"成功收集异常总线中的异常对象共计：${list.size}条，异常总线将会被清空.")
+    logDebug(s"成功收集异常总线中的异常对象共计：${list.size}条，异常总线将会被清空.")
     (list, this.exceptionCount.get())
   }
 
@@ -110,7 +110,7 @@ object ExceptionBus extends Logging {
   private[fire] def offAndLogError(logger: Logger, msg: String, t: Throwable, sql: String = ""): Unit = {
     this.post(t, sql)
     if (noEmpty(msg)) {
-      if (logger != null) logger.error(FirePS1Conf.wrap(msg, FirePS1Conf.RED), t) else t.printStackTrace()
+      if (logger != null) logError(msg, t) else t.printStackTrace()
     }
   }
 

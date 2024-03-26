@@ -26,7 +26,6 @@ import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.sync.SyncSparkEngine
 import com.zto.fire.spark.util.SparkSingletonFactory
-import org.apache.spark.SparkException
 import org.apache.spark.scheduler._
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
@@ -45,7 +44,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
    * 当SparkContext启动时触发
    */
   override def onApplicationStart(applicationStart: SparkListenerApplicationStart): Unit = {
-    this.logger.info(s"Spark 初始化完成.")
+    logInfo(s"Spark 初始化完成.")
     SparkSingletonFactory.setEngineState(true)
     this.baseSpark.onApplicationStart(applicationStart)
   }
@@ -82,7 +81,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
     this.baseSpark.onExecutorAdded(executorAdded)
     if (this.baseSpark.jobType != JobType.SPARK_CORE) this.needRegister.compareAndSet(false, true)
     SparkSingletonFactory.executorActiveCount.incrementAndGet()
-    this.logger.debug(s"executor[${executorAdded.executorId}] added. host: [${executorAdded.executorInfo.executorHost}].", this.module)
+    logDebug(s"executor[${executorAdded.executorId}] added. host: [${executorAdded.executorInfo.executorHost}].")
   }
 
   /**
@@ -91,7 +90,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
   override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
     this.baseSpark.onExecutorRemoved(executorRemoved)
     SparkSingletonFactory.executorActiveCount.decrementAndGet()
-    this.logger.debug(s"executor[${executorRemoved.executorId}] removed. reason: [${executorRemoved.reason}].", this.module)
+    logDebug(s"executor[${executorRemoved.executorId}] removed. reason: [${executorRemoved.reason}].")
   }
 
   /**
@@ -128,7 +127,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
       AccumulatorManager.addMultiTimer(module, "onJobEnd", "onJobEnd", "", "INFO", "", 1)
     } else {
       AccumulatorManager.addMultiTimer(module, "onJobEnd", "onJobEnd", "", "ERROR", "", 1)
-      this.logger.error(s"job failed.", this.module)
+      this.logError(s"job failed.")
     }
   }
 
@@ -146,7 +145,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
       AccumulatorManager.addMultiTimer(module, "onStageCompleted", "onStageCompleted", "", "INFO", "", 1)
     } else {
       AccumulatorManager.addMultiTimer(module, "onStageCompleted", "onStageCompleted", "", "ERROR", "", 1)
-      this.logger.error(s"stage failed. reason: " + stageCompleted.stageInfo.failureReason, this.module)
+      this.logError(s"stage failed. reason: " + stageCompleted.stageInfo.failureReason)
       AccumulatorManager.addLog(stageCompleted.stageInfo.failureReason.getOrElse(""))
 
       // 异常信息统一投递到Fire异常总线
@@ -177,7 +176,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
       AccumulatorManager.addMultiTimer(module, "onTaskEnd", "onTaskEnd", "", "INFO", "", 1)
     } else {
       AccumulatorManager.addMultiTimer(module, "onTaskEnd", "onTaskEnd", "", "ERROR", "", 1)
-      this.logger.error(s"task failed.", this.module)
+      this.logError(s"task failed.")
     }
   }
 
@@ -194,7 +193,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
     if (this.needRegister.compareAndSet(true, false)) {
       AccumulatorManager.registerAccumulators(this.baseSpark.sc)
       SyncSparkEngine.syncDynamicConf(this.baseSpark.sc, this.baseSpark._conf)
-      this.logger.info(s"完成系统累加器注册.", this.module)
+      logInfo(s"完成系统累加器注册.")
     }
   }
 }

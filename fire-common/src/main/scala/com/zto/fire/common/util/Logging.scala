@@ -35,11 +35,11 @@ trait Logging {
   protected def logger: Logger = log_
 
   protected def logInfo(msg: => String): Unit = {
-    if (this.logger.isInfoEnabled) this.logger.info(FirePS1Conf.wrap(msg, FirePS1Conf.BLUE))
+    if (this.logger.isInfoEnabled) this.logger.info(FirePS1Conf.wrap(msg, FirePS1Conf.GREEN))
   }
 
   protected def logDebug(msg: => String): Unit = {
-    if (this.logger.isDebugEnabled) this.logger.debug(msg)
+    if (this.logger.isDebugEnabled) this.logger.debug(FirePS1Conf.wrap(msg, FirePS1Conf.BLUE))
   }
 
   protected def logTrace(msg: => String): Unit = {
@@ -55,11 +55,11 @@ trait Logging {
   }
 
   protected def logInfo(msg: => String, throwable: Throwable): Unit = {
-    if (this.logger.isInfoEnabled) this.logger.info(msg, throwable)
+    if (this.logger.isInfoEnabled) this.logger.info(FirePS1Conf.wrap(msg, FirePS1Conf.GREEN), throwable)
   }
 
   protected def logDebug(msg: => String, throwable: Throwable): Unit = {
-    if (this.logger.isDebugEnabled) this.logger.debug(msg, throwable)
+    if (this.logger.isDebugEnabled) this.logger.debug(FirePS1Conf.wrap(msg, FirePS1Conf.BLUE), throwable)
   }
 
   protected def logTrace(msg: => String, throwable: Throwable): Unit = {
@@ -67,10 +67,10 @@ trait Logging {
   }
 
   protected def logWarning(msg: => String, throwable: Throwable): Unit = {
-    if (this.logger.isWarnEnabled) this.logger.warn(msg, throwable)
+    if (this.logger.isWarnEnabled) this.logger.warn(FirePS1Conf.wrap(msg, FirePS1Conf.YELLOW), throwable)
   }
 
   protected def logError(msg: => String, throwable: Throwable): Unit = {
-    if (this.logger.isErrorEnabled) this.logger.error(msg, throwable)
+    if (this.logger.isErrorEnabled) this.logger.error(FirePS1Conf.wrap(msg, FirePS1Conf.RED), throwable)
   }
 }

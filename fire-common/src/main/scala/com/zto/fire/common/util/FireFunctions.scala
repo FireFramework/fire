@@ -63,7 +63,7 @@ trait FireFunctions extends Serializable with Logging  {
         case _ if retryNum > 1 => {
           Thread.sleep(duration)
           count += 1
-          logger.info(s"${FirePS1Conf.wrap(s"第${count}次执行. 时间:${DateFormatUtils.formatCurrentDateTime()}. 间隔:${duration}.", FirePS1Conf.RED)}")
+          logInfo(s"第${count}次执行. 时间:${DateFormatUtils.formatCurrentDateTime()}. 间隔:${duration}.")
           redo(retryNum - 1, duration)(fun)
         }
         case util.Failure(e) => throw e
@@ -219,7 +219,7 @@ trait FireFunctions extends Serializable with Logging  {
   def elapsed[T](msg: String, logger: Logger = this.logger, threshold: Long = 0)(block: => T): T = {
     val startTime = this.currentTime
     val retVal = block
-    if (StringUtils.isNotBlank(msg) && (System.currentTimeMillis() - startTime) >= threshold) logger.info(s"${msg}, Elapsed：${elapsed(startTime)}")
+    if (StringUtils.isNotBlank(msg) && (System.currentTimeMillis() - startTime) >= threshold) logger.info(FirePS1Conf.wrap(s"${msg}, Elapsed：${elapsed(startTime)}", FirePS1Conf.GREEN))
     retVal
   }
 }

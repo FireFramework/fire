@@ -17,19 +17,11 @@
 
 package com.zto.fire.examples.flink
 
-//import com.zto.VersionTest
-import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.common.enu.Operation
-import com.zto.fire.common.lineage.parser.connector.MQDatasource
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.core.anno.lifecycle.Process
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
-import org.apache.flink.api.scala._
-import org.apache.flink.streaming.api.functions.source.SourceFunction
-
-import scala.util.Random
 
 
 @Config(

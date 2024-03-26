@@ -57,7 +57,7 @@ class ConfigCenterUnitTest extends SparkCore with SparkTester {
   @Test
   @TestStep(step = 1, desc = "测试配置优先级")
   def assertConf: Unit = {
-    this.logger.warn(s"================runtime is ${SparkUtils.getExecutorId}================")
+    logWarning(s"================runtime is ${SparkUtils.getExecutorId}================")
 
     val poolSize = this.conf.getInt("fire.thread.pool.size", -1)
     val scheduleSize = this.conf.getInt("fire.thread.pool.schedule.size", -1)
@@ -66,12 +66,12 @@ class ConfigCenterUnitTest extends SparkCore with SparkTester {
     val partitions = this.conf.getInt("fire.jdbc.query.partitions", -1)
     val test = this.conf.getString("fire.conf.test")
 
-    this.logger.warn(s"fire.thread.pool.size=$poolSize")
-    this.logger.warn(s"fire.thread.pool.schedule.size=$scheduleSize")
-    this.logger.warn(s"fire.acc.timer.max.size=$accSize")
-    this.logger.warn(s"fire.acc.log.max.size=$logSize")
-    this.logger.warn(s"fire.jdbc.query.partitions=$partitions")
-    this.logger.warn(s"fire.conf.test=$test")
+    logWarning(s"fire.thread.pool.size=$poolSize")
+    logWarning(s"fire.thread.pool.schedule.size=$scheduleSize")
+    logWarning(s"fire.acc.timer.max.size=$accSize")
+    logWarning(s"fire.acc.log.max.size=$logSize")
+    logWarning(s"fire.jdbc.query.partitions=$partitions")
+    logWarning(s"fire.conf.test=$test")
 
     assert(poolSize == 6)
     assert(scheduleSize == 5)
@@ -80,6 +80,6 @@ class ConfigCenterUnitTest extends SparkCore with SparkTester {
     assert(partitions == 11)
     assert(test.equals("spark"))
 
-    this.logger.warn(s"=======================================")
+    logWarning(s"=======================================")
   }
 }

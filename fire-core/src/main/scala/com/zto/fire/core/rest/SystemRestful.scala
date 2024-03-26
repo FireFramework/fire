@@ -29,7 +29,6 @@ import com.zto.fire.core.plugin.ArthasDynamicLauncher
 import com.zto.fire.core.sync.SyncEngineConfHelper
 import com.zto.fire.predef.noEmpty
 import org.apache.commons.httpclient.Header
-import org.slf4j.{Logger, LoggerFactory}
 import spark.{Request, Response}
 
 import scala.collection.JavaConversions
@@ -39,8 +38,7 @@ import scala.collection.JavaConversions
  *
  * @author ChengLong 2020年4月2日 13:58:08
  */
-protected[fire] abstract class SystemRestful(engine: BaseFire) {
-  protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
+protected[fire] abstract class SystemRestful(engine: BaseFire) extends Logging {
   this.register
 
   /**
@@ -65,13 +63,13 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
   @Rest("/system/lineage")
   protected def lineage(request: Request, response: Response): AnyRef = {
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/lineage")
+      logInfo(s"Ip address ${request.ip()} request /system/lineage")
       val lineage = JSONUtils.toJSONString(SyncEngineConfHelper.syncLineage)
-      this.logger.info(s"[lineage] 获取数据源列表成功：lineage=$lineage")
+      logInfo(s"[lineage] 获取数据源列表成功：lineage=$lineage")
       ResultMsg.buildSuccess(lineage, "获取数据源列表成功")
     } catch {
       case e: Exception => {
-        this.logger.error(s"[lineage] 获取实时血缘信息失败", e)
+        logError(s"[lineage] 获取实时血缘信息失败", e)
         ResultMsg.buildError("获取实时血缘信息失败", ErrorCode.ERROR)
       }
     }
@@ -85,15 +83,15 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
   protected def arthas(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/arthas")
-      this.logger.info(s"请求执行Arthas命令：$json")
+      logInfo(s"Ip address ${request.ip()} request /system/arthas")
+      logInfo(s"请求执行Arthas命令：$json")
       val arthasParam = JSONUtils.parseObject[ArthasParam](json)
       ArthasDynamicLauncher.command(arthasParam)
-      this.logger.info(s"[arthas] Arthas命令${arthasParam.getCommand}执行成功！")
+      logInfo(s"[arthas] Arthas命令${arthasParam.getCommand}执行成功！")
       ResultMsg.buildSuccess("操作成功", "调用arthas接口成功！")
     } catch {
       case e: Exception => {
-        this.logger.error(s"[arthas] 调用arthas接口失败，参数不合法，请检查", e)
+        logError(s"[arthas] 调用arthas接口失败，参数不合法，请检查", e)
         ResultMsg.buildError("调用arthas接口失败，参数不合法，请检查", ErrorCode.ERROR)
       }
     }
@@ -105,14 +103,14 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) {
   @Rest("/system/exception")
   protected def exception(request: Request, response: Response): AnyRef = {
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/exception")
+      logInfo(s"Ip address ${request.ip()} request /system/exception")
       val msg = ExceptionBus.getAndClear
       val exceptions = msg._1.map(t => new ExceptionMsg(t._2, t._3))
-      logger.debug(s"异常诊断：本轮发送异常共计${msg._1.size}个.")
+      logDebug(s"异常诊断：本轮发送异常共计${msg._1.size}个.")
       ResultMsg.buildSuccess(JSONUtils.toJSONString(JavaConversions.seqAsJavaList(exceptions)), s"获取exception信息成功，共计：${exceptions.size}条")
     } catch {
       case e: Exception => {
-        this.logger.error(s"调用exception接口失败，请检查", e)
+        logError(s"调用exception接口失败，请检查", e)
         ResultMsg.buildError("调用exception接口失败，请检查", ErrorCode.ERROR)
       }
     }
@@ -138,7 +136,7 @@ private[fire] object SystemRestful extends Logging {
       val restful = FireFrameworkConf.fireRestUrl + urlSuffix
       try {
         val secret = EncryptUtils.md5Encrypt(FireFrameworkConf.dynamicKey)
-        this.logger.debug(s"secret=${secret} restServerSecret=${FireFrameworkConf.restServerSecret} driverClassName=${FireFrameworkConf.driverClassName}  date=${DateFormatUtils.formatCurrentDate}")
+        logDebug(s"secret=${secret} restServerSecret=${FireFrameworkConf.restServerSecret} driverClassName=${FireFrameworkConf.driverClassName}  date=${DateFormatUtils.formatCurrentDate}")
         response = if (noEmpty(json)) {
           HttpClientUtils.doPost(restful, json, new Header("Content-Type", "application/json"), new Header("Authorization", secret))
         } else {
@@ -147,7 +145,7 @@ private[fire] object SystemRestful extends Logging {
       } catch {
         case e: Exception => {
           if (this.logCount < 3) {
-            this.logger.info(s"fire内部接口自调用失败，对任务无影响，请忽略该异常", e)
+            logInfo(s"fire内部接口自调用失败，对任务无影响，请忽略该异常", e)
             this.logCount += 1
           }
         }

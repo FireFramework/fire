@@ -154,7 +154,7 @@ object SparkUtils extends Logging {
             row.fieldIndex(fieldName)
           } catch {
             case e: Exception => {
-              this.logger.error(s"将Spark Row转JavaBean失败，未能匹配${fieldName}或${annoFieldName}", e)
+              logError(s"将Spark Row转JavaBean失败，未能匹配${fieldName}或${annoFieldName}", e)
               -1
             }
           }
@@ -456,6 +456,13 @@ object SparkUtils extends Logging {
   }
 
   /**
+   * 用于判断当前是否为driver
+   *
+   * @return true: driver false: executor
+   */
+  def isMaster: Boolean = this.isDriver
+
+  /**
    * 是否是集群模式
    *
    * @return
@@ -646,8 +653,8 @@ object SparkUtils extends Logging {
     if (map.isEmpty) {
       throw new IllegalArgumentException(s"spark datasource options不能为空，请通过配置文件指定，以${FireSparkConf.SPARK_DATASOURCE_OPTIONS_PREFIX}为前缀，以${keyNum}为后缀.")
     }
-    this.logger.info(s"--> Spark DataSource options信息（keyNum=$keyNum）<--")
-    map.foreach(option => this.logger.info(s"${option._1} = ${option._2}"))
+    logInfo(s"--> Spark DataSource options信息（keyNum=$keyNum）<--")
+    map.foreach(option => logInfo(s"${option._1} = ${option._2}"))
     map.toMap
   }
 

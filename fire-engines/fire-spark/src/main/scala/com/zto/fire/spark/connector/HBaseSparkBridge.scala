@@ -546,7 +546,7 @@ object HBaseSparkBridge extends ConnectorFactory[HBaseSparkBridge] {
   override protected def create(conf: Any = null, keyNum: Int = KeyNum._1): HBaseSparkBridge = {
     requireNonEmpty(keyNum)
     val connector = new HBaseSparkBridge(keyNum)
-    logger.debug(s"创建HBaseSparkBridge实例成功. keyNum=$keyNum")
+    logDebug(s"创建HBaseSparkBridge实例成功. keyNum=$keyNum")
     connector
   }
 }

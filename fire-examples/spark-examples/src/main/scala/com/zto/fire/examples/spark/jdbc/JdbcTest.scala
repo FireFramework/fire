@@ -164,14 +164,14 @@ object JdbcTest extends SparkCore {
     })
     JdbcConnector.query(s"select id from $tableName limit 1", null, callback = _ => {
     }, keyNum = 2)
-    this.logger.info("driver sql执行成功")
+    logInfo("driver sql执行成功")
     val rdd = this.fire.createRDD(1 to 3, 3)
     rdd.foreachPartition(it => {
       it.foreach(i => {
         JdbcConnector.query(s"select id from $tableName limit 1", null, callback = _ => {
         })
       })
-      this.logger.info("sql执行成功")
+      logInfo("sql执行成功")
     })
 
     this.logConf
@@ -182,7 +182,7 @@ object JdbcTest extends SparkCore {
           this.logConf
           1
         }, keyNum = 2)
-        this.logger.info("sql执行成功")
+        logInfo("sql执行成功")
       })
     })
   }

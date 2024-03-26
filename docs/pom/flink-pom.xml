@@ -24,7 +24,7 @@
   <name>${project.artifactId}</name>
 
   <properties>
-    <fire.version>2.3.5</fire.version>
+    <fire.version>2.4.4-SNAPSHOT</fire.version>
     <hudi.version>0.9.0</hudi.version>
     <maven.scope>compile</maven.scope>
     <scala.binary.version>2.12</scala.binary.version>
@@ -221,52 +221,11 @@
     <!-- fire框架相关依赖 -->
     <dependency>
       <groupId>com.zto.fire</groupId>
-      <artifactId>fire-common_${scala.binary.version}</artifactId>
-      <version>${fire.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.zto.fire</groupId>
-      <artifactId>fire-core_${scala.binary.version}</artifactId>
-      <version>${fire.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.zto.fire</groupId>
-      <artifactId>fire-flink_${flink.reference}</artifactId>
-      <version>${fire.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.zto.fire</groupId>
-      <artifactId>fire-enhance-flink_${flink.reference}</artifactId>
-      <version>${fire.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.zto.fire</groupId>
-      <artifactId>fire-enhance-arthas_${scala.binary.version}</artifactId>
-      <version>${fire.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.zto.fire</groupId>
-      <artifactId>fire-connector-hbase_${scala.binary.version}</artifactId>
-      <version>${fire.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.zto.fire</groupId>
-      <artifactId>fire-connector-jdbc_${scala.binary.version}</artifactId>
-      <version>${fire.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.zto.fire</groupId>
-      <artifactId>fire-connector-flink-rocketmq_${flink.reference}</artifactId>
+      <artifactId>fire-bundle-flink_${flink.reference}</artifactId>
       <version>${fire.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>com.sparkjava</groupId>
-      <artifactId>spark-core</artifactId>
-      <version>${sparkjava.version}</version>
-    </dependency>
 
-    <!-- flink计算引擎相关依赖 -->
     <!-- flink计算引擎相关依赖 -->
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -493,6 +452,7 @@
         <inherited>true</inherited>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>

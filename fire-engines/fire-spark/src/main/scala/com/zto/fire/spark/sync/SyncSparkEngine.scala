@@ -77,9 +77,9 @@ object SyncSparkEngine extends Logging {
         this.broadcastConf.value.getAll.foreach(kv => {
           PropUtils.setProperty(kv._1, kv._2)
         })
-        this.logger.info("The Executor side configuration has been reloaded.")
+        logInfo("The Executor side configuration has been reloaded.")
       })
-      this.logger.info("The Driver side configuration has been reloaded.")
+      logInfo("The Driver side configuration has been reloaded.")
     }
   }
 }

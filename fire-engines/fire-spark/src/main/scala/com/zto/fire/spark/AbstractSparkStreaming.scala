@@ -183,7 +183,7 @@ trait AbstractSparkStreaming extends BaseSpark {
   def hotRestart(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      this.logger.info(s"Ip address ${request.ip()} request /system/streaming/hotRestart")
+      logInfo(s"Ip address ${request.ip()} request /system/streaming/hotRestart")
       this.externalConf = JSONUtils.parseObject[RestartParams](json)
       new Thread(new Runnable {
         override def run(): Unit = {
@@ -192,11 +192,11 @@ trait AbstractSparkStreaming extends BaseSpark {
         }
       }).start()
 
-      this.logger.info(s"[hotRestart] 执行热重启成功：duration=${this.externalConf.getBatchDuration} json=$json", "rest")
+      logInfo(s"[hotRestart] 执行热重启成功：duration=${this.externalConf.getBatchDuration} json=$json")
       ResultMsg.buildSuccess(s"执行热重启成功：duration=${this.externalConf.getBatchDuration}", ErrorCode.SUCCESS.toString)
     } catch {
       case e: Exception => {
-        this.logger.error(s"[hotRestart] 执行热重启失败：json=$json", e)
+        logError(s"[hotRestart] 执行热重启失败：json=$json", e)
         ResultMsg.buildError("执行热重启失败", ErrorCode.ERROR)
       }
     }
