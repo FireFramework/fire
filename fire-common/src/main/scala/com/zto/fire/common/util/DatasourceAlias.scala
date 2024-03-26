@@ -62,4 +62,6 @@ trait DatasourceAlias {
   type MongodbDatasource = DBDatasource
   type DorisDatasource = DBDatasource
   type StarRocksDatasource = DBDatasource
+  type InfluxdbDatasource = DBDatasource
+  type PromethusDatasource = DBDatasource
 }

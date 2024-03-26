@@ -150,7 +150,7 @@ object LineageManager extends Logging {
   private[fire] def printLog(msg: String): Unit = {
     if (lineageDebugEnable) {
       val log = s"lineage=>$msg"
-      logger.info(log)
+      logInfo(log)
       println(log)
     }
   }
@@ -167,7 +167,7 @@ object LineageManager extends Logging {
       val jsonLineage = FirePS1Conf.wrap(s"""
                             |------------------- 血缘信息（${DateFormatUtils.formatCurrentDateTime()}）：----------------------
                             |${JSONUtils.toJSONString(lineage, pretty)}
-                            |""".stripMargin, FirePS1Conf.GREEN)
+                            |""".stripMargin, FirePS1Conf.PINK)
 
       println(jsonLineage)
       logInfo(jsonLineage)
@@ -663,6 +663,47 @@ object LineageManager extends Logging {
   def addDerbyLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
     this.addDBLineage2(Datasource.DERBY, cluster, tableName, username, operations: _*)
   }
+
+  /**
+   * 添加Influxdb数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addInfluxdbLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.INFLUXDB, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加Influxdb数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addInfluxdbLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.INFLUXDB, cluster, tableName, username, operations: _*)
+  }
+
+  /**
+   * 添加Promethus数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addPromethusLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.PROMETHUS, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加Promethus数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addPromethusLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.PROMETHUS, cluster, tableName, username, operations: _*)
+  }
+
 
   /**
    * 添加Presto数据库数据源信息
