@@ -55,9 +55,5 @@ object SinkKafkaRocketMQTest extends SparkStreaming {
       // 将数据发送到@RocketMQ3配置的topic：mq_test
       recordRDD.sinkRocketMQ(keyNum = 3)
     })
-
-    ThreadUtils.scheduleAtFixedRate({
-      println(s"累加器值：" + JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
-    }, 0, 10, TimeUnit.SECONDS)
   }
 }

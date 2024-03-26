@@ -19,16 +19,12 @@ package com.zto.fire.examples.spark.lineage
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
 import com.zto.fire.core.anno.connector._
-import com.zto.fire.core.anno.lifecycle.{Process, Step1}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector
-import com.zto.fire.spark.{HudiStreaming, SparkStreaming}
+import com.zto.fire.spark.HudiStreaming
 import com.zto.fire.spark.anno.Streaming
-import com.zto.fire.spark.sync.SparkLineageAccumulatorManager
-
-import java.util.concurrent.TimeUnit
 
 /**
  * 基于Fire进行Spark Streaming开发
@@ -69,10 +65,6 @@ object LineageTest extends HudiStreaming {
    * 注：该方法非必须
    */
   override protected def sqlBefore(tableName: String): String = {
-    ThreadUtils.scheduleAtFixedRate({
-      println(s"累加器值：" + JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
-    }, 0, 10, TimeUnit.SECONDS)
-
     this.source
 
     s"""

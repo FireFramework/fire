@@ -162,7 +162,7 @@ object LineageManager extends Logging {
    * 时间间隔
    */
   def print(interval: Long = 60, pretty: Boolean = true): Unit = {
-    ThreadUtils.runLoop({
+    ThreadUtils.schedule({
       val lineage = FireUtils.invokeEngineApi[Lineage](this.sparkLineageAccumulatorManager, this.flinkLineageAccumulatorManager, "getValue")
       val jsonLineage = FirePS1Conf.wrap(s"""
                             |------------------- 血缘信息（${DateFormatUtils.formatCurrentDateTime()}）：----------------------
@@ -171,7 +171,7 @@ object LineageManager extends Logging {
 
       println(jsonLineage)
       logInfo(jsonLineage)
-    }, interval)
+    }, interval, interval, timeUnit = TimeUnit.SECONDS)
   }
 
   /**

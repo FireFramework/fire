@@ -19,14 +19,11 @@ package com.zto.fire.examples.spark.lineage
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.common.util.{DateFormatUtils, JSONUtils, ThreadUtils}
+import com.zto.fire.common.util.DateFormatUtils
 import com.zto.fire.core.anno.connector.{HBase, Jdbc, Kafka, RocketMQ}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.SparkCore
-import com.zto.fire.spark.sync.SparkLineageAccumulatorManager
-
-import java.util.concurrent.TimeUnit
 
 /**
  * 基于Fire进行Spark Streaming开发

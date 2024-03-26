@@ -34,9 +34,6 @@ object HudiTest extends HudiStreaming {
    * 注：该方法非必须
    */
   override protected def sqlBefore(tableName: String): String = {
-    ThreadUtils.scheduleAtFixedRate({
-      println(s"累加器值：" + JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue))
-    }, 0, 10, TimeUnit.SECONDS)
     this.sendMsg
 
     val df = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])
