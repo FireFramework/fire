@@ -38,11 +38,11 @@ import java.util.concurrent.TimeUnit
 @Config("""fire.lineage.run.initialDelay=10""")
 @Streaming(interval = 60, unaligned = true, parallelism = 2) // 100s做一次checkpoint，开启非对齐checkpoint
 @RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
-@RocketMQ5(brokers = "10.10.10.15:9092", topics = "fire5", groupId = "fire5")
+@RocketMQ5(brokers = "bigdata_test", topics = "fire5", groupId = "fire5")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
-@Kafka5(brokers = "10.10.10.10:9092", topics = "fire5", groupId = "fire5")
+@Kafka5(brokers = "bigdata_test", topics = "fire5", groupId = "fire5")
 @Jdbc(url = "jdbc:mysql://mysql-server:3306/fire?useSSL=true", username = "root", password = "root")
-@Jdbc5(url = "jdbc:mysql://10.10.10.10:3306/fire?useSSL=true", username = "root5", password = "root")
+@Jdbc5(url = "jdbc:mysql://mysql-server:3306/fire?useSSL=true", username = "root5", password = "root")
 object LineageTest extends FlinkStreaming {
   private val hbaseTable = "fire_test_1"
   private lazy val tableName = "spark_test"

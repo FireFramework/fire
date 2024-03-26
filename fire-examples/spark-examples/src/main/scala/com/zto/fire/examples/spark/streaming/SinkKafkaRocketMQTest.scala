@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Streaming(interval = 10)
-@RocketMQ(brokers = "10.9.44.143:9876", topics = "fire", groupId = "fire")
+@RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @Kafka5(brokers = "bigdata_test", topics = "mq_test", groupId = "fire")
 @RocketMQ3(brokers = "bigdata_test", topics = "mq_test", groupId = "fire")
 object SinkKafkaRocketMQTest extends SparkStreaming {
