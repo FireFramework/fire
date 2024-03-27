@@ -55,14 +55,14 @@
         </dependency>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>fire-connector-flink-format-zdtp_${flink.reference}</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
             <artifactId>fire-connector-flink-clickhouse_${flink.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
+        <!--<dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>fire-connector-flink-format_${flink.reference}</artifactId>
+            <version>${fire.version}</version>
+        </dependency>-->
     </dependencies>
 
     <build>

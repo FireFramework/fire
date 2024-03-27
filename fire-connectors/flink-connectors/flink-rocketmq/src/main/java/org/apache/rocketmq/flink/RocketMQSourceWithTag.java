@@ -267,7 +267,9 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
     @Override
     public void cancel() {
         LOG.warn("{} RocketMQ Connector cancel ...", consumerLogInfo);
-        runningChecker.setRunning(false);
+        if (runningChecker != null) {
+            runningChecker.setRunning(false);
+        }
 
         if (pullConsumerScheduleService != null) {
             pullConsumerScheduleService.shutdown();

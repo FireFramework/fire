@@ -83,7 +83,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
               relationses.add(new SQLTableColumnsRelations(x.getSourceColumn, x.getTargetColumn))
             }
             SQLLineageManager.addRelation(TableIdentifier(results.last.getSourceTable), TableIdentifier(results.last.getTargetTable), relationses)
-          } (this.logger, "血缘解析：RichSqlInsert解析失败")
+          } (this.logger, "血缘解析：RichSqlInsert解析失败", isThrow = false, hook = false)
         }
         case createView: SqlCreateView => {
           this.parseSqlNode(createView.getViewName, Operation.CREATE_VIEW)

@@ -53,10 +53,10 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.specs</groupId>
-            <artifactId>specs</artifactId>
-            <version>1.2.5</version>
-            <scope>test</scope>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-json</artifactId>
+            <version>${flink.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
     </dependencies>
 

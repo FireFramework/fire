@@ -49,7 +49,7 @@ class TableExt(table: Table) {
    */
   def show(): Unit = {
     import com.zto.fire._
-    this.table.toChangelogStream.addSinkWrap(row => println(row))
+    this.table.toRetractStreamSingle.addSinkWrap(row => println(row))
   }
 
   /**

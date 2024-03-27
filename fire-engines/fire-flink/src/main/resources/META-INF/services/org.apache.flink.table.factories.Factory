@@ -1,3 +1,1 @@
 com.zto.fire.flink.sql.connector.rocketmq.RocketMQDynamicTableFactory
-
-com.zto.fire.flink.formats.json.ZDTPJsonFormatFactory

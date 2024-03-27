@@ -33,17 +33,6 @@
     <dependencies>
         <dependency>
             <groupId>com.zto.fire</groupId>
-            <artifactId>fire-connector-flink-format-zdtp_1.14_2.12</artifactId>
-            <version>${fire.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_${scala.binary.version}</artifactId>
-            <version>${kafka.version}</version>
-            <scope>${maven.scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.zto.fire</groupId>
             <artifactId>fire-bundle-flink_${flink.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
@@ -212,6 +201,13 @@
                     <artifactId>calcite-core</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka_${scala.binary.version}</artifactId>
+            <version>${kafka.version}</version>
+            <scope>${maven.scope}</scope>
         </dependency>
 
         <!-- hbase相关依赖 -->

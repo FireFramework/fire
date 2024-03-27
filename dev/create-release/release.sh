@@ -46,15 +46,15 @@ rm -rf $MVN_TEMP_REPO/com/zto/fire
 
 # 3. build in MVN_TEMP_REPO
 set -e
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.12,spark-2.3,hudi-0.9,release -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.13,spark-2.4,hudi-0.9,release -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.14,spark-2.4,hudi-0.9,release -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.12,spark-2.3,hudi-0.9,deploy-ossrh-repo -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.13,spark-2.4,hudi-0.9,deploy-ossrh-repo -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.14,spark-2.4,hudi-0.9,deploy-ossrh-repo -U -T40C
 
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.12,spark-2.4,hudi-0.9,release -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.13,spark-3.0,hudi-0.9,release -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.14,spark-3.1,hudi-0.9,release -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.15,spark-3.2,hudi-0.9,release -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.16,spark-3.3,hudi-0.9,release -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.12,spark-2.4,hudi-0.9,deploy-ossrh-repo -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.13,spark-3.0,hudi-0.9,deploy-ossrh-repo -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.14,spark-3.1,hudi-0.9,deploy-ossrh-repo -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.15,spark-3.2,hudi-0.9,deploy-ossrh-repo -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.16,spark-3.3,hudi-0.9,deploy-ossrh-repo -U -T40C
 set +e
 
 # 4. ready to uploading file
