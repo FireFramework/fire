@@ -21,7 +21,6 @@ import com.zto.fire.common.bean.lineage.LineageResult
 import com.zto.fire.common.util.Constant
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.metadata.{JaninoRelMetadataProvider, RelColumnOrigin, RelMetadataQueryBase}
-import org.apache.commons.lang3.StringUtils
 import org.apache.flink.table.api.internal.TableEnvironmentImpl
 import org.apache.flink.table.api.{TableException, ValidationException}
 import org.apache.flink.table.operations.{CatalogSinkModifyOperation, Operation}

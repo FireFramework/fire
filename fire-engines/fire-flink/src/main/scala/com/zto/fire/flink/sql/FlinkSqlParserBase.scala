@@ -21,7 +21,7 @@ import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.bean.lineage.SQLTableColumnsRelations
-import com.zto.fire.common.conf.FireHiveConf
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
 import com.zto.fire.common.lineage.parser.ConnectorParserManager
@@ -73,17 +73,23 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
   override def sqlParser(sql: String): Unit = {
     try {
       FlinkUtils.sqlNodeParser(sql) match {
-        case select: SqlSelect =>
-          this.parseSqlNode(select)
+        case select: SqlSelect => this.parseSqlNode(select)
         case insert: RichSqlInsert => {
           tryWithLog {
-            val results = context.analyzeLineage(sql)
-            val relationses = new JHashSet[SQLTableColumnsRelations]()
-            for (x <- results) {
-              relationses.add(new SQLTableColumnsRelations(x.getSourceColumn, x.getTargetColumn))
+            if (FireFrameworkConf.lineageColumnEnable) {
+              // 开启字段级血缘
+              val results = context.analyzeLineage(sql)
+              val relationships = new JHashSet[SQLTableColumnsRelations]()
+              for (x <- results) {
+                relationships.add(new SQLTableColumnsRelations(x.getSourceColumn, x.getTargetColumn))
+              }
+              SQLLineageManager.addRelation(TableIdentifier(results.last.getSourceTable), TableIdentifier(results.last.getTargetTable), relationships)
+            } else {
+              this.parseSqlNode(insert.getTargetTable, Operation.INSERT_INTO)
+              this.parsePartitions(insert.getTargetTable.asInstanceOf[SqlIdentifier], Seq(insert.getStaticPartitions))
+              this.parseSqlNode(insert.getSource, Operation.SELECT, targetTable = Some(insert.getTargetTable))
             }
-            SQLLineageManager.addRelation(TableIdentifier(results.last.getSourceTable), TableIdentifier(results.last.getTargetTable), relationses)
-          } (this.logger, "血缘解析：RichSqlInsert解析失败", isThrow = false, hook = false)
+          } (this.logger, catchLog = "血缘解析：RichSqlInsert解析失败", isThrow = FireFrameworkConf.lineageDebugEnable, hook = false)
         }
         case createView: SqlCreateView => {
           this.parseSqlNode(createView.getViewName, Operation.CREATE_VIEW)
@@ -123,7 +129,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
         case sqlHiveInsert: RichSqlHiveInsert => this.parseHiveInsert(sqlHiveInsert)
         case _ => LineageManager.printLog(s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql")
       }
-    }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", isThrow = false, hook = false)
+    }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", isThrow = FireFrameworkConf.lineageDebugEnable, hook = false)
   }
 
   /**

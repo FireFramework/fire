@@ -20,6 +20,7 @@ package com.zto.fire.spark.sql
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.conf.FireFrameworkConf.lineageCollectSQLEnable
 import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
@@ -94,7 +95,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
       val logicalPlan = this.spark.sessionState.sqlParser.parsePlan(sql)
       if (lineageCollectSQLEnable) SQLLineageManager.addStatement(sql)
       this.sqlParser(logicalPlan)
-    }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", isThrow = false, hook = false)
+    }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，SQL：\n$sql", isThrow = FireFrameworkConf.lineageDebugEnable, hook = false)
   }
 
   /**
@@ -112,7 +113,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
     } finally {
       tryWithLog {
         this.queryParser(logicalPlan, sinkTable)
-      }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，logicalPlan: ${logicalPlan}", isThrow = false, hook = false)
+      }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，logicalPlan: ${logicalPlan}", isThrow = FireFrameworkConf.lineageDebugEnable, hook = false)
     }
   }
 
