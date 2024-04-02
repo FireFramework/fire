@@ -49,6 +49,29 @@ object LineageTest extends FlinkStreaming {
 
   @Process
   def kafkaSource: Unit = {
+    LineageManager.show(30)
+    sql(
+      """
+        |CREATE TABLE t_student (
+        |   id BIGINT,
+        |   name STRING,
+        |   age INT,
+        |   createTime TIMESTAMP(13),
+        |   sex Boolean
+        |) WITH (
+        |   'connector' = 'http',
+        |   'cluster' = 'http://www.baidu.com',
+        |   'url' = 'http://www.baidu.com',
+        |   'rows-per-second'='1', -- 5000/s
+        |   'fields.id.min'='1', -- id字段，1到1000之间
+        |   'fields.id.max'='1000',
+        |   'fields.name.length'='5', -- name字段，长度为5
+        |   'fields.age.min'='1', -- age字段，1到120岁
+        |   'fields.age.max'='120'
+        |)
+        |""".stripMargin)
+    LineageManager.addHttpLineage("http://www.baidu.com", Operation.SINK)
+
     this.fire.createKafkaDirectStream().print()
     val dstream = this.fire.createRocketMqPullStream()
     dstream.map(t => {
@@ -81,6 +104,7 @@ object LineageTest extends FlinkStreaming {
       // 多个数据源
       LineageManager.addMySQLLineage2("jdbc:mysql://mysql-server:3306/fire?useSSL=true", "t_student", "fire", Operation.SELECT, Operation.DELETE, Operation.INSERT)
     }
+
 
     // 方式二：
     dstream.addSinkLineage2(x => println("addSinkLineage2=>" + x))(new BlackholeDatasource(Datasource.PRINT.toString), Operation.SINK)

@@ -17,7 +17,7 @@
 
 package com.zto.fire.common.util
 
-import com.zto.fire.common.lineage.parser.connector.{DBDatasource, FileDatasource, MQDatasource, VirtualDatasource}
+import com.zto.fire.common.lineage.parser.connector.{DBDatasource, FileDatasource, MQDatasource, UrlDatasource, VirtualDatasource}
 
 /**
  * 数据源别名映射
@@ -64,4 +64,10 @@ trait DatasourceAlias {
   type StarRocksDatasource = DBDatasource
   type InfluxdbDatasource = DBDatasource
   type PromethusDatasource = DBDatasource
+
+  // 接口类型
+  type HttpDatasource = UrlDatasource
+  type RpcDatasource = UrlDatasource
+  type InterfaceDatasource = UrlDatasource
+  type dubboDatasource = UrlDatasource
 }

@@ -44,7 +44,8 @@ public enum Datasource {
     PRINT("print"), DATAGEN("datagen"), FILESYSTEM("filesystem"),
     BLACKHOLE("blackhole"), DYNAMODB("dynamodb"), FIREHOSE("firehouse"),
     ELASTICSEARCH("elasticsearch"), OPENSEARCH("opensearch"), INFLUXDB("influxdb"),
-    PROMETHUS("promethus"), UNKNOWN("unknown");
+    PROMETHUS("promethus"), INTERFACE("interface"), HTTP("http"), RPC("rpc"),
+    URL("url"), DUBBO("dubbo"), UNKNOWN("unknown");
 
     private static Map<Datasource, Class<?>> datasourceMap = Maps.newHashMap();
 
@@ -96,6 +97,13 @@ public enum Datasource {
         datasourceMap.put(DATAGEN, VirtualDatasource.class);
         datasourceMap.put(PRINT, VirtualDatasource.class);
         datasourceMap.put(BLACKHOLE, VirtualDatasource.class);
+
+        // 接口类型connector
+        datasourceMap.put(URL, UrlDatasource.class);
+        datasourceMap.put(INTERFACE, UrlDatasource.class);
+        datasourceMap.put(HTTP, UrlDatasource.class);
+        datasourceMap.put(RPC, UrlDatasource.class);
+        datasourceMap.put(DUBBO, UrlDatasource.class);
 
         // 待归类
         // VIEW

@@ -806,6 +806,56 @@ object LineageManager extends Logging {
   }
 
   /**
+   * 添加接口数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addUrlLineage(datasource: Datasource, url: String, operations: Operation*): Unit = {
+    this.addLineage(UrlDatasource(datasource.toString, url), operations: _*)
+  }
+
+  /**
+   * 添加接口数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addHttpLineage(url: String, operations: Operation*): Unit = {
+    this.addUrlLineage(Datasource.HTTP, url, operations: _*)
+  }
+
+  /**
+   * 添加接口数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addRpcLineage(url: String, operations: Operation*): Unit = {
+    this.addUrlLineage(Datasource.RPC, url, operations: _*)
+  }
+
+  /**
+   * 添加Dubbo接口数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addDubboLineage(url: String, operations: Operation*): Unit = {
+    this.addUrlLineage(Datasource.DUBBO, url, operations: _*)
+  }
+
+  /**
+   * 添加Interface接口数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addInterfaceLineage(url: String, operations: Operation*): Unit = {
+    this.addUrlLineage(Datasource.INTERFACE, url, operations: _*)
+  }
+
+  /**
    * 为指定数据源添加Operation类型
    * @param datasource
    * 数据源

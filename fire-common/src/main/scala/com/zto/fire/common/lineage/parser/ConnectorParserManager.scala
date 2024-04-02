@@ -66,6 +66,8 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
     } else if (conn.contains("elasticsearch") || conn.contains("opensearch")) {
       // 支持：'connector' = 'elasticsearch-6' | 'connector' = 'elasticsearch-7'
       "elasticsearch"
+    } else if (conn.contains("interface") || conn.contains("http") || conn.contains("url") || conn.contains("rpc")|| conn.contains("dubbo")) {
+      "url"
     } else {
       // 支持标准命名，比如'connector'='hudi' | 'connector'='doris' | 'connector'='clickhouse'等
       conn
