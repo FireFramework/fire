@@ -19,6 +19,8 @@ package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.common.enu.Operation
+import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
 import com.zto.fire.common.util.{ExceptionBus, Logging}
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.HBaseBulkConnector
@@ -146,5 +148,35 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
         }
       }
     })
+  }
+
+  /**
+   * 至少一次的语义保证，当rdd处理成功时提交offset，当处理失败时重试指定的次数
+   * 该算子支持识别kafka和rocketmq的源，并在执行成功的情况下提交offset
+   * 注：必须在最原始的DStream上调用该算子，不能经过任何的transform转换，否则会报错
+   *
+   * @param process
+   * rdd的处理逻辑
+   * @param lineageFun
+   * 血缘采集
+   */
+  def foreachRDDAtLeastOnceLineage(process: RDD[T] => Unit)(lineageFun: => Unit): Unit = {
+    lineageFun
+    this.foreachRDDAtLeastOnce(process)
+  }
+
+  /**
+   * 至少一次的语义保证，当rdd处理成功时提交offset，当处理失败时重试指定的次数
+   * 该算子支持识别kafka和rocketmq的源，并在执行成功的情况下提交offset
+   * 注：必须在最原始的DStream上调用该算子，不能经过任何的transform转换，否则会报错
+   *
+   * @param process
+   * rdd的处理逻辑
+   */
+  def foreachRDDAtLeastOnceLineage2(process: RDD[T] => Unit)(datasourceDesc: DatasourceDesc, operations: Operation*): Unit = {
+    requireNonNull(datasourceDesc, operations)("血缘信息不能为空，请维护血缘信息！")
+    LineageManager.addLineage(datasourceDesc, operations: _*)
+
+    this.foreachRDDAtLeastOnce(process)
   }
 }
