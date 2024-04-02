@@ -17,6 +17,7 @@
 
 package com.zto.fire.flink.ext.stream
 
+import org.apache.flink.api.connector.sink.Sink
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.scala.DataStream
@@ -48,5 +49,14 @@ abstract class DataStreamHelperImpl[T](stream: DataStream[T]) extends DataStream
    */
   override protected[fire] def addSinkWrap(fun: T => Unit): DataStreamSink[T] = {
     this.stream.$sink(fun)
+  }
+
+  /**
+   * Adds the given sink to this DataStream. Only streams with sinks added
+   * will be executed once the StreamExecutionEnvironment.execute(...)
+   * method is called.
+   */
+  override protected[fire] def sinkToWrap(sink: Sink[T, _, _, _]): DataStreamSink[T] = {
+    this.stream.$sinkTo(sink)
   }
 }

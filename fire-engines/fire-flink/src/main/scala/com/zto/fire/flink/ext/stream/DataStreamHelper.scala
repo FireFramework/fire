@@ -20,6 +20,7 @@ package com.zto.fire.flink.ext.stream
 import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
 import com.zto.fire.requireNonNull
+import org.apache.flink.api.connector.sink.Sink
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.scala.DataStream
@@ -54,6 +55,15 @@ abstract class DataStreamHelper[T](stream: DataStream[T]) {
   }
 
   /**
+   * Adds the given sink to this DataStream. Only streams with sinks added
+   * will be executed once the StreamExecutionEnvironment.execute(...)
+   * method is called.
+   */
+  protected[fire] def sinkToWrap(sink: Sink[T, _, _, _]): DataStreamSink[T] = {
+    this.stream.sinkTo(sink)
+  }
+
+  /**
    * 添加sink数据源，并维护血缘信息
    */
   def addSinkLineage(sinkFunction: SinkFunction[T])(lineageFun: => Unit): DataStreamSink[T] = {
@@ -67,6 +77,14 @@ abstract class DataStreamHelper[T](stream: DataStream[T]) {
   def addSinkLineage(fun: T => Unit)(lineageFun: => Unit): DataStreamSink[T] = {
     lineageFun
     this.addSinkWrap(fun)
+  }
+
+  /**
+   * 添加sinkTo数据源，并维护血缘信息
+   */
+  def sinkToLineage(sink: Sink[T, _, _, _])(lineageFun: => Unit): DataStreamSink[T] = {
+    lineageFun
+    this.sinkToWrap(sink)
   }
 
   /**
@@ -85,5 +103,14 @@ abstract class DataStreamHelper[T](stream: DataStream[T]) {
     requireNonNull(datasourceDesc, operations)("血缘信息不能为空，请维护血缘信息！")
     LineageManager.addLineage(datasourceDesc, operations: _*)
     this.addSinkWrap(fun)
+  }
+
+  /**
+   * 添加sinkTo数据源，并维护血缘信息
+   */
+  def sinkToLineage2(sink: Sink[T, _, _, _])(datasourceDesc: DatasourceDesc, operations: Operation*): DataStreamSink[T] = {
+    requireNonNull(datasourceDesc, operations)("血缘信息不能为空，请维护血缘信息！")
+    LineageManager.addLineage(datasourceDesc, operations: _*)
+    this.sinkToWrap(sink)
   }
 }
