@@ -541,7 +541,6 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends StreamExecu
   def sql(sql: String): TableResult = {
     SQLUtils.executeSql(sql) { statement =>
       if (FireFlinkConf.autoAddStatementSet && this.isInsertStatement(statement)) {
-        FlinkSqlExtensionsParser.sqlParse(statement)
         this.addInsertSql(statement)
         TableUtils.TABLE_RESULT_OK
       } else {
@@ -574,6 +573,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends StreamExecu
    */
   def addInsertSql(sql: String): StatementSet = {
     StreamExecutionEnvExt.useStatementSet.compareAndSet(false, true)
+    FlinkSqlExtensionsParser.sqlParse(sql)
     SQLUtils.executeSql(sql) (sql => StreamExecutionEnvExt.statementSet.addInsertSql(sql)).get
   }
 
@@ -658,7 +658,5 @@ private[fire] object StreamExecutionEnvExt {
   /**
    * 创建并返回StatementSet对象实例
    */
-  def createStatementSet: StatementSet =
-
-    FlinkSingletonFactory.getTableEnv.createStatementSet()
+  def createStatementSet: StatementSet = FlinkSingletonFactory.getTableEnv.createStatementSet()
 }
