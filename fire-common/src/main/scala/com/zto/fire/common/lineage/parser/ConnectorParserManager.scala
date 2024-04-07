@@ -57,7 +57,7 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
     } else if (conn.contains("hbase")) {
       // 支持：'connector'='hbase-1.4' | 'connector'='hbase-2.2'等
       "hbase"
-    } else if (conn.contains("rocketmq")) {
+    } else if (conn.contains("rocket")) {
       // 支持：'connector'='fire-rocketmq' | 'connector'='rocketmq'等
       "rocketmq"
     } else if (conn.contains("-cdc")) {
