@@ -104,7 +104,7 @@ object MQDatasource extends SqlToDatasource {
       }
 
       Datasource.KAFKA
-    } else if (isMatch("fire-rocketmq", table) || isMatch("rocket", table)) {
+    } else if (isMatch("fire-rocketmq", table) || isMatch("rocketmq", table) || table.getConnector.contains("rocket")) {
       if (noEmpty(table.getOptions)) {
         groupId = table.getOptions.getOrDefault("rocket.group.id", "")
         if (isEmpty(groupId)) {
