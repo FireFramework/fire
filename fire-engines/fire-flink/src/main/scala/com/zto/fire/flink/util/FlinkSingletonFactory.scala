@@ -21,6 +21,7 @@ import com.zto.fire.core.util.SingletonFactory
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.table.api.TableEnvironment
+import org.apache.flink.table.api.bridge.scala.StreamTableEnvironment
 
 /**
   * 单例工厂，用于创建单例的对象
@@ -72,6 +73,14 @@ object FlinkSingletonFactory extends SingletonFactory {
    * TableEnv实例
    */
   private[fire] def getTableEnv: TableEnvironment = this.tableEnv
+
+  /**
+   * 获取StreamTableEnvironment实例
+   *
+   * @return
+   * StreamTableEnvironment实例
+   */
+  private[fire] def getStreamTableEnv: StreamTableEnvironment = this.tableEnv.asInstanceOf[StreamTableEnvironment]
 
   private [fire] def getStreamEnv: StreamExecutionEnvironment = this.streamEnv
 

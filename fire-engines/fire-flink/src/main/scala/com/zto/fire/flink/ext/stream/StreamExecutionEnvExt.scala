@@ -538,6 +538,12 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends StreamExecu
    * 执行sql语句
    * 支持DDL、DML
    */
+  def executeSql(sql: String): TableResult = this.sql(sql)
+
+  /**
+   * 执行sql语句
+   * 支持DDL、DML
+   */
   def sql(sql: String): TableResult = {
     SQLUtils.executeSql(sql) { statement =>
       if (FireFlinkConf.autoAddStatementSet && this.isInsertStatement(statement)) {
