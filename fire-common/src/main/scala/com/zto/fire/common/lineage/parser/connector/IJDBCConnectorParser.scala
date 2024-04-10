@@ -130,7 +130,7 @@ object DBDatasource extends SqlToDatasource {
       datasource = Datasource.DORIS
     }
 
-    if (isMatch("hbase", table)) {
+    if (isMatch("hbase", table) || table.getConnector.contains("hbase")) {
       datasource = Datasource.HBASE
     }
 
