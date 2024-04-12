@@ -34,7 +34,7 @@ import com.zto.fire.flink.util.{FlinkRocketMQUtils, FlinkSingletonFactory, Flink
 import com.zto.fire.jdbc.JdbcConnectorBridge
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.functions.RuntimeContext
-import org.apache.flink.api.common.serialization.SimpleStringSchema
+import org.apache.flink.api.common.serialization.{DeserializationSchema, SimpleStringSchema}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode
@@ -108,13 +108,13 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends StreamExecu
     // 消费kafka埋点信息
     KafkaConnectorParser.addDatasource(KAFKA, confKafkaParams("bootstrap.servers").toString, topicsStr, confKafkaParams("group.id").toString, FOperation.SOURCE)
 
+    val topicTrimList = JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic)))
     deserializer match {
-      case schema: JSONKeyValueDeserializationSchema =>
-        new FlinkKafkaConsumer[ObjectNode](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
-          schema, properties).asInstanceOf[FlinkKafkaConsumer[T]]
-      case _ =>
-        new FlinkKafkaConsumer[String](JavaConversions.seqAsJavaList(topicList.map(topic => StringUtils.trim(topic))),
-          new SimpleStringSchema, properties).asInstanceOf[FlinkKafkaConsumer[T]]
+      case schema: KafkaDeserializationSchema[_] =>
+        new FlinkKafkaConsumer(topicTrimList, schema, properties).asInstanceOf[FlinkKafkaConsumer[T]]
+      case schema: DeserializationSchema[_] =>
+        new FlinkKafkaConsumer(topicTrimList, schema, properties).asInstanceOf[FlinkKafkaConsumer[T]]
+      case _ => throw new IllegalArgumentException("flink kafka deserializer只支持KafkaDeserializationSchema与DeserializationSchema两种类型！")
     }
   }
 

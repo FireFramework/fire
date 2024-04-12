@@ -26,6 +26,8 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -458,5 +460,37 @@ public class ReflectionUtils {
         } catch (ClassNotFoundException e) {
             return false;
         }
+    }
+
+    /**
+     * 获取某类指定父类的泛型类型
+     */
+    public static List<Class<?>> getSuperParameterizedType(Class<?> subClass, Class<?> parentClass) {
+        List<Type> typeList = new LinkedList<>();
+
+        if (subClass.getSuperclass() == parentClass) {
+            Type type = subClass.getGenericSuperclass();
+            typeList.add(type);
+        }
+
+        Type[] interfacesType = subClass.getGenericInterfaces();
+        for (Type interfaceType : interfacesType) {
+            if (interfaceType.getTypeName().contains(parentClass.getName() + "<")) {
+                typeList.add(interfaceType);
+            }
+        }
+
+        List<Class<?>> typeArgumentList = new LinkedList<>();
+        for (Type type : typeList) {
+            if (type instanceof ParameterizedType) {
+                ParameterizedType parameterizedType = (ParameterizedType) type;
+                Type[] typeArguments = parameterizedType.getActualTypeArguments();
+                for (Type typeArg : typeArguments) {
+                    typeArgumentList.add((Class<?>) typeArg);
+                }
+            }
+        }
+
+        return typeArgumentList;
     }
 }

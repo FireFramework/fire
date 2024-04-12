@@ -17,37 +17,34 @@
 
 package com.zto.fire.examples.flink
 
+import org.apache.flink.api.scala._
+import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.core.anno.lifecycle.Process
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode
+import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema
 
 
 @Config(
   """
-    |fire.lineage.debug.enable=true
+    |fire.lineage.debug.enable=false
     |""")
 @Streaming(interval = 20, disableOperatorChaining = true, parallelism = 2)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Kafka2(brokers = "bigdata_test", topics = "fire", groupId = "fire2")
 object Test extends FlinkStreaming {
 
   @Process
   def kafkaSource: Unit = {
-//    println("version=" + VersionTest.version())
-//    val stream = this.fire.addSourceLineage(new SourceFunction[Int] {
-//      val random = new Random()
-//      override def run(ctx: SourceFunction.SourceContext[Int]): Unit = {
-//        while (true) {
-//          ctx.collect(random.nextInt(1000))
-//          Thread.sleep(1000)
-//        }
-//      }
-//
-//      override def cancel(): Unit = ???
-//    })(MQDatasource("kafka", "localhost:9092", "fire", "fire"), Operation.SOURCE)
-//
-//
-//    stream.print()
+    val stream = this.fire.createKafkaDirectStream()
+    stream.print()
+
+    val dstream = this.fire.createDirectStreamBySchema[ObjectNode](deserializer = new JSONKeyValueDeserializationSchema(true), keyNum = 1)
+    dstream.map(t => {
+      t
+    }).print("2->")
   }
 }
