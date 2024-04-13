@@ -27,7 +27,7 @@ import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
 import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.core.sql.SqlParser
 import com.zto.fire.predef.JConcurrentHashMap
-import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
+import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils, TiSparkUtils}
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.{TableIdentifier => SparkTableIdentifier}
@@ -45,6 +45,13 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   protected lazy val catalog = this.spark.sessionState.catalog
   protected lazy val hiveTableMetaDataMap = new JConcurrentHashMap[String, CatalogTable]()
 
+
+  /**
+   * 判断给定的表是否为tidb表
+   */
+  @Internal
+  def isTiDBTable(tableIdentifier: TableIdentifier): Boolean = TiSparkUtils.isTiDBTable(tableIdentifier)
+
   /**
    * 用于判断给定的表是否为hive表
    */
@@ -56,7 +63,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
         val hiveTable = this.hiveTableMetaDataMap.mergeGet(tableIdentifier.identifier) {
           catalog.getTableMetadata(toSparkTableIdentifier(tableIdentifier))
         }
-        if (hiveTable.provider.isDefined && "hive".equals(hiveTable.provider.get)) true else false
+        if ((hiveTable.provider.isDefined && "hive".equals(hiveTable.provider.get)) || (hiveTable.storage.locationUri.isDefined && hiveTable.storage.locationUri.get.toString.contains("hdfs"))) true else false
       }(this.logger, catchLog = s"判断${tableIdentifier}是否为hive表失败", hook = false)
     }
   }
@@ -124,10 +131,12 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def getCatalog(tableIdentifier: TableIdentifier): Datasource = {
-    if (this.isHiveTable(tableIdentifier)) {
-      Datasource.HIVE
-    } else if (this.isHudiTable(tableIdentifier)) {
+    if (this.isHudiTable(tableIdentifier)) {
       Datasource.HUDI
+    } else if (this.isHiveTable(tableIdentifier)) {
+      Datasource.HIVE
+    } else if (this.isTiDBTable(tableIdentifier)) {
+      Datasource.TIDB
     } else {
       Datasource.VIEW
     }
@@ -147,7 +156,11 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def addCatalog(identifier: TableIdentifier, operation: Operation): Unit = {
-    SQLLineageManager.setCatalog(identifier, this.getCatalog(identifier).toString)
+    val catalog = this.getCatalog(identifier)
+    SQLLineageManager.setCatalog(identifier, catalog.toString)
+    if (catalog == Datasource.TIDB) {
+      SQLLineageManager.setCluster(identifier, this.spark.conf.get("spark.tispark.pd.addresses", ""))
+    }
     SQLLineageManager.setOperation(identifier, operation.toString)
     if (this.isTempView(identifier)) {
       SQLLineageManager.setTmpView(identifier, identifier.toString())

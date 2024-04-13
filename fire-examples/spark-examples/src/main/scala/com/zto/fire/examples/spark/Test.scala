@@ -17,12 +17,9 @@
 
 package com.zto.fire.examples.spark
 
-import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.common.enu.Operation
-import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.core.anno.connector._
-import com.zto.fire.spark.SparkStreaming
+import com.zto.fire.spark.SparkCore
 import com.zto.fire.spark.anno.Streaming
 
 /**
@@ -33,26 +30,30 @@ import com.zto.fire.spark.anno.Streaming
 @Config(
   """
     |fire.lineage.debug.enable=true
+    |spark.sql.extensions=org.apache.spark.sql.TiExtensions
+    |spark.tispark.isolation_read_engines=tikv
+    |spark.tispark.table.scan_concurrency=1
+    |spark.tispark.plan.allow_index_read=false
+    |spark.tispark.pd.addresses=ip:2379
     |""")
 @HBase("test")
 @Hive("fat")
 @Streaming(interval = 10)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
-object Test extends SparkStreaming {
+object Test extends SparkCore {
 
   override def process: Unit = {
-    println("loader=" + this.spark.getClass.getClassLoader)
-
-    val stream = this.fire.createKafkaDirectStream()
-    stream.foreachRDD(rdd => {
-      rdd.foreachPartition(it => {
-//        LineageManager.addPrintLineage(Operation.SINK)
-      })
-    })
-//    LineageManager.addMySQLLineage("jdbc://localhost:3306/fire", "t_user", "root", Operation.INSERT_INTO)
-    stream.print()
-    LineageManager.addSql("""select * from tmp.baseorganize""")
-    LineageManager.print(10)
+    this.fire.sql(
+      """
+        |select * from dpa_analysis.ss_chart limit 10000
+        |""".stripMargin).createOrReplaceTempView("tidb_view")
+    this.fire.sql(
+      """
+        |insert into tmp.ss_chart_fire select * from tidb_view
+        |""".stripMargin)
+    this.fire.sql(
+      """
+        |select * from tmp.ss_chart_fire
+        |""".stripMargin).show
   }
-
 }

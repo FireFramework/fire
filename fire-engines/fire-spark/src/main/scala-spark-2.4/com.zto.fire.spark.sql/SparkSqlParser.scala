@@ -22,6 +22,7 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
+import com.zto.fire.spark.util.TiSparkUtils
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.command._
@@ -98,8 +99,17 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
       }
       case createView: CreateViewCommand => {
         val identifier = toFireTableIdentifier(createView.name)
+        sinkTable = Some(identifier)
         this.addCatalog(identifier, Operation.CREATE_VIEW)
         SQLLineageManager.setColumns(identifier, createView.child.output.map(t => (t.name, t.dataType.toString)))
+
+        if (logicalPlan.toString().contains("TiDBRelation")) {
+          val tableIdentifier = TiSparkUtils.parseTableIdentifier(logicalPlan)
+          if (tableIdentifier.isDefined) {
+            this.addCatalog(tableIdentifier.get, Operation.SELECT)
+            if (sinkTable.isDefined) SQLLineageManager.addRelation(tableIdentifier.get, sinkTable.get, null)
+          }
+        }
       }
       // rename partition语句解析
       case renamePartition: AlterTableRenamePartitionCommand => {

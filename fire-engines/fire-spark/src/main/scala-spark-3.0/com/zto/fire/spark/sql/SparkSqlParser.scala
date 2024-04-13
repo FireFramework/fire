@@ -22,11 +22,12 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
+import com.zto.fire.spark.util.TiSparkUtils
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.catalog.HiveTableRelation
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.command.CreateViewCommand
-import org.apache.spark.sql.execution.datasources.CreateTable
+import org.apache.spark.sql.execution.datasources.{CreateTable, LogicalRelation}
 
 /**
  * Spark SQL解析器，用于解析Spark SQL语句中的库、表、分区、操作类型等信息
@@ -65,12 +66,22 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
               sourceTable = Some(tableIdentifier)
               // 如果是insert xxx select或create xxx select语句，则维护表与表之间的关系
               if (sinkTable.isDefined) SQLLineageManager.addRelation(tableIdentifier, sinkTable.get, null)
-            case _ => LineageManager.printLog(s"Parse query SQL异常，无法匹配该Statement. $child")
+            case logicalRelation: LogicalRelation =>
+              if (logicalRelation.toString().contains("TiDBRelation")) {
+                val tableIdentifier = TiSparkUtils.parseTableIdentifier(logicalRelation)
+                if (tableIdentifier.isDefined) {
+                  this.addCatalog(tableIdentifier.get, Operation.SELECT)
+                  sourceTable = tableIdentifier
+                  if (sinkTable.isDefined) SQLLineageManager.addRelation(tableIdentifier.get, sinkTable.get, null)
+                }
+              }
+            case t => LineageManager.printLog(s"Parse query SQL异常，无法匹配该Statement. $child")
           }
         })
       }
     }
   }
+
 
   /**
    * 用于解析DDL语句中的库表、分区信息

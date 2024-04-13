@@ -130,7 +130,7 @@ object DBDatasource extends SqlToDatasource {
       datasource = Datasource.DORIS
     }
 
-    if (isMatch("hbase", table) || table.getConnector.contains("hbase")) {
+    if (isMatch("hbase", table) || noEmpty(table.getConnector) && table.getConnector.contains("hbase")) {
       datasource = Datasource.HBASE
     }
 
@@ -156,6 +156,10 @@ object DBDatasource extends SqlToDatasource {
 
     if (isMatch("opensearch", table)) {
       datasource = Datasource.OPENSEARCH
+    }
+
+    if (isMatch("tidb", table)) {
+      datasource = Datasource.TIDB
     }
 
     if (Datasource.UNKNOWN == datasource) return
