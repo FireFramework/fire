@@ -314,8 +314,8 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addHudiLineage(tableName: String, tableType: String, recordKey: String, precombineKey: String, partitionField: String, operations: Operation*): Unit = {
-    this.addLineage(HudiDatasource(Datasource.HUDI.toString, tableName, tableType, recordKey, precombineKey, partitionField), operations: _*)
+  def addHudiLineage(tableName: String, cluster: String, tableType: String, recordKey: String, precombineKey: String, partitionField: String, operations: Operation*): Unit = {
+    this.addLineage(HudiDatasource(Datasource.HUDI.toString, cluster, tableName, tableType, recordKey, precombineKey, partitionField), operations: _*)
   }
 
   /**
