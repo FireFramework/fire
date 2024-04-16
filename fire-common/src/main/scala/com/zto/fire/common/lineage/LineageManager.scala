@@ -585,6 +585,26 @@ object LineageManager extends Logging {
   }
 
   /**
+   * 添加Oracle数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addADBLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.ADB, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加Oracle数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addADBLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.ADB, cluster, tableName, username, operations: _*)
+  }
+
+  /**
    * 添加DB2数据库数据源信息
    *
    * @param operations

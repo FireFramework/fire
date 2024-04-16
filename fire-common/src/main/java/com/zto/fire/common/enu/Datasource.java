@@ -34,7 +34,7 @@ public enum Datasource {
     // TODO: 添加新的数据源时务必在static代码块中添加与DatasourceDesc子类的映射关系
     HIVE("hive"), HBASE("hbase"), KAFKA("kafka"), UPSERT_KAFKA("upsert-kafka"),
     ROCKETMQ("rocketmq"), REDIS("redis"), KINESIS("kinesis"),
-    MYSQL("mysql"), TIDB("tidb"), ORACLE("oracle"),
+    MYSQL("mysql"), TIDB("tidb"), ORACLE("oracle"), ADB("adb"),
     SQLSERVER("sqlserver"), DB2("db2"), CLICKHOUSE("clickhouse"),
     PRESTO("presto"), KYLIN("kylin"), DERBY("derby"),
     VIEW("view"), JDBC("jdbc"), FIRE_ROCKETMQ("fire_rocketmq"),
@@ -56,6 +56,7 @@ public enum Datasource {
         datasourceMap.put(MYSQL, DBDatasource.class);
         datasourceMap.put(TIDB, DBDatasource.class);
         datasourceMap.put(ORACLE, DBDatasource.class);
+        datasourceMap.put(ADB, DBDatasource.class);
         datasourceMap.put(SQLSERVER, DBDatasource.class);
         datasourceMap.put(DB2, DBDatasource.class);
         datasourceMap.put(CLICKHOUSE, DBDatasource.class);

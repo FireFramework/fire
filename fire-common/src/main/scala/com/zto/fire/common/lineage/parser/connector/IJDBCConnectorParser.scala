@@ -142,6 +142,10 @@ object DBDatasource extends SqlToDatasource {
       datasource = Datasource.ORACLE
     }
 
+    if (isMatch("adb-cdc", table) || noEmpty(table.getConnector) && table.getConnector.contains("adb")) {
+      datasource = Datasource.ADB
+    }
+
     if (isMatch("mongodb-cdc", table)) {
       datasource = Datasource.MONGODB
     }
