@@ -50,6 +50,6 @@ private[fire] object SparkConsumerOffsetManager extends ConsumerOffsetManager {
   }
 
   def post(offsetRanges: Array[OffsetRange]): Unit = {
-    
+
   }
 }
