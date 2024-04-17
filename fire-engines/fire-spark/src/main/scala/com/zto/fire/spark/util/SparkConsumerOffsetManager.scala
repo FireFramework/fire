@@ -1,0 +1,55 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.zto.fire.spark.util
+
+import com.zto.fire.common.anno.Internal
+import com.zto.fire.common.bean.{ConsumerOffsetInfo, FireTask, JobConsumerInfo}
+import com.zto.fire.core.util.ConsumerOffsetManager
+import com.zto.fire._
+import org.apache.spark.streaming.kafka010.OffsetRange
+
+/**
+ * 实时计算引擎消费位点管理器
+ *
+ * @author ChengLong
+ * @Date 2024/4/17 13:52
+ * @version 2.4.5
+ */
+@Internal
+private[fire] object SparkConsumerOffsetManager extends ConsumerOffsetManager {
+
+  /**
+   * 将Spark Streaming每个批次的消费位点信息转为JobConsumerInfo类型
+   * @param offsetRanges
+   * Spark String各批次消费位点信息
+   */
+  def toConsumerInfo(offsetRanges: Array[OffsetRange]): Option[JobConsumerInfo] = {
+    if (offsetRanges == null || offsetRanges.isEmpty) return None
+
+    val offsetSetInfo = new JHashSet[ConsumerOffsetInfo]()
+    offsetRanges.foreach(range => {
+      offsetSetInfo.add(new ConsumerOffsetInfo(range.topic, "groupId", range.partition, range.fromOffset))
+    })
+
+    Some(new JobConsumerInfo(new FireTask, offsetSetInfo))
+  }
+
+  def post(offsetRanges: Array[OffsetRange]): Unit = {
+    
+  }
+}
