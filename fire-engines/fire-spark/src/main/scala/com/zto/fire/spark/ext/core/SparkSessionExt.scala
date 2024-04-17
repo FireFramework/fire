@@ -144,8 +144,9 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
                                consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                                locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                                instance: String = "",
+                               offsets: Set[ConsumerOffsetInfo] = Set.empty,
                                keyNum: Int = KeyNum._1): InputDStream[MessageExt] = {
-    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum)
+    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, offsets, keyNum)
   }
 
   /**
@@ -169,8 +170,9 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
                                       consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                                       locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                                       instance: String = "",
+                                      offsets: Set[ConsumerOffsetInfo] = Set.empty,
                                       keyNum: Int = KeyNum._1): DStream[(String, String)] = {
-    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum).map(t => (t.getTags, new String(t.getBody)))
+    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, offsets, keyNum).map(t => (t.getTags, new String(t.getBody)))
   }
 
   /**
@@ -194,8 +196,9 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
                                consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                                locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                                instance: String = "",
+                               offsets: Set[ConsumerOffsetInfo] = Set.empty,
                                keyNum: Int = KeyNum._1): DStream[(String, String, String)] = {
-    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum).map(t => (t.getTags, t.getKeys, new String(t.getBody)))
+    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, offsets, keyNum).map(t => (t.getTags, t.getKeys, new String(t.getBody)))
   }
 
   /**
@@ -219,8 +222,9 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
                                consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                                locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                                instance: String = "",
+                               offsets: Set[ConsumerOffsetInfo] = Set.empty,
                                keyNum: Int = KeyNum._1): InputDStream[MessageExt] = {
-    this.ssc.createRocketPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum)
+    this.ssc.createRocketPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, offsets, keyNum)
   }
 
   /**

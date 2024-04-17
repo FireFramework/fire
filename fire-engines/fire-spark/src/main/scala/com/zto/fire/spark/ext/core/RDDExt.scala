@@ -314,6 +314,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
   def rocketCommitOffsets(stream: InputDStream[MessageExt]): Unit = {
     val offsetRanges = rdd.asInstanceOf[org.apache.rocketmq.spark.HasOffsetRanges].offsetRanges
     stream.asInstanceOf[org.apache.rocketmq.spark.CanCommitOffsets].commitAsync(offsetRanges)
+    SparkConsumerOffsetManager.post(offsetRanges)
   }
 
   /**
