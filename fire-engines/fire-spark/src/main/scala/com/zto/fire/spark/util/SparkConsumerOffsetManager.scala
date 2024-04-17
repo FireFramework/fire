@@ -21,6 +21,7 @@ import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.{ConsumerOffsetInfo, FireTask, JobConsumerInfo}
 import com.zto.fire.core.util.ConsumerOffsetManager
 import com.zto.fire._
+import com.zto.fire.common.conf.FireFrameworkConf
 import org.apache.spark.streaming.kafka010.OffsetRange
 
 /**
@@ -38,18 +39,46 @@ private[fire] object SparkConsumerOffsetManager extends ConsumerOffsetManager {
    * @param offsetRanges
    * Spark String各批次消费位点信息
    */
-  def toConsumerInfo(offsetRanges: Array[OffsetRange]): Option[JobConsumerInfo] = {
+  private[this] def toConsumerInfo(offsetRanges: Array[OffsetRange]): Option[JobConsumerInfo] = {
     if (offsetRanges == null || offsetRanges.isEmpty) return None
 
     val offsetSetInfo = new JHashSet[ConsumerOffsetInfo]()
     offsetRanges.foreach(range => {
-      offsetSetInfo.add(new ConsumerOffsetInfo(range.topic, "groupId", range.partition, range.fromOffset))
+      if (range.untilOffset > range.fromOffset) {
+        offsetSetInfo.add(new ConsumerOffsetInfo(range.topic, range.partition, range.untilOffset))
+      }
     })
 
-    Some(new JobConsumerInfo(new FireTask, offsetSetInfo))
+    if (offsetSetInfo.isEmpty) return None
+
+    Some(new JobConsumerInfo(offsetSetInfo))
   }
 
+  /**
+   * 将kafka消费位点信息转换并发送到消息队列
+   *
+   * @param offsetRanges
+   * Spark kafka offsetRanges
+   */
   def post(offsetRanges: Array[OffsetRange]): Unit = {
+    if (!FireFrameworkConf.consumerOffsetExportEnable) return
 
+    tryWithLog {
+      val jobConsumerInfo = this.toConsumerInfo(offsetRanges)
+      if (jobConsumerInfo.isDefined && noEmpty(jobConsumerInfo.get.getOffsets)) {
+        this.post(jobConsumerInfo.get)
+      }
+    } (this.logger, catchLog = "采集kafka消费位点信息失败，请检查", isThrow = false, hook = false)
   }
+
+  /**
+   * 将RocketMQ消费位点信息转换并发送到消息队列
+   *
+   * @param offsetRanges
+   * Spark rocketmq offsetRanges
+   */
+ /* def post2(offsetRanges: Map[TopicQueueId, Array[OffsetRange]]): Unit = {
+    if (!FireFrameworkConf.consumerOffsetExportEnable) return
+
+  }*/
 }

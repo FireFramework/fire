@@ -38,7 +38,10 @@ import com.zto.fire.spark.anno.Streaming
     |spark.tispark.table.scan_concurrency=1
     |spark.tispark.plan.allow_index_read=false
     |spark.tispark.pd.addresses=ip:2379
-    |#fire.consumer.offsets=[{"topic":"fire","groupId": "fire","partition":0,"offset":1009,"timestamp":1713320991995}]
+    |fire.consumer.offsets=[{"topic":"fire","groupId": "fire","partition":0,"offset":991,"timestamp":1713320991995}]
+    |fire.consumer.offset.export.enable                                          =       true
+    |fire.consumer.offset.export.mq.url                                          =       bigdata_test
+    |fire.consumer.offset.export.mq.topic                                        =       sjzn_platform_realtime_offset
     |""")
 @HBase("test")
 @Hive("fat")
@@ -47,7 +50,7 @@ import com.zto.fire.spark.anno.Streaming
 object Test extends SparkStreaming {
 
   override def process: Unit = {
-    val set = Set[ConsumerOffsetInfo](new ConsumerOffsetInfo("fire", "fire", 0, 1000))
+    val set = Set[ConsumerOffsetInfo](new ConsumerOffsetInfo("fire", 0, 1000))
     val stream = this.fire.createKafkaDirectStream(offsets = set)
     stream.foreachRDDAtLeastOnce(rdd => {
       rdd.foreachPartition(it => {

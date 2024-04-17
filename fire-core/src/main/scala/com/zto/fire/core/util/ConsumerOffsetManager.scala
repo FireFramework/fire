@@ -36,7 +36,7 @@ private[fire] trait ConsumerOffsetManager extends Logging {
    * 投递消费位点信息到指定消息队列中
    */
   protected def post(consumerInfo: JobConsumerInfo): Unit = {
-    if (!FireFrameworkConf.consumerOffsetExportEnable || consumerInfo == null || consumerInfo.getOffsetInfo == null || consumerInfo.getOffsetInfo.isEmpty) return
+    if (!FireFrameworkConf.consumerOffsetExportEnable || consumerInfo == null || consumerInfo.getOffsets == null || consumerInfo.getOffsets.isEmpty) return
 
     val msg = JSONUtils.toJSONString(consumerInfo)
     MQProducer.sendKafka(FireFrameworkConf.consumerOffsetExportMqUrl, FireFrameworkConf.consumerOffsetExportMqTopic, msg)

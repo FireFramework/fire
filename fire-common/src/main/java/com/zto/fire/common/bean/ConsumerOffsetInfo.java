@@ -17,7 +17,6 @@
 
 package com.zto.fire.common.bean;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.zto.fire.common.util.JSONUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +33,6 @@ import java.util.*;
  */
 public class ConsumerOffsetInfo {
     private String topic;
-    private String groupId;
     private String broker;
     private Integer partition;
     private Long offset;
@@ -43,17 +41,15 @@ public class ConsumerOffsetInfo {
     public ConsumerOffsetInfo() {
     }
 
-    public ConsumerOffsetInfo(String topic, String groupId, Integer partition, Long offset) {
+    public ConsumerOffsetInfo(String topic, Integer partition, Long offset) {
         this.topic = topic;
-        this.groupId = groupId;
         this.partition = partition;
         this.offset = offset;
         this.timestamp = System.currentTimeMillis();
     }
 
-    public ConsumerOffsetInfo(String topic, String groupId, String broker, Integer partition, Long offset, Long timestamp) {
+    public ConsumerOffsetInfo(String topic, String broker, Integer partition, Long offset, Long timestamp) {
         this.topic = topic;
-        this.groupId = groupId;
         this.broker = broker;
         this.partition = partition;
         this.offset = offset;
@@ -107,14 +103,6 @@ public class ConsumerOffsetInfo {
         this.broker = broker;
     }
 
-    public String getGroupId() {
-        return groupId;
-    }
-
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
-    }
-
     /**
      * 将JsonArray转为Set<TopicPartition>
      */
@@ -122,9 +110,8 @@ public class ConsumerOffsetInfo {
         if (StringUtils.isBlank(jsonArray)) return Collections.EMPTY_SET;
 
         try {
-            Set<ConsumerOffsetInfo> set = JSONUtils.newObjectMapperWithDefaultConf().readValue(jsonArray, new TypeReference<Set<ConsumerOffsetInfo>>(){});
-            return set;
-        } catch (JsonProcessingException e) {
+            return JSONUtils.newObjectMapperWithDefaultConf().readValue(jsonArray, new TypeReference<Set<ConsumerOffsetInfo>>(){});
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -157,11 +144,11 @@ public class ConsumerOffsetInfo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ConsumerOffsetInfo that = (ConsumerOffsetInfo) o;
-        return Objects.equals(topic, that.topic) && Objects.equals(groupId, that.groupId) && Objects.equals(partition, that.partition) && Objects.equals(offset, that.offset) && Objects.equals(timestamp, that.timestamp);
+        return Objects.equals(topic, that.topic) && Objects.equals(partition, that.partition) && Objects.equals(offset, that.offset) && Objects.equals(timestamp, that.timestamp);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(topic, groupId, partition, offset, timestamp);
+        return Objects.hash(topic, partition, offset, timestamp);
     }
 }

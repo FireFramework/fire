@@ -26,31 +26,22 @@ import java.util.Set;
  * @version 2.4.5
  * @Date 2024/4/17 13:14
  */
-public class JobConsumerInfo {
-    private FireTask taskInfo;
-    private Set<ConsumerOffsetInfo> offsetInfo;
+public class JobConsumerInfo extends FireTask {
+    private Set<ConsumerOffsetInfo> offsets;
 
     public JobConsumerInfo() {
     }
 
-    public JobConsumerInfo(FireTask taskInfo, Set<ConsumerOffsetInfo> offsetInfo) {
-        this.taskInfo = taskInfo;
-        this.offsetInfo = offsetInfo;
+    public JobConsumerInfo(Set<ConsumerOffsetInfo> offsets) {
+        super();
+        this.offsets = offsets;
     }
 
-    public FireTask getTaskInfo() {
-        return taskInfo;
+    public Set<ConsumerOffsetInfo> getOffsets() {
+        return offsets;
     }
 
-    public void setTaskInfo(FireTask taskInfo) {
-        this.taskInfo = taskInfo;
-    }
-
-    public Set<ConsumerOffsetInfo> getOffsetInfo() {
-        return offsetInfo;
-    }
-
-    public void setOffsetInfo(Set<ConsumerOffsetInfo> offsetInfo) {
-        this.offsetInfo = offsetInfo;
+    public void setOffsets(Set<ConsumerOffsetInfo> offsets) {
+        this.offsets = offsets;
     }
 }

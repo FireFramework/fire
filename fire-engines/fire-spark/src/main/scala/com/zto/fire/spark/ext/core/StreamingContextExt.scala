@@ -79,7 +79,7 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
     KafkaConnectorParser.addDatasource(KAFKA, confKafkaParams("bootstrap.servers").toString, finalKafkaTopic.mkString("", ", ", ""), finalGroupId, FOperation.SOURCE)
 
     // 获取指定的消费位点信息
-    val offsets = getKafkaTopicPartition(consumerOffsetInfo, finalGroupId, keyNum)
+    val offsets = getKafkaTopicPartition(consumerOffsetInfo, keyNum)
 
     KafkaUtils.createDirectStream[JString, JString](
       ssc, PreferConsistent, Subscribe[JString, JString](finalKafkaTopic, confKafkaParams, offsets))
@@ -89,7 +89,7 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
    * 根据优先级获取消费kafka的位点信息
    */
   @Internal
-  private[this] def getKafkaTopicPartition(consumerOffsetInfo: Set[ConsumerOffsetInfo], groupId: String, keyNum: Int): JMap[TopicPartition, JLong] = {
+  private[this] def getKafkaTopicPartition(consumerOffsetInfo: Set[ConsumerOffsetInfo], keyNum: Int): JMap[TopicPartition, JLong] = {
     val confOffsetJson = FireFrameworkConf.consumerInfo(keyNum)
     if (isEmpty(confOffsetJson) && isEmpty(consumerOffsetInfo)) return Collections.emptyMap()
 
@@ -106,13 +106,6 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
         }
       } else {
         // 如果配置文件中指定了消费位点信息，则从配置文件获取
-        confOffsets.foreach(info => {
-          if (!groupId.equalsIgnoreCase(info.getTopic)) {
-            // 合法性检查：json中指定的groupId必须与当前任务配置的groupId保持一致
-            throw new IllegalArgumentException(s"用于重置消费位点的groupId=${info.getTopic}与任务中配置的groupId=${groupId}不一致，请检查！")
-          }
-        })
-
         offsets.putAll(ConsumerOffsetInfo.toKafkaTopicPartition(confOffsets))
       }
 
