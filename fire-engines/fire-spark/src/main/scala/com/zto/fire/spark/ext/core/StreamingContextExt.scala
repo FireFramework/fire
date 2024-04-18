@@ -24,7 +24,7 @@ import com.zto.fire.common.conf.{FireFrameworkConf, FireKafkaConf, FireRocketMQC
 import com.zto.fire.common.enu.Datasource.{KAFKA, ROCKETMQ}
 import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.lineage.parser.connector.{KafkaConnectorParser, RocketmqConnectorParser}
-import com.zto.fire.common.util.Logging
+import com.zto.fire.common.util.{Logging, ConsumerOffsetUtils}
 import com.zto.fire.spark.util.{SparkRocketMQUtils, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -98,15 +98,15 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
       val offsets = new JHashMap[TopicPartition, JLong]
 
       // 从配置文件中获取消费位点信息
-      val confOffsets = ConsumerOffsetInfo.jsonToBean(confOffsetJson)
+      val confOffsets = ConsumerOffsetUtils.jsonToBean(confOffsetJson)
       if (confOffsets.isEmpty) {
         if (noEmpty(consumerOffsetInfo)) {
           // 如果配置文件中未指定并且代码中指定了，则以代码传参为准
-          offsets.putAll(ConsumerOffsetInfo.toKafkaTopicPartition(consumerOffsetInfo))
+          offsets.putAll(ConsumerOffsetUtils.toKafkaTopicPartition(consumerOffsetInfo))
         }
       } else {
         // 如果配置文件中指定了消费位点信息，则从配置文件获取
-        offsets.putAll(ConsumerOffsetInfo.toKafkaTopicPartition(confOffsets))
+        offsets.putAll(ConsumerOffsetUtils.toKafkaTopicPartition(confOffsets))
       }
 
       offsets
@@ -195,15 +195,15 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
       val offsets = new JHashMap[MessageQueue, JLong]()
 
       // 从配置文件中获取消费位点信息
-      val confOffsets = ConsumerOffsetInfo.jsonToBean(confOffsetJson)
+      val confOffsets = ConsumerOffsetUtils.jsonToBean(confOffsetJson)
       if (confOffsets.isEmpty) {
         if (noEmpty(consumerOffsetInfo)) {
           // 如果配置文件中未指定并且代码中指定了，则以代码传参为准
-          offsets.putAll(ConsumerOffsetInfo.toRocketMQTopicPartition(consumerOffsetInfo))
+          offsets.putAll(ConsumerOffsetUtils.toRocketMQTopicPartition(consumerOffsetInfo))
         }
       } else {
         // 如果配置文件中指定了消费位点信息，则从配置文件获取
-        offsets.putAll(ConsumerOffsetInfo.toRocketMQTopicPartition(confOffsets))
+        offsets.putAll(ConsumerOffsetUtils.toRocketMQTopicPartition(confOffsets))
       }
 
       SpecificOffsetStrategy(offsets.toMap.map(t => (t._1, t._2.toLong)))

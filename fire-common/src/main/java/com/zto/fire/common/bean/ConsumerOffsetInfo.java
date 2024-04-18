@@ -17,13 +17,7 @@
 
 package com.zto.fire.common.bean;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.zto.fire.common.util.JSONUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.kafka.common.TopicPartition;
-import org.apache.rocketmq.common.message.MessageQueue;
-
-import java.util.*;
+import java.util.Objects;
 
 /**
  * MQ消费位点信息
@@ -102,61 +96,6 @@ public class ConsumerOffsetInfo {
 
     public void setBroker(String broker) {
         this.broker = broker;
-    }
-
-    /**
-     * 将JsonArray转为Set<TopicPartition>
-     */
-    public static Set<ConsumerOffsetInfo> jsonToBean(String jsonArray) {
-        if (StringUtils.isBlank(jsonArray)) return Collections.EMPTY_SET;
-
-        try {
-            return JSONUtils.newObjectMapperWithDefaultConf().readValue(jsonArray, new TypeReference<Set<ConsumerOffsetInfo>>(){});
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * 将消费位点信息转为Kafka TopicPartition
-     */
-    public static Map<TopicPartition, Long> toKafkaTopicPartition(Set<ConsumerOffsetInfo> topicPartitionInfoSet) {
-        Map<TopicPartition, Long> topicPartitionLongMap = new LinkedHashMap<>();
-        if (topicPartitionInfoSet == null || topicPartitionInfoSet.isEmpty()) return topicPartitionLongMap;
-
-        topicPartitionInfoSet.forEach(info -> {
-            topicPartitionLongMap.put(new TopicPartition(info.getTopic(), info.getPartition()), info.getOffset());
-        });
-
-        return topicPartitionLongMap;
-    }
-
-    /**
-     * 将消费位点信息转为Kafka TopicPartition
-     */
-    public static Map<TopicPartition, Long> toKafkaTopicPartition(String jsonArray) {
-        return toKafkaTopicPartition(jsonToBean(jsonArray));
-    }
-
-    /**
-     * 将消费位点信息转为RocketMQ MessageQueue
-     */
-    public static Map<MessageQueue, Long> toRocketMQTopicPartition(Set<ConsumerOffsetInfo> topicPartitionInfoSet) {
-        Map<MessageQueue, Long> topicPartitionLongMap = new LinkedHashMap<>();
-        if (topicPartitionInfoSet == null || topicPartitionInfoSet.isEmpty()) return topicPartitionLongMap;
-
-        topicPartitionInfoSet.forEach(info -> {
-            topicPartitionLongMap.put(new MessageQueue(info.getTopic(), info.getBroker(), info.getPartition()), info.getOffset());
-        });
-
-        return topicPartitionLongMap;
-    }
-
-    /**
-     * 将消费位点信息转为RocketMQ MessageQueue
-     */
-    public static Map<MessageQueue, Long> toRocketMQTopicPartition(String jsonArray) {
-        return toRocketMQTopicPartition(jsonToBean(jsonArray));
     }
 
     @Override
