@@ -164,11 +164,10 @@ object LineageManager extends Logging {
   def print(interval: Long = 60, pretty: Boolean = true): Unit = {
     ThreadUtils.schedule({
       val lineage = FireUtils.invokeEngineApi[Lineage](this.sparkLineageAccumulatorManager, this.flinkLineageAccumulatorManager, "getValue")
-      val jsonLineage = FirePS1Conf.wrap(
-        s"""
-           |------------------- 血缘信息（${DateFormatUtils.formatCurrentDateTime()}）：----------------------
-           |${JSONUtils.toJSONString(lineage, pretty)}
-           |""".stripMargin, FirePS1Conf.PINK)
+      val jsonLineage = FirePS1Conf.wrap(s"""
+                            |------------------- 血缘信息（${DateFormatUtils.formatCurrentDateTime()}）：----------------------
+                            |${JSONUtils.toJSONString(lineage, pretty)}
+                            |""".stripMargin, FirePS1Conf.PINK)
 
       println(jsonLineage)
       logInfo(jsonLineage)
@@ -245,7 +244,7 @@ object LineageManager extends Logging {
           LineageManager.printLog(log)
         }
       })
-    }(this.logger, catchLog = "将SQLTable血缘信息映射为Datasource数据源信息失败！", isThrow = false, hook = false)
+    } (this.logger, catchLog = "将SQLTable血缘信息映射为Datasource数据源信息失败！", isThrow = false, hook = false)
   }
 
   /**
@@ -349,7 +348,7 @@ object LineageManager extends Logging {
    */
   def addPaimonLineage(cluster: String, tableName: String, primaryKey: String,
                        bucketKey: String, partitionField: String, operations: Operation*): Unit = {
-    this.addLineage(PaimonDatasource(Datasource.PAIMON.toString, cluster, tableName, primaryKey, bucketKey, partitionField), operations: _*)
+    this.addLineage(PaimonDatasource(Datasource.PAIMON.toString, cluster, tableName, primaryKey , bucketKey, partitionField), operations: _*)
   }
 
   /**
@@ -878,7 +877,6 @@ object LineageManager extends Logging {
 
   /**
    * 为指定数据源添加Operation类型
-   *
    * @param datasource
    * 数据源
    * @param targetOperations
