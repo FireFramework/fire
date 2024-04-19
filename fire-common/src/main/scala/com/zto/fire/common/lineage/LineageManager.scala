@@ -930,7 +930,7 @@ object LineageManager extends Logging {
   /**
    * 将目标DataSourceDesc中的operation合并到set中
    */
-  private[fire] def mergeSet(set: JHashSet[DatasourceDesc], datasourceDesc: DatasourceDesc): Unit = {
+  private[fire] def mergeSet(set: JHashSet[DatasourceDesc], datasourceDesc: DatasourceDesc): Unit = this.synchronized {
     if (set.isEmpty || !set.contains(datasourceDesc)) {
       set.add(datasourceDesc)
       return
