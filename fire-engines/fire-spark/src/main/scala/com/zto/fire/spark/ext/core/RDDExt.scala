@@ -24,14 +24,14 @@ import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util._
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
-import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
+import com.zto.fire.spark.util.{SparkConsumerOffsetManager, SparkSingletonFactory, SparkUtils}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.common.message.MessageExt
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
-import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges}
+import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges, OffsetRange}
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
@@ -305,6 +305,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
   def kafkaCommitOffsets(stream: DStream[ConsumerRecord[String, String]]): Unit = {
     val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
     stream.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
+    SparkConsumerOffsetManager.post(offsetRanges)
   }
 
   /**
@@ -313,6 +314,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
   def rocketCommitOffsets(stream: InputDStream[MessageExt]): Unit = {
     val offsetRanges = rdd.asInstanceOf[org.apache.rocketmq.spark.HasOffsetRanges].offsetRanges
     stream.asInstanceOf[org.apache.rocketmq.spark.CanCommitOffsets].commitAsync(offsetRanges)
+    SparkConsumerOffsetManager.post(offsetRanges)
   }
 
   /**

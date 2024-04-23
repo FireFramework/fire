@@ -154,6 +154,10 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_SQL_CONF_PREFIX = "fire.sql_conf."
   lazy val FIRE_SQL_CONF_PREFIX2 = "sql.conf."
   lazy val HIVE_CONF_PREFIX = "hive.conf."
+  lazy val FIRE_CONSUMER_OFFSET_INFO = "fire.consumer.offsets"
+  lazy val FIRE_CONSUMER_OFFSET_EXPORT_ENABLE = "fire.consumer.offset.export.enable"
+  lazy val FIRE_CONSUMER_OFFSET_EXPORT_MQ_URL = "fire.consumer.offset.export.mq.url"
+  lazy val FIRE_CONSUMER_OFFSET_EXPORT_MQ_TOPIC = "fire.consumer.offset.export.mq.topic"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -330,4 +334,29 @@ private[fire] object FireFrameworkConf {
   lazy val accSyncMaxSize = PropUtils.getLong(this.FIRE_ACC_SYNC_MAX_SIZE, 100)
   // sql的set配置，如：this.spark.sql("set hive.exec.dynamic.partition=true")
   lazy val sqlConfMap = PropUtils.sliceKeys(this.FIRE_SQL_CONF_PREFIX) ++ PropUtils.sliceKeys(this.FIRE_SQL_CONF_PREFIX2) ++ PropUtils.sliceKeys(this.HIVE_CONF_PREFIX)
+
+  /**
+   * 获取配置的消费位点信息
+   */
+  def consumerInfo(keyNum: Int): String = PropUtils.getString(this.FIRE_CONSUMER_OFFSET_INFO, "", keyNum)
+
+  /**
+   * 是否将消费位点信息主动推送到指定的kafka topic中
+   * @return
+   */
+  lazy val consumerOffsetExportEnable: Boolean = PropUtils.getBoolean(this.FIRE_CONSUMER_OFFSET_EXPORT_ENABLE, false)
+
+  /**
+   * 将offset消费信息发送到指定kafka
+   */
+  def consumerOffsetExportMqUrl: String = {
+    val url = PropUtils.getString(this.FIRE_CONSUMER_OFFSET_EXPORT_MQ_URL, "")
+    FireKafkaConf.kafkaBrokers(url)
+  }
+
+  /**
+   * 将offset信息发送到指定的topic
+   * @return
+   */
+  lazy val consumerOffsetExportMqTopic: String = PropUtils.getString(this.FIRE_CONSUMER_OFFSET_EXPORT_MQ_TOPIC, "")
 }

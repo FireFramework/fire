@@ -18,7 +18,7 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
-import com.zto.fire.common.bean.Generator
+import com.zto.fire.common.bean.{ConsumerOffsetInfo, Generator}
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.Datasource._
 import com.zto.fire.common.enu.{Operation => FOperation}
@@ -119,8 +119,8 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
    * @return
    * DStream
    */
-  def createKafkaDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, groupId: String = null, keyNum: Int = KeyNum._1): DStream[ConsumerRecord[String, String]] = {
-    this.ssc.createDirectStream(kafkaParams, topics, groupId, keyNum)
+  def createKafkaDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, groupId: String = null, offsets: Set[ConsumerOffsetInfo] = Set.empty, keyNum: Int = KeyNum._1): DStream[ConsumerRecord[String, String]] = {
+    this.ssc.createDirectStream(kafkaParams, topics, groupId, offsets, keyNum)
   }
 
   /**
@@ -144,8 +144,9 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
                                consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                                locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                                instance: String = "",
+                               offsets: Set[ConsumerOffsetInfo] = Set.empty,
                                keyNum: Int = KeyNum._1): InputDStream[MessageExt] = {
-    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum)
+    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, offsets, keyNum)
   }
 
   /**
@@ -169,8 +170,9 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
                                       consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                                       locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                                       instance: String = "",
+                                      offsets: Set[ConsumerOffsetInfo] = Set.empty,
                                       keyNum: Int = KeyNum._1): DStream[(String, String)] = {
-    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum).map(t => (t.getTags, new String(t.getBody)))
+    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, offsets, keyNum).map(t => (t.getTags, new String(t.getBody)))
   }
 
   /**
@@ -194,8 +196,9 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
                                consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                                locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                                instance: String = "",
+                               offsets: Set[ConsumerOffsetInfo] = Set.empty,
                                keyNum: Int = KeyNum._1): DStream[(String, String, String)] = {
-    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum).map(t => (t.getTags, t.getKeys, new String(t.getBody)))
+    this.createRocketMqPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, offsets, keyNum).map(t => (t.getTags, t.getKeys, new String(t.getBody)))
   }
 
   /**
@@ -219,8 +222,9 @@ class SparkSessionExt(_spark: SparkSession) extends Api with JdbcConnectorBridge
                                consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                                locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                                instance: String = "",
+                               offsets: Set[ConsumerOffsetInfo] = Set.empty,
                                keyNum: Int = KeyNum._1): InputDStream[MessageExt] = {
-    this.ssc.createRocketPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, keyNum)
+    this.ssc.createRocketPullStream(rocketParam, groupId, topics, tag, consumerStrategy, locationStrategy, instance, offsets, keyNum)
   }
 
   /**

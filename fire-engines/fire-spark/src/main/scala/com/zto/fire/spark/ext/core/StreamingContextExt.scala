@@ -18,19 +18,24 @@
 package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
-import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
+import com.zto.fire.common.anno.Internal
+import com.zto.fire.common.bean.ConsumerOffsetInfo
+import com.zto.fire.common.conf.{FireFrameworkConf, FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.Datasource.{KAFKA, ROCKETMQ}
 import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.lineage.parser.connector.{KafkaConnectorParser, RocketmqConnectorParser}
-import com.zto.fire.common.util.Logging
+import com.zto.fire.common.util.{Logging, ConsumerOffsetUtils}
 import com.zto.fire.spark.util.{SparkRocketMQUtils, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.rocketmq.common.message.MessageExt
-import org.apache.rocketmq.spark.{ConsumerStrategy, LocationStrategy, RocketMQConfig, RocketMqUtils}
+import org.apache.kafka.common.TopicPartition
+import org.apache.rocketmq.common.message.{MessageExt, MessageQueue}
+import org.apache.rocketmq.spark.{ConsumerStrategy, LocationStrategy, RocketMQConfig, RocketMqUtils, SpecificOffsetStrategy}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.KafkaUtils
+
+import java.util.Collections
 
 /**
  * StreamingContext扩展
@@ -56,7 +61,7 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
    * @return
    * DStream
    */
-  def createDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, groupId: String = null, keyNum: Int = KeyNum._1): DStream[ConsumerRecord[String, String]] = {
+  def createDirectStream(kafkaParams: Map[String, Object] = null, topics: Set[String] = null, groupId: String = null, consumerOffsetInfo: Set[ConsumerOffsetInfo] = Set.empty, keyNum: Int = KeyNum._1): DStream[ConsumerRecord[String, String]] = {
     // kafka topic优先级：配置文件 > topics参数
     val confTopic = FireKafkaConf.kafkaTopics(keyNum)
     val finalKafkaTopic = if (StringUtils.isNotBlank(confTopic)) SparkUtils.topicSplit(confTopic) else topics
@@ -68,11 +73,44 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
     require(confKafkaParams.contains("bootstrap.servers"), s"kafka bootstrap.servers不能为空，请在配置文件中指定：spark.kafka.brokers.name$keyNum")
     require(confKafkaParams.contains("group.id"), s"kafka group.id不能为空，请在配置文件中指定：spark.kafka.group.id$keyNum")
 
-    // kafka消费信息埋点
-    KafkaConnectorParser.addDatasource(KAFKA, confKafkaParams("bootstrap.servers").toString, finalKafkaTopic.mkString("", ", ", ""), confKafkaParams("group.id").toString, FOperation.SOURCE)
+    val finalGroupId = confKafkaParams("group.id").toString
 
-    KafkaUtils.createDirectStream[String, String](
-      ssc, PreferConsistent, Subscribe[String, String](finalKafkaTopic, confKafkaParams))
+    // kafka消费信息埋点
+    KafkaConnectorParser.addDatasource(KAFKA, confKafkaParams("bootstrap.servers").toString, finalKafkaTopic.mkString("", ", ", ""), finalGroupId, FOperation.SOURCE)
+
+    // 获取指定的消费位点信息
+    val offsets = getKafkaTopicPartition(consumerOffsetInfo, keyNum)
+
+    KafkaUtils.createDirectStream[JString, JString](
+      ssc, PreferConsistent, Subscribe[JString, JString](finalKafkaTopic, confKafkaParams, offsets))
+  }
+
+  /**
+   * 根据优先级获取消费kafka的位点信息
+   */
+  @Internal
+  private[this] def getKafkaTopicPartition(consumerOffsetInfo: Set[ConsumerOffsetInfo], keyNum: Int): JMap[TopicPartition, JLong] = {
+    val confOffsetJson = FireFrameworkConf.consumerInfo(keyNum)
+    if (isEmpty(confOffsetJson) && isEmpty(consumerOffsetInfo)) return Collections.emptyMap()
+
+    tryWithReturn {
+      // 配置文件优先级高于代码硬编码
+      val offsets = new JHashMap[TopicPartition, JLong]
+
+      // 从配置文件中获取消费位点信息
+      val confOffsets = ConsumerOffsetUtils.jsonToBean(confOffsetJson)
+      if (confOffsets.isEmpty) {
+        if (noEmpty(consumerOffsetInfo)) {
+          // 如果配置文件中未指定并且代码中指定了，则以代码传参为准
+          offsets.putAll(ConsumerOffsetUtils.toKafkaTopicPartition(consumerOffsetInfo))
+        }
+      } else {
+        // 如果配置文件中指定了消费位点信息，则从配置文件获取
+        offsets.putAll(ConsumerOffsetUtils.toKafkaTopicPartition(confOffsets))
+      }
+
+      offsets
+    } (this.logger, catchLog = s"获取消费位点信息失败，请检查配置参数，${FireFrameworkConf.FIRE_CONSUMER_OFFSET_INFO}=$confOffsetJson")
   }
 
   /**
@@ -96,6 +134,7 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
                              consumerStrategy: ConsumerStrategy = ConsumerStrategy.lastest,
                              locationStrategy: LocationStrategy = LocationStrategy.PreferConsistent,
                              instance: String = "",
+                             consumerOffsetInfo: Set[ConsumerOffsetInfo] = Set.empty,
                              keyNum: Int = KeyNum._1): InputDStream[MessageExt] = {
 
     // 获取topic信息，配置文件优先级高于代码中指定的
@@ -105,7 +144,7 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
 
     // 起始消费位点
     val confOffset = FireRocketMQConf.rocketStartingOffset(keyNum)
-    val finalConsumerStrategy = if (StringUtils.isNotBlank(confOffset)) SparkRocketMQUtils.valueOfStrategy(confOffset) else consumerStrategy
+    val confConsumerStrategy = if (StringUtils.isNotBlank(confOffset)) SparkRocketMQUtils.valueOfStrategy(confOffset) else consumerStrategy
 
     // 是否自动提交offset
     val finalAutoCommit = FireRocketMQConf.rocketEnableAutoCommit(keyNum)
@@ -126,6 +165,10 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
     val finalInstanceId = if (StringUtils.isNotBlank(instanceId)) instanceId else instance
     if (StringUtils.isNotBlank(finalInstanceId)) finalRocketParam.put("consumer.instance", finalInstanceId)
 
+    // 获取指定的消费位点信息
+    val finalConsumerStrategy = getRocketMQTopicPartition(consumerOffsetInfo, confConsumerStrategy, keyNum)
+    val finalForceSpecial = if (finalConsumerStrategy.isInstanceOf[SpecificOffsetStrategy]) true else FireRocketMQConf.rocketForceSpecial(keyNum)
+
     // 消费rocketmq埋点信息
     RocketmqConnectorParser.addDatasource(ROCKETMQ, finalRocketParam(RocketMQConfig.NAME_SERVER_ADDR), finalTopics, finalGroupId, FOperation.SOURCE)
 
@@ -134,9 +177,37 @@ class StreamingContextExt(ssc: StreamingContext) extends Logging {
       finalTopics.split(",").toList,
       finalConsumerStrategy,
       finalAutoCommit,
-      forceSpecial = FireRocketMQConf.rocketForceSpecial(keyNum),
+      forceSpecial = finalForceSpecial,
       failOnDataLoss = FireRocketMQConf.rocketFailOnDataLoss(keyNum),
       locationStrategy, finalRocketParam)
+  }
+
+  /**
+   * 根据优先级获取消费rocketmq的位点信息
+   */
+  @Internal
+  private[this] def getRocketMQTopicPartition(consumerOffsetInfo: Set[ConsumerOffsetInfo], confConsumerStrategy: ConsumerStrategy, keyNum: Int): ConsumerStrategy = {
+    val confOffsetJson = FireFrameworkConf.consumerInfo(keyNum)
+    if (isEmpty(confOffsetJson) && isEmpty(consumerOffsetInfo)) return confConsumerStrategy
+
+    tryWithReturn {
+      // 配置文件优先级高于代码硬编码
+      val offsets = new JHashMap[MessageQueue, JLong]()
+
+      // 从配置文件中获取消费位点信息
+      val confOffsets = ConsumerOffsetUtils.jsonToBean(confOffsetJson)
+      if (confOffsets.isEmpty) {
+        if (noEmpty(consumerOffsetInfo)) {
+          // 如果配置文件中未指定并且代码中指定了，则以代码传参为准
+          offsets.putAll(ConsumerOffsetUtils.toRocketMQTopicPartition(consumerOffsetInfo))
+        }
+      } else {
+        // 如果配置文件中指定了消费位点信息，则从配置文件获取
+        offsets.putAll(ConsumerOffsetUtils.toRocketMQTopicPartition(confOffsets))
+      }
+
+      SpecificOffsetStrategy(offsets.toMap.map(t => (t._1, t._2.toLong)))
+    } (this.logger, catchLog = s"获取消费位点信息失败，请检查配置参数，${FireFrameworkConf.FIRE_CONSUMER_OFFSET_INFO}=$confOffsetJson")
   }
 
   /**
