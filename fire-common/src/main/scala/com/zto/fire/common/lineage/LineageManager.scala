@@ -421,8 +421,8 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addCustomizeSourceLineage(datasource: String, cluster: String, sourceType: String): Unit = {
-    this.addLineage(CustomizeDatasource(datasource, cluster, sourceType), Operation.SOURCE)
+  def addCustomizeSourceLineage(datasource: String, cluster: String, connector: String): Unit = {
+    this.addLineage(CustomizeDatasource(datasource, cluster, connector), Operation.SOURCE)
   }
 
   /**
@@ -431,8 +431,8 @@ object LineageManager extends Logging {
    * @param operations
    * 操作类型
    */
-  def addCustomizeSinkLineage(datasource: String, cluster: String, sourceType: String): Unit = {
-    this.addLineage(CustomizeDatasource(datasource, cluster, sourceType), Operation.SINK)
+  def addCustomizeSinkLineage(datasource: String, cluster: String, connector: String): Unit = {
+    this.addLineage(CustomizeDatasource(datasource, cluster, connector), Operation.SINK)
   }
 
   // ----------------------------------------------- 消息队列数据源 ---------------------------------------------------------- //

@@ -55,8 +55,8 @@ private[fire] object CustomizeConnectorParser extends ConnectorParser {
    * @param cluster
    * 集群标识
    */
-  def addDatasource(datasource: Datasource, cluster: String, sourceType: String, operation: Operation*): Unit = {
-    if (this.canAdd) this.addDatasource(datasource, CustomizeDatasource(datasource.toString, cluster, sourceType, toOperationSet(operation: _*)))
+  def addDatasource(datasource: Datasource, cluster: String, connector: String, operation: Operation*): Unit = {
+    if (this.canAdd) this.addDatasource(datasource, CustomizeDatasource(datasource.toString, cluster, connector, toOperationSet(operation: _*)))
   }
 }
 
@@ -70,12 +70,12 @@ private[fire] object CustomizeConnectorParser extends ConnectorParser {
  * @param operation
  * 数据源操作类型（必须是var变量，否则合并不成功）
  */
-case class CustomizeDatasource(datasource: String, cluster: String, sourceType: String, var operation: JSet[Operation] = new JHashSet[Operation]) extends DatasourceDesc {
+case class CustomizeDatasource(datasource: String, cluster: String, connector: String, var operation: JSet[Operation] = new JHashSet[Operation]) extends DatasourceDesc {
 
   override def equals(obj: Any): Boolean = {
     if (obj == null || getClass != obj.getClass) return false
     val target = obj.asInstanceOf[CustomizeDatasource]
-    Objects.equals(datasource, target.datasource) && Objects.equals(cluster, target.cluster) && Objects.equals(sourceType, target.sourceType)
+    Objects.equals(datasource, target.datasource) && Objects.equals(cluster, target.cluster) && Objects.equals(connector, target.connector)
   }
 
   override def hashCode(): Int = Objects.hash(datasource, cluster)
