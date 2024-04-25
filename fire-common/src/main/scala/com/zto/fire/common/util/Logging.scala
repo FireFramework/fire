@@ -34,6 +34,9 @@ trait Logging {
    */
   protected def logger: Logger = log_
 
+  /**
+   * 同时记录日志到日志文件与控制台
+   */
   protected def logPrint(msg: => String): Unit = {
     if (this.logger.isInfoEnabled) {
       this.logInfo(msg)

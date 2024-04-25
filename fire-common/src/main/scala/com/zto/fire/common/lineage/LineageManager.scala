@@ -149,9 +149,7 @@ object LineageManager extends Logging {
    */
   private[fire] def printLog(msg: String): Unit = {
     if (lineageDebugEnable) {
-      val log = s"lineage=>$msg"
-      logInfo(log)
-      println(log)
+      logPrint(s"lineage=>$msg")
     }
   }
 
