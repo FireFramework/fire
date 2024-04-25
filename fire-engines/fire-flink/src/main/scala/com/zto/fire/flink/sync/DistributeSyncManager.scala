@@ -7,7 +7,7 @@ import com.zto.fire.common.util.{JSONUtils, PropUtils, ThreadUtils}
 import com.zto.fire.core.bean.ArthasParam
 import com.zto.fire.core.plugin.ArthasDynamicLauncher
 import com.zto.fire.core.rest.SystemRestful
-import com.zto.fire.core.sync.SyncManager
+import com.zto.fire.core.sync.{DistributeExecuteManagerHelper, SyncManager}
 import com.zto.fire.flink.bean.DistributeBean
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.enu.DistributeModule
@@ -36,6 +36,8 @@ private[fire] object DistributeSyncManager extends SyncManager {
    */
   def sync: Unit = {
     ThreadUtils.scheduleWithFixedDelay({
+      // 分布式调用
+      DistributeExecuteManagerHelper.distributeExecute
       if (!FireFlinkConf.distributeSyncEnabled) return
       val jsonConf = SystemRestful.restInvoke(this.distributeSyncUrl)
       if (!this.lastJsonConf.equals(jsonConf)) {

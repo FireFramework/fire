@@ -22,6 +22,7 @@ import com.zto.fire.common.anno.Scheduled;
 import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.DateFormatUtils;
 import com.zto.fire.common.util.ReflectionUtils;
+import com.zto.fire.core.sync.DistributeExecuteManagerHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.quartz.*;
@@ -125,6 +126,10 @@ public abstract class SchedulerManager implements Serializable {
      */
     public synchronized void registerTasks(Object... taskInstances) {
         try {
+            if (FireFrameworkConf.distributeExecuteEnable()) {
+                DistributeExecuteManagerHelper.distributeExecute();
+            }
+
             if (!FireFrameworkConf.scheduleEnable()) {
                 return;
             }

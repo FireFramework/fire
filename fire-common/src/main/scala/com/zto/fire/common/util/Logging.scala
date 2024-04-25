@@ -34,6 +34,13 @@ trait Logging {
    */
   protected def logger: Logger = log_
 
+  protected def logPrint(msg: => String): Unit = {
+    if (this.logger.isInfoEnabled) {
+      this.logInfo(msg)
+      println(msg)
+    }
+  }
+
   protected def logInfo(msg: => String): Unit = {
     if (this.logger.isInfoEnabled) this.logger.info(FirePS1Conf.wrap(msg, FirePS1Conf.GREEN))
   }

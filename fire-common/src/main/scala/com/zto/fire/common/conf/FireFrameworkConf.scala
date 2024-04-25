@@ -158,6 +158,9 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_CONSUMER_OFFSET_EXPORT_ENABLE = "fire.consumer.offset.export.enable"
   lazy val FIRE_CONSUMER_OFFSET_EXPORT_MQ_URL = "fire.consumer.offset.export.mq.url"
   lazy val FIRE_CONSUMER_OFFSET_EXPORT_MQ_TOPIC = "fire.consumer.offset.export.mq.topic"
+  lazy val FIRE_DEBUG_CLASS_CODE_RESOURCE = "fire.debug.class.code.resource"
+  lazy val FIRE_DISTRIBUTE_EXECUTE_ENABLE = "fire.distribute.execute.enable"
+  lazy val FIRE_DISTRIBUTE_EXECUTE_CLASS = "fire.distribute.execute.class"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -359,4 +362,19 @@ private[fire] object FireFrameworkConf {
    * @return
    */
   lazy val consumerOffsetExportMqTopic: String = PropUtils.getString(this.FIRE_CONSUMER_OFFSET_EXPORT_MQ_TOPIC, "")
+
+  /**
+   * 获取需要打印类加载路径信息的列表
+   */
+  lazy val codeResource: String = PropUtils.getString(this.FIRE_DEBUG_CLASS_CODE_RESOURCE, "")
+
+  /**
+   * 是否开启分布式执行，用于在各container端执行指定的代码逻辑
+   */
+  lazy val distributeExecuteEnable = PropUtils.getBoolean(this.FIRE_DISTRIBUTE_EXECUTE_ENABLE, true)
+
+  /**
+   * 分布式执行各引擎的类型
+   */
+  lazy val distributeExecuteClass = PropUtils.getString(this.FIRE_DISTRIBUTE_EXECUTE_CLASS, "")
 }
