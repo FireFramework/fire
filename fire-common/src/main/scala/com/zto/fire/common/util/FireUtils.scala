@@ -215,6 +215,15 @@ private[fire] object FireUtils extends Serializable with Logging {
   }
 
   /**
+   * 打印指定类的路径信息
+   */
+  def printCodeResource(): Unit = {
+    if (noEmpty(FireFrameworkConf.codeResource)) {
+      FireFrameworkConf.codeResource.split(",").foreach(clazz => logPrint(ReflectionUtils.getCodeSourceDetail(clazz)))
+    }
+  }
+
+  /**
    * 用于在fire框架启动时展示信息
    */
   private[fire] def splash: Unit = {

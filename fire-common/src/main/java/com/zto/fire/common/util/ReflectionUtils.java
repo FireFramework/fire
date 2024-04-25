@@ -28,6 +28,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.net.URL;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -492,5 +495,71 @@ public class ReflectionUtils {
         }
 
         return typeArgumentList;
+    }
+
+    /**
+     * 获取指定类的来源（来自哪个jar包）
+     * @param className
+     * 类名
+     */
+    public static String getCodeSource(String className) {
+        String codeLocation = "";
+        try {
+            // 获取 ProtectionDomain
+            ProtectionDomain protectionDomain = Class.forName(StringUtils.trim(className)).getProtectionDomain();
+            // 获取 CodeSource
+            CodeSource codeSource = protectionDomain.getCodeSource();
+
+            if (codeSource != null) {
+                // 获取 CodeSource 对应的 URL
+                URL location = codeSource.getLocation();
+                codeLocation = location.toString();
+            }
+        } catch (Exception e) {
+            logger.error("无法获取该类的位置信息！类名：" + className);
+        } finally {
+            return codeLocation;
+        }
+    }
+
+    /**
+     * 获取指定类的类加载器
+     * @param className
+     * 类名
+     * @return
+     * 类加载器的标识
+     */
+    public static String getClassClassLoader(String className) {
+        String classLoaderName = "";
+        try {
+            classLoaderName = Class.forName(StringUtils.trim(className)).getClassLoader().getClass().getName();
+        } catch (Exception e) {
+            logger.error("无法获取该类的类加载器信息！类名：" + className);
+        } finally {
+            return classLoaderName;
+        }
+    }
+
+    /**
+     * 获取指定类的详细位置信息，包括主机等
+     * @param className
+     * 类名
+     */
+    public static String getCodeSourceDetail(String className) {
+        String codeLocation = getCodeSource(className);
+        StringBuilder codeLocationDetail = new StringBuilder();
+
+        codeLocationDetail
+                .append("Class [")
+                .append(StringUtils.trim(className))
+                .append("] loaded by [")
+                .append(getClassClassLoader(StringUtils.trim(className)))
+                .append("]")
+                .append("@")
+                .append(OSUtils.getHostName())
+                .append(":")
+                .append(codeLocation.replaceAll("file:", ""));
+
+        return codeLocationDetail.toString();
     }
 }
