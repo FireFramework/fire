@@ -172,12 +172,19 @@ public class FindClassUtils {
      * @param fileName 文件名
      * @return 路径名+文件名
      */
-    public static String findFileInJar(String fileName) {
+    public static String findFileInJar(URL url, String fileName) {
         if (StringUtils.isBlank(fileName)) {
             return null;
         }
+
+        // 如果jar包的URL路径为空，则默认从当前jar包完整路径（URL）中获取
+        if (url == null) {
+            url = FindClassUtils.class.getProtectionDomain().getCodeSource().getLocation();
+        }
+
+        logger.debug("从{}中获取配置文件：{}", url.toString(), fileName);
+
         String fullName = "";
-        URL url = FindClassUtils.class.getProtectionDomain().getCodeSource().getLocation();
         if (url.getPath().endsWith(".jar")) {
             try (JarFile jarFile = new JarFile(url.getFile())) {
                 Enumeration<JarEntry> entrys = jarFile.entries();

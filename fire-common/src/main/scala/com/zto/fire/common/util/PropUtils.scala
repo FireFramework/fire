@@ -24,6 +24,7 @@ import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 
 import java.io.{FileInputStream, InputStream, StringReader}
+import java.net.URL
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.collection.mutable.{ArrayBuffer, Map}
@@ -37,6 +38,7 @@ import scala.reflect.ClassTag
 object PropUtils extends Logging {
   private val props = new Properties()
   private val configurationFiles = Array[String]("fire", "cluster", "spark", "flink")
+  private val fireInternalConf = configurationFiles ++ Array[String]("spark-core", "spark-streaming", "flink-batch", "flink-streaming")
   // 用于判断是否merge过
   private[fire] val isMerge = new AtomicBoolean(false)
   // 引擎类型判断，当前阶段仅支持spark与flink，未来若支持新的引擎，则需在此处做支持
@@ -52,6 +54,23 @@ object PropUtils extends Logging {
   private[fire] lazy val removeKeyMap = new JConcurrentHashMap[String, String]()
   // 用于存放固定前缀，而后缀不同的配置信息
   private[this] lazy val cachedConfMap = new mutable.HashMap[String, collection.immutable.Map[String, String]]()
+  // 任务主类名
+  private[fire] var mainClass = ""
+
+  /**
+   * 设置任务运行主类名
+   */
+  def setMainClass(mainClass: String): Unit = {
+    if (noEmpty(mainClass)) {
+      this.mainClass = mainClass
+      PropUtils.setProperty(FireFrameworkConf.DRIVER_CLASS_NAME, this.mainClass)
+    }
+  }
+
+  /**
+   * 获取当前运行任务的主类名
+   */
+  def getMainClass: String = this.mainClass
 
   /**
    * 判断指定的配置文件是否存在
@@ -94,7 +113,12 @@ object PropUtils extends Logging {
     try {
       resource = FileUtils.resourceFileExists(fullName)
       if (resource == null) {
-        val findFileName = FindClassUtils.findFileInJar(fullName)
+        // 如果是用户配置文件，则从用户的jar包中查找配置文件
+        val jarUrl: URL = if (!this.fireInternalConf.contains(fileName) && noEmpty(this.getMainClass)) {
+          new URL(ReflectionUtils.getCodeSource(this.getMainClass))
+        } else null
+
+        val findFileName = FindClassUtils.findFileInJar(jarUrl, fullName)
         if (StringUtils.isNotBlank(findFileName)) {
           if (FindClassUtils.isJar) {
             resource = FileUtils.resourceFileExists(findFileName)
@@ -118,6 +142,7 @@ object PropUtils extends Logging {
     if (StringUtils.isNotBlank(fullName) && !this.alreadyLoadMap.contains(fullName)) {
       var resource: InputStream = null
       try {
+        this.logDebug(s"-------------> loading ${fullName} <-------------")
         resource = this.getInputStream(fullName)
         if (resource == null && !this.configurationFiles.contains(fileName)) this.logWarning(s"未找到配置文件[ $fullName ]，若已使用注解配置，可忽略该警告")
         if (resource != null) {

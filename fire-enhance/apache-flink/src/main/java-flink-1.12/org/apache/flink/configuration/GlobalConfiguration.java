@@ -302,7 +302,8 @@ public final class GlobalConfiguration {
         if (isJobManager && className != null && className.contains(".")) {
             String simpleClassName = className.substring(className.lastIndexOf('.') + 1);
             if (simpleClassName.length() > 0) {
-                PropUtils.setProperty("driver.class.name", className);
+                // PropUtils.setProperty("driver.class.name", className);
+                PropUtils.setMainClass(className);
                 // TODO: 判断批处理模式，并加载对应配置文件
                 // PropUtils.load(FireFrameworkConf.FLINK_BATCH_CONF_FILE)
                 PropUtils.loadFile(FireFrameworkConf.FLINK_STREAMING_CONF_FILE());

@@ -19,6 +19,7 @@ package com.zto.fire.examples.flink
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
+import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.core.anno.lifecycle.Process
 import com.zto.fire.flink.FlinkStreaming
@@ -27,7 +28,7 @@ import com.zto.fire.flink.anno.Streaming
 @Config(
   """
     |fire.lineage.debug.enable=false
-    |fire.debug.class.code.resource=org.apache.flink.table.api.internal.TableEnvironmentImpl,com.zto.fire.examples.flink.Test,org.apache.hadoop.hbase.client.ConnectionManager
+    |fire.debug.class.code.resource=com.zto.fire.common.util.PropUtils,com.zto.fire.examples.flink.Test
     |""")
 @Streaming(interval = 20, disableOperatorChaining = true, parallelism = 2)
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
@@ -36,6 +37,9 @@ object Test extends FlinkStreaming {
 
   @Process
   def kafkaSource: Unit = {
+    println("主类：PropUtils=" + Class.forName("com.zto.fire.common.util.PropUtils").getName)
+    println("PropUtils.classLoader=" + Class.forName("com.zto.fire.common.util.PropUtils").getClassLoader.toString)
+    println("Test.classLoader=" + Thread.currentThread().getContextClassLoader.toString)
     val stream = this.fire.createKafkaDirectStream()
     stream.print()
   }

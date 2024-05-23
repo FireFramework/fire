@@ -62,6 +62,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
    */
   override private[fire] final def boot: Unit = {
     // 进Driver端进行引擎配置与用户配置的加载，executor端会通过fire进行分发，应避免在executor端加载引擎和用户配置文件
+    PropUtils.setMainClass(this.className)
     if (SparkUtils.isDriver) {
       this.loadConf
       PropUtils.load(FireFrameworkConf.userCommonConf: _*) //.loadJobConf(this.getClass.getName)
@@ -70,7 +71,7 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
       // 注册到实时平台，并覆盖配置信息
       PropUtils.loadJobConf(this.getClass.getName)
     }
-    PropUtils.setProperty(FireFrameworkConf.DRIVER_CLASS_NAME, this.className)
+    // PropUtils.setProperty(FireFrameworkConf.DRIVER_CLASS_NAME, this.className)
     if (StringUtils.isNotBlank(FireSparkConf.appName)) {
       this.appName = FireSparkConf.appName
     }
