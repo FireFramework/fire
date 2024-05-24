@@ -38,7 +38,8 @@ import scala.reflect.ClassTag
 object PropUtils extends Logging {
   private val props = new Properties()
   private val configurationFiles = Array[String]("fire", "cluster", "spark", "flink")
-  private val fireInternalConf = configurationFiles ++ Array[String]("spark-core", "spark-streaming", "flink-batch", "flink-streaming")
+  // Tips: cluster.properties文件比较特殊，因此从user jar中加载
+  private val fireInternalConf = Array[String]("fire", "spark", "flink", "spark-core", "spark-streaming", "structured-streaming", "flink-batch", "flink-streaming")
   // 用于判断是否merge过
   private[fire] val isMerge = new AtomicBoolean(false)
   // 引擎类型判断，当前阶段仅支持spark与flink，未来若支持新的引擎，则需在此处做支持
