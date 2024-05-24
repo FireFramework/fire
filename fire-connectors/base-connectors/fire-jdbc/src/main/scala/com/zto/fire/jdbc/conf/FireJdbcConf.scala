@@ -44,6 +44,7 @@ private[fire] object FireJdbcConf {
   lazy val JDBC_BATCH_SIZE = "db.jdbc.batch.size"
   lazy val JDBC_FLUSH_INTERVAL = "db.jdbc.flushInterval"
   lazy val JDBC_MAX_RETRY = "db.jdbc.max.retry"
+  lazy val JDBC_QUERY_USE_LABEL = "db.query.use.label"
   // c3p0数据库连接池相关配置
   lazy val JDBC_C3P0_CONF_PREFIX = "db.c3p0.conf."
   // fire框架针对jdbc操作后数据集的缓存策略
@@ -92,6 +93,8 @@ private[fire] object FireJdbcConf {
   def maxIdleTime(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.JDBC_MAX_IDLE_TIME, 30, keyNum)
   // c3p0相关配置
   def c3p0ConfMap(keyNum: Int = KeyNum._1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(this.JDBC_C3P0_CONF_PREFIX, keyNum)
+  // 是否使用别名进行映射
+  lazy val useLabel: Boolean = PropUtils.getBoolean(this.JDBC_QUERY_USE_LABEL, true)
 
   /**
    * 根据给定的jdbc url别名获取对应的jdbc地址

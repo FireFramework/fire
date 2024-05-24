@@ -131,7 +131,12 @@ object DBUtils extends Logging {
     val metaData = rs.getMetaData
     val fieldMap = new JHashMap[String, Int]()
     for (i <- 1 to metaData.getColumnCount) {
-      val fieldName = metaData.getColumnName(i)
+      val fieldName = if (FireJdbcConf.useLabel) {
+        // 支持别名映射
+        metaData.getColumnLabel(i)
+      } else {
+        metaData.getColumnName(i)
+      }
       val fieldType = metaData.getColumnType(i)
       fieldMap.put(fieldName, fieldType)
     }
