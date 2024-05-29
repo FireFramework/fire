@@ -17,8 +17,11 @@
 
 package com.zto.fire.common.conf
 
+import com.zto.fire.predef._
 import com.zto.fire.common.util.PropUtils
 import org.apache.hadoop.conf.Configuration
+
+import scala.collection.JavaConversions
 
 /**
  * HDFS配置
@@ -51,6 +54,11 @@ private[fire] object FireHDFSConf {
       PropUtils.sliceKeys(s"${this.HDFS_HA_PREFIX}${FireHiveConf.hiveCluster}.")
     } else Map.empty
   }
+
+  /**
+   * 读取HDFS高可用相关配置信息
+   */
+  def getHdfsHAConf: JMap[String, String] = JavaConversions.mapAsJavaMap(this.hdfsHAConf)
 
   /**
    * 获取hdfs配置参数
