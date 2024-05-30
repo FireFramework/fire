@@ -62,6 +62,8 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_CONNECTOR_SHUTDOWN_HOOK_ENABLE = "fire.connector.shutdown_hook.enable"
   // 用于配置是否抛弃配置中心独立运行
   lazy val FIRE_CONFIG_CENTER_ENABLE = "fire.config_center.enable"
+  // 配置文件列表
+  lazy val FILRE_CONFIG_FILES = "fire.config.files"
   // 本地运行环境下（Windows、Mac）是否调用配置中心接口获取配置信息
   lazy val FIRE_CONFIG_CENTER_LOCAL_ENABLE = "fire.config_center.local.enable"
   // 配置中心接口调用秘钥
@@ -377,4 +379,11 @@ private[fire] object FireFrameworkConf {
    * 分布式执行各引擎的类型
    */
   lazy val distributeExecuteClass = PropUtils.getString(this.FIRE_DISTRIBUTE_EXECUTE_CLASS, "")
+
+  /**
+   * 配置文件列表，可通过提交任务的命令行参数指定（多个文件以逗号分隔）：
+   * 1. spark引擎：--conf fire.config.files='file:///tmp/a.properties,file:///tmp/b.properties'
+   * 2. flink引擎：-D fire.config.files='file:///tmp/a.properties,file:///tmp/b.properties'
+   */
+  lazy val configFiles = PropUtils.getString(this.FILRE_CONFIG_FILES, "")
 }

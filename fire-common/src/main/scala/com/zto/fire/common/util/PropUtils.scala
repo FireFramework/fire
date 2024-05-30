@@ -22,8 +22,9 @@ import com.zto.fire.common.conf._
 import com.zto.fire.common.enu.ConfigureLevel
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
+import org.apache.hadoop.fs.Path
 
-import java.io.{FileInputStream, InputStream, StringReader}
+import java.io.{File, FileInputStream, InputStream, StringReader}
 import java.net.URL
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
@@ -144,7 +145,25 @@ object PropUtils extends Logging {
       var resource: InputStream = null
       try {
         this.logDebug(s"-------------> loading ${fullName} <-------------")
-        resource = this.getInputStream(fullName)
+
+        // 从本地文件系统中加载
+        if (fullName.contains(File.separator) && new File(fullName).exists()) {
+          resource = new FileInputStream(fullName)
+        }
+
+        // 从分布式文件系统系统中加载
+        if (resource == null && fullName.contains("hdfs://")) {
+          this.logDebug(s"从hdfs加载配置文件：$fullName")
+          if (noEmpty(FireHDFSConf.hdfsUrl, FireHDFSConf.hdfsUser)) {
+            resource = HDFSUtils.getFileSystem(FireHDFSConf.hdfsUrl, FireHDFSConf.hdfsUser).open(new Path(fullName))
+          }
+        }
+
+        // 从jar包中加载
+        if (resource == null) {
+          resource = this.getInputStream(fullName)
+        }
+
         if (resource == null && !this.configurationFiles.contains(fileName)) this.logWarning(s"未找到配置文件[ $fullName ]，若已使用注解配置，可忽略该警告")
         if (resource != null) {
           this.logInfo(s"-------------> loaded ${fullName} <-------------")
@@ -265,12 +284,26 @@ object PropUtils extends Logging {
     this.loadAnnoConf(Class.forName(className))
     // 加载用户配置文件以及@Config注解配置
     this.loadJobConf(Class.forName(className))
+    // 加载用户在任务提交脚本中指定的配置文件
+    this.loadCommandConfig()
     // 配置中心任务级别配置优先级高于用户本地配置文件中的配置，做到重启任务即可生效
     this.setProperties(centerConfig.getOrDefault(ConfigureLevel.TASK, Map.empty[String, String]))
     // 配置中心紧急配置优先级最高，用于对所有任务生效的紧急参数调优
     this.setProperties(centerConfig.getOrDefault(ConfigureLevel.URGENT, Map.empty[String, String]))
 
     this
+  }
+
+  /**
+   * 配置文件列表，可通过提交任务的命令行参数指定（多个文件以逗号分隔）：
+   * 1. spark引擎：--conf fire.config.files='file:///tmp/a.properties,file:///tmp/b.properties'
+   * 2. flink引擎：-D fire.config.files='file:///tmp/a.properties,file:///tmp/b.properties'
+   */
+  def loadCommandConfig(): Unit = {
+    val configFiles = FireFrameworkConf.configFiles
+    if (noEmpty(configFiles)) {
+      configFiles.split(",").foreach(file => this.load(StringUtils.trim(file)))
+    }
   }
 
   /**
