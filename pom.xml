@@ -271,9 +271,6 @@
         </profile>
         <profile>
             <id>spark-3.0</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <spark.version>3.0.2</spark.version>
                 <spark.major.version>3.0</spark.major.version>
@@ -556,9 +553,6 @@
 
         <profile>
             <id>flink-1.14</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <flink.version>1.14.3</flink.version>
                 <flink.major.version>1.14</flink.major.version>
