@@ -343,6 +343,40 @@ public class ReflectionUtils {
     }
 
     /**
+     * 调用指定的方法(不适用方法重载的场景)
+     */
+    public static Object invokeMethod(Object target, String methodName, Object ...args) throws Exception {
+       Class<?> clazz = target.getClass();
+       Method method = clazz.getDeclaredMethod(methodName, getParamTypes(args));
+       method.setAccessible(true);
+       return method.invoke(target, args);
+    }
+
+    /**
+     * 获取指定字段的值
+     */
+    public static Object getFieldValue(Object target, String fieldName) throws Exception {
+        Class<?> clazz = target.getClass();
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(target);
+    }
+
+    /**
+     * 获取参数具体类型
+     */
+    public static Class<?>[] getParamTypes(Object ...args) {
+        if (args == null || args.length == 0) {
+            return null;
+        }
+        Class<?>[] paramTypes = new Class[args.length];
+        for (int i = 0; i < args.length; i++) {
+            paramTypes[i] = args[i].getClass();
+        }
+        return paramTypes;
+    }
+
+    /**
      * 根据注解调用对应的方法
      * @param target
      * 目标对象

@@ -86,7 +86,9 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
               SQLLineageManager.addRelation(TableIdentifier(results.last.getSourceTable), TableIdentifier(results.last.getTargetTable), relationships)
             } else {
               this.parseSqlNode(insert.getTargetTable, Operation.INSERT_INTO)
-              this.parsePartitions(insert.getTargetTable.asInstanceOf[SqlIdentifier], Seq(insert.getStaticPartitions))
+              if (insert.getTargetTable.isInstanceOf[SqlIdentifier]) {
+                this.parsePartitions(insert.getTargetTable.asInstanceOf[SqlIdentifier], Seq(insert.getStaticPartitions))
+              }
               this.parseSqlNode(insert.getSource, Operation.SELECT, targetTable = Some(insert.getTargetTable))
             }
           } (this.logger, catchLog = "血缘解析：RichSqlInsert解析失败", isThrow = FireFrameworkConf.lineageDebugEnable, hook = false)
@@ -161,7 +163,14 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
         val tableIdentifier = toFireTableIdentifier(sqlIdentifier, isHive)
         this.addCatalog(tableIdentifier, operation)
         if (targetTable.isDefined) {
-          SQLLineageManager.addRelation(tableIdentifier, TableIdentifier(targetTable.get.toString),null)
+          var targetTableName = targetTable.get.toString
+
+          if (targetTable.get.isInstanceOf[SqlTableRef]) {
+            val target = targetTable.get.asInstanceOf[SqlTableRef]
+            targetTableName = ReflectionUtils.getFieldValue(target, "tableName").toString
+          }
+
+          SQLLineageManager.addRelation(tableIdentifier, TableIdentifier(targetTableName), null)
         }
       }
       case sqlNodeList: SqlNodeList => JavaConversions.asScalaBuffer(sqlNodeList.getList).foreach(this.parseSqlNode(_))
