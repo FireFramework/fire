@@ -1866,7 +1866,7 @@ public class CheckpointCoordinator {
         if (this.currentCheckpointScheduledFuture != null && this.baseInterval != this.oldInterval) {
             this.currentCheckpointScheduledFuture.cancel(true);
             this.oldInterval = this.baseInterval;
-            LOG.warn("checkpoint执行频率变更，新checkpoint周期：" + this.baseInterval + "ms");
+            LOG.warn("checkpoint执行频率变更，新checkpoint周期：{}ms.", this.baseInterval);
         }
 
         this.currentCheckpointScheduledFuture = timer.scheduleAtFixedRate(
