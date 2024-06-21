@@ -154,6 +154,11 @@ public class CheckpointCoordinator {
      */
     private long baseInterval;
 
+    private long oldInterval;
+
+    // 当前checkpoint线程的Future对象
+    private ScheduledFuture<?> currentCheckpointScheduledFuture = null;
+
     /** The max time (in ms) that a checkpoint may take. */
     private long checkpointTimeout;
 
@@ -168,9 +173,9 @@ public class CheckpointCoordinator {
     }
 
     public void setBaseInterval(long baseInterval) {
+        this.oldInterval = this.baseInterval;
         this.baseInterval = baseInterval;
     }
-
     public void setCheckpointTimeout(long checkpointTimeout) {
         this.checkpointTimeout = checkpointTimeout;
     }
@@ -181,6 +186,7 @@ public class CheckpointCoordinator {
 
     public void setMinPauseBetweenCheckpoints(long minPauseBetweenCheckpoints) {
         this.minPauseBetweenCheckpoints = minPauseBetweenCheckpoints;
+        this.requestDecider.setMinPauseBetweenCheckpoints(minPauseBetweenCheckpoints);
     }
 
     private static CheckpointCoordinator coordinator;
@@ -330,6 +336,9 @@ public class CheckpointCoordinator {
 
         this.job = checkNotNull(job);
         this.baseInterval = baseInterval;
+        // TODO: ------------ start：二次开发代码 --------------- //
+        this.oldInterval = baseInterval;
+        // TODO: ------------ end：二次开发代码 --------------- //
         this.checkpointTimeout = chkConfig.getCheckpointTimeout();
         this.minPauseBetweenCheckpoints = minPauseBetweenCheckpoints;
         this.coordinatorsToCheckpoint =
@@ -1988,10 +1997,19 @@ public class CheckpointCoordinator {
         return ThreadLocalRandom.current().nextLong(minPauseBetweenCheckpoints, baseInterval + 1L);
     }
 
+    // TODO: ------------ start：二次开发代码 --------------- //
     private ScheduledFuture<?> scheduleTriggerWithDelay(long initDelay) {
-        return timer.scheduleAtFixedRate(
+        if (this.currentCheckpointScheduledFuture != null && this.baseInterval != this.oldInterval) {
+            this.currentCheckpointScheduledFuture.cancel(true);
+            this.oldInterval = this.baseInterval;
+            LOG.warn("checkpoint执行频率变更，新checkpoint周期：" + this.baseInterval + "ms");
+        }
+
+        this.currentCheckpointScheduledFuture = timer.scheduleAtFixedRate(
                 new ScheduledTrigger(), initDelay, baseInterval, TimeUnit.MILLISECONDS);
+        return this.currentCheckpointScheduledFuture;
     }
+    // TODO: ------------ end：二次开发代码 --------------- //
 
     private void restoreStateToCoordinators(
             final long checkpointId, final Map<OperatorID, OperatorState> operatorStates)
