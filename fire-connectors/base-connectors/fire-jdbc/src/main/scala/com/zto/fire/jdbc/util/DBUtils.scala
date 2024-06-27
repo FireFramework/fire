@@ -248,7 +248,8 @@ object DBUtils extends Logging {
         case "java.math.BigDecimal" => statement.setBigDecimal(i + 1, field.get(bean).asInstanceOf[JBigDecimal])
         case "java.sql.Date" => statement.setDate(i + 1, field.get(bean).asInstanceOf[Date])
         case _ => try {
-          statement.setString(i + 1, field.get(bean).toString)
+          val value = if (field.get(bean) == null) null else field.get(bean).toString
+          statement.setString(i + 1, value)
         } catch {
           case e: Throwable => logError(s"字段类型不匹配，请检查${columns(i)}与JavaBean的对应关系", e)
         }
