@@ -22,6 +22,7 @@ import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
 import com.zto.fire.common.util.{ExceptionBus, Logging}
+import com.zto.fire.core.util.ErrorToleranceAcc
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.HBaseBulkConnector
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
@@ -30,6 +31,7 @@ import org.apache.rocketmq.common.message.MessageExt
 import org.apache.rocketmq.spark.{CanCommitOffsets => RocketCanCommitOffsets}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.streaming.Time
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges}
 
@@ -120,6 +122,12 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
         }
       }
 
+      // 容错检测，超过容错阈值则退出任务
+      if (ErrorToleranceAcc.toFailing) {
+        logger.error("检测任务运行状态，超过容错阈值，则立即退出，避免提交offset")
+        doExit(batchTime, retValue)
+      }
+
       // 根据rdd处理的成功与否决定是否提交offset或退出任务
       if (retValue.isSuccess) {
         if (autoCommit) {
@@ -138,16 +146,23 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
           }
         }
       } else if (exitOnFailure) {
-        ExceptionBus.post(retValue.failed.get)
-        logError(s"批次[${batchTime}]执行失败，offset未提交，任务将退出")
-        logError(s"异常堆栈：${ExceptionBus.stackTrace(retValue.failed.get)}")
-        try {
-          SparkSingletonFactory.getStreamingContext.stop(SparkUtils.isContextStarted, false)
-        } finally {
-          System.exit(-1)
-        }
+        doExit(batchTime, retValue)
       }
     })
+
+    /**
+     * 强制退出任务
+     */
+    def doExit(batchTime: Time, retValue: Try[Unit]): Unit = {
+      ExceptionBus.post(retValue.failed.get)
+      logError(s"批次[${batchTime}]执行失败，offset未提交，任务将退出")
+      logError(s"异常堆栈：${ExceptionBus.stackTrace(retValue.failed.get)}")
+      try {
+        SparkSingletonFactory.getStreamingContext.stop(SparkUtils.isContextStarted, false)
+      } finally {
+        System.exit(-1)
+      }
+    }
   }
 
   /**

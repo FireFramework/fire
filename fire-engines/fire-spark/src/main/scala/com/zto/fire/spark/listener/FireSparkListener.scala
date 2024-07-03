@@ -21,6 +21,7 @@ import com.zto.fire.common.anno.Scheduled
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.exception.FireSparkException
 import com.zto.fire.common.util.{ExceptionBus, Logging}
+import com.zto.fire.core.util.ErrorToleranceAcc
 import com.zto.fire.spark.BaseSpark
 import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.conf.FireSparkConf
@@ -37,8 +38,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListener with Logging {
   private[this] val module = "listener"
   private[this] val needRegister = new AtomicBoolean(false)
-  // 用于统计stage失败的次数
-  private[this] lazy val stageFailedCount = new AtomicLong(0)
+
 
   /**
    * 当SparkContext启动时触发
@@ -90,6 +90,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
   override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
     this.baseSpark.onExecutorRemoved(executorRemoved)
     SparkSingletonFactory.executorActiveCount.decrementAndGet()
+    ErrorToleranceAcc.addContainerFailedCount()
     logDebug(s"executor[${executorRemoved.executorId}] removed. reason: [${executorRemoved.reason}].")
   }
 
@@ -127,6 +128,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
       AccumulatorManager.addMultiTimer(module, "onJobEnd", "onJobEnd", "", "INFO", "", 1)
     } else {
       AccumulatorManager.addMultiTimer(module, "onJobEnd", "onJobEnd", "", "ERROR", "", 1)
+      ErrorToleranceAcc.addJobFailedCount()
       this.logError(s"job failed.")
     }
   }
@@ -153,7 +155,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
 
       // spark.fire.stage.maxFailures参数用于控制stage允许的最大失败次数，小于等于零表示不开启，默认-1
       // 当配置为2时表示最多允许失败2个stage，当第三个stage失败时SparkSession退出
-      if (this.stageFailedCount.addAndGet(1) > FireSparkConf.stageMaxFailures && FireSparkConf.stageMaxFailures > 0) this.exit
+      if (ErrorToleranceAcc.addStageFailedCount() > FireSparkConf.stageMaxFailures && FireSparkConf.stageMaxFailures > 0) this.exit
     }
   }
 
@@ -176,6 +178,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
       AccumulatorManager.addMultiTimer(module, "onTaskEnd", "onTaskEnd", "", "INFO", "", 1)
     } else {
       AccumulatorManager.addMultiTimer(module, "onTaskEnd", "onTaskEnd", "", "ERROR", "", 1)
+      ErrorToleranceAcc.addTaskFailedCount()
       this.logError(s"task failed.")
     }
   }

@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.conf
 
+import com.zto.fire.common.enu.ErrorTolerance
 import com.zto.fire.common.util.{DateFormatUtils, PropUtils}
 import org.apache.commons.lang3.StringUtils
 
@@ -163,6 +164,8 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_DEBUG_CLASS_CODE_RESOURCE = "fire.debug.class.code.resource"
   lazy val FIRE_DISTRIBUTE_EXECUTE_ENABLE = "fire.distribute.execute.enable"
   lazy val FIRE_DISTRIBUTE_EXECUTE_CLASS = "fire.distribute.execute.class"
+  lazy val FIRE_ERROR_TOLERANCE_LEVEL = "fire.error.tolerance.level"
+  lazy val FIRE_ERROR_TOLERANCE_THRESHOLD = "fire.error.tolerance.threshold"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -386,4 +389,17 @@ private[fire] object FireFrameworkConf {
    * 2. flink引擎：-D fire.config.files='file:///tmp/a.properties,file:///tmp/b.properties'
    */
   lazy val configFiles = PropUtils.getString(this.FILRE_CONFIG_FILES, "")
+
+  /**
+   * 获取容错级别：NONE/TASK/STAGE/JOB/Container/Master
+   */
+  def errorToleranceLevel: ErrorTolerance = {
+    val level = PropUtils.getString(this.FIRE_ERROR_TOLERANCE_LEVEL, "NONE")
+    ErrorTolerance.valueOf(level.toUpperCase)
+  }
+
+  /**
+   * 容错阈值
+   */
+  lazy val errorToleranceThreshold: Long = PropUtils.getLong(this.FIRE_ERROR_TOLERANCE_THRESHOLD, 0)
 }
