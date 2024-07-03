@@ -17,6 +17,7 @@
 
 package com.zto.fire.common.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,17 +33,21 @@ public class FireEngineUtils {
     private static final Logger LOG = LoggerFactory.getLogger(FireEngineUtils.class);
     private static Method addSqlMethod = null;
     private static Method postMethod = null;
+    private static Method confMethod = null;
 
     static {
         Class<?> lineageClass = null;
         Class<?> exceptionBusClass = null;
+        Class<?> confClass = null;
         final String lineageClassName = "com.zto.fire.common.lineage.LineageManager";
         final String exceptionClassName = "com.zto.fire.common.util.ExceptionBus";
+        final String fireConfClassName = "com.zto.fire.common.util.PropUtils";
 
         try {
             // 使用标准类加载器尝试加载
             lineageClass = Class.forName(lineageClassName);
             exceptionBusClass = Class.forName(exceptionClassName);
+            confClass = Class.forName(fireConfClassName);
         } catch (Throwable t) {
             LOG.warn("使用标准类加载器无法检测到fire相关依赖");
         }
@@ -59,6 +64,11 @@ public class FireEngineUtils {
                 // 加载根因分析采集类
                 exceptionBusClass = currentLoader.loadClass(exceptionClassName);
             }
+
+            if (confClass == null) {
+                // 加载fire框架配置类
+                confClass = currentLoader.loadClass(fireConfClassName);
+            }
         } catch (Throwable t) {
             LOG.warn("使用当前线程加载器无法检测到fire相关依赖");
         }
@@ -71,6 +81,10 @@ public class FireEngineUtils {
 
             if (exceptionBusClass != null) {
                 postMethod = exceptionBusClass.getMethod("post", Throwable.class, String.class);
+            }
+
+            if (confClass != null) {
+                confMethod = confClass.getMethod("getProperty", String.class);
             }
 
             LOG.info("Fire框架相关依赖加载成功!");
@@ -114,5 +128,52 @@ public class FireEngineUtils {
      */
     public static void postException(Throwable t) {
         postException(t, "");
+    }
+
+    /**
+     * 获取fire框架中的配置信息
+     * @param key
+     * 配置的key
+     * @return
+     * 配置的value
+     */
+    public static String getStringConf(String key) {
+        if (StringUtils.isBlank(key)) return "";
+
+        try {
+            if (confMethod != null) {
+                return (String) confMethod.invoke(null, key);
+            }
+        } catch (Exception e) {
+        }
+
+        return "";
+    }
+
+    /**
+     * 获取fire框架中的boolean类型的配置信息
+     */
+    public static boolean getBooleanConf(String key) {
+        String value = getStringConf(key);
+        if (StringUtils.isBlank(value)) return false;
+        return Boolean.parseBoolean(value);
+    }
+
+    /**
+     * 获取fire框架中的int类型的配置信息
+     */
+    public static int getIntConf(String key) {
+        String value = getStringConf(key);
+        if (StringUtils.isBlank(value)) return -1;
+        return Integer.parseInt(value);
+    }
+
+    /**
+     * 获取fire框架中的long类型的配置信息
+     */
+    public static long getLongConf(String key) {
+        String value = getStringConf(key);
+        if (StringUtils.isBlank(value)) return -1;
+        return Long.parseLong(value);
     }
 }

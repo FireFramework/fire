@@ -18,6 +18,8 @@
 
 package org.apache.flink.runtime.checkpoint;
 
+import com.zto.fire.common.util.FireEngineUtils;
+import com.zto.fire.common.util.TimeExpression;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
@@ -174,6 +176,84 @@ public class CheckpointCoordinator {
         return CheckpointCoordinator.coordinator;
     }
 
+    /**
+     * 首次启动时间
+     */
+    private long startTime;
+
+    /**
+     * 是否开启checkpoint自适应机制
+     */
+    private boolean checkpointAdaptiveEnable;
+    private final String checkpointAdaptiveEnableConf = "flink.checkpoint.adaptive.enable";
+
+    /**
+     * 主动触发checkpoint的时间区间
+     */
+    private String checkpointAdaptiveTriggerInterval;
+    private final String checkpointAdaptiveTriggerIntervalConf = "flink.checkpoint.adaptive.active_trigger.interval";
+
+    /**
+     * 主动触发checkpoint的时间间隔
+     */
+    private long checkpointAdaptiveTriggerDuration;
+    private final String checkpointAdaptiveTriggerDurationConf = "flink.checkpoint.adaptive.active_trigger.duration";
+
+    /**
+     * 第一次checkpoint延迟多少秒后触发
+     */
+    private long checkpointAdaptiveDelayStart;
+    private final String checkpointAdaptiveDelayStartConf = "flink.checkpoint.adaptive.delay_start";
+
+    /**
+     * 消息积压量低于该阈值后才做checkpoint
+     */
+    private long checkpointAdaptiveThreshold;
+    private final String checkpointAdaptiveThresholdConf = "flink.checkpoint.adaptive.threshold";
+
+    public boolean isCheckpointAdaptiveEnable() {
+        return checkpointAdaptiveEnable;
+    }
+
+    public void setCheckpointAdaptiveEnable(boolean checkpointAdaptiveEnable) {
+        this.checkpointAdaptiveEnable = checkpointAdaptiveEnable;
+    }
+
+    public String getCheckpointAdaptiveTriggerInterval() {
+        return checkpointAdaptiveTriggerInterval;
+    }
+
+    public void setCheckpointAdaptiveTriggerInterval(String checkpointAdaptiveTriggerInterval) {
+        this.checkpointAdaptiveTriggerInterval = checkpointAdaptiveTriggerInterval;
+    }
+
+    public long getCheckpointAdaptiveTriggerDuration() {
+        return checkpointAdaptiveTriggerDuration;
+    }
+
+    public void setCheckpointAdaptiveTriggerDuration(long checkpointAdaptiveTriggerDuration) {
+        this.checkpointAdaptiveTriggerDuration = checkpointAdaptiveTriggerDuration;
+    }
+
+    public long getCheckpointAdaptiveDelayStart() {
+        return checkpointAdaptiveDelayStart;
+    }
+
+    public void setCheckpointAdaptiveDelayStart(long checkpointAdaptiveDelayStart) {
+        this.checkpointAdaptiveDelayStart = checkpointAdaptiveDelayStart;
+    }
+
+    public long getCheckpointAdaptiveThreshold() {
+        return checkpointAdaptiveThreshold;
+    }
+
+    public void setCheckpointAdaptiveThreshold(long checkpointAdaptiveThreshold) {
+        this.checkpointAdaptiveThreshold = checkpointAdaptiveThreshold;
+    }
+
+    private ExecutorService adaptiveExecutor;
+    private boolean isPeriodicMode = true;
+
     // TODO: ------------ end：二次开发代码 ----------------- //
 
     /**
@@ -306,9 +386,17 @@ public class CheckpointCoordinator {
 
         this.job = checkNotNull(job);
         this.baseInterval = baseInterval;
+
         // TODO: ------------ start：二次开发代码 --------------- //
         this.oldInterval = baseInterval;
+        this.startTime = System.currentTimeMillis();
+        this.checkpointAdaptiveEnable = FireEngineUtils.getBooleanConf(checkpointAdaptiveEnableConf);
+        this.checkpointAdaptiveTriggerInterval = FireEngineUtils.getStringConf(checkpointAdaptiveTriggerIntervalConf);
+        this.checkpointAdaptiveTriggerDuration = FireEngineUtils.getLongConf(checkpointAdaptiveTriggerDurationConf);
+        this.checkpointAdaptiveDelayStart = FireEngineUtils.getIntConf(checkpointAdaptiveDelayStartConf);
+        this.checkpointAdaptiveThreshold = FireEngineUtils.getLongConf(checkpointAdaptiveThresholdConf);
         // TODO: ------------ end：二次开发代码 --------------- //
+
         this.checkpointTimeout = chkConfig.getCheckpointTimeout();
         this.minPauseBetweenCheckpoints = minPauseBetweenCheckpoints;
         this.tasksToTrigger = checkNotNull(tasksToTrigger);
@@ -362,8 +450,44 @@ public class CheckpointCoordinator {
                         this.minPauseBetweenCheckpoints,
                         this.pendingCheckpoints::size,
                         this.checkpointsCleaner::getNumberOfCheckpointsToClean);
+
         // TODO: ------------ start：二次开发代码 --------------- //
         CheckpointCoordinator.coordinator = this;
+        if (checkpointAdaptiveEnable && org.apache.commons.lang3.StringUtils.isNotBlank(checkpointAdaptiveTriggerInterval)) {
+            this.adaptiveExecutor = Executors.newSingleThreadExecutor();
+            this.adaptiveExecutor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        TimeExpression timeExpression = new TimeExpression(checkpointAdaptiveTriggerInterval);
+                        while (true) {
+                            if (timeExpression.isBetween(System.currentTimeMillis())) {
+                                if (isPeriodicMode) {
+                                    LOG.info("In adaptive mode, CheckpointCoordinator: start to trigger checkpoint, interval is {}", checkpointAdaptiveTriggerDuration);
+                                    isPeriodicMode = false;
+                                    long originInterval = getBaseInterval();
+                                    setBaseInterval(checkpointAdaptiveTriggerDuration);
+                                    setMinPauseBetweenCheckpoints(checkpointAdaptiveTriggerDuration);
+                                    oldInterval = originInterval;
+                                    startCheckpointScheduler();
+                                }
+                            } else {
+                                if (!isPeriodicMode) {
+                                    LOG.info("In periodic mode, CheckpointCoordinator: start to trigger checkpoint, interval is {}", oldInterval);
+                                    isPeriodicMode = true;
+                                    setBaseInterval(oldInterval);
+                                    setMinPauseBetweenCheckpoints(oldInterval);
+                                    oldInterval = checkpointAdaptiveTriggerDuration;
+                                }
+                            }
+                            Thread.sleep(10000);
+                        }
+                    } catch (Exception e) {
+                        LOG.error(e.getMessage(), e);
+                    }
+                }
+            });
+        }
         // TODO: ------------ end：二次开发代码 --------------- //
     }
 
@@ -1809,11 +1933,16 @@ public class CheckpointCoordinator {
         if (this.currentCheckpointScheduledFuture != null && this.baseInterval != this.oldInterval) {
             this.currentCheckpointScheduledFuture.cancel(true);
             this.oldInterval = this.baseInterval;
-            LOG.warn("checkpoint执行频率变更，新checkpoint周期：{}ms.", this.baseInterval);
+            LOG.warn("checkpoint执行频率变更，新checkpoint周期：" + this.baseInterval + "ms");
+        }
+
+        long delay = initDelay;
+        if (this.checkpointIdCounter.get() == 1 && this.checkpointAdaptiveEnable) {
+            delay = this.checkpointAdaptiveDelayStart * 1000;
         }
 
         this.currentCheckpointScheduledFuture = timer.scheduleAtFixedRate(
-                new ScheduledTrigger(), initDelay, baseInterval, TimeUnit.MILLISECONDS);
+                new ScheduledTrigger(), delay, baseInterval, TimeUnit.MILLISECONDS);
         return this.currentCheckpointScheduledFuture;
     }
     // TODO: ------------ end：二次开发代码 --------------- //
