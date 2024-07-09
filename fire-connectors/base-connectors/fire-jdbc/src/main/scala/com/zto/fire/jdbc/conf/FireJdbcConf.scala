@@ -61,6 +61,7 @@ private[fire] object FireJdbcConf {
   // 通过JdbcConnector查询后将数据集放到多少个分区中，需根据实际的结果集做配置
   lazy val jdbcQueryPartition = PropUtils.getInt(this.FIRE_JDBC_QUERY_REPARTITION, 10)
 
+  def jdbcPartition(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.FIRE_JDBC_QUERY_REPARTITION, "1", keyNum = keyNum)
   // db.jdbc.url
   def url(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.JDBC_URL, "", keyNum)
   // jdbc url与别名映射
