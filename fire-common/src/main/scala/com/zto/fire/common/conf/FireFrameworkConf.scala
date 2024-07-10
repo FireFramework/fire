@@ -152,6 +152,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_ANALYSIS_LOG_EXCEPTION_SEND_TIMEOUT = "fire.analysis.log.exception.send.timeout"
   lazy val FIRE_ANALYSIS_LOG_EXCEPTION_SEND_MQ_URL = "fire.analysis.log.exception.send.mq.url"
   lazy val FIRE_ANALYSIS_LOG_EXCEPTION_SEND_MQ_TOPIC = "fire.analysis.log.exception.send.mq.topic"
+  lazy val FIRE_ANALYSIS_LOG_EXCEPTION_SEND_MQ_MESSAGE_MAX_SIZE = "fire.analysis.log.exception.send.mq.message.max.size"
   lazy val FIRE_JOB_AUTO_START = "fire.job.autoStart"
   lazy val FIRE_ACC_SYNC_MAX_SIZE = "fire.acc.sync.max.size"
   lazy val FIRE_SQL_CONF_PREFIX = "fire.sql_conf."
@@ -337,6 +338,8 @@ private[fire] object FireFrameworkConf {
   }
   // 异常发送到mq的哪个topic
   def exceptionTraceMQTopic: String = PropUtils.getString(this.FIRE_ANALYSIS_LOG_EXCEPTION_SEND_MQ_TOPIC, "")
+  // 根因发送的消息体阈值
+  def exceptionTraceMQMessageMaxSize: Long = PropUtils.getLong(this.FIRE_ANALYSIS_LOG_EXCEPTION_SEND_MQ_MESSAGE_MAX_SIZE, 1048576)
   // 是否自动提交job
   lazy val jobAutoStart = PropUtils.getBoolean(this.FIRE_JOB_AUTO_START, true)
   lazy val accSyncMaxSize = PropUtils.getLong(this.FIRE_ACC_SYNC_MAX_SIZE, 100)

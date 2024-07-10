@@ -44,6 +44,7 @@ object ExceptionBus extends Logging {
   // 异常总数计数器
   private[fire] lazy val exceptionCount = new AtomicLong(0)
   private[this] lazy val isStarted = new AtomicBoolean(false)
+  private[this] lazy val kafkaConfMap = Map[String, String]("max.request.size" -> FireFrameworkConf.exceptionTraceMQMessageMaxSize.toString)
   this.sendToMQ
 
   /**
@@ -70,12 +71,13 @@ object ExceptionBus extends Logging {
   private[this] def postException: Unit = {
     val mqUrl = FireFrameworkConf.exceptionTraceMQ
     val mqTopic = FireFrameworkConf.exceptionTraceMQTopic
+
     if (isEmpty(mqUrl, mqTopic)) return
 
     val msg = this.getAndClear
     if (msg._1.nonEmpty) {
       msg._1.foreach(t => {
-        MQProducer.send(mqUrl, mqTopic, new ExceptionMsg(t._2, t._3).toString)
+        MQProducer.send(mqUrl, mqTopic, new ExceptionMsg(t._2, t._3).toString, otherConf = kafkaConfMap)
       })
       logDebug(s"异常诊断：本轮发送异常共计${msg._1.size}个.")
     }

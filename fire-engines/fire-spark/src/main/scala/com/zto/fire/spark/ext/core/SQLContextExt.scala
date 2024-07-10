@@ -394,7 +394,6 @@ class SQLContextExt(sqlContext: SQLContext) {
    * DataFrame
    */
   def jdbcSqlLoad(querySql: String, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): DataFrame = {
-
     sqlContext.read.format("jdbc").options(
       Map(
         "url" -> FireJdbcConf.url(keyNum),
@@ -407,6 +406,7 @@ class SQLContextExt(sqlContext: SQLContext) {
       )
     ).load()
   }
+
   /**
    * 指定load的条件，从关系型数据库中并行的load数据，并转为DataFrame
    *
