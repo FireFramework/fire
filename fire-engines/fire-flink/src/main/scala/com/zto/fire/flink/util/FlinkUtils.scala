@@ -22,7 +22,7 @@ import com.zto.fire.common.anno.FieldName
 import com.zto.fire.common.util._
 import com.zto.fire.flink.bean.FlinkTableSchema
 import com.zto.fire.flink.conf.FireFlinkConf
-import com.zto.fire.flink.sql.FlinkSqlExtensionsParser
+import com.zto.fire.flink.sql.{FlinkSqlExtensionsParser, FlinkSqlParserConf}
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.predef._
 import com.zto.fire.{JHashMap, JStringBuilder, noEmpty}
@@ -33,7 +33,6 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.ExecutionConfig.ClosureCleanerLevel
 import org.apache.flink.api.common.{ExecutionConfig, ExecutionMode, InputDependencyConstraint}
 import org.apache.flink.runtime.util.EnvironmentInformation
-import org.apache.flink.sql.parser.hive.impl.FlinkHiveSqlParserImpl
 import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl
 import org.apache.flink.table.api.{SqlDialect => FlinkSqlDialect}
 import org.apache.flink.table.data.binary.BinaryStringData
@@ -58,28 +57,16 @@ object FlinkUtils extends Serializable with Logging {
   lazy val calciteParserConfig = this.createParserConfig
   lazy val calciteHiveParserConfig = this.createHiveParserConfig
 
-  /**
-   * 构建flink default的SqlParser config
-   */
-  def createParserConfig(dialect: FlinkSqlDialect = FlinkSqlDialect.DEFAULT): CalciteParser.Config = {
-    val configBuilder = CalciteParser.configBuilder
-      .setQuoting(Quoting.BACK_TICK)
-      .setUnquotedCasing(Casing.TO_UPPER)
-      .setQuotedCasing(Casing.UNCHANGED)
-
-    if (dialect == FlinkSqlDialect.DEFAULT) configBuilder.setParserFactory(FlinkSqlParserImpl.FACTORY) else configBuilder.setParserFactory(FlinkHiveSqlParserImpl.FACTORY)
-    configBuilder.build
-  }
 
   /**
    * 构建flink default的SqlParser config
    */
-  private[this] def createParserConfig: CalciteParser.Config = this.createParserConfig()
+  private[this] def createParserConfig: CalciteParser.Config = FlinkSqlParserConf.createParserConfig()
 
   /**
    * 构建flink hive方言版的SqlParser config
    */
-  private[this] def createHiveParserConfig: CalciteParser.Config = this.createParserConfig(FlinkSqlDialect.HIVE)
+  private[this] def createHiveParserConfig: CalciteParser.Config = FlinkSqlParserConf.createParserConfig(FlinkSqlDialect.HIVE)
 
   /**
    * 根据sql构建Calcite SqlParser

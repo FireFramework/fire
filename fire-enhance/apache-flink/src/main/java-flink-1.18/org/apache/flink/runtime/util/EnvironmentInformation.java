@@ -21,7 +21,6 @@ package org.apache.flink.runtime.util;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.util.OperatingSystem;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

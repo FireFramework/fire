@@ -21,7 +21,7 @@ package org.apache.flink.connector.jdbc.dialect.adb;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.jdbc.dialect.JdbcDialect;
 import org.apache.flink.connector.jdbc.dialect.JdbcDialectFactory;
-import org.apache.flink.connector.jdbc.dialect.mysql.MySqlDialect;
+import org.apache.flink.connector.jdbc.databases.mysql.dialect.MySqlDialect;
 
 /** Factory for {@link MySqlDialect}. */
 @Internal

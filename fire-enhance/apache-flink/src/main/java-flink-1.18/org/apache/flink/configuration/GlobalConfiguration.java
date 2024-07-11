@@ -23,18 +23,12 @@ import com.zto.fire.common.util.OSUtils;
 import com.zto.fire.common.util.PropUtils;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.util.Preconditions;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
 
 import javax.annotation.Nullable;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.util.HashMap;
@@ -54,7 +48,17 @@ public final class GlobalConfiguration {
 
     // the keys whose values should be hidden
     private static final String[] SENSITIVE_KEYS =
-            new String[] {"password", "secret", "fs.azure.account.key", "apikey"};
+            new String[] {
+                    "password",
+                    "secret",
+                    "fs.azure.account.key",
+                    "apikey",
+                    "auth-params",
+                    "service-key",
+                    "token",
+                    "basic-auth",
+                    "jaas.config"
+            };
 
     // the hidden content to be displayed
     public static final String HIDDEN_CONTENT = "******";
@@ -220,9 +224,7 @@ public final class GlobalConfiguration {
                                         + file
                                         + ":"
                                         + lineNo
-                                        + ": \""
-                                        + line
-                                        + "\"");
+                                        + ": Line is not a key-value pair (missing space after ':'?)");
                         continue;
                     }
 
@@ -236,9 +238,7 @@ public final class GlobalConfiguration {
                                         + file
                                         + ":"
                                         + lineNo
-                                        + ": \""
-                                        + line
-                                        + "\"");
+                                        + ": Key or value was empty");
                         continue;
                     }
 

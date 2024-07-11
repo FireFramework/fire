@@ -25,6 +25,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.calcite.util.ImmutableNullableList;
 import org.apache.flink.sql.parser.ExtendedSqlNode;
+import org.apache.flink.sql.parser.SqlConstraintValidator;
 import org.apache.flink.sql.parser.SqlUnparseUtils;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlComputedColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
@@ -35,8 +36,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -173,29 +175,7 @@ public class SqlCreateTable extends SqlCreate implements ExtendedSqlNode {
 
     @Override
     public void validate() throws SqlValidateException {
-
-        List<SqlTableConstraint> constraints =
-                getFullConstraints().stream()
-                        .filter(SqlTableConstraint::isPrimaryKey)
-                        .collect(Collectors.toList());
-
-        if (constraints.size() > 1) {
-            throw new SqlValidateException(
-                    constraints.get(1).getParserPosition(), "Duplicate primary key definition");
-        } else if (constraints.size() == 1) {
-            Set<String> primaryKeyColumns =
-                    Arrays.stream(constraints.get(0).getColumnNames()).collect(Collectors.toSet());
-
-            for (SqlNode column : columnList) {
-                SqlTableColumn tableColumn = (SqlTableColumn) column;
-                if (tableColumn instanceof SqlRegularColumn
-                        && primaryKeyColumns.contains(tableColumn.getName().getSimple())) {
-                    SqlRegularColumn regularColumn = (SqlRegularColumn) column;
-                    SqlDataTypeSpec notNullType = regularColumn.getType().withNullable(false);
-                    regularColumn.setType(notNullType);
-                }
-            }
-        }
+        SqlConstraintValidator.validateAndChangeColumnNullability(tableConstraints, columnList);
     }
 
     public boolean hasRegularColumnsOnly() {
@@ -210,17 +190,7 @@ public class SqlCreateTable extends SqlCreate implements ExtendedSqlNode {
 
     /** Returns the column constraints plus the table constraints. */
     public List<SqlTableConstraint> getFullConstraints() {
-        List<SqlTableConstraint> ret = new ArrayList<>();
-        this.columnList.forEach(
-                column -> {
-                    SqlTableColumn tableColumn = (SqlTableColumn) column;
-                    if (tableColumn instanceof SqlRegularColumn) {
-                        SqlRegularColumn regularColumn = (SqlRegularColumn) tableColumn;
-                        regularColumn.getConstraint().map(ret::add);
-                    }
-                });
-        ret.addAll(this.tableConstraints);
-        return ret;
+        return SqlConstraintValidator.getFullConstraints(tableConstraints, columnList);
     }
 
     /**

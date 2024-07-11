@@ -148,6 +148,14 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
     /** User-set flag to disable filtering restored partitions with current topics descriptor. */
     private boolean filterRestoredPartitionsWithCurrentTopicsDescriptor = true;
 
+    // TODO: ------------ start：二次开发代码 ----------------- //
+    /**
+     * The offset commit mode for the consumer. The value of this can only be determined in {@link
+     * FlinkKafkaConsumerBase#open(Configuration)} since it depends on whether or not checkpointing
+     * is enabled for the job.
+     */
+    protected OffsetCommitMode offsetCommitMode;
+
     /** User configured value for discovery interval, in milliseconds. */
     private final long discoveryIntervalMillis;
 
@@ -173,21 +181,11 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
     /** Data for pending but uncommitted offsets. */
     private final LinkedMap pendingOffsetsToCommit = new LinkedMap();
 
-
-    /** The partition discoverer, used to find new partitions. */
-    private transient volatile AbstractPartitionDiscoverer partitionDiscoverer;
-
-    // TODO: ------------ start：二次开发代码 ----------------- //
-
     /** The fetcher implements the connections to the Kafka brokers. */
     protected transient volatile AbstractFetcher<T, ?> kafkaFetcher;
 
-    /**
-     * The offset commit mode for the consumer. The value of this can only be determined in {@link
-     * FlinkKafkaConsumerBase#open(Configuration)} since it depends on whether or not checkpointing
-     * is enabled for the job.
-     */
-    protected OffsetCommitMode offsetCommitMode;
+    /** The partition discoverer, used to find new partitions. */
+    protected transient volatile AbstractPartitionDiscoverer partitionDiscoverer;
 
     /**
      * The offsets to restore to, if the consumer restores state from a checkpoint.
@@ -200,6 +198,12 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
      */
     protected transient volatile TreeMap<KafkaTopicPartition, Long> restoredState;
 
+    /** Accessor for state in the operator state backend. */
+    private transient ListState<Tuple2<KafkaTopicPartition, Long>> unionOffsetStates;
+
+    /** Discovery loop, executed in a separate thread. */
+    private transient volatile Thread discoveryLoopThread;
+
     // 是否启用强制的周期性手动提交（区别于自动提交）
     protected boolean enableForceAutoCommit = false;
     // 主动周期性提交offset的时间周期
@@ -207,22 +211,6 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
 
     /** Flag indicating whether the consumer is still running. */
     protected volatile boolean running = true;
-
-    /**
-     * Callback interface that will be invoked upon async Kafka commit completion. Please be aware
-     * that default callback implementation in base class does not provide any guarantees on
-     * thread-safety. This is sufficient for now because current supported Kafka connectors
-     * guarantee no more than 1 concurrent async pending offset commit.
-     */
-    protected transient KafkaCommitCallback offsetCommitCallback;
-    // TODO: ------------ end：二次开发代码 ----------------- //
-
-
-    /** Accessor for state in the operator state backend. */
-    private transient ListState<Tuple2<KafkaTopicPartition, Long>> unionOffsetStates;
-
-    /** Discovery loop, executed in a separate thread. */
-    private transient volatile Thread discoveryLoopThread;
 
     // ------------------------------------------------------------------------
     //  internal metrics
@@ -239,6 +227,15 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
 
     /** Counter for failed Kafka offset commits. */
     private transient Counter failedCommits;
+
+    /**
+     * Callback interface that will be invoked upon async Kafka commit completion. Please be aware
+     * that default callback implementation in base class does not provide any guarantees on
+     * thread-safety. This is sufficient for now because current supported Kafka connectors
+     * guarantee no more than 1 concurrent async pending offset commit.
+     */
+    protected transient KafkaCommitCallback offsetCommitCallback;
+    // TODO: ------------ end：二次开发代码 ----------------- //
 
     // ------------------------------------------------------------------------
 

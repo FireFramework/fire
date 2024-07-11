@@ -63,6 +63,7 @@ private[fire] object ErrorToleranceAcc extends Logging {
       case ErrorTolerance.STAGE => this.getStageFailedCount > FireFrameworkConf.errorToleranceThreshold
       case ErrorTolerance.JOB => this.getJobFailedCount > FireFrameworkConf.errorToleranceThreshold
       case ErrorTolerance.CONTAINER => this.getContainerFailedCount > FireFrameworkConf.errorToleranceThreshold
+      case _ => false
     }
 
     if (isFailed) this.showLog()

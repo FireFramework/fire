@@ -160,7 +160,7 @@ class CheckpointRequestDecider {
         if (isTriggering
                 || queuedRequests.isEmpty()
                 || numberOfCleaningCheckpointsSupplier.getAsInt()
-                        > maxConcurrentCheckpointAttempts) {
+                > maxConcurrentCheckpointAttempts) {
             return Optional.empty();
         }
         if (pendingCheckpointsSizeSupplier.getAsInt() >= maxConcurrentCheckpointAttempts) {
@@ -225,7 +225,7 @@ class CheckpointRequestDecider {
 
     private static void logInQueueTime(CheckpointTriggerRequest request) {
         if (LOG.isInfoEnabled()) {
-            long timeInQueue = request.timestamp - currentTimeMillis();
+            long timeInQueue = currentTimeMillis() - request.timestamp;
             if (timeInQueue > LOG_TIME_IN_QUEUE_THRESHOLD_MS) {
                 LOG.info("checkpoint request time in queue: {}", timeInQueue);
             }

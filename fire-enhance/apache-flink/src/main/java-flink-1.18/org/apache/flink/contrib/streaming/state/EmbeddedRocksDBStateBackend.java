@@ -33,6 +33,7 @@ import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.configuration.*;
 import org.apache.flink.configuration.description.InlineElement;
+import org.apache.flink.contrib.streaming.state.RocksDBMemoryControllerUtils.RocksDBMemoryFactory;
 import org.apache.flink.core.execution.SavepointFormatType;
 import org.apache.flink.core.fs.CloseableRegistry;
 import org.apache.flink.core.fs.Path;
@@ -56,6 +57,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static org.apache.flink.configuration.description.TextElement.text;
 import static org.apache.flink.contrib.streaming.state.RocksDBConfigurableOptions.RESTORE_OVERLAP_FRACTION_THRESHOLD;
@@ -230,6 +232,9 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
      * key-group range.
      */
     private double overlapFractionThreshold;
+
+    /** Factory for Write Buffer Manager and Block Cache. */
+    private RocksDBMemoryFactory rocksDBMemoryFactory;
     // ------------------------------------------------------------------------
 
     /** Creates a new {@code EmbeddedRocksDBStateBackend} for storing local state. */
@@ -258,6 +263,7 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
         this.memoryConfiguration = new RocksDBMemoryConfiguration();
         this.writeBatchSize = UNDEFINED_WRITE_BATCH_SIZE;
         this.overlapFractionThreshold = UNDEFINED_OVERLAP_FRACTION_THRESHOLD;
+        this.rocksDBMemoryFactory = RocksDBMemoryFactory.DEFAULT;
 
         // TODO: ------------ start：二次开发代码 --------------- //
         this.initZKClient();
@@ -357,6 +363,8 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
         checkArgument(
                 overlapFractionThreshold >= 0 && this.overlapFractionThreshold <= 1,
                 "Overlap fraction threshold of restoring should be between 0 and 1");
+
+        this.rocksDBMemoryFactory = original.rocksDBMemoryFactory;
     }
 
     // ------------------------------------------------------------------------
@@ -445,7 +453,7 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
     }
 
     private File getNextStoragePath() {
-// TODO: ------------ start：二次开发代码 --------------- //
+        // TODO: ------------ start：二次开发代码 --------------- //
         int ni = nextDirectory;
         if (isRoundRobin()) {
             try {
@@ -547,13 +555,15 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
 
         final OpaqueMemoryResource<RocksDBSharedResources> sharedResources =
                 RocksDBOperationUtils.allocateSharedCachesIfConfigured(
-                        memoryConfiguration, env.getMemoryManager(), managedMemoryFraction, LOG);
+                        memoryConfiguration, env, managedMemoryFraction, LOG, rocksDBMemoryFactory);
         if (sharedResources != null) {
             LOG.info("Obtained shared RocksDB cache of size {} bytes", sharedResources.getSize());
         }
         final RocksDBResourceContainer resourceContainer =
                 createOptionsAndResourceContainer(
-                        sharedResources, nativeMetricOptions.isStatisticsEnabled());
+                        sharedResources,
+                        instanceBasePath,
+                        nativeMetricOptions.isStatisticsEnabled());
 
         ExecutionConfig executionConfig = env.getExecutionConfig();
         StreamCompressionDecorator keyGroupCompressionDecorator =
@@ -921,6 +931,11 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
         this.writeBatchSize = writeBatchSize;
     }
 
+    /** Set RocksDBMemoryFactory. */
+    public void setRocksDBMemoryFactory(RocksDBMemoryFactory rocksDBMemoryFactory) {
+        this.rocksDBMemoryFactory = checkNotNull(rocksDBMemoryFactory);
+    }
+
     double getOverlapFractionThreshold() {
         return overlapFractionThreshold == UNDEFINED_OVERLAP_FRACTION_THRESHOLD
                 ? RESTORE_OVERLAP_FRACTION_THRESHOLD.defaultValue()
@@ -950,13 +965,14 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
     }
 
     @VisibleForTesting
-    RocksDBResourceContainer createOptionsAndResourceContainer() {
-        return createOptionsAndResourceContainer(null, false);
+    RocksDBResourceContainer createOptionsAndResourceContainer(@Nullable File instanceBasePath) {
+        return createOptionsAndResourceContainer(null, instanceBasePath, false);
     }
 
     @VisibleForTesting
     private RocksDBResourceContainer createOptionsAndResourceContainer(
             @Nullable OpaqueMemoryResource<RocksDBSharedResources> sharedResources,
+            @Nullable File instanceBasePath,
             boolean enableStatistics) {
 
         return new RocksDBResourceContainer(
@@ -964,6 +980,7 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
                 predefinedOptions != null ? predefinedOptions : PredefinedOptions.DEFAULT,
                 rocksDbOptionsFactory,
                 sharedResources,
+                instanceBasePath,
                 enableStatistics);
     }
 
@@ -987,6 +1004,13 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
 
     @VisibleForTesting
     static void ensureRocksDBIsLoaded(String tempDirectory) throws IOException {
+        ensureRocksDBIsLoaded(tempDirectory, NativeLibraryLoader::getInstance);
+    }
+
+    @VisibleForTesting
+    static void ensureRocksDBIsLoaded(
+            String tempDirectory, Supplier<NativeLibraryLoader> nativeLibraryLoaderSupplier)
+            throws IOException {
         synchronized (EmbeddedRocksDBStateBackend.class) {
             if (!rocksDbInitialized) {
 
@@ -1022,7 +1046,8 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
                         rocksLibFolder.mkdirs();
 
                         // explicitly load the JNI dependency if it has not been loaded before
-                        NativeLibraryLoader.getInstance()
+                        nativeLibraryLoaderSupplier
+                                .get()
                                 .loadLibrary(rocksLibFolder.getAbsolutePath());
 
                         // this initialization here should validate that the loading succeeded
