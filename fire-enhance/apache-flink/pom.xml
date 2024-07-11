@@ -93,7 +93,7 @@
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-kafka${contains.scala.binary.version}</artifactId>
-      <version>${flink.version}</version>
+      <version>${flink.kafka.connector.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>
     <dependency>
@@ -135,13 +135,7 @@
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-jdbc${contains.scala.binary.version}</artifactId>
-      <version>${flink.version}</version>
-      <scope>${maven.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-elasticsearch-base${contains.scala.binary.version}</artifactId>
-      <version>${flink.version}</version>
+      <version>${flink.jdbc.connector.version}</version>
       <scope>${maven.scope}</scope>
     </dependency>
     <dependency>

@@ -1,10 +1,10 @@
 package com.zto.fire.examples.flink.util
 
 import com.zto.fire.flink.conf.FireFlinkConf
-import com.zto.fire.flink.util.StateCleanerUtils
 import org.apache.commons.lang3.time.DateUtils
 import org.apache.hadoop.fs.LocatedFileStatus
 import com.zto.fire._
+import com.zto.fire.flink.util.StateCleanerUtils
 
 import java.util.Date
 import scala.collection.mutable.ListBuffer

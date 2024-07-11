@@ -498,8 +498,10 @@
         <profile>
             <id>flink-1.12</id>
             <properties>
-                <flink.version>1.12.2</flink.version>
+                <flink.version>1.12.7</flink.version>
                 <flink.major.version>1.12</flink.major.version>
+                <flink.jdbc.connector.version>${flink.version}</flink.jdbc.connector.version>
+                <flink.kafka.connector.version>${flink.version}</flink.kafka.connector.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -526,8 +528,10 @@
         <profile>
             <id>flink-1.13</id>
             <properties>
-                <flink.version>1.13.0</flink.version>
+                <flink.version>1.13.6</flink.version>
                 <flink.major.version>1.13</flink.major.version>
+                <flink.jdbc.connector.version>${flink.version}</flink.jdbc.connector.version>
+                <flink.kafka.connector.version>${flink.version}</flink.kafka.connector.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -556,6 +560,8 @@
             <properties>
                 <flink.version>1.14.3</flink.version>
                 <flink.major.version>1.14</flink.major.version>
+                <flink.jdbc.connector.version>${flink.version}</flink.jdbc.connector.version>
+                <flink.kafka.connector.version>${flink.version}</flink.kafka.connector.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -576,9 +582,11 @@
         <profile>
             <id>flink-1.15</id>
             <properties>
-                <flink.version>1.15.3</flink.version>
+                <flink.version>1.15.4</flink.version>
                 <flink.major.version>1.15</flink.major.version>
                 <contains.scala.binary.version></contains.scala.binary.version>
+                <flink.jdbc.connector.version>${flink.version}</flink.jdbc.connector.version>
+                <flink.kafka.connector.version>${flink.version}</flink.kafka.connector.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -599,9 +607,11 @@
         <profile>
             <id>flink-1.16</id>
             <properties>
-                <flink.version>1.16.1</flink.version>
+                <flink.version>1.16.3</flink.version>
                 <flink.major.version>1.16</flink.major.version>
                 <contains.scala.binary.version></contains.scala.binary.version>
+                <flink.jdbc.connector.version>${flink.version}</flink.jdbc.connector.version>
+                <flink.kafka.connector.version>${flink.version}</flink.kafka.connector.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -618,6 +628,82 @@
                 </dependency>
             </dependencies>
         </profile>
+
+        <profile>
+            <id>flink-1.17</id>
+            <properties>
+                <flink.version>1.17.2</flink.version>
+                <flink.major.version>1.17</flink.major.version>
+                <contains.scala.binary.version></contains.scala.binary.version>
+                <flink.jdbc.connector.version>3.1.2-${flink.major.version}</flink.jdbc.connector.version>
+                <flink.kafka.connector.version>3.1.0-${flink.major.version}</flink.kafka.connector.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
+                    <version>${flink.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-queryable-state-runtime</artifactId>
+                    <version>${flink.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>flink-1.18</id>
+            <properties>
+                <flink.version>1.18.1</flink.version>
+                <flink.major.version>1.18</flink.major.version>
+                <contains.scala.binary.version></contains.scala.binary.version>
+                <flink.jdbc.connector.version>3.2.0-${flink.major.version}</flink.jdbc.connector.version>
+                <flink.kafka.connector.version>3.2.0-${flink.major.version}</flink.kafka.connector.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
+                    <version>${flink.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-queryable-state-runtime</artifactId>
+                    <version>${flink.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>flink-1.19</id>
+            <properties>
+                <flink.version>1.19.1</flink.version>
+                <flink.major.version>1.19</flink.major.version>
+                <contains.scala.binary.version></contains.scala.binary.version>
+                <flink.jdbc.connector.version>3.2.0-${flink.major.version}</flink.jdbc.connector.version>
+                <flink.kafka.connector.version>3.2.0-${flink.major.version}</flink.kafka.connector.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
+                    <version>${flink.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-queryable-state-runtime</artifactId>
+                    <version>${flink.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
         <profile>
             <id>hudi-0.8</id>
             <properties>
