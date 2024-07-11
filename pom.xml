@@ -365,6 +365,55 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>spark-3.4</id>
+            <properties>
+                <spark.version>3.4.3</spark.version>
+                <spark.major.version>3.4</spark.major.version>
+                <jackson.version>2.10.5</jackson.version>
+                <hudi.bundle.version>3</hudi.bundle.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-avro_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+                <!-- Hudi相关依赖 -->
+                <dependency>
+                    <groupId>org.apache.hudi</groupId>
+                    <artifactId>hudi-spark${hudi.bundle.version}-bundle_${scala.binary.version}</artifactId>
+                    <version>${hudi.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>spark-3.5</id>
+            <properties>
+                <spark.version>3.5.1</spark.version>
+                <spark.major.version>3.5</spark.major.version>
+                <jackson.version>2.10.5</jackson.version>
+                <hudi.bundle.version>3</hudi.bundle.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-avro_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+                <!-- Hudi相关依赖 -->
+                <dependency>
+                    <groupId>org.apache.hudi</groupId>
+                    <artifactId>hudi-spark${hudi.bundle.version}-bundle_${scala.binary.version}</artifactId>
+                    <version>${hudi.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
 
         <!-- 以hadoop2.7、hive1.2低版本编译 -->
         <profile>
