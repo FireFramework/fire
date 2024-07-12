@@ -129,7 +129,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
     } else {
       AccumulatorManager.addMultiTimer(module, "onJobEnd", "onJobEnd", "", "ERROR", "", 1)
       ErrorToleranceAcc.addJobFailedCount()
-      this.logError(s"job failed.")
+      this.logError(s"job failed. reason: ${jobEnd.jobResult}")
     }
   }
 
@@ -147,7 +147,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
       AccumulatorManager.addMultiTimer(module, "onStageCompleted", "onStageCompleted", "", "INFO", "", 1)
     } else {
       AccumulatorManager.addMultiTimer(module, "onStageCompleted", "onStageCompleted", "", "ERROR", "", 1)
-      this.logError(s"stage failed. reason: " + stageCompleted.stageInfo.failureReason)
+      this.logError(s"stage failed. reason: ${stageCompleted.stageInfo.failureReason}")
       AccumulatorManager.addLog(stageCompleted.stageInfo.failureReason.getOrElse(""))
 
       // 异常信息统一投递到Fire异常总线
@@ -179,7 +179,7 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
     } else {
       AccumulatorManager.addMultiTimer(module, "onTaskEnd", "onTaskEnd", "", "ERROR", "", 1)
       ErrorToleranceAcc.addTaskFailedCount()
-      this.logError(s"task failed.")
+      this.logError(s"task failed. reason: ${taskEnd.reason}")
     }
   }
 
