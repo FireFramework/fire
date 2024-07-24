@@ -484,7 +484,7 @@ object PropUtils extends Logging {
         case _ if paramType eq classOf[Boolean] => value.toBoolean
         case _ => value
       }
-    }(this.logger, catchLog = s"为找到配置信息：${key}，请检查！")
+    }(this.logger, catchLog = s"未找到配置信息：${key}，请检查！")
     property.asInstanceOf[T]
   }
 
