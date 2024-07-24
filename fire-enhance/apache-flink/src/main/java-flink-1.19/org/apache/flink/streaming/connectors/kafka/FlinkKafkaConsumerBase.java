@@ -275,10 +275,19 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
      */
     protected static void adjustAutoCommitConfig(
             Properties properties, OffsetCommitMode offsetCommitMode) {
-        if (offsetCommitMode == OffsetCommitMode.ON_CHECKPOINTS
-                || offsetCommitMode == OffsetCommitMode.DISABLED) {
-            properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        // TODO: ------------ start：二次开发代码 --------------- //
+        boolean enableForceAutoCommit = Boolean.parseBoolean(properties.getProperty("kafka.force.autoCommit.enable", "false"));
+        if (enableForceAutoCommit) {
+            properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+            long forceAutoCommitIntervalMillis = Long.parseLong(properties.getProperty("kafka.force.autoCommit.Interval", "30000"));
+            properties.setProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, String.valueOf(forceAutoCommitIntervalMillis));
+        } else {
+            if (offsetCommitMode == OffsetCommitMode.ON_CHECKPOINTS
+                    || offsetCommitMode == OffsetCommitMode.DISABLED) {
+                properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+            }
         }
+        // TODO: ------------ end：二次开发代码 --------------- //
     }
     // ------------------------------------------------------------------------
     //  Configuration

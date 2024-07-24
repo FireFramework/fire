@@ -26,20 +26,20 @@ import java.util.List;
 /**
  * Implementation of {@link SqlCall} that keeps its operands in an array.
  */
-public class SqlBasicCall extends SqlCall {
+public class SqlBasicCall2 extends SqlCall {
     private SqlOperator operator;
     public final SqlNode[] operands;
     private final SqlLiteral functionQuantifier;
     private final boolean expanded;
 
-    public SqlBasicCall(
+    public SqlBasicCall2(
             SqlOperator operator,
             SqlNode[] operands,
             SqlParserPos pos) {
         this(operator, operands, pos, false, null);
     }
 
-    protected SqlBasicCall(
+    protected SqlBasicCall2(
             SqlOperator operator,
             SqlNode[] operands,
             SqlParserPos pos,
@@ -99,4 +99,4 @@ public class SqlBasicCall extends SqlCall {
 
 }
 
-// End SqlBasicCall.java
+// End SqlBasicCall2.java

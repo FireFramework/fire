@@ -145,7 +145,7 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
         this.parseSqlNode(sqlJoin.getLeft, operation, isHive, targetTable)
         this.parseSqlNode(sqlJoin.getRight, operation, isHive, targetTable)
       }
-      case sqlBasicCall: SqlBasicCall => {
+      case sqlBasicCall: SqlBasicCall2 => {
         sqlBasicCall.operands.foreach(sqlNode => {
           // 过滤掉别名
           if (sqlNode.isInstanceOf[SqlIdentifier]) {

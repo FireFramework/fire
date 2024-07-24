@@ -2234,14 +2234,18 @@ public class CheckpointCoordinator {
         scheduleTriggerWithDelay(currentTimeMillis, tillNextMillis);
     }
 
+    // TODO: ------------ start：二次开发代码 --------------- //
     private void cancelPeriodicTrigger() {
         if (currentPeriodicTrigger != null) {
             nextCheckpointTriggeringRelativeTime = Long.MAX_VALUE;
-            currentPeriodicTriggerFuture.cancel(false);
+            if (currentPeriodicTriggerFuture != null) {
+                currentPeriodicTriggerFuture.cancel(false);
+            }
             currentPeriodicTrigger = null;
             currentPeriodicTriggerFuture = null;
         }
     }
+    // TODO: ------------ end：二次开发代码 --------------- //
 
     private long getRandomInitDelay() {
         return ThreadLocalRandom.current().nextLong(minPauseBetweenCheckpoints, baseInterval + 1L);

@@ -46,7 +46,7 @@ trait AbstractFlinkStreaming extends BaseFlink {
   protected var tableEnv: TableEnvironment = _
   protected lazy val sql = fire.sql(_)
   protected lazy val sqlQuery = fire.sqlQuery(_)
-  protected lazy val steamTableEnv: StreamTableEnvironment = this.tableEnv.asInstanceOf[StreamTableEnvironment]
+  protected lazy val streamTableEnv: StreamTableEnvironment = this.tableEnv.asInstanceOf[StreamTableEnvironment]
   override val jobType: JobType = JobType.FLINK_STREAMING
   // 用于存放延期的数据
   protected lazy val outputTag = new OutputTag[Any]("later_data")
@@ -77,7 +77,7 @@ trait AbstractFlinkStreaming extends BaseFlink {
    * 加载SQL set statement参数
    */
   override protected[fire] def loadSqlConf(): Unit = {
-    val tableConfig = this.steamTableEnv.getConfig.getConfiguration
+    val tableConfig = this.streamTableEnv.getConfig.getConfiguration
     PropUtils.loadSqlConfig(this.getClass).foreach(kv => {
       logInfo(s"\nExecute: set ${kv._1}=${kv._2}")
       tableConfig.setString(kv._1, kv._2)
