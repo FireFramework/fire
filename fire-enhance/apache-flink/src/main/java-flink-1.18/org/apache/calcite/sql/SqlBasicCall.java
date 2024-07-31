@@ -17,76 +17,113 @@
 package org.apache.calcite.sql;
 
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.util.UnmodifiableArrayList;
-
-import com.google.common.base.Preconditions;
+import org.apache.calcite.util.ImmutableNullableList;
 
 import java.util.List;
+import java.util.Objects;
+
+import static org.apache.calcite.linq4j.Nullness.castNonNull;
 
 /**
  * Implementation of {@link SqlCall} that keeps its operands in an array.
  */
 public class SqlBasicCall extends SqlCall {
     private SqlOperator operator;
+    private List<SqlNode> operandList;
     public final SqlNode[] operands;
     private final SqlLiteral functionQuantifier;
-    private final boolean expanded;
 
+    @Deprecated // to be removed before 2.0
     public SqlBasicCall(
             SqlOperator operator,
             SqlNode[] operands,
             SqlParserPos pos) {
-        this(operator, operands, pos, false, null);
+        this(operator, ImmutableNullableList.copyOf(operands), pos, null);
     }
 
-    protected SqlBasicCall(
+    /** Creates a SqlBasicCall.
+     *
+     * <p>It is not expanded; call {@link #withExpanded withExpanded(true)}
+     * to expand. */
+    public SqlBasicCall(
+            SqlOperator operator,
+            List<? extends SqlNode> operandList,
+            SqlParserPos pos) {
+        this(operator, operandList, pos, null);
+    }
+
+    @Deprecated // to be removed before 2.0
+    public SqlBasicCall(
             SqlOperator operator,
             SqlNode[] operands,
             SqlParserPos pos,
-            boolean expanded,
+            SqlLiteral functionQualifier) {
+        this(operator, ImmutableNullableList.copyOf(operands), pos,
+                functionQualifier);
+    }
+
+    /** Creates a SqlBasicCall with an optional function qualifier.
+     *
+     * <p>It is not expanded; call {@link #withExpanded withExpanded(true)}
+     * to expand. */
+    public SqlBasicCall(
+            SqlOperator operator,
+            List<? extends SqlNode> operandList,
+            SqlParserPos pos,
             SqlLiteral functionQualifier) {
         super(pos);
-        this.operator = Preconditions.checkNotNull(operator);
-        this.operands = operands;
-        this.expanded = expanded;
+        this.operator = Objects.requireNonNull(operator, "operator");
+        this.operandList = ImmutableNullableList.copyOf(operandList);
+        this.operands = new SqlNode[this.operandList.size()];
+        for (int i = 0; i < this.operandList.size(); i++) {
+            this.operands[i] = this.operandList.get(i);
+        }
         this.functionQuantifier = functionQualifier;
     }
 
-    public SqlKind getKind() {
+    @Override public SqlKind getKind() {
         return operator.getKind();
     }
 
-    @Override public boolean isExpanded() {
-        return expanded;
+    /** Sets whether this call is expanded.
+     *
+     * @see #isExpanded() */
+    public SqlCall withExpanded(boolean expanded) {
+        return !expanded
+                ? this
+                : new ExpandedBasicCall(operator, operandList, pos,
+                functionQuantifier);
     }
 
     @Override public void setOperand(int i, SqlNode operand) {
-        operands[i] = operand;
+        operandList = set(operandList, i, operand);
     }
 
+    /** Sets the operator (or function) that is being called.
+     *
+     * <p>This method is used by the validator to set a more refined version of
+     * the same operator (for instance, a version where overloading has been
+     * resolved); use with care. */
     public void setOperator(SqlOperator operator) {
-        this.operator = Preconditions.checkNotNull(operator);
+        this.operator = Objects.requireNonNull(operator, "operator");
     }
 
-    public SqlOperator getOperator() {
+    @Override public SqlOperator getOperator() {
         return operator;
     }
 
-    public SqlNode[] getOperands() {
-        return operands;
-    }
-
-    public List<SqlNode> getOperandList() {
-        return UnmodifiableArrayList.of(operands); // not immutable, but quick
+    @SuppressWarnings("nullness")
+    @Override public List<SqlNode> getOperandList() {
+        return operandList;
     }
 
     @SuppressWarnings("unchecked")
     @Override public <S extends SqlNode> S operand(int i) {
-        return (S) operands[i];
+        return (S) castNonNull(operandList.get(i));
     }
 
     @Override public int operandCount() {
-        return operands.length;
+        return operandList.size();
     }
 
     @Override public SqlLiteral getFunctionQuantifier() {
@@ -94,9 +131,40 @@ public class SqlBasicCall extends SqlCall {
     }
 
     @Override public SqlNode clone(SqlParserPos pos) {
-        return getOperator().createCall(getFunctionQuantifier(), pos, operands);
+        return getOperator().createCall(getFunctionQuantifier(), pos, operandList);
     }
 
-}
+    /** Sets the {@code i}th element of {@code list} to value {@code e}, creating
+     * an immutable copy of the list. */
+    private static <E> List<E> set(List<E> list, int i, E e) {
+        if (i == 0 && list.size() == 1) {
+            // short-cut case where the contents of the previous list can be ignored
+            return ImmutableNullableList.of(e);
+        }
+        //noinspection unchecked
+        E[] objects = (E[]) list.toArray();
+        objects[i] = e;
+        return ImmutableNullableList.copyOf(objects);
+    }
 
-// End SqlBasicCall2.java
+    /** Sub-class of {@link org.apache.calcite.sql.SqlBasicCall}
+     * for which {@link #isExpanded()} returns true. */
+    private static class ExpandedBasicCall extends SqlBasicCall {
+        ExpandedBasicCall(SqlOperator operator,
+                          List<? extends SqlNode> operandList, SqlParserPos pos,
+                          SqlLiteral functionQualifier) {
+            super(operator, operandList, pos, functionQualifier);
+        }
+
+        @Override public boolean isExpanded() {
+            return true;
+        }
+
+        @Override public SqlCall withExpanded(boolean expanded) {
+            return expanded
+                    ? this
+                    : new SqlBasicCall(getOperator(), getOperandList(), pos,
+                    getFunctionQuantifier());
+        }
+    }
+}
