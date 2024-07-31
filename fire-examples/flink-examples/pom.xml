@@ -147,12 +147,12 @@
             <scope>${maven.scope}</scope>
         </dependency>
         <!-- flink1.19 向下兼容zk3.4.x -->
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-shaded-zookeeper-3</artifactId>
             <version>3.4.14-14.0</version>
             <scope>${maven.scope}</scope>
-        </dependency>
+        </dependency>-->
 
         <!-- RocketMQ相关依赖 -->
         <dependency>

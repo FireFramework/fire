@@ -198,11 +198,6 @@ public class ApplicationDispatcherBootstrap implements DispatcherBootstrap {
             final DispatcherGateway dispatcherGateway, final ScheduledExecutor scheduledExecutor) {
         final Optional<String> configuredJobId =
                 configuration.getOptional(PipelineOptionsInternal.PIPELINE_FIXED_JOB_ID);
-        if (configuredJobId.isPresent()) {
-            System.out.println("-------------->JobId=" + configuredJobId.get());
-        } else {
-            System.out.println("-------------->JobId is null");
-        }
         final boolean submitFailedJobOnApplicationError =
                 configuration.get(DeploymentOptions.SUBMIT_FAILED_JOB_ON_APPLICATION_ERROR);
         if (!HighAvailabilityMode.isHighAvailabilityModeActivated(configuration)
