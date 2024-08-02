@@ -17,7 +17,7 @@
 
 package com.zto.fire.flink.ext.stream
 
-import com.zto.fire.common.conf.FireHiveConf
+import com.zto.fire.common.conf.{FireHiveConf, FirePaimonConf}
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import com.zto.fire.noEmpty
@@ -26,7 +26,7 @@ import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.expressions.Expression
 import org.apache.flink.table.api.{SqlDialect, Table, TableEnvironment}
 import org.apache.flink.table.catalog.Catalog
-import org.apache.flink.table.functions.{ScalarFunction, AggregateFunction, TableAggregateFunction, TableFunction}
+import org.apache.flink.table.functions.{AggregateFunction, ScalarFunction, TableAggregateFunction, TableFunction}
 
 import java.util.Optional
 
@@ -95,6 +95,14 @@ trait TableApi {
    */
   def useDefaultCatalog: Unit = {
     this.tableEnv.useCatalog(FireFlinkConf.defaultCatalogName)
+    this.tableEnv.getConfig.setSqlDialect(SqlDialect.DEFAULT)
+  }
+
+  /**
+   * 使用paimon catalog
+   */
+  def usePaimonCatalog(): Unit = {
+    this.tableEnv.useCatalog(FirePaimonConf.paimonCatalogName)
     this.tableEnv.getConfig.setSqlDialect(SqlDialect.DEFAULT)
   }
 
