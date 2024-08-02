@@ -86,7 +86,7 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
   /**
    * 将血缘信息放到累加器中
    */
-  override def add(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
+  override def add(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = this.synchronized {
     if (lineage.nonEmpty) this.mergeLineage(lineage)
   }
 
