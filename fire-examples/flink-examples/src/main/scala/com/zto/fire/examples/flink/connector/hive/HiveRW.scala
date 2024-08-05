@@ -1,6 +1,7 @@
 package com.zto.fire.examples.flink.connector.hive
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import org.apache.flink.api.scala._
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.{Hive, Kafka}
@@ -12,9 +13,17 @@ import com.zto.fire.flink.anno.Streaming
 /**
  * 基于Fire进行Flink Streaming开发
  */
-@Streaming(30)
-@Hive("fat")
-@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Streaming(20)
+@Hive(cluster = "fat", version = "2.3.9")
+@Kafka(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
+@Config(
+  """
+    |flink.checkpoint.adaptive.enable=true
+    |flink.checkpoint.adaptive.delay_start=20
+    |flink.checkpoint.adaptive.active_trigger.interval=13:14~13:15, 14:00~15:00
+    |flink.checkpoint.adaptive.active_trigger.duration=20000
+    |fire.debug.class.code.resource=com.fasterxml.jackson.databind.JsonMappingException,com.fasterxml.jackson.databind.ObjectMapper
+    |""")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HiveRW extends FlinkStreaming {
 

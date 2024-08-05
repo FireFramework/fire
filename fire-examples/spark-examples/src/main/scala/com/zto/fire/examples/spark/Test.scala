@@ -32,7 +32,7 @@ import com.zto.fire.spark.anno.Streaming
 @Config(
   """
     |fire.lineage.debug.enable=false
-    |fire.debug.class.code.resource=org.apache.spark.sql.SparkSession,com.zto.fire.examples.spark.Test,org.apache.hadoop.hbase.client.ConnectionManager
+    |fire.debug.class.code.resource=org.apache.spark.sql.SparkSession,com.zto.fire.examples.spark.test.Test,org.apache.hadoop.hbase.client.ConnectionManager
     |""")
 @HBase(cluster = "fat", user = "test-sparksubmit")
 @Hive("fat")
