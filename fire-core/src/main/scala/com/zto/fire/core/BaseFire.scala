@@ -156,6 +156,13 @@ trait BaseFire extends Logging {
   private[fire] def createContext(conf: Any): Unit
 
   /**
+   * 在用户代码被执行之前调用
+   */
+  protected def preProcess(): Unit = {
+
+  }
+
+  /**
    * 生命周期方法：具体的用户开发的业务逻辑代码
    * 注：此方法会被自动调用，不需要在main中手动调用
    */
@@ -168,6 +175,7 @@ trait BaseFire extends Logging {
   protected[fire] def processAll: Unit = {
     tryWithLog({
       this.loadSqlConf()
+      this.preProcess()
       this.process()
       AnnoManager.processAnno(this)
       if (FireFrameworkConf.lineageDebugEnable || FireFrameworkConf.lineageDebugPrintEnable) LineageManager.show()
