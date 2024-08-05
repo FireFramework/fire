@@ -26,6 +26,7 @@
         <module>flink-clickhouse</module>
         <module>flink-rocketmq</module>
         <module>flink-format</module>
+        <module>flink-paimon</module>
     </modules>
 
     <parent>

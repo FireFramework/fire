@@ -15,21 +15,16 @@
  * limitations under the License.
  */
 
-package com.zto.fire.common.conf
+package org.apache.flink.connector.paimon
 
-import com.zto.fire.common.util.{PropUtils, StringsUtils}
-import spark.utils.StringUtils
 
 /**
- * paimon相关配置
+ * Paimon通用父类
  *
  * @author ChengLong
- * @since 2.5.0
- * @create 2024-08-02 10:01:01
+ * @Date 2024/8/2 10:52
+ * @version 2.3.5
  */
-private[fire] object FirePaimonConf {
-  lazy val PAIMON_CATALOG_NAME = "paimon.catalog.name"
+trait PaimonStreaming extends BasePaimonStreaming {
 
-  // paimon catalog名称
-  lazy val paimonCatalogName = PropUtils.getString(this.PAIMON_CATALOG_NAME, "paimon")
 }

@@ -17,7 +17,7 @@
 
 package com.zto.fire.flink.ext.stream
 
-import com.zto.fire.common.conf.{FireHiveConf, FirePaimonConf}
+import com.zto.fire.common.conf.FireHiveConf
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import com.zto.fire.noEmpty
@@ -95,14 +95,6 @@ trait TableApi {
    */
   def useDefaultCatalog: Unit = {
     this.tableEnv.useCatalog(FireFlinkConf.defaultCatalogName)
-    this.tableEnv.getConfig.setSqlDialect(SqlDialect.DEFAULT)
-  }
-
-  /**
-   * 使用paimon catalog
-   */
-  def usePaimonCatalog(): Unit = {
-    this.tableEnv.useCatalog(FirePaimonConf.paimonCatalogName)
     this.tableEnv.getConfig.setSqlDialect(SqlDialect.DEFAULT)
   }
 
