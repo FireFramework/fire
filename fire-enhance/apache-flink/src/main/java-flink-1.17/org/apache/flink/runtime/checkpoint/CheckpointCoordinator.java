@@ -135,7 +135,11 @@ public class CheckpointCoordinator {
      */
     private long baseInterval;
 
+    // 上一次的checkpoint间隔时间
     private long oldInterval;
+
+    // 最原始的checkpoint间隔时间
+    private long originInterval;
 
     // 当前checkpoint线程的Future对象
     private ScheduledFuture<?> currentCheckpointScheduledFuture = null;
@@ -399,6 +403,7 @@ public class CheckpointCoordinator {
 
         // TODO: ------------ start：二次开发代码 --------------- //
         this.oldInterval = baseInterval;
+        this.originInterval = baseInterval;
         this.startTime = System.currentTimeMillis();
         this.checkpointAdaptiveEnable = FireEngineUtils.getBooleanConf(checkpointAdaptiveEnableConf);
         this.checkpointAdaptiveTriggerInterval = FireEngineUtils.getStringConf(checkpointAdaptiveTriggerIntervalConf);
@@ -475,7 +480,8 @@ public class CheckpointCoordinator {
                         TimeExpression timeExpression = new TimeExpression(checkpointAdaptiveTriggerInterval);
                         while (true) {
                             if (timeExpression.isBetween(System.currentTimeMillis())) {
-                                if (isPeriodicMode) {
+                                if (isPeriodicModee && checkpointAdaptiveTriggerDuration > 0) {
+                                    // 自适应的checkpoint
                                     LOG.info("In adaptive mode, CheckpointCoordinator: start to trigger checkpoint, interval is {}", checkpointAdaptiveTriggerDuration);
                                     isPeriodicMode = false;
                                     long originInterval = getBaseInterval();
@@ -486,11 +492,14 @@ public class CheckpointCoordinator {
                                 }
                             } else {
                                 if (!isPeriodicMode) {
+                                    // 恢复周期性的checkpoint
                                     LOG.info("In periodic mode, CheckpointCoordinator: start to trigger checkpoint, interval is {}", oldInterval);
                                     isPeriodicMode = true;
-                                    setBaseInterval(oldInterval);
-                                    setMinPauseBetweenCheckpoints(oldInterval);
-                                    oldInterval = checkpointAdaptiveTriggerDuration;
+                                    // 恢复最初的checkpoint间隔
+                                    setBaseInterval(originInterval);
+                                    setMinPauseBetweenCheckpoints(originInterval);
+                                    // oldInterval = checkpointAdaptiveTriggerDuration;
+                                    startCheckpointScheduler();
                                 }
                             }
                             Thread.sleep(10000);

@@ -21,31 +21,57 @@ import com.zto.fire._
 import com.zto.fire.common.anno.Config
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.core.anno.lifecycle.Process
+import com.zto.fire.examples.flink.sql.SimpleSqlDemo.sql
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
 import org.apache.flink.streaming.api.scala._
 
-import java.util.Objects
-
 @Config(
   """
     |flink.checkpoint.adaptive.enable=true
-    |flink.checkpoint.adaptive.delay_start=10
-    |flink.checkpoint.adaptive.active_trigger.interval=10:07~10:09, 14:23~14:25
-    |flink.checkpoint.adaptive.active_trigger.duration=10000
+    |flink.checkpoint.adaptive.delay_start=20
+    |flink.checkpoint.adaptive.active_trigger.interval=16:50~16:56, 10:46~10:47
+    |flink.checkpoint.adaptive.active_trigger.duration=20000
     |fire.lineage.debug.enable=false
-    |fire.debug.class.code.resource=com.zto.fire.common.util.PropUtils,com.zto.fire.examples.flink.Test
+    |fire.debug.class.code.resource=org.apache.hadoop.hbase.client.Put
     |""")
-@Streaming(interval = 60, disableOperatorChaining = true, parallelism = 2)
-@Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
+@Streaming(interval = 10, disableOperatorChaining = true, parallelism = 2)
+@Kafka(brokers = "bigdata_test", topics = "fire2", groupId = "fire2", forceOverwriteStateOffset = true, startingOffset = "latest")
 @Kafka2(brokers = "bigdata_test", topics = "fire", groupId = "fire2")
 object Test extends FlinkStreaming {
 
   @Process
   def kafkaSource: Unit = {
-    val dstream = this.fire.createRandomIntStream(10)
-    dstream.map(t => {
-      t
-    }).print()
+    sql(
+      """
+        |CREATE TABLE t_student (
+        |  name STRING,
+        |  age INT
+        |) WITH (
+        |  'connector' = 'kafka',								-- 用于指定connector的类型
+        |  'topic' = 'fire',										-- 消费的topic名称为fire
+        |  'properties.bootstrap.servers' = 'kafka-server:9092',	-- kafka的broker地址
+        |  'properties.group.id' = 'fire3',						-- 当前flink sql任务所使用的groupId
+        |  'scan.startup.mode' = 'earliest-offset',				-- 指定从什么位置开始消费
+        |  'properties.kafka.force.autoCommit.enable' = 'true',	-- 指定是否自动提交offset
+        |  'properties.kafka.force.autoCommit.Interval' = '10000',
+        |  'format' = 'json'										-- 指定解析的kafka消息为json格式
+        |)
+        |""".stripMargin)
+
+    sql(
+      """
+        |create table t_print(
+        |  name STRING,
+        |  age INT
+        |) with (
+        |  'connector' = 'print'
+        |)
+        |""".stripMargin)
+
+    sql(
+      """
+        |insert into t_print select * from t_student
+        |""".stripMargin)
   }
 }

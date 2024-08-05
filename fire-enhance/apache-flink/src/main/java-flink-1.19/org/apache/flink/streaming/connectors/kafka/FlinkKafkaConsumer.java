@@ -155,15 +155,6 @@ public class FlinkKafkaConsumer<T> extends FlinkKafkaConsumerBase<T> {
             String topics = this.properties.getProperty("kafka.topics", "");
             String groupId = this.properties.getProperty("group.id", "");
 
-            // 是否开启周期性的offset提交，仅在开启checkpoint的情况下生效
-            this.enableForceAutoCommit = Boolean.parseBoolean(this.properties.getProperty("kafka.force.autoCommit.enable", "false"));
-            // 自动提交offset的周期
-            this.forceAutoCommitIntervalMillis = Long.parseLong(this.properties.getProperty("kafka.force.autoCommit.Interval", "30000"));
-            if (this.enableForceAutoCommit) {
-                this.executeAutoCommit(topics, groupId);
-                LOG.info("开启异步提交kafka offset功能，topics：{} groupId：{} interval：{}", topics, groupId, this.forceAutoCommitIntervalMillis);
-            }
-
             // 判断是否跳过从状态中读取到的offset信息
             boolean skipRestoredState = Boolean.parseBoolean(this.properties.getProperty("kafka.force.overwrite.stateOffset.enable", "false"));
 

@@ -110,9 +110,9 @@ public class SqlSelect extends SqlCall {
             where = addCondition(sqlJoin.getLeft(), where, true);
             // process right sqlNode
             return addCondition(sqlJoin.getRight(), where, true);
-        } else if (from instanceof SqlBasicCall) {
+        } else if (from instanceof SqlBasicCall2) {
             // Table has an alias or comes from a subquery
-            SqlNode[] tableNodes = ((SqlBasicCall) from).getOperands();
+            SqlNode[] tableNodes = ((SqlBasicCall2) from).getOperands();
             *//**
              * If there is a subquery in the Join, row-level filtering has been appended to the subquery.
              * What is returned here is the SqlSelect type, just return the original where directly
@@ -131,12 +131,12 @@ public class SqlSelect extends SqlCall {
      * Add row-level filtering based on user-configured permission points
      */
 /*    private SqlNode addPermission(SqlNode where, String tableName, String tableAlias) {
-        SqlBasicCall permissions = null;
+        SqlBasicCall2 permissions = null;
         ConcurrentHashMap<String, String> permissionsMap = RowLevelPermissionsContext.get();
         if (permissionsMap != null) {
             String permissionsStatement = permissionsMap.get(tableName);
             if (permissionsStatement != null && !"".equals(permissionsStatement)) {
-                permissions = (SqlBasicCall) CustomTableEnvironmentContext.get().getParser()
+                permissions = (SqlBasicCall2) CustomTableEnvironmentContext.get().getParser()
                         .parseExpression(permissionsStatement);
             }
         }

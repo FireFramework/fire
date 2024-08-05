@@ -26,7 +26,7 @@ import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.expressions.Expression
 import org.apache.flink.table.api.{SqlDialect, Table, TableEnvironment}
 import org.apache.flink.table.catalog.Catalog
-import org.apache.flink.table.functions.{ScalarFunction, AggregateFunction, TableAggregateFunction, TableFunction}
+import org.apache.flink.table.functions.{AggregateFunction, ScalarFunction, TableAggregateFunction, TableFunction}
 
 import java.util.Optional
 
