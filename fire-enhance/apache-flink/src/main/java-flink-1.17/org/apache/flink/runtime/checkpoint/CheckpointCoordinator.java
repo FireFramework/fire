@@ -480,7 +480,7 @@ public class CheckpointCoordinator {
                         TimeExpression timeExpression = new TimeExpression(checkpointAdaptiveTriggerInterval);
                         while (true) {
                             if (timeExpression.isBetween(System.currentTimeMillis())) {
-                                if (isPeriodicModee && checkpointAdaptiveTriggerDuration > 0) {
+                                if (isPeriodicMode && checkpointAdaptiveTriggerDuration > 0) {
                                     // 自适应的checkpoint
                                     LOG.info("In adaptive mode, CheckpointCoordinator: start to trigger checkpoint, interval is {}", checkpointAdaptiveTriggerDuration);
                                     isPeriodicMode = false;
