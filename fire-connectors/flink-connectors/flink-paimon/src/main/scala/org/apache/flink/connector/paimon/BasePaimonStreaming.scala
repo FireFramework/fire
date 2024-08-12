@@ -34,14 +34,19 @@ trait BasePaimonStreaming extends FlinkStreaming {
    * 初始化paimon catalog
    */
   override protected def preProcess(): Unit = {
-    sql(
+    val paimonCatalog = s"""
+                           |CREATE CATALOG ${FirePaimonConf.paimonCatalogName} WITH (
+                           |  'type' = 'paimon',
+                           |  'metastore' = 'hive',
+                           |  'uri' = '${FirePaimonConf.getMetastoreUrl}'
+                           |)
+                           |""".stripMargin
+    logInfo(
       s"""
-         |CREATE CATALOG ${FirePaimonConf.paimonCatalogName} WITH (
-         |  'type' = 'paimon',
-         |  'metastore' = 'hive',
-         |  'uri' = '${FirePaimonConf.hiveCluster}',
-         |)
-         |""".stripMargin)
+        |execute create paimon catalog statement:
+        |$paimonCatalog
+        |""".stripMargin)
+    sql(paimonCatalog)
   }
 
   /**

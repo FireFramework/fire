@@ -16,7 +16,6 @@
  */
 
 package org.apache.flink.connector.paimon.conf
-
 import com.zto.fire.common.util.PropUtils
 
 /**
@@ -29,9 +28,19 @@ import com.zto.fire.common.util.PropUtils
 private[paimon] object FirePaimonConf {
   lazy val HIVE_CLUSTER = "hive.cluster"
   lazy val PAIMON_CATALOG_NAME = "paimon.catalog.name"
+  lazy val HIVE_CLUSTER_MAP_PREFIX = "fire.hive.cluster.map."
+  // 初始化hive集群名称与metastore映射
+  private lazy val hiveMetastoreMap = PropUtils.sliceKeys(this.HIVE_CLUSTER_MAP_PREFIX)
 
   // paimon catalog名称
   lazy val paimonCatalogName = PropUtils.getString(this.PAIMON_CATALOG_NAME, "paimon")
   // hive集群标识（batch/streaming/test）
   lazy val hiveCluster = PropUtils.getString(this.HIVE_CLUSTER, "")
+
+  /**
+   * 根据hive集群名称获取metastore地址
+   */
+  def getMetastoreUrl: String = {
+    this.hiveMetastoreMap.getOrElse(hiveCluster, hiveCluster)
+  }
 }
