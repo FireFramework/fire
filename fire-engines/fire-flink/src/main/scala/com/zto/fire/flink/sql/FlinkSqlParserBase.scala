@@ -310,8 +310,15 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
         val tableIdentifier = TableIdentifier(identifier.toString, hive.getDbName)
         SQLLineageManager.setPhysicalTable(tableIdentifier, tableIdentifier.toString)
         SQLLineageManager.setTmpView(tableIdentifier, tableIdentifier.toString)
-        SQLLineageManager.setCatalog(tableIdentifier, this.getCatalog(identifier).toString)
-        SQLLineageManager.setConnector(tableIdentifier, "hive")
+
+        // 兼容paimon表血缘解析
+        if (!"paimon".equals(SQLLineageManager.getTableInstance(tableIdentifier).getCatalog)) {
+          SQLLineageManager.setCatalog(tableIdentifier, this.getCatalog(identifier).toString)
+        }
+
+        if (!"paimon".equals(SQLLineageManager.getTableInstance(tableIdentifier).getConnector)) {
+          SQLLineageManager.setConnector(tableIdentifier, "hive")
+        }
 
         if (hive.getSd != null) {
           // 获取表存储路径
