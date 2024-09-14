@@ -286,6 +286,226 @@ private[fire] trait AnnoManager extends Logging {
   }
 
   /**
+   * 将@Paimon中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon注解实例
+   */
+  @Internal
+  def mapPaimon(paimon: Paimon): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon2中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon2注解实例
+   */
+  @Internal
+  def mapPaimon2(paimon: Paimon2): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon3中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon3注解实例
+   */
+  @Internal
+  def mapPaimon3(paimon: Paimon3): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon4中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon4注解实例
+   */
+  @Internal
+  def mapPaimon4(paimon: Paimon4): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon5中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon5注解实例
+   */
+  @Internal
+  def mapPaimon5(paimon: Paimon5): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon6中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon6注解实例
+   */
+  @Internal
+  def mapPaimon6(paimon: Paimon6): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon7中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon7注解实例
+   */
+  @Internal
+  def mapPaimon7(paimon: Paimon7): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon8中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon8注解实例
+   */
+  @Internal
+  def mapPaimon8(paimon: Paimon8): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon9中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon9注解实例
+   */
+  @Internal
+  def mapPaimon9(paimon: Paimon9): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon10中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon10注解实例
+   */
+  @Internal
+  def mapPaimon10(paimon: Paimon10): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon11中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon11注解实例
+   */
+  @Internal
+  def mapPaimon11(paimon: Paimon11): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 解析paimon注解中的配置信息
+   */
+  @Internal
+  private[this] def parsePaimonConf(datasource: String, value: String, props: Array[String], partitionTTL: String, partitionFormat: String,
+                      tagOnSavepoint: Boolean, tagAutoCreate: Boolean, tagTTL: String, bucket: Long, tagNumMax: Long, snapshotNumMin: Long,
+                      snapshotNumMax: Long, snapshotExpireLimit: Long, tagCreationPeriod: String, mergeEngine: String, fileFormat: String,
+                      writeOnly: Boolean, snapshotTTL: String, mergeBufferSize: String, compactionTrigger: Long, writeBufferSize: String): Unit = {
+
+    requireNonEmpty(datasource)("datasource不能为空，请在@Paimon注解中指定数据源，该参数与建表语句中的with datasource一致")
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(value).foreach(kv => toPaimonConf(datasource, kv))
+    // 解析通过注解配置的单项配置信息
+    props.map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toPaimonConf(datasource, kv))
+
+    // 解析自定义参数
+    toPaimonConf(datasource, ("partition.expiration-time", partitionTTL))
+    toPaimonConf(datasource, ("partition.timestamp-formatter", partitionFormat))
+    toPaimonConf(datasource, ("sink.savepoint.auto-tag", tagOnSavepoint.toString))
+    toPaimonConf(datasource, ("tag.automatic-creation", tagAutoCreate.toString))
+    toPaimonConf(datasource, ("tag.default-time-retained", tagTTL))
+
+    if (bucket != 0) {
+      toPaimonConf(datasource, ("bucket", bucket.toString))
+    }
+
+    if (tagNumMax > 0) {
+      toPaimonConf(datasource, ("tag.num-retained-max", tagNumMax.toString))
+    }
+
+    if (snapshotNumMin > 0) {
+      toPaimonConf(datasource, ("snapshot.num-retained.min", snapshotNumMin.toString))
+    }
+
+    if (snapshotNumMax > 0) {
+      toPaimonConf(datasource, ("snapshot.num-retained.max", snapshotNumMax.toString))
+    }
+
+    if (snapshotExpireLimit > 0) {
+      toPaimonConf(datasource, ("snapshot.expire.limit", snapshotExpireLimit.toString))
+    }
+
+    toPaimonConf(datasource, ("tag.creation-period", tagCreationPeriod))
+    toPaimonConf(datasource, ("merge-engine", mergeEngine))
+
+    toPaimonConf(datasource, ("file.format", fileFormat))
+    toPaimonConf(datasource, ("write-only", writeOnly.toString))
+    toPaimonConf(datasource, ("snapshot.time-retained", snapshotTTL))
+
+    toPaimonConf(datasource, ("local-merge-buffer-size", mergeBufferSize))
+    if (compactionTrigger > 0) {
+      toPaimonConf(datasource, ("num-sorted-run.compaction-trigger", compactionTrigger.toString))
+    }
+    toPaimonConf(datasource, ("write-buffer-size", writeBufferSize))
+
+    /**
+     * 将配置转换为paimon的参数
+     */
+    def toPaimonConf(datasource: String, kv: (String, String)): Unit = {
+      if (noEmpty(kv._1, kv._2)) {
+        val keyPrefix = "flink.sql.with." + datasource + "."
+        this.put(keyPrefix + kv._1, kv._2)
+      }
+    }
+  }
+
+  /**
    * 将@Hudi中配置的信息映射为键值对形式
    *
    * @param hudi
@@ -1300,7 +1520,8 @@ object AnnoManager extends Logging {
     classOf[RocketMQ], classOf[RocketMQ2],
     classOf[RocketMQ3], classOf[RocketMQ4], classOf[RocketMQ5], classOf[RocketMQ6], classOf[RocketMQ7], classOf[RocketMQ8], classOf[RocketMQ9], classOf[RocketMQ10], classOf[RocketMQ11],
     classOf[Hudi], classOf[Hudi2], classOf[Hudi3],
-    classOf[Hudi4], classOf[Hudi5], classOf[Hudi6], classOf[Hudi7], classOf[Hudi8], classOf[Hudi9], classOf[Hudi10], classOf[Hudi11]
+    classOf[Hudi4], classOf[Hudi5], classOf[Hudi6], classOf[Hudi7], classOf[Hudi8], classOf[Hudi9], classOf[Hudi10], classOf[Hudi11],
+    classOf[Paimon], classOf[Paimon2], classOf[Paimon3], classOf[Paimon4], classOf[Paimon5], classOf[Paimon6], classOf[Paimon7], classOf[Paimon8], classOf[Paimon9], classOf[Paimon10], classOf[Paimon11]
   )
 
   // 用于注册所有的生命周期注解

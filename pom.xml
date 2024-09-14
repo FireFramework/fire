@@ -96,6 +96,7 @@
         <jsqlparser.version>4.5</jsqlparser.version>
         <htrace.version>3.2.0-incubating</htrace.version>
         <build.dest>pub</build.dest>
+        <janino.version>3.0.16</janino.version>
         <httpcomponents.version>4.3.3</httpcomponents.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <rocketmq.schema.registry.version>0.1.0</rocketmq.schema.registry.version>
@@ -531,7 +532,35 @@
         <profile>
             <id>hadoop-3.2</id>
             <properties>
-                <hadoop.version>3.2.0</hadoop.version>
+                <hadoop.version>3.2.4</hadoop.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-hive_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>hadoop-3.3</id>
+            <properties>
+                <hadoop.version>3.3.6</hadoop.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-hive_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>hadoop-3.4</id>
+            <properties>
+                <hadoop.version>3.4.0</hadoop.version>
             </properties>
             <dependencies>
                 <dependency>

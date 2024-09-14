@@ -151,11 +151,11 @@
             <scope>${maven.scope}</scope>
         </dependency>
 
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.paimon</groupId>
             <artifactId>paimon-flink-${flink.major.version}</artifactId>
             <version>${paimon.version}</version>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>org.apache.paimon</groupId>
             <artifactId>paimon-hive-catalog</artifactId>

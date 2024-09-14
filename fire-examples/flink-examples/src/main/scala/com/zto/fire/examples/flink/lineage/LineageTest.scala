@@ -34,8 +34,16 @@ import org.apache.flink.api.scala._
 
 import java.util.concurrent.TimeUnit
 
-@HBase("fat")
-@Config("""fire.lineage.run.initialDelay=10""")
+@Hive("fat")
+@Config(
+  """
+    |fire.lineage.run.initialDelay=10
+    |fire.lineage.enable=true
+    |fire.lineage.collect_sql.enable=true
+    |fire.lineage.debug.print=true
+    |fire.lineage.debug.enable=true
+    |fire.lineage.column.enable=false
+    |""")
 @Streaming(interval = 60, unaligned = true, parallelism = 2) // 100s做一次checkpoint，开启非对齐checkpoint
 @RocketMQ(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @RocketMQ5(brokers = "bigdata_test", topics = "fire5", groupId = "fire5")
@@ -52,96 +60,45 @@ object LineageTest extends FlinkStreaming {
     LineageManager.show(30)
     sql(
       """
-        |CREATE TABLE t_student (
-        |   id BIGINT,
-        |   name STRING,
-        |   age INT,
-        |   createTime TIMESTAMP(13),
-        |   sex Boolean
-        |) WITH (
-        |   'connector' = 'http',
-        |   'cluster' = 'http://www.baidu.com',
-        |   'url' = 'http://www.baidu.com',
-        |   'rows-per-second'='1', -- 5000/s
-        |   'fields.id.min'='1', -- id字段，1到1000之间
-        |   'fields.id.max'='1000',
-        |   'fields.name.length'='5', -- name字段，长度为5
-        |   'fields.age.min'='1', -- age字段，1到120岁
-        |   'fields.age.max'='120'
-        |)
+        |create table
+        |  mobilegatew (
+        | appname	    string
+        |,file	        string
+        |,host	        string
+        |,hostname	    string
+        |,localip	    string
+        |,message	    string
+        |,source_type    string
+        |,`timestamp`	    string
+        |  )
+        |with
+        |  (
+        |    'connector' = 'kafka'
+        |  , 'dpa.datasource.name'='mobilegateway'
+        |  , 'properties.group.id' = 'mobilegateway_consumer'
+        |  , 'scan.startup.mode' = 'latest-offset'
+        |  , 'format' = 'json'
+        |  );
+        |
+        |
+        |
+        |use catalog hive;
+        |
+        |use catalog `default`;
+        |
+        |insert into
+        |  hive.ods.ods_log_mobilegateway
+        |select
+        | appname	     as    appname
+        |,file	         as    file
+        |,host	         as    host
+        |,hostname	     as    hostname
+        |,localip	     as    localip
+        |,message	     as    message
+        |,source_type     as    source_type
+        |,`timestamp`	     as    `timestamp`
+        |,substr(regexp_replace(`timestamp`,'-',''),1,8) as ds
+        |from   mobilegatew;
         |""".stripMargin)
-    LineageManager.addHttpLineage("http://www.baidu.com", Operation.SINK)
-
-    this.fire.createKafkaDirectStream().print()
-    val dstream = this.fire.createRocketMqPullStream()
-    dstream.map(t => {
-      val timestamp = DateFormatUtils.formatCurrentDateTime()
-      val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-      this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
-      HBaseConnector.get[Student](hbaseTable, Seq("1"))
-      t
-    }).print()
-
-    /*this.fire.fromSourceLineage(source, WatermarkStrategy.noWatermarks(), "kafka") {
-      LineageManager.addKafkaLineage(keyNum = 1, Operation.SOURCE)
-    }*/
-
-    // 方式一：
-    dstream.addSinkLineage(x => println("addSinkLineage.addBlackHoleLineage=>" + x)) {
-      LineageManager.addBlackHoleLineage
-    }
-
-    dstream.addSinkLineage(x => println("addSinkLineage.kafkaSink=>" + x)) {
-      LineageManager.addKafkaLineage(keyNum = 5, Operation.SINK)
-    }
-
-    dstream.addSinkLineage(x => println("addSinkLineage.rocketSink=>" + x)) {
-      LineageManager.addRocketMQLineage(keyNum = 5, Operation.SINK)
-    }
-
-    dstream.addSinkLineage(x => println("addSinkLineage.rocketSink=>" + x)) {
-      LineageManager.addTidbLineage("t_user", keyNum = 5, Operation.SINK)
-      // 多个数据源
-      LineageManager.addMySQLLineage2("jdbc:mysql://mysql-server:3306/fire?useSSL=true", "t_student", "fire", Operation.SELECT, Operation.DELETE, Operation.INSERT)
-    }
-
-
-    // 方式二：
-    dstream.addSinkLineage2(x => println("addSinkLineage2=>" + x))(new BlackholeDatasource(Datasource.PRINT.toString), Operation.SINK)
-    dstream.addSink(x => println("原生：" + x))
-
-    sql("""
-          |CREATE table source (
-          |  id int,
-          |  name string,
-          |  age int,
-          |  length double,
-          |  data DECIMAL(10, 5)
-          |) with (
-          | 'connector'='fire-rocketmq',
-          | 'format'='json',
-          | 'rocket.brokers.name'='bigdata_test',
-          | 'rocket.topics'='fire',
-          | 'rocket.group.id'='fire',
-          | 'rocket.consumer.tag'='*'
-          |);
-          |
-          |CREATE table sink (
-          |  id int,
-          |  name string,
-          |  age int,
-          |  length double,
-          |  data DECIMAL(10, 5)
-          |) with (
-          | 'connector'='fire-rocketmq',
-          | 'format'='json',
-          | 'rocket.brokers.name'='bigdata_test',
-          | 'rocket.topics'='fire2',
-          | 'rocket.consumer.tag'='*',
-          | 'rocket.sink.parallelism'='1'
-          |);
-          |
-          |insert into sink select * from source;
-          |""".stripMargin)
   }
 }
