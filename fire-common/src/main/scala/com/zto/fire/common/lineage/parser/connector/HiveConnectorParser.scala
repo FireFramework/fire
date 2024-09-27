@@ -83,7 +83,7 @@ case class HiveDatasource(datasource: String, cluster: String, tableName: String
     Objects.equals(datasource, target.datasource) && Objects.equals(cluster, target.cluster) && Objects.equals(tableName, target.tableName)
   }
 
-  override def hashCode(): Int = Objects.hash(datasource, cluster)
+  override def hashCode(): Int = Objects.hash(datasource, cluster, tableName)
 }
 
 object HiveDatasource extends SqlToDatasource {

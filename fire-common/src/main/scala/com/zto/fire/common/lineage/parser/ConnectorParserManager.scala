@@ -19,7 +19,7 @@ package com.zto.fire.common.lineage.parser
 
 import com.zto.fire.common.bean.TableIdentifier
 import com.zto.fire.common.enu.Operation
-import com.zto.fire.common.lineage.parser.connector.UnknownConnectorParser
+import com.zto.fire.common.lineage.parser.connector.{HiveDatasource, UnknownConnectorParser}
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
 import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.predef._
@@ -125,7 +125,6 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
    */
   def merge[T <: DatasourceDesc : ClassTag](datasourceList: JSet[DatasourceDesc], targetDesc: DatasourceDesc): JHashSet[DatasourceDesc] = {
     val mergeSet = new CopyOnWriteArraySet[DatasourceDesc](datasourceList)
-    mergeSet.addAll(datasourceList)
 
     mergeSet.foreach(sourceDesc => {
       if (sourceDesc.getClass == targetDesc.getClass) {
@@ -138,9 +137,7 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
       }
     })
 
-    val finalSet = new JHashSet[DatasourceDesc]()
-    finalSet.addAll(mergeSet)
-    finalSet
+    new JHashSet[DatasourceDesc](mergeSet)
   }
 
   /**
@@ -184,17 +181,26 @@ private[fire] object ConnectorParserManager extends ConnectorParser {
 
       if (targetOperations.isEmpty) return
 
-      // 将target中的operation几盒添加到source数据源中
+      // 将target中的operation集合添加到source数据源中
       val clazz = source.getClass
       val operationMethod = ReflectionUtils.getMethodByName(clazz, "operation")
       if (operationMethod != null) {
         val operation = operationMethod.invoke(source)
-        val sourceOptions = if (operation != null) operation.asInstanceOf[JHashSet[Operation]] else new JHashSet[Operation]()
+
+        // 克隆一个全新的set并合并source中已有的数据，避免因多个case class实例引用同一个set而导致set中的数据被批量修改的bug
+        val finalOptions = new JHashSet[Operation]()
+        if (operation != null && operation.isInstanceOf[JHashSet[_]]) {
+          val sourceOperation = operation.asInstanceOf[JHashSet[Operation]]
+          if (sourceOperation != null && sourceOperation.nonEmpty) {
+            finalOptions.addAll(sourceOperation)
+          }
+        }
+
         if (operation != null) {
           val methodEq = ReflectionUtils.getMethodByName(clazz, "operation_$eq")
           if (methodEq != null) {
-            sourceOptions.addAll(targetOperations)
-            methodEq.invoke(source, sourceOptions)
+            finalOptions.addAll(targetOperations)
+            methodEq.invoke(source, finalOptions)
           }
         }
       }
