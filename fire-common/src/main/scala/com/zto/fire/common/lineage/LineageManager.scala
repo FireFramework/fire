@@ -961,14 +961,25 @@ object LineageManager extends Logging {
   private[fire] def mergeLineageMap(current: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]], target: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
     printLog(s"1. 双血缘map合并 current：$current target：$target")
     target.foreach(ds => {
-      val datasourceDesc = current.mergeGet(ds._1)(ds._2)
-      if (ds._2.nonEmpty) {
-        ds._2.foreach(desc => {
-          current.put(ds._1, this.manager.mergeDatasource(datasourceDesc, desc))
+      val key = ds._1
+      val value = ds._2
+
+      if (current.containsKey(key) && value.nonEmpty) {
+        // 如果current中已存在，则进行merge操作
+        value.foreach(desc => {
+          val currentValue = current.get(key)
+          val mergedValue = this.manager.mergeDatasource(currentValue, desc)
+          current.put(key, mergedValue)
+          printLog(s"2. 合并已存在的血缘到map中 key：$key \n currentValue：$currentValue \n targetValue: $desc \n mergedValue：$mergedValue")
         })
+      } else {
+        // 如果当前current中不存在该数据源，则直接添加
+        current.put(key, value)
+        printLog(s"2. 添加不存在的血缘到map中 key：$key value：$value")
       }
     })
-    printLog(s"2. 双血缘map合并 current：$current")
+
+    printLog(s"3. 双血缘map合并 current：$current")
     current
   }
 }
