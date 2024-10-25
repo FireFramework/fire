@@ -167,6 +167,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_DISTRIBUTE_EXECUTE_CLASS = "fire.distribute.execute.class"
   lazy val FIRE_ERROR_TOLERANCE_LEVEL = "fire.error.tolerance.level"
   lazy val FIRE_ERROR_TOLERANCE_THRESHOLD = "fire.error.tolerance.threshold"
+  lazy val FIRE_DEBUG_SHUTDOWN_SLEEP = "fire.debug.shutdown.sleep"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -230,6 +231,8 @@ private[fire] object FireFrameworkConf {
   lazy val connectorShutdownHookEnable = PropUtils.getBoolean(this.FIRE_CONNECTOR_SHUTDOWN_HOOK_ENABLE, false)
   // 用于指定当前运行环境是否为local模式（主要用于flink-shell的本地配置文件加载）
   lazy val localEnv = PropUtils.getBoolean(this.FIRE_ENV_LOCAL, false)
+  // 当jvm退出前睡眠指定的时间（ms)
+  lazy val shutdownSleep = PropUtils.getLong(this.FIRE_DEBUG_SHUTDOWN_SLEEP, 5000L)
 
   // fire日志打印黑名单
   lazy val fireConfBlackList: Set[String] = {
