@@ -77,7 +77,7 @@ object ExceptionBus extends Logging {
     val msg = this.getAndClear
     if (msg._1.nonEmpty) {
       msg._1.foreach(t => {
-        MQProducer.send(mqUrl, mqTopic, new ExceptionMsg(t._2, t._3).toString, otherConf = kafkaConfMap)
+        MQProducer.send(mqUrl, mqTopic, new ExceptionMsg(t._2, t._3).toString, otherConf = kafkaConfMap, throwable = false)
       })
       logDebug(s"异常诊断：本轮发送异常共计${msg._1.size}个.")
     }

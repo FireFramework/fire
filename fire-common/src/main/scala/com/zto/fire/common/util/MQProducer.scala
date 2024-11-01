@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @since 2.3.1
  */
 class MQProducer(url: String, mqType: MQType = MQType.kafka,
-                 otherConf: Map[String, String] = Map.empty) extends Logging {
+                 otherConf: Map[String, String] = Map.empty, throwable: Boolean = true) extends Logging {
   private lazy val maxRetries = FireFrameworkConf.exceptionTraceSendMQMaxRetries
   private lazy val sendTimeout = FireFrameworkConf.exceptionSendTimeout
   private var sendErrorCount = 0
@@ -128,6 +128,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
         if (exception != null) {
           sendErrorCount += 1
           logWarning("Send msg to kafka failed!", exception)
+          if (throwable) throw exception
         } else sendErrorCount = 0
       }
     })
@@ -172,6 +173,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
         if (exception != null) {
           sendErrorCount += 1
           logWarning("Send msg to rocketmq failed!", exception)
+          if (throwable) throw exception
         } else sendErrorCount = 0
       }
     }, timeout)
@@ -247,7 +249,7 @@ object MQProducer {
   }
 
   def apply(url: String, mqType: MQType = MQType.kafka,
-            otherConf: Map[String, String] = Map.empty) = new MQProducer(url, mqType, otherConf)
+            otherConf: Map[String, String] = Map.empty, throwable: Boolean = true) = new MQProducer(url, mqType, otherConf, throwable)
 
   /**
    * 发送消息到指定的mq topic
@@ -258,8 +260,8 @@ object MQProducer {
    * 优化参数
    */
   def send(url: String, topic: String, msg: String,
-           mqType: MQType = MQType.kafka, otherConf: Map[String, String] = Map.empty): Unit = {
-    this.sendRecord(url, MQRecord(topic, msg), mqType, otherConf)
+           mqType: MQType = MQType.kafka, otherConf: Map[String, String] = Map.empty, throwable: Boolean = true): Unit = {
+    this.sendRecord(url, MQRecord(topic, msg), mqType, otherConf, throwable)
   }
 
   /**
@@ -271,31 +273,31 @@ object MQProducer {
    * 优化参数
    */
   def sendRecord(url: String, record: MQRecord,
-                 mqType: MQType = MQType.kafka, otherConf: Map[String, String] = Map.empty): Unit = {
-    val producer = this.producerMap.mergeGet(url + ":" + record.topic)(new MQProducer(url, mqType, otherConf))
+                 mqType: MQType = MQType.kafka, otherConf: Map[String, String] = Map.empty, throwable: Boolean = true): Unit = {
+    val producer = this.producerMap.mergeGet(url + ":" + record.topic)(new MQProducer(url, mqType, otherConf, throwable))
     producer.send(record)
   }
 
   /**
    * 将消息发送到kafka
    */
-  def sendKafka(url: String, topic: String, msg: String, otherConf: Map[String, String] = Map.empty): Unit = this.send(url, topic, msg, MQType.kafka, otherConf)
+  def sendKafka(url: String, topic: String, msg: String, otherConf: Map[String, String] = Map.empty, throwable: Boolean = true): Unit = this.send(url, topic, msg, MQType.kafka, otherConf, throwable)
 
   /**
    * 将消息发送到kafka
    */
-  def sendKafkaRecord(url: String, record: MQRecord, otherConf: Map[String, String] = Map.empty): Unit = this.sendRecord(url, record, MQType.kafka, otherConf)
+  def sendKafkaRecord(url: String, record: MQRecord, otherConf: Map[String, String] = Map.empty, throwable: Boolean = true): Unit = this.sendRecord(url, record, MQType.kafka, otherConf, throwable)
 
 
   /**
    * 将消息发送到rocketmq
    */
-  def sendRocketMQ(url: String, topic: String, msg: String, otherConf: Map[String, String] = Map.empty): Unit = this.send(url, topic, msg, MQType.rocketmq, otherConf)
+  def sendRocketMQ(url: String, topic: String, msg: String, otherConf: Map[String, String] = Map.empty, throwable: Boolean = true): Unit = this.send(url, topic, msg, MQType.rocketmq, otherConf, throwable)
 
   /**
    * 将消息发送到rocketmq
    */
-  def sendRocketMQRecord(url: String, record: MQRecord, otherConf: Map[String, String] = Map.empty): Unit = this.sendRecord(url, record, MQType.rocketmq, otherConf)
+  def sendRocketMQRecord(url: String, record: MQRecord, otherConf: Map[String, String] = Map.empty, throwable: Boolean = true): Unit = this.sendRecord(url, record, MQType.rocketmq, otherConf, throwable)
 }
 
 /**

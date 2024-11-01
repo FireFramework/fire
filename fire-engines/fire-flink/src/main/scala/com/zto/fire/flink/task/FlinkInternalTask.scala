@@ -46,7 +46,7 @@ private[fire] class FlinkInternalTask(baseFlink: BaseFlink) extends FireInternal
       if (FireFrameworkConf.lineageEnable && FireFrameworkConf.lineageSendMqEnable) {
         val lineageJson = JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue)
         LineageManager.printLog("向kafka发送血缘json：" + lineageJson)
-        MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, lineageJson)
+        MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, lineageJson, throwable = false)
       }
     }
   }
