@@ -525,9 +525,11 @@ object PropUtils extends Logging {
    */
   def setProperty(key: String, value: String): Unit = this.synchronized {
     if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
-      this.setAdaptiveProperty(this.adaptiveKey(key), value)
-      this.originalSettingsMap.put(key, value)
-      this.addRemoveKey(key)
+      // 去除前后空格等非法字符，避免影响引擎的正常运行
+      val trimKey = StringUtils.trim(key).replaceAll("　", "")
+      this.setAdaptiveProperty(this.adaptiveKey(trimKey), value)
+      this.originalSettingsMap.put(trimKey, value)
+      this.addRemoveKey(trimKey)
     }
   }
 
