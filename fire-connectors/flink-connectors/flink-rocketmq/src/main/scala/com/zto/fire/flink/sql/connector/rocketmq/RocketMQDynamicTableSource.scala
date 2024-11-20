@@ -19,20 +19,27 @@ package com.zto.fire.flink.sql.connector.rocketmq
 
 import com.zto.fire.common.conf.FireRocketMQConf
 import com.zto.fire.common.enu.Datasource.ROCKETMQ
-import com.zto.fire.common.lineage.LineageManager
-import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.getRocketMQProperties
-import com.zto.fire.predef._
 import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.lineage.parser.connector.RocketmqConnectorParser
+import com.zto.fire.flink.sql.connector.rocketmq.FireRocketMQDynamicSource.ReadableMetadata
+import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.getRocketMQProperties
+import com.zto.fire.predef._
 import org.apache.flink.api.common.serialization.DeserializationSchema
+import org.apache.flink.formats.raw.RawFormatFactory
+import org.apache.flink.table.api.TableSchema
 import org.apache.flink.table.connector.ChangelogMode
 import org.apache.flink.table.connector.format.DecodingFormat
+import org.apache.flink.table.connector.source.abilities.SupportsReadingMetadata
 import org.apache.flink.table.connector.source.{DynamicTableSource, ScanTableSource, SourceFunctionProvider}
 import org.apache.flink.table.data.RowData
 import org.apache.flink.table.types.DataType
 import org.apache.flink.table.types.utils.DataTypeUtils
-import org.apache.rocketmq.flink.common.serialization.JsonDeserializationSchema
+import org.apache.rocketmq.flink.common.serialization.{JsonDeserializationSchema, RowKeyValueDeserializationSchema}
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSourceWithTag}
+
+import java.util
+import java.util.Collections
+import scala.collection.JavaConversions
 
 /**
  * 定义source table
@@ -45,11 +52,13 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
                                  keyProjection: Array[Int],
                                  valueProjection: Array[Int],
                                  keyPrefix: String,
-                                 tableOptions: JMap[String, String]) extends ScanTableSource {
+                                 tableOptions: JMap[String, String], schema: TableSchema) extends ScanTableSource with SupportsReadingMetadata {
+
+  var metadataKeys: JList[String] = Collections.emptyList()
 
   override def getChangelogMode: ChangelogMode = ChangelogMode.insertOnly()
 
-  override def copy(): DynamicTableSource = new RocketMQDynamicTableSource(physicalDataType, keyDecodingFormat, valueDecodingFormat, keyProjection, valueProjection, keyPrefix, tableOptions)
+  override def copy(): DynamicTableSource = new RocketMQDynamicTableSource(physicalDataType, keyDecodingFormat, valueDecodingFormat, keyProjection, valueProjection, keyPrefix, tableOptions, schema)
 
   override def asSummaryString(): String = "fire-rocketmq source"
 
@@ -100,10 +109,33 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
     // 消费rocketmq埋点信息
     RocketmqConnectorParser.addDatasource(ROCKETMQ, nameserver, topic, groupId, FOperation.SOURCE)
 
-    val keyDeserialization = createDeserialization(context, keyDecodingFormat, keyProjection, keyPrefix)
+    // val keyDeserialization = createDeserialization(context, keyDecodingFormat, keyProjection, keyPrefix)
     val valueDeserialization = createDeserialization(context, valueDecodingFormat, valueProjection, null)
 
-    SourceFunctionProvider.of(new RocketMQSourceWithTag(new JsonDeserializationSchema(keyDeserialization, valueDeserialization), properties), false)
+    if (valueDecodingFormat.toString.contains("Raw")) {
+      SourceFunctionProvider.of(
+        new RocketMQSourceWithTag(
+          createKeyValueDeserializationSchema(JavaConversions.mapAsJavaMap(properties.toMap)), properties),
+        false)
+    } else {
+      SourceFunctionProvider.of(new RocketMQSourceWithTag(new JsonDeserializationSchema(null, valueDeserialization), properties), false)
+    }
   }
 
+  private def createKeyValueDeserializationSchema(properties: util.Map[String, String]) = {
+    new RowKeyValueDeserializationSchema.Builder()
+      .setProperties(properties)
+      .setTableSchema(schema)
+      .build
+  }
+
+  override def listReadableMetadata(): JMap[JString, DataType] = {
+    val matadataMap = new util.HashMap[String, DataType]()
+    ReadableMetadata.values().foreach(metadata => matadataMap.putIfAbsent(metadata.key, metadata.dataType))
+    matadataMap
+  }
+
+  override def applyReadableMetadata(metadataKeys: JList[JString], producedDataType: DataType): Unit = {
+    this.metadataKeys = metadataKeys
+  }
 }

@@ -18,6 +18,7 @@
 package com.zto.fire.flink.sql.connector.rocketmq
 
 import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions._
+import com.zto.fire.predef._
 import org.apache.flink.api.common.serialization.{DeserializationSchema, SerializationSchema}
 import org.apache.flink.configuration.ConfigOption
 import org.apache.flink.table.connector.format.{DecodingFormat, EncodingFormat}
@@ -25,7 +26,7 @@ import org.apache.flink.table.connector.sink.DynamicTableSink
 import org.apache.flink.table.connector.source.DynamicTableSource
 import org.apache.flink.table.data.RowData
 import org.apache.flink.table.factories._
-import com.zto.fire.predef._
+import org.apache.flink.table.utils.TableSchemaUtils
 
 /**
  * sql connector的source与sink创建工厂
@@ -87,6 +88,7 @@ class RocketMQDynamicTableFactory extends DynamicTableSourceFactory with Dynamic
     val keyProjection = createKeyFormatProjection(tableOptions, physicalDataType)
     val valueProjection = createValueFormatProjection(tableOptions, physicalDataType)
     val keyPrefix = tableOptions.getOptional(KEY_FIELDS_PREFIX).orElse(null)
+    val schema = TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema())
 
     new RocketMQDynamicTableSource(physicalDataType,
       keyDecodingFormat,
@@ -94,7 +96,8 @@ class RocketMQDynamicTableFactory extends DynamicTableSourceFactory with Dynamic
       keyProjection,
       valueProjection,
       keyPrefix,
-      withOptions)
+      withOptions,
+      schema)
   }
 
   /**
