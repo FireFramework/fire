@@ -357,7 +357,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                             }
                         }
                     } catch (Exception e) {
-                        LOG.error("{} 获取topic队列信息失败！", consumerLogInfo);
+                        LOG.error(consumerLogInfo + " 获取topic队列信息失败！", e);
                     }
                 }
             }, 30, 30, TimeUnit.SECONDS);

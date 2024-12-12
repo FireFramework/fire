@@ -29,13 +29,47 @@ import com.zto.fire.flink.anno.Streaming
  * @create 2021-01-18 17:24
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Streaming(parallelism = 2, interval = 30)
+@Streaming(parallelism = 2, interval = 30, disableOperatorChaining = true)
 object RocketMQConnectorTest extends FlinkStreaming {
 
-  @Step1("定义RocketMQ源表")
-  def source: Unit = {
+  @Step1("测试raw format")
+  def raw: Unit = {
     sql("""
-          |CREATE table source (
+          |CREATE table rawSource (
+          |  name STRING
+          |) with (
+          | 'connector'='fire-rocketmq',
+          | 'format'='raw',
+          | 'rocket.brokers.name'='bigdata_test',
+          | 'rocket.topics'='fire-raw',
+          | 'rocket.group.id'='fire-raw',
+          | 'rocket.consumer.tag'='*'
+          |)
+          |""".stripMargin)
+
+    sql(
+      """
+        |CREATE table rawSink (
+        |  name STRING
+        |) with (
+        | 'connector'='fire-rocketmq',
+        | 'format'='json',
+        | 'rocket.brokers.name'='bigdata_test',
+        | 'rocket.topics'='fire-raw2',
+        | 'rocket.consumer.tag'='*',
+        | 'rocket.sink.parallelism'='1'
+        |)
+        |""".stripMargin)
+
+    sql("""
+          |insert into rawSink select * from rawSource
+          |""".stripMargin)
+  }
+
+  @Step2("测试json format")
+  def json: Unit = {
+    sql("""
+          |CREATE table jsonSource (
           |  id int,
           |  name string,
           |  age int,
@@ -50,13 +84,9 @@ object RocketMQConnectorTest extends FlinkStreaming {
           | 'rocket.consumer.tag'='*'
           |)
           |""".stripMargin)
-  }
-
-  @Step2("定义目标表")
-  def sink: Unit = {
     sql(
       """
-        |CREATE table sink (
+        |CREATE table jsonSink (
         |  id int,
         |  name string,
         |  age int,
@@ -71,12 +101,9 @@ object RocketMQConnectorTest extends FlinkStreaming {
         | 'rocket.sink.parallelism'='1'
         |)
         |""".stripMargin)
-  }
 
-  @Step3("数据sink")
-  def insert: Unit = {
     sql("""
-        |insert into sink select * from source
-        |""".stripMargin)
+          |insert into jsonSink select * from jsonSource
+          |""".stripMargin)
   }
 }
