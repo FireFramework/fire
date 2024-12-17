@@ -5,6 +5,8 @@
 
 package org.apache.flink.shaded.curator4.org.apache.curator.shaded.com.google.common.util.concurrent;
 
+import org.apache.flink.shaded.curator4.org.apache.curator.shaded.com.google.common.base.Preconditions;
+
 import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -35,6 +37,17 @@ public final class ThreadFactoryBuilder {
         this.priority = priority;
         return this;
     }
+
+    public ThreadFactoryBuilder setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
+        this.uncaughtExceptionHandler = (Thread.UncaughtExceptionHandler) Preconditions.checkNotNull(uncaughtExceptionHandler);
+        return this;
+    }
+
+    public ThreadFactoryBuilder setThreadFactory(ThreadFactory backingThreadFactory) {
+        this.backingThreadFactory = (ThreadFactory)Preconditions.checkNotNull(backingThreadFactory);
+        return this;
+    }
+
 
     public ThreadFactory build() {
         return doBuild(this);
