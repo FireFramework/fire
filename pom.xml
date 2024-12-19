@@ -833,18 +833,12 @@
             </properties>
         </profile>
 
-        <profile>
-            <id>paimon-zto-0.9.1</id>
-            <properties>
-                <paimon.version>0.9.1.1-SNAPSHOT</paimon.version>
-            </properties>
-        </profile>
-
         <!-- include zto env -->
         <profile>
             <id>zto-env</id>
             <properties>
                 <build.dest>zto</build.dest>
+                <paimon.version>0.9.1.1-SNAPSHOT</paimon.version>
             </properties>
             <activation>
                 <activeByDefault>false</activeByDefault>
