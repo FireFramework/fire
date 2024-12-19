@@ -817,6 +817,29 @@
                 <hudi.major.version>1.0</hudi.major.version>
             </properties>
         </profile>
+
+        <!-- paimon -->
+        <profile>
+            <id>paimon-0.8</id>
+            <properties>
+                <paimon.version>0.8.2</paimon.version>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>paimon-0.9</id>
+            <properties>
+                <paimon.version>0.9.0</paimon.version>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>paimon-zto-0.9.1</id>
+            <properties>
+                <paimon.version>0.9.1.1-SNAPSHOT</paimon.version>
+            </properties>
+        </profile>
+
         <!-- include zto env -->
         <profile>
             <id>zto-env</id>

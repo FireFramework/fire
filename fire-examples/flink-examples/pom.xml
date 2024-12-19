@@ -30,10 +30,6 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <properties>
-        <paimon.version>0.9.1.1-SNAPSHOT</paimon.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.zto.fire</groupId>
