@@ -119,6 +119,9 @@ public class CheckpointCoordinator {
 
     // TODO: ------------ start：二次开发代码 --------------- //
 
+    // 用于判断是否为首次checkpoint
+    private static Boolean isFirstCheckpoint = true;
+
     /**
      * The base checkpoint interval. Actual trigger time may be affected by the max concurrent
      * checkpoints and minimum-pause values
@@ -1951,8 +1954,10 @@ public class CheckpointCoordinator {
         }
 
         long delay = initDelay;
-        if (this.checkpointIdCounter.get() == 1 && this.checkpointAdaptiveEnable) {
+        if (isFirstCheckpoint && this.checkpointAdaptiveEnable) {
             delay = this.checkpointAdaptiveDelayStart * 1000;
+            isFirstCheckpoint = false;
+            LOG.warn("首次checkpoint延迟触发：{}s", delay);
         }
 
         this.currentCheckpointScheduledFuture = timer.scheduleAtFixedRate(
