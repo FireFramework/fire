@@ -19,6 +19,7 @@ package com.zto.fire.flink.sql
 
 import org.apache.calcite.avatica.util.{Casing, Quoting}
 import org.apache.calcite.sql.parser.{SqlParser => CalciteParser}
+import org.apache.flink.sql.parser.hive.impl.FlinkHiveSqlParserImpl
 import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl
 import org.apache.flink.table.api.{SqlDialect => FlinkSqlDialect}
 
@@ -40,7 +41,7 @@ object FlinkSqlParserConf extends FlinkSqlParserConfBase {
       .setUnquotedCasing(Casing.TO_UPPER)
       .setQuotedCasing(Casing.UNCHANGED)
 
-    configBuilder.setParserFactory(FlinkSqlParserImpl.FACTORY)
+    if (dialect == FlinkSqlDialect.DEFAULT) configBuilder.setParserFactory(FlinkSqlParserImpl.FACTORY) else configBuilder.setParserFactory(FlinkHiveSqlParserImpl.FACTORY)
     configBuilder.build
   }
 }

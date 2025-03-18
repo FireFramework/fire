@@ -5,7 +5,7 @@
 
 package org.apache.flink.shaded.curator4.org.apache.curator.shaded.com.google.common.util.concurrent;
 
-import org.apache.flink.shaded.curator4.org.apache.curator.shaded.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 
 import java.util.Locale;
 import java.util.concurrent.Executors;
