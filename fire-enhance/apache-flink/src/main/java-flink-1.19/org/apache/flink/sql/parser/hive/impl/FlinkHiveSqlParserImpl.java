@@ -44295,7 +44295,7 @@ public class FlinkHiveSqlParserImpl extends SqlAbstractParserImpl implements Fli
       return (jj_ntk = jj_nt.kind);
   }
 
-  private Vector jj_expentries = new Vector();
+  private java.util.Vector jj_expentries = new java.util.Vector();
   private int[] jj_expentry;
   private int jj_kind = -1;
   private int[] jj_lasttokens = new int[100];
@@ -44311,7 +44311,7 @@ public class FlinkHiveSqlParserImpl extends SqlAbstractParserImpl implements Fli
         jj_expentry[i] = jj_lasttokens[i];
       }
       boolean exists = false;
-      for (Enumeration e = jj_expentries.elements(); e.hasMoreElements();) {
+      for (java.util.Enumeration e = jj_expentries.elements(); e.hasMoreElements();) {
         int[] oldentry = (int[])(e.nextElement());
         if (oldentry.length == jj_expentry.length) {
           exists = true;
