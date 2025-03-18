@@ -78,7 +78,7 @@ public class FlinkKafkaConsumer<T> extends FlinkKafkaConsumerBase<T> {
         }
     }
 
-    protected AbstractFetcher<T, ?> createFetcher(SourceFunction.SourceContext<T> sourceContext, Map<KafkaTopicPartition, Long> assignedPartitionsWithInitialOffsets, SerializedValue<WatermarkStrategy<T>> watermarkStrategy, StreamingRuntimeContext runtimeContext, OffsetCommitMode offsetCommitMode, MetricGroup consumerMetricGroup, boolean useMetrics) throws Exception {
+    protected AbstractFetcher<T, ?> createFetcher(SourceContext<T> sourceContext, Map<KafkaTopicPartition, Long> assignedPartitionsWithInitialOffsets, SerializedValue<WatermarkStrategy<T>> watermarkStrategy, StreamingRuntimeContext runtimeContext, OffsetCommitMode offsetCommitMode, MetricGroup consumerMetricGroup, boolean useMetrics) throws Exception {
         adjustAutoCommitConfig(this.properties, offsetCommitMode);
         return new KafkaFetcher(sourceContext, assignedPartitionsWithInitialOffsets, watermarkStrategy, runtimeContext.getProcessingTimeService(), runtimeContext.getExecutionConfig().getAutoWatermarkInterval(), runtimeContext.getUserCodeClassLoader(), runtimeContext.getTaskNameWithSubtasks(), this.deserializer, this.properties, this.pollTimeout, runtimeContext.getMetricGroup(), consumerMetricGroup, useMetrics);
     }

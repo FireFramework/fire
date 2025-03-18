@@ -261,7 +261,7 @@ public class RocksDB extends RocksObject {
      * with new Options instance as underlying native statistics instance does not
      * use any locks to prevent concurrent updates.</p>
      *
-     * @param options {@link org.rocksdb.Options} instance.
+     * @param options {@link Options} instance.
      * @param path the path to the rocksdb.
      * @return a {@link RocksDB} instance on success, null if the specified
      *     {@link RocksDB} can not be opened.
@@ -304,7 +304,7 @@ public class RocksDB extends RocksObject {
      * ColumnFamily handles are disposed when the RocksDB instance is disposed.
      * </p>
      *
-     * @param options {@link org.rocksdb.DBOptions} instance.
+     * @param options {@link DBOptions} instance.
      * @param path the path to the rocksdb.
      * @param columnFamilyDescriptors list of column family descriptors
      * @param columnFamilyHandles will be filled with ColumnFamilyHandle instances
@@ -702,7 +702,7 @@ public class RocksDB extends RocksObject {
      * The ColumnFamilyHandle is automatically disposed with DB disposal.
      *
      * @param columnFamilyDescriptor column family to be created.
-     * @return {@link org.rocksdb.ColumnFamilyHandle} instance.
+     * @return {@link ColumnFamilyHandle} instance.
      *
      * @throws RocksDBException thrown if error happens in underlying
      *    native library.
@@ -784,7 +784,7 @@ public class RocksDB extends RocksObject {
      * only records a drop record in the manifest and prevents the column
      * family from flushing and compacting.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      *
      * @throws RocksDBException thrown if error happens in underlying
@@ -869,7 +869,7 @@ public class RocksDB extends RocksObject {
      * Set the database entry for "key" to "value" in the specified
      * column family.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param key the specified key to be inserted.
      * @param value the value associated with the specified key.
@@ -889,7 +889,7 @@ public class RocksDB extends RocksObject {
      * Set the database entry for "key" to "value" in the specified
      * column family.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param key The specified key to be inserted
      * @param offset the offset of the "key" array to be used, must
@@ -919,7 +919,7 @@ public class RocksDB extends RocksObject {
     /**
      * Set the database entry for "key" to "value".
      *
-     * @param writeOpts {@link org.rocksdb.WriteOptions} instance.
+     * @param writeOpts {@link WriteOptions} instance.
      * @param key the specified key to be inserted.
      * @param value the value associated with the specified key.
      *
@@ -935,7 +935,7 @@ public class RocksDB extends RocksObject {
     /**
      * Set the database entry for "key" to "value".
      *
-     * @param writeOpts {@link org.rocksdb.WriteOptions} instance.
+     * @param writeOpts {@link WriteOptions} instance.
      * @param key The specified key to be inserted
      * @param offset the offset of the "key" array to be used, must be
      *     non-negative and no larger than "key".length
@@ -965,9 +965,9 @@ public class RocksDB extends RocksObject {
      * Set the database entry for "key" to "value" for the specified
      * column family.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
-     * @param writeOpts {@link org.rocksdb.WriteOptions} instance.
+     * @param writeOpts {@link WriteOptions} instance.
      * @param key the specified key to be inserted.
      * @param value the value associated with the specified key.
      *
@@ -988,9 +988,9 @@ public class RocksDB extends RocksObject {
      * Set the database entry for "key" to "value" for the specified
      * column family.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
-     * @param writeOpts {@link org.rocksdb.WriteOptions} instance.
+     * @param writeOpts {@link WriteOptions} instance.
      * @param key the specified key to be inserted. Position and limit is used.
      *     Supports direct buffer only.
      * @param value the value associated with the specified key. Position and limit is used.
@@ -1014,7 +1014,7 @@ public class RocksDB extends RocksObject {
     /**
      * Set the database entry for "key" to "value".
      *
-     * @param writeOpts {@link org.rocksdb.WriteOptions} instance.
+     * @param writeOpts {@link WriteOptions} instance.
      * @param key the specified key to be inserted. Position and limit is used.
      *     Supports direct buffer only.
      * @param value the value associated with the specified key. Position and limit is used.
@@ -1039,9 +1039,9 @@ public class RocksDB extends RocksObject {
      * Set the database entry for "key" to "value" for the specified
      * column family.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
-     * @param writeOpts {@link org.rocksdb.WriteOptions} instance.
+     * @param writeOpts {@link WriteOptions} instance.
      * @param key The specified key to be inserted
      * @param offset the offset of the "key" array to be used, must be
      *     non-negative and no larger than "key".length
@@ -1123,7 +1123,7 @@ public class RocksDB extends RocksObject {
      * success, and a non-OK status on error.  It is not an error if "key"
      * did not exist in the database.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param key Key to delete within database
      *
@@ -1143,7 +1143,7 @@ public class RocksDB extends RocksObject {
      * success, and a non-OK status on error.  It is not an error if "key"
      * did not exist in the database.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param key Key to delete within database
      *
@@ -1160,7 +1160,7 @@ public class RocksDB extends RocksObject {
      * success, and a non-OK status on error.  It is not an error if "key"
      * did not exist in the database.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param key Key to delete within database
      * @param offset the offset of the "key" array to be used,
@@ -1237,7 +1237,7 @@ public class RocksDB extends RocksObject {
      * success, and a non-OK status on error.  It is not an error if "key"
      * did not exist in the database.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param writeOpt WriteOptions to be used with delete operation
      * @param key Key to delete within database
@@ -1258,7 +1258,7 @@ public class RocksDB extends RocksObject {
      * success, and a non-OK status on error.  It is not an error if "key"
      * did not exist in the database.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param writeOpt WriteOptions to be used with delete operation
      * @param key Key to delete within database
@@ -1278,7 +1278,7 @@ public class RocksDB extends RocksObject {
      * success, and a non-OK status on error.  It is not an error if "key"
      * did not exist in the database.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param writeOpt WriteOptions to be used with delete operation
      * @param key Key to delete within database
@@ -1300,7 +1300,7 @@ public class RocksDB extends RocksObject {
     /**
      * Get the value associated with the specified key within column family.
      *
-     * @param opt {@link org.rocksdb.ReadOptions} instance.
+     * @param opt {@link ReadOptions} instance.
      * @param key the key to retrieve the value. It is using position and limit.
      *     Supports direct buffer only.
      * @param value the out-value to receive the retrieved value.
@@ -1331,9 +1331,9 @@ public class RocksDB extends RocksObject {
     /**
      * Get the value associated with the specified key within column family.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
-     * @param opt {@link org.rocksdb.ReadOptions} instance.
+     * @param opt {@link ReadOptions} instance.
      * @param key the key to retrieve the value. It is using position and limit.
      *     Supports direct buffer only.
      * @param value the out-value to receive the retrieved value.
@@ -1509,7 +1509,7 @@ public class RocksDB extends RocksObject {
      * non-OK status on error. It is not an error if "key" did not exist in the
      * database.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle} instance
+     * @param columnFamilyHandle {@link ColumnFamilyHandle} instance
      * @param beginKey First key to delete within database (inclusive)
      * @param endKey Last key to delete within database (exclusive)
      *
@@ -1553,7 +1553,7 @@ public class RocksDB extends RocksObject {
      * non-OK status on error. It is not an error if "key" did not exist in the
      * database.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle} instance
+     * @param columnFamilyHandle {@link ColumnFamilyHandle} instance
      * @param writeOpt WriteOptions to be used with delete operation
      * @param beginKey First key to delete within database (included)
      * @param endKey Last key to delete within database (excluded)
@@ -1728,7 +1728,7 @@ public class RocksDB extends RocksObject {
      * success, and a non-OK status on error.  It is not an error if "key"
      * did not exist in the database.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param writeOpt WriteOptions to be used with delete operation
      * @param key Key to delete within database. It is using position and limit.
@@ -1884,7 +1884,7 @@ public class RocksDB extends RocksObject {
     /**
      * Get the value associated with the specified key within column family.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param key the key to retrieve the value.
      * @param value the out-value to receive the retrieved value.
@@ -1907,7 +1907,7 @@ public class RocksDB extends RocksObject {
     /**
      * Get the value associated with the specified key within column family.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param key the key to retrieve the value.
      * @param offset the offset of the "key" array to be used, must be
@@ -1942,7 +1942,7 @@ public class RocksDB extends RocksObject {
     /**
      * Get the value associated with the specified key.
      *
-     * @param opt {@link org.rocksdb.ReadOptions} instance.
+     * @param opt {@link ReadOptions} instance.
      * @param key the key to retrieve the value.
      * @param value the out-value to receive the retrieved value.
      * @return The size of the actual value that matches the specified
@@ -1964,7 +1964,7 @@ public class RocksDB extends RocksObject {
     /**
      * Get the value associated with the specified key.
      *
-     * @param opt {@link org.rocksdb.ReadOptions} instance.
+     * @param opt {@link ReadOptions} instance.
      * @param key the key to retrieve the value.
      * @param offset the offset of the "key" array to be used, must be
      *     non-negative and no larger than "key".length
@@ -1997,9 +1997,9 @@ public class RocksDB extends RocksObject {
     /**
      * Get the value associated with the specified key within column family.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
-     * @param opt {@link org.rocksdb.ReadOptions} instance.
+     * @param opt {@link ReadOptions} instance.
      * @param key the key to retrieve the value.
      * @param value the out-value to receive the retrieved value.
      * @return The size of the actual value that matches the specified
@@ -2022,9 +2022,9 @@ public class RocksDB extends RocksObject {
     /**
      * Get the value associated with the specified key within column family.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
-     * @param opt {@link org.rocksdb.ReadOptions} instance.
+     * @param opt {@link ReadOptions} instance.
      * @param key the key to retrieve the value.
      * @param offset the offset of the "key" array to be used, must be
      *     non-negative and no larger than "key".length
@@ -2098,7 +2098,7 @@ public class RocksDB extends RocksObject {
      * the value associated with the specified input key if any.  null will be
      * returned if the specified key is not found.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param key the key retrieve the value.
      * @return a byte array storing the value associated with the input key if
@@ -2124,7 +2124,7 @@ public class RocksDB extends RocksObject {
      * the value associated with the specified input key if any.  null will be
      * returned if the specified key is not found.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param key the key retrieve the value.
      * @param offset the offset of the "key" array to be used, must be
@@ -2191,7 +2191,7 @@ public class RocksDB extends RocksObject {
      * the value associated with the specified input key if any.  null will be
      * returned if the specified key is not found.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param key the key retrieve the value.
      * @param opt Read options.
@@ -2212,7 +2212,7 @@ public class RocksDB extends RocksObject {
      * the value associated with the specified input key if any.  null will be
      * returned if the specified key is not found.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param key the key retrieve the value.
      * @param offset the offset of the "key" array to be used, must be
@@ -2281,8 +2281,8 @@ public class RocksDB extends RocksObject {
      * {@code columnFamilyHandleList}.
      * </p>
      *
-     * @param columnFamilyHandleList {@link java.util.List} containing
-     *     {@link org.rocksdb.ColumnFamilyHandle} instances.
+     * @param columnFamilyHandleList {@link List} containing
+     *     {@link ColumnFamilyHandle} instances.
      * @param keys List of keys for which values need to be retrieved.
      * @return Map where key of map is the key passed by user and value for map
      *     entry is the corresponding value in DB.
@@ -2381,8 +2381,8 @@ public class RocksDB extends RocksObject {
      * </p>
      *
      * @param opt Read options.
-     * @param columnFamilyHandleList {@link java.util.List} containing
-     *     {@link org.rocksdb.ColumnFamilyHandle} instances.
+     * @param columnFamilyHandleList {@link List} containing
+     *     {@link ColumnFamilyHandle} instances.
      * @param keys of keys for which values need to be retrieved.
      * @return Map where key of map is the key passed by user and value for map
      *     entry is the corresponding value in DB.
@@ -2467,8 +2467,8 @@ public class RocksDB extends RocksObject {
      * {@code columnFamilyHandleList}.
      * </p>
      *
-     * @param columnFamilyHandleList {@link java.util.List} containing
-     *     {@link org.rocksdb.ColumnFamilyHandle} instances.
+     * @param columnFamilyHandleList {@link List} containing
+     *     {@link ColumnFamilyHandle} instances.
      * @param keys List of keys for which values need to be retrieved.
      * @return List of values for the given list of keys. List will contain
      * null for keys which could not be found.
@@ -2541,8 +2541,8 @@ public class RocksDB extends RocksObject {
      * </p>
      *
      * @param opt Read options.
-     * @param columnFamilyHandleList {@link java.util.List} containing
-     *     {@link org.rocksdb.ColumnFamilyHandle} instances.
+     * @param columnFamilyHandleList {@link List} containing
+     *     {@link ColumnFamilyHandle} instances.
      * @param keys of keys for which values need to be retrieved.
      * @return List of values for the given list of keys. List will contain
      * null for keys which could not be found.
@@ -2877,7 +2877,7 @@ public class RocksDB extends RocksObject {
      * The returned iterator should be closed before this db is closed.
      * </p>
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @return instance of iterator object.
      */
@@ -2897,7 +2897,7 @@ public class RocksDB extends RocksObject {
      * The returned iterator should be closed before this db is closed.
      * </p>
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance
      * @param readOptions {@link ReadOptions} instance.
      * @return instance of iterator object.
@@ -2913,9 +2913,9 @@ public class RocksDB extends RocksObject {
      * column families. Iterators are heap allocated and need to be deleted
      * before the db is deleted
      *
-     * @param columnFamilyHandleList {@link java.util.List} containing
-     *     {@link org.rocksdb.ColumnFamilyHandle} instances.
-     * @return {@link java.util.List} containing {@link org.rocksdb.RocksIterator}
+     * @param columnFamilyHandleList {@link List} containing
+     *     {@link ColumnFamilyHandle} instances.
+     * @return {@link List} containing {@link RocksIterator}
      *     instances
      *
      * @throws RocksDBException thrown if error happens in underlying
@@ -2932,10 +2932,10 @@ public class RocksDB extends RocksObject {
      * column families. Iterators are heap allocated and need to be deleted
      * before the db is deleted
      *
-     * @param columnFamilyHandleList {@link java.util.List} containing
-     *     {@link org.rocksdb.ColumnFamilyHandle} instances.
+     * @param columnFamilyHandleList {@link List} containing
+     *     {@link ColumnFamilyHandle} instances.
      * @param readOptions {@link ReadOptions} instance.
-     * @return {@link java.util.List} containing {@link org.rocksdb.RocksIterator}
+     * @return {@link List} containing {@link RocksIterator}
      *     instances
      *
      * @throws RocksDBException thrown if error happens in underlying
@@ -3013,7 +3013,7 @@ public class RocksDB extends RocksObject {
      *    of the sstables that make up the db contents.</li>
      * </ul>
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance, or null for the default column family.
      * @param property to be fetched. See above for examples
      * @return property value
@@ -3074,7 +3074,7 @@ public class RocksDB extends RocksObject {
     /**
      * Gets a property map.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance, or null for the default column family.
      * @param property to be fetched.
      *
@@ -3132,7 +3132,7 @@ public class RocksDB extends RocksObject {
      * <p><strong>Java 8</strong>: In Java 8 the value should be treated as
      * unsigned long using provided methods of type {@link Long}.</p>
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance, or null for the default column family
      * @param property to be fetched.
      *
@@ -3198,7 +3198,7 @@ public class RocksDB extends RocksObject {
      * should include the recently written data in the mem-tables (if
      * the mem-table type supports it), data serialized to disk, or both.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance, or null for the default column family
      * @param ranges the ranges over which to approximate sizes
      * @param sizeApproximationFlags flags to determine what to include in the
@@ -3260,7 +3260,7 @@ public class RocksDB extends RocksObject {
      * {@link #getApproximateSizes(ColumnFamilyHandle, List, SizeApproximationFlag...)},
      * except that it returns approximate number of records and size in memtables.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance, or null for the default column family
      * @param range the ranges over which to get the memtable stats
      *
@@ -3330,7 +3330,7 @@ public class RocksDB extends RocksObject {
      * </li>
      * </ul>
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance, or null for the default column family.
      *
      * @throws RocksDBException thrown if an error occurs within the native
@@ -3385,7 +3385,7 @@ public class RocksDB extends RocksObject {
      * </li>
      * </ul>
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance, or null for the default column family.
      * @param begin start of key range (included in range)
      * @param end end of key range (excluded from range)
@@ -3458,7 +3458,7 @@ public class RocksDB extends RocksObject {
      *
      * @deprecated Use {@link #compactRange(ColumnFamilyHandle, byte[], byte[], CompactRangeOptions)} instead
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance, or null for the default column family.
      * @param changeLevel reduce level after compaction
      * @param targetLevel target level to compact to
@@ -3542,7 +3542,7 @@ public class RocksDB extends RocksObject {
      *
      * @deprecated Use {@link #compactRange(ColumnFamilyHandle, byte[], byte[], CompactRangeOptions)} instead
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance.
      * @param begin start of key range (included in range)
      * @param end end of key range (excluded from range)
@@ -3576,7 +3576,7 @@ public class RocksDB extends RocksObject {
      * all data will have been pushed down to the last level containing
      * any data.</p>
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle} instance.
+     * @param columnFamilyHandle {@link ColumnFamilyHandle} instance.
      * @param begin start of key range (included in range)
      * @param end end of key range (excluded from range)
      * @param compactRangeOptions options for the compaction
@@ -3598,7 +3598,7 @@ public class RocksDB extends RocksObject {
     /**
      * Change the options for the column family handle.
      *
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle}
+     * @param columnFamilyHandle {@link ColumnFamilyHandle}
      *     instance, or null for the default column family.
      * @param mutableColumnFamilyOptions the options.
      *
@@ -3867,7 +3867,7 @@ public class RocksDB extends RocksObject {
      * is not GC'ed before this method finishes. If the wait parameter is
      * set to false, flush processing is asynchronous.</p>
      *
-     * @param flushOptions {@link org.rocksdb.FlushOptions} instance.
+     * @param flushOptions {@link FlushOptions} instance.
      * @throws RocksDBException thrown if an error occurs within the native
      *     part of the library.
      */
@@ -3883,8 +3883,8 @@ public class RocksDB extends RocksObject {
      * is not GC'ed before this method finishes. If the wait parameter is
      * set to false, flush processing is asynchronous.</p>
      *
-     * @param flushOptions {@link org.rocksdb.FlushOptions} instance.
-     * @param columnFamilyHandle {@link org.rocksdb.ColumnFamilyHandle} instance.
+     * @param flushOptions {@link FlushOptions} instance.
+     * @param columnFamilyHandle {@link ColumnFamilyHandle} instance.
      * @throws RocksDBException thrown if an error occurs within the native
      *     part of the library.
      */
@@ -3905,7 +3905,7 @@ public class RocksDB extends RocksObject {
      * specified up to the latest sequence number at the time when flush is
      * requested.
      *
-     * @param flushOptions {@link org.rocksdb.FlushOptions} instance.
+     * @param flushOptions {@link FlushOptions} instance.
      * @param columnFamilyHandles column family handles.
      * @throws RocksDBException thrown if an error occurs within the native
      *     part of the library.
@@ -4105,9 +4105,9 @@ public class RocksDB extends RocksObject {
      *
      * @param sequenceNumber sequence number offset
      *
-     * @return {@link org.rocksdb.TransactionLogIterator} instance.
+     * @return {@link TransactionLogIterator} instance.
      *
-     * @throws org.rocksdb.RocksDBException if iterator cannot be retrieved
+     * @throws RocksDBException if iterator cannot be retrieved
      *     from native-side.
      */
     public TransactionLogIterator getUpdatesSince(final long sequenceNumber)
@@ -4440,7 +4440,7 @@ public class RocksDB extends RocksObject {
      * Be very careful using this method.
      *
      * @param path the path to the Rocksdb database.
-     * @param options {@link org.rocksdb.Options} instance.
+     * @param options {@link Options} instance.
      *
      * @throws RocksDBException thrown if error happens in underlying
      *    native library.
