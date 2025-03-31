@@ -443,7 +443,7 @@ object LineageManager extends Logging {
    */
   def addKafkaLineage(keyNum: Int, operations: Operation*): Unit = {
     lazy val (finalBrokers, finalTopic, _) = KafkaUtils.getConfByKeyNum(null, null, null, keyNum)
-    this.addLineage(MQDatasource("kafka", finalBrokers, finalTopic, FireKafkaConf.kafkaGroupId(keyNum)), operations: _*)
+    this.addLineage(MQDatasource(Datasource.KAFKA.toString, finalBrokers, finalTopic, FireKafkaConf.kafkaGroupId(keyNum)), operations: _*)
   }
 
 
@@ -454,7 +454,7 @@ object LineageManager extends Logging {
    * 操作类型
    */
   def addKafkaLineage2(cluster: String, topics: String, groupId: String, operations: Operation*): Unit = {
-    this.addLineage(MQDatasource("kafka", cluster, topics, groupId), operations: _*)
+    this.addLineage(MQDatasource(Datasource.KAFKA.toString, cluster, topics, groupId), operations: _*)
   }
 
   /**
@@ -465,7 +465,7 @@ object LineageManager extends Logging {
    */
   def addRocketMQLineage(keyNum: Int, operations: Operation*): Unit = {
     val (finalBrokers, finalTopic, _, _) = RocketMQUtils.getConfByKeyNum(null, null, null, null, keyNum)
-    this.addLineage(MQDatasource("rocketmq", finalBrokers, finalTopic, FireRocketMQConf.rocketGroupId(keyNum)), operations: _*)
+    this.addLineage(MQDatasource(Datasource.ROCKETMQ.toString, finalBrokers, finalTopic, FireRocketMQConf.rocketGroupId(keyNum)), operations: _*)
   }
 
   /**
@@ -475,7 +475,7 @@ object LineageManager extends Logging {
    * 操作类型
    */
   def addRocketMQLineage2(cluster: String, topics: String, groupId: String, operations: Operation*): Unit = {
-    this.addLineage(MQDatasource("rocketmq", cluster, topics, groupId), operations: _*)
+    this.addLineage(MQDatasource(Datasource.ROCKETMQ.toString, cluster, topics, groupId), operations: _*)
   }
 
   // ----------------------------------------------- 数据库类型数据源 ---------------------------------------------------------- //
