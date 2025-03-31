@@ -19,6 +19,7 @@ package com.zto.fire.flink.ext.stream
 
 import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
+import com.zto.fire.flink.util.FlinkUtils
 import com.zto.fire.requireNonNull
 import org.apache.flink.api.connector.sink.Sink
 import org.apache.flink.streaming.api.datastream.DataStreamSink
@@ -64,6 +65,15 @@ abstract class DataStreamHelper[T](stream: DataStream[T]) {
   }
 
   /**
+   * Adds the given sink to this DataStream. Only streams with sinks added
+   * will be executed once the StreamExecutionEnvironment.execute(...)
+   * method is called.
+   */
+  protected[fire] def sinkToWrap(sink: org.apache.flink.api.connector.sink2.Sink[T]): DataStreamSink[T] = {
+    this.stream.sinkTo(sink)
+  }
+
+  /**
    * 添加sink数据源，并维护血缘信息
    */
   def addSinkLineage(sinkFunction: SinkFunction[T])(lineageFun: => Unit): DataStreamSink[T] = {
@@ -86,6 +96,15 @@ abstract class DataStreamHelper[T](stream: DataStream[T]) {
     lineageFun
     this.sinkToWrap(sink)
   }
+
+  /**
+   * 添加sinkTo数据源，并维护血缘信息
+   */
+  def sinkToLineage(sink: org.apache.flink.api.connector.sink2.Sink[T])(lineageFun: => Unit): DataStreamSink[T] = {
+    lineageFun
+    this.sinkToWrap(sink)
+  }
+
 
   /**
    * 添加sink数据源，并维护血缘信息

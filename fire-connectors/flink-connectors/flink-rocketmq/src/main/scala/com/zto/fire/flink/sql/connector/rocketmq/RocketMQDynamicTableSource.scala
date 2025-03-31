@@ -25,7 +25,6 @@ import com.zto.fire.flink.sql.connector.rocketmq.FireRocketMQDynamicSource.Reada
 import com.zto.fire.flink.sql.connector.rocketmq.RocketMQOptions.getRocketMQProperties
 import com.zto.fire.predef._
 import org.apache.flink.api.common.serialization.DeserializationSchema
-import org.apache.flink.formats.raw.RawFormatFactory
 import org.apache.flink.table.api.TableSchema
 import org.apache.flink.table.connector.ChangelogMode
 import org.apache.flink.table.connector.format.DecodingFormat
