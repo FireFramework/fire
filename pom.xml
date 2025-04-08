@@ -97,7 +97,7 @@
         <htrace.version>3.2.0-incubating</htrace.version>
         <build.dest>pub</build.dest>
         <janino.version>3.0.16</janino.version>
-        <httpcomponents.version>4.3.3</httpcomponents.version>
+        <httpcomponents.version>4.4.1</httpcomponents.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <rocketmq.schema.registry.version>0.1.0</rocketmq.schema.registry.version>
         <contains.scala.binary.version>_${scala.binary.version}</contains.scala.binary.version>
