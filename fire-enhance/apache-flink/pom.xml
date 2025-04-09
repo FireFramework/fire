@@ -150,6 +150,12 @@
       <version>2.6.5-8.0</version>
       <scope>${maven.scope}</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
+      <scope>${maven.scope}</scope>
+    </dependency>
 
     <!-- hive相关依赖 -->
     <dependency>
