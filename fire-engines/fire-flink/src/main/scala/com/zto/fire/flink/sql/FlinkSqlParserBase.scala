@@ -278,6 +278,22 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
   def isHudiTable(tableIdentifier: TableIdentifier): Boolean = false
 
   /**
+   * 用于判断给定的表是否为Paimon表
+   */
+  def isPaimonTable(tableIdentifier: TableIdentifier): Boolean = {
+    this.paimonTableMap.mergeGet(tableIdentifier.identifier) {
+      tryWithReturn {
+        if (!this.tableEnv.paimonCatalog.isPresent || isEmpty(tableIdentifier.database)) {
+          return false
+        }
+
+        val paimonCatalog = this.tableEnv.paimonCatalog.get()
+        paimonCatalog.listTables(tableIdentifier.database).contains(tableIdentifier.table)
+      }(this.logger, catchLog = s"判断${tableIdentifier}是否为paimon表失败", hook = false)
+    }
+  }
+
+  /**
    * 用于判断给定的表是否为hive表
    *
    * @param tableIdentifier 库表
@@ -318,6 +334,12 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
 
         if (!"paimon".equals(SQLLineageManager.getTableInstance(tableIdentifier).getConnector)) {
           SQLLineageManager.setConnector(tableIdentifier, "hive")
+        }
+
+        // 基于paimon catalog判断是否为paimon catalog
+        if (this.isPaimonTable(identifier)) {
+          SQLLineageManager.setCatalog(identifier, Datasource.PAIMON.toString)
+          SQLLineageManager.setConnector(tableIdentifier, "paimon")
         }
 
         if (hive.getSd != null) {
