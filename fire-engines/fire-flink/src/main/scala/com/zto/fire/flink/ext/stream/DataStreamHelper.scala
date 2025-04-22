@@ -19,7 +19,6 @@ package com.zto.fire.flink.ext.stream
 
 import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
-import com.zto.fire.flink.util.FlinkUtils
 import com.zto.fire.requireNonNull
 import org.apache.flink.api.connector.sink.Sink
 import org.apache.flink.streaming.api.datastream.DataStreamSink
@@ -70,7 +69,7 @@ abstract class DataStreamHelper[T](stream: DataStream[T]) {
    * method is called.
    */
   protected[fire] def sinkToWrap(sink: org.apache.flink.api.connector.sink2.Sink[T]): DataStreamSink[T] = {
-    this.stream.sinkTo(sink)
+    throw new UnsupportedOperationException("Only Zto Flink version is supported !!!")
   }
 
   /**

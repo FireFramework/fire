@@ -68,4 +68,5 @@ abstract class DataStreamHelperImpl[T](stream: DataStream[T]) extends DataStream
   override protected[fire] def sinkToWrap(sink: org.apache.flink.api.connector.sink2.Sink[T]): DataStreamSink[T] = {
     this.stream.$sinkTo(sink)
   }
+
 }
