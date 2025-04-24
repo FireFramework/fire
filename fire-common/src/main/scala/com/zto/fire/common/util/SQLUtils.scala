@@ -302,24 +302,33 @@ object SQLUtils extends Logging {
 
   /**
    * 解析SelectBody结构中的血缘信息
+   * with语法暂不支持解析
    */
   private def parseSelectBodyLineage(body: SelectBody, tables: JHashSet[(JString, Operation)]): Unit = {
-    if (body.isInstanceOf[PlainSelect]) {
-      val plainSelect = body.asInstanceOf[PlainSelect]
-      val fromItem = plainSelect.getFromItem
-      if (fromItem != null && fromItem.isInstanceOf[Table]) {
-        tables.add((this.getTableName(fromItem.asInstanceOf[Table]), Operation.SELECT))
-      }
+    body match {
+      case plainSelect: PlainSelect =>
+        val fromItem = plainSelect.getFromItem
+        processFromItem(fromItem, tables)
 
-      val joins = plainSelect.getJoins
-      if (joins != null && joins.nonEmpty) {
-        joins.filter(t => t != null && t.getRightItem != null).foreach(join => {
-          if (join.getRightItem.isInstanceOf[Table]) {
-            tables.add((this.getTableName(join.getRightItem.asInstanceOf[Table]), Operation.SELECT))
-          }
-        })
-      }
+        val joins = plainSelect.getJoins
+        if (joins != null && joins.nonEmpty) {
+          joins.filter(t => t != null && t.getRightItem != null).foreach(join => {
+            processFromItem(join.getRightItem, tables)
+          })
+        }
+      case otherItem => this.logWarning(s"子查询暂不支持解析: ${otherItem.getClass.getName}")
     }
+  }
+
+  /**
+   * 递归解析子查询中的血缘信息
+   */
+  private def processFromItem(item: FromItem, tables: JHashSet[(JString, Operation)]): Unit = item match {
+    case table: Table =>
+      tables.add((getTableName(table), Operation.SELECT))
+    case subSelect: SubSelect =>
+      parseSelectBodyLineage(subSelect.getSelectBody, tables)
+    case otherItem => this.logWarning(s"Item暂不支持解析: ${otherItem.getClass.getName}")
   }
 
   /**
