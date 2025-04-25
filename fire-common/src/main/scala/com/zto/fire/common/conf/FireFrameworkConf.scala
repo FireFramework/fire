@@ -107,6 +107,10 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_CONFIG_CENTER_REGISTER_CONF_PROD_ADDRESS = "fire.config_center.register.conf.prod.address"
   // 配置中心测试环境注册地址
   lazy val FIRE_CONFIG_CENTER_REGISTER_CONF_TEST_ADDRESS = "fire.config_center.register.conf.test.address"
+  // 配置中心接口header key
+  lazy val FIRE_CONFIG_CENTER_REGISTER_CONF_ZDP_HEADER_KEY = "fire.config_center.register.conf.zdp.header.key"
+  // 配置中心接口header value
+  lazy val FIRE_CONFIG_CENTER_REGISTER_CONF_ZDP_HEADER_VALUE = "fire.config_center.register.conf.zdp.header.value"
   // 配置打印黑名单，配置项以逗号分隔
   lazy val FIRE_CONF_PRINT_BLACKLIST = "fire.conf.print.blacklist"
   // 是否启用动态配置功能
@@ -281,6 +285,10 @@ private[fire] object FireFrameworkConf {
   lazy val configCenterProdAddress = PropUtils.getString(this.FIRE_CONFIG_CENTER_REGISTER_CONF_PROD_ADDRESS, "")
   // 配置中心测试环境注册地址
   lazy val configCenterTestAddress = PropUtils.getString(this.FIRE_CONFIG_CENTER_REGISTER_CONF_TEST_ADDRESS)
+  // 配置中心接口header key
+  lazy val configCenterZdpHeaderKey = PropUtils.getString(this.FIRE_CONFIG_CENTER_REGISTER_CONF_ZDP_HEADER_KEY, "")
+  // 配置中心接口header value
+  lazy val configCenterZdpHeaderValue = PropUtils.getString(this.FIRE_CONFIG_CENTER_REGISTER_CONF_ZDP_HEADER_VALUE, "")
   // 任务的唯一标识
   lazy val configCenterAppId = PropUtils.getString(this.FIRE_CONFIG_CENTER_APP_ID)
 

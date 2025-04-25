@@ -21,6 +21,7 @@ import com.zto.fire.common.bean.config.ConfigurationParam
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.ConfigureLevel
 import com.zto.fire.predef._
+import org.apache.commons.httpclient.Header
 import org.apache.commons.lang3.StringUtils
 
 /**
@@ -43,7 +44,7 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
     val rest = FireFrameworkConf.fireRestUrl
     if (StringUtils.isBlank(rest)) logWarning("Fire Rest Server 地址为空，将无法完成注册")
     s"""
-       |{"className": "${className.replace("$", "")}", "url": "$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "zrcKey": "${FireFrameworkConf.configCenterSecret}", "engine": "${PropUtils.engine}", "appId": "${getFireAppId}"}
+       |{ "url": "$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "engine": "${PropUtils.engine}", "taskId": "${getFireAppId}"}
       """.stripMargin
   }
 
@@ -75,7 +76,7 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
    */
   private[this] def invoke(url: String, param: String): String = {
     try {
-      HttpClientUtils.doPost(url, param)
+      HttpClientUtils.doPost(url, param,new Header(FireFrameworkConf.configCenterZdpHeaderKey,FireFrameworkConf.configCenterZdpHeaderValue))
     } catch {
       case _: Throwable => logError("调用配置中心接口失败，开始尝试调用测试环境配置中心接口。")
         ""
