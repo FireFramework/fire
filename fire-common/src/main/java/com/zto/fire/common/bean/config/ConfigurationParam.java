@@ -18,6 +18,8 @@
 package com.zto.fire.common.bean.config;
 
 import com.zto.fire.common.enu.ConfigureLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Map;
 
@@ -29,24 +31,13 @@ import java.util.Map;
  * @author ChengLong 2021-8-23 15:26:39
  * @since 2.2.0
  */
+@Getter
+@Setter
 public class ConfigurationParam {
-    private Integer code;
-    private Map<ConfigureLevel, Map<String, String>> content;
-
-    public Integer getCode() {
-        return code;
-    }
-
-    public void setCode(Integer code) {
-        this.code = code;
-    }
-
-    public Map<ConfigureLevel, Map<String, String>> getContent() {
-        return content;
-    }
-
-    public void setContent(Map<ConfigureLevel, Map<String, String>> content) {
-        this.content = content;
-    }
-
+    private boolean status;
+    private String statusCode;
+    private String message;
+    private Map<ConfigureLevel, Map<String, String>> result;
+    private String solution;
+    private String exception;
 }

@@ -101,8 +101,8 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
       FireUtils.exitError
     } else {
       val param = JSONUtils.parseObject[ConfigurationParam](json)
-      if (noEmpty(param, param.getCode, param.getContent) && param.getCode == 200) {
-        this.configCenterProperties.putAll(param.getContent)
+      if (param.isStatus && noEmpty(param, param.getResult) ) {
+        this.configCenterProperties.putAll(param.getResult)
         logInfo("配置中心参数已生效")
       }
     }
