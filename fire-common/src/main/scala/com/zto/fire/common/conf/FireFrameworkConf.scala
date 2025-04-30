@@ -172,6 +172,10 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_ERROR_TOLERANCE_LEVEL = "fire.error.tolerance.level"
   lazy val FIRE_ERROR_TOLERANCE_THRESHOLD = "fire.error.tolerance.threshold"
   lazy val FIRE_DEBUG_SHUTDOWN_SLEEP = "fire.debug.shutdown.sleep"
+  lazy val FIRE_CONTAINER_MONITOR_ENABLE = "fire.container.monitor.enable"
+  lazy val FIRE_CONTAINER_MONITOR_INTERVAL = "fire.container.monitor.interval"
+  lazy val FIRE_CONTAINER_MONITOR_PMEM_RATIO = "fire.container.monitor.pmem.ratio"
+  lazy val FIRE_CONTAINER_MONITOR_VMEM_RATIO = "fire.container.monitor.vmem.ratio"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -416,4 +420,24 @@ private[fire] object FireFrameworkConf {
    * 容错阈值
    */
   lazy val errorToleranceThreshold: Long = PropUtils.getLong(this.FIRE_ERROR_TOLERANCE_THRESHOLD, 0)
+
+  /**
+   * 是否启用yarn container内存使用监控
+   */
+  lazy val containerMonitorEnable: Boolean = PropUtils.getBoolean(this.FIRE_CONTAINER_MONITOR_ENABLE, true)
+
+  /**
+   * 监控container容器内存使用的周期
+   */
+  lazy val containerMonitorInterval: Long = PropUtils.getLong(this.FIRE_CONTAINER_MONITOR_INTERVAL, 10 * 1000)
+
+  /**
+   * 监控container容器物理内存的上限比例
+   */
+  lazy val containerMonitorPmemRatio: Double = PropUtils.getDouble(this.FIRE_CONTAINER_MONITOR_PMEM_RATIO, 1.8)
+
+  /**
+   * 监控container容器虚拟内存的上限比例
+   */
+  lazy val containerMonitorVmemRatio: Double = PropUtils.getDouble(this.FIRE_CONTAINER_MONITOR_VMEM_RATIO, 2.0)
 }

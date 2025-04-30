@@ -17,6 +17,15 @@
 
 package com.zto.fire.common.util;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.apache.hadoop.yarn.api.records.ContainerId;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
+
+import java.io.IOException;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,6 +34,8 @@ import java.util.regex.Pattern;
  * @author ChengLong 2018年8月10日 16:03:29
  */
 public class YarnUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(YarnUtils.class);
+    private static Integer containerPhysicalMemory;
 
     private YarnUtils() {}
     /**
@@ -45,5 +56,67 @@ public class YarnUtils {
         } else {
             return "";
         }
+    }
+
+    /**
+     * 获取Yarn ContainerId
+     *
+     * @return ContainerId
+     */
+    public static Optional<ContainerId> getContainerId() {
+        String id = System.getenv("CONTAINER_ID");
+        if (StringUtils.isBlank(id)) {
+            return Optional.empty();
+        }
+        return Optional.of(ContainerId.fromString(id));
+    }
+
+    /**
+     * 获取当前container的物理内存大小
+     */
+    public static int getContainerPhysicalMemory() {
+        if (containerPhysicalMemory != null) {
+            return containerPhysicalMemory;
+        }
+
+        YarnClient yarnClient = null;
+        try {
+            Optional<ContainerId> containerId = getContainerId();
+            if (!containerId.isPresent()) {
+                return 0;
+            }
+
+            YarnConfiguration conf = new YarnConfiguration();
+            yarnClient = YarnClient.createYarnClient();
+            yarnClient.init(conf);
+            yarnClient.start();
+            containerPhysicalMemory = yarnClient.getContainerReport(containerId.get()).getAllocatedResource().getMemory();
+            return containerPhysicalMemory;
+        } catch (Exception e) {
+            LOG.error("Yarn物理内存获取失败！", e);
+        } finally {
+            if (yarnClient != null) {
+                try {
+                    yarnClient.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * 获取当前container的物理内存上限
+     */
+    public static long getContainerPmemLimit(double ratio) {
+        return (long) (getContainerPhysicalMemory() * ratio);
+    }
+
+    /**
+     * 获取当前container的虚拟内存的上限
+     */
+    public static long getContainerVmemLimit(double ratio) {
+        return (long) (getContainerPhysicalMemory() * ratio);
     }
 }

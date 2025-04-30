@@ -17,6 +17,7 @@
 
 package com.zto.fire.flink.sync
 
+import com.zto.fire.common.analysis.MemoryAnalysis
 import com.zto.fire.common.util.FireUtils
 import com.zto.fire.core.sync.DistributeExecuteManager
 
@@ -35,5 +36,7 @@ private object FlinkDistributeExecuteManager extends DistributeExecuteManager {
   override def distributeExecute: Unit = {
     // 分布式打印指定类的路径信息
     FireUtils.printCodeResource()
+    // 启动内存监控工具
+    MemoryAnalysis.startMemoryMonitor()
   }
 }
