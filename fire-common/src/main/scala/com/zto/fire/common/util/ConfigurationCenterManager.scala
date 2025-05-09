@@ -44,7 +44,7 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
     val rest = FireFrameworkConf.fireRestUrl
     if (StringUtils.isBlank(rest)) logWarning("Fire Rest Server 地址为空，将无法完成注册")
     s"""
-       |{ "url": "$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "engine": "${PropUtils.engine}", "taskId": "${getFireAppId}"}
+       |{ "url": "$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "taskId": "${getFireAppId}"}
       """.stripMargin
   }
 

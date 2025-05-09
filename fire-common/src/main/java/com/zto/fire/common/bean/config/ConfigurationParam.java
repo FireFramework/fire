@@ -31,8 +31,6 @@ import java.util.Map;
  * @author ChengLong 2021-8-23 15:26:39
  * @since 2.2.0
  */
-@Getter
-@Setter
 public class ConfigurationParam {
     private boolean status;
     private String statusCode;
@@ -40,4 +38,52 @@ public class ConfigurationParam {
     private Map<ConfigureLevel, Map<String, String>> result;
     private String solution;
     private String exception;
+
+    public boolean isStatus() {
+        return status;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
+    }
+
+    public String getStatusCode() {
+        return statusCode;
+    }
+
+    public void setStatusCode(String statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public Map<ConfigureLevel, Map<String, String>> getResult() {
+        return result;
+    }
+
+    public void setResult(Map<ConfigureLevel, Map<String, String>> result) {
+        this.result = result;
+    }
+
+    public String getSolution() {
+        return solution;
+    }
+
+    public void setSolution(String solution) {
+        this.solution = solution;
+    }
+
+    public String getException() {
+        return exception;
+    }
+
+    public void setException(String exception) {
+        this.exception = exception;
+    }
 }
