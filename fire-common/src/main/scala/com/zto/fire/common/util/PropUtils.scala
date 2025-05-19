@@ -244,12 +244,12 @@ object PropUtils extends Logging {
     val mapConfig = new JHashMap[String, String]()
     if (noEmpty(value)) {
       // 移除所有的注释信息
-      val normalValue = RegularUtils.propAnnotation.replaceAllIn(value, "").replaceAll("\\|", "").trim
+      val normalValue = RegularUtils.propAnnotation.replaceAllIn(value, "").trim
       val valueProps = new Properties()
       val stringReader = new StringReader(normalValue)
       valueProps.load(stringReader)
       stringReader.close()
-      val propMap = valueProps.map(kv => (StringUtils.trim(kv._1), StringUtils.trim(kv._2))).filter(kv => noEmpty(kv, kv._1, kv._2)).toMap
+      val propMap = valueProps.filter(kv => noEmpty(kv, kv._1, kv._2)).map(kv => (kv._1.replaceAll("\\|", "").trim, kv._2.trim)).toMap
       mapConfig.putAll(propMap)
     }
 
