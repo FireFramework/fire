@@ -147,7 +147,7 @@ public class SqlBasicCall extends SqlCall {
         return ImmutableNullableList.copyOf(objects);
     }
 
-    /** Sub-class of {@link SqlBasicCall}
+    /** Sub-class of {@link org.apache.calcite.sql.SqlBasicCall}
      * for which {@link #isExpanded()} returns true. */
     private static class ExpandedBasicCall extends SqlBasicCall {
         ExpandedBasicCall(SqlOperator operator,

@@ -39,7 +39,7 @@ import static org.apache.flink.runtime.checkpoint.CheckpointFailureReason.MINIMU
 import static org.apache.flink.runtime.checkpoint.CheckpointFailureReason.TOO_MANY_CHECKPOINT_REQUESTS;
 
 /**
- * Decides whether a {@link CheckpointTriggerRequest checkpoint request}
+ * Decides whether a {@link CheckpointCoordinator.CheckpointTriggerRequest checkpoint request}
  * should be executed, dropped or postponed. Dropped requests are failed immediately. Postponed
  * requests are enqueued into a queue and can be dequeued later.
  *
