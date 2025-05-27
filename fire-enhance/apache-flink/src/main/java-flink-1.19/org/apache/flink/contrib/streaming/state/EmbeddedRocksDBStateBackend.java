@@ -62,11 +62,11 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- * A {@link StateBackend} that stores its state in an embedded {@code
+ * A {@link org.apache.flink.runtime.state.StateBackend} that stores its state in an embedded {@code
  * RocksDB} instance. This state backend can store very large state that exceeds memory and spills
  * to local disk. All key/value state (including windows) is stored in the key/value index of
  * RocksDB. For persistence against loss of machines, please configure a {@link
- * CheckpointStorage} instance for the Job.
+ * org.apache.flink.runtime.state.CheckpointStorage} instance for the Job.
  *
  * <p>The behavior of the RocksDB instances can be parametrized by setting RocksDB Options using the
  * methods {@link #setPredefinedOptions(PredefinedOptions)} and {@link
@@ -1036,7 +1036,7 @@ public class EmbeddedRocksDBStateBackend extends AbstractManagedMemoryStateBacke
     @VisibleForTesting
     static void resetRocksDBLoadedFlag() throws Exception {
         final Field initField =
-                NativeLibraryLoader.class.getDeclaredField("initialized");
+                org.rocksdb.NativeLibraryLoader.class.getDeclaredField("initialized");
         initField.setAccessible(true);
         initField.setBoolean(null, false);
     }
