@@ -15,17 +15,15 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.paimon
-
+package com.zto.fire.flink.sql.connector.paimon
 
 /**
  * Paimon通用父类
  *
  * @author ChengLong
- * @Date 2024/8/2 10:52
- * @version 2.3.5
+ * @Date 2025-05-27 13:24:19
+ * @version 2.4.5
  */
-@deprecated("use com.zto.fire.flink.sql.connector.paimon.PaimonStreaming")
 trait PaimonStreaming extends BasePaimonStreaming {
 
 }

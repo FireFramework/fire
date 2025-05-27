@@ -15,17 +15,23 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.paimon
+package org.apache.flink.api.connector.sink2;
 
+import org.apache.flink.annotation.PublicEvolving;
+
+import java.io.Serializable;
 
 /**
- * Paimon通用父类
+ * Base interface for developing a sink. A basic {@link Sink} is a stateless sink that can flush
+ * data on checkpoint to achieve at-least-once consistency. Sinks with additional requirements
  *
- * @author ChengLong
- * @Date 2024/8/2 10:52
- * @version 2.3.5
+ * <p>The {@link Sink} needs to be serializable. All configuration should be validated eagerly. The
+ * respective sink writers are transient and will only be created in the subtasks on the
+ * taskmanagers.
+ *
+ * @param <InputT> The type of the sink's input
  */
-@deprecated("use com.zto.fire.flink.sql.connector.paimon.PaimonStreaming")
-trait PaimonStreaming extends BasePaimonStreaming {
+@PublicEvolving
+public interface Sink<InputT> extends Serializable {
 
 }

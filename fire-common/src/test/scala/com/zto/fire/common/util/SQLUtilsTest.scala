@@ -127,4 +127,38 @@ class SQLUtilsTest {
     val mergeColumns = SQLUtils.parsePlaceholder(merge)
     assert("biz_no,appeal_no,postal_bill_code,postal_category_code,postal_create_time,appeal_no,postal_create_time,biz_no,appeal_no,postal_category_code".equals(mergeColumns.mkString(",")), "merge语句解析异常")
   }
+
+  @Test
+  def testSelectParse(): Unit = {
+    var sql = "select batchNumber from rt_zto_truck_p2p"
+    var jdbcLineages = SQLUtils.parseLineage(sql)
+    assert("rt_zto_truck_p2p".equals(jdbcLineages.map(_._1).mkString(",")), "基础select语句解析异常")
+
+    //子查询
+    sql = "select  batchNumber  from ( select t.batch_number as batchNumber from rt_zto_truck_p2p t where t.gmt_modified >= '2025-04-21 13:21:00' and t.gmt_modified < '2025-04-21 13:24:00' and  deletionstatecode=0 ) t where t.flag=0"
+    jdbcLineages = SQLUtils.parseLineage(sql)
+    assert("rt_zto_truck_p2p".equals(jdbcLineages.map(_._1).mkString(",")), "子查询select语句解析异常")
+
+    //常规join
+    sql = "select a.id,b.id from a left join b on a.id = b.id"
+    jdbcLineages = SQLUtils.parseLineage(sql)
+    assert("a,b".equals(jdbcLineages.map(_._1).mkString(",")), "基础join语句解析异常")
+
+    //子查询join
+    sql = "select a.id,b.id from a left join (select * from b) bb on a.id = b.id"
+    jdbcLineages = SQLUtils.parseLineage(sql)
+    assert("a,b".equals(jdbcLineages.map(_._1).mkString(",")), "子查询join语句解析异常")
+
+    //多层子查询
+    sql = "select *from (select *from (select a.id from a) aa) aaa left join  (select *from (select b.id from b) bb) bbb on aaa.id = bbb.id"
+    jdbcLineages = SQLUtils.parseLineage(sql)
+    assert("a,b".equals(jdbcLineages.map(_._1).mkString(",")), "多层子查询语句解析异常")
+
+    //线上用例
+    sql = "select  batchNumber,         unlaodTransferId,         unloadCenterId,         date_format(estimateDate , '%Y-%m-%d %h:%i:%s')   estimateDate,         date_format(actualEndDate , '%Y-%m-%d %h:%i:%s')  actualEndDate,         dispNum,         dispWeight,         transferInProNum,         if(transferInProNum=0,0,transferInProWeight) as transferInProWeight,         outProNum,         outProWeight,         publishDate  from ( select t.batch_number as batchNumber,        t.end_site_id  as unlaodTransferId,        t.end_center_id as unloadCenterId,        case when estimate_end_date<='1999-01-01 00:00:00'             then gps_arrive_date             else estimate_end_date             end as estimateDate ,        t.actual_end_date as actualEndDate,        t.disp_bills + t.disp_bag_bills as dispNum,        t.disp_weight as dispWeight,        (t.in_pro_num - t.disp_bills - t.disp_bag_bills) as transferInProNum,        t.in_pro_weight - t.disp_weight as transferInProWeight,        if((t.disp_bills + t.disp_bag_bills)>0 and disp_weight=0,1,0) as flag,        t.out_pro_num as outProNum,        t.out_pro_weight as outProWeight,        '2025-04-21 13:24:00' as publishDate from rt_zto_truck_p2p t where t.gmt_modified >= '2025-04-21 13:21:00' and t.gmt_modified < '2025-04-21 13:24:00' and  deletionstatecode=0 ) t where t.flag=0"
+    jdbcLineages = SQLUtils.parseLineage(sql)
+    assert("rt_zto_truck_p2p".equals(jdbcLineages.map(_._1).mkString(",")), "线上用例解析异常")
+
+
+  }
 }

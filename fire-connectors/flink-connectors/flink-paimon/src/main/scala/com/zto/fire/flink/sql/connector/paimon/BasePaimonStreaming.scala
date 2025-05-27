@@ -15,21 +15,30 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.paimon
+package com.zto.fire.flink.sql.connector.paimon
 
+import com.zto.fire.common.util.PropUtils
 import com.zto.fire.flink.FlinkStreaming
-import org.apache.flink.connector.paimon.conf.FirePaimonConf
+import com.zto.fire.flink.sql.connector.paimon.conf.FirePaimonConf
 import org.apache.flink.table.api.SqlDialect
 
 /**
  * Paimon通用父类，会自动初始化paimon catalog
  *
  * @author ChengLong
- * @Date 2024/8/2 10:27
- * @version 2.3.5
+ * @Date 2025-05-27 13:23:50
+ * @version 2.4.5
  */
-@deprecated("use com.zto.fire.flink.sql.connector.paimon.BasePaimonStreaming")
 trait BasePaimonStreaming extends FlinkStreaming {
+
+  /**
+   * 额外加载paimon.properties配置文件
+   * 注：该配置文件含有公共的paimon任务调优参数，适用于大部分任务
+   */
+  override private[fire] def boot: Unit = {
+    PropUtils.load(FirePaimonConf.PAIMON_CONF_FILE_NAME)
+    super.boot
+  }
 
   /**
    * 初始化paimon catalog

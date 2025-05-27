@@ -59,16 +59,16 @@ case class TableIdentifier(private val _table: String, private val _database: St
     if ("default_database".equalsIgnoreCase(dbName)) "" else dbName
   }
 
-/*  lazy val catalog = {
-    if (isEmpty(this._catalog) && this._table.contains(".")) {
+  lazy val catalog = {
+    if (this._table.contains(".")) {
       val seq = this._table.split('.')
       if (seq.length == 3) {
         seq(0)
       } else {
         ""
       }
-    } else this._catalog
-  }*/
+    } else ""
+  }
 
   /**
    * 用于判断是否存在数据库名称

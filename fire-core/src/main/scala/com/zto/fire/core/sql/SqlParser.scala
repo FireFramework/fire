@@ -36,6 +36,7 @@ import java.util.concurrent.{CopyOnWriteArraySet, TimeUnit}
 @Internal
 private[fire] trait SqlParser extends Logging {
   protected[fire] lazy val hiveTableMap = new JConcurrentHashMap[String, Boolean]()
+  protected[fire] lazy val paimonTableMap = new JConcurrentHashMap[String, Boolean]()
   protected lazy val buffer = new CopyOnWriteArraySet[String]()
   this.sqlParse
 

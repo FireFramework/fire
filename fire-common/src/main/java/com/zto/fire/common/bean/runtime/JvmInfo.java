@@ -262,11 +262,11 @@ public class JvmInfo implements Serializable {
         // 获取gc信息
         List<GarbageCollectorMXBean> gcs = ManagementFactory.getGarbageCollectorMXBeans();
         for (GarbageCollectorMXBean gc : gcs) {
-            if (gc.getName().contains("Young") || gc.getName().contains("MarkSweep")) {
+            if (gc.getName().contains("Young") || gc.getName().contains("Scavenge")) {
                 jvmInfo.minorGCCount = gc.getCollectionCount();
                 jvmInfo.minorGCTime = gc.getCollectionTime();
             }
-            if (gc.getName().contains("Old") || gc.getName().contains("Scavenge")) {
+            if (gc.getName().contains("Old") || gc.getName().contains("MarkSweep")) {
                 jvmInfo.fullGCCount = gc.getCollectionCount();
                 jvmInfo.fullGCTime = gc.getCollectionTime();
             }

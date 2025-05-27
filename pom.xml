@@ -97,7 +97,7 @@
         <htrace.version>3.2.0-incubating</htrace.version>
         <build.dest>pub</build.dest>
         <janino.version>3.0.16</janino.version>
-        <httpcomponents.version>4.3.3</httpcomponents.version>
+        <httpcomponents.version>4.4.1</httpcomponents.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <rocketmq.schema.registry.version>0.1.0</rocketmq.schema.registry.version>
         <contains.scala.binary.version>_${scala.binary.version}</contains.scala.binary.version>
@@ -606,7 +606,7 @@
         <profile>
             <id>flink-1.13</id>
             <properties>
-                <flink.version>1.13.6</flink.version>
+                <flink.version>1.13.0</flink.version>
                 <flink.major.version>1.13</flink.major.version>
                 <flink.jdbc.connector.version>${flink.version}</flink.jdbc.connector.version>
                 <flink.kafka.connector.version>${flink.version}</flink.kafka.connector.version>
@@ -833,6 +833,19 @@
             </properties>
         </profile>
 
+        <profile>
+            <id>paimon-1.0.1</id>
+            <properties>
+                <paimon.version>1.0.1</paimon.version>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>paimon-1.1.0</id>
+            <properties>
+                <paimon.version>1.1.0</paimon.version>
+            </properties>
+        </profile>
         <!-- include zto env -->
         <profile>
             <id>zto-env</id>

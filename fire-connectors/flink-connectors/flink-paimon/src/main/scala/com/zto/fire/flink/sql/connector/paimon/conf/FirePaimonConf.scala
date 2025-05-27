@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.paimon.conf
+package com.zto.fire.flink.sql.connector.paimon.conf
+
 import com.zto.fire.common.util.PropUtils
 
 /**
@@ -25,11 +26,11 @@ import com.zto.fire.common.util.PropUtils
  * @since 2.5.0
  * @create 2024-08-02 10:01:01
  */
-@deprecated("use com.zto.fire.flink.sql.connector.paimon.conf.FirePaimonConf")
 private[paimon] object FirePaimonConf {
   lazy val HIVE_CLUSTER = "hive.cluster"
   lazy val PAIMON_CATALOG_NAME = "paimon.catalog.name"
   lazy val HIVE_CLUSTER_MAP_PREFIX = "fire.hive.cluster.map."
+  lazy val PAIMON_CONF_FILE_NAME = "paimon"
   // 初始化hive集群名称与metastore映射
   private lazy val hiveMetastoreMap = PropUtils.sliceKeys(this.HIVE_CLUSTER_MAP_PREFIX)
 

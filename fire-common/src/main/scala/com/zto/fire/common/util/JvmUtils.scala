@@ -15,17 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.paimon
+package com.zto.fire.common.util
 
+import java.lang.management.{ManagementFactory, ThreadInfo}
 
 /**
- * Paimon通用父类
+ * Jvm工具栏，用于进行线程、内存等的dump
  *
  * @author ChengLong
- * @Date 2024/8/2 10:52
- * @version 2.3.5
+ * @Date 2025/5/22 16:12
+ * @version 2.4.5
  */
-@deprecated("use com.zto.fire.flink.sql.connector.paimon.PaimonStreaming")
-trait PaimonStreaming extends BasePaimonStreaming {
+object JvmUtils {
 
+  /**
+   * 创建线程dump信息
+   */
+  def createThreadDump: List[ThreadInfo] = {
+    val threadMxBean = ManagementFactory.getThreadMXBean
+    threadMxBean.dumpAllThreads(true, true).toList
+  }
 }

@@ -255,7 +255,8 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
           batch += 1
           stat.addBatch()
           if (batch % FireJdbcConf.batchSize(keyNum) == 0) {
-            stat.executeBatch()
+            val retVal = stat.executeBatch()
+            count += retVal.sum
             stat.clearBatch()
           }
         })
@@ -263,7 +264,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       // 执行批量更新
       val retVal = stat.executeBatch
       if (commit) conn.commit()
-      count = retVal.sum
+      count += retVal.sum
       this.logInfo(s"executeBatch success. keyNum: ${keyNum} count: $count")
       retVal
     } {

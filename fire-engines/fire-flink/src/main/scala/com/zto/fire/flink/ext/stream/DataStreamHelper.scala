@@ -64,6 +64,15 @@ abstract class DataStreamHelper[T](stream: DataStream[T]) {
   }
 
   /**
+   * Adds the given sink to this DataStream. Only streams with sinks added
+   * will be executed once the StreamExecutionEnvironment.execute(...)
+   * method is called.
+   */
+  protected[fire] def sinkToWrap(sink: org.apache.flink.api.connector.sink2.Sink[T]): DataStreamSink[T] = {
+    throw new UnsupportedOperationException("Only Zto Flink version is supported !!!")
+  }
+
+  /**
    * 添加sink数据源，并维护血缘信息
    */
   def addSinkLineage(sinkFunction: SinkFunction[T])(lineageFun: => Unit): DataStreamSink[T] = {
@@ -86,6 +95,15 @@ abstract class DataStreamHelper[T](stream: DataStream[T]) {
     lineageFun
     this.sinkToWrap(sink)
   }
+
+  /**
+   * 添加sinkTo数据源，并维护血缘信息
+   */
+  def sinkToLineage(sink: org.apache.flink.api.connector.sink2.Sink[T])(lineageFun: => Unit): DataStreamSink[T] = {
+    lineageFun
+    this.sinkToWrap(sink)
+  }
+
 
   /**
    * 添加sink数据源，并维护血缘信息
