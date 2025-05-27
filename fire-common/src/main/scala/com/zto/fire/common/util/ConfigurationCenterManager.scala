@@ -44,7 +44,7 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
     val rest = FireFrameworkConf.fireRestUrl
     if (StringUtils.isBlank(rest)) logWarning("Fire Rest Server 地址为空，将无法完成注册")
     s"""
-       |{ "url": "$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "engine": "${PropUtils.engine}", "taskId": "${getFireAppId}"}
+       |{ "url": "$rest", "fireVersion": "${FireFrameworkConf.fireVersion}", "taskId": "${getFireAppId}"}
       """.stripMargin
   }
 
@@ -75,6 +75,7 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
    * 通过参数调用指定的接口
    */
   private[this] def invoke(url: String, param: String): String = {
+    logInfo(s"开始调用接口：$url,参数为：$param")
     try {
       HttpClientUtils.doPost(url, param,new Header(FireFrameworkConf.configCenterZdpHeaderKey,FireFrameworkConf.configCenterZdpHeaderValue))
     } catch {
@@ -101,9 +102,12 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
       FireUtils.exitError
     } else {
       val param = JSONUtils.parseObject[ConfigurationParam](json)
-      if (noEmpty(param, param.getCode, param.getContent) && param.getCode == 200) {
-        this.configCenterProperties.putAll(param.getContent)
+      if (param.isStatus && noEmpty(param, param.getResult) ) {
+        this.configCenterProperties.putAll(param.getResult)
         logInfo("配置中心参数已生效")
+      } else{
+        logError(s"配置中心接口未生效导致任务发布失败。请直接联系平台管理人员确认。 接口返回为：$json")
+        FireUtils.exitError
       }
     }
     this.configCenterProperties

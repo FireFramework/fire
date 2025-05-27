@@ -18,6 +18,8 @@
 package com.zto.fire.common.bean.config;
 
 import com.zto.fire.common.enu.ConfigureLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Map;
 
@@ -30,23 +32,58 @@ import java.util.Map;
  * @since 2.2.0
  */
 public class ConfigurationParam {
-    private Integer code;
-    private Map<ConfigureLevel, Map<String, String>> content;
+    private boolean status;
+    private String statusCode;
+    private String message;
+    private Map<ConfigureLevel, Map<String, String>> result;
+    private String solution;
+    private String exception;
 
-    public Integer getCode() {
-        return code;
+    public boolean isStatus() {
+        return status;
     }
 
-    public void setCode(Integer code) {
-        this.code = code;
+    public void setStatus(boolean status) {
+        this.status = status;
     }
 
-    public Map<ConfigureLevel, Map<String, String>> getContent() {
-        return content;
+    public String getStatusCode() {
+        return statusCode;
     }
 
-    public void setContent(Map<ConfigureLevel, Map<String, String>> content) {
-        this.content = content;
+    public void setStatusCode(String statusCode) {
+        this.statusCode = statusCode;
     }
 
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public Map<ConfigureLevel, Map<String, String>> getResult() {
+        return result;
+    }
+
+    public void setResult(Map<ConfigureLevel, Map<String, String>> result) {
+        this.result = result;
+    }
+
+    public String getSolution() {
+        return solution;
+    }
+
+    public void setSolution(String solution) {
+        this.solution = solution;
+    }
+
+    public String getException() {
+        return exception;
+    }
+
+    public void setException(String exception) {
+        this.exception = exception;
+    }
 }
