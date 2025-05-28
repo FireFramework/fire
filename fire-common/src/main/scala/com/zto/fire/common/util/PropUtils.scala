@@ -249,7 +249,11 @@ object PropUtils extends Logging {
       val stringReader = new StringReader(normalValue)
       valueProps.load(stringReader)
       stringReader.close()
-      val propMap = valueProps.filter(kv => noEmpty(kv, kv._1, kv._2)).map(kv => (kv._1.replaceAll("\\|", "").trim, kv._2.trim)).toMap
+      val propMap = valueProps
+        .filter(kv => noEmpty(kv, kv._1, kv._2))
+        .map(kv => (kv._1.replaceAll("\\|", "").trim, kv._2.trim))
+        .filter(kv => !kv._1.startsWith("#"))
+        .toMap
       mapConfig.putAll(propMap)
     }
 
