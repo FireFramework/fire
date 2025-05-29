@@ -18,6 +18,7 @@
 
 package org.apache.flink.runtime.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.util.OperatingSystem;
@@ -33,6 +34,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -406,6 +408,19 @@ public class EnvironmentInformation {
      */
     public static void setSetting(String key, String value) {
         if (!settings.containsKey(key)) settings.put(key, value);
+    }
+
+    /**
+     * 批量设置配置信息
+     */
+    public static void setSetting(HashMap<String, Object> map) {
+        if (map != null && !map.isEmpty()) {
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                if (StringUtils.isNotBlank(entry.getKey()) && entry.getValue() != null) {
+                    settings.put(entry.getKey(), entry.getValue() + "");
+                }
+            }
+        }
     }
 
     /**

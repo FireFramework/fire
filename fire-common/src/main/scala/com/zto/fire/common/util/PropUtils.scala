@@ -538,6 +538,23 @@ object PropUtils extends Logging {
   }
 
   /**
+   * 设置指定的配置
+   * 注：其他均需要通过该API进行配置的设定,禁止直接调用：props.setProperty
+   *
+   * @param key
+   * 配置的key
+   * @param value
+   * 配置的value
+   */
+  def setPropertyIfNotExists(key: String, value: String): Unit = this.synchronized {
+    if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
+      if (!this.originalSettingsMap.containsKey(key)) {
+        this.setProperty(key, value)
+      }
+    }
+  }
+
+  /**
    * 添加待移除的配置key
    *
    * @param key

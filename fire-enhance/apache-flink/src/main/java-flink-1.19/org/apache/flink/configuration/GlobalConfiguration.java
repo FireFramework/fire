@@ -21,6 +21,7 @@ package org.apache.flink.configuration;
 import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.OSUtils;
 import com.zto.fire.common.util.PropUtils;
+import com.zto.fire.common.util.ReflectionUtils;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.util.Preconditions;
@@ -220,7 +221,7 @@ public final class GlobalConfiguration {
         Method setSetting = null;
         try {
             Class env = Class.forName("org.apache.flink.runtime.util.EnvironmentInformation");
-            setSetting = env.getMethod("setSetting", String.class, String.class);
+            setSetting = env.getMethod("setSetting", HashMap.class);
         } catch (Exception e) {
             LOG.error("获取EnvironmentInformation.setSetting()失败", e);
         }
@@ -271,13 +272,8 @@ public final class GlobalConfiguration {
                             key,
                             isSensitive(key) ? HIDDEN_CONTENT : value);
                     config.setString(key, value);
-
                     // TODO: ------------ start：二次开发代码 --------------- //
-                    try {
-                        setSetting.invoke(null, key, value);
-                    } catch (Exception e) {
-                        LOG.error("二次开发代码异常，反射调用配置产生失败！", e);
-                    }
+
                     // TODO: ------------ end：二次开发代码 --------------- //
                 }
             }
@@ -287,6 +283,12 @@ public final class GlobalConfiguration {
 
         // TODO: ------------ start：二次开发代码 --------------- //
         fireBootstrap(config);
+
+        try {
+            setSetting.invoke(null, config.confData);
+        } catch (Exception e) {
+            LOG.error("二次开发代码异常，反射调用配置产生失败！", e);
+        }
         // TODO: ------------ end：二次开发代码 --------------- //
 
         return config;
@@ -388,6 +390,7 @@ public final class GlobalConfiguration {
     private static ServerSocket restServerSocket;
     // 任务的运行模式
     private static String runMode;
+    private static final String paimonClass = "com.zto.fire.flink.sql.connector.paimon.BasePaimonStreaming";
     private static final Map<String, String> settings = new HashMap<>();
 
     static {
@@ -459,27 +462,44 @@ public final class GlobalConfiguration {
             Method method = env.getMethod("isJobManager");
             isJobManager = Boolean.valueOf(method.invoke(null) + "");
         } catch (Exception e) {
-            LOG.error("调用EnvironmentInformation.isJobManager()失败", e);
+            LOG.error("反射调用EnvironmentInformation.isJobManager()失败", e);
+        }
+
+        // 判断当前主类是否为PaimonStreaming的子类，如果是则单独加载paimon.properties配置文件
+        boolean isPaimonStreaming = false;
+        try {
+            String manClass = className.endsWith("$") ? className : className + "$";
+            isPaimonStreaming = ReflectionUtils.containsSuperClass(Class.forName(manClass), Class.forName(paimonClass));
+        } catch (Exception e) {
+            LOG.error("测试：反射判断是否为paimon任务子类失败: " + e.getMessage());
         }
 
         // 配置信息仅在JobManager端进行加载，TaskManager端会被主动的merge
         if (isJobManager && className != null && className.contains(".")) {
             String simpleClassName = className.substring(className.lastIndexOf('.') + 1);
-            if (simpleClassName.length() > 0) {
+            if (!simpleClassName.isEmpty()) {
                 // PropUtils.setProperty("driver.class.name", className);
                 PropUtils.setMainClass(className);
                 // TODO: 判断批处理模式，并加载对应配置文件
                 // PropUtils.load(FireFrameworkConf.FLINK_BATCH_CONF_FILE)
                 PropUtils.loadFile(FireFrameworkConf.FLINK_STREAMING_CONF_FILE());
+                // 如果是paimon任务，则加载paimon.properties，优先级低于common等配置文件
+                if (isPaimonStreaming) {
+                    PropUtils.loadFile(FireFrameworkConf.FLINK_PAIMON_COMMON_CONF_FILE());
+                    LOG.info("当前任务类型[ paimon Streaming ]，完成加载paimon.properties通用配置文件.");
+                }
                 // 将所有configuration信息同步到PropUtils中
-                PropUtils.setProperties(config.confData);
+                config.confData.forEach((key, value) -> {
+                    // 重复的数据不要覆盖PropUtils中，否则会导致两边配置对不上
+                    PropUtils.setPropertyIfNotExists(key, value.toString());
+                });
                 // 加载用户公共配置文件
                 PropUtils.load(FireFrameworkConf.userCommonConf());
                 // 加载任务同名的配置文件
                 // PropUtils.loadJobConf(className);
                 // 构建fire rest接口地址
                 PropUtils.setProperty(FireFrameworkConf.FIRE_REST_URL(), "http://" + OSUtils.getIp() + ":" + getRestPort());
-                // 加载外部系统配置信息，覆盖同名配置文件中的配置，实现动态替换
+                // 加载外部系统（配置中心）配置+类同名配置文件，覆盖同名配置文件中的配置，实现动态替换
                 PropUtils.loadJobConf(className);
                 PropUtils.setProperty("flink.run.mode", runMode);
 

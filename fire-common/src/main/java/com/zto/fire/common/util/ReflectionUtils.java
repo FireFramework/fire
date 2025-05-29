@@ -596,4 +596,48 @@ public class ReflectionUtils {
 
         return codeLocationDetail.toString();
     }
+
+    /**
+     * 获取指定类所有的父类以及父接口
+     */
+    public static List<Class<?>> getSuperClass(Class<?> subClass) {
+        // 获取所有的父接口
+        Class<?>[] superInterface = subClass.getInterfaces();
+        List<Class<?>> superList = new ArrayList<>(Arrays.asList(superInterface));
+
+        // 获取父类
+        Class<?> superClass = subClass.getSuperclass();
+        if (superClass != null) {
+            superList.add(superClass);
+        }
+
+        return superList;
+    }
+
+    /**
+     * 判断某个子类是否是某个父类或父接口的子类
+     */
+    public static boolean containsSuperClass(Class<?> subClass, Class<?> superClass) {
+        if (subClass == superClass) {
+            return true;
+        }
+
+        List<Class<?>> superList = getSuperClass(subClass);
+
+        boolean isContains = false;
+
+        for (Class<?> clazz : superList) {
+            if (clazz == superClass) {
+                return true;
+            } else {
+                isContains = containsSuperClass(clazz, superClass);
+            }
+
+            if (isContains) {
+                return true;
+            }
+        }
+
+        return isContains;
+    }
 }
