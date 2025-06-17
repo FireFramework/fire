@@ -86,6 +86,10 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       pool.setMaxStatements(0)
       pool.setMaxStatementsPerConnection(0)
       pool.setMaxIdleTime(FireJdbcConf.maxIdleTime(keyNum))
+      pool.setMaxConnectionAge(FireJdbcConf.maxConnectionAge(keyNum))
+      pool.setPreferredTestQuery(FireJdbcConf.preferredTestQuery(keyNum))
+      pool.setIdleConnectionTestPeriod(FireJdbcConf.idleConnectionTestPeriod(keyNum))
+      pool.setBreakAfterAcquireFailure(FireJdbcConf.breakAfterAcquireFailure(keyNum))
       // 加载以db.c3p0.conf.为前缀的配置项
       this.installDBPoolProperties(pool, this.keyNum)
       this.connPool = pool

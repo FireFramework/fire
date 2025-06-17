@@ -45,6 +45,11 @@ private[fire] object FireJdbcConf {
   lazy val JDBC_FLUSH_INTERVAL = "db.jdbc.flushInterval"
   lazy val JDBC_MAX_RETRY = "db.jdbc.max.retry"
   lazy val JDBC_QUERY_USE_LABEL = "db.query.use.label"
+  lazy val JDBC_MAX_CONNECTION_AGE = "db.jdbc.maxConnectionAge"
+  lazy val JDBC_PREFERRED_TEST_QUERY = "db.jdbc.preferredTestQuery"
+  lazy val JDBC_IDLE_CONNECTION_TEST_PERIOD = "db.jdbc.idleConnectionTestPeriod"
+  lazy val JDBC_BREAK_AFTER_ACQUIRE_FAILURE = "db.jdbc.breakAfterAcquireFailure"
+
   // c3p0数据库连接池相关配置
   lazy val JDBC_C3P0_CONF_PREFIX = "db.c3p0.conf."
   // fire框架针对jdbc操作后数据集的缓存策略
@@ -90,10 +95,21 @@ private[fire] object FireJdbcConf {
   def maxPoolSize(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.JDBC_MAX_POOL_SIZE, 5, keyNum)
   // 连接池每次自增连接数
   def acquireIncrement(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.JDBC_ACQUIRE_INCREMENT, 1, keyNum)
+  // 超过多久后强制回收连接
+  def maxConnectionAge(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.JDBC_MAX_CONNECTION_AGE, 1800, keyNum)
+  // 监测空闲连接是否可用
+  def preferredTestQuery(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.JDBC_PREFERRED_TEST_QUERY, "select 1", keyNum)
+  // 空闲连接检测间隔
+  def idleConnectionTestPeriod(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.JDBC_IDLE_CONNECTION_TEST_PERIOD, 60, keyNum)
+  // 避免单词连接失败永久关闭连接池
+  def breakAfterAcquireFailure(keyNum: Int = KeyNum._1): Boolean = PropUtils.getBoolean(this.JDBC_BREAK_AFTER_ACQUIRE_FAILURE, false, keyNum)
+
   // 多久释放没有用到的连接
   def maxIdleTime(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.JDBC_MAX_IDLE_TIME, 30, keyNum)
   // c3p0相关配置
   def c3p0ConfMap(keyNum: Int = KeyNum._1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(this.JDBC_C3P0_CONF_PREFIX, keyNum)
+
+
   // 是否使用别名进行映射
   lazy val useLabel: Boolean = PropUtils.getBoolean(this.JDBC_QUERY_USE_LABEL, true)
 
