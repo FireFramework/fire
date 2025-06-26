@@ -21,13 +21,12 @@ import com.zto.fire.common.conf.FireFrameworkConf;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Objects;
 
 /**
@@ -47,7 +46,7 @@ public class EncryptUtils {
     public static String base64Decrypt(String message) {
         Objects.requireNonNull(message, ERROR_MESSAGE);
         try {
-            return new String((new BASE64Decoder()).decodeBuffer(message), StandardCharsets.UTF_8);
+            return new String(Base64.getDecoder().decode(message));
         } catch (Exception e) {
             logger.error("BASE64解密出错", e);
         }
@@ -60,7 +59,7 @@ public class EncryptUtils {
     public static String base64Encrypt(String message) {
         Objects.requireNonNull(message, ERROR_MESSAGE);
         try {
-            return new BASE64Encoder().encodeBuffer(message.getBytes());
+            return new String(Base64.getEncoder().encode(message.getBytes()));
         } catch (Exception e) {
             logger.error("BASE64加密出错", e);
         }
