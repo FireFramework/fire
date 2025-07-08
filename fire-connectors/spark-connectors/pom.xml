@@ -26,6 +26,7 @@
     <module>spark-hbase</module>
     <module>spark-rocketmq</module>
     <module>spark-hudi</module>
+      <module>spark-paimon</module>
   </modules>
 
   <parent>
