@@ -345,7 +345,7 @@
         <profile>
             <id>spark-3.3</id>
             <properties>
-                <spark.version>3.3.2</spark.version>
+                <spark.version>3.3.4</spark.version>
                 <spark.major.version>3.3</spark.major.version>
                 <jackson.version>2.10.5</jackson.version>
                 <hudi.bundle.version>3</hudi.bundle.version>
