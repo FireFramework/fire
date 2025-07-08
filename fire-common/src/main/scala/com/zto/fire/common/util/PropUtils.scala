@@ -249,7 +249,11 @@ object PropUtils extends Logging {
       val stringReader = new StringReader(normalValue)
       valueProps.load(stringReader)
       stringReader.close()
-      val propMap = valueProps.filter(kv => noEmpty(kv, kv._1, kv._2)).map(kv => (kv._1.replaceAll("\\|", "").trim, kv._2.trim)).toMap
+      val propMap = valueProps
+        .filter(kv => noEmpty(kv, kv._1, kv._2))
+        .map(kv => (kv._1.replaceAll("\\|", "").trim, kv._2.trim))
+        .filter(kv => !kv._1.startsWith("#"))
+        .toMap
       mapConfig.putAll(propMap)
     }
 
@@ -530,6 +534,23 @@ object PropUtils extends Logging {
       this.setAdaptiveProperty(this.adaptiveKey(trimKey), value)
       this.originalSettingsMap.put(trimKey, value)
       this.addRemoveKey(trimKey)
+    }
+  }
+
+  /**
+   * 设置指定的配置
+   * 注：其他均需要通过该API进行配置的设定,禁止直接调用：props.setProperty
+   *
+   * @param key
+   * 配置的key
+   * @param value
+   * 配置的value
+   */
+  def setPropertyIfNotExists(key: String, value: String): Unit = this.synchronized {
+    if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
+      if (!this.originalSettingsMap.containsKey(key)) {
+        this.setProperty(key, value)
+      }
     }
   }
 

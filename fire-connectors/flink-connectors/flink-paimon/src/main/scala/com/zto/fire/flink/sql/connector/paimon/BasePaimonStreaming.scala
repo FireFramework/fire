@@ -17,7 +17,6 @@
 
 package com.zto.fire.flink.sql.connector.paimon
 
-import com.zto.fire.common.util.PropUtils
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.sql.connector.paimon.conf.FirePaimonConf
 import org.apache.flink.table.api.SqlDialect
@@ -30,15 +29,6 @@ import org.apache.flink.table.api.SqlDialect
  * @version 2.4.5
  */
 trait BasePaimonStreaming extends FlinkStreaming {
-
-  /**
-   * 额外加载paimon.properties配置文件
-   * 注：该配置文件含有公共的paimon任务调优参数，适用于大部分任务
-   */
-  override private[fire] def boot: Unit = {
-    PropUtils.load(FirePaimonConf.PAIMON_CONF_FILE_NAME)
-    super.boot
-  }
 
   /**
    * 初始化paimon catalog

@@ -306,7 +306,8 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends StreamExecu
     RocketmqConnectorParser.addDatasource(ROCKETMQ, finalRocketParam(RocketMQConfig.NAME_SERVER_ADDR), finalTopics, finalGroupId, FOperation.SOURCE)
 
     val props = new Properties()
-    props.putAll(finalRocketParam)
+    // support JDK9+
+    finalRocketParam.foreach(kv => props.put(kv._1, kv._2))
     props
   }
 

@@ -72,7 +72,8 @@ private[spark] class DirectKafkaInputDStream[K, V](
   @transient private var kc: Consumer[K, V] = null
   def consumer(): Consumer[K, V] = this.synchronized {
     if (null == kc) {
-      kc = consumerStrategy.onStart(currentOffsets.mapValues(l => java.lang.Long.valueOf(l)).asJava)
+      kc = consumerStrategy.onStart(
+        currentOffsets.mapValues(l => java.lang.Long.valueOf(l)).toMap.asJava)
     }
     kc
   }
@@ -119,12 +120,7 @@ private[spark] class DirectKafkaInputDStream[K, V](
   /**
    * Asynchronously maintains & sends new rate limits to the receiver through the receiver tracker.
    */
-  override protected[streaming] val rateController: Option[RateController] = this.rateControllerFun()
-
-  /**
-   * Asynchronously maintains & sends new rate limits to the receiver through the receiver tracker.
-   */
-  protected[streaming] def rateControllerFun(): Option[RateController] = {
+  override protected[streaming] val rateController: Option[RateController] = {
     if (RateController.isBackPressureEnabled(ssc.conf)) {
       Some(new DirectKafkaRateController(id,
         RateEstimator.create(ssc.conf, context.graph.batchDuration)))
@@ -135,7 +131,7 @@ private[spark] class DirectKafkaInputDStream[K, V](
 
   protected[streaming] def maxMessagesPerPartition(
     offsets: Map[TopicPartition, Long]): Option[Map[TopicPartition, Long]] = {
-    val estimatedRateLimit = rateControllerFun().map { x => {
+    val estimatedRateLimit = rateController.map { x => {
       val lr = x.getLatestRate()
       if (lr > 0) lr else initialRate
     }}
@@ -183,8 +179,8 @@ private[spark] class DirectKafkaInputDStream[K, V](
         val off = acc.get(tp).map(o => Math.min(o, m.offset)).getOrElse(m.offset)
         acc + (tp -> off)
       }.foreach { case (tp, off) =>
-        logInfo(s"poll(0) returned messages, seeking $tp to $off to compensate")
-        c.seek(tp, off)
+          logInfo(s"poll(0) returned messages, seeking $tp to $off to compensate")
+          c.seek(tp, off)
       }
     }
   }
@@ -224,8 +220,8 @@ private[spark] class DirectKafkaInputDStream[K, V](
 
     maxMessagesPerPartition(offsets).map { mmp =>
       mmp.map { case (tp, messages) =>
-        val uo = offsets(tp)
-        tp -> Math.min(currentOffsets(tp) + messages, uo)
+          val uo = offsets(tp)
+          tp -> Math.min(currentOffsets(tp) + messages, uo)
       }
     }.getOrElse(offsets)
   }
@@ -246,8 +242,8 @@ private[spark] class DirectKafkaInputDStream[K, V](
       offsetRange.fromOffset != offsetRange.untilOffset
     }.toSeq.sortBy(-_.count()).map { offsetRange =>
       s"topic: ${offsetRange.topic}\tpartition: ${offsetRange.partition}\t" +
-        s"offsets: ${offsetRange.fromOffset} to ${offsetRange.untilOffset}\t" +
-        s"count: ${offsetRange.count()}"
+      s"offsets: ${offsetRange.fromOffset} to ${offsetRange.untilOffset}\t" +
+      s"count: ${offsetRange.count()}"
     }.mkString("\n")
     // Copy offsetRanges to immutable.List to prevent from being modified by the user
     val metadata = Map(
@@ -282,9 +278,7 @@ private[spark] class DirectKafkaInputDStream[K, V](
 
   override def stop(): Unit = this.synchronized {
     if (kc != null) {
-      logInfo("Invoke kafka consumer.close()")
       kc.close()
-      kc = null
     }
   }
 
@@ -339,7 +333,7 @@ private[spark] class DirectKafkaInputDStream[K, V](
     override def update(time: Time): Unit = {
       batchForTime.clear()
       generatedRDDs.foreach { kv =>
-        val a = kv._2.asInstanceOf[KafkaRDD[K, V]].offsetRanges.map(_.toTuple).toArray
+        val a = kv._2.asInstanceOf[KafkaRDD[K, V]].offsetRanges.map(_.toTuple)
         batchForTime += kv._1 -> a
       }
     }
@@ -348,16 +342,16 @@ private[spark] class DirectKafkaInputDStream[K, V](
 
     override def restore(): Unit = {
       batchForTime.toSeq.sortBy(_._1)(Time.ordering).foreach { case (t, b) =>
-        logInfo(s"Restoring KafkaRDD for time $t ${b.mkString("[", ", ", "]")}")
-        generatedRDDs += t -> new KafkaRDD[K, V](
-          context.sparkContext,
-          executorKafkaParams,
-          b.map(OffsetRange(_)),
-          getPreferredHosts,
-          // during restore, it's possible same partition will be consumed from multiple
-          // threads, so do not use cache.
-          false
-        )
+         logInfo(s"Restoring KafkaRDD for time $t ${b.mkString("[", ", ", "]")}")
+         generatedRDDs += t -> new KafkaRDD[K, V](
+           context.sparkContext,
+           executorKafkaParams,
+           b.map(OffsetRange(_)),
+           getPreferredHosts,
+           // during restore, it's possible same partition will be consumed from multiple
+           // threads, so do not use cache.
+           false
+         )
       }
     }
   }

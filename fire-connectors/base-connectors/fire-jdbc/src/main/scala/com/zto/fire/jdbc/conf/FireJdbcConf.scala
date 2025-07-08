@@ -47,6 +47,7 @@ private[fire] object FireJdbcConf {
   lazy val JDBC_QUERY_USE_LABEL = "db.query.use.label"
   // c3p0数据库连接池相关配置
   lazy val JDBC_C3P0_CONF_PREFIX = "db.c3p0.conf."
+  lazy val JDBC_C3P0_COMMON_CONF_PREFIX = "db.c3p0.common.conf."
   // fire框架针对jdbc操作后数据集的缓存策略
   lazy val FIRE_JDBC_STORAGE_LEVEL = "fire.jdbc.storage.level"
   // 通过JdbcConnector查询后将数据集放到多少个分区中，需根据实际的结果集做配置
@@ -92,8 +93,11 @@ private[fire] object FireJdbcConf {
   def acquireIncrement(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.JDBC_ACQUIRE_INCREMENT, 1, keyNum)
   // 多久释放没有用到的连接
   def maxIdleTime(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.JDBC_MAX_IDLE_TIME, 30, keyNum)
-  // c3p0相关配置
-  def c3p0ConfMap(keyNum: Int = KeyNum._1): collection.immutable.Map[String, String] = PropUtils.sliceKeysByNum(this.JDBC_C3P0_CONF_PREFIX, keyNum)
+  // c3p0相关配置（若未配置，则所有连接池共用默认参数）
+  def c3p0ConfMap(keyNum: Int = KeyNum._1): collection.immutable.Map[String, String] = {
+    val map = PropUtils.sliceKeysByNum(this.JDBC_C3P0_CONF_PREFIX, keyNum)
+    if (map.nonEmpty) map else PropUtils.sliceKeysByNum(this.JDBC_C3P0_COMMON_CONF_PREFIX, KeyNum._1)
+  }
   // 是否使用别名进行映射
   lazy val useLabel: Boolean = PropUtils.getBoolean(this.JDBC_QUERY_USE_LABEL, true)
 
