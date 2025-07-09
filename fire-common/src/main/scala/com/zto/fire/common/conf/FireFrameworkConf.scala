@@ -176,7 +176,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_CONTAINER_MONITOR_INTERVAL = "fire.container.monitor.interval"
   lazy val FIRE_CONTAINER_MONITOR_PMEM_RATIO = "fire.container.monitor.pmem.ratio"
   lazy val FIRE_CONTAINER_MONITOR_VMEM_RATIO = "fire.container.monitor.vmem.ratio"
-  lazy val FLINK_PAIMON_COMMON_CONF_FILE = "paimon.properties"
+  lazy val FIRE_PAIMON_COMMON_CONF_FILE = "paimon.properties"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分

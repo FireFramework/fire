@@ -80,6 +80,11 @@
             <artifactId>fire-connector-spark-hudi_${spark.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>fire-connector-spark-paimon_${spark.reference}</artifactId>
+            <version>${fire.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -15,34 +15,33 @@
  * limitations under the License.
  */
 
-package com.zto.fire.flink.sql.connector.paimon.conf
+package com.zto.fire.spark.connector.paimon
 
 import com.zto.fire.common.util.PropUtils
+import com.zto.fire.spark.SparkCore
+import com.zto.fire.spark.connector.paimon.conf.FirePaimonConf
 
 /**
- * paimon相关配置
+ * Paimon 离线Spark Core任务父类
  *
  * @author ChengLong
- * @since 2.5.0
- * @create 2024-08-02 10:01:01
+ * @Date 2025/7/8 14:01
+ * @version 2.6.0
  */
-private[paimon] object FirePaimonConf {
-  lazy val HIVE_CLUSTER = "hive.cluster"
-  lazy val PAIMON_CATALOG_NAME = "paimon.catalog.name"
-  lazy val HIVE_CLUSTER_MAP_PREFIX = "fire.hive.cluster.map."
-
-  // 初始化hive集群名称与metastore映射
-  private lazy val hiveMetastoreMap = PropUtils.sliceKeys(this.HIVE_CLUSTER_MAP_PREFIX)
-
-  // paimon catalog名称
-  lazy val paimonCatalogName = PropUtils.getString(this.PAIMON_CATALOG_NAME, "paimon")
-  // hive集群标识（batch/streaming/test）
-  lazy val hiveCluster = PropUtils.getString(this.HIVE_CLUSTER, "")
+trait BasePaimonCore extends SparkCore with BasePaimon {
 
   /**
-   * 根据hive集群名称获取metastore地址
+   * 在加载任务配置文件前将被加载
    */
-  def getMetastoreUrl: String = {
-    this.hiveMetastoreMap.getOrElse(hiveCluster, hiveCluster)
+  override private[fire] def loadConf: Unit = {
+    super.loadConf
+    this.loadPaimonConf
+  }
+
+  /**
+   * 在加载用户配置以后加载hms地址
+   */
+  override protected def preProcess(): Unit = {
+    this.loadHmsConf
   }
 }

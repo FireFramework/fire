@@ -882,17 +882,24 @@
         </profile>
 
         <profile>
-            <id>paimon-1.1.0</id>
+            <id>paimon-1.1.1</id>
             <properties>
-                <paimon.version>1.1.0</paimon.version>
+                <paimon.version>1.1.1</paimon.version>
             </properties>
         </profile>
+
+        <profile>
+            <id>paimon-1.2.0</id>
+            <properties>
+                <paimon.version>1.2.0</paimon.version>
+            </properties>
+        </profile>
+
         <!-- include zto env -->
         <profile>
             <id>zto-env</id>
             <properties>
                 <build.dest>zto</build.dest>
-                <paimon.version>1.0.1.3-SNAPSHOT</paimon.version>
             </properties>
             <activation>
                 <activeByDefault>false</activeByDefault>
