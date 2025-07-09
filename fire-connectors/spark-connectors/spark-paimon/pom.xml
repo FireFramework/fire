@@ -57,12 +57,12 @@
         </dependency>
 
         <!-- paimon相关依赖 -->
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.paimon</groupId>
             <artifactId>paimon-spark-${spark.major.version}</artifactId>
             <version>${paimon.version}</version>
             <scope>${maven.scope}</scope>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>org.apache.paimon</groupId>
             <artifactId>paimon-hive-common</artifactId>
