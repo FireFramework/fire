@@ -17,9 +17,7 @@
 
 package com.zto.fire.spark.connector.paimon
 
-import com.zto.fire.common.util.PropUtils
 import com.zto.fire.spark.SparkCore
-import com.zto.fire.spark.connector.paimon.conf.FirePaimonConf
 
 /**
  * Paimon 离线Spark Core任务父类
