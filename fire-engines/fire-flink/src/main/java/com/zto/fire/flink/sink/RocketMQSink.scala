@@ -45,7 +45,7 @@ abstract class RocketMQSink[IN, T <: MQRecord : ClassTag](params: Map[String, Ob
   override def sink(dataList: List[T]): Unit = {
     dataList.foreach(record => {
       if (isEmpty(record.topic)) record.topic = finalTopic
-      if (isEmpty(record.tag)) record.tag = finalTag
+      if (isEmpty(record.tag) && noEmpty(finalTag)) record.tag = finalTag
       MQProducer.sendRecord(finalBrokers, record, MQType.rocketmq, finalConf)
     })
   }

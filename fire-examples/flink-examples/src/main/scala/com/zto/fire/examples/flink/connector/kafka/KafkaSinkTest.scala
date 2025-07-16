@@ -12,7 +12,7 @@ import org.apache.flink.api.scala._
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
 @Kafka2(brokers = "bigdata_test", topics = "fire2")
 @Kafka5(brokers = "bigdata_test", topics = "mq_test")
-@RocketMQ3(brokers = "bigdata_test", topics = "mq_test", sinkBatch = 10, sinkFlushInterval = 3000)
+@RocketMQ3(brokers = "bigdata_test", topics = "mq_test", sinkBatch = 10, sinkFlushInterval = 3000, tag = "*")
 object KafkaSinkTest extends FlinkStreaming {
 
   @Process

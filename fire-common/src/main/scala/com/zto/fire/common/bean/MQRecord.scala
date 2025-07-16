@@ -31,7 +31,7 @@ import org.apache.rocketmq.remoting.common.RemotingHelper
 class MQRecord(var topic: String, var msg: String) {
   var partition: JInt = null
   var key: String = null
-  var tag: String = "*"
+  var tag: String = null
   var flag: Int = 0
   var waitStoreMsgOK: Boolean = true
 
@@ -49,11 +49,11 @@ class MQRecord(var topic: String, var msg: String) {
   }
 
   def this(msg: String, partition: JInt, key: String) = {
-    this(null, msg, partition, key, "*", 0, true)
+    this(null, msg, partition, key, null, 0, true)
   }
 
   def this(msg: String, partition: JInt) = {
-    this(null, msg, partition, null, "*", 0, true)
+    this(null, msg, partition, null, null, 0, true)
   }
 
   def this(msg: String, key: String, tag: String, flag: Int, waitStoreMsgOK: Boolean) = {
@@ -69,14 +69,14 @@ class MQRecord(var topic: String, var msg: String) {
   }
 
   def this(msg: String) = {
-    this(null, msg, null, null, "*", 0, true)
+    this(null, msg, null, null, null, 0, true)
   }
 
   /**
    * 转为RocketMQ消息体
    */
   def toRocketMQ: Message = {
-    new Message(topic, tag, key, flag, msg.getBytes(RemotingHelper.DEFAULT_CHARSET), waitStoreMsgOK)
+    new Message(topic, if (isEmpty(tag)) "*" else tag, key, flag, msg.getBytes(RemotingHelper.DEFAULT_CHARSET), waitStoreMsgOK)
   }
 
   /**
@@ -96,17 +96,17 @@ object MQRecord {
 
   def apply(msg: String, partition: JInt, key: String, tags: JString): MQRecord = new MQRecord(null, msg, partition, key, tags, 0, true)
 
-  def apply(msg: String, partition: JInt, key: String): MQRecord = new MQRecord(null, msg, partition, key, "*", 0, true)
+  def apply(msg: String, partition: JInt, key: String): MQRecord = new MQRecord(null, msg, partition, key, null, 0, true)
 
-  def apply(msg: String, partition: JInt): MQRecord = new MQRecord(null, msg, partition, null, "*", 0, true)
+  def apply(msg: String, partition: JInt): MQRecord = new MQRecord(null, msg, partition, null, null, 0, true)
 
-  def apply(msg: String): MQRecord = new MQRecord(null, msg, null, null, "*", 0, true)
+  def apply(msg: String): MQRecord = new MQRecord(null, msg, null, null, null, 0, true)
 
-  def apply(topic: String, msg: String): MQRecord = new MQRecord(topic, msg, null, null, "*", 0, true)
+  def apply(topic: String, msg: String): MQRecord = new MQRecord(topic, msg, null, null, null, 0, true)
 
-  def apply(topic: String, msg: String, partition: JInt): MQRecord = new MQRecord(topic, msg, partition, null, "*", 0, true)
+  def apply(topic: String, msg: String, partition: JInt): MQRecord = new MQRecord(topic, msg, partition, null, null, 0, true)
 
-  def apply(topic: String, msg: String, partition: JInt, key: String): MQRecord = new MQRecord(topic, msg, partition, key, "*", 0, true)
+  def apply(topic: String, msg: String, partition: JInt, key: String): MQRecord = new MQRecord(topic, msg, partition, key, null, 0, true)
 
   def apply(topic: String, msg: String, partition: JInt, key: String, tag: JString): MQRecord = new MQRecord(topic, msg, partition, key, tag, 0, true)
 
