@@ -177,6 +177,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_CONTAINER_MONITOR_PMEM_RATIO = "fire.container.monitor.pmem.ratio"
   lazy val FIRE_CONTAINER_MONITOR_VMEM_RATIO = "fire.container.monitor.vmem.ratio"
   lazy val FIRE_PAIMON_COMMON_CONF_FILE = "paimon.properties"
+  lazy val CMD_CONF_OVERWRITE_PREFIX = "conf.overwrite."
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -361,6 +362,8 @@ private[fire] object FireFrameworkConf {
   lazy val accSyncMaxSize = PropUtils.getLong(this.FIRE_ACC_SYNC_MAX_SIZE, 100)
   // sql的set配置，如：this.spark.sql("set hive.exec.dynamic.partition=true")
   lazy val sqlConfMap = PropUtils.sliceKeys(this.FIRE_SQL_CONF_PREFIX) ++ PropUtils.sliceKeys(this.FIRE_SQL_CONF_PREFIX2) ++ PropUtils.sliceKeys(this.HIVE_CONF_PREFIX)
+  // 获取命令行覆盖参数，优先级仅次于配置中心紧急参数
+  lazy val cmdConfOverwriteMap = PropUtils.sliceKeys(this.CMD_CONF_OVERWRITE_PREFIX)
 
   /**
    * 获取配置的消费位点信息

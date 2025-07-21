@@ -292,6 +292,8 @@ object PropUtils extends Logging {
     this.loadCommandConfig()
     // 配置中心任务级别配置优先级高于用户本地配置文件中的配置，做到重启任务即可生效
     this.setProperties(centerConfig.getOrDefault(ConfigureLevel.TASK, Map.empty[String, String]))
+    // 命令行覆盖参数优先级仅次于配置中心紧急配置
+    this.setProperties(FireFrameworkConf.cmdConfOverwriteMap)
     // 配置中心紧急配置优先级最高，用于对所有任务生效的紧急参数调优
     this.setProperties(centerConfig.getOrDefault(ConfigureLevel.URGENT, Map.empty[String, String]))
 
