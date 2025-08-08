@@ -31,6 +31,7 @@ import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils, TiSparkUtils}
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.{TableIdentifier => SparkTableIdentifier}
+import org.apache.spark.sql.execution.{QueryExecution, SparkPlan}
 
 
 /**
@@ -121,6 +122,26 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
       tryWithLog {
         this.queryParser(logicalPlan, sinkTable)
       }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，logicalPlan: ${logicalPlan}", isThrow = FireFrameworkConf.lineageDebugEnable, hook = false)
+    }
+  }
+
+  /**
+   * 用于解析SparkSql中的库表信息(物理执行计划)
+   */
+  @Internal
+  def sqlParserWithExecution(queryExecution: QueryExecution): Unit = {
+    val sparkPlan = queryExecution.sparkPlan
+    var sinkTable: Option[TableIdentifier] = None
+    try {
+      sinkTable = this.ddlParserWithPlan(sparkPlan)
+    } catch {
+      case e: Throwable => {
+        LineageManager.printLog(s"可忽略异常：实时血缘解析SQL报错，sparkPlan: ${sparkPlan}")
+      }
+    } finally {
+      tryWithLog {
+        this.queryParser(queryExecution.optimizedPlan, sinkTable)
+      }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，sparkPlan: ${sparkPlan}", isThrow = FireFrameworkConf.lineageDebugEnable, hook = false)
     }
   }
 
@@ -224,6 +245,14 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def ddlParser(logicalPlan: LogicalPlan): Option[TableIdentifier]
+
+  /**
+   * 用于解析DDL语句中的库表、分区信息
+   *
+   * @return 返回sink目标表，用于维护表与表之间的关系
+   */
+  @Internal
+  protected def ddlParserWithPlan(sparkPlan: SparkPlan): Option[TableIdentifier]
 
   /**
    * 将Fire的TableIdentifier转为Spark的TableIdentifier
