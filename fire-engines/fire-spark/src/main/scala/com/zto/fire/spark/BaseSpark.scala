@@ -87,8 +87,12 @@ trait BaseSpark extends SparkListener with BaseFire with Serializable {
     if (noEmpty(this._spark, this.sc) && this.sc.isStarted) {
       // 退出前触发一次血缘采集分析，避免spark core短时任务执行来不及采集血缘
       if (FireFrameworkConf.accEnable && FireFrameworkConf.lineageEnable) {
+        //由于spark事件监听可能有延迟，固定睡眠一段时间
+        logInfo("<-- 开始spark context关闭 -->")
+        Thread.sleep(FireFrameworkConf.lineageShutdownSleep * 1000)
         AccumulatorManager.collectDistributeLineage(false)
         Thread.sleep(FireFrameworkConf.lineageShutdownSleep * 1000)
+        logInfo("<-- 完成spark context关闭 -->")
       }
 
       if (this.sc.isStarted) {

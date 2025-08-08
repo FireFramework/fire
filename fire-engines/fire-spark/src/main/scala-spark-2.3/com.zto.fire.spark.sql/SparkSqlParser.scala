@@ -24,9 +24,12 @@ import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
 import com.zto.fire.spark.util.TiSparkUtils
 import org.apache.spark.sql.catalyst.analysis._
+import org.apache.spark.sql.catalyst.catalog.HiveTableRelation
 import org.apache.spark.sql.catalyst.plans.logical._
+import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.command._
-import org.apache.spark.sql.execution.datasources.CreateTable
+import org.apache.spark.sql.execution.datasources._
+import org.apache.spark.sql.hive.execution.{CreateHiveTableAsSelectCommand, InsertIntoHiveDirCommand, InsertIntoHiveTable}
 
 /**
  * Spark SQL解析器，用于解析Spark SQL语句中的库、表、分区、操作类型等信息
@@ -145,6 +148,133 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         this.addCatalog(tableIdentifier, Operation.UNCACHE)
       }
       case _ => LineageManager.printLog(s"Parse ddl SQL异常，无法匹配该Statement. $logicalPlan")
+    }
+    sinkTable
+  }
+
+  /**
+   * 用于解析DDL语句中的库表、分区信息
+   *
+   * @return 返回sink目标表，用于维护表与表之间的关系
+   */
+  override def ddlParserWithPlan(sparkPlan: SparkPlan): Option[TableIdentifier] = {
+    var sinkTable: Option[TableIdentifier] = None
+
+    sparkPlan.collect {
+      //Hive表扫描信息
+      case plan if plan.getClass.getName == "org.apache.spark.sql.hive.execution.HiveTableScanExec" =>
+        val relationField = plan.getClass.getDeclaredField("relation")
+        relationField.setAccessible(true)
+        val relation = relationField.get(plan).asInstanceOf[HiveTableRelation]
+        val tableIdentifier = this.toFireTableIdentifier(relation.tableMeta.identifier)
+        LineageManager.printLog(s"解析到select表名: $tableIdentifier")
+        this.addCatalog(tableIdentifier, Operation.SELECT)
+        sinkTable = Some(tableIdentifier)
+      //表写入信息
+      case plan: DataWritingCommandExec =>
+        plan.cmd match {
+          case CreateDataSourceTableAsSelectCommand(table, mode, query, outputColumnNames) =>
+            val tableIdentifier = this.toFireTableIdentifier(table.identifier)
+            this.addCatalog(tableIdentifier, Operation.CREATE_TABLE)
+            sinkTable = Some(tableIdentifier)
+          case CreateHiveTableAsSelectCommand(tableDesc, query, outputColumnNames, mode) =>
+            val tableIdentifier = this.toFireTableIdentifier(tableDesc.identifier)
+            this.addCatalog(tableIdentifier, Operation.CREATE_TABLE)
+            sinkTable = Some(tableIdentifier)
+          case InsertIntoHadoopFsRelationCommand(outputPath, staticPartitions, ifPartitionNotExists, partitionColumns, bucketSpec, fileFormat, options, query, mode, catalogTable, fileIndex, outputColumnNames) =>
+          case InsertIntoHiveTable(table, partition, query, overwrite, ifPartitionNotExists, outputColumnNames) => {
+            val tableIdentifier = this.toFireTableIdentifier(table.identifier)
+            this.addCatalog(tableIdentifier, Operation.INSERT_INTO)
+            sinkTable = Some(tableIdentifier)
+          }
+          case InsertIntoHiveDirCommand(isLocal, storage, query, overwrite, outputColumnNames) =>
+        }
+      //命令
+      case plan: ExecutedCommandExec => plan.cmd match {
+        case AddFileCommand(path) =>
+        case AddJarCommand(path) =>
+        case AlterDatabasePropertiesCommand(databaseName, props) =>
+        case AlterTableAddColumnsCommand(tableName, colsToAdd) =>
+          val tableIdentifier = this.toFireTableIdentifier(tableName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AlterTableAddPartitionCommand(tableName, partitionSpecsAndLocs, ifNotExists) =>
+          val tableIdentifier = this.toFireTableIdentifier(tableName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AlterTableChangeColumnCommand(tableName, columnName, newColumn) =>
+          val tableIdentifier = this.toFireTableIdentifier(tableName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AlterTableDropPartitionCommand(tableName, specs, ifExists, purge, retainData) =>
+          val tableIdentifier = this.toFireTableIdentifier(tableName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AlterTableRecoverPartitionsCommand(tableName, cmd) =>
+          val tableIdentifier = this.toFireTableIdentifier(tableName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AlterTableRenameCommand(oldName, newName, isView) =>
+          val oldTableIdentifier = this.toFireTableIdentifier(oldName)
+          this.addCatalog(oldTableIdentifier, Operation.ALTER_TABLE)
+          val tableIdentifier = this.toFireTableIdentifier(newName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AlterTableRenamePartitionCommand(tableName, oldPartition, newPartition) =>
+          val tableIdentifier = this.toFireTableIdentifier(tableName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AlterTableSerDePropertiesCommand(tableName, serdeClassName, serdeProperties, partSpec) =>
+          val tableIdentifier = this.toFireTableIdentifier(tableName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AlterTableSetLocationCommand(tableName, partitionSpec, location) =>
+          val tableIdentifier = this.toFireTableIdentifier(tableName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AlterTableSetPropertiesCommand(tableName, properties, isView) =>
+          val tableIdentifier = this.toFireTableIdentifier(tableName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AlterTableUnsetPropertiesCommand(tableName, propKeys, ifExists, isView) =>
+          val tableIdentifier = this.toFireTableIdentifier(tableName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AlterViewAsCommand(tableName, originalText, query) =>
+          val tableIdentifier = this.toFireTableIdentifier(tableName)
+          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
+        case AnalyzeColumnCommand(tableIdent, columnNames) =>
+        case AnalyzePartitionCommand(tableIdent, partitionSpec, noscan) =>
+        case AnalyzeTableCommand(tableIdent, noscan) =>
+        case CacheTableCommand(tableIdent, plan, isLazy) =>
+        case ClearCacheCommand() =>
+        case CreateDataSourceTableCommand(table, ignoreIfExists) =>
+        case CreateDatabaseCommand(databaseName, ifNotExists, path, comment, props) =>
+        case CreateFunctionCommand(databaseName, functionName, className, resources, isTemp, ignoreIfExists, replace) =>
+        case CreateTableCommand(table, ignoreIfExists) =>
+        case CreateTableLikeCommand(targetTable, sourceTable, location, ifNotExists) =>
+        case CreateTempViewUsing(tableIdent, userSpecifiedSchema, replace, global, provider, options) =>
+        case CreateViewCommand(name, userSpecifiedColumns, comment, properties, originalText, child, allowExisting, replace, viewType) =>
+        case DescribeColumnCommand(tableName, colNameParts, isExtended) =>
+        case DescribeDatabaseCommand(databaseName, extended) =>
+        case DescribeFunctionCommand(functionName, isExtended) =>
+        case DescribeTableCommand(tableName, partitionSpec, isExtended) =>
+        case DropDatabaseCommand(databaseName, ifExists, cascade) =>
+        case DropFunctionCommand(databaseName, functionName, ifExists, isTemp) =>
+        case DropTableCommand(tableName, ifExists, isView, purge) =>
+        case ExplainCommand(logicalPlan, extended, codegen, cost) =>
+        case InsertIntoDataSourceCommand(logicalRelation, query, overwrite) =>
+        case InsertIntoDataSourceDirCommand(storage, provider, query, overwrite) =>
+        case ListFilesCommand(files) =>
+        case ListJarsCommand(jars) =>
+        case LoadDataCommand(table, path, isLocal, isOverwrite, partition) =>
+        case RefreshResource(path) =>
+        case RefreshTable(tableIdent) =>
+        case ResetCommand =>
+        case SaveIntoDataSourceCommand(query, dataSource, options, mode) =>
+        case SetCommand(kv) =>
+        case SetDatabaseCommand(databaseName) =>
+        case ShowColumnsCommand(databaseName, tableName) =>
+        case ShowCreateTableCommand(tableName) =>
+        case ShowDatabasesCommand(databasePattern) =>
+        case ShowFunctionsCommand(db, pattern, showUserFunctions, showSystemFunctions) =>
+        case ShowPartitionsCommand(tableName, spec) =>
+        case ShowTablePropertiesCommand(tableName, propertyKey) =>
+        case ShowTablesCommand(databaseName, tableIdentifierPattern, isExtended, partitionSpec) =>
+        case StreamingExplainCommand(queryExecution, extended) =>
+        case TruncateTableCommand(tableName, partitionSpec) =>
+        case UncacheTableCommand(tableIdent, ifExists) =>
+        case _ =>
+      }
     }
     sinkTable
   }
