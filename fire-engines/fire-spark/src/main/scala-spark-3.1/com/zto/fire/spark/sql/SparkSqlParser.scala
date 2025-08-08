@@ -24,6 +24,7 @@ import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.logical._
+import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.command.{AlterTableDropPartitionCommand, CacheTableCommand, CreateViewCommand, RefreshTableCommand, UncacheTableCommand}
 import org.apache.spark.sql.execution.datasources.CreateTable
 
@@ -144,6 +145,16 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
     }
 
     sinkTable
+  }
+
+  /**
+   * 暂时只有spark2.3需解析物理执行计划，其他版本暂不需要
+   *
+   * @param sparkPlan
+   * @return
+   */
+  override def ddlParserWithPlan(sparkPlan: SparkPlan): Option[TableIdentifier] = {
+    None
   }
 
   /**
