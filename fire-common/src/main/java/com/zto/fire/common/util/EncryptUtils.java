@@ -22,11 +22,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.crypto.Cipher;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -124,4 +130,66 @@ public class EncryptUtils {
         String fireAuth = EncryptUtils.md5Encrypt(FireFrameworkConf.restServerSecret() + privateKey + DateFormatUtils.formatCurrentDate());
         return fireAuth.equals(auth);
     }
+
+    /**
+     * 生成RSA的公钥和私钥
+     */
+    public static Map<String, Object> genRSAKey() throws Exception {
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
+        keyPairGen.initialize(1024);
+        KeyPair keyPair = keyPairGen.generateKeyPair();
+        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+        Map<String, Object> keyMap = new HashMap<>(2);
+        keyMap.put("RSAPublicKey", publicKey);
+        keyMap.put("RSAPrivateKey", privateKey);
+        return keyMap;
+    }
+
+    /**
+     * 基于RSA加密算法对指定的文本进行加密
+     * @param text
+     * 待加密的问题吧
+     * @param publicKeyStr
+     * RSA公钥
+     * @return
+     * 加密后的字符串
+     */
+    public static String rsaEncrypt(String text, String publicKeyStr) {
+        try {
+            X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyStr));
+            KeyFactory factory = KeyFactory.getInstance("RSA");
+            PublicKey key = factory.generatePublic(x509EncodedKeySpec);
+            Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            return Base64.getEncoder().encodeToString(cipher.doFinal(text.getBytes("UTF-8")));
+        } catch (Exception e) {
+            logger.error("基于RSA算法进行加密报错", e);
+            return null;
+        }
+    }
+
+    /**
+     * 基于RSA加密算法对指定的文本进行解密
+     * @param text
+     * 加密后的文本
+     * @param privateKeyStr
+     * RSA私钥
+     * @return
+     * 解密后的文本
+     */
+    public static String rsaDecrypt(String text, String privateKeyStr) {
+        try {
+            PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyStr));
+            KeyFactory factory = KeyFactory.getInstance("RSA");
+            PrivateKey key = factory.generatePrivate(pkcs8EncodedKeySpec);
+            Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.DECRYPT_MODE, key);
+            return new String(cipher.doFinal(Base64.getDecoder().decode(text)));
+        } catch (Exception e) {
+            logger.error("基于RSA算法进行解密报错", e);
+            return null;
+        }
+    }
+
 }

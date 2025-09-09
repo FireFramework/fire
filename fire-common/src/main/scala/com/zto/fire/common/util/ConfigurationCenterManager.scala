@@ -24,6 +24,8 @@ import com.zto.fire.predef._
 import org.apache.commons.httpclient.Header
 import org.apache.commons.lang3.StringUtils
 
+import scala.collection.mutable.Map
+
 /**
  * 配置中心管理器，用于读取配置中心中的配置信息
  *
@@ -33,6 +35,7 @@ import org.apache.commons.lang3.StringUtils
  */
 private[fire] object ConfigurationCenterManager extends Serializable with Logging {
   private lazy val configCenterProperties: JMap[ConfigureLevel, JMap[String, String]] = new JHashMap[ConfigureLevel, JMap[String, String]]
+  private lazy val jdbcPasswordConfKey = "db.jdbc.password"
 
   /**
    * 构建配置中心请求参数
@@ -110,6 +113,52 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
         FireUtils.exitError
       }
     }
+
+    // 解密通过平台下发的密文密码
+    this.jdbcConfDecrypt()
+
     this.configCenterProperties
+  }
+
+  /**
+   * 基于RSA加密算法对配置信息中的jdbc密码进行解密
+   * 注：通常情况下加密后的密码会基于实时平台进行配置与下发，因此只考虑解析从平台获取到的Task级别的JDBC配置信息
+   */
+  private[this] def jdbcConfDecrypt(): Unit = {
+    // 从提交命令所在机器环境中获取私钥信息
+    val privateKeyTest = FireFrameworkConf.encryptPrivateKeyTest
+    val privateKeyProd = FireFrameworkConf.encryptPrivateKeyProd
+
+    if (isEmpty(privateKeyTest, privateKeyProd)) {
+      logWarning("未加载到JDBC密码解密私钥信息，密码信息将直接下发到connector！")
+      return
+    }
+
+    logInfo("已加载JDBC密码解密私钥信息")
+    val taskMap = this.configCenterProperties.getOrDefault(ConfigureLevel.TASK, Map.empty[JString, JString])
+    if (taskMap.isEmpty) return
+
+    // 遍历jdbc相关配置信息，并尝试基于RSA算法进行密码解密
+    val copyMap = new JHashMap[JString, JString]()
+    taskMap.foreach(kv => {
+      if (kv._1.contains(this.jdbcPasswordConfKey)) {
+        // 尝试基于RSA算法对password进行解密，首先基于测试环境的私钥进行解密
+        val password = EncryptUtils.rsaDecrypt(kv._2, privateKeyTest)
+        if (noEmpty(password)) {
+          // 如果解密成功，则password不为空，将替换已有的密文password
+          copyMap.put(kv._1, password)
+        } else {
+          // 如果测试环境私钥解密失败，则尝试通过生产环境私钥进行解密
+          val password = EncryptUtils.rsaDecrypt(kv._2, privateKeyProd)
+          if (noEmpty(password)) {
+            copyMap.put(kv._1, password)
+          }
+        }
+      }
+    })
+
+    if (copyMap.isEmpty) return
+    taskMap.putAll(copyMap)
+    logInfo(s"已成功解密并替换JDBC密码，共计：${copyMap.size()}项")
   }
 }

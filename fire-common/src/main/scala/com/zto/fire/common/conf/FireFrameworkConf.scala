@@ -178,6 +178,8 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_CONTAINER_MONITOR_VMEM_RATIO = "fire.container.monitor.vmem.ratio"
   lazy val FIRE_PAIMON_COMMON_CONF_FILE = "paimon.properties"
   lazy val CMD_CONF_OVERWRITE_PREFIX = "conf.overwrite."
+  lazy val FIRE_ENCRYPT_PRIVATE_KEY_PROD = "fire.encrypt.private.key.prod"
+  lazy val FIRE_ENCRYPT_PRIVATE_KEY_TEST = "fire.encrypt.private.key.test"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -444,4 +446,14 @@ private[fire] object FireFrameworkConf {
    * 监控container容器虚拟内存的上限比例
    */
   lazy val containerMonitorVmemRatio: Double = PropUtils.getDouble(this.FIRE_CONTAINER_MONITOR_VMEM_RATIO, 2.0)
+
+  /**
+   * 生产环境私钥配置
+   */
+  lazy val encryptPrivateKeyProd: String = PropUtils.getString(this.FIRE_ENCRYPT_PRIVATE_KEY_PROD)
+
+  /**
+   * 测试环境私钥配置
+   */
+  lazy val encryptPrivateKeyTest: String = PropUtils.getString(this.FIRE_ENCRYPT_PRIVATE_KEY_TEST)
 }
