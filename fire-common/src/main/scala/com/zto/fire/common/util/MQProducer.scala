@@ -73,6 +73,9 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, this.sendTimeout.toString)
+    props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true")
+    props.put(ProducerConfig.ACKS_CONFIG, "true")
+    props.put(ProducerConfig.RETRIES_CONFIG, "3")
     this.otherConf.foreach(prop => props.put(prop._1, prop._2))
 
     val producer = new KafkaProducer[String, String](props)
