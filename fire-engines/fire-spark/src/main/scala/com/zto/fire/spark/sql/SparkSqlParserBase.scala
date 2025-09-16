@@ -136,12 +136,12 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
       sinkTable = this.ddlParserWithPlan(sparkPlan)
     } catch {
       case e: Throwable => {
-        LineageManager.printLog(s"可忽略异常：实时血缘解析SQL报错，sparkPlan: ${sparkPlan}")
+        LineageManager.printLog(s"可忽略异常：实时血缘解析物理执行计划SQL报错，sparkPlan: ${sparkPlan}")
       }
     } finally {
       tryWithLog {
         this.queryParser(queryExecution.optimizedPlan, sinkTable)
-      }(this.logger, catchLog = s"可忽略异常：实时血缘解析SQL报错，sparkPlan: ${sparkPlan}", isThrow = FireFrameworkConf.lineageDebugEnable, hook = false)
+      }(this.logger, catchLog = s"可忽略异常：实时血缘解析物理执行计划SQL报错，sparkPlan: ${sparkPlan}", isThrow = FireFrameworkConf.lineageDebugEnable, hook = false)
     }
   }
 

@@ -30,6 +30,8 @@ import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.command._
 import org.apache.spark.sql.execution.datasources._
 import org.apache.spark.sql.hive.execution.{CreateHiveTableAsSelectCommand, InsertIntoHiveDirCommand, InsertIntoHiveTable}
+import org.apache.spark.sql.execution.adaptive.QueryStageInput
+import org.apache.spark.sql.execution.columnar.InMemoryTableScanExec
 
 /**
  * Spark SQL解析器，用于解析Spark SQL语句中的库、表、分区、操作类型等信息
@@ -159,7 +161,7 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
    */
   override def ddlParserWithPlan(sparkPlan: SparkPlan): Option[TableIdentifier] = {
     var sinkTable: Option[TableIdentifier] = None
-
+    LineageManager.printLog(s"开始解析物理执行计划, $sparkPlan")
     sparkPlan.collect {
       //Hive表扫描信息
       case plan if plan.getClass.getName == "org.apache.spark.sql.hive.execution.HiveTableScanExec" =>
@@ -167,9 +169,16 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         relationField.setAccessible(true)
         val relation = relationField.get(plan).asInstanceOf[HiveTableRelation]
         val tableIdentifier = this.toFireTableIdentifier(relation.tableMeta.identifier)
-        LineageManager.printLog(s"解析到select表名: $tableIdentifier")
+        LineageManager.printLog(s"hive scan解析到select表名: $tableIdentifier")
         this.addCatalog(tableIdentifier, Operation.SELECT)
         sinkTable = Some(tableIdentifier)
+      //cache scan
+      case p: InMemoryTableScanExec =>
+        handleInMemoryTableScan(p).foreach(x => {
+          LineageManager.printLog(s"cache scan中解析到select表名: $x")
+          this.addCatalog(x, Operation.SELECT)
+          sinkTable = Some(x)
+        })
       //表写入信息
       case plan: DataWritingCommandExec =>
         plan.cmd match {
@@ -273,11 +282,32 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         case StreamingExplainCommand(queryExecution, extended) =>
         case TruncateTableCommand(tableName, partitionSpec) =>
         case UncacheTableCommand(tableIdent, ifExists) =>
-        case _ =>
+        case _ => LineageManager.printLog(s"解析物理执行计划异常，无法匹配该Statement")
       }
     }
     sinkTable
   }
+
+  /**
+   * 处理执行计划中InMemoryTableScanExec
+   *
+   * @param plan 物理执行计划
+   * @return 表操作信息
+   */
+  def handleInMemoryTableScan(plan: SparkPlan): Seq[TableIdentifier] = {
+    plan match {
+      case p if p.getClass.getName == "org.apache.spark.sql.hive.execution.HiveTableScanExec" =>
+        val relationField = p.getClass.getDeclaredField("relation")
+        relationField.setAccessible(true)
+        val relation = relationField.get(plan).asInstanceOf[HiveTableRelation]
+        val tableIdentifier = this.toFireTableIdentifier(relation.tableMeta.identifier)
+        Seq(tableIdentifier)
+      case p: QueryStageInput =>  handleInMemoryTableScan(p.childStage)
+      case p: InMemoryTableScanExec => handleInMemoryTableScan(p.relation.child)
+      case p: SparkPlan => p.children.flatMap(handleInMemoryTableScan)
+    }
+  }
+
 
   /**
    * 用于判断给定的表是否为临时表
