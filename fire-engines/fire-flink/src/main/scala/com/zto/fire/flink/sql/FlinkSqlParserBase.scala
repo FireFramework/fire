@@ -288,7 +288,9 @@ private[fire] trait FlinkSqlParserBase extends SqlParser {
         }
 
         val paimonCatalog = this.tableEnv.paimonCatalog.get()
-        paimonCatalog.listTables(tableIdentifier.database).contains(tableIdentifier.table)
+        val checkTable = paimonCatalog.getTable(new ObjectPath(tableIdentifier.database, tableIdentifier.table));
+        //目前只能通过该方法判断，hive表为org.apache.paimon.flink.FormatCatalogTable
+        checkTable != null && checkTable.getClass.getName.equals("org.apache.paimon.flink.DataCatalogTable")
       }(this.logger, catchLog = s"判断${tableIdentifier}是否为paimon表失败", hook = false)
     }
   }
