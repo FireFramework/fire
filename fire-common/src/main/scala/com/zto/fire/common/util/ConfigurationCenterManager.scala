@@ -80,7 +80,7 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
   private[this] def invoke(url: String, param: String): String = {
     logInfo(s"开始调用接口：$url,参数为：$param")
     try {
-      HttpClientUtils.doPost(url, param,new Header(FireFrameworkConf.configCenterZdpHeaderKey,FireFrameworkConf.configCenterZdpHeaderValue))
+      HttpClientUtils.doPost(url, param, new Header(FireFrameworkConf.configCenterZdpHeaderKey, FireFrameworkConf.configCenterZdpHeaderValue))
     } catch {
       case _: Throwable => logError("调用配置中心接口失败，开始尝试调用测试环境配置中心接口。")
         ""
