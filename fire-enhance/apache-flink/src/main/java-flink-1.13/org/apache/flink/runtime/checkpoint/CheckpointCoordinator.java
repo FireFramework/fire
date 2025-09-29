@@ -1006,6 +1006,7 @@ public class CheckpointCoordinator {
      */
     private void onTriggerFailure(@Nullable PendingCheckpoint checkpoint, Throwable throwable) {
         // beautify the stack trace a bit
+        LOG.error("触发生成checkpoint失败：", throwable);
         throwable = ExceptionUtils.stripCompletionException(throwable);
 
         try {

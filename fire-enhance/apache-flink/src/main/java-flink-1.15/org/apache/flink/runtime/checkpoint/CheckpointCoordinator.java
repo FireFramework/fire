@@ -1064,6 +1064,7 @@ public class CheckpointCoordinator {
             CheckpointProperties checkpointProperties,
             Throwable throwable) {
         // beautify the stack trace a bit
+        LOG.error("触发生成checkpoint失败：", throwable);
         throwable = ExceptionUtils.stripCompletionException(throwable);
 
         try {
