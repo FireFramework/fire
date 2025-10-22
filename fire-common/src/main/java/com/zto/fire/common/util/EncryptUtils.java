@@ -187,7 +187,7 @@ public class EncryptUtils {
             cipher.init(Cipher.DECRYPT_MODE, key);
             return new String(cipher.doFinal(Base64.getDecoder().decode(text)));
         } catch (Exception e) {
-            logger.error("基于RSA算法进行解密报错", e);
+            logger.warn("基于RSA算法进行解密报错：{}", e.getMessage());
             return null;
         }
     }
