@@ -180,6 +180,8 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
     } else {
       AccumulatorManager.addMultiTimer(module, "onTaskEnd", "onTaskEnd", "", "ERROR", "", 1)
       ErrorToleranceAcc.addTaskFailedCount()
+      // 异常信息统一投递到Fire异常总线
+      ExceptionBus.post(new FireSparkException(taskEnd.reason.toString))
       this.logError(s"task failed. reason: ${taskEnd.reason}")
     }
   }
