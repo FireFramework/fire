@@ -28,5 +28,5 @@ import java.io.Serializable;
  */
 public interface TagKeyValueDeserializationSchema<T> extends ResultTypeQueryable<T>, Serializable {
 
-    T deserializeTagKeyAndValue(MessageExt msg);
+    T deserializeTagKeyAndValue(MessageExt msg) throws Exception;
 }

@@ -33,7 +33,7 @@ import java.nio.charset.StandardCharsets;
 public class SimpleTagKeyValueDeserializationSchema implements TagKeyValueDeserializationSchema<Tuple3<String, String, String>> {
 
     @Override
-    public Tuple3<String, String, String> deserializeTagKeyAndValue(MessageExt msg) {
+    public Tuple3<String, String, String> deserializeTagKeyAndValue(MessageExt msg) throws Exception {
         String tag = msg.getTags();
         String key = msg.getKeys();
         byte[] value = msg.getBody();

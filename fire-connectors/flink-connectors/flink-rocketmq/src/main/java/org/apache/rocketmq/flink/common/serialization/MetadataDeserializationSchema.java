@@ -30,7 +30,7 @@ import org.apache.rocketmq.common.message.MessageExt;
 public class MetadataDeserializationSchema implements TagKeyValueDeserializationSchema<MessageExt> {
 
     @Override
-    public MessageExt deserializeTagKeyAndValue(MessageExt msg) {
+    public MessageExt deserializeTagKeyAndValue(MessageExt msg) throws Exception {
         return msg;
     }
 
