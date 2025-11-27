@@ -50,7 +50,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
   private[this] var poolMethodMap: mutable.Map[JString, Method] = _
   private[this] var username: String = _
   private[this] var url: String = _
-  private[this] var dbType: String = "unknown"
+  private[this] var dbType: Datasource = Datasource.UNKNOWN
   private[this] lazy val finallyCatchLog = "释放jdbc资源失败"
 
   /**
@@ -66,7 +66,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
 
       val driverClass = if (isEmpty(FireJdbcConf.driverClass(keyNum)) && noEmpty(this.conf) && noEmpty(this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
       val autoDriver = if (isEmpty(driverClass)) DBUtils.parseDriverByUrl(this.url) else driverClass
-      require(noEmpty(autoDriver), s"数据库driverClass不能为空，keyNum=${this.keyNum}")
+      // require(noEmpty(autoDriver), s"数据库driverClass不能为空，keyNum=${this.keyNum}")
       this.username = if (isEmpty(FireJdbcConf.user(keyNum)) && noEmpty(this.conf, this.conf.username)) this.conf.username else FireJdbcConf.user(keyNum)
       val password = if (isEmpty(FireJdbcConf.password(keyNum)) && noEmpty(this.conf, this.conf.password)) this.conf.password else FireJdbcConf.password(keyNum)
       // 识别数据源类型是oracle、mysql等
@@ -74,22 +74,25 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       logInfo(s"Fire框架识别到当前jdbc数据源标识为：${this.dbType}，keyNum=${this.keyNum}")
 
       // 创建c3p0数据库连接池实例
-      val pool = new ComboPooledDataSource(true)
-      pool.setJdbcUrl(this.url)
-      pool.setDriverClass(autoDriver)
-      if (noEmpty(this.username)) pool.setUser(this.username)
-      if (noEmpty(password)) pool.setPassword(password)
-      pool.setMaxPoolSize(FireJdbcConf.maxPoolSize(keyNum))
-      pool.setMinPoolSize(FireJdbcConf.minPoolSize(keyNum))
-      pool.setAcquireIncrement(FireJdbcConf.acquireIncrement(keyNum))
-      pool.setInitialPoolSize(FireJdbcConf.initialPoolSize(keyNum))
-      pool.setMaxStatements(0)
-      pool.setMaxStatementsPerConnection(0)
-      pool.setMaxIdleTime(FireJdbcConf.maxIdleTime(keyNum))
-      // 加载以db.c3p0.conf.为前缀的配置项
-      this.installDBPoolProperties(pool, this.keyNum)
-      this.connPool = pool
-      this.logInfo(s"创建数据库连接池[ $keyNum ] driver: ${this.dbType}")
+      if (this.dbType != Datasource.DORIS) {
+        val pool = new ComboPooledDataSource(true)
+        pool.setJdbcUrl(this.url)
+        pool.setDriverClass(autoDriver)
+        if (noEmpty(this.username)) pool.setUser(this.username)
+        if (noEmpty(password)) pool.setPassword(password)
+        pool.setMaxPoolSize(FireJdbcConf.maxPoolSize(keyNum))
+        pool.setMinPoolSize(FireJdbcConf.minPoolSize(keyNum))
+        pool.setAcquireIncrement(FireJdbcConf.acquireIncrement(keyNum))
+        pool.setInitialPoolSize(FireJdbcConf.initialPoolSize(keyNum))
+        pool.setMaxStatements(0)
+        pool.setMaxStatementsPerConnection(0)
+        pool.setMaxIdleTime(FireJdbcConf.maxIdleTime(keyNum))
+        // 加载以db.c3p0.conf.为前缀的配置项
+        this.installDBPoolProperties(pool, this.keyNum)
+        this.connPool = pool
+        this.logInfo(s"创建数据库连接池[ $keyNum ] driver: ${this.dbType}")
+      }
+
     }(this.logger, s"数据库连接池创建成功", s"初始化数据库连接池[ $keyNum ]失败")
   }
 
@@ -415,7 +418,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
   @Internal
   private[this] def sqlBuriedPoint(sql: String, operation: FOperation): String = {
     try {
-      LineageManager.addDBSql(Datasource.parse(this.dbType), this.url, this.username, sql, operation)
+      LineageManager.addDBSql(this.dbType, this.url, this.username, sql, operation)
       StringsUtils.substring(sql, 0, this.logSqlLength)
     } catch {
       case _: Throwable => ""

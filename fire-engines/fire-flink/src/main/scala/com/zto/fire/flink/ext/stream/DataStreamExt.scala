@@ -599,7 +599,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
 
     // 3. sink jdbc埋点信息
     // TODO: 解析sql血缘关系，包括针对表做了哪些操作，数据的流转等
-    LineageManager.addDBSql(Datasource.parse(DBUtils.dbTypeParser(jdbcConf.driverClass, jdbcConf.url)), jdbcConf.url, jdbcConf.username, sql, Operation.UPDATE)
+    LineageManager.addDBSql(DBUtils.dbTypeParser(jdbcConf.driverClass, jdbcConf.url), jdbcConf.url, jdbcConf.username, sql, Operation.UPDATE)
     (jdbcConf, connectionTimeout, columns)
   }
 

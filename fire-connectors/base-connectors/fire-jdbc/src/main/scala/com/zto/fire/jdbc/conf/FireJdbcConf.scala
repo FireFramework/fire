@@ -115,4 +115,19 @@ private[fire] object FireJdbcConf {
   def jdbcUrl(url: String): String = {
     this.jdbcUrlMap.getOrElse(url, url)
   }
+
+  /**
+   * 将jdbc配置转换为doris connector的配置格式
+   */
+  def toDorisConf(withSplit: String = "", keyNum: Int = KeyNum._1): String = {
+    require(this.url(keyNum).nonEmpty, "doris jdbc url is empty")
+    require(this.user(keyNum).nonEmpty, "doris jdbc user is empty")
+    require(this.password(keyNum).nonEmpty, "doris jdbc password is empty")
+
+    s"""
+      |'fenodes' = '${this.url(keyNum)}',
+      |'username' = '${this.user(keyNum)}',
+      |'password' = '${this.password(keyNum)}'${withSplit}
+      |""".stripMargin
+  }
 }

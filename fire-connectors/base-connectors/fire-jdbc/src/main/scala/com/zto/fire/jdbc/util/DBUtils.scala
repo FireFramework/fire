@@ -187,18 +187,23 @@ object DBUtils extends Logging {
   /**
    * 根据jdbc驱动包名或数据库url区分连接的不同的数据库厂商标识
    */
-  def dbTypeParser(driverClass: String, url: String): String = {
-    var dbType = "unknown"
+  def dbTypeParser(driverClass: String, url: String): Datasource = {
+    var dbType = Datasource.UNKNOWN
+
+    // 尝试从驱动类名中解析
     Datasource.values().map(_.toString).foreach(datasource => {
-      if (driverClass.toUpperCase.contains(datasource)) dbType = datasource
+      if (driverClass.toUpperCase.contains(datasource)) dbType = Datasource.parse(datasource)
     })
 
     // 尝试从url中的端口号解析，对结果进行校正，因为有些数据库使用的是mysql驱动，可以通过url中的端口号区分
     if (StringUtils.isNotBlank(url)) {
       FireFrameworkConf.lineageDatasourceMap.foreach(kv => {
-        if (url.contains(kv._2)) dbType = kv._1.toUpperCase
+        kv._2.split(",").foreach(port => {
+          if (url.contains(StringUtils.trim(port))) dbType = Datasource.parse(kv._1)
+        })
       })
     }
+
     dbType
   }
 
