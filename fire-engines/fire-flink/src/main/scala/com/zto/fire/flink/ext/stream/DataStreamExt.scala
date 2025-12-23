@@ -303,8 +303,9 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
                                        tag: String = "*",
                                        mqType: MQType = MQType.kafka,
                                        batch: Int = 100, flushInterval: Long = 1000,
+                                       sendByte: Boolean = false,
                                        keyNum: Int = KeyNum._1): DataStreamSink[_] = {
-    this.sinkMQFun[E](params, url, topic, tag, mqType, batch, flushInterval, keyNum)(_.asInstanceOf[E])
+    this.sinkMQFun[E](params, url, topic, tag, mqType, batch, flushInterval, sendByte,keyNum)(_.asInstanceOf[E])
   }
 
   /**
@@ -327,11 +328,12 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
                                           tag: String = "*",
                                           mqType: MQType = MQType.kafka,
                                           batch: Int = 100, flushInterval: Long = 1000,
+                                          sendByte: Boolean = false,
                                           keyNum: Int = KeyNum._1)(mapFunction: T => E): DataStreamSink[_] = {
     if (mqType == MQType.rocketmq) {
-      this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval, keyNum)(mapFunction)
+      this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval,sendByte, keyNum)(mapFunction)
     } else {
-      this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, keyNum)(mapFunction)
+      this.sinkKafkaFun[E](params, url, topic, batch, flushInterval,sendByte, keyNum)(mapFunction)
     }
   }
 
@@ -344,15 +346,41 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    * 消息队列的url
    * @param topic
    * 发送消息到指定的主题
+   * * @param sendByte
+   * 是否发送byte值的消息，默认false发送string
    * @param keyNum
    * 指定配置的keyNum，可从配置或注解中获取对应配置信息
    */
   def sinkKafka[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
                                           url: String = null, topic: String = null,
                                           batch: Int = 1000, flushInterval: Long = 5000,
+                                          sendByte: Boolean = false,
                                           keyNum: Int = KeyNum._1): DataStreamSink[_] = {
 
-    this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, keyNum)(_.asInstanceOf[E])
+    this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, sendByte,keyNum)(_.asInstanceOf[E])
+  }
+
+  /**
+   * 将数据实时sink到指定的kafka topic
+   *
+   * @param params
+   * 额外的producer参数
+   * @param url
+   * 消息队列的url
+   * @param topic
+   * 发送消息到指定的主题
+   * * @param sendByte
+   * 是否发送byte值的消息，默认false发送string
+   * @param keyNum
+   * 指定配置的keyNum，可从配置或注解中获取对应配置信息
+   */
+  def sinkKafkaByte[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
+                                          url: String = null, topic: String = null,
+                                          batch: Int = 1000, flushInterval: Long = 5000,
+                                          sendByte: Boolean = true,
+                                          keyNum: Int = KeyNum._1): DataStreamSink[_] = {
+
+    this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, sendByte, keyNum)(_.asInstanceOf[E])
   }
 
   /**
@@ -370,11 +398,12 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
   def sinkKafkaFun[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
                                              url: String = null, topic: String = null,
                                              batch: Int = 1000, flushInterval: Long = 5000,
+                                             sendByte: Boolean = false,
                                              keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
     val finalBatch = if (FireKafkaConf.kafkaSinkBatch(keyNum) > 0) FireKafkaConf.kafkaSinkBatch(keyNum) else batch
     val finalInterval = if (FireKafkaConf.kafkaFlushInterval(keyNum) > 0) FireKafkaConf.kafkaFlushInterval(keyNum) else flushInterval
 
-    this.addSinkWrap(new KafkaSink[T, E](params, url, topic, finalBatch, finalInterval, keyNum) {
+    this.addSinkWrap(new KafkaSink[T, E](params, url, topic, finalBatch, finalInterval, sendByte,keyNum) {
       override def map(value: T): E = fun(value)
     })
   }
@@ -394,8 +423,29 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
   def sinkRocketMQ[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
                                              url: String = null, topic: String = null, tag: String = "*",
                                              batch: Int = 1000, flushInterval: Long = 5000,
+                                             sendByte: Boolean = false,
                                              keyNum: Int = KeyNum._1): DataStreamSink[_] = {
-    this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval, keyNum)(_.asInstanceOf[E])
+    this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval,sendByte,keyNum)(_.asInstanceOf[E])
+  }
+
+  /**
+   * 将数据实时sink到指定的rocketmq topic，发送byte类型的数据
+   *
+   * @param params
+   * 额外的producer参数
+   * @param url
+   * 消息队列的url
+   * @param topic
+   * 发送消息到指定的主题
+   * @param keyNum
+   * 指定配置的keyNum，可从配置或注解中获取对应配置信息
+   */
+  def sinkRocketMQByte[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
+                                             url: String = null, topic: String = null, tag: String = "*",
+                                             batch: Int = 1000, flushInterval: Long = 5000,
+                                             sendByte: Boolean = true,
+                                             keyNum: Int = KeyNum._1): DataStreamSink[_] = {
+    this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval, sendByte, keyNum)(_.asInstanceOf[E])
   }
 
   /**
@@ -412,12 +462,12 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    */
   def sinkRocketMQFun[E <: MQRecord : ClassTag](params: Map[String, Object] = null,
                                                 url: String = null, topic: String = null, tag: String = "*",
-                                                batch: Int = 1000, flushInterval: Long = 5000,
+                                                batch: Int = 1000, flushInterval: Long = 5000, sendByte: Boolean = false,
                                                 keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
     val finalBatch = if (FireRocketMQConf.rocketSinkBatch(keyNum) > 0) FireRocketMQConf.rocketSinkBatch(keyNum) else batch
     val finalInterval = if (FireRocketMQConf.rocketSinkFlushInterval(keyNum) > 0) FireRocketMQConf.rocketSinkFlushInterval(keyNum) else flushInterval
 
-    this.addSinkWrap(new RocketMQSink[T, E](params, url, topic, tag, finalBatch, finalInterval, keyNum) {
+    this.addSinkWrap(new RocketMQSink[T, E](params, url, topic, tag, finalBatch, finalInterval,sendByte, keyNum) {
       override def map(value: T): E = fun(value)
     })
   }

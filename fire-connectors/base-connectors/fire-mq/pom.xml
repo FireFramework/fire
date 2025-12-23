@@ -19,9 +19,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>fire-connector-hbase_${scala.binary.version}</artifactId>
+    <artifactId>fire-connector-mq_${scala.binary.version}</artifactId>
     <packaging>jar</packaging>
-    <name>Fire : Connectors : Common : HBase </name>
+    <name>Fire : Connectors : Common : mq </name>
 
     <parent>
         <groupId>com.zto.fire</groupId>
@@ -31,44 +31,21 @@
     </parent>
 
     <dependencies>
-        <!-- hadoop相关依赖 -->
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-            <version>${hadoop.version}</version>
-            <scope>${maven.scope}</scope>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-kafka${contains.scala.binary.version}</artifactId>
+            <version>${flink.kafka.connector.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-hdfs</artifactId>
-            <version>${hadoop.version}</version>
-            <scope>${maven.scope}</scope>
+            <groupId>com.zto.fire</groupId>
+            <artifactId>fire-connector-flink-rocketmq_${flink.reference}</artifactId>
+            <version>${fire.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-            <version>${hadoop.version}</version>
-            <scope>${maven.scope}</scope>
-        </dependency>
-
-        <!-- hbase相关依赖 -->
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-common</artifactId>
-            <version>${hbase.version}</version>
-            <scope>${maven.scope}</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.hbase</groupId>
-                    <artifactId>hbase-client</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-            <version>${hbase.version}</version>
-            <scope>${maven.scope}</scope>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-client</artifactId>
+            <version>${rocketmq.version}</version>
         </dependency>
     </dependencies>
     <build>
