@@ -152,7 +152,9 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def getCatalog(tableIdentifier: TableIdentifier): Datasource = {
-    if (this.isHudiTable(tableIdentifier)) {
+    if(noEmpty(tableIdentifier.catalog)) {
+      Datasource.parse(tableIdentifier.catalog)
+    } else if (this.isHudiTable(tableIdentifier)) {
       Datasource.HUDI
     } else if (this.isHiveTable(tableIdentifier)) {
       Datasource.HIVE
@@ -187,7 +189,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
       SQLLineageManager.setTmpView(identifier, identifier.toString())
     }
 
-    if (this.isHiveTable(identifier) || this.isHudiTable(identifier)) {
+    if (noEmpty(identifier.catalog) || this.isHiveTable(identifier) || this.isHudiTable(identifier)) {
       val metadata = this.hiveTableMetaDataMap.get(identifier.toString)
       if (metadata != null) {
         val url = metadata.storage.locationUri
@@ -210,10 +212,13 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def toTableIdentifier(tableName: Seq[String]): TableIdentifier = {
-    if (tableName.size > 1)
+    val tab = if (tableName.size > 2) {
+      TableIdentifier(tableName(2), tableName(1), tableName.head)
+    } else if (tableName.size == 2)
       TableIdentifier(tableName(1), tableName.head)
     else if (tableName.size == 1) TableIdentifier(tableName.head)
     else TableIdentifier("")
+    tab
   }
 
   /**

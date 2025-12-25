@@ -365,6 +365,20 @@
                     <version>${hudi.version}</version>
                     <scope>${maven.scope}</scope>
                 </dependency>
+
+                <!-- Paimon相关依赖 -->
+                <dependency>
+                    <groupId>org.apache.paimon</groupId>
+                    <artifactId>paimon-spark-common_${scala.binary.version}</artifactId>
+                    <version>${paimon.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.paimon</groupId>
+                    <artifactId>paimon-spark-${spark.major.version}</artifactId>
+                    <version>${paimon.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
             </dependencies>
         </profile>
         <profile>
@@ -1016,7 +1030,7 @@
         <profile>
             <id>paimon-1.0.1</id>
             <properties>
-                <paimon.version>1.0.1</paimon.version>
+                <paimon.version>1.0.1.4-SNAPSHOT</paimon.version>
             </properties>
         </profile>
 
