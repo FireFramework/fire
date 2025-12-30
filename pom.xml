@@ -1062,7 +1062,7 @@
                 <dependency>
                     <groupId>com.zto.bigdata</groupId>
                     <artifactId>cluster-env</artifactId>
-                    <version>1.0.7-SNAPSHOT</version>
+                    <version>1.0.8-SNAPSHOT</version>
                 </dependency>
             </dependencies>
             <build>
