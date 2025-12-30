@@ -19,47 +19,42 @@ package com.zto.fire.examples.spark.lineage
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.common.util.DateFormatUtils
-import com.zto.fire.core.anno.connector.{HBase, Jdbc, Kafka, RocketMQ}
+import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
+import com.zto.fire.core.anno.connector.{HBase, Hive, Jdbc, Kafka, RocketMQ}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.SparkCore
+import com.zto.fire.spark.connector.paimon.PaimonStreaming
+import org.apache.spark.sql.DataFrame
 
 /**
  * 基于Fire进行Spark Streaming开发
  *
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@HBase("fat")
-@Config(
-  """
-    |fire.lineage.run.initialDelay=10
-    |fire.shutdown.auto.exit=false
-    |""")
+@Hive(value = "fat")
 @Kafka(brokers = "bigdata_test", topics = "fire", groupId = "fire")
-@RocketMQ(brokers = "bigdata_test", topics = "fire2", groupId = "fire")
-@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire?useSSL=true", username = "root", password = "root")
-object SparkCoreLineageTest extends SparkCore {
-  private val hbaseTable = "fire_test_1"
-  private lazy val tableName = "spark_test"
-
+object SparkCoreLineageTest extends PaimonStreaming {
   override def process: Unit = {
-    (1 to 10).foreach(x => {
-      val df = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])
-      df.rdd.foreachPartition(it => {
-        val timestamp = DateFormatUtils.formatCurrentDateTime()
-        val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
-        this.fire.jdbcUpdate(insertSql, Seq("admin", 12, timestamp, 10.0, 1))
-        HBaseConnector.get[Student](hbaseTable, Seq("1"))
-      })
-      // 每个批次插100条
-      df.hbasePutDF[Student](this.hbaseTable)
-      Thread.sleep(10000)
-    })
-
-    val df = this.fire.createDataFrame(Student.newStudentList(), classOf[Student])
-    df.rdd.foreachPartition(it => {
-      val a = 1 / 0
-    })
+    LineageManager.print(30)
+    sql(
+      """
+        |drop table if exists tmp.paimon_xiaotiantong
+        |""".stripMargin)
+    val df = sql(
+      """
+        |create table tmp.paimon_xiaotiantong as select * from paimon.paimon.paimon_xiaotiantong
+        |""".stripMargin)
+    df.show
+    sql(
+      """
+        |select * from tmp.paimon_xiaotiantong limit 10
+        |""".stripMargin).show
+    val stream = this.fire.createKafkaDirectStream()
+    stream.print()
+    /*this.ddl
+    // this.streaming
+    this.batch*/
   }
 }
