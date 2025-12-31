@@ -4,7 +4,6 @@ import com.zto.bigdata.integeration.util.ZtoSerializeUtil;
 import com.zto.fire.common.util.ReflectionUtils;
 import com.zto.fire.flink.conf.ZtoSerializeConf$;
 import com.zto.zdata.schema.format.InputData;
-import javafx.print.Collation;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
