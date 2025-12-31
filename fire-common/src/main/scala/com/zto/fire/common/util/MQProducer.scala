@@ -130,6 +130,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
     if (this.sendErrorCount >= this.maxRetries) {
       this.kafkaProducer.close()
       logError(s"异常信息发送MQ重试${this.sendErrorCount}次仍失败，将退出异常信息发送！")
+      if (throwable) throw new RuntimeException("发送kafka消息失败，请检查是否存在网络问题或集群维护")
       return
     }
 
@@ -178,6 +179,8 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
 
     if (this.sendErrorCount >= this.maxRetries) {
       this.rocketmqProducer.shutdown()
+      logError(s"异常信息发送rocket重试${this.sendErrorCount}次仍失败，将退出异常信息发送！")
+      if (throwable) throw new RuntimeException("发送rocket消息失败，请检查是否存在网络问题或集群维护")
       return
     }
 
