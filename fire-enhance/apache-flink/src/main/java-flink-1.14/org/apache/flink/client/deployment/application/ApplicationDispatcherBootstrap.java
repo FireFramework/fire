@@ -18,6 +18,7 @@
 
 package org.apache.flink.client.deployment.application;
 
+import com.zto.fire.common.exception.FireNoHaCheckPointException;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.JobID;
@@ -146,6 +147,23 @@ public class ApplicationDispatcherBootstrap implements DispatcherBootstrap {
                                         return dispatcherGateway.shutDownCluster(
                                                 ApplicationStatus.SUCCEEDED);
                                     }
+
+                                    // TODO: ------------ start：二次开发代码 --------------- //
+                                    final Optional<FireNoHaCheckPointException> noCkException =
+                                            ExceptionUtils.findThrowable(
+                                                    t, FireNoHaCheckPointException.class);
+                                    LOG.info("try find no ck exception,{}", noCkException.isPresent());
+                                    if (noCkException.isPresent()) {
+                                        LOG.error(
+                                                "Application failed due to FireNoHaCheckPointException, "
+                                                        + "shutdown cluster with UNKNOWN status.",
+                                                noCkException.get());
+
+                                        return dispatcherGateway.shutDownCluster(
+                                                ApplicationStatus.UNKNOWN);
+                                    }
+                                    // TODO: ------------ end：二次开发代码 --------------- //
+
                                     final Optional<UnsuccessfulExecutionException> maybeException =
                                             ExceptionUtils.findThrowable(
                                                     t, UnsuccessfulExecutionException.class);

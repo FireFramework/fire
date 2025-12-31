@@ -24,8 +24,8 @@ import com.zto.fire.common.enu.{Datasource, Operation}
 import com.zto.fire.common.lineage.parser.connector.KafkaConnectorParser
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.predef._
-import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerConfig, RecordMetadata}
-import org.apache.kafka.common.serialization.StringSerializer
+import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
+import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 import org.apache.rocketmq.client.producer.{DefaultMQProducer, SendCallback, SendResult}
 
 import java.util.Properties
@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @since 2.3.1
  */
 class MQProducer(url: String, mqType: MQType = MQType.kafka,
-                 otherConf: Map[String, String] = Map.empty, throwable: Boolean = true) extends Logging {
+                 otherConf: Map[String, String] = Map.empty, throwable: Boolean = true,sendBytes:Boolean = false) extends Logging {
   private lazy val maxRetries = FireFrameworkConf.exceptionTraceSendMQMaxRetries
   private lazy val sendTimeout = FireFrameworkConf.exceptionSendTimeout
   private var sendErrorCount = 0
@@ -71,17 +71,22 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
     val props = new Properties()
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, FireKafkaConf.kafkaBrokers(this.url))
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
-    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
+    if(sendBytes){
+      props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[ByteArraySerializer])
+    } else{
+      props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer])
+    }
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, this.sendTimeout.toString)
     props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true")
     props.put(ProducerConfig.ACKS_CONFIG, "all")
     props.put(ProducerConfig.RETRIES_CONFIG, "3")
     this.otherConf.foreach(prop => props.put(prop._1, prop._2))
 
-    val producer = new KafkaProducer[String, String](props)
+    val producer = new KafkaProducer[Any, Any](props)
     this.useKafka = true
     producer
   }
+
 
   // rocketmq producer
   private lazy val rocketmqProducer = {
@@ -116,17 +121,24 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
    * 消息体
    */
   def sendKafkaRecord(record: MQRecord): Unit = {
-    requireNonNull(record, record.topic, record.msg)("消息体参数不合法，请检查")
+    if(sendBytes){
+      requireNonNull(record, record.topic, record.msgBytes)("【发送byte】消息体参数不合法，请检查")
+    } else{
+      requireNonNull(record, record.topic, record.msg)("【发送msg】消息体参数不合法，请检查")
+    }
 
     if (this.sendErrorCount >= this.maxRetries) {
       this.kafkaProducer.close()
       logError(s"异常信息发送MQ重试${this.sendErrorCount}次仍失败，将退出异常信息发送！")
+      if (throwable) throw new RuntimeException("发送kafka消息失败，请检查是否存在网络问题或集群维护")
       return
     }
 
-    val kafkaRecord = record.toKafka
+    //val kafkaRecord = record.toKafka
+    val kafkaRecord = record.toKafkaByFlag(sendBytes)
     this.addLineage(record.topic)
-    kafkaProducer.send(kafkaRecord, new Callback() {
+
+    kafkaProducer.send(kafkaRecord.asInstanceOf[ProducerRecord[Any, Any]], new Callback() {
       override def onCompletion(recordMetadata: RecordMetadata, exception: Exception): Unit = {
         if (exception != null) {
           sendErrorCount += 1
@@ -136,6 +148,7 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
       }
     })
   }
+
 
   /**
    * 发送消息到kafka
@@ -158,14 +171,21 @@ class MQProducer(url: String, mqType: MQType = MQType.kafka,
    * 发送超时时间
    */
   def sendRocketMQRecord(record: MQRecord, timeout: Long = 10000): Unit = {
-    requireNonNull(record, record.topic, record.msg)("消息体参数不合法，请检查")
+    if (sendBytes) {
+      requireNonNull(record, record.topic, record.msgBytes)("【发送byte】消息体参数不合法，请检查")
+    } else {
+      requireNonNull(record, record.topic, record.msg)("【发送msg】消息体参数不合法，请检查")
+    }
 
     if (this.sendErrorCount >= this.maxRetries) {
       this.rocketmqProducer.shutdown()
+      logError(s"异常信息发送rocket重试${this.sendErrorCount}次仍失败，将退出异常信息发送！")
+      if (throwable) throw new RuntimeException("发送rocket消息失败，请检查是否存在网络问题或集群维护")
       return
     }
 
-    val rocketRecord = record.toRocketMQ
+    val rocketRecord = record.toRocketMQByFlag(sendBytes)
+    record.mqHeaders.foreach(header => rocketRecord.putUserProperty(header._1, header._2))
     this.addLineage(record.topic)
     this.rocketmqProducer.send(rocketRecord, new SendCallback {
       override def onSuccess(sendResult: SendResult): Unit = {
@@ -252,7 +272,8 @@ object MQProducer {
   }
 
   def apply(url: String, mqType: MQType = MQType.kafka,
-            otherConf: Map[String, String] = Map.empty, throwable: Boolean = true) = new MQProducer(url, mqType, otherConf, throwable)
+            otherConf: Map[String, String] = Map.empty, throwable: Boolean = true, sendByte: Boolean = false) = new MQProducer(url, mqType, otherConf, throwable,sendByte)
+
 
   /**
    * 发送消息到指定的mq topic
@@ -276,8 +297,8 @@ object MQProducer {
    * 优化参数
    */
   def sendRecord(url: String, record: MQRecord,
-                 mqType: MQType = MQType.kafka, otherConf: Map[String, String] = Map.empty, throwable: Boolean = true): Unit = {
-    val producer = this.producerMap.mergeGet(url + ":" + record.topic)(new MQProducer(url, mqType, otherConf, throwable))
+                 mqType: MQType = MQType.kafka, otherConf: Map[String, String] = Map.empty, throwable: Boolean = true, sendByte: Boolean = false): Unit = {
+    val producer = this.producerMap.mergeGet(url + ":" + record.topic)(new MQProducer(url, mqType, otherConf, throwable,sendByte))
     producer.send(record)
   }
 

@@ -36,6 +36,7 @@ abstract class KafkaSink[IN, T <: MQRecord : ClassTag](params: Map[String, Objec
                                                        url: String, topic: String,
                                                        batch: Int = 100,
                                                        flushInterval: Long = 5000,
+                                                       sendByte: Boolean = false,
                                                        keyNum: Int = KeyNum._1) extends BaseSink[IN, T](batch, flushInterval) {
 
   private lazy val (finalBrokers, finalTopic, finalConf) = KafkaUtils.getConfByKeyNum(params, url, topic, keyNum)
@@ -47,7 +48,7 @@ abstract class KafkaSink[IN, T <: MQRecord : ClassTag](params: Map[String, Objec
   override def sink(dataList: List[T]): Unit = {
     dataList.foreach(record => {
       if (isEmpty(record.topic)) record.topic = finalTopic
-      MQProducer.sendRecord(finalBrokers, record, MQType.kafka, finalConf)
+      MQProducer.sendRecord(finalBrokers, record, MQType.kafka, finalConf,sendByte=sendByte)
     })
   }
 }
