@@ -382,6 +382,7 @@ class SQLContextExt(sqlContext: SQLContext) {
   }
 
   /**
+   * 更灵活的分布式关系型数据库查询API，可避免driver oom
    *
    * @param querySql
    * 查询sql
