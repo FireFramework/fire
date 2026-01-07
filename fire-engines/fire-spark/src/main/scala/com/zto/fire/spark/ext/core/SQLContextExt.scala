@@ -388,13 +388,16 @@ class SQLContextExt(sqlContext: SQLContext) {
    * 查询sql
    * @param jdbcProps
    * 调用者指定的数据库连接信息，如果为空，则默认读取配置文件
+   * @param numPartitions
+   * 默认的并行度（分区数）
    * @param keyNum
    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    * @return
    * DataFrame
    */
-  def jdbcSqlLoad(querySql: String, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): DataFrame = {
+  def jdbcSqlLoad(querySql: String, jdbcProps: Properties = null, numPartitions: Int = 10, keyNum: Int = KeyNum._1): DataFrame = {
+    val parallelism = if (FireJdbcConf.jdbcPartition(keyNum).toInt > 0) FireJdbcConf.jdbcPartition(keyNum) else numPartitions.toString
     sqlContext.read.format("jdbc").options(
       Map(
         "url" -> FireJdbcConf.url(keyNum),
@@ -402,8 +405,8 @@ class SQLContextExt(sqlContext: SQLContext) {
         "password" -> FireJdbcConf.password(keyNum),
         "dbtable" -> s"($querySql) t",
         "driver" -> FireJdbcConf.driverClass(keyNum),
-        "batchsize" -> FireJdbcConf.batchSize(keyNum).toString,
-        "numPartitions" -> FireJdbcConf.jdbcPartition(keyNum)
+        "numPartitions" -> parallelism,
+        "batchsize" -> FireJdbcConf.batchSize(keyNum).toString
       )
     ).load()
   }
