@@ -191,12 +191,12 @@ public class EncryptUtils {
 
             String decryptPasswd = new String(cipher.doFinal(Base64.getDecoder().decode(text)));
             if (StringUtils.isNotBlank(decryptPasswd)) {
-                logger.info("Jdbc数据源解密成功，密文前10位：{}", StringUtils.substring(text, 10));
+                logger.info("Jdbc数据源解密成功，密文前10位：{}", StringUtils.substring(text, 0, 10));
             }
 
             return decryptPasswd;
         } catch (Exception e) {
-            logger.warn("Jdbc数据源解密失败，原因：1. 数据源配置有误或密码非密文 2. 私钥有误（若有解密成功的日志，则考虑第一点），私钥前10位：{}，异常信息；{}", StringUtils.substring(privateKeyStr, 10), e.getMessage());
+            logger.warn("Jdbc数据源解密失败，原因：1. 数据源配置有误或密码非密文 2. 私钥有误（若有解密成功的日志，则考虑第一点），私钥前10位：{}，异常信息；{}", StringUtils.substring(privateKeyStr, 0, 10), e.getMessage());
             return null;
         }
     }
