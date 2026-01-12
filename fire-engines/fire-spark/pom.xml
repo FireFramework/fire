@@ -105,6 +105,12 @@
             <version>${spark.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>${kafka.version}</version>
+            <scope>${maven.scope}</scope>
+        </dependency>
 
         <!-- hadoop相关依赖 -->
         <dependency>
