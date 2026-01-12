@@ -125,7 +125,7 @@ class TableExt(table: Table) {
    */
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate(sql: String,
-                      batch: Int = 10,
+                      batch: Int = 100,
                       flushInterval: Long = 1000,
                       isMerge: Boolean = true,
                       keyNum: Int = KeyNum._1): DataStreamSink[Row] = {
@@ -155,7 +155,7 @@ class TableExt(table: Table) {
    */
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate2(sql: String,
-                       batch: Int = 10,
+                       batch: Int = 100,
                        flushInterval: Long = 1000,
                        isMerge: Boolean = true,
                        keyNum: Int = KeyNum._1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {

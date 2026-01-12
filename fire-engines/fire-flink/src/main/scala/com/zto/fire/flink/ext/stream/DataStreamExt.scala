@@ -171,7 +171,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate(sql: String,
                       fields: Seq[String],
-                      batch: Int = 10,
+                      batch: Int = 100,
                       flushInterval: Long = 1000,
                       keyNum: Int = KeyNum._1): DataStreamSink[T] = {
     this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
@@ -223,7 +223,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    */
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate2(sql: String,
-                       batch: Int = 10,
+                       batch: Int = 100,
                        flushInterval: Long = 1000,
                        keyNum: Int = KeyNum._1)(fun: T => Seq[Any]): DataStreamSink[T] = {
     this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
