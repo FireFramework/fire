@@ -41,8 +41,11 @@ import java.util.Objects;
  * @author ChengLong 2018年7月16日 09:53:59
  */
 public class EncryptUtils {
-    private static final String ERROR_MESSAGE = "参数不合法";
     private static final Logger logger = LoggerFactory.getLogger(EncryptUtils.class);
+    private static final String ERROR_MESSAGE = "参数不合法";
+    private static final String RSA = "RSA";
+    private static final String SHA = "SHA";
+    private static final String md5 = "md5";
 
     private EncryptUtils() {}
 
@@ -79,7 +82,7 @@ public class EncryptUtils {
         Objects.requireNonNull(message, ERROR_MESSAGE);
         try {
             // 得到一个信息摘要器
-            MessageDigest digest = MessageDigest.getInstance("md5");
+            MessageDigest digest = MessageDigest.getInstance(md5);
             byte[] result = digest.digest(message.getBytes(StandardCharsets.UTF_8));
             StringBuilder buffer = new StringBuilder();
             for (byte b : result) {
@@ -104,7 +107,7 @@ public class EncryptUtils {
     public static String shaEncrypt(String message, String key) {
         Objects.requireNonNull(message, ERROR_MESSAGE);
         if(StringUtils.isBlank(key)) {
-            key = "SHA";
+            key = SHA;
         }
         try {
             MessageDigest sha = MessageDigest.getInstance(key);
@@ -135,7 +138,7 @@ public class EncryptUtils {
      * 生成RSA的公钥和私钥
      */
     public static Map<String, Object> genRSAKey() throws Exception {
-        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(RSA);
         keyPairGen.initialize(1024);
         KeyPair keyPair = keyPairGen.generateKeyPair();
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
@@ -158,11 +161,11 @@ public class EncryptUtils {
     public static String rsaEncrypt(String text, String publicKeyStr) {
         try {
             X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyStr));
-            KeyFactory factory = KeyFactory.getInstance("RSA");
+            KeyFactory factory = KeyFactory.getInstance(RSA);
             PublicKey key = factory.generatePublic(x509EncodedKeySpec);
-            Cipher cipher = Cipher.getInstance("RSA");
+            Cipher cipher = Cipher.getInstance(RSA);
             cipher.init(Cipher.ENCRYPT_MODE, key);
-            return Base64.getEncoder().encodeToString(cipher.doFinal(text.getBytes("UTF-8")));
+            return Base64.getEncoder().encodeToString(cipher.doFinal(text.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
             logger.error("基于RSA算法进行加密报错", e);
             return null;
@@ -181,13 +184,19 @@ public class EncryptUtils {
     public static String rsaDecrypt(String text, String privateKeyStr) {
         try {
             PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyStr));
-            KeyFactory factory = KeyFactory.getInstance("RSA");
+            KeyFactory factory = KeyFactory.getInstance(RSA);
             PrivateKey key = factory.generatePrivate(pkcs8EncodedKeySpec);
-            Cipher cipher = Cipher.getInstance("RSA");
+            Cipher cipher = Cipher.getInstance(RSA);
             cipher.init(Cipher.DECRYPT_MODE, key);
-            return new String(cipher.doFinal(Base64.getDecoder().decode(text)));
+
+            String decryptPasswd = new String(cipher.doFinal(Base64.getDecoder().decode(text)));
+            if (StringUtils.isNotBlank(decryptPasswd)) {
+                logger.info("Jdbc数据源解密成功，密文前10位：{}", StringUtils.substring(text, 10));
+            }
+
+            return decryptPasswd;
         } catch (Exception e) {
-            logger.warn("基于RSA算法进行解密报错，密文：{} {}", text, e.getMessage());
+            logger.warn("Jdbc数据源解密失败，原因：1. 数据源配置有误或密码非密文 2. 私钥有误（若有解密成功的日志，则考虑第一点），私钥前10位：{}，异常信息；{}", StringUtils.substring(privateKeyStr, 10), e.getMessage());
             return null;
         }
     }
