@@ -73,25 +73,26 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       this.dbType = DBUtils.dbTypeParser(autoDriver, this.url)
       logInfo(s"Fire框架识别到当前jdbc数据源标识为：${this.dbType}，keyNum=${this.keyNum}")
 
+      // 如果url非标准jdbc协议，则不初始化c3p0，比如：doris flink connection中的url
+      if (!this.url.trim.startsWith("jdbc:")) return
+
       // 创建c3p0数据库连接池实例
-      if (this.dbType != Datasource.DORIS) {
-        val pool = new ComboPooledDataSource(true)
-        pool.setJdbcUrl(this.url)
-        pool.setDriverClass(autoDriver)
-        if (noEmpty(this.username)) pool.setUser(this.username)
-        if (noEmpty(password)) pool.setPassword(password)
-        pool.setMaxPoolSize(FireJdbcConf.maxPoolSize(keyNum))
-        pool.setMinPoolSize(FireJdbcConf.minPoolSize(keyNum))
-        pool.setAcquireIncrement(FireJdbcConf.acquireIncrement(keyNum))
-        pool.setInitialPoolSize(FireJdbcConf.initialPoolSize(keyNum))
-        pool.setMaxStatements(0)
-        pool.setMaxStatementsPerConnection(0)
-        pool.setMaxIdleTime(FireJdbcConf.maxIdleTime(keyNum))
-        // 加载以db.c3p0.conf.为前缀的配置项
-        this.installDBPoolProperties(pool, this.keyNum)
-        this.connPool = pool
-        this.logInfo(s"创建数据库连接池[ $keyNum ] driver: ${this.dbType}")
-      }
+      val pool = new ComboPooledDataSource(true)
+      pool.setJdbcUrl(this.url)
+      pool.setDriverClass(autoDriver)
+      if (noEmpty(this.username)) pool.setUser(this.username)
+      if (noEmpty(password)) pool.setPassword(password)
+      pool.setMaxPoolSize(FireJdbcConf.maxPoolSize(keyNum))
+      pool.setMinPoolSize(FireJdbcConf.minPoolSize(keyNum))
+      pool.setAcquireIncrement(FireJdbcConf.acquireIncrement(keyNum))
+      pool.setInitialPoolSize(FireJdbcConf.initialPoolSize(keyNum))
+      pool.setMaxStatements(0)
+      pool.setMaxStatementsPerConnection(0)
+      pool.setMaxIdleTime(FireJdbcConf.maxIdleTime(keyNum))
+      // 加载以db.c3p0.conf.为前缀的配置项
+      this.installDBPoolProperties(pool, this.keyNum)
+      this.connPool = pool
+      this.logInfo(s"创建数据库连接池[ $keyNum ] driver: ${this.dbType}")
 
     }(this.logger, s"数据库连接池创建成功", s"初始化数据库连接池[ $keyNum ]失败")
   }
