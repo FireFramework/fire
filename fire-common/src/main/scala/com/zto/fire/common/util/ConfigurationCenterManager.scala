@@ -77,7 +77,7 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
   private[this] def invoke(url: String, param: String): String = {
     logInfo(s"开始调用接口：$url,参数为：$param")
     try {
-      HttpClientUtils.doPost(url, param,new Header(FireFrameworkConf.configCenterZdpHeaderKey,FireFrameworkConf.configCenterZdpHeaderValue))
+      HttpClientUtils.doPost(url, param, new Header(FireFrameworkConf.configCenterZdpHeaderKey, FireFrameworkConf.configCenterZdpHeaderValue))
     } catch {
       case _: Throwable => logError("调用配置中心接口失败，开始尝试调用测试环境配置中心接口。")
         ""
@@ -110,6 +110,47 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
         FireUtils.exitError
       }
     }
+
     this.configCenterProperties
+  }
+
+  /**
+   * 对jdbc配置的密文密码进行RSA解密
+   * @param key
+   * 配置的key
+   * @param value
+   * db.jdbc.password对应的密文
+   * @return
+   * password明文
+   */
+  private[fire] def jdbcPasswordDecrypt(key: String, value: String): String = {
+    val jdbcPasswordConfKey = "db.jdbc.password"
+    // 不解析非JDBC password配置
+    if (!key.contains(jdbcPasswordConfKey)) {
+      return value
+    }
+
+    // 从提交命令所在机器环境中获取私钥信息
+    val privateKeyTest = FireFrameworkConf.encryptPrivateKeyTest
+    val privateKeyProd = FireFrameworkConf.encryptPrivateKeyProd
+
+    if (isEmpty(privateKeyTest, privateKeyProd)) {
+      logWarning("未加载到JDBC密码解密私钥信息，密码信息将直接下发到connector！")
+      return value
+    }
+
+    // 尝试基于RSA算法对password进行解密，首先基于测试环境的私钥进行解密
+    var password = EncryptUtils.rsaDecrypt(value, privateKeyTest)
+    if (isEmpty(password)) {
+      // 若解密失败，则调用生产密钥进行解密
+      password = EncryptUtils.rsaDecrypt(value, privateKeyProd)
+    }
+
+    if (noEmpty(password)) {
+      logInfo(s"JDBC密文密码解密成功：key=$key")
+      password
+    } else {
+      value
+    }
   }
 }

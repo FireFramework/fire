@@ -18,6 +18,7 @@
 
 package org.apache.flink.runtime.checkpoint;
 
+import com.zto.fire.common.exception.FireNoHaCheckPointException;
 import com.zto.fire.common.util.FireEngineUtils;
 import com.zto.fire.common.util.TimeExpression;
 import org.apache.flink.annotation.VisibleForTesting;
@@ -45,6 +46,8 @@ import org.apache.flink.util.clock.Clock;
 import org.apache.flink.util.clock.SystemClock;
 import org.apache.flink.util.concurrent.FutureUtils;
 import org.apache.flink.util.concurrent.ScheduledExecutor;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1028,6 +1031,7 @@ public class CheckpointCoordinator {
             CheckpointProperties checkpointProperties,
             Throwable throwable) {
         // beautify the stack trace a bit
+        LOG.error("触发生成checkpoint失败：", throwable);
         throwable = ExceptionUtils.stripCompletionException(throwable);
 
         try {
@@ -1611,11 +1615,24 @@ public class CheckpointCoordinator {
      */
     public boolean restoreInitialCheckpointIfPresent(final Set<ExecutionJobVertex> tasks)
             throws Exception {
+        // TODO: ------------ start：二次开发代码 --------------- //
+        //如未采用yarn或出现其他异常，按最严格的方式来校验是否存在最新ck，防止出现故障
+        int attemptId = 2;
+        try{
+            attemptId = ConverterUtils.toContainerId(System.getenv(ApplicationConstants.Environment.CONTAINER_ID.key())).getApplicationAttemptId().getAttemptId();
+        } catch (Throwable e){
+            LOG.error("获取yarn重试id出现异常，异常默认am重试次数2");
+        }
+        LOG.info("restoreInitialCheckpointIfPresent start,AttemptId is {}=========",attemptId);
+        // TODO: ------------ end：二次开发代码 --------------- //
         final OptionalLong restoredCheckpointId =
                 restoreLatestCheckpointedStateInternal(
                         tasks,
                         OperatorCoordinatorRestoreBehavior.RESTORE_IF_CHECKPOINT_PRESENT,
-                        false, // initial checkpoints exist only on JobManager failover. ok if not
+                        // TODO: ------------ start：二次开发代码 --------------- //
+                        //false, // initial checkpoints exist only on JobManager failover. ok if not
+                        attemptId != 1 ,//避免低概率zk被清理后 am重试后用错ck
+                        // TODO: ------------ end：二次开发代码 --------------- //
                         // present.
                         false,
                         true); // JobManager failover means JobGraphs match exactly.
@@ -1664,10 +1681,14 @@ public class CheckpointCoordinator {
             CompletedCheckpoint latest = completedCheckpointStore.getLatestCheckpoint();
 
             if (latest == null) {
-                LOG.info("No checkpoint found during restore.");
+                LOG.info("No checkpoint found during restore.judge need throw Exception,{}",errorIfNoCheckpoint);
 
                 if (errorIfNoCheckpoint) {
-                    throw new IllegalStateException("No completed checkpoint available");
+                    //throw new IllegalStateException("No completed checkpoint available");
+                    // TODO: ------------ start：二次开发代码 --------------- //
+                    // 抛出固定异常用于ApplicationDispatcherBootstrap捕获，用以判断是否需要直接终止flink任务，避免无意义的重试
+                    throw new FireNoHaCheckPointException();
+                    // TODO: ------------ end：二次开发代码 --------------- //
                 }
 
                 LOG.debug("Resetting the master hooks.");

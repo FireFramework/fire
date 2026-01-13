@@ -31,6 +31,7 @@ import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils, TiSparkUtils}
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.{TableIdentifier => SparkTableIdentifier}
+import org.apache.spark.sql.execution.{QueryExecution, SparkPlan}
 
 
 /**
@@ -125,13 +126,35 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
   }
 
   /**
+   * 用于解析SparkSql中的库表信息(物理执行计划)
+   */
+  @Internal
+  def sqlParserWithExecution(queryExecution: QueryExecution): Unit = {
+    val sparkPlan = queryExecution.sparkPlan
+    var sinkTable: Option[TableIdentifier] = None
+    try {
+      sinkTable = this.ddlParserWithPlan(sparkPlan)
+    } catch {
+      case e: Throwable => {
+        LineageManager.printLog(s"可忽略异常：实时血缘解析物理执行计划SQL报错，sparkPlan: ${sparkPlan}")
+      }
+    } finally {
+      tryWithLog {
+        this.queryParser(queryExecution.optimizedPlan, sinkTable)
+      }(this.logger, catchLog = s"可忽略异常：实时血缘解析物理执行计划SQL报错，sparkPlan: ${sparkPlan}", isThrow = FireFrameworkConf.lineageDebugEnable, hook = false)
+    }
+  }
+
+  /**
    * 用于判断给定的表是否为hive表
    *
    * @param tableIdentifier 库表
    */
   @Internal
   protected def getCatalog(tableIdentifier: TableIdentifier): Datasource = {
-    if (this.isHudiTable(tableIdentifier)) {
+    if(noEmpty(tableIdentifier.catalog)) {
+      Datasource.parse(tableIdentifier.catalog)
+    } else if (this.isHudiTable(tableIdentifier)) {
       Datasource.HUDI
     } else if (this.isHiveTable(tableIdentifier)) {
       Datasource.HIVE
@@ -166,7 +189,7 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
       SQLLineageManager.setTmpView(identifier, identifier.toString())
     }
 
-    if (this.isHiveTable(identifier) || this.isHudiTable(identifier)) {
+    if (noEmpty(identifier.catalog) || this.isHiveTable(identifier) || this.isHudiTable(identifier)) {
       val metadata = this.hiveTableMetaDataMap.get(identifier.toString)
       if (metadata != null) {
         val url = metadata.storage.locationUri
@@ -189,10 +212,13 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def toTableIdentifier(tableName: Seq[String]): TableIdentifier = {
-    if (tableName.size > 1)
+    val tab = if (tableName.size > 2) {
+      TableIdentifier(tableName(2), tableName(1), tableName.head)
+    } else if (tableName.size == 2)
       TableIdentifier(tableName(1), tableName.head)
     else if (tableName.size == 1) TableIdentifier(tableName.head)
     else TableIdentifier("")
+    tab
   }
 
   /**
@@ -224,6 +250,14 @@ private[fire] trait SparkSqlParserBase extends SqlParser {
    */
   @Internal
   protected def ddlParser(logicalPlan: LogicalPlan): Option[TableIdentifier]
+
+  /**
+   * 用于解析DDL语句中的库表、分区信息
+   *
+   * @return 返回sink目标表，用于维护表与表之间的关系
+   */
+  @Internal
+  protected def ddlParserWithPlan(sparkPlan: SparkPlan): Option[TableIdentifier]
 
   /**
    * 将Fire的TableIdentifier转为Spark的TableIdentifier

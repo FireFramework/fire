@@ -33,7 +33,7 @@ import scala.reflect.ClassTag
 abstract class RocketMQSink[IN, T <: MQRecord : ClassTag](params: Map[String, Object],
                                                           url: String, topic: String,
                                                           tag: String = "*", batch: Int = 100,
-                                                          flushInterval: Long = 1000, keyNum: Int = KeyNum._1) extends BaseSink[IN, T](batch, flushInterval) {
+                                                          flushInterval: Long = 1000, sendByte: Boolean = false,keyNum: Int = KeyNum._1) extends BaseSink[IN, T](batch, flushInterval) {
 
   private lazy val (finalBrokers, finalTopic, finalTag, finalConf) = RocketMQUtils.getConfByKeyNum(url, topic, tag, params, keyNum)
 
@@ -45,8 +45,8 @@ abstract class RocketMQSink[IN, T <: MQRecord : ClassTag](params: Map[String, Ob
   override def sink(dataList: List[T]): Unit = {
     dataList.foreach(record => {
       if (isEmpty(record.topic)) record.topic = finalTopic
-      if (isEmpty(record.tag)) record.tag = finalTag
-      MQProducer.sendRecord(finalBrokers, record, MQType.rocketmq, finalConf)
+      if (isEmpty(record.tag) && noEmpty(finalTag)) record.tag = finalTag
+      MQProducer.sendRecord(finalBrokers, record, MQType.rocketmq, finalConf,sendByte=sendByte)
     })
   }
 }

@@ -23,10 +23,10 @@ import com.zto.fire.common.conf.FireFrameworkConf.FIRE_LOG_SQL_LENGTH
 import com.zto.fire.common.conf.FireKafkaConf._
 import com.zto.fire.common.conf.FireRocketMQConf._
 import com.zto.fire.common.conf.{FireHDFSConf, FireHiveConf, KeyNum}
-import com.zto.fire.common.util.{Logging, PropUtils, ReflectionUtils, StringsUtils}
+import com.zto.fire.common.util.{Logging, PropUtils, ReflectionUtils}
 import com.zto.fire.core.BaseFire
-import com.zto.fire.core.anno.connector.{HBase11, HBase6, HBase7, HBase8, HBase9, Jdbc10, Jdbc11, Jdbc6, Jdbc7, Jdbc8, Jdbc9, Kafka10, Kafka11, Kafka6, Kafka7, Kafka8, Kafka9, RocketMQ10, RocketMQ11, RocketMQ4, RocketMQ6, RocketMQ7, RocketMQ8, RocketMQ9, _}
-import com.zto.fire.core.anno.lifecycle.{Handle, Process, Step1, Step10, Step11, Step12, Step13, Step14, Step15, Step16, Step17, Step18, Step19, Step2, Step3, Step4, Step5, Step6, Step7, Step8, Step9}
+import com.zto.fire.core.anno.connector._
+import com.zto.fire.core.anno.lifecycle._
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 
@@ -252,6 +252,126 @@ private[fire] trait AnnoManager extends Logging {
   @Internal
   def mapHBase11(hbase: HBase11): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._11)
 
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase12
+   */
+  @Internal
+  def mapHBase12(hbase: HBase12): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._12)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase13
+   */
+  @Internal
+  def mapHBase13(hbase: HBase13): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._13)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase14
+   */
+  @Internal
+  def mapHBase14(hbase: HBase14): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._14)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase15
+   */
+  @Internal
+  def mapHBase15(hbase: HBase15): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._15)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase16
+   */
+  @Internal
+  def mapHBase16(hbase: HBase16): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._16)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase17
+   */
+  @Internal
+  def mapHBase17(hbase: HBase17): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._17)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase18
+   */
+  @Internal
+  def mapHBase18(hbase: HBase18): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._18)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase19
+   */
+  @Internal
+  def mapHBase19(hbase: HBase19): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._19)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase20
+   */
+  @Internal
+  def mapHBase20(hbase: HBase20): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._20)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase21
+   */
+  @Internal
+  def mapHBase21(hbase: HBase21): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._21)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase22
+   */
+  @Internal
+  def mapHBase22(hbase: HBase22): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._22)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase23
+   */
+  @Internal
+  def mapHBase23(hbase: HBase23): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._23)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase24
+   */
+  @Internal
+  def mapHBase24(hbase: HBase24): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._24)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase25
+   */
+  @Internal
+  def mapHBase25(hbase: HBase25): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._25)
+
+  /**
+   * 将@HBase中配置的信息映射为键值对形式
+   *
+   * @param HBase26
+   */
+  @Internal
+  def mapHBase26(hbase: HBase26): Unit = this.mapHBaseConf(hbase.value(), hbase.cluster(), hbase.user(), hbase.family(), hbase.batchSize(), hbase.scanPartitions(), hbase.storageLevel(), hbase.maxRetries(), hbase.durability(), hbase.tableMetaCache(), hbase.config(), KeyNum._26)
+
 
   /**
    * 用于映射JDBC相关配置信息
@@ -433,6 +553,216 @@ private[fire] trait AnnoManager extends Logging {
    */
   @Internal
   def mapPaimon11(paimon: Paimon11): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon12中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon12注解实例
+   */
+  @Internal
+  def mapPaimon12(paimon: Paimon12): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon13中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon13注解实例
+   */
+  @Internal
+  def mapPaimon13(paimon: Paimon13): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon14中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon14注解实例
+   */
+  @Internal
+  def mapPaimon14(paimon: Paimon14): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon15中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon15注解实例
+   */
+  @Internal
+  def mapPaimon15(paimon: Paimon15): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon16中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon16注解实例
+   */
+  @Internal
+  def mapPaimon16(paimon: Paimon16): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon17中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon17注解实例
+   */
+  @Internal
+  def mapPaimon17(paimon: Paimon17): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon18中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon18注解实例
+   */
+  @Internal
+  def mapPaimon18(paimon: Paimon18): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon19中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon19注解实例
+   */
+  @Internal
+  def mapPaimon19(paimon: Paimon19): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon20中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon20注解实例
+   */
+  @Internal
+  def mapPaimon20(paimon: Paimon20): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon21中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon21注解实例
+   */
+  @Internal
+  def mapPaimon21(paimon: Paimon21): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon22中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon22注解实例
+   */
+  @Internal
+  def mapPaimon22(paimon: Paimon22): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon23中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon23注解实例
+   */
+  @Internal
+  def mapPaimon23(paimon: Paimon23): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon24中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon24注解实例
+   */
+  @Internal
+  def mapPaimon24(paimon: Paimon24): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon25中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon25注解实例
+   */
+  @Internal
+  def mapPaimon25(paimon: Paimon25): Unit = {
+    this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
+      paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
+      paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
+      paimon.writeOnly, paimon.snapshotTTL, paimon.mergeBufferSize, paimon.compactionTrigger, paimon.writeBufferSize)
+  }
+
+  /**
+   * 将@Paimon26中配置的信息映射为键值对形式
+   *
+   * @param paimon
+   * Paimon26注解实例
+   */
+  @Internal
+  def mapPaimon26(paimon: Paimon26): Unit = {
     this.parsePaimonConf(paimon.datasource, paimon.value, paimon.props, paimon.partitionTTL, paimon.partitionFormat,
       paimon.tagOnSavepoint, paimon.tagAutoCreate, paimon.tagTTL, paimon.bucket, paimon.tagNumMax, paimon.snapshotNumMin,
       paimon.snapshotNumMax, paimon.snapshotExpireLimit, paimon.tagCreationPeriod, paimon.mergeEngine, paimon.fileFormat,
@@ -814,6 +1144,426 @@ private[fire] trait AnnoManager extends Logging {
   }
 
   /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi12(hudi: Hudi12): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._12))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._12))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._12)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._12)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._12)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._12)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._12)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._12)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._12)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi13(hudi: Hudi13): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._13))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._13))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._13)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._13)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._13)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._13)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._13)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._13)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._13)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi14(hudi: Hudi14): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._14))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._14))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._14)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._14)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._14)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._14)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._14)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._14)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._14)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi15(hudi: Hudi15): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._15))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._15))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._15)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._15)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._15)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._15)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._15)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._15)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._15)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi16(hudi: Hudi16): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._16))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._16))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._16)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._16)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._16)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._16)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._16)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._16)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._16)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi17(hudi: Hudi17): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._17))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._17))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._17)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._17)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._17)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._17)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._17)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._17)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._17)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi18(hudi: Hudi18): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._18))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._18))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._18)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._18)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._18)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._18)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._18)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._18)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._18)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi19(hudi: Hudi19): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._19))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._19))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._19)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._19)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._19)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._19)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._19)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._19)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._19)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi20(hudi: Hudi20): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._20))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._20))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._20)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._20)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._20)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._20)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._20)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._20)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._20)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi21(hudi: Hudi21): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._21))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._21))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._21)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._21)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._21)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._21)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._21)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._21)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._21)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi22(hudi: Hudi22): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._22))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._22))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._22)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._22)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._22)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._22)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._22)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._22)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._22)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi23(hudi: Hudi23): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._23))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._23))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._23)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._23)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._23)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._23)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._23)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._23)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._23)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi24(hudi: Hudi24): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._24))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._24))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._24)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._24)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._24)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._24)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._24)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._24)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._24)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi25(hudi: Hudi25): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._25))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._25))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._25)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._25)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._25)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._25)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._25)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._25)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._25)
+  }
+
+  /**
+   * 将@Hudi中配置的信息映射为键值对形式
+   *
+   * @param hudi
+   * Hudi注解实例
+   */
+  @Internal
+  def mapHudi26(hudi: Hudi26): Unit = {
+    // 解析通过注解配置的多个配置信息
+    PropUtils.parseTextConfig(hudi.value()).foreach(kv => toHudiConf(kv, KeyNum._26))
+    // 解析通过注解配置的单项配置信息
+    hudi.props().map(conf => PropUtils.splitConfLine(conf)).filter(_.isDefined).map(_.get).foreach(kv => toHudiConf(kv, KeyNum._26))
+    // 统一的并行度设置
+    this.hudiParallelism(hudi.parallelism(), KeyNum._26)
+    // 布隆索引相关设置
+    this.hudiBloomIndexConf(hudi.bloomIndexParallelism(), hudi.useBloomIndexBucketized(), hudi.bloomkeysPerBucket, KeyNum._26)
+    // 记录级索引相关设置
+    this.hudiRecordIndexConf(hudi.useRecordIndex(), KeyNum._26)
+    // hbase索引相关设置
+    this.hudiHBaseIndexConf(hudi.useHBaseIndex(), hudi.hbaseZkQuorum(), hudi.hbasePort(), hudi.hbaseTable(), hudi.hbaseZkNodePath(), hudi.hbaseRollbackSync()
+      , hudi.hbaseUpdatePartitionPath(), hudi.hbaseGetBatchSize(), hudi.hbasePutBatchSize(), hudi.hbasePutBatchSizeAutoCompute(), hudi.hbaseMaxQpsPerRegionServer()
+      , hudi.hbaseQpsFraction(), hudi.hbaseQpsAllocatorClass(),hudi.hbaseIndexUser(), KeyNum._26)
+    // clean相关设置
+    this.hudiCleanConf(hudi.cleanerAsync(), hudi.cleanerPolicy(), hudi.cleanerCommitsRetained(), KeyNum._26)
+    this.hudiCompactConf(hudi.compactCommits(), hudi.compactSchedule(), KeyNum._26)
+    this.hudiClusteringConf(hudi.clusteringCommits(), hudi.clusteringSchedule(), hudi.clustringColumns(), hudi.clusteringPartitions(), KeyNum._26)
+  }
+
+  /**
    * 统一设置hudi任务各项参数的并行度
    *
    * @param parallelism
@@ -1132,6 +1882,201 @@ private[fire] trait AnnoManager extends Logging {
       jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._11)
   }
 
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc12
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc12(jdbc: Jdbc12): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._12)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc13
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc13(jdbc: Jdbc13): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._13)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc14
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc14(jdbc: Jdbc14): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._14)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc15
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc15(jdbc: Jdbc15): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._15)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc16
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc16(jdbc: Jdbc16): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._16)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc17
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc17(jdbc: Jdbc17): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._17)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc18
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc18(jdbc: Jdbc18): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._18)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc19
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc19(jdbc: Jdbc19): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._19)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc20
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc20(jdbc: Jdbc20): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._20)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc21
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc21(jdbc: Jdbc21): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._21)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc22
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc22(jdbc: Jdbc22): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._22)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc23
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc23(jdbc: Jdbc23): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._23)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc24
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc24(jdbc: Jdbc24): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._24)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc25
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc25(jdbc: Jdbc25): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._25)
+  }
+
+  /**
+   * 将@Jdbc中配置的信息映射为键值对形式
+   *
+   * @param Jdbc26
+   * Jdbc注解实例
+   */
+  @Internal
+  def mapJdbc26(jdbc: Jdbc26): Unit = {
+    this.mapJdbcConf(jdbc.url(), jdbc.driver(), jdbc.username(), jdbc.password(), jdbc.isolationLevel(),
+      jdbc.maxPoolSize(), jdbc.minPoolSize(), jdbc.initialPoolSize(), jdbc.acquireIncrement(), jdbc.maxIdleTime(),
+      jdbc.batchSize(), jdbc.flushInterval(), jdbc.maxRetries(), jdbc.storageLevel(), jdbc.queryPartitions(), jdbc.logSqlLength(), jdbc.connectionTimeout, jdbc.config(), KeyNum._26)
+  }
+
 
   /**
    * 用于映射Kafka相关配置信息
@@ -1329,6 +2274,231 @@ private[fire] trait AnnoManager extends Logging {
   }
 
   /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka12
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka12(kafka: Kafka12): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._12
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka13
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka13(kafka: Kafka13): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._13
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka14
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka14(kafka: Kafka14): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._14
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka15
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka15(kafka: Kafka15): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._15
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka16
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka16(kafka: Kafka16): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._16
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka17
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka17(kafka: Kafka17): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._17
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka18
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka18(kafka: Kafka18): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._18
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka19
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka19(kafka: Kafka19): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._19
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka20
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka20(kafka: Kafka20): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._20
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka21
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka21(kafka: Kafka21): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._21
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka22
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka22(kafka: Kafka22): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._22
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka23
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka23(kafka: Kafka23): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._23
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka24
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka24(kafka: Kafka24): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._24
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka25
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka25(kafka: Kafka25): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._25
+    )
+  }
+
+  /**
+   * 将@Kafka中配置的信息映射为键值对形式
+   *
+   * @param Kafka26
+   * Kafka注解实例
+   */
+  @Internal
+  def mapKafka26(kafka: Kafka26): Unit = {
+    this.mapKafkaConf(kafka.brokers(), kafka.topics(), kafka.groupId(), kafka.startingOffset(),
+      kafka.endingOffsets(), kafka.autoCommit(), kafka.sessionTimeout(), kafka.requestTimeout(), kafka.pollInterval(),
+      kafka.startFromTimestamp(), kafka.startFromGroupOffsets(), kafka.forceOverwriteStateOffset(),
+      kafka.forceAutoCommit(), kafka.forceAutoCommitInterval(), kafka.sinkBatch(), kafka.sinkFlushInterval(), kafka.config(), KeyNum._26
+    )
+  }
+
+  /**
    * 将@RocketMQ中配置的信息映射为键值对形式
    *
    * @param RocketMQ
@@ -1481,6 +2651,186 @@ private[fire] trait AnnoManager extends Logging {
       rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._11)
   }
 
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ12
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ12(rocketmq: RocketMQ12): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._12)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ13
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ13(rocketmq: RocketMQ13): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._13)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ14
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ14(rocketmq: RocketMQ14): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._14)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ15
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ15(rocketmq: RocketMQ15): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._15)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ16
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ16(rocketmq: RocketMQ16): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._16)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ17
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ17(rocketmq: RocketMQ17): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._17)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ18
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ18(rocketmq: RocketMQ18): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._18)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ19
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ19(rocketmq: RocketMQ19): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._19)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ20
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ20(rocketmq: RocketMQ20): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._20)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ21
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ21(rocketmq: RocketMQ21): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._21)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ22
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ22(rocketmq: RocketMQ22): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._22)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ23
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ23(rocketmq: RocketMQ23): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._23)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ24
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ24(rocketmq: RocketMQ24): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._24)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ25
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ25(rocketmq: RocketMQ25): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._25)
+  }
+
+  /**
+   * 将@RocketMQ3中配置的信息映射为键值对形式
+   *
+   * @param RocketMQ26
+   * RocketMQ注解实例
+   */
+  @Internal
+  def mapRocketMQ26(rocketmq: RocketMQ26): Unit = {
+    this.mapRocketMQConf(rocketmq.brokers(), rocketmq.topics, rocketmq.groupId, rocketmq.tag,
+      rocketmq.startingOffset, rocketmq.autoCommit, rocketmq.sinkBatch(), rocketmq.sinkFlushInterval(), rocketmq.config, KeyNum._26)
+  }
+
 
   /**
    * 将@Hive中配置的信息映射为键值对形式
@@ -1510,25 +2860,21 @@ private[fire] trait AnnoManager extends Logging {
 object AnnoManager extends Logging {
   // 用于存放注册了的主键，只解析这些主键中的信息
   private[fire] lazy val registerAnnoSet = Sets.newHashSet[Class[_]](
-    classOf[Hive], classOf[HBase], classOf[HBase2], classOf[HBase3], classOf[HBase4], classOf[HBase5],
-    classOf[HBase6], classOf[HBase7], classOf[HBase8], classOf[HBase9], classOf[HBase10], classOf[HBase11],
-    classOf[Jdbc], classOf[Jdbc2], classOf[Jdbc3], classOf[Jdbc4], classOf[Jdbc5], classOf[Jdbc6], classOf[Jdbc7], classOf[Jdbc8], classOf[Jdbc9],
-    classOf[Jdbc10],
-    classOf[Jdbc11], classOf[Kafka],
-    classOf[Kafka2], classOf[Kafka3], classOf[Kafka4], classOf[Kafka5], classOf[Kafka6],
-    classOf[Kafka7], classOf[Kafka8], classOf[Kafka9], classOf[Kafka10], classOf[Kafka11],
-    classOf[RocketMQ], classOf[RocketMQ2],
-    classOf[RocketMQ3], classOf[RocketMQ4], classOf[RocketMQ5], classOf[RocketMQ6], classOf[RocketMQ7], classOf[RocketMQ8], classOf[RocketMQ9], classOf[RocketMQ10], classOf[RocketMQ11],
-    classOf[Hudi], classOf[Hudi2], classOf[Hudi3],
-    classOf[Hudi4], classOf[Hudi5], classOf[Hudi6], classOf[Hudi7], classOf[Hudi8], classOf[Hudi9], classOf[Hudi10], classOf[Hudi11],
-    classOf[Paimon], classOf[Paimon2], classOf[Paimon3], classOf[Paimon4], classOf[Paimon5], classOf[Paimon6], classOf[Paimon7], classOf[Paimon8], classOf[Paimon9], classOf[Paimon10], classOf[Paimon11]
+    classOf[Hive],
+    classOf[HBase], classOf[HBase2], classOf[HBase3], classOf[HBase4], classOf[HBase5], classOf[HBase6], classOf[HBase7], classOf[HBase8], classOf[HBase9], classOf[HBase10], classOf[HBase11], classOf[HBase12], classOf[HBase13], classOf[HBase14], classOf[HBase15], classOf[HBase16], classOf[HBase17], classOf[HBase18], classOf[HBase19], classOf[HBase20], classOf[HBase21], classOf[HBase22], classOf[HBase23], classOf[HBase24], classOf[HBase25], classOf[HBase26],
+    classOf[Jdbc], classOf[Jdbc2], classOf[Jdbc3], classOf[Jdbc4], classOf[Jdbc5], classOf[Jdbc6], classOf[Jdbc7], classOf[Jdbc8], classOf[Jdbc9], classOf[Jdbc10], classOf[Jdbc11], classOf[Jdbc12], classOf[Jdbc13], classOf[Jdbc14], classOf[Jdbc15], classOf[Jdbc16], classOf[Jdbc17], classOf[Jdbc18], classOf[Jdbc19], classOf[Jdbc20], classOf[Jdbc21], classOf[Jdbc22], classOf[Jdbc23], classOf[Jdbc24], classOf[Jdbc25], classOf[Jdbc26],
+    classOf[Kafka], classOf[Kafka2], classOf[Kafka3], classOf[Kafka4], classOf[Kafka5], classOf[Kafka6], classOf[Kafka7], classOf[Kafka8], classOf[Kafka9], classOf[Kafka10], classOf[Kafka11], classOf[Kafka12], classOf[Kafka13], classOf[Kafka14], classOf[Kafka15], classOf[Kafka16], classOf[Kafka17], classOf[Kafka18], classOf[Kafka19], classOf[Kafka20], classOf[Kafka21], classOf[Kafka22], classOf[Kafka23], classOf[Kafka24], classOf[Kafka25], classOf[Kafka26],
+    classOf[RocketMQ], classOf[RocketMQ2], classOf[RocketMQ3], classOf[RocketMQ4], classOf[RocketMQ5], classOf[RocketMQ6], classOf[RocketMQ7], classOf[RocketMQ8], classOf[RocketMQ9], classOf[RocketMQ10], classOf[RocketMQ11], classOf[RocketMQ12], classOf[RocketMQ13], classOf[RocketMQ14], classOf[RocketMQ15], classOf[RocketMQ16], classOf[RocketMQ17], classOf[RocketMQ18], classOf[RocketMQ19], classOf[RocketMQ20], classOf[RocketMQ21], classOf[RocketMQ22], classOf[RocketMQ23], classOf[RocketMQ24], classOf[RocketMQ25], classOf[RocketMQ26],
+    classOf[Hudi], classOf[Hudi2], classOf[Hudi3], classOf[Hudi4], classOf[Hudi5], classOf[Hudi6], classOf[Hudi7], classOf[Hudi8], classOf[Hudi9], classOf[Hudi10], classOf[Hudi11], classOf[Hudi12], classOf[Hudi13], classOf[Hudi14], classOf[Hudi15], classOf[Hudi16], classOf[Hudi17], classOf[Hudi18], classOf[Hudi19], classOf[Hudi20], classOf[Hudi21], classOf[Hudi22], classOf[Hudi23], classOf[Hudi24], classOf[Hudi25], classOf[Hudi26],
+    classOf[Paimon], classOf[Paimon2], classOf[Paimon3], classOf[Paimon4], classOf[Paimon5], classOf[Paimon6], classOf[Paimon7], classOf[Paimon8], classOf[Paimon9], classOf[Paimon10], classOf[Paimon11], classOf[Paimon12], classOf[Paimon13], classOf[Paimon14], classOf[Paimon15], classOf[Paimon16], classOf[Paimon17], classOf[Paimon18], classOf[Paimon19], classOf[Paimon20], classOf[Paimon21], classOf[Paimon22], classOf[Paimon23], classOf[Paimon24], classOf[Paimon25], classOf[Paimon26]
   )
 
   // 用于注册所有的生命周期注解
   private[fire] lazy val registerAnnoMethod = List[Class[_ <: Annotation]](classOf[Process], classOf[Handle],
     classOf[Step1], classOf[Step2], classOf[Step3], classOf[Step4], classOf[Step5], classOf[Step6], classOf[Step7],
     classOf[Step8], classOf[Step9], classOf[Step10], classOf[Step11], classOf[Step12], classOf[Step13], classOf[Step14],
-    classOf[Step15], classOf[Step16], classOf[Step17], classOf[Step18], classOf[Step19])
+    classOf[Step15], classOf[Step16], classOf[Step17], classOf[Step18], classOf[Step19], classOf[Step20], classOf[Step21],
+    classOf[Step22], classOf[Step23], classOf[Step24], classOf[Step25], classOf[Step26])
 
   /**
    * 用于调起生命周期注解所标记的方法

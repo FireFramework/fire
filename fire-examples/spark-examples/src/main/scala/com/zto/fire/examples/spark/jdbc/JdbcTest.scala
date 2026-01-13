@@ -119,6 +119,9 @@ object JdbcTest extends SparkCore {
     val where = Array[String]("id >=1 and id <=3", "id >=6 and id <=9", "name='root'")
     // 根据指定的条件进行数据加载，条件的个数决定了load数据的并发度
     this.fire.jdbcTableLoad(tableName, where).show(100, false)
+
+    // 推荐用法，使用灵活，可避免driver oom
+    // this.fire.jdbcSqlLoad("select * from xxx")
   }
 
   /**

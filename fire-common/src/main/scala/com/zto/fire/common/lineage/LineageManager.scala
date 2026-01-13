@@ -57,23 +57,28 @@ private[fire] class LineageManager extends Logging {
   private[this] def lineageParse(): Unit = {
     if (lineageEnable) {
       this.parserExecutor.scheduleWithFixedDelay(new Runnable {
-        override def run(): Unit = {
-          if (!lineageEnable || (parseCount.incrementAndGet() >= lineageRunCount && !parserExecutor.isShutdown)) {
-            disableLineage()
-            parserExecutor.shutdown()
-            printLog("实时血缘解析任务退出！")
-          }
-
-          // 1. 解析jdbc sql语句
-          parseJdbcSql()
-          printLog(s"完成第${parseCount}/${lineageRunCount}次解析JDBC中的血缘信息")
-
-          // 2. 将SQL中使用到的的表血缘信息映射到数据源中
-          LineageManager.mapTableToDatasource(SQLLineageManager.getSQLLineage.getTables)
-          printLog(s"完成第${parseCount}/${lineageRunCount}次异步解析SQL埋点中的表信息")
-        }
+        override def run(): Unit = executeLineageParse()
       }, lineageRunInitialDelay, lineageRunPeriod, TimeUnit.SECONDS)
     }
+  }
+
+  /**
+   * 触发合并
+   */
+  private[this] def executeLineageParse(): Unit = {
+    if (!lineageEnable || (parseCount.incrementAndGet() >= lineageRunCount && !parserExecutor.isShutdown)) {
+      disableLineage()
+      parserExecutor.shutdown()
+      printLog("实时血缘解析任务退出！")
+    }
+
+    // 1. 解析jdbc sql语句
+    parseJdbcSql()
+    printLog(s"完成第${parseCount}/${lineageRunCount}次解析JDBC中的血缘信息")
+
+    // 2. 将SQL中使用到的的表血缘信息映射到数据源中
+    LineageManager.mapTableToDatasource(SQLLineageManager.getSQLLineage.getTables)
+    printLog(s"完成第${parseCount}/${lineageRunCount}次异步解析SQL埋点中的表信息")
   }
 
   /**
@@ -127,7 +132,11 @@ private[fire] class LineageManager extends Logging {
   /**
    * 获取所有使用到的数据源
    */
-  private[fire] def get: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = this.lineageMap
+  private[fire] def get: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
+    //返回前，手动触发下合并
+    executeLineageParse()
+    this.lineageMap
+  }
 }
 
 /**

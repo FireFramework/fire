@@ -485,7 +485,7 @@ public final class GlobalConfiguration {
                 PropUtils.loadFile(FireFrameworkConf.FLINK_STREAMING_CONF_FILE());
                 // 如果是paimon任务，则加载paimon.properties，优先级低于common等配置文件
                 if (isPaimonStreaming) {
-                    PropUtils.loadFile(FireFrameworkConf.FLINK_PAIMON_COMMON_CONF_FILE());
+                    PropUtils.loadFile(FireFrameworkConf.FIRE_PAIMON_COMMON_CONF_FILE());
                     LOG.info("当前任务类型[ paimon Streaming ]，完成加载paimon.properties通用配置文件.");
                 }
                 // 将所有configuration信息同步到PropUtils中

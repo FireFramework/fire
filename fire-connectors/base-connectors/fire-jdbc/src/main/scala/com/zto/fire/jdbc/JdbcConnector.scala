@@ -50,7 +50,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
   private[this] var poolMethodMap: mutable.Map[JString, Method] = _
   private[this] var username: String = _
   private[this] var url: String = _
-  private[this] var dbType: String = "unknown"
+  private[this] var dbType: Datasource = Datasource.UNKNOWN
   private[this] lazy val finallyCatchLog = "释放jdbc资源失败"
 
   /**
@@ -66,12 +66,15 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
 
       val driverClass = if (isEmpty(FireJdbcConf.driverClass(keyNum)) && noEmpty(this.conf) && noEmpty(this.conf.driverClass)) this.conf.driverClass else FireJdbcConf.driverClass(keyNum)
       val autoDriver = if (isEmpty(driverClass)) DBUtils.parseDriverByUrl(this.url) else driverClass
-      require(noEmpty(autoDriver), s"数据库driverClass不能为空，keyNum=${this.keyNum}")
+      // require(noEmpty(autoDriver), s"数据库driverClass不能为空，keyNum=${this.keyNum}")
       this.username = if (isEmpty(FireJdbcConf.user(keyNum)) && noEmpty(this.conf, this.conf.username)) this.conf.username else FireJdbcConf.user(keyNum)
       val password = if (isEmpty(FireJdbcConf.password(keyNum)) && noEmpty(this.conf, this.conf.password)) this.conf.password else FireJdbcConf.password(keyNum)
       // 识别数据源类型是oracle、mysql等
       this.dbType = DBUtils.dbTypeParser(autoDriver, this.url)
       logInfo(s"Fire框架识别到当前jdbc数据源标识为：${this.dbType}，keyNum=${this.keyNum}")
+
+      // 如果url非标准jdbc协议，则不初始化c3p0，比如：doris flink connection中的url
+      if (!this.url.trim.startsWith("jdbc:")) return
 
       // 创建c3p0数据库连接池实例
       val pool = new ComboPooledDataSource(true)
@@ -90,6 +93,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       this.installDBPoolProperties(pool, this.keyNum)
       this.connPool = pool
       this.logInfo(s"创建数据库连接池[ $keyNum ] driver: ${this.dbType}")
+
     }(this.logger, s"数据库连接池创建成功", s"初始化数据库连接池[ $keyNum ]失败")
   }
 
@@ -415,7 +419,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
   @Internal
   private[this] def sqlBuriedPoint(sql: String, operation: FOperation): String = {
     try {
-      LineageManager.addDBSql(Datasource.parse(this.dbType), this.url, this.username, sql, operation)
+      LineageManager.addDBSql(this.dbType, this.url, this.username, sql, operation)
       StringsUtils.substring(sql, 0, this.logSqlLength)
     } catch {
       case _: Throwable => ""

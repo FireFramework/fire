@@ -22,11 +22,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.crypto.Cipher;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -35,8 +41,11 @@ import java.util.Objects;
  * @author ChengLong 2018年7月16日 09:53:59
  */
 public class EncryptUtils {
-    private static final String ERROR_MESSAGE = "参数不合法";
     private static final Logger logger = LoggerFactory.getLogger(EncryptUtils.class);
+    private static final String ERROR_MESSAGE = "参数不合法";
+    private static final String RSA = "RSA";
+    private static final String SHA = "SHA";
+    private static final String md5 = "md5";
 
     private EncryptUtils() {}
 
@@ -73,7 +82,7 @@ public class EncryptUtils {
         Objects.requireNonNull(message, ERROR_MESSAGE);
         try {
             // 得到一个信息摘要器
-            MessageDigest digest = MessageDigest.getInstance("md5");
+            MessageDigest digest = MessageDigest.getInstance(md5);
             byte[] result = digest.digest(message.getBytes(StandardCharsets.UTF_8));
             StringBuilder buffer = new StringBuilder();
             for (byte b : result) {
@@ -98,7 +107,7 @@ public class EncryptUtils {
     public static String shaEncrypt(String message, String key) {
         Objects.requireNonNull(message, ERROR_MESSAGE);
         if(StringUtils.isBlank(key)) {
-            key = "SHA";
+            key = SHA;
         }
         try {
             MessageDigest sha = MessageDigest.getInstance(key);
@@ -124,4 +133,72 @@ public class EncryptUtils {
         String fireAuth = EncryptUtils.md5Encrypt(FireFrameworkConf.restServerSecret() + privateKey + DateFormatUtils.formatCurrentDate());
         return fireAuth.equals(auth);
     }
+
+    /**
+     * 生成RSA的公钥和私钥
+     */
+    public static Map<String, Object> genRSAKey() throws Exception {
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(RSA);
+        keyPairGen.initialize(1024);
+        KeyPair keyPair = keyPairGen.generateKeyPair();
+        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+        Map<String, Object> keyMap = new HashMap<>(2);
+        keyMap.put("RSAPublicKey", publicKey);
+        keyMap.put("RSAPrivateKey", privateKey);
+        return keyMap;
+    }
+
+    /**
+     * 基于RSA加密算法对指定的文本进行加密
+     * @param text
+     * 待加密的问题吧
+     * @param publicKeyStr
+     * RSA公钥
+     * @return
+     * 加密后的字符串
+     */
+    public static String rsaEncrypt(String text, String publicKeyStr) {
+        try {
+            X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyStr));
+            KeyFactory factory = KeyFactory.getInstance(RSA);
+            PublicKey key = factory.generatePublic(x509EncodedKeySpec);
+            Cipher cipher = Cipher.getInstance(RSA);
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            return Base64.getEncoder().encodeToString(cipher.doFinal(text.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            logger.error("基于RSA算法进行加密报错", e);
+            return null;
+        }
+    }
+
+    /**
+     * 基于RSA加密算法对指定的文本进行解密
+     * @param text
+     * 加密后的文本
+     * @param privateKeyStr
+     * RSA私钥
+     * @return
+     * 解密后的文本
+     */
+    public static String rsaDecrypt(String text, String privateKeyStr) {
+        try {
+            PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyStr));
+            KeyFactory factory = KeyFactory.getInstance(RSA);
+            PrivateKey key = factory.generatePrivate(pkcs8EncodedKeySpec);
+            Cipher cipher = Cipher.getInstance(RSA);
+            cipher.init(Cipher.DECRYPT_MODE, key);
+
+            String decryptPasswd = new String(cipher.doFinal(Base64.getDecoder().decode(text)));
+            if (StringUtils.isNotBlank(decryptPasswd)) {
+                logger.info("Jdbc数据源解密成功，密文前10位：{}", StringUtils.substring(text, 0, 10));
+            }
+
+            return decryptPasswd;
+        } catch (Exception e) {
+            logger.warn("Jdbc数据源解密失败，原因：1. 数据源配置有误或密码非密文 2. 私钥有误（若有解密成功的日志，则考虑第一点），私钥前10位：{}，异常信息；{}", StringUtils.substring(privateKeyStr, 0, 10), e.getMessage());
+            return null;
+        }
+    }
+
 }

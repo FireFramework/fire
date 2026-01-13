@@ -62,7 +62,7 @@ private[fire] object FireJdbcConf {
   // 通过JdbcConnector查询后将数据集放到多少个分区中，需根据实际的结果集做配置
   lazy val jdbcQueryPartition = PropUtils.getInt(this.FIRE_JDBC_QUERY_REPARTITION, 10)
 
-  def jdbcPartition(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.FIRE_JDBC_QUERY_REPARTITION, "1", keyNum = keyNum)
+  def jdbcPartition(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.FIRE_JDBC_QUERY_REPARTITION, "-1", keyNum = keyNum)
   // db.jdbc.url
   def url(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.JDBC_URL, "", keyNum)
   // jdbc url与别名映射
@@ -114,5 +114,20 @@ private[fire] object FireJdbcConf {
    */
   def jdbcUrl(url: String): String = {
     this.jdbcUrlMap.getOrElse(url, url)
+  }
+
+  /**
+   * 将jdbc配置转换为doris connector的配置格式
+   */
+  def toDorisConf(withSplit: String = "", keyNum: Int = KeyNum._1): String = {
+    require(this.url(keyNum).nonEmpty, "doris jdbc url is empty")
+    require(this.user(keyNum).nonEmpty, "doris jdbc user is empty")
+    require(this.password(keyNum).nonEmpty, "doris jdbc password is empty")
+
+    s"""
+      |'fenodes' = '${this.url(keyNum)}',
+      |'username' = '${this.user(keyNum)}',
+      |'password' = '${this.password(keyNum)}'${withSplit}
+      |""".stripMargin
   }
 }

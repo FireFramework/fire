@@ -25,6 +25,7 @@ import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
 import com.zto.fire.spark.util.TiSparkUtils
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.plans.logical._
+import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.command._
 import org.apache.spark.sql.execution.datasources.CreateTable
 
@@ -147,6 +148,16 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
       case _ => LineageManager.printLog(s"Parse ddl SQL异常，无法匹配该Statement. $logicalPlan")
     }
     sinkTable
+  }
+
+  /**
+   * 暂时只有spark2.3需解析物理执行计划，其他版本暂不需要
+   *
+   * @param sparkPlan
+   * @return
+   */
+  override def ddlParserWithPlan(sparkPlan: SparkPlan): Option[TableIdentifier] = {
+    None
   }
 
   /**

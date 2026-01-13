@@ -29,12 +29,21 @@ import scala.reflect.ClassTag
  * @since 2.0.0
  * @create 2020-12-23 15:49
  */
-private[fire] trait JdbcFunctions {
+trait JdbcFunctions {
 
   /**
    * 根据指定的keyNum获取对应的数据库连接
    */
   def getConnection(keyNum: Int = KeyNum._1): Connection = JdbcConnector(keyNum = keyNum).getConnection
+
+  /**
+   * 关闭指定的jdbc连接
+   */
+  def closeConnection(connection: Connection): Unit = {
+    if (connection != null && !connection.isClosed) {
+      try connection.close() catch { case _: Throwable => }
+    }
+  }
 
   /**
    * 更新操作

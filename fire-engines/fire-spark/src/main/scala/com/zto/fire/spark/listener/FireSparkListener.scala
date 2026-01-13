@@ -25,9 +25,10 @@ import com.zto.fire.core.util.ErrorToleranceAcc
 import com.zto.fire.spark.BaseSpark
 import com.zto.fire.spark.acc.AccumulatorManager
 import com.zto.fire.spark.conf.FireSparkConf
-import com.zto.fire.spark.sync.SyncSparkEngine
+import com.zto.fire.spark.sync.{SparkLineageAccumulatorManager, SyncSparkEngine}
 import com.zto.fire.spark.util.SparkSingletonFactory
 import org.apache.spark.scheduler._
+import org.apache.spark.sql.execution.ui.SparkListenerSQLExecutionEnd
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
@@ -179,6 +180,8 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
     } else {
       AccumulatorManager.addMultiTimer(module, "onTaskEnd", "onTaskEnd", "", "ERROR", "", 1)
       ErrorToleranceAcc.addTaskFailedCount()
+      // 异常信息统一投递到Fire异常总线
+      ExceptionBus.post(new FireSparkException(taskEnd.reason.toString))
       this.logError(s"task failed. reason: ${taskEnd.reason}")
     }
   }
@@ -187,6 +190,12 @@ private[fire] class FireSparkListener(baseSpark: BaseSpark) extends SparkListene
    * 当取消缓存RDD时触发
    */
   override def onUnpersistRDD(unpersistRDD: SparkListenerUnpersistRDD): Unit = this.baseSpark.onUnpersistRDD(unpersistRDD)
+
+  override def onOtherEvent(event: SparkListenerEvent): Unit = event match {
+    case e: SparkListenerSQLExecutionEnd => SparkLineageAccumulatorManager.onExecutionEnd(e)
+    case _ => // Ignore
+  }
+
 
   /**
    * 用于注册内置累加器，每隔1分钟执行一次，延迟1分钟执行，默认执行10次

@@ -105,7 +105,7 @@ public class RowKeyValueDeserializationSchema implements TagKeyValueDeserializat
         this.fieldNames = tableSchema.getFieldNames();
     }
 
-    public RowData deserializeTagKeyAndValue(MessageExt msg) {
+    public RowData deserializeTagKeyAndValue(MessageExt msg) throws Exception {
         if (isOnlyHaveVarbinaryDataField()) {
             GenericRowData rowData = new GenericRowData(columnSize);
             rowData.setField(0, msg.getBody());

@@ -28,7 +28,7 @@ import com.zto.fire.predef._
  * @author ChengLong 2022-09-06 15:19:55
  * @since 2.3.2
  */
-case class TableIdentifier(private val _table: String, private val _database: String = ""/*, private val _catalog: String = ""*/) {
+case class TableIdentifier(private val _table: String, private val _database: String = "", private val _catalog: String = "") {
 
   lazy val table = {
     if (this._table.contains(".")) {
@@ -60,7 +60,9 @@ case class TableIdentifier(private val _table: String, private val _database: St
   }
 
   lazy val catalog = {
-    if (this._table.contains(".")) {
+    if (noEmpty(this._catalog) ) {
+      this._catalog
+    } else if (this._table.contains(".")) {
       val seq = this._table.split('.')
       if (seq.length == 3) {
         seq(0)

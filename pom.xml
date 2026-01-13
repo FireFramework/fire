@@ -22,7 +22,7 @@
     <groupId>com.zto.fire</groupId>
     <artifactId>fire-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.6.0-SNAPSHOT</version>
+    <version>2.7.0-SNAPSHOT</version>
     <name>Fire : </name>
     <description>Fire framework is a development framework for real-time computing task development . The framework provides a simple and easy to use API that can significantly reduce the development threshold of Spark and Flink and improve development efficiency.</description>
     <url>https://github.com/fire-framework/fire</url>
@@ -64,6 +64,7 @@
         <hudi.major.version>0.9</hudi.major.version>
         <hudi.bundle.version>3</hudi.bundle.version>
         <commons-lang.version>2.5</commons-lang.version>
+        <cluster-env.version>1.0.9-SNAPSHOT</cluster-env.version>
         <clickhouse-jdbc.version>0.3.1</clickhouse-jdbc.version>
         <maven.scope>provided</maven.scope>
         <kafka.version>0.11.0.2</kafka.version>
@@ -349,6 +350,7 @@
                 <spark.major.version>3.3</spark.major.version>
                 <jackson.version>2.10.5</jackson.version>
                 <hudi.bundle.version>3</hudi.bundle.version>
+                <netty.version>4.1.74.Final</netty.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -362,6 +364,20 @@
                     <groupId>org.apache.hudi</groupId>
                     <artifactId>hudi-spark${hudi.bundle.version}-bundle_${scala.binary.version}</artifactId>
                     <version>${hudi.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+
+                <!-- Paimon相关依赖 -->
+                <dependency>
+                    <groupId>org.apache.paimon</groupId>
+                    <artifactId>paimon-spark-common_${scala.binary.version}</artifactId>
+                    <version>${paimon.version}</version>
+                    <scope>${maven.scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.paimon</groupId>
+                    <artifactId>paimon-spark-${spark.major.version}</artifactId>
+                    <version>${paimon.version}</version>
                     <scope>${maven.scope}</scope>
                 </dependency>
             </dependencies>
@@ -573,7 +589,7 @@
         <profile>
             <id>hadoop-3.2</id>
             <properties>
-                <hadoop.version>3.2.4</hadoop.version>
+                <hadoop.version>3.2.3</hadoop.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -581,6 +597,144 @@
                     <artifactId>spark-hive_${scala.binary.version}</artifactId>
                     <version>${spark.version}</version>
                     <scope>${maven.scope}</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.apache.hive</groupId>
+                            <artifactId>hive-common</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.hive</groupId>
+                            <artifactId>hive-exec</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.hive</groupId>
+                            <artifactId>hive-metastore</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.hive</groupId>
+                            <artifactId>hive-serde</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.hive</groupId>
+                            <artifactId>hive-shims</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.calcite</groupId>
+                            <artifactId>calcite-core</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.pentaho</groupId>
+                            <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-hive-thriftserver_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <scope>${maven.scope}</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.apache.hive</groupId>
+                            <artifactId>hive-cli</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.hive</groupId>
+                            <artifactId>hive-jdbc</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.hive</groupId>
+                            <artifactId>hive-beeline</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.pentaho</groupId>
+                            <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>${hive.group}</groupId>
+                    <artifactId>hive-cli</artifactId>
+                    <version>${hive.version}</version>
+                    <scope>${maven.scope}</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.pentaho</groupId>
+                            <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>${hive.group}</groupId>
+                    <artifactId>hive-jdbc</artifactId>
+                    <version>${hive.version}</version>
+                    <scope>${maven.scope}</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.pentaho</groupId>
+                            <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>${hive.group}</groupId>
+                    <artifactId>hive-beeline</artifactId>
+                    <version>${hive.version}</version>
+                    <scope>${maven.scope}</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.pentaho</groupId>
+                            <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>${hive.group}</groupId>
+                    <artifactId>hive-common</artifactId>
+                    <version>${hive.version}</version>
+                    <scope>${maven.scope}</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.pentaho</groupId>
+                            <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>${hive.group}</groupId>
+                    <artifactId>hive-metastore</artifactId>
+                    <version>${hive.version}</version>
+                    <scope>${maven.scope}</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.pentaho</groupId>
+                            <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>${hive.group}</groupId>
+                    <artifactId>hive-exec</artifactId>
+                    <version>${hive.version}</version>
+                    <scope>${maven.scope}</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.apache.commons</groupId>
+                            <artifactId>commons-lang3</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.spark</groupId>
+                            <artifactId>spark-core_2.10</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.calcite</groupId>
+                            <artifactId>calcite-core</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.pentaho</groupId>
+                            <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                        </exclusion>
+                    </exclusions>
                 </dependency>
             </dependencies>
         </profile>
@@ -728,6 +882,7 @@
             <properties>
                 <flink.version>1.16.3</flink.version>
                 <flink.major.version>1.16</flink.major.version>
+                <calcite.version>1.32.0</calcite.version>
                 <contains.scala.binary.version></contains.scala.binary.version>
                 <flink.jdbc.connector.version>${flink.version}</flink.jdbc.connector.version>
                 <flink.kafka.connector.version>${flink.version}</flink.kafka.connector.version>
@@ -753,6 +908,7 @@
             <properties>
                 <flink.version>1.17.2</flink.version>
                 <flink.major.version>1.17</flink.major.version>
+                <calcite.version>1.32.0</calcite.version>
                 <contains.scala.binary.version></contains.scala.binary.version>
                 <flink.jdbc.connector.version>3.1.2-${flink.major.version}</flink.jdbc.connector.version>
                 <flink.kafka.connector.version>3.1.0-${flink.major.version}</flink.kafka.connector.version>
@@ -778,6 +934,7 @@
             <properties>
                 <flink.version>1.18.1</flink.version>
                 <flink.major.version>1.18</flink.major.version>
+                <calcite.version>1.32.0</calcite.version>
                 <contains.scala.binary.version></contains.scala.binary.version>
                 <flink.jdbc.connector.version>3.2.0-${flink.major.version}</flink.jdbc.connector.version>
                 <flink.kafka.connector.version>3.2.0-${flink.major.version}</flink.kafka.connector.version>
@@ -803,6 +960,7 @@
             <properties>
                 <flink.version>1.19.1</flink.version>
                 <flink.major.version>1.19</flink.major.version>
+                <calcite.version>1.32.0</calcite.version>
                 <contains.scala.binary.version></contains.scala.binary.version>
                 <flink.jdbc.connector.version>3.2.0-${flink.major.version}</flink.jdbc.connector.version>
                 <flink.kafka.connector.version>3.2.0-${flink.major.version}</flink.kafka.connector.version>
@@ -877,22 +1035,29 @@
         <profile>
             <id>paimon-1.0.1</id>
             <properties>
-                <paimon.version>1.0.1</paimon.version>
+                <paimon.version>1.0.1.4-SNAPSHOT</paimon.version>
             </properties>
         </profile>
 
         <profile>
-            <id>paimon-1.1.0</id>
+            <id>paimon-1.1.1</id>
             <properties>
-                <paimon.version>1.1.0</paimon.version>
+                <paimon.version>1.1.1</paimon.version>
             </properties>
         </profile>
+
+        <profile>
+            <id>paimon-1.2.0</id>
+            <properties>
+                <paimon.version>1.2.0</paimon.version>
+            </properties>
+        </profile>
+
         <!-- include zto env -->
         <profile>
             <id>zto-env</id>
             <properties>
                 <build.dest>zto</build.dest>
-                <paimon.version>1.0.1.3-SNAPSHOT</paimon.version>
             </properties>
             <activation>
                 <activeByDefault>false</activeByDefault>
@@ -902,7 +1067,7 @@
                 <dependency>
                     <groupId>com.zto.bigdata</groupId>
                     <artifactId>cluster-env</artifactId>
-                    <version>1.0.6-SNAPSHOT</version>
+                    <version>${cluster-env.version}</version>
                 </dependency>
             </dependencies>
             <build>

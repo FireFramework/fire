@@ -60,6 +60,8 @@ private[fire] object FireRocketMQConf {
   // 是否使状态中存放的offset不生效（请谨慎配置，用于rocketmq集群迁移等不正常状况的运维）
   lazy val ROCKET_OVERWRITE_STATE_OFFSET = "rocket.force.overwrite.stateOffset.enable"
   lazy val ROCKET_START_FROM_TIMESTAMP = "rocket.StartFromTimestamp"
+  // 是否打印详细的日志
+  lazy val ROCKET_LOGGER_DEBUG_ENABLE = "rocket.logger.debug.enable"
 
   // 设置从指定的时间戳开始消费
   def startFromTimestamp(keyNum: Int = KeyNum._1): Long = PropUtils.getLong(this.ROCKET_START_FROM_TIMESTAMP, -1)
@@ -92,6 +94,8 @@ private[fire] object FireRocketMQConf {
   def rocketSinkBatch(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.ROCKET_SINK_BATCH, -1, keyNum)
   // sink rocketmq多久刷新一次（ms）
   def rocketSinkFlushInterval(keyNum: Int = KeyNum._1): Long = PropUtils.getLong(this.ROCKET_SINK_FLUSH_INTERVAL, -1, keyNum)
+  // 是否打印详细的日志信息
+  def rocketLoggerDebugEnable(keyNum: Int = KeyNum._1): Boolean = PropUtils.getBoolean(this.ROCKET_LOGGER_DEBUG_ENABLE, false, keyNum)
 
   // 获取rocketMQ name server 地址
   def rocketNameServer(keyNum: Int = KeyNum._1): String = {

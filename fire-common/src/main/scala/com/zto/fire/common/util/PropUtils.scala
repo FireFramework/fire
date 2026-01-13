@@ -292,11 +292,30 @@ object PropUtils extends Logging {
     this.loadCommandConfig()
     // 配置中心任务级别配置优先级高于用户本地配置文件中的配置，做到重启任务即可生效
     this.setProperties(centerConfig.getOrDefault(ConfigureLevel.TASK, Map.empty[String, String]))
+    // 命令行覆盖参数优先级仅次于配置中心紧急配置
+    this.setProperties(FireFrameworkConf.cmdConfOverwriteMap)
     // 配置中心紧急配置优先级最高，用于对所有任务生效的紧急参数调优
     this.setProperties(centerConfig.getOrDefault(ConfigureLevel.URGENT, Map.empty[String, String]))
+    // JDBC密文密码解密（针对PropUtils主动加载的配置进行批量解密）
+    this.internalPasswordDecrypt()
 
     this
   }
+
+  /**
+   * 基于RSA加密算法对配置信息中的jdbc密码进行解密
+   * 注：通常情况下加密后的密码会基于实时平台进行配置与下发，因此只考虑解析从平台获取到的Task级别的JDBC配置信息
+   */
+  private[this] def internalPasswordDecrypt(): Unit = {
+    // 遍历jdbc相关配置信息，并尝试基于RSA算法进行密码解密
+    val copyMap = new JHashMap[JString, JString]()
+    this.settings.foreach(kv => {
+      copyMap.put(kv._1, ConfigurationCenterManager.jdbcPasswordDecrypt(kv._1, kv._2))
+    })
+
+    this.setProperties(copyMap)
+  }
+
 
   /**
    * 配置文件列表，可通过提交任务的命令行参数指定（多个文件以逗号分隔）：
@@ -529,10 +548,12 @@ object PropUtils extends Logging {
    */
   def setProperty(key: String, value: String): Unit = this.synchronized {
     if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
+      // 过滤jdbc.password配置并尝试进行兜底解密，针对引擎端的配置解密
+      val decryptValue = ConfigurationCenterManager.jdbcPasswordDecrypt(key, value)
       // 去除前后空格等非法字符，避免影响引擎的正常运行
       val trimKey = StringUtils.trim(key).replaceAll("　", "")
-      this.setAdaptiveProperty(this.adaptiveKey(trimKey), value)
-      this.originalSettingsMap.put(trimKey, value)
+      this.setAdaptiveProperty(this.adaptiveKey(trimKey), decryptValue)
+      this.originalSettingsMap.put(trimKey, decryptValue)
       this.addRemoveKey(trimKey)
     }
   }

@@ -15,7 +15,34 @@
  * limitations under the License.
  */
 
-package com.zto.fire.jdbc;
+package com.zto.fire.examples.spark.paimon
 
-public class JavaJdbcConnectorBridge {
+import com.zto.fire.core.anno.connector.Hive
+import com.zto.fire.spark.connector.paimon.PaimonCore
+
+/**
+ * 集成Paimon测试任务进行spark core任务开发
+ *
+ * @author ChengLong
+ * @Date 2025-07-09 13:32:41
+ * @version 2.6.0
+ */
+@Hive("thrift://ip:9083")
+object PaimonTest extends PaimonCore  { // extends PaimonStreaming
+
+  override def process(): Unit = {
+    sql(
+      """
+        |use paimon.paimon
+        |""".stripMargin)
+    sql(
+      """
+        |show tables
+        |""".stripMargin).show
+    sql(
+      """
+        |select * from paimon.paimon.paimon_table_name where ds=xxx
+        |""".stripMargin).show
+  }
 }
+

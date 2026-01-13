@@ -16,6 +16,7 @@ package org.apache.rocketmq.flink;
 import com.alibaba.fastjson.JSON;
 import com.esotericsoftware.minlog.Log;
 import com.zto.fire.common.conf.FireRocketMQConf;
+import com.zto.fire.common.conf.FireRocketMQConf$;
 import org.apache.commons.collections.map.LinkedMap;
 import org.apache.commons.lang.Validate;
 import org.apache.flink.api.common.state.ListState;
@@ -79,6 +80,8 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
     private List<MessageQueue> totalQueues;
     private ScheduledExecutorService discoveryService;
     private String consumerLogInfo;
+    private boolean debugEnable = false;
+    private Exception consumerException;
 
     public RocketMQSourceWithTag(TagKeyValueDeserializationSchema<OUT> schema, Properties props) {
         this.schema = schema;
@@ -90,6 +93,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         LOG.info("RocketMQ Connector source open....");
         Validate.notEmpty(props, "Consumer properties can not be empty");
         Validate.notNull(schema, "TagKeyValueDeserializationSchema can not be null");
+        debugEnable = FireRocketMQConf.rocketLoggerDebugEnable(1);
 
         this.topic = props.getProperty(RocketMQConfig.CONSUMER_TOPIC);
         this.group = props.getProperty(RocketMQConfig.CONSUMER_GROUP);
@@ -141,22 +145,36 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
 
         pullConsumerScheduleService.setPullThreadNums(pullPoolSize);
         pullConsumerScheduleService.registerPullTaskCallback(topic, (mq, pullTaskContext) -> {
+            MessageExt currentMsg = null;
+            OUT deserializeMsg = null;
             try {
                 long offset = getMessageQueueOffset(mq);
                 if (offset < 0) {
                     LOG.error("{} Current topic {} offset is < 0 {} for queue {}", consumerLogInfo, topic, offset, mq);
                     return;
                 }
-                Log.debug("Current pullBatchSize is: " + pullBatchSize);
+
                 PullResult pullResult = consumer.pull(mq, tag, offset, pullBatchSize);
+                if (debugEnable) {
+                    LOG.info("consumer.pull tag={}, offset={}, pullBatchSize={} pullResult=", tag, offset, pullBatchSize, pullResult);
+                }
+
                 boolean found = false;
                 switch (pullResult.getPullStatus()) {
                     case FOUND:
                         List<MessageExt> messages = pullResult.getMsgFoundList();
-                        if (pullBatchSize != messages.size()) LOG.debug("Pull from rocketmq records is: {}", messages.size());
                         for (MessageExt msg : messages) {
                             if (msg != null) {
+                                currentMsg = msg;
+                                if (debugEnable) LOG.info("反序列化前的消息：{}", msg);
                                 OUT data = schema.deserializeTagKeyAndValue(msg);
+                                deserializeMsg = data;
+                                if (debugEnable) LOG.info("反序列化后的消息：{}", data);
+
+                                if (data == null) {
+                                    LOG.error("RocketMQ消息反序列化失败，消息为空！");
+                                    consumerException = new RuntimeException("RocketMQ消息反序列化失败，消息为空！");
+                                }
 
                                 // output and state update are atomic
                                 synchronized (lock) {
@@ -167,16 +185,24 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                         found = true;
                         break;
                     case NO_MATCHED_MSG:
-                        LOG.debug("{} No matched message after offset {} for queue {}", consumerLogInfo, offset, mq);
+                        if (debugEnable) {
+                            LOG.info("{} No matched message after offset {} for queue {}", consumerLogInfo, offset, mq);
+                        }
                         break;
                     case NO_NEW_MSG:
-                        LOG.debug("{} No message after offset {} for queue {}", consumerLogInfo, offset, mq);
+                        if (debugEnable) {
+                            LOG.info("{} No message after offset {} for queue {}", consumerLogInfo, offset, mq);
+                        }
                         break;
                     case OFFSET_ILLEGAL:
-                        LOG.debug("{} Offset {} is illegal for queue {}", consumerLogInfo, offset, mq);
+                        if (debugEnable) {
+                            LOG.info("{} No message after offset {} for queue {}", consumerLogInfo, offset, mq);
+                        }
                         break;
                     default:
-                        LOG.debug("{} No FOUND message after offset {} for queue {}", consumerLogInfo, offset, mq);
+                        if (debugEnable) {
+                            LOG.info("{} No message after offset {} for queue {}", consumerLogInfo, offset, mq);
+                        }
                         break;
                 }
 
@@ -190,21 +216,26 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                     pullTaskContext.setPullNextDelayTimeMillis(delayWhenMessageNotFound);
                 }
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                LOG.error("消费RocketMQ反序列化过程中发生异常！消息：" + currentMsg, e);
+                consumerException = new RuntimeException("消费RocketMQ反序列化过程中发生异常！原始消息：" + currentMsg + " 反序列化后消息：" + deserializeMsg, e);
             }
         });
 
         try {
             pullConsumerScheduleService.start();
         } catch (MQClientException e) {
-            throw new RuntimeException(e);
+            LOG.error("启动consumer schedule服务失败！", e);
+            consumerException = e;
         }
         runningChecker.setRunning(true);
         awaitTermination();
     }
 
-    private void awaitTermination() throws InterruptedException {
+    private void awaitTermination() throws Exception {
         while (runningChecker.isRunning()) {
+            if (consumerException != null) {
+                throw consumerException;
+            }
             Thread.sleep(50);
         }
     }
@@ -214,7 +245,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         long recallTime = FireRocketMQConf.startFromTimestamp(1);
 
         if (offset == null) {
-            LOG.debug("从状态中获取Offset列表为空，将从server端获取offset列表");
+            if (debugEnable) LOG.info("从状态中获取Offset列表为空，将从server端获取offset列表");
             offset = consumer.fetchConsumeOffset(mq, true);
 
             int retryCount = 1;
@@ -323,12 +354,12 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
     public void snapshotState(FunctionSnapshotContext context) throws Exception {
         // called when a snapshot for a checkpoint is requested
         if (!runningChecker.isRunning()) {
-            LOG.debug("snapshotState() called on closed source; returning null.");
+            if (debugEnable) LOG.info("snapshotState() called on closed source; returning null.");
             return;
         }
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Snapshotting state {} ...", context.getCheckpointId());
+            LOG.info("Snapshotting state {} ...", context.getCheckpointId());
         }
 
         unionOffsetStates.clear();
@@ -375,8 +406,8 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
 
         pendingOffsetsToCommit.put(context.getCheckpointId(), currentOffsets);
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Snapshotted state, last processed offsets: {}, checkpoint id: {}, timestamp: {}",
+        if (debugEnable) {
+            LOG.info("Snapshotted state, last processed offsets: {}, checkpoint id: {}, timestamp: {}",
                     offsetTable, context.getCheckpointId(), context.getCheckpointTimestamp());
         }
     }
@@ -425,7 +456,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
     public void notifyCheckpointComplete(long checkpointId) throws Exception {
         // callback when checkpoint complete
         if (!runningChecker.isRunning()) {
-            LOG.debug("notifyCheckpointComplete() called on closed source; returning null.");
+            if (debugEnable) LOG.info("notifyCheckpointComplete() called on closed source; returning null.");
             return;
         }
 

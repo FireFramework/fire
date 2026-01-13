@@ -30,7 +30,7 @@ private[paimon] object FirePaimonConf {
   lazy val HIVE_CLUSTER = "hive.cluster"
   lazy val PAIMON_CATALOG_NAME = "paimon.catalog.name"
   lazy val HIVE_CLUSTER_MAP_PREFIX = "fire.hive.cluster.map."
-  lazy val PAIMON_CONF_FILE_NAME = "paimon"
+
   // 初始化hive集群名称与metastore映射
   private lazy val hiveMetastoreMap = PropUtils.sliceKeys(this.HIVE_CLUSTER_MAP_PREFIX)
 

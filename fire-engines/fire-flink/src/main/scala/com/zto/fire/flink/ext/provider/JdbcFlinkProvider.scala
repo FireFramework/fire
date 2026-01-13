@@ -55,7 +55,7 @@ trait JdbcFlinkProvider {
   def jdbcBatchUpdateStream[T](stream: DataStream[T],
                                sql: String,
                                fields: Seq[String],
-                               batch: Int = 10,
+                               batch: Int = 100,
                                flushInterval: Long = 1000,
                                keyNum: Int = KeyNum._1): DataStreamSink[T] = {
     stream.jdbcBatchUpdate(sql, fields, batch, flushInterval, keyNum)
@@ -78,7 +78,7 @@ trait JdbcFlinkProvider {
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateStream2[T](stream: DataStream[T],
                                 sql: String,
-                                batch: Int = 10,
+                                batch: Int = 100,
                                 flushInterval: Long = 1000,
                                 keyNum: Int = KeyNum._1)(fun: T => Seq[Any]): DataStreamSink[T] = {
     stream.jdbcBatchUpdate2(sql, batch, flushInterval, keyNum)(fun)
@@ -102,7 +102,7 @@ trait JdbcFlinkProvider {
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateTable(table: Table,
                            sql: String,
-                           batch: Int = 10,
+                           batch: Int = 100,
                            flushInterval: Long = 1000,
                            isMerge: Boolean = true,
                            keyNum: Int = KeyNum._1): DataStreamSink[Row] = {
@@ -124,7 +124,7 @@ trait JdbcFlinkProvider {
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateTable2(table: Table,
                             sql: String,
-                            batch: Int = 10,
+                            batch: Int = 100,
                             flushInterval: Long = 1000,
                             isMerge: Boolean = true,
                             keyNum: Int = KeyNum._1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
