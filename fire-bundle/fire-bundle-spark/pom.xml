@@ -13,11 +13,6 @@
     </parent>
 
     <dependencies>
-<!--        <dependency>
-            <groupId>com.zto.bigdata</groupId>
-            <artifactId>cluster-env</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
-        </dependency>-->
         <!-- 用于解决spark2.3在local模式下netty冲突问题 -->
         <dependency>
             <groupId>io.netty</groupId>
