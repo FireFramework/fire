@@ -64,6 +64,7 @@
         <hudi.major.version>0.9</hudi.major.version>
         <hudi.bundle.version>3</hudi.bundle.version>
         <commons-lang.version>2.5</commons-lang.version>
+        <cluster-env.version>1.0.9-SNAPSHOT</cluster-env.version>
         <clickhouse-jdbc.version>0.3.1</clickhouse-jdbc.version>
         <maven.scope>provided</maven.scope>
         <kafka.version>0.11.0.2</kafka.version>
@@ -881,6 +882,7 @@
             <properties>
                 <flink.version>1.16.3</flink.version>
                 <flink.major.version>1.16</flink.major.version>
+                <calcite.version>1.32.0</calcite.version>
                 <contains.scala.binary.version></contains.scala.binary.version>
                 <flink.jdbc.connector.version>${flink.version}</flink.jdbc.connector.version>
                 <flink.kafka.connector.version>${flink.version}</flink.kafka.connector.version>
@@ -906,6 +908,7 @@
             <properties>
                 <flink.version>1.17.2</flink.version>
                 <flink.major.version>1.17</flink.major.version>
+                <calcite.version>1.32.0</calcite.version>
                 <contains.scala.binary.version></contains.scala.binary.version>
                 <flink.jdbc.connector.version>3.1.2-${flink.major.version}</flink.jdbc.connector.version>
                 <flink.kafka.connector.version>3.1.0-${flink.major.version}</flink.kafka.connector.version>
@@ -931,6 +934,7 @@
             <properties>
                 <flink.version>1.18.1</flink.version>
                 <flink.major.version>1.18</flink.major.version>
+                <calcite.version>1.32.0</calcite.version>
                 <contains.scala.binary.version></contains.scala.binary.version>
                 <flink.jdbc.connector.version>3.2.0-${flink.major.version}</flink.jdbc.connector.version>
                 <flink.kafka.connector.version>3.2.0-${flink.major.version}</flink.kafka.connector.version>
@@ -956,6 +960,7 @@
             <properties>
                 <flink.version>1.19.1</flink.version>
                 <flink.major.version>1.19</flink.major.version>
+                <calcite.version>1.32.0</calcite.version>
                 <contains.scala.binary.version></contains.scala.binary.version>
                 <flink.jdbc.connector.version>3.2.0-${flink.major.version}</flink.jdbc.connector.version>
                 <flink.kafka.connector.version>3.2.0-${flink.major.version}</flink.kafka.connector.version>
@@ -1062,7 +1067,7 @@
                 <dependency>
                     <groupId>com.zto.bigdata</groupId>
                     <artifactId>cluster-env</artifactId>
-                    <version>1.0.9-SNAPSHOT</version>
+                    <version>${cluster-env.version}</version>
                 </dependency>
             </dependencies>
             <build>

@@ -35,35 +35,6 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <profiles>
-        <!-- include zto env -->
-        <profile>
-            <id>zto-env</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <dependencies>
-                <!-- 中通内部集群环境依赖，编译报错可直接注释掉，不影响开源社区使用 -->
-                <dependency>
-                    <groupId>com.zto.bigdata</groupId>
-                    <artifactId>cluster-env</artifactId>
-                    <version>1.0.8-SNAPSHOT</version>
-                </dependency>
-            </dependencies>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                        <filtering>true</filtering>
-                        <includes>
-                            <include>conf-test.properties</include>
-                        </includes>
-                    </resource>
-                </resources>
-            </build>
-        </profile>
-    </profiles>
-
     <dependencies>
         <dependency>
             <groupId>com.zto.fire</groupId>

@@ -398,6 +398,7 @@
                             <include>com.github.oshi:*</include>
                             <include>org.apache.curator:*</include>
                             <include>org.eclipse.jetty:*</include>
+                            <include>com.zto.bigdata:*</include>
                         </includes>
                     </artifactSet>
                     <filters>
