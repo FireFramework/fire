@@ -7,10 +7,10 @@
     <packaging>pom</packaging>
     <name>Fire : Bundle : </name>
 
-    <modules>
+    <!--<modules>
         <module>fire-bundle-spark</module>
         <module>fire-bundle-flink</module>
-    </modules>
+    </modules>-->
 
     <parent>
         <groupId>com.zto.fire</groupId>
@@ -18,6 +18,21 @@
         <version>2.7.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
+
+    <profiles>
+        <profile>
+            <id>build-spark</id>
+            <modules>
+                <module>fire-bundle-spark</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>build-flink</id>
+            <modules>
+                <module>fire-bundle-flink</module>
+            </modules>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>

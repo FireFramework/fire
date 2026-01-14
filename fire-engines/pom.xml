@@ -30,10 +30,23 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <modules>
-        <module>fire-spark</module>
-        <module>fire-flink</module>
-    </modules>
+    <profiles>
+        <!-- 构建spark引擎相关模块 -->
+        <profile>
+            <id>build-spark</id>
+            <modules>
+                <module>fire-spark</module>
+            </modules>
+        </profile>
+
+        <!-- 构建flink引擎相关模块 -->
+        <profile>
+            <id>build-flink</id>
+            <modules>
+                <module>fire-flink</module>
+            </modules>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>

@@ -30,11 +30,25 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <modules>
-        <module>base-connectors</module>
-        <module>spark-connectors</module>
-        <module>flink-connectors</module>
-    </modules>
+    <profiles>
+        <!-- 构建spark引擎相关模块 -->
+        <profile>
+            <id>build-spark</id>
+            <modules>
+                <module>base-connectors</module>
+                <module>spark-connectors</module>
+            </modules>
+        </profile>
+
+        <!-- 构建flink引擎相关模块 -->
+        <profile>
+            <id>build-flink</id>
+            <modules>
+                <module>base-connectors</module>
+                <module>flink-connectors</module>
+            </modules>
+        </profile>
+    </profiles>
 
     <dependencies>
         <!-- fire相关模块依赖 -->

@@ -107,16 +107,33 @@
         <flink.reference>${flink.major.version}_${scala.binary.version}</flink.reference>
     </properties>
 
-    <modules>
-        <module>fire-common</module>
-        <module>fire-core</module>
-        <module>fire-connectors</module>
-        <module>fire-engines</module>
-        <module>fire-enhance</module>
-        <module>fire-bundle</module>
-    </modules>
-
     <profiles>
+        <!-- 构建spark引擎相关模块 -->
+        <profile>
+            <id>build-spark</id>
+            <modules>
+                <module>fire-common</module>
+                <module>fire-core</module>
+                <module>fire-connectors</module>
+                <module>fire-engines</module>
+                <module>fire-enhance</module>
+                <module>fire-bundle</module>
+            </modules>
+        </profile>
+
+        <!-- 构建flink引擎相关模块 -->
+        <profile>
+            <id>build-flink</id>
+            <modules>
+                <module>fire-common</module>
+                <module>fire-core</module>
+                <module>fire-connectors</module>
+                <module>fire-engines</module>
+                <module>fire-enhance</module>
+                <module>fire-bundle</module>
+            </modules>
+        </profile>
+
         <!-- 发布jar包到maven中央仓库 -->
         <profile>
             <id>deploy-ossrh-repo</id>

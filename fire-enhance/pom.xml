@@ -29,11 +29,28 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <modules>
+  <!--<modules>
     <module>apache-spark</module>
     <module>apache-flink</module>
     <module>apache-arthas</module>
-  </modules>
+  </modules>-->
+
+  <profiles>
+      <profile>
+          <id>build-spark</id>
+          <modules>
+              <module>apache-spark</module>
+              <module>apache-arthas</module>
+          </modules>
+      </profile>
+      <profile>
+          <id>build-flink</id>
+          <modules>
+              <module>apache-flink</module>
+              <module>apache-arthas</module>
+          </modules>
+      </profile>
+  </profiles>
 
   <build>
     <plugins>
