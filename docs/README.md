@@ -22,10 +22,18 @@ under the License.
     <img src="./img/fire-framework-logo.jpeg" width="600" height="600">
   </a>
   <p align="center">
-    <a href='https://gitee.com/fire-framework/fire/stargazers'><img src='https://gitee.com/fire-framework/fire/badge/star.svg?theme=gray' alt='star'></img></a>
-    <a href='https://gitee.com/fire-framework/fire/members'><img src='https://gitee.com/fire-framework/fire/badge/fork.svg?theme=gray' alt='fork'></img></a>
+    <a href="https://github.com/FireFramework/fire/stargazers">
+    <img src="https://img.shields.io/github/stars/FireFramework/fire?style=flat-square&logo=github" alt="GitHub stars">
+    </a>
+    <a href="https://github.com/FireFramework/fire/network/members">
+     <img src="https://img.shields.io/github/forks/FireFramework/fire?style=flat-square&logo=github" alt="GitHub forks">
+    </a>
+    <a href='https://gitee.com/fire-framework/fire/stargazers'><img src='https://gitee.com/fire-framework/fire/badge/star.svg?theme=gray' alt='Gitee star'></img></a>
+    <a href='https://gitee.com/fire-framework/fire/members'><img src='https://gitee.com/fire-framework/fire/badge/fork.svg?theme=gray' alt='Gitee fork'></img></a>
+		<a href='https://gitcode.com/fire-framework/fire'><img src='https://gitcode.com/fire-framework/fire/star/badge.svg' alt='GitCode star'></img></a>
   </p>
 </p>
+
 
 
 # Fire框架

@@ -7,17 +7,44 @@
     <packaging>pom</packaging>
     <name>Fire : Bundle : </name>
 
-    <modules>
-        <module>fire-bundle-spark</module>
-        <module>fire-bundle-flink</module>
-    </modules>
-
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-parent</artifactId>
-        <version>2.7.0-SNAPSHOT</version>
+        <version>2.7.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
+
+    <profiles>
+        <profile>
+            <id>build-spark</id>
+            <modules>
+                <module>fire-bundle-spark</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>build-flink</id>
+            <modules>
+                <module>fire-bundle-flink</module>
+            </modules>
+        </profile>
+        <!-- include fire plus 仅用于中通内部，社区版本不要激活该profile，否则编译报错 -->
+        <profile>
+            <id>fire-plus</id>
+            <properties>
+                <build.dest>zto</build.dest>
+            </properties>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>com.zto.bigdata</groupId>
+                    <artifactId>cluster-env</artifactId>
+                    <version>${cluster-env.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
@@ -366,6 +393,7 @@
                     <artifactSet>
                         <includes>
                             <include>com.zto.fire:*</include>
+                            <include>com.zto.bigdata:*</include>
                             <include>com.sparkjava:*</include>
                             <include>org.quartz-scheduler:*</include>
                             <include>com.fasterxml.jackson.module:*</include>
@@ -398,7 +426,6 @@
                             <include>com.github.oshi:*</include>
                             <include>org.apache.curator:*</include>
                             <include>org.eclipse.jetty:*</include>
-                            <include>com.zto.bigdata:*</include>
                         </includes>
                     </artifactSet>
                     <filters>

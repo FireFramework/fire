@@ -48,7 +48,7 @@ abstract class KafkaSink[IN, T <: MQRecord : ClassTag](params: Map[String, Objec
   override def sink(dataList: List[T]): Unit = {
     dataList.foreach(record => {
       if (isEmpty(record.topic)) record.topic = finalTopic
-      MQProducer.sendRecord(finalBrokers, record, MQType.kafka, finalConf,sendByte=sendByte)
+      MQProducer.sendRecord(finalBrokers, record, MQType.kafka, finalConf, sendByte = sendByte)
     })
   }
 }

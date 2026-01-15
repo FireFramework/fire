@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @since 2.3.1
  */
 class MQProducer(url: String, mqType: MQType = MQType.kafka,
-                 otherConf: Map[String, String] = Map.empty, throwable: Boolean = true,sendBytes:Boolean = false) extends Logging {
+                 otherConf: Map[String, String] = Map.empty, throwable: Boolean = true, sendBytes: Boolean = false) extends Logging {
   private lazy val maxRetries = FireFrameworkConf.exceptionTraceSendMQMaxRetries
   private lazy val sendTimeout = FireFrameworkConf.exceptionSendTimeout
   private var sendErrorCount = 0
@@ -298,7 +298,7 @@ object MQProducer {
    */
   def sendRecord(url: String, record: MQRecord,
                  mqType: MQType = MQType.kafka, otherConf: Map[String, String] = Map.empty, throwable: Boolean = true, sendByte: Boolean = false): Unit = {
-    val producer = this.producerMap.mergeGet(url + ":" + record.topic)(new MQProducer(url, mqType, otherConf, throwable,sendByte))
+    val producer = this.producerMap.mergeGet(url + ":" + record.topic)(new MQProducer(url, mqType, otherConf, throwable, sendByte))
     producer.send(record)
   }
 

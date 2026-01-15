@@ -305,7 +305,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
                                        batch: Int = 100, flushInterval: Long = 1000,
                                        sendByte: Boolean = false,
                                        keyNum: Int = KeyNum._1): DataStreamSink[_] = {
-    this.sinkMQFun[E](params, url, topic, tag, mqType, batch, flushInterval, sendByte,keyNum)(_.asInstanceOf[E])
+    this.sinkMQFun[E](params, url, topic, tag, mqType, batch, flushInterval, sendByte, keyNum)(_.asInstanceOf[E])
   }
 
   /**
@@ -331,9 +331,9 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
                                           sendByte: Boolean = false,
                                           keyNum: Int = KeyNum._1)(mapFunction: T => E): DataStreamSink[_] = {
     if (mqType == MQType.rocketmq) {
-      this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval,sendByte, keyNum)(mapFunction)
+      this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval, sendByte, keyNum)(mapFunction)
     } else {
-      this.sinkKafkaFun[E](params, url, topic, batch, flushInterval,sendByte, keyNum)(mapFunction)
+      this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, sendByte, keyNum)(mapFunction)
     }
   }
 
@@ -357,7 +357,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
                                           sendByte: Boolean = false,
                                           keyNum: Int = KeyNum._1): DataStreamSink[_] = {
 
-    this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, sendByte,keyNum)(_.asInstanceOf[E])
+    this.sinkKafkaFun[E](params, url, topic, batch, flushInterval, sendByte, keyNum)(_.asInstanceOf[E])
   }
 
   /**
@@ -403,7 +403,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
     val finalBatch = if (FireKafkaConf.kafkaSinkBatch(keyNum) > 0) FireKafkaConf.kafkaSinkBatch(keyNum) else batch
     val finalInterval = if (FireKafkaConf.kafkaFlushInterval(keyNum) > 0) FireKafkaConf.kafkaFlushInterval(keyNum) else flushInterval
 
-    this.addSinkWrap(new KafkaSink[T, E](params, url, topic, finalBatch, finalInterval, sendByte,keyNum) {
+    this.addSinkWrap(new KafkaSink[T, E](params, url, topic, finalBatch, finalInterval, sendByte, keyNum) {
       override def map(value: T): E = fun(value)
     })
   }
@@ -425,7 +425,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
                                              batch: Int = 1000, flushInterval: Long = 5000,
                                              sendByte: Boolean = false,
                                              keyNum: Int = KeyNum._1): DataStreamSink[_] = {
-    this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval,sendByte,keyNum)(_.asInstanceOf[E])
+    this.sinkRocketMQFun[E](params, url, topic, tag, batch, flushInterval, sendByte, keyNum)(_.asInstanceOf[E])
   }
 
   /**
@@ -467,7 +467,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
     val finalBatch = if (FireRocketMQConf.rocketSinkBatch(keyNum) > 0) FireRocketMQConf.rocketSinkBatch(keyNum) else batch
     val finalInterval = if (FireRocketMQConf.rocketSinkFlushInterval(keyNum) > 0) FireRocketMQConf.rocketSinkFlushInterval(keyNum) else flushInterval
 
-    this.addSinkWrap(new RocketMQSink[T, E](params, url, topic, tag, finalBatch, finalInterval,sendByte, keyNum) {
+    this.addSinkWrap(new RocketMQSink[T, E](params, url, topic, tag, finalBatch, finalInterval, sendByte, keyNum) {
       override def map(value: T): E = fun(value)
     })
   }
