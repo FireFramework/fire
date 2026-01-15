@@ -46,7 +46,7 @@ abstract class RocketMQSink[IN, T <: MQRecord : ClassTag](params: Map[String, Ob
     dataList.foreach(record => {
       if (isEmpty(record.topic)) record.topic = finalTopic
       if (isEmpty(record.tag) && noEmpty(finalTag)) record.tag = finalTag
-      MQProducer.sendRecord(finalBrokers, record, MQType.rocketmq, finalConf,sendByte=sendByte)
+      MQProducer.sendRecord(finalBrokers, record, MQType.rocketmq, finalConf, sendByte = sendByte)
     })
   }
 }

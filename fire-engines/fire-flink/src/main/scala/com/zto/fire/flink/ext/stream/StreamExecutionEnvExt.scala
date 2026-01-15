@@ -32,7 +32,6 @@ import com.zto.fire.flink.ext.provider.{HBaseConnectorProvider, JdbcFlinkProvide
 import com.zto.fire.flink.sql.FlinkSqlExtensionsParser
 import com.zto.fire.flink.util.{FlinkRocketMQUtils, FlinkSingletonFactory, FlinkUtils, TableUtils}
 import com.zto.fire.jdbc.JdbcConnectorBridge
-import com.zto.fire.mq.deserializer.{BaseDeserializeEntity, ZtoKafkaMessageDeserializationSchema, ZtoRocketMessageDeserializationSchema}
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.api.common.functions.RuntimeContext
 import org.apache.flink.api.common.serialization.{DeserializationSchema, SimpleStringSchema}
@@ -180,24 +179,6 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends StreamExecu
    * @return
    * DStream
    */
-  def createDirectStreamWithZtoDeserialize[T <: BaseDeserializeEntity:ClassTag](kafkaParams: Map[String, Object] = null,
-                         topics: Set[String] = null,
-                         specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
-                         runtimeContext: RuntimeContext = null,
-                         keyNum: Int = KeyNum._1)(implicit typeInfo: TypeInformation[T]): DataStream[T] = {
-    val confTopics = FireKafkaConf.kafkaTopics(keyNum)
-    val ztoDeserialize = new ZtoKafkaMessageDeserializationSchema[T](confTopics);
-    this.createDirectStreamBySchema[T](kafkaParams, topics, specificStartupOffsets, runtimeContext, ztoDeserialize, keyNum = keyNum)
-  }
-
-  /**
-   * 创建DStream流
-   *
-   * @param kafkaParams
-   * kafka相关的配置参数
-   * @return
-   * DStream
-   */
   def createDirectStream(kafkaParams: Map[String, Object] = null,
                          topics: Set[String] = null,
                          specificStartupOffsets: Map[KafkaTopicPartition, java.lang.Long] = null,
@@ -279,28 +260,6 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends StreamExecu
   }
 
   /**
-   * 构建RocketMQ拉取消息的DStream流，获取消息中的tag、key以及value
-   *
-   * @param rocketParam
-   * rocketMQ相关消费参数
-   * @param groupId
-   * groupId
-   * @param topics
-   * topic列表
-   * @return
-   * rocketMQ DStream
-   */
-  def createRocketMqPullStreamWithEntity[T <: BaseDeserializeEntity:ClassTag:TypeInformation](rocketParam: Map[String, String] = null,
-                                      groupId: String = null,
-                                      topics: String = null,
-                                      tag: String = null,
-                                      keyNum: Int = KeyNum._1): DataStream[T] = {
-    val props = buildRocketMQProps(rocketParam, groupId, topics, tag, keyNum)
-    val confTopics = FireRocketMQConf.rocketTopics(keyNum)
-    this.addSourceWrap(new RocketMQSourceWithTag[T](new ZtoRocketMessageDeserializationSchema[T](confTopics), props)).name("RocketMQ Entity Source")
-  }
-
-  /**
    * 构建RocketMQ拉取消息的DStream流，获取消息中的tag、key以及value等相关元数据信息
    *
    * @param rocketParam
@@ -325,7 +284,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends StreamExecu
   /**
    * 根据参数构建消费所需的参数
    */
-  private[this] def buildRocketMQProps(rocketParam: Map[JString, JString], groupId: JString, topics: JString, tag: JString, keyNum: Int) = {
+  private[fire] def buildRocketMQProps(rocketParam: Map[JString, JString], groupId: JString, topics: JString, tag: JString, keyNum: Int) = {
     // 获取topic信息，配置文件优先级高于代码中指定的
     val confTopics = FireRocketMQConf.rocketTopics(keyNum)
     val finalTopics = if (StringUtils.isNotBlank(confTopics)) confTopics else topics
