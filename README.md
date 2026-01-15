@@ -17,6 +17,23 @@ specific language governing permissions and limitations
 under the License.
 -->
 
+<p align="center">
+  <a href="https://www.fireframework.cn/">
+    <img src="./docs/img/fire-framework-logo.jpeg" width="600" height="600">
+  </a>
+  <p align="center">
+    <a href="https://github.com/FireFramework/fire/stargazers">
+    <img src="https://img.shields.io/github/stars/FireFramework/fire?style=flat-square&logo=github" alt="GitHub stars">
+    </a>
+    <a href="https://github.com/FireFramework/fire/network/members">
+     <img src="https://img.shields.io/github/forks/FireFramework/fire?style=flat-square&logo=github" alt="GitHub forks">
+    </a>
+    <a href='https://gitee.com/fire-framework/fire/stargazers'><img src='https://gitee.com/fire-framework/fire/badge/star.svg?theme=gray' alt='Gitee star'></img></a>
+    <a href='https://gitee.com/fire-framework/fire/members'><img src='https://gitee.com/fire-framework/fire/badge/fork.svg?theme=gray' alt='Gitee fork'></img></a>
+		<a href='https://gitcode.com/fire-framework/fire'><img src='https://gitcode.com/fire-framework/fire/star/badge.svg' alt='GitCode star'></img></a>
+  </p>
+</p>
+
 # Fire框架
 
 　　Fire框架是由**中通**大数据自主研发并开源的、专门用于进行Spark和Flink任务开发的大数据框架，可节约70%以上的代码量。首创基于注解进行Spark和Flink任务开发，具备**实时血缘、根因诊断、动态调优、参数热调整**等众多平台化功能。Fire框架在中通内部每天处理数据量高达数千亿，在外部已被数十家公司所使用。
