@@ -7,11 +7,6 @@
     <packaging>pom</packaging>
     <name>Fire : Bundle : </name>
 
-    <!--<modules>
-        <module>fire-bundle-spark</module>
-        <module>fire-bundle-flink</module>
-    </modules>-->
-
     <parent>
         <groupId>com.zto.fire</groupId>
         <artifactId>fire-parent</artifactId>
@@ -31,6 +26,23 @@
             <modules>
                 <module>fire-bundle-flink</module>
             </modules>
+        </profile>
+        <!-- include fire plus 仅用于中通内部，社区版本不要激活该profile，否则编译报错 -->
+        <profile>
+            <id>fire-plus</id>
+            <properties>
+                <build.dest>zto</build.dest>
+            </properties>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>com.zto.bigdata</groupId>
+                    <artifactId>cluster-env</artifactId>
+                    <version>${cluster-env.version}</version>
+                </dependency>
+            </dependencies>
         </profile>
     </profiles>
 
