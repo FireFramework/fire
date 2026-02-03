@@ -20,19 +20,20 @@ package com.zto.fire.spark.sql
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.TableIdentifier
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
-import com.zto.fire.spark.util.TiSparkUtils
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.catalog.HiveTableRelation
-import org.apache.spark.sql.catalyst.plans.logical.{CreateTable, _}
+import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.adaptive.QueryStageExec
 import org.apache.spark.sql.execution.columnar.InMemoryTableScanExec
-import org.apache.spark.sql.execution.command.{AlterDatabasePropertiesCommand, AlterTableAddColumnsCommand, AlterTableAddPartitionCommand, AlterTableChangeColumnCommand, AlterTableDropPartitionCommand, AlterTableRenameCommand, AlterTableRenamePartitionCommand, AlterTableSerDePropertiesCommand, AlterTableSetLocationCommand, AlterTableSetPropertiesCommand, AlterTableUnsetPropertiesCommand, AlterViewAsCommand, AnalyzeColumnCommand, AnalyzePartitionCommand, AnalyzeTableCommand, ClearCacheCommand, CreateDataSourceTableAsSelectCommand, CreateDataSourceTableCommand, CreateDatabaseCommand, CreateFunctionCommand, CreateTableCommand, CreateTableLikeCommand, CreateViewCommand, DataWritingCommandExec, DescribeColumnCommand, DescribeDatabaseCommand, DescribeFunctionCommand, DescribeTableCommand, DropDatabaseCommand, DropFunctionCommand, DropTableCommand, ExecutedCommandExec, ExplainCommand, InsertIntoDataSourceDirCommand, ListFilesCommand, ListJarsCommand, LoadDataCommand, RefreshTableCommand, ResetCommand, SetCommand, ShowColumnsCommand, ShowCreateTableCommand, ShowFunctionsCommand, ShowPartitionsCommand, ShowTablePropertiesCommand, ShowTablesCommand, StreamingExplainCommand, TruncateTableCommand}
-import org.apache.spark.sql.execution.datasources.v2.DeleteFromTableExec
-import org.apache.spark.sql.execution.datasources.{CreateTempViewUsing, InsertIntoDataSourceCommand, InsertIntoHadoopFsRelationCommand, RefreshResource, SaveIntoDataSourceCommand}
+import org.apache.spark.sql.execution.command._
+import org.apache.spark.sql.execution.datasources._
 import org.apache.spark.sql.hive.execution.{CreateHiveTableAsSelectCommand, InsertIntoHiveDirCommand, InsertIntoHiveTable}
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Spark SQL解析器，用于解析Spark SQL语句中的库、表、分区、操作类型等信息
@@ -92,53 +93,6 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         this.addCatalog(tableIdentifier, Operation.RENAME_TABLE_OLD)
         this.addCatalog(newTableIdentifier, Operation.RENAME_TABLE_NEW)
         SQLLineageManager.addRelation(tableIdentifier, newTableIdentifier)
-      // create table as select语句解析
-      /*case createTableAsSelect: CreateTableAsSelect => {
-        val identifier = createTableAsSelect
-        println(identifier)
-        val identifier = this.toTableIdentifier(createTableAsSelect.tableName)
-        this.addCatalog(identifier, Operation.CREATE_TABLE_AS_SELECT)
-        // 采集建表属性信息
-        SQLLineageManager.setOptions(identifier, createTableAsSelect.properties)
-        sinkTable = Some(identifier)
-      }*/
-      // TODO:
-      // create table语句解析
-      /*case createTable: CreateTable => {
-        val createTable2 = createTable
-        createTable.table
-        println(createTable2)
-        /*val identifier = this.toFireTableIdentifier(createTable.tableDesc.identifier)
-        this.addCatalog(identifier, Operation.CREATE_TABLE)
-        sinkTable = Some(identifier)
-        // 采集建表属性信息
-        SQLLineageManager.setOptions(identifier, createTable.tableDesc.properties)
-        // 采集分区字段信息
-        val partitions = createTable.tableDesc.partitionSchema.map(st => (st.dataType.toString, st.name))
-        SQLLineageManager.setPartitions(identifier, partitions)*/
-      }*/
-      /*
-      case createView: CreateViewCommand => {
-        val identifier = toFireTableIdentifier(createView.name)
-        this.addCatalog(identifier, Operation.CREATE_VIEW)
-        SQLLineageManager.setColumns(identifier, createView.child.output.map(t => (t.name, t.dataType.toString)))
-        // 采集建表属性信息
-        sinkTable = Some(identifier)
-      }
-      case createView: CreateViewCommand => {
-        val identifier = toFireTableIdentifier(createView.name)
-        sinkTable = Some(identifier)
-        this.addCatalog(identifier, Operation.CREATE_VIEW)
-        SQLLineageManager.setColumns(identifier, createView.child.output.map(t => (t.name, t.dataType.toString)))
-
-        if (logicalPlan.toString().contains("TiDBRelation")) {
-          val tableIdentifier = TiSparkUtils.parseTableIdentifier(logicalPlan)
-          if (tableIdentifier.isDefined) {
-            this.addCatalog(tableIdentifier.get, Operation.SELECT)
-            if (sinkTable.isDefined) SQLLineageManager.addRelation(tableIdentifier.get, sinkTable.get, null)
-          }
-        }
-      }*/
       // rename partition语句解析
       case renamePartition: AlterTableRenamePartitionCommand => {
         val tableIdentifier = this.toFireTableIdentifier(renamePartition.tableName)
@@ -164,19 +118,48 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         val tableIdentifier = this.toFireTableIdentifier(truncateTable.tableName)
         this.addCatalog(tableIdentifier, Operation.TRUNCATE)
       }
-      // TODO:
-      /*case cacheTable: CacheTable => {
-        val tableIdentifier = this.toFireTableIdentifier(cacheTable.tableIdent)
-        this.addCatalog(tableIdentifier, Operation.CACHE)
+      // create view语句解析
+      case createView: CreateViewCommand => {
+        val identifier = toFireTableIdentifier(createView.name)
+        this.addCatalog(identifier, Operation.CREATE_VIEW)
+        sinkTable = Some(identifier)
+        // 解析视图依赖的表，建立视图与源表之间的血缘关系
+        if (createView.plan != null) {
+          this.queryParser(createView.plan, sinkTable)
+        }
+        // 采集视图的列信息
+        if (createView.plan != null && createView.plan.output.nonEmpty) {
+          val columns = createView.plan.output.map(t => (t.name, t.dataType.toString))
+          SQLLineageManager.setColumns(identifier, columns)
+        }
       }
-      case cacheTable: CacheTableAsSelect => {
-        val tableIdentifier = this.toFireTableIdentifier(cacheTable.tableIdent)
-        this.addCatalog(tableIdentifier, Operation.CACHE)
+      // cache table语句解析
+      // 注意：在Spark 3.3中，CacheTableCommand可能不存在于LogicalPlan中，需要通过反射或物理执行计划处理
+      case cacheTable: CacheTable => {
+        try {
+          // 尝试通过反射获取tableIdent字段
+          val identifier = cacheTable.multipartIdentifier
+          val tableIdentifier = this.toTableIdentifier(identifier)
+          this.addCatalog(tableIdentifier, Operation.CACHE)
+        } catch {
+          case e: Exception =>
+            if (FireFrameworkConf.lineageDebugEnable) {
+              LineageManager.printLog(s"解析CacheTable失败: ${e.getMessage}, 类名: ${cacheTable.getClass.getName}")
+            }
+        }
       }
+      // uncache table语句解析
       case uncacheTable: UncacheTable => {
-        val tableIdentifier = this.toFireTableIdentifier(uncacheTable.tableIdent)
-        this.addCatalog(tableIdentifier, Operation.UNCACHE)
-      }*/
+        try {
+          val tableIdentifier = this.getIdentifier(uncacheTable.table)
+          this.addCatalog(tableIdentifier, Operation.UNCACHE)
+        } catch {
+          case e: Exception =>
+            if (FireFrameworkConf.lineageDebugEnable) {
+              LineageManager.printLog(s"解析UncacheTable失败: ${e.getMessage}, 类名: ${uncacheTable.getClass.getName}")
+            }
+        }
+      }
       case _ => LineageManager.printLog(s"Parse ddl SQL异常，无法匹配该Statement. $logicalPlan")
     }
     sinkTable
@@ -266,7 +249,6 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         case AlterTableUnsetPropertiesCommand(tableName, propKeys, ifExists, isView) =>
           val tableIdentifier = this.toFireTableIdentifier(tableName)
           this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
-          this.addCatalog(tableIdentifier, Operation.ALTER_TABLE)
         case AnalyzePartitionCommand(tableIdent, partitionSpec, noscan) => {
           val tableIdentifier = this.toFireTableIdentifier(tableIdent)
           this.addCatalog(tableIdentifier, Operation.ANALYZE_PARTITION)
@@ -344,6 +326,36 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
           val tableIdentifier = this.toFireTableIdentifier(tableName)
           this.addCatalog(tableIdentifier, Operation.TRUNCATE)
         }
+        // Cache/Uncache命令处理（在物理执行计划中）
+        // 在Spark 3.3中，CacheTableCommand和UncacheTableCommand可能不存在，使用反射方式处理
+        case cmd if cmd.getClass.getSimpleName.contains("CacheTable") => {
+          try {
+            val tableIdentField = cmd.getClass.getDeclaredField("tableIdent")
+            tableIdentField.setAccessible(true)
+            val tableIdent = tableIdentField.get(cmd)
+            val tableIdentifier = this.toFireTableIdentifier(tableIdent.asInstanceOf[org.apache.spark.sql.catalyst.TableIdentifier])
+            this.addCatalog(tableIdentifier, Operation.CACHE)
+          } catch {
+            case e: Exception =>
+              if (FireFrameworkConf.lineageDebugEnable) {
+                LineageManager.printLog(s"解析物理执行计划中CacheTable失败: ${e.getMessage}, 类名: ${cmd.getClass.getName}")
+              }
+          }
+        }
+        case cmd if cmd.getClass.getSimpleName.contains("UncacheTable") => {
+          try {
+            val tableIdentField = cmd.getClass.getDeclaredField("tableIdent")
+            tableIdentField.setAccessible(true)
+            val tableIdent = tableIdentField.get(cmd)
+            val tableIdentifier = this.toFireTableIdentifier(tableIdent.asInstanceOf[org.apache.spark.sql.catalyst.TableIdentifier])
+            this.addCatalog(tableIdentifier, Operation.UNCACHE)
+          } catch {
+            case e: Exception =>
+              if (FireFrameworkConf.lineageDebugEnable) {
+                LineageManager.printLog(s"解析物理执行计划中UncacheTable失败: ${e.getMessage}, 类名: ${cmd.getClass.getName}")
+              }
+          }
+        }
         case _ => LineageManager.printLog(s"解析物理执行计划异常，无法匹配该Statement")
       }
     }
@@ -366,8 +378,37 @@ private[fire] object SparkSqlParser extends SparkSqlParserBase {
         Seq(tableIdentifier)
       // case p: QueryStageInput => handleInMemoryTableScan(p.childStage)
       case p: QueryStageExec => handleInMemoryTableScan(p.plan)
-      // case p: InMemoryTableScanExec => handleInMemoryTableScan(p.relation.child)
-      case p: InMemoryTableScanExec => handleInMemoryTableScan(p.relation.cachedPlan)
+      case p: InMemoryTableScanExec =>
+        // 尝试从InMemoryRelation中提取表名
+        try {
+          val relation = p.relation
+          // 尝试通过反射获取tableName字段（InMemoryRelation可能包含表名信息）
+          try {
+            val tableNameField = relation.getClass.getDeclaredField("tableName")
+            tableNameField.setAccessible(true)
+            val tableNameOpt = tableNameField.get(relation).asInstanceOf[Option[String]]
+            if (tableNameOpt.isDefined) {
+              val tableIdentifier = this.toFireTableIdentifier(org.apache.spark.sql.catalyst.TableIdentifier(tableNameOpt.get))
+              return Seq(tableIdentifier)
+            }
+          } catch {
+            case _: NoSuchFieldException =>
+              // tableName字段不存在，继续尝试其他方式
+          }
+          // 如果无法从relation中直接获取表名，递归处理cachedPlan
+          handleInMemoryTableScan(p.relation.cachedPlan)
+        } catch {
+          case e: Exception =>
+            if (FireFrameworkConf.lineageDebugEnable) {
+              LineageManager.printLog(s"解析InMemoryTableScanExec失败: ${e.getMessage}, 类名: ${plan.getClass.getName}")
+            }
+            // 如果提取失败，递归处理cachedPlan
+            try {
+              handleInMemoryTableScan(p.relation.cachedPlan)
+            } catch {
+              case _: Exception => Seq.empty
+            }
+        }
       case p: SparkPlan => p.children.flatMap(handleInMemoryTableScan)
     }
   }

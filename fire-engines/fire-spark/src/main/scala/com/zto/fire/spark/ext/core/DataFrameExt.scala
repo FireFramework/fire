@@ -142,36 +142,61 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
         var count: Int = 0
         val list = ListBuffer[ListBuffer[Any]]()
         var params: ListBuffer[Any] = null
+        val connector = JdbcConnector.getConnection(keyNum)
 
-        it.foreach(row => {
-          count += 1
-          params = ListBuffer[Any]()
-          if (ValueUtils.noEmpty(fields)) {
-            // 若调用者指定了某些列，则取这些列的数据
-            fields.foreach(field => {
-              val index = row.fieldIndex(field)
-              params += row.get(index)
-            })
-          } else {
-            // 否则取当前DataFrame全部的列，顺序要与sql问号占位符保持一致
-            (0 until row.size).foreach(index => {
-              params += row.get(index)
-            })
-          }
-          list += params
+        try {
+          it.foreach(row => {
+            count += 1
+            params = ListBuffer[Any]()
+            if (ValueUtils.noEmpty(fields)) {
+              // 若调用者指定了某些列，则取这些列的数据
+              fields.foreach(field => {
+                val index = row.fieldIndex(field)
+                params += row.get(index)
+              })
+            } else {
+              // 否则取当前DataFrame全部的列，顺序要与sql问号占位符保持一致
+              (0 until row.size).foreach(index => {
+                params += row.get(index)
+              })
+            }
+            list += params
 
-          // 分批次执行
-          if (count == batch) {
-            JdbcConnector.executeBatch(sql, list, keyNum = keyNum)
-            count = 0
+            // 分批次执行
+            if (count == batch) {
+              JdbcConnector.executeBatch(sql, list, connector, commit = false, closeConnection = false, keyNum = keyNum)
+              count = 0
+              list.clear()
+            }
+          })
+
+          // 将剩余的数据一次执行掉
+          if (list.nonEmpty) {
+            JdbcConnector.executeBatch(sql, list, connector, commit = true, closeConnection = false, keyNum = keyNum)
             list.clear()
           }
-        })
-
-        // 将剩余的数据一次执行掉
-        if (list.nonEmpty) {
-          JdbcConnector.executeBatch(sql, list, keyNum = keyNum)
-          list.clear()
+        } catch {
+          case e: Exception =>
+            // 异常时回滚事务
+            try {
+              if (connector != null && !connector.isClosed && !connector.getAutoCommit) {
+                connector.rollback()
+              }
+            } catch {
+              case rollbackEx: Exception =>
+                logError(s"回滚事务失败: ${rollbackEx.getMessage}", rollbackEx)
+            }
+            throw e
+        } finally {
+          // 确保连接被关闭
+          try {
+            if (connector != null && !connector.isClosed) {
+              connector.close()
+            }
+          } catch {
+            case e: Exception =>
+              logError(s"关闭数据库连接失败: ${e.getMessage}", e)
+          }
         }
       })
     }
@@ -210,36 +235,61 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
         var count: Int = 0
         val list = ListBuffer[ListBuffer[Any]]()
         var params: ListBuffer[Any] = null
+        val connector = JdbcConnector.getConnection(keyNum)
 
-        it.foreach(row => {
-          count += 1
-          params = ListBuffer[Any]()
-          if (noEmpty(finalFields)) {
-            // 若调用者指定了某些列，则取这些列的数据
-            finalFields.foreach(field => {
-              val index = row.fieldIndex(field)
-              params += row.get(index)
-            })
-          } else {
-            // 否则取当前DataFrame全部的列，顺序要与sql问号占位符保持一致
-            (0 until row.size).foreach(index => {
-              params += row.get(index)
-            })
-          }
-          list += params
+        try {
+          it.foreach(row => {
+            count += 1
+            params = ListBuffer[Any]()
+            if (noEmpty(finalFields)) {
+              // 若调用者指定了某些列，则取这些列的数据
+              finalFields.foreach(field => {
+                val index = row.fieldIndex(field)
+                params += row.get(index)
+              })
+            } else {
+              // 否则取当前DataFrame全部的列，顺序要与sql问号占位符保持一致
+              (0 until row.size).foreach(index => {
+                params += row.get(index)
+              })
+            }
+            list += params
 
-          // 分批次执行
-          if (count == FireJdbcConf.batchSize(keyNum)) {
-            JdbcConnector.executeBatch(sql, list, keyNum = keyNum)
-            count = 0
+            // 分批次执行
+            if (count == FireJdbcConf.batchSize(keyNum)) {
+              JdbcConnector.executeBatch(sql, list, connector, commit = false, closeConnection = false, keyNum = keyNum)
+              count = 0
+              list.clear()
+            }
+          })
+
+          // 将剩余的数据一次执行掉
+          if (list.nonEmpty) {
+            JdbcConnector.executeBatch(sql, list, connector, commit = true, closeConnection = false, keyNum = keyNum)
             list.clear()
           }
-        })
-
-        // 将剩余的数据一次执行掉
-        if (list.nonEmpty) {
-          JdbcConnector.executeBatch(sql, list, keyNum = keyNum)
-          list.clear()
+        } catch {
+          case e: Exception =>
+            // 异常时回滚事务
+            try {
+              if (connector != null && !connector.isClosed && !connector.getAutoCommit) {
+                connector.rollback()
+              }
+            } catch {
+              case rollbackEx: Exception =>
+                logError(s"回滚事务失败: ${rollbackEx.getMessage}", rollbackEx)
+            }
+            throw e
+        } finally {
+          // 确保连接被关闭
+          try {
+            if (connector != null && !connector.isClosed) {
+              connector.close()
+            }
+          } catch {
+            case e: Exception =>
+              logError(s"关闭数据库连接失败: ${e.getMessage}", e)
+          }
         }
       })
     }

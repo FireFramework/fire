@@ -239,7 +239,11 @@ this.fire.hbasePutDF(hTableName2, studentDF, classOf[Student], keyNum=2)	// keyN
 
 ### **3.11 实时血缘**
 
-　　Fire框架支持运行时统计分析每个任务所使用到的数据源信息、库表信息、操作类型等，并将这些血缘信息通过接口的方式对外暴露。实时平台等web系统通过接口调用的方式即可获取到实时血缘信息。
+　　Fire框架支持运行时统计分析每个任务所使用到的数据源信息、库表信息、操作类型等，并将这些血缘信息通过接口的方式对外暴露。实时平台等web系统通过接口调用的方式即可获取到实时血缘信息。截止目前，Fire框架支持高达**30多**种主流connector的血缘解析，包括：paimon、hudi、doris、hive、jdbc、StarRocks、HBase等等。Fire框架会将解析的血缘拼接成json格式，通过配置的地址周期性发送到指定的**kafka topic**中，下游实时平台消费血缘信息并做展示即可。
+
+![fire血缘架构](/Users/insight/project/workspace/fire-open/docs/img/lineage1.png)
+
+​		Fire框架同时支持**Spark**与**Flink**两大流式计算引擎的血缘解析，可实现全面洞悉数据流转链路、打通离线与实时计算的血缘形成闭环、还可协助快速定位线上的问题。		![fire血缘展示](/Users/insight/project/workspace/fire-open/docs/img/lineage2.png)
 
 ### **3.12 定时调度**
 
