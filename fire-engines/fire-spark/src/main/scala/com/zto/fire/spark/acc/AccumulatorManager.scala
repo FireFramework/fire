@@ -88,7 +88,7 @@ private[fire] object AccumulatorManager extends Logging  {
   // 用于广播spark配置信息
   private[fire] var broadcastConf: Broadcast[SparkConf] = _
   // 用于解析数据源的异步定时调度线程
-  private lazy val lineageThread = ThreadUtils.createThreadPool("LineageAccumulator", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
+  private lazy val lineageThread = ThreadUtils.createManagedThreadPool("LineageAccumulator", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
   // 用于记录血缘解析运行的次数
   private lazy val lineageRunCount = new AtomicInteger()
 

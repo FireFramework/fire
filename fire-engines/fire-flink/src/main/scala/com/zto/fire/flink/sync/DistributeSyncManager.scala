@@ -28,7 +28,7 @@ private[fire] object DistributeSyncManager extends SyncManager {
   private lazy val lineageUrl = "/system/collectLineage"
   // 用于记录血缘解析运行的次数
   private lazy val lineageRunCount = new AtomicInteger()
-  private lazy val lineageThread = ThreadUtils.createThreadPool("LineageSyncThread", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
+  private lazy val lineageThread = ThreadUtils.createManagedThreadPool("LineageSyncThread", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
 
 
   /**

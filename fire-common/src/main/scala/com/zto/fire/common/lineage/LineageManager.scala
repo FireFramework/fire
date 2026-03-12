@@ -45,7 +45,7 @@ private[fire] class LineageManager extends Logging {
   // 用于收集来自不同数据源的sql语句，后续会异步进行SQL解析，考虑到分布式场景下会有很多重复的SQL执行，因此使用了线程不安全的队列即可满足需求
   private lazy val dbSqlQueue = new ConcurrentLinkedQueue[DBSqlSource]()
   // 用于解析数据源的异步定时调度线程
-  private lazy val parserExecutor = ThreadUtils.createThreadPool("LineageManager", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
+  private lazy val parserExecutor = ThreadUtils.createManagedThreadPool("LineageManager", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
   private lazy val parseCount = new AtomicInteger()
   private lazy val addDBCount = new AtomicInteger()
   // 用于收集各实时引擎执行的sql语句
