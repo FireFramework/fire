@@ -316,7 +316,7 @@ object SQLUtils extends Logging {
             processFromItem(join.getRightItem, tables)
           })
         }
-      case otherItem => this.logWarning(s"子查询暂不支持解析: ${otherItem.getClass.getName}")
+      case otherItem => this.logDebug(s"子查询暂不支持解析: ${otherItem.getClass.getName}")
     }
   }
 

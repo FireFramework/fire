@@ -184,7 +184,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
               }
             } catch {
               case rollbackEx: Exception =>
-                logError(s"回滚事务失败: ${rollbackEx.getMessage}", rollbackEx)
+                DataFrameExt.logError(s"回滚事务失败: ${rollbackEx.getMessage}", rollbackEx)
             }
             throw e
         } finally {
@@ -195,7 +195,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
             }
           } catch {
             case e: Exception =>
-              logError(s"关闭数据库连接失败: ${e.getMessage}", e)
+              DataFrameExt.logError(s"关闭数据库连接失败: ${e.getMessage}", e)
           }
         }
       })
@@ -277,7 +277,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
               }
             } catch {
               case rollbackEx: Exception =>
-                logError(s"回滚事务失败: ${rollbackEx.getMessage}", rollbackEx)
+                DataFrameExt.logError(s"回滚事务失败: ${rollbackEx.getMessage}", rollbackEx)
             }
             throw e
         } finally {
@@ -288,7 +288,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
             }
           } catch {
             case e: Exception =>
-              logError(s"关闭数据库连接失败: ${e.getMessage}", e)
+              DataFrameExt.logError(s"关闭数据库连接失败: ${e.getMessage}", e)
           }
         }
       })
@@ -531,3 +531,5 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
       .save(hudiTablePath)
   }
 }
+
+private object DataFrameExt extends Logging

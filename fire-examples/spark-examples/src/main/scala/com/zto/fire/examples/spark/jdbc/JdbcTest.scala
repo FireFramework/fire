@@ -23,7 +23,8 @@ import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
 import com.zto.fire.core.anno.connector.{Jdbc, Jdbc2}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.jdbc.JdbcConnector
-import com.zto.fire.spark.SparkCore
+import com.zto.fire.spark.anno.Streaming
+import com.zto.fire.spark.{SparkCore, SparkStreaming}
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.spark.sql.SaveMode
 
@@ -40,7 +41,8 @@ import org.apache.spark.sql.SaveMode
     |""")
 @Jdbc(url = "jdbc:mysql://10.9.44.143:3306/fire?useSSL=true", username = "root", password = "oynZtP#bw7gF8i", batchSize = 10)
 @Jdbc2(url = "jdbc:mysql://10.9.44.143:3306/fire?useSSL=true", username = "root", password = "oynZtP#bw7gF8i", batchSize = 10)
-object JdbcTest extends SparkCore {
+@Streaming(interval = 60)
+object JdbcTest extends SparkStreaming {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "t_cluster_info"
   lazy val tableName3 = "t_cluster_status"
@@ -52,7 +54,7 @@ object JdbcTest extends SparkCore {
   def testJdbcUpdateAsync: Unit = {
     // --------------------- 一、适用于driver端的api ------------------------------- //
     // 准备数据
-    val stuRDD = this.fire.createRDD(1 to 1000, 6)
+    val stuRDD = this.fire.createRDD(1 to 1000, 2)
               .map(index => new Student(index, s"name-$index", index, java.math.BigDecimal.valueOf(index), true, DateFormatUtils.formatCurrentDateTime()))
     // 准备jdbc占位符对应的具体参数值，可以基于RDD转化而来
     val paramList = stuRDD.map(t => Seq(t.getName, t.getAge, t.getCreateTime, t.getLength, t.getSex)).collect().toSeq
@@ -62,13 +64,51 @@ object JdbcTest extends SparkCore {
     // 执行insert操作
     val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
     // 每个executor开5个线程并发执行insert
-    this.fire.jdbcUpdateBatchAsync(insertSql, paramList, threadNum = 5)
+    this.fire.jdbcUpdateBatchAsync(insertSql, paramList, threadNum = 3)
 
     // --------------------- 二、适用于分布式执行的api ------------------------------- //
     val insertSql2 = s"INSERT INTO spark_test2(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
     // 每个executor开3个并发执行insert into语句
     df.jdbcUpdateBatchAsync(insertSql2, Seq("name", "age", "createTime", "length", "sex"), threadNum = 3)
     // this.fire.jdbcUpdateBatchDFAsync(df, insertSql2, Seq("name", "age", "createTime", "length", "sex"), threadNum = 3)
+  }
+
+  /**
+   */
+  def testLoader: Unit = {
+    val stuRDD = this.fire.createRDD(1 to 20000, 2)
+      .map(index => new Student(index, s"name-$index", index, java.math.BigDecimal.valueOf(index), true, DateFormatUtils.formatCurrentDateTime()))
+    // 直接将DataFrame中的数据并发写入到数据库中
+    val df = this.fire.createDataFrame(stuRDD, classOf[Student]).cache()
+    println(df.count)
+
+    // --------------------- 二、适用于分布式执行的api ------------------------------- //
+
+    val insertSql = s"INSERT INTO spark_test(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
+    val start = System.currentTimeMillis()
+    df.jdbcUpdateBatch(insertSql, Seq("name", "age", "createTime", "length", "sex"))
+    val start2 = System.currentTimeMillis()
+    df.jdbcUpdateBatchAsync(insertSql, Seq("name", "age", "createTime", "length", "sex"), threadNum = 4)
+    val end = System.currentTimeMillis()
+    println(
+      s"""
+        |性能对比（insert 20万条）：
+        |单线程：${end - start} ms
+        |四线程：${end - start2} ms
+        |""".stripMargin)
+  }
+
+  /**
+   * 基于流式API测试并发jdbc sink
+   */
+  def testStreamingAsync(): Unit = {
+    val dstream = this.fire.createRandomIntStream(100)
+    dstream.foreachRDD(rdd => {
+      this.testJdbcUpdateAsync
+      Thread.sleep(20000)
+      this.fire.jdbcUpdate(s"delete from $tableName")
+      this.fire.jdbcUpdate(s"delete from spark_test2")
+    })
   }
 
   /**
@@ -247,7 +287,9 @@ object JdbcTest extends SparkCore {
     this.testDataFrameSave*/
     // 测试配置分发
     //this.testExecutor
-    this.testJdbcUpdateAsync
+    // this.testJdbcUpdateAsync
+    this.testStreamingAsync
+    // this.testLoader
     // Thread.sleep(30000)
   }
 }
