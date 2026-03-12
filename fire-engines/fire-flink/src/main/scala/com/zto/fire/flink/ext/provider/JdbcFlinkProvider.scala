@@ -48,6 +48,8 @@ trait JdbcFlinkProvider {
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
+   * @param threadNum
+   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    */
@@ -57,8 +59,9 @@ trait JdbcFlinkProvider {
                                fields: Seq[String],
                                batch: Int = 100,
                                flushInterval: Long = 1000,
+                               threadNum: Int = 1,
                                keyNum: Int = KeyNum._1): DataStreamSink[T] = {
-    stream.jdbcBatchUpdate(sql, fields, batch, flushInterval, keyNum)
+    stream.jdbcBatchUpdate(sql, fields, batch, flushInterval, threadNum, keyNum)
   }
 
   /**
@@ -70,6 +73,8 @@ trait JdbcFlinkProvider {
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
+   * @param threadNum
+   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    * @param fun
@@ -80,8 +85,9 @@ trait JdbcFlinkProvider {
                                 sql: String,
                                 batch: Int = 100,
                                 flushInterval: Long = 1000,
+                                threadNum: Int = 1,
                                 keyNum: Int = KeyNum._1)(fun: T => Seq[Any]): DataStreamSink[T] = {
-    stream.jdbcBatchUpdate2(sql, batch, flushInterval, keyNum)(fun)
+    stream.jdbcBatchUpdate2(sql, batch, flushInterval, threadNum, keyNum)(fun)
   }
 
   /**
@@ -96,6 +102,8 @@ trait JdbcFlinkProvider {
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
+   * @param threadNum
+   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    */
@@ -105,8 +113,9 @@ trait JdbcFlinkProvider {
                            batch: Int = 100,
                            flushInterval: Long = 1000,
                            isMerge: Boolean = true,
+                           threadNum: Int = 1,
                            keyNum: Int = KeyNum._1): DataStreamSink[Row] = {
-    table.jdbcBatchUpdate(sql, batch, flushInterval, isMerge, keyNum)
+    table.jdbcBatchUpdate(sql, batch, flushInterval, isMerge, threadNum, keyNum)
   }
 
   /**
@@ -118,6 +127,8 @@ trait JdbcFlinkProvider {
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
+   * @param threadNum
+   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    */
@@ -127,8 +138,9 @@ trait JdbcFlinkProvider {
                             batch: Int = 100,
                             flushInterval: Long = 1000,
                             isMerge: Boolean = true,
+                            threadNum: Int = 1,
                             keyNum: Int = KeyNum._1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
-    table.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, keyNum)(fun)
+    table.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, threadNum, keyNum)(fun)
   }
 
 }

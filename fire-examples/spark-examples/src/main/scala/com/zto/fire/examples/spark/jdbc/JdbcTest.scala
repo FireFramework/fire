@@ -18,6 +18,7 @@
 package com.zto.fire.examples.spark.jdbc
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
 import com.zto.fire.core.anno.connector.{Jdbc, Jdbc2}
 import com.zto.fire.examples.bean.Student
@@ -32,12 +33,43 @@ import org.apache.spark.sql.SaveMode
  * @author ChengLong 2019-6-17 15:17:38
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
-@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire?useSSL=true", username = "root", password = "root")
-@Jdbc2(url = "jdbc:mysql://mysql-server:3306/fire?useSSL=true", username = "root", password = "root")
+@Config(
+  """
+    |fire.lineage.send.mq.enable=false
+    |fire.analysis.log.exception.stack.enable=false
+    |""")
+@Jdbc(url = "jdbc:mysql://10.9.44.143:3306/fire?useSSL=true", username = "root", password = "oynZtP#bw7gF8i", batchSize = 10)
+@Jdbc2(url = "jdbc:mysql://10.9.44.143:3306/fire?useSSL=true", username = "root", password = "oynZtP#bw7gF8i", batchSize = 10)
 object JdbcTest extends SparkCore {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "t_cluster_info"
   lazy val tableName3 = "t_cluster_status"
+
+  /**
+   * executor中并发执行jdbc写入
+   * 注意：要确保数据已去重或对乱序无感，否则会有问题！！！
+   */
+  def testJdbcUpdateAsync: Unit = {
+    // --------------------- 一、适用于driver端的api ------------------------------- //
+    // 准备数据
+    val stuRDD = this.fire.createRDD(1 to 1000, 6)
+              .map(index => new Student(index, s"name-$index", index, java.math.BigDecimal.valueOf(index), true, DateFormatUtils.formatCurrentDateTime()))
+    // 准备jdbc占位符对应的具体参数值，可以基于RDD转化而来
+    val paramList = stuRDD.map(t => Seq(t.getName, t.getAge, t.getCreateTime, t.getLength, t.getSex)).collect().toSeq
+    // 直接将DataFrame中的数据并发写入到数据库中
+    val df = this.fire.createDataFrame(stuRDD, classOf[Student])
+
+    // 执行insert操作
+    val insertSql = s"INSERT INTO $tableName (name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
+    // 每个executor开5个线程并发执行insert
+    this.fire.jdbcUpdateBatchAsync(insertSql, paramList, threadNum = 5)
+
+    // --------------------- 二、适用于分布式执行的api ------------------------------- //
+    val insertSql2 = s"INSERT INTO spark_test2(name, age, createTime, length, sex) VALUES (?, ?, ?, ?, ?)"
+    // 每个executor开3个并发执行insert into语句
+    df.jdbcUpdateBatchAsync(insertSql2, Seq("name", "age", "createTime", "length", "sex"), threadNum = 3)
+    // this.fire.jdbcUpdateBatchDFAsync(df, insertSql2, Seq("name", "age", "createTime", "length", "sex"), threadNum = 3)
+  }
 
   /**
    * 使用jdbc方式对关系型数据库进行增删改操作
@@ -65,6 +97,8 @@ object JdbcTest extends SparkCore {
 
     // 执行批量更新
     this.fire.jdbcUpdateBatch(s"update $tableName set sex=? where id=?", Seq(Seq(1, 1), Seq(2, 2), Seq(3, 3), Seq(4, 4), Seq(5, 5), Seq(6, 6)))
+    // executor中并发执行
+    // this.fire.jdbcUpdateBatchAsync(s"update $tableName set sex=? where id=?", Seq(Seq(1, 1), Seq(2, 2), Seq(3, 3), Seq(4, 4), Seq(5, 5), Seq(6, 6)), threadNum = 3)
 
     // 方式一：通过this.fire方式执行delete操作
     val sql = s"DELETE FROM $tableName WHERE id=?"
@@ -153,6 +187,8 @@ object JdbcTest extends SparkCore {
     val sqlDF = sql("select name, age, createTime from student where id>=1").repartition(1)
     // 若不指定字段，则默认传入当前DataFrame所有列，且列的顺序与sql中问号占位符顺序一致
     sqlDF.jdbcUpdateBatch("insert into spark_test(name, age, createTime) values(?, ?, ?)", keyNum = 2)
+    // 多线程异步执行
+    // sqlDF.jdbcUpdateBatchAsync("insert into spark_test(name, age, createTime) values(?, ?, ?)", threadNum = 3, keyNum = 2)
     this.fire.jdbcTableLoadAll(this.tableName, keyNum = 2).show(100, false)
     // 等同以上方式
     // this.fire.jdbcBatchUpdateDF(sqlDF, "insert into spark_test(name, age, createTime) values(?, ?, ?)")
@@ -201,8 +237,8 @@ object JdbcTest extends SparkCore {
 
   override def process: Unit = {
     // 测试环境测试
-    this.testJdbcUpdate
-    this.testJdbcQuery
+    /*this.testJdbcUpdate
+    this.testJdbcQuery*/
     // this.testJdbcUpdate
     /*this.testJdbcUpdate
     this.testJdbcQuery
@@ -210,7 +246,8 @@ object JdbcTest extends SparkCore {
     this.testTableSave
     this.testDataFrameSave*/
     // 测试配置分发
-    this.testExecutor
-    Thread.sleep(100000)
+    //this.testExecutor
+    this.testJdbcUpdateAsync
+    // Thread.sleep(30000)
   }
 }

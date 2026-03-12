@@ -19,17 +19,19 @@ package com.zto.fire.jdbc
 
 import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Statement}
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import com.zto.fire.common.enu.{Datasource, Operation => FOperation}
+import com.zto.fire.common.enu.{Datasource, ThreadPoolType, Operation => FOperation}
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.conf.{FireFrameworkConf, KeyNum}
 import com.zto.fire.common.lineage.LineageManager
-import com.zto.fire.common.util.{LogUtils, ReflectionUtils, StringsUtils}
+import com.zto.fire.common.util.{LogUtils, ReflectionUtils, StringsUtils, ThreadUtils}
 import com.zto.fire.core.connector.{ConnectorFactory, FireConnector}
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils
 import com.zto.fire.predef._
 
 import java.lang.reflect.Method
+import java.util.concurrent.{CompletableFuture, ExecutorService, Executors}
+import java.util.function.Supplier
 import scala.collection.mutable
 import scala.reflect.{ClassTag, classTag}
 
@@ -52,6 +54,12 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
   private[this] var url: String = _
   private[this] var dbType: Datasource = Datasource.UNKNOWN
   private[this] lazy val finallyCatchLog = "释放jdbc资源失败"
+  // 创建jdbc异步线程池，用于多线程执行sql
+  private[this] lazy val poolName = s"JdbcConcurrentSinkThreadPool_${keyNum}"
+  @transient private[this] lazy val executor: ExecutorService = {
+    val poolSize = FireJdbcConf.maxPoolSize(this.keyNum)
+    ThreadUtils.createManagedThreadPool(this.poolName, ThreadPoolType.FIXED, math.abs(poolSize))
+  }
 
   /**
    * c3p0线程池初始化
@@ -240,12 +248,12 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
    * @return
    * 影响的记录数
    */
-  def updateBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+  def updateBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
     val conn = if (connection == null) this.getConnection else connection
     var stat: PreparedStatement = null
 
     var batch = 0
-    var count = 0
+    var count = 0L
     tryFinallyWithReturn {
       conn.setAutoCommit(false)
       stat = conn.prepareStatement(sql)
@@ -260,7 +268,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
           stat.addBatch()
           if (batch % FireJdbcConf.batchSize(keyNum) == 0) {
             val retVal = stat.executeBatch()
-            count += retVal.sum
+            count += retVal.map(_.toLong).sum
             stat.clearBatch()
           }
         })
@@ -268,12 +276,64 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
       // 执行批量更新
       val retVal = stat.executeBatch
       if (commit) conn.commit()
-      count += retVal.sum
+      count += retVal.map(_.toLong).sum
       this.logInfo(s"executeBatch success. keyNum: ${keyNum} count: $count")
-      retVal
+      count
     } {
       this.release(sql, conn, stat, null, closeConnection)
     }(this.logger, s"${this.sqlBuriedPoint(sql, FOperation.UPDATE)}", s"executeBatch failed. keyNum：${keyNum}\n${this.sqlBuriedPoint(sql, FOperation.UPDATE)}", finallyCatchLog)
+  }
+
+  /**
+   * 使用固定大小线程池并发执行批量更新操作
+   * 该方法会将参数集合按线程数自动切分为多个分组，每个分组使用单独的
+   * jdbc连接执行一次 `updateBatch`，最后阻塞等待所有分组执行结束并汇总结果
+   *
+   * 注意：
+   * 1. `threadNum=1` 时等价于单线程批量写入
+   * 2. `threadNum>1` 时每个分组是独立事务，不保证全局事务原子性
+   * 3. 当 `paramsList` 为空时，会按无参SQL执行一次
+   *
+   * 调用示例：
+   * {{{
+   *   val sql = "insert into test(name, age) values(?, ?)"
+   *   val params = Seq(
+   *     Seq("alice", 18),
+   *     Seq("bob", 20),
+   *     Seq("cindy", 22),
+   *     Seq("david", 24)
+   *   )
+   *
+   *   // 使用4个线程并发写入
+   *   JdbcConnector.updateBatchAsync(sql, params, threadNum = 4, keyNum = 1)
+   *
+   *   // 无参SQL也允许执行一次
+   *   JdbcConnector.updateBatchAsync("delete from test where ds<'20240101'", threadNum = 2, keyNum = 1)
+   * }}}
+   *
+   * @param sql
+   * 待执行的sql语句
+   * @param paramsList
+   * sql的参数列表，每个元素对应一次批量执行中的一行参数
+   * @param commit
+   * 是否自动提交事务，默认为自动提交
+   * @param threadNum
+   * 并发任务数，实际并发度不会超过连接池大小和参数列表大小
+   * @return
+   * 所有分组批量执行后影响的总记录数
+   */
+  def updateBatchAsync(sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5): Long = {
+    require(threadNum > 0, s"线程数量必须大于0，当前值：$threadNum")
+
+    val finalParamsList = if (paramsList == null || paramsList.isEmpty) Seq(Seq.empty[Any]) else paramsList
+    val poolSize = FireJdbcConf.maxPoolSize(this.keyNum)
+    require(poolSize > 0, s"数据库连接池最大连接数必须大于0，当前值：$poolSize keyNum=${this.keyNum}")
+    val parallelism = math.min(math.min(threadNum, poolSize), finalParamsList.size)
+
+    // 将paramsList分割成不同的分组，使用多线程并发处理，并发度为parallelism
+    ThreadUtils.parallelProcess(finalParamsList, parallelism, this.executor)(partition => {
+      this.updateBatch(sql, partition)
+    }).sum
   }
 
   /**
@@ -293,7 +353,7 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
    * 影响的记录数
    */
   @deprecated("use updateBatch", "fire 2.3.3")
-  def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Array[Int] = {
+  def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true): Long = {
     this.updateBatch(sql, paramsList, connection, commit, closeConnection)
   }
 

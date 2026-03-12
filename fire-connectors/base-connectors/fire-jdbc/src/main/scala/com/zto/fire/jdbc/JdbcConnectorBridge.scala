@@ -74,7 +74,7 @@ private[fire] trait JdbcConnectorBridge {
    * 影响的记录数
    */
   @deprecated("use jdbcUpdateBatch", "fire 2.3.3")
-  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Array[Int] = {
+  def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Long = {
     JdbcConnector.updateBatch(sql, paramsList, connection, commit, closeConnection, keyNum)
   }
 
@@ -97,8 +97,26 @@ private[fire] trait JdbcConnectorBridge {
    * @return
    * 影响的记录数
    */
-  def jdbcUpdateBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Array[Int] = {
+  def jdbcUpdateBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Long = {
     JdbcConnector.updateBatch(sql, paramsList, connection, commit, closeConnection, keyNum)
+  }
+
+  /**
+   * 关系型数据库批量插入、删除、更新操作（多线程）
+   *
+   * @param sql
+   * 待执行的sql语句
+   * @param paramsList
+   * sql的参数列表
+   * @param commit
+   * 是否自动提交事务，默认为自动提交
+   * @param threadNum
+   * 并发任务数，实际并发度不会超过连接池大小
+   * @return
+   * 影响的记录数
+   */
+  def jdbcUpdateBatchAsync(sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 1, keyNum: Int = KeyNum._1): Long = {
+    JdbcConnector.updateBatchAsync(sql, paramsList, threadNum, keyNum)
   }
 
   /**

@@ -111,8 +111,26 @@ trait JdbcFunctions {
    * @return
    * 影响的记录数
    */
-  def updateBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Array[Int] = {
+  def updateBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Long = {
     JdbcConnector(keyNum = keyNum).updateBatch(sql, paramsList, connection, commit, closeConnection)
+  }
+
+  /**
+   * 使用固定大小线程池并发执行批量更新操作
+   *
+   * @param sql
+   * 待执行的sql语句
+   * @param paramsList
+   * sql的参数列表
+   * @param commit
+   * 是否自动提交事务，默认为自动提交
+   * @param threadNum
+   * 并发任务数，实际并发度不会超过连接池大小
+   * @return
+   * 影响的记录数
+   */
+  def updateBatchAsync(sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 1, keyNum: Int = KeyNum._1): Long = {
+    JdbcConnector(keyNum = keyNum).updateBatchAsync(sql, paramsList, threadNum)
   }
 
   /**
@@ -135,7 +153,7 @@ trait JdbcFunctions {
    * 影响的记录数
    */
   @deprecated("use updateBatch", "fire 2.3.3")
-  def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Array[Int] = {
+  def executeBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Long = {
     JdbcConnector(keyNum = keyNum).executeBatch(sql, paramsList, connection, commit, closeConnection)
   }
 

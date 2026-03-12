@@ -19,9 +19,9 @@ package com.zto.fire.spark.ext.core
 
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
-import com.zto.fire.common.enu.{Datasource, Operation}
+import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
 import com.zto.fire.common.lineage.parser.connector.HudiConnectorParser
-import com.zto.fire.common.util.{LogUtils, Logging, SQLUtils, ValueUtils}
+import com.zto.fire.common.util.{LogUtils, Logging, SQLUtils, ThreadUtils, ValueUtils}
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.hudi.conf.FireHudiConf
 import com.zto.fire.hudi.enu.{HoodieOperationType, HoodieTableType}
@@ -294,6 +294,90 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
       })
     }
   }
+
+  /**
+   * 将DataFrame中指定的列以并发方式写入到jdbc中
+   * 调用者需自己保证DataFrame中的列类型与关系型数据库对应字段类型一致
+   *
+   * 注意：
+   * 1. 当threadNum=1时，直接复用`jdbcUpdateBatch`原有逻辑
+   * 2. 当threadNum>1时，仅在每个partition内部并发写入
+   * 3. 并发模式下，每个分组是独立事务，不保证全局事务原子性
+   *
+   * 调用示例：
+   * {{{
+   *   df.jdbcUpdateBatchAsync(
+   *     "insert into spark_test(name, age, create_time) values(?, ?, ?)",
+   *     Seq("name", "age", "createTime"),
+   *     threadNum = 4,
+   *     keyNum = 1
+   *   )
+   * }}}
+   *
+   * @param sql
+   * 关系型数据库待执行的增删改sql
+   * @param fields
+   * 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序
+   * 若不指定字段，则根据sql语句中的占位符自动推断
+   * @param autoConvert
+   * 是否自动将下划线转驼峰
+   * @param threadNum
+   * 每个partition内部的jdbc并发写线程数，默认为1，即单线程串行写入
+   * @param keyNum
+   * 对应配置文件中指定的数据源编号
+   */
+  def jdbcUpdateBatchAsync(sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, threadNum: Int = 5, keyNum: Int = KeyNum._1): Unit = {
+    requireNonEmpty(sql)("执行jdbcUpdateBatchAsync失败，sql语句不能为空")
+    if (threadNum <= 1 || dataFrame.isStreaming) {
+      this.jdbcUpdateBatch(sql, fields, autoConvert, keyNum)
+      return
+    }
+
+    val finalFields = if (noEmpty(fields)) fields else SQLUtils.parsePlaceholder(sql).map(column => if (autoConvert) column.toHump else column)
+    this.foreachPartitionAsync(threadNum) { rows =>
+      val paramsList = ListBuffer[Seq[Any]]()
+      rows.foreach(row => {
+        val params = ListBuffer[Any]()
+        if (noEmpty(finalFields)) {
+          // 若调用者指定了某些列，则取这些列的数据
+          finalFields.foreach(field => {
+            val index = row.fieldIndex(field)
+            params += row.get(index)
+          })
+        } else {
+          // 否则取当前DataFrame全部的列，顺序要与sql问号占位符保持一致
+          (0 until row.size).foreach(index => {
+            params += row.get(index)
+          })
+        }
+        paramsList += params
+      })
+      JdbcConnector.updateBatch(sql, paramsList, keyNum = keyNum)
+    }
+  }
+
+  /**
+   * 支持多线程处理每个spark partition中的数据
+   *
+   * @param threadNum
+   * 每个分区内的并发线程数
+   * @param fun
+   * 对每个分组数据的处理逻辑
+   */
+  def foreachPartitionAsync(threadNum: Int = 3)(fun: Seq[Row] => Unit): Unit = {
+    require(threadNum > 0, s"线程数必须大于0，当前值：$threadNum")
+    this.dataFrame.rdd.foreachPartition(it => {
+      if (it.nonEmpty) {
+        val executor = ThreadUtils.createThreadPool(ThreadPoolType.FIXED, threadNum)
+        try {
+          ThreadUtils.parallelProcess[Row, Unit](it.toSeq, threadNum, executor)(partition => fun(partition))
+        } finally {
+          ThreadUtils.shutdown(executor)
+        }
+      }
+    })
+  }
+
 
   /**
    * 批量写入，将自定义的JavaBean数据集批量并行写入

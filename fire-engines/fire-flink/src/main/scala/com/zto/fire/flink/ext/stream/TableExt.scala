@@ -120,6 +120,8 @@ class TableExt(table: Table) {
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
+   * @param threadNum
+   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    */
@@ -128,9 +130,10 @@ class TableExt(table: Table) {
                       batch: Int = 100,
                       flushInterval: Long = 1000,
                       isMerge: Boolean = true,
+                      threadNum: Int = 1,
                       keyNum: Int = KeyNum._1): DataStreamSink[Row] = {
 
-    this.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, keyNum) {
+    this.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, threadNum, keyNum) {
       row => {
         val param = ListBuffer[Any]()
         for (i <- 0 until row.getArity) {
@@ -150,6 +153,8 @@ class TableExt(table: Table) {
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
+   * @param threadNum
+   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    */
@@ -158,10 +163,11 @@ class TableExt(table: Table) {
                        batch: Int = 100,
                        flushInterval: Long = 1000,
                        isMerge: Boolean = true,
+                       threadNum: Int = 1,
                        keyNum: Int = KeyNum._1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
     import com.zto.fire._
     if (!isMerge) throw new IllegalArgumentException("该jdbc sink api暂不支持非merge语义，delete操作需单独实现")
-    this.table.toRetractStreamSingle.jdbcBatchUpdate2(sql, batch, flushInterval, keyNum) {
+    this.table.toRetractStreamSingle.jdbcBatchUpdate2(sql, batch, flushInterval, threadNum, keyNum) {
       row => fun(row)
     }.name("fire jdbc sink")
   }

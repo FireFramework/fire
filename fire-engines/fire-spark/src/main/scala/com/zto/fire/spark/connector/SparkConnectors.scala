@@ -51,7 +51,7 @@ object SparkConnectors extends StreamingConnectors {
    * @since 2.3.6
    */
   class GenConnector[T](gen: => T, qps: Long) extends Receiver[T](StorageLevel.MEMORY_AND_DISK_SER) {
-    private lazy val generatorThread = ThreadUtils.createThreadPool(this.getClass.getSimpleName, ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
+    private lazy val generatorThread = ThreadUtils.createManagedThreadPool(this.getClass.getSimpleName, ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
 
     override def onStart(): Unit = {
       this.generatorThread.scheduleWithFixedDelay(new Runnable {

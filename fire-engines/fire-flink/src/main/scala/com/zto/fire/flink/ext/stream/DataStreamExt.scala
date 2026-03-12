@@ -165,6 +165,8 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
+   * @param threadNum
+   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    */
@@ -173,8 +175,9 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
                       fields: Seq[String],
                       batch: Int = 100,
                       flushInterval: Long = 1000,
+                      threadNum: Int = 1,
                       keyNum: Int = KeyNum._1): DataStreamSink[T] = {
-    this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
+    this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, threadNum = threadNum, keyNum = keyNum) {
       var fieldMap: java.util.Map[String, Field] = _
       var clazz: Class[_] = _
 
@@ -216,6 +219,8 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
+   * @param threadNum
+   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    * @param fun
@@ -225,8 +230,9 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
   def jdbcBatchUpdate2(sql: String,
                        batch: Int = 100,
                        flushInterval: Long = 1000,
+                       threadNum: Int = 1,
                        keyNum: Int = KeyNum._1)(fun: T => Seq[Any]): DataStreamSink[T] = {
-    this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
+    this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum, threadNum = threadNum) {
       override def map(value: T): Seq[Any] = {
         fun(value)
       }

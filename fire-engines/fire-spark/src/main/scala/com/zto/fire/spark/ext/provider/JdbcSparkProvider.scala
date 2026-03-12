@@ -182,6 +182,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
+  @deprecated("use jdbcUpdateBatchDF", "fire 2.3.3")
   def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = KeyNum._1): Unit = {
     require(dataFrame != null && StringUtils.isNotBlank(sql), "执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
     dataFrame.jdbcBatchUpdate(sql, fields, batch, keyNum)
@@ -206,5 +207,28 @@ trait JdbcSparkProvider extends SparkProvider {
   def jdbcUpdateBatchDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, keyNum: Int = KeyNum._1): Unit = {
     require(dataFrame != null && StringUtils.isNotBlank(sql), "执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
     dataFrame.jdbcUpdateBatch(sql, fields, autoConvert, keyNum)
+  }
+
+  /**
+   * 将DataFrame中指定的列写入到jdbc中（executor端并发写）
+   * 调用者需自己保证DataFrame中的列类型与关系型数据库对应字段类型一致
+   *
+   * @param dataFrame
+   * 将要插入到关系型数据库中原始的数据集
+   * @param sql
+   * 关系型数据库待执行的增删改sql
+   * @param fields
+   * 指定部分DataFrame列名作为参数，顺序要对应sql中问号占位符的顺序
+   * 若不指定字段，则根据sql语句中的占位符自动推断
+   * @param autoConvert
+   * 是否自动将下划线转驼峰
+   * @param threadNum
+   * 并发任务数，实际并发度不会超过连接池大小和参数列表大小
+   * @param keyNum
+   * 对应配置文件中指定的数据源编号
+   */
+  def jdbcUpdateBatchDFAsync(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, threadNum: Int = 5, keyNum: Int = KeyNum._1): Unit = {
+    require(dataFrame != null && StringUtils.isNotBlank(sql), "执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
+    dataFrame.jdbcUpdateBatchAsync(sql, fields, autoConvert, threadNum, keyNum)
   }
 }
