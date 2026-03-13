@@ -41,7 +41,7 @@ object ForeachPartitionAsyncTest extends SparkCore {
       println(s"rdd计算->线程ID：${Thread.currentThread().getId} 数据量=${it.size}")
     })
 
-    // 2. DataFrame并发API：DataFrame中9条数据被分割成4分，被4个子线程并发处理
+    // 2. DataFrame并发API：DataFrame中9条数据被分割成3分，被3个子线程并发处理
     val df = this.fire.createDataFrame(rdd, classOf[Student])
     df.foreachPartitionAsync(threadNum = 3)(it => {
       // it集合会被fire框架自动切分成线程数对应的3份，并开启多线程并行计算
