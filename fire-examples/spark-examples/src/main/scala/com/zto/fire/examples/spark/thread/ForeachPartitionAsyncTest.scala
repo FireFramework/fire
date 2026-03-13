@@ -28,19 +28,27 @@ import com.zto.fire.spark.SparkCore
  * @Date 2026/3/12 08:36
  * @version 3.0.0
  */
-object ConcurrentTest extends SparkCore {
+object ForeachPartitionAsyncTest extends SparkCore {
 
   override def process(): Unit = {
-    val studentList = Student.newStudentList()
-    val studentDF = this.fire.createDataFrame(studentList, classOf[Student])
+    // 数据打进一个partition中便于观察测试结果
+    val rdd = this.fire.createRDD(Student.newStudentList(), 1)
+    println("rdd.count=" + rdd.count)
 
-    // 每个executor中开启5个线程并发处理迭代器中的数据
-    studentDF.foreachPartitionAsync(threadNum = 5) {it => {
-      // it这个集合中的数据会在executor端被并发处理
-      it.foreach(row => {
-        println(s"线程ID：${Thread.currentThread().getId} row=${row}")
-      })
-    }}
+    // 1. RDD并发API：rdd中9条数据被分割成5分，被5个子线程并发处理
+    rdd.foreachPartitionAsync(threadNum = 5)(it => {
+      // it集合会被fire框架自动切分成线程数对应的5份，并开启多线程并行计算
+      println(s"rdd计算->线程ID：${Thread.currentThread().getId} 数据量=${it.size}")
+    })
 
+    // 2. DataFrame并发API：DataFrame中9条数据被分割成4分，被4个子线程并发处理
+    val df = this.fire.createDataFrame(rdd, classOf[Student])
+    df.foreachPartitionAsync(threadNum = 3)(it => {
+      // it集合会被fire框架自动切分成线程数对应的3份，并开启多线程并行计算
+      println(s"DF计算->线程ID：${Thread.currentThread().getId} 数据量=${it.size}")
+    })
+
+    // 便于观察结果
+    Thread.currentThread().join(60000)
   }
 }

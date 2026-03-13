@@ -366,16 +366,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    */
   def foreachPartitionAsync(threadNum: Int = 3)(fun: Seq[Row] => Unit): Unit = {
     require(threadNum > 0, s"线程数必须大于0，当前值：$threadNum")
-    this.dataFrame.rdd.foreachPartition(it => {
-      if (it.nonEmpty) {
-        val executor = ThreadUtils.createThreadPool(ThreadPoolType.FIXED, threadNum)
-        try {
-          ThreadUtils.parallelProcess[Row, Unit](it.toSeq, threadNum, executor)(partition => fun(partition))
-        } finally {
-          ThreadUtils.shutdown(executor)
-        }
-      }
-    })
+    this.dataFrame.rdd.foreachPartitionAsync(threadNum = threadNum)(it => fun(it))
   }
 
 

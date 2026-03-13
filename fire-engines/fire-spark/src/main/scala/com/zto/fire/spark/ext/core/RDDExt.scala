@@ -20,6 +20,7 @@ package com.zto.fire.spark.ext.core
 import com.zto.fire._
 import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util._
 import com.zto.fire.hbase.bean.HBaseBaseBean
@@ -329,6 +330,28 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    */
   def foreachPartitionBatch[E](mapFun: T => E, sinkFun: ListBuffer[E] => Unit, batch: Int = 1000): Unit = {
     SparkUtils.rddForeachPartitionBatch(this.rdd, mapFun, sinkFun, batch)
+  }
+
+  /**
+   * 支持多线程处理每个spark partition中的数据
+   *
+   * @param threadNum
+   * 每个分区内的并发线程数
+   * @param fun
+   * 对每个分组数据的处理逻辑
+   */
+  def foreachPartitionAsync(threadNum: Int = 3)(fun: Seq[T] => Unit): Unit = {
+    require(threadNum > 0, s"线程数必须大于0，当前值：$threadNum")
+    this.rdd.foreachPartition(it => {
+      if (it.nonEmpty) {
+        val executor = ThreadUtils.createThreadPool(ThreadPoolType.FIXED, threadNum)
+        try {
+          ThreadUtils.parallelProcess[T, Unit](it.toSeq, threadNum, executor)(partition => fun(partition))
+        } finally {
+          ThreadUtils.shutdown(executor)
+        }
+      }
+    })
   }
 
   /**
