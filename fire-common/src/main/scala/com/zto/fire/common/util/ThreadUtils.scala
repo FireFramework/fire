@@ -32,6 +32,8 @@ import java.util.function.Supplier
  * @author ChengLong 2019-4-25 15:17:55
  */
 object ThreadUtils extends Logging {
+  // 在JVM退出时统一回收ThreadUtils创建并托管的线程池（含executor/taskmanager进程）
+  ShutdownHookManager.addShutdownHook()(() => this.shutdown)
   // 用于维护使用ThreadUtils创建的线程池对象，并进行统一的关闭
   private lazy val poolMap = new JConcurrentHashMap[String, ExecutorService]()
   private lazy val singlePool = this.createManagedThreadPool("FireSinglePool", ThreadPoolType.SINGLE)
@@ -237,10 +239,20 @@ object ThreadUtils extends Logging {
   }
 
   /**
+   * 用于释放指定的线程池
+   */
+  def shutdownNow(pool: ExecutorService): Unit = {
+    if (pool != null && !pool.isShutdown) {
+      pool.shutdownNow()
+      logDebug(s"关闭线程池：${pool}")
+    }
+  }
+
+  /**
    * 用于释放所有线程池
    * 关闭后会清空 poolMap，避免持有已关闭池的引用
    */
-  private[fire] def shutdown: Unit = {
+  private[fire] def shutdown: Unit = synchronized {
     val poolNum = this.poolMap.size()
     if (this.poolMap.size() > 0) {
       this.poolMap.foreach(pool => {
