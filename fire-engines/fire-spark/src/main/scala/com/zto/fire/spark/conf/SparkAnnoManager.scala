@@ -17,7 +17,8 @@
 
 package com.zto.fire.spark.conf
 
-import com.zto.fire.common.conf.FireFrameworkConf.FIRE_JOB_AUTO_START
+import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.common.conf.FireFrameworkConf.{FIRE_JOB_AUTO_START, FIRE_SHARED_THREAD_POOL_MAX_SIZE}
 import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.conf.AnnoManager
 import com.zto.fire.spark.anno.{SparkConf, Streaming, StreamingDuration}
@@ -49,6 +50,7 @@ private[fire] class SparkAnnoManager extends AnnoManager {
   def mapStreaming(streaming: Streaming): Unit = {
     this.put(FireSparkConf.SPARK_STREAMING_BATCH_DURATION, streaming.value())
     this.put(FireSparkConf.SPARK_STREAMING_BATCH_DURATION, streaming.interval())
+    this.put(FireFrameworkConf.FIRE_SHARED_THREAD_POOL_MAX_SIZE, streaming.threadPoolSize())
     this.put("spark.streaming.receiver.writeAheadLog.enable", streaming.checkpoint())
     this.put("spark.streaming.backpressure.enabled", streaming.backpressure())
     this.put("spark.streaming.concurrentJobs", streaming.concurrent())

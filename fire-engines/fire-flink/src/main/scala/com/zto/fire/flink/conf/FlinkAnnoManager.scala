@@ -17,7 +17,7 @@
 
 package com.zto.fire.flink.conf
 
-import com.zto.fire.common.conf.FireFrameworkConf.FIRE_JOB_AUTO_START
+import com.zto.fire.common.conf.FireFrameworkConf.{FIRE_JOB_AUTO_START, FIRE_SHARED_THREAD_POOL_MAX_SIZE}
 import com.zto.fire.common.util.PropUtils
 import com.zto.fire.core.conf.AnnoManager
 import com.zto.fire.flink.anno.{Checkpoint, FlinkConf, Streaming}
@@ -58,6 +58,7 @@ private[fire] class FlinkAnnoManager extends AnnoManager {
     this.put(FLINK_SQL_USE_STATEMENT_SET, streaming.useStatementSet())
     this.put(FLINK_RUNTIME_MODE, streaming.executionMode().toString)
     this.put(FLINK_AUTO_WATERMARK_INTERVAL, streaming.watermarkInterval())
+    this.put(FIRE_SHARED_THREAD_POOL_MAX_SIZE, streaming.threadPoolSize())
   }
 
   /**

@@ -180,6 +180,7 @@ private[fire] object FireFrameworkConf {
   lazy val CMD_CONF_OVERWRITE_PREFIX = "conf.overwrite."
   lazy val FIRE_ENCRYPT_PRIVATE_KEY_PROD = "fire.encrypt.private.key.prod"
   lazy val FIRE_ENCRYPT_PRIVATE_KEY_TEST = "fire.encrypt.private.key.test"
+  lazy val FIRE_SHARED_THREAD_POOL_MAX_SIZE = "fire.shared.threadPool.size"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -456,4 +457,9 @@ private[fire] object FireFrameworkConf {
    * 测试环境私钥配置
    */
   lazy val encryptPrivateKeyTest: String = PropUtils.getString(this.FIRE_ENCRYPT_PRIVATE_KEY_TEST)
+
+  /**
+   * fire内置共享线程池大小
+   */
+  lazy val sharedThreadPoolSize: Int = math.max(math.abs(PropUtils.getInt(this.FIRE_SHARED_THREAD_POOL_MAX_SIZE, 5)), 1)
 }

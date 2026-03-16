@@ -63,4 +63,9 @@ public @interface Streaming {
      * 任务的并行度
      */
     int parallelism() default -1;
+
+    /**
+     * 共享线程池大小
+     */
+    int threadPoolSize() default 5;
 }

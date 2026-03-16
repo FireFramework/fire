@@ -114,4 +114,9 @@ public @interface Streaming {
      * watermark生成周期
      */
     int watermarkInterval() default -1;
+
+    /**
+     * 共享线程池大小
+     */
+    int threadPoolSize() default 5;
 }
