@@ -25,6 +25,7 @@ import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util._
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
+import com.zto.fire.spark.sync.SparkSharedThreadPoolManager
 import com.zto.fire.spark.util.{SparkConsumerOffsetManager, SparkSingletonFactory, SparkUtils}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.rocketmq.common.message.MessageExt
@@ -337,18 +338,24 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    *
    * @param threadNum
    * 每个分区内的并发线程数
+   * @param useSharedThreadPool
+   * 是否复用共享线程池（避免重复创建线程池）
    * @param fun
    * 对每个分组数据的处理逻辑
    */
-  def foreachPartitionAsync(threadNum: Int = 3)(fun: Seq[T] => Unit): Unit = {
+  def foreachPartitionAsync(fun: Seq[T] => Unit)(implicit threadNum: Int = 5, useSharedThreadPool: Boolean = true): Unit = {
     require(threadNum > 0, s"线程数必须大于0，当前值：$threadNum")
     this.rdd.foreachPartition(it => {
       if (it.nonEmpty) {
-        val executor = ThreadUtils.createThreadPool(ThreadPoolType.FIXED, threadNum)
+        val executor = if (useSharedThreadPool) SparkSharedThreadPoolManager.sharedThreadPool else ThreadUtils.createThreadPool(ThreadPoolType.FIXED, threadNum)
         try {
           ThreadUtils.parallelProcess[T, Unit](it.toSeq, threadNum, executor)(partition => fun(partition))
-        } finally {
-          ThreadUtils.shutdown(executor)
+        } catch {
+          case e: Throwable => throw e
+        }finally {
+          if (!useSharedThreadPool) {
+            ThreadUtils.shutdownNow(executor)
+          }
         }
       }
     })

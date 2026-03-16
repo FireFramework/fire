@@ -36,17 +36,18 @@ object ForeachPartitionAsyncTest extends SparkCore {
     println("rdd.count=" + rdd.count)
 
     // 1. RDD并发API：rdd中9条数据被分割成5分，被5个子线程并发处理
-    rdd.foreachPartitionAsync(threadNum = 5)(it => {
+    rdd.foreachPartitionAsync(it => {
       // it集合会被fire框架自动切分成线程数对应的5份，并开启多线程并行计算
       println(s"rdd计算->线程ID：${Thread.currentThread().getId} 数据量=${it.size}")
     })
+    // })(threadNum = 5) 单独设置并发度，默认5个线程
 
     // 2. DataFrame并发API：DataFrame中9条数据被分割成3分，被3个子线程并发处理
     val df = this.fire.createDataFrame(rdd, classOf[Student])
-    df.foreachPartitionAsync(threadNum = 3)(it => {
+    df.foreachPartitionAsync(it => {
       // it集合会被fire框架自动切分成线程数对应的3份，并开启多线程并行计算
       println(s"DF计算->线程ID：${Thread.currentThread().getId} 数据量=${it.size}")
-    })
+    })(threadNum = 3) // 3线程处理上述的计算任务
 
     // 便于观察结果
     Thread.currentThread().join(60000)

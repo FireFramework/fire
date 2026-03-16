@@ -334,7 +334,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
     }
 
     val finalFields = if (noEmpty(fields)) fields else SQLUtils.parsePlaceholder(sql).map(column => if (autoConvert) column.toHump else column)
-    this.foreachPartitionAsync(threadNum) { rows =>
+    this.foreachPartitionAsync { rows =>
       val paramsList = ListBuffer[Seq[Any]]()
       rows.foreach(row => {
         val params = ListBuffer[Any]()
@@ -353,7 +353,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
         paramsList += params
       })
       JdbcConnector.updateBatch(sql, paramsList, keyNum = keyNum)
-    }
+    }(threadNum)
   }
 
   /**
@@ -361,14 +361,15 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    *
    * @param threadNum
    * 每个分区内的并发线程数
+   * @param useSharedThreadPool
+   * 是否复用共享线程池（避免重复创建线程池）
    * @param fun
    * 对每个分组数据的处理逻辑
    */
-  def foreachPartitionAsync(threadNum: Int = 3)(fun: Seq[Row] => Unit): Unit = {
+  def foreachPartitionAsync(fun: Seq[Row] => Unit)(implicit threadNum: Int = 5, useSharedThreadPool: Boolean = true): Unit = {
     require(threadNum > 0, s"线程数必须大于0，当前值：$threadNum")
-    this.dataFrame.rdd.foreachPartitionAsync(threadNum = threadNum)(it => fun(it))
+    this.dataFrame.rdd.foreachPartitionAsync(it => fun(it))(threadNum, useSharedThreadPool)
   }
-
 
   /**
    * 批量写入，将自定义的JavaBean数据集批量并行写入

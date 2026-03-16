@@ -23,8 +23,8 @@ import com.zto.fire.common.util.{DateFormatUtils, JSONUtils}
 import com.zto.fire.core.anno.connector.{Jdbc, Jdbc2}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.jdbc.JdbcConnector
+import com.zto.fire.spark.SparkStreaming
 import com.zto.fire.spark.anno.Streaming
-import com.zto.fire.spark.{SparkCore, SparkStreaming}
 import com.zto.fire.spark.util.SparkUtils
 import org.apache.spark.sql.SaveMode
 
@@ -41,7 +41,7 @@ import org.apache.spark.sql.SaveMode
     |""")
 @Jdbc(url = "jdbc:mysql://10.9.44.143:3306/fire?useSSL=true", username = "root", password = "oynZtP#bw7gF8i", batchSize = 10)
 @Jdbc2(url = "jdbc:mysql://10.9.44.143:3306/fire?useSSL=true", username = "root", password = "oynZtP#bw7gF8i", batchSize = 10)
-@Streaming(interval = 60)
+@Streaming(interval = 60, threadPoolSize = 10)
 object JdbcTest extends SparkStreaming {
   lazy val tableName = "spark_test"
   lazy val tableName2 = "t_cluster_info"
@@ -103,9 +103,26 @@ object JdbcTest extends SparkStreaming {
    */
   def testStreamingAsync(): Unit = {
     val dstream = this.fire.createRandomIntStream(100)
+    val stuRDD = this.fire.createRDD(1 to 20000, 2)
+      .map(index => new Student(index, s"name-$index", index, java.math.BigDecimal.valueOf(index), true, DateFormatUtils.formatCurrentDateTime()))
+
+    new Thread(new Runnable {
+      override def run(): Unit = {
+        while (true) {
+          val df = fire.createDataFrame(stuRDD, classOf[Student])
+          df.foreachPartitionAsync(it => {
+            println(s"DF计算->线程ID：${Thread.currentThread().getId} 数据量=${it.size} 线程总数：${Thread.activeCount()}")
+            Thread.sleep(1000)
+          })(threadNum = 3) // it集合会被fire框架自动切分成线程数对应的3份，并开启多线程并行计算（默认5线程）
+
+          Thread.sleep(10000)
+        }
+      }
+    }).start()
+
     dstream.foreachRDD(rdd => {
       this.testJdbcUpdateAsync
-      Thread.sleep(20000)
+      Thread.sleep(10000)
       this.fire.jdbcUpdate(s"delete from $tableName")
       this.fire.jdbcUpdate(s"delete from spark_test2")
     })
