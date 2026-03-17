@@ -32,13 +32,13 @@ import java.util.function.Supplier
  * @author ChengLong 2019-4-25 15:17:55
  */
 object ThreadUtils extends Logging {
-  // 在JVM退出时统一回收ThreadUtils创建并托管的线程池（含executor/taskmanager进程）
-  ShutdownHookManager.addShutdownHook()(() => this.shutdown)
   // 用于维护使用ThreadUtils创建的线程池对象，并进行统一的关闭
   private lazy val poolMap = new JConcurrentHashMap[String, ExecutorService]()
   private lazy val singlePool = this.createManagedThreadPool("FireSinglePool", ThreadPoolType.SINGLE)
   private lazy val cachedPool = this.createManagedThreadPool("FireCachedPool", ThreadPoolType.CACHED)
   private lazy val scheduledPool = this.createManagedThreadPool("FireScheduledPool", ThreadPoolType.SCHEDULED, FireFrameworkConf.threadPoolSchedulerSize).asInstanceOf[ScheduledExecutorService]
+  // 在JVM退出时统一回收ThreadUtils创建并托管的线程池（含executor/taskmanager进程）
+  ShutdownHookManager.addShutdownHook()(() => this.shutdown)
 
   /**
    * 利用SingleThreadExecutor执行给定的函数
@@ -171,7 +171,11 @@ object ThreadUtils extends Logging {
    */
   private[fire] def createManagedThreadPool(poolName: String, poolType: ThreadPoolType = ThreadPoolType.FIXED, poolSize: Int = 1): ExecutorService = {
     require(StringUtils.isNotBlank(poolName), "线程池名称不能为空")
-    this.poolMap.computeIfAbsent(poolName, _ => this.createThreadPoolByType(poolType, poolSize))
+    // this.poolMap.computeIfAbsent(poolName, _ => this.createThreadPoolByType(poolType, poolSize))
+    // 兼容scala 2.11语法
+    this.poolMap.computeIfAbsent(poolName, new java.util.function.Function[String, ExecutorService] {
+      override def apply(name: String): ExecutorService = createThreadPoolByType(poolType, poolSize)
+    })
   }
 
   /**
