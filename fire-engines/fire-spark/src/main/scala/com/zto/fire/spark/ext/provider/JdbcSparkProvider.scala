@@ -123,7 +123,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * DataFrame
    */
   def jdbcSqlLoad(querySql: String, jdbcProps: Properties = null, numPartitions: Int = 10, keyNum: Int = KeyNum._1): DataFrame = {
-    this.spark.sqlContext.jdbcSqlLoad(querySql, jdbcProps, keyNum)
+    this.spark.sqlContext.jdbcSqlLoad(querySql, jdbcProps,numPartitions, keyNum)
   }
 
   /**
