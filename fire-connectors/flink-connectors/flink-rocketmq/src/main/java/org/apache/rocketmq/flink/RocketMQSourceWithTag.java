@@ -39,6 +39,7 @@ import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.message.MessageQueue;
+import org.apache.rocketmq.common.protocol.ResponseCode;
 import org.apache.rocketmq.flink.common.serialization.TagKeyValueDeserializationSchema;
 import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
@@ -49,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.rocketmq.flink.RocketMQConfig.*;
 import static org.apache.rocketmq.flink.RocketMQUtils.getInteger;
@@ -82,6 +84,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
     private String consumerLogInfo;
     private boolean debugEnable = false;
     private Exception consumerException;
+    private transient AtomicInteger brokerBusyRetryCount = new AtomicInteger(0);
 
     public RocketMQSourceWithTag(TagKeyValueDeserializationSchema<OUT> schema, Properties props) {
         this.schema = schema;
@@ -214,6 +217,13 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                     pullTaskContext.setPullNextDelayTimeMillis(0); // no delay when messages were found
                 } else {
                     pullTaskContext.setPullNextDelayTimeMillis(delayWhenMessageNotFound);
+                }
+            } catch (MQBrokerException e) {
+                if (brokerBusyRetryCount.getAndIncrement() < 3) {
+                    pullTaskContext.setPullNextDelayTimeMillis(delayWhenMessageNotFound * 100);
+                    LOG.warn("Broker busy, delay 2 seconds. Will retry 3 times.", e);
+                } else {
+                    throw new RuntimeException("Unrecoverable MQBrokerException", e);
                 }
             } catch (Exception e) {
                 LOG.error("消费RocketMQ反序列化过程中发生异常！消息：" + currentMsg, e);
