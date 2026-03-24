@@ -190,12 +190,12 @@
                 <repository>
                     <id>repo-zto-rc</id>
                     <name>libs-release</name>
-                    <url>https://jfrog.dev.ztosys.com/artifactory/libs-release/</url>
+                    <url>${repo.zto.release.url}</url>
                 </repository>
                 <snapshotRepository>
                     <id>repo-zto-snapshot</id>
                     <name>libs-snapshot</name>
-                    <url>https://jfrog.dev.ztosys.com/artifactory/libs-snapshot/</url>
+                    <url>${repo.zto.snapshot.url}</url>
                 </snapshotRepository>
             </distributionManagement>
         </profile>
