@@ -39,8 +39,8 @@ import org.apache.spark.sql.SaveMode
     |fire.lineage.send.mq.enable=false
     |fire.analysis.log.exception.stack.enable=false
     |""")
-@Jdbc(url = "jdbc:mysql://10.9.44.143:3306/fire?useSSL=true", username = "root", password = "oynZtP#bw7gF8i", batchSize = 10)
-@Jdbc2(url = "jdbc:mysql://10.9.44.143:3306/fire?useSSL=true", username = "root", password = "oynZtP#bw7gF8i", batchSize = 10)
+@Jdbc(url = "jdbc:mysql://mysql-server:3306/fire?useSSL=true", username = "root", password = "root")
+@Jdbc2(url = "jdbc:mysql://mysql-server:3306/fire?useSSL=true", username = "root", password = "root")
 @Streaming(interval = 60, threadPoolSize = 10)
 object JdbcTest extends SparkStreaming {
   lazy val tableName = "spark_test"
