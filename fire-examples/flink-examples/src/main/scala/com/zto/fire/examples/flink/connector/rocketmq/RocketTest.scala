@@ -36,7 +36,7 @@ import org.apache.flink.api.scala._
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Streaming(interval = 30, parallelism = 2, disableOperatorChaining = true)
-@RocketMQ(brokers = "10.9.44.145:9876", topics = "fire", groupId = "fire")
+@RocketMQ(brokers = "rocketmq-server:9876", topics = "fire", groupId = "fire")
 @RocketMQ2(brokers = "bigdata_test", topics = "fire2", groupId = "fire2", tag = "*", startingOffset = "latest")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object RocketTest extends FlinkStreaming {
