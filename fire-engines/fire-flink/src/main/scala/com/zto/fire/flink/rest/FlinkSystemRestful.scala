@@ -157,8 +157,27 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
           if (checkpointParams.getInterval != null) ReflectionUtils.getMethodByName(clazz, "setBaseInterval").invoke(target, checkpointParams.getInterval)
           // 重新设置checkpoint的超时时间
           if (checkpointParams.getTimeout != null) ReflectionUtils.getMethodByName(clazz, "setCheckpointTimeout").invoke(target, checkpointParams.getTimeout)
-          // 重新设置两次相邻checkpoint的最短时间间隔
-          if (checkpointParams.getMinPauseBetween != null) ReflectionUtils.getMethodByName(clazz, "setMinPauseBetweenCheckpoints").invoke(target, checkpointParams.getMinPauseBetween)
+          val minPauseRaw = if (checkpointParams.getMinPauseBetween != null) {
+            checkpointParams.getMinPauseBetween
+          } else {
+            checkpointParams.getInterval
+          }
+
+          if (minPauseRaw != null) {
+            if (checkpointParams.getMinPauseBetween == null && checkpointParams.getInterval != null) {
+              logInfo(s"[checkpoint] 未指定 minPauseBetween，已使用 interval=${checkpointParams.getInterval} 作为 minPauseBetween")
+            }
+
+            val getBaseInterval = ReflectionUtils.getMethodByName(clazz, "getBaseInterval")
+            val baseInterval = if (getBaseInterval != null) getBaseInterval.invoke(target).asInstanceOf[Long] else minPauseRaw.longValue()
+            var minPause = minPauseRaw.longValue()
+            if (minPause > baseInterval) {
+              minPause = baseInterval
+              logWarning(s"[checkpoint] minPauseBetween($minPauseRaw) 大于 baseInterval($baseInterval)，已调整为 $baseInterval（须满足 minPause ≤ interval）")
+            }
+            ReflectionUtils.getMethodByName(clazz, "setMinPauseBetweenCheckpoints").invoke(target, java.lang.Long.valueOf(minPause))
+          }
+
           // 重新调度checkpoint
           target.startCheckpointScheduler()
         }
