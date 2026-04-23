@@ -76,10 +76,6 @@ object SparkUtils extends Logging {
       SimpleAnalyzer.checkAnalysis(logicalPlan)
     }
 
-    if (retVal.isFailure) {
-      ExceptionBus.post(retVal.failed.get, sql)
-    }
-
     retVal
   }
 
