@@ -164,7 +164,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
 
             // 分批次执行
             if (count == batch) {
-              JdbcConnector.executeBatch(sql, list, connector, commit = false, closeConnection = false, keyNum = keyNum)
+              JdbcConnector.executeBatch(sql, list, connector, closeConnection = false, keyNum = keyNum)
               count = 0
               list.clear()
             }
@@ -257,7 +257,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
 
             // 分批次执行
             if (count == FireJdbcConf.batchSize(keyNum)) {
-              JdbcConnector.executeBatch(sql, list, connector, commit = false, closeConnection = false, keyNum = keyNum)
+              JdbcConnector.executeBatch(sql, list, connector, closeConnection = false, keyNum = keyNum)
               count = 0
               list.clear()
             }
