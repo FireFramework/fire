@@ -181,6 +181,10 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_ENCRYPT_PRIVATE_KEY_PROD = "fire.encrypt.private.key.prod"
   lazy val FIRE_ENCRYPT_PRIVATE_KEY_TEST = "fire.encrypt.private.key.test"
   lazy val FIRE_SHARED_THREAD_POOL_MAX_SIZE = "fire.shared.threadPool.size"
+  lazy val FIRE_TRACE_CODE_TRACE_ENABLE = "fire.trace.codeTrace.enable"
+  lazy val FIRE_TRACE_CODE_TRACE_CLASS = "fire.trace.codeTrace.class"
+  lazy val FIRE_TRACE_CODE_TRACE_ELAPSE = "fire.trace.codeTrace.elapse"
+  lazy val FIRE_TRACE_LAUNCHER = "fire.trace.launcher"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -462,4 +466,24 @@ private[fire] object FireFrameworkConf {
    * fire内置共享线程池大小
    */
   lazy val sharedThreadPoolSize: Int = math.max(math.abs(PropUtils.getInt(this.FIRE_SHARED_THREAD_POOL_MAX_SIZE, 5)), 1)
+
+  /**
+   * 是否启用Trace代码增强
+   */
+  def traceCodeTraceEnable: Boolean = PropUtils.getBoolean(this.FIRE_TRACE_CODE_TRACE_ENABLE, false)
+
+  /**
+   * Trace代码增强目标类与方法，格式：全限定类名.方法名，方法名为*表示全部方法
+   */
+  def traceCodeTraceClass: String = PropUtils.getString(this.FIRE_TRACE_CODE_TRACE_CLASS, "")
+
+  /**
+   * Trace代码增强打印日志的最小耗时阈值，单位ms
+   */
+  def traceCodeTraceElapse: Long = PropUtils.getLong(this.FIRE_TRACE_CODE_TRACE_ELAPSE, 10L)
+
+  /**
+   * Trace启动器
+   */
+  lazy val traceLauncher = PropUtils.getString(this.FIRE_TRACE_LAUNCHER)
 }

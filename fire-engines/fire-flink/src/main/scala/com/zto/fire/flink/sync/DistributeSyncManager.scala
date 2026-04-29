@@ -4,8 +4,8 @@ import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.util.{JSONUtils, PropUtils, ThreadUtils}
-import com.zto.fire.core.bean.ArthasParam
-import com.zto.fire.core.plugin.ArthasDynamicLauncher
+import com.zto.fire.core.bean.{ArthasParam, TraceParam}
+import com.zto.fire.core.plugin.{ArthasDynamicLauncher, TraceDynamicLauncher}
 import com.zto.fire.core.rest.SystemRestful
 import com.zto.fire.core.sync.{DistributeExecuteManagerHelper, SyncManager}
 import com.zto.fire.flink.bean.DistributeBean
@@ -32,7 +32,9 @@ private[fire] object DistributeSyncManager extends SyncManager {
 
 
   /**
-   * 准实时同步最新配置信息
+   * TaskManager从JobManager准实时同步以下信息：
+   * 1. 最新配置信息
+   * 2. 命令：启动或停止Arthas、ByteBuddy agent服务等
    */
   def sync: Unit = {
     ThreadUtils.scheduleWithFixedDelay({
@@ -44,8 +46,12 @@ private[fire] object DistributeSyncManager extends SyncManager {
         if (JSONUtils.isJson(jsonConf)) {
           val distribute = JSONUtils.parseObject[DistributeBean](jsonConf)
           distribute.getModule match {
+            // 同步配置信息
             case DistributeModule.CONF => this.syncConf(distribute.getJson)
+            // 同步Arthas服务的命令
             case DistributeModule.ARTHAS => ArthasDynamicLauncher.command(JSONUtils.parseObject[ArthasParam](distribute.getJson))
+            // 同步ByteBuddy agent服务的命令
+            case DistributeModule.TRACE => TraceDynamicLauncher.command(JSONUtils.parseObject[TraceParam](distribute.getJson))
           }
         }
         this.lastJsonConf = jsonConf

@@ -55,6 +55,18 @@
             <version>${arthas.version}</version>
             <scope>${maven.scope}</scope>
         </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>${byte-buddy.version}</version>
+            <scope>${maven.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>${byte-buddy.version}</version>
+            <scope>${maven.scope}</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -23,8 +23,11 @@
     <artifactId>fire-parent</artifactId>
     <packaging>pom</packaging>
     <version>3.0.0-SNAPSHOT</version>
-    <name>Fire : </name>
-    <description>Fire framework is a development framework for real-time computing task development . The framework provides a simple and easy to use API that can significantly reduce the development threshold of Spark and Flink and improve development efficiency.</description>
+    <name>Fire :</name>
+    <description>Fire framework is a development framework for real-time computing task development . The framework
+        provides a simple and easy to use API that can significantly reduce the development threshold of Spark and Flink
+        and improve development efficiency.
+    </description>
     <url>https://github.com/fire-framework/fire</url>
 
     <licenses>
@@ -88,6 +91,7 @@
         <guava.version>15.0</guava.version>
         <curator.verrsion>2.6.0</curator.verrsion>
         <arthas.version>3.5.4</arthas.version>
+        <byte-buddy.version>1.14.10</byte-buddy.version>
         <calcite.version>1.26.0</calcite.version>
         <netty.version>4.1.17.Final</netty.version>
         <aspectj.version>1.9.7</aspectj.version>
@@ -978,6 +982,7 @@
                 <flink.version>1.19.1</flink.version>
                 <flink.major.version>1.19</flink.major.version>
                 <calcite.version>1.32.0</calcite.version>
+                <jackson.version>2.13.4</jackson.version>
                 <contains.scala.binary.version></contains.scala.binary.version>
                 <flink.jdbc.connector.version>3.2.0-${flink.major.version}</flink.jdbc.connector.version>
                 <flink.kafka.connector.version>3.2.0-${flink.major.version}</flink.kafka.connector.version>

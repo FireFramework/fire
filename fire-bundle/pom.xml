@@ -52,6 +52,12 @@
             <artifactId>spark-core</artifactId>
             <version>${sparkjava.version}</version>
         </dependency>
+        <!-- Spark 2.8 + Jetty 需 Servlet 3.1+（含 getHeaders）；与 fat jar 中 servlet-api 2.5 冲突会导致 NoSuchMethodError -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+        </dependency>
         <dependency>
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
@@ -197,6 +203,16 @@
             <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core</artifactId>
             <version>${oshi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>${byte-buddy.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>${byte-buddy.version}</version>
         </dependency>
     </dependencies>
 
@@ -426,7 +442,13 @@
                             <include>com.github.oshi:*</include>
                             <include>org.apache.curator:*</include>
                             <include>org.eclipse.jetty:*</include>
+                            <include>javax.servlet:javax.servlet-api</include>
                         </includes>
+                        <excludes>
+                            <!-- 旧坐标 2.5，打入 fat jar 会覆盖 3.1 接口，触发 HttpServletResponse.getHeaders NoSuchMethodError -->
+                            <exclude>javax.servlet:servlet-api</exclude>
+                            <exclude>org.mortbay.jetty:servlet-api</exclude>
+                        </excludes>
                     </artifactSet>
                     <filters>
                         <filter>

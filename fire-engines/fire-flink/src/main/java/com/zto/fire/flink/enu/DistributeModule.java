@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2.2.0
  */
 public enum DistributeModule {
-    CONF("conf"), ARTHAS("arthas");
+    CONF("conf"), ARTHAS("arthas"), TRACE("trace");
 
     DistributeModule(String type) {
     }
