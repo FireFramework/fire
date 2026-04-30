@@ -231,7 +231,7 @@ public final class TraceManager {
         }
         String className = target.substring(0, lastDot).trim();
         String methodSpec = target.substring(lastDot + 1).trim();
-        if (StringUtils.isAnyBlank(className, methodSpec)) {
+        if (StringUtils.isBlank(className) || StringUtils.isBlank(methodSpec)) {
             throw new IllegalArgumentException("类名或方法名不能为空：" + raw);
         }
         return new String[]{className, methodSpec};
