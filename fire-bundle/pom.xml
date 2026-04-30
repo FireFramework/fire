@@ -52,7 +52,6 @@
             <artifactId>spark-core</artifactId>
             <version>${sparkjava.version}</version>
         </dependency>
-        <!-- Spark 2.8 + Jetty 需 Servlet 3.1+（含 getHeaders）；与 fat jar 中 servlet-api 2.5 冲突会导致 NoSuchMethodError -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>

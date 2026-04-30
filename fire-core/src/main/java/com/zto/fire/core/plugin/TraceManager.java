@@ -46,7 +46,7 @@ public final class TraceManager {
     private static final AtomicBoolean started = new AtomicBoolean(false);
     private static final AtomicBoolean stopped = new AtomicBoolean(true);
     private static volatile ResettableClassFileTransformer resettable;
-    private static volatile long elapse = 10L;
+    private static volatile long thresholdMs = 10L;
     private static volatile String className = "";
 
     /**
@@ -75,15 +75,15 @@ public final class TraceManager {
      * 根据配置启动代码增强
      */
     public static void startCodeTrace() {
-        startCodeTrace(FireFrameworkConf.traceCodeTraceClass(), FireFrameworkConf.traceCodeTraceElapse());
+        startCodeTrace(FireFrameworkConf.traceCodeTraceClass(), FireFrameworkConf.traceCodeTraceThresholdMs());
     }
 
     /**
      * 启动代码增强
      */
-    public static void startCodeTrace(String className, Long elapse) {
+    public static void startCodeTrace(String className, Long thresholdMsParam) {
         final String targetClass = StringUtils.defaultIfBlank(className, FireFrameworkConf.traceCodeTraceClass());
-        final long targetElapse = elapse == null ? FireFrameworkConf.traceCodeTraceElapse() : Math.max(elapse, 0L);
+        final long targetThresholdMs = thresholdMsParam == null ? FireFrameworkConf.traceCodeTraceThresholdMs() : Math.max(thresholdMsParam, 0L);
         if (StringUtils.isBlank(targetClass)) {
             logger.warn("Trace代码追踪目标类为空，请通过fire.trace.codeTrace.class进行配置");
             return;
@@ -93,7 +93,7 @@ public final class TraceManager {
             try {
                 stopped.compareAndSet(true, false);
                 TraceManager.className = targetClass;
-                TraceManager.elapse = targetElapse;
+                TraceManager.thresholdMs = targetThresholdMs;
                 System.setProperty("jdk.attach.allowAttachSelf", "true");
 
                 ByteBuddyAgent.install();
@@ -113,19 +113,19 @@ public final class TraceManager {
                         .type(ElementMatchers.namedOneOf(typeNames))
                         .transform(advice)
                         .installOn(instrumentation);
-                logger.warn(String.format("Trace代码增强服务已启动：className=%s elapse=%sms", targetClass, targetElapse));
+                logger.warn(String.format("Trace代码增强服务已启动：className=%s thresholdMs=%dms", targetClass, targetThresholdMs));
             } catch (Throwable e) {
                 started.compareAndSet(true, false);
                 stopped.compareAndSet(false, true);
-                logger.error(String.format("Trace代码增强服务启动失败：className=%s elapse=%sms", targetClass, targetElapse), e);
+                logger.error(String.format("Trace代码增强服务启动失败：className=%s thresholdMs=%dms", targetClass, targetThresholdMs), e);
             }
         } else {
             if (!targetClass.equals(TraceManager.className)) {
                 logger.warn(String.format("Trace代码增强目标发生变化，自动重启：oldClassName=%s newClassName=%s", TraceManager.className, targetClass));
-                restartCodeTrace(targetClass, targetElapse);
+                restartCodeTrace(targetClass, targetThresholdMs);
             } else {
-                TraceManager.elapse = targetElapse;
-                logger.warn(String.format("Trace代码增强服务已处于启动状态，仅更新耗时阈值：className=%s elapse=%sms", targetClass, targetElapse));
+                TraceManager.thresholdMs = targetThresholdMs;
+                logger.warn(String.format("Trace代码增强服务已处于启动状态，仅更新耗时阈值：className=%s thresholdMs=%dms", targetClass, targetThresholdMs));
             }
         }
     }
@@ -153,9 +153,9 @@ public final class TraceManager {
     /**
      * 重启代码增强
      */
-    public static void restartCodeTrace(String className, Long elapse) {
+    public static void restartCodeTrace(String className, Long thresholdMsParam) {
         stopCodeTrace();
-        startCodeTrace(className, elapse);
+        startCodeTrace(className, thresholdMsParam);
     }
 
     /**
@@ -163,7 +163,7 @@ public final class TraceManager {
      */
     public static void printTraceLog(long start, String origin, Object[] allArgs, Object result, Throwable thrown) {
         long cost = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
-        if (cost < elapse) {
+        if (cost < thresholdMs) {
             return;
         }
 

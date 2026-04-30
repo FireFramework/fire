@@ -28,17 +28,17 @@ public class TraceParam {
     private Boolean distribute;
     private String ip;
     private String className;
-    private Long elapse;
+    private Long thresholdMs;
 
     public TraceParam() {
     }
 
-    public TraceParam(String command, Boolean distribute, String ip, String className, Long elapse) {
+    public TraceParam(String command, Boolean distribute, String ip, String className, Long thresholdMs) {
         this.command = command;
         this.distribute = distribute;
         this.ip = ip;
         this.className = className;
-        this.elapse = elapse;
+        this.thresholdMs = thresholdMs;
     }
 
     public String getCommand() {
@@ -73,11 +73,11 @@ public class TraceParam {
         this.className = className;
     }
 
-    public Long getElapse() {
-        return elapse;
+    public Long getThresholdMs() {
+        return thresholdMs;
     }
 
-    public void setElapse(Long elapse) {
-        this.elapse = elapse;
+    public void setThresholdMs(Long thresholdMs) {
+        this.thresholdMs = thresholdMs;
     }
 }

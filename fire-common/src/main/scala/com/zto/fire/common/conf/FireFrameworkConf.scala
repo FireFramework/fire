@@ -183,7 +183,7 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_SHARED_THREAD_POOL_MAX_SIZE = "fire.shared.threadPool.size"
   lazy val FIRE_TRACE_CODE_TRACE_ENABLE = "fire.trace.codeTrace.enable"
   lazy val FIRE_TRACE_CODE_TRACE_CLASS = "fire.trace.codeTrace.class"
-  lazy val FIRE_TRACE_CODE_TRACE_ELAPSE = "fire.trace.codeTrace.elapse"
+  lazy val FIRE_TRACE_CODE_TRACE_THRESHOLD_MS = "fire.trace.codeTrace.thresholdMs"
   lazy val FIRE_TRACE_LAUNCHER = "fire.trace.launcher"
 
   /**
@@ -478,9 +478,9 @@ private[fire] object FireFrameworkConf {
   def traceCodeTraceClass: String = PropUtils.getString(this.FIRE_TRACE_CODE_TRACE_CLASS, "")
 
   /**
-   * Trace代码增强打印日志的最小耗时阈值，单位ms
+   * Trace代码增强打印日志的最小耗时阈值，单位 ms（与 REST 字段 thresholdMs 一致）
    */
-  def traceCodeTraceElapse: Long = PropUtils.getLong(this.FIRE_TRACE_CODE_TRACE_ELAPSE, 10L)
+  def traceCodeTraceThresholdMs: Long = PropUtils.getLong(this.FIRE_TRACE_CODE_TRACE_THRESHOLD_MS, 10L)
 
   /**
    * Trace启动器

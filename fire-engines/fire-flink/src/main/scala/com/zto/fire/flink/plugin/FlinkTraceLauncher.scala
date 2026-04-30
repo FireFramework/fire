@@ -41,8 +41,8 @@ private[fire] class FlinkTraceLauncher extends TraceLauncher {
   /**
    * 热启动代码增强
    */
-  override def codeTraceStart(isDistribute: Boolean, ip: String, className: String, elapse: java.lang.Long): Unit =
-    if (this.canDo(isDistribute, ip)) TraceManager.startCodeTrace(className, elapse)
+  override def codeTraceStart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit =
+    if (this.canDo(isDistribute, ip)) TraceManager.startCodeTrace(className, thresholdMs)
 
   /**
    * 热关闭代码增强
@@ -53,6 +53,6 @@ private[fire] class FlinkTraceLauncher extends TraceLauncher {
   /**
    * 热重启代码增强
    */
-  override def codeTraceRestart(isDistribute: Boolean, ip: String, className: String, elapse: java.lang.Long): Unit =
-    if (this.canDo(isDistribute, ip)) TraceManager.restartCodeTrace(className, elapse)
+  override def codeTraceRestart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit =
+    if (this.canDo(isDistribute, ip)) TraceManager.restartCodeTrace(className, thresholdMs)
 }

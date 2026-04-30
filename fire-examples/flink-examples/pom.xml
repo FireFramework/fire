@@ -65,7 +65,6 @@
             <artifactId>fire-bundle-flink_${flink.reference}</artifactId>
             <version>${fire.version}</version>
         </dependency>
-        <!-- 与 Spark Java 嵌入式 Jetty 一致，避免 uber jar / 集群 classpath 中 servlet-api 2.5 优先导致 getHeaders NoSuchMethodError -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>

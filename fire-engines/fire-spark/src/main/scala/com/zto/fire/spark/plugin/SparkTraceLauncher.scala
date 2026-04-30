@@ -33,11 +33,11 @@ private[fire] class SparkTraceLauncher extends TraceLauncher {
   /**
    * 热启动代码增强
    */
-  override def codeTraceStart(isDistribute: Boolean, ip: String, className: String, elapse: java.lang.Long): Unit = {
-    TraceManager.startCodeTrace(className, elapse)
+  override def codeTraceStart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit = {
+    TraceManager.startCodeTrace(className, thresholdMs)
     if (isDistribute) {
       DistributeSyncManager.sync({
-        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TraceManager.startCodeTrace(className, elapse)
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TraceManager.startCodeTrace(className, thresholdMs)
       })
     }
   }
@@ -57,11 +57,11 @@ private[fire] class SparkTraceLauncher extends TraceLauncher {
   /**
    * 热重启代码增强
    */
-  override def codeTraceRestart(isDistribute: Boolean, ip: String, className: String, elapse: java.lang.Long): Unit = {
-    TraceManager.restartCodeTrace(className, elapse)
+  override def codeTraceRestart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit = {
+    TraceManager.restartCodeTrace(className, thresholdMs)
     if (isDistribute) {
       DistributeSyncManager.sync({
-        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TraceManager.restartCodeTrace(className, elapse)
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TraceManager.restartCodeTrace(className, thresholdMs)
       })
     }
   }

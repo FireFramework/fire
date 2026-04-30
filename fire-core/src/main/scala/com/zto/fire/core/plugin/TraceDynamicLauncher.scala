@@ -42,8 +42,8 @@ private[fire] object TraceDynamicLauncher extends TraceLauncher {
   /**
    * 热启动代码增强
    */
-  override def codeTraceStart(isDistribute: Boolean, ip: String, className: String, elapse: java.lang.Long): Unit =
-    this.launcher.codeTraceStart(isDistribute, ip, className, elapse)
+  override def codeTraceStart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit =
+    this.launcher.codeTraceStart(isDistribute, ip, className, thresholdMs)
 
   /**
    * 热关闭代码增强
@@ -54,6 +54,6 @@ private[fire] object TraceDynamicLauncher extends TraceLauncher {
   /**
    * 热重启代码增强
    */
-  override def codeTraceRestart(isDistribute: Boolean, ip: String, className: String, elapse: java.lang.Long): Unit =
-    this.launcher.codeTraceRestart(isDistribute, ip, className, elapse)
+  override def codeTraceRestart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit =
+    this.launcher.codeTraceRestart(isDistribute, ip, className, thresholdMs)
 }

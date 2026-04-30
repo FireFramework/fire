@@ -39,16 +39,16 @@ private[fire] trait TraceLauncher extends Logging {
     val isDistribute = if (param.getDistribute == null) false else param.getDistribute.booleanValue()
 
     param.getCommand match {
-      case "start" => this.codeTraceStart(isDistribute, param.getIp, param.getClassName, param.getElapse)
+      case "start" => this.codeTraceStart(isDistribute, param.getIp, param.getClassName, param.getThresholdMs)
       case "stop" => this.codeTraceStop(isDistribute, param.getIp)
-      case "restart" => this.codeTraceRestart(isDistribute, param.getIp, param.getClassName, param.getElapse)
+      case "restart" => this.codeTraceRestart(isDistribute, param.getIp, param.getClassName, param.getThresholdMs)
     }
   }
 
   /**
    * 热启动代码增强
    */
-  def codeTraceStart(isDistribute: Boolean, ip: String, className: String, elapse: java.lang.Long): Unit
+  def codeTraceStart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit
 
   /**
    * 热关闭代码增强
@@ -58,5 +58,5 @@ private[fire] trait TraceLauncher extends Logging {
   /**
    * 热重启代码增强
    */
-  def codeTraceRestart(isDistribute: Boolean, ip: String, className: String, elapse: java.lang.Long): Unit
+  def codeTraceRestart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit
 }
