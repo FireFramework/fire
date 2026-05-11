@@ -23,6 +23,7 @@ import com.zto.fire.common.enu.ConfigureLevel
 import com.zto.fire.predef._
 import org.apache.commons.httpclient.Header
 import org.apache.commons.lang3.StringUtils
+import scala.util.{Failure, Success, Try}
 
 /**
  * 配置中心管理器，用于读取配置中心中的配置信息
@@ -139,18 +140,29 @@ private[fire] object ConfigurationCenterManager extends Serializable with Loggin
       return value
     }
 
-    // 尝试基于RSA算法对password进行解密，首先基于测试环境的私钥进行解密
-    var password = EncryptUtils.rsaDecrypt(value, privateKeyTest)
-    if (isEmpty(password)) {
-      // 若解密失败，则调用生产密钥进行解密
+    var password = ""
+    try {
+      // 尝试基于RSA算法对password进行解密，首先基于生产环境的私钥进行解密
       password = EncryptUtils.rsaDecrypt(value, privateKeyProd)
+    } catch {
+      case e: Exception => {
+        try {
+          // 若解密失败，则调用测试密钥进行解密
+          password = EncryptUtils.rsaDecrypt(value, privateKeyTest)
+        } catch {
+          case e2: Exception => {
+            logger.warn("Jdbc数据源解密失败，原因：1. 数据源配置有误或密码本身就是明文 2. 私钥有误，测试环境私钥前10位：{}，生产环境私钥前10位：{}，异常信息；{}", StringUtils.substring(privateKeyTest, 0, 10), StringUtils.substring(privateKeyProd, 0, 10), e2.getMessage())
+            return value
+          }
+        }
+      }
     }
 
-    if (noEmpty(password)) {
-      logInfo(s"JDBC密文密码解密成功：key=$key")
-      password
-    } else {
-      value
+    // 如果解密失败，可能意味着value本身就是明文的，所以直接返回
+    if (isEmpty(password)) {
+      password = value
     }
+
+    password
   }
 }
