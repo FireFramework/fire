@@ -99,22 +99,21 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) extends Logging {
 
   /**
    * 启用Trace代码增强进行耗时追踪
-   *
    */
-  @Rest("/system/trace")
-  protected def trace(request: Request, response: Response): AnyRef = {
+  @Rest(value = "/system/trace/performance", method = "post")
+  protected def tracePerformance(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
-      logWarning(s"Ip address ${request.ip()} request /system/trace")
-      logWarning(s"请求执行Trace代码追踪命令：$json")
+      logWarning(s"Ip address ${request.ip()} request /system/trace/performance")
+      logWarning(s"请求执行 Trace performance：$json")
       val traceParam = JSONUtils.parseObject[TraceParam](json)
       TraceDynamicLauncher.command(traceParam)
-      logWarning(s"[codeTrace] Trace代码追踪命令${traceParam.getCommand}执行成功！")
-      ResultMsg.buildSuccess("操作成功", "调用Trace代码追踪接口成功！")
+      logWarning(s"[tracePerformance] 命令${traceParam.getCommand}执行成功！")
+      ResultMsg.buildSuccess("操作成功", "调用 Trace performance 接口成功！")
     } catch {
       case e: Exception => {
-        logError(s"[codeTrace] 调用Trace代码追踪接口失败，参数不合法，请检查", e)
-        ResultMsg.buildError("调用Trace代码追踪接口失败，参数不合法，请检查", ErrorCode.ERROR)
+        logError(s"[tracePerformance] 调用失败，参数不合法，请检查", e)
+        ResultMsg.buildError("调用 Trace performance 接口失败，参数不合法，请检查", ErrorCode.ERROR)
       }
     }
   }

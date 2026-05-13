@@ -18,7 +18,10 @@
 package com.zto.fire.core.plugin
 
 import com.zto.fire.common.conf.FireFrameworkConf
+import com.zto.fire.core.bean.TraceTarget
 import com.zto.fire.predef._
+
+import java.util
 
 /**
  * Trace启动器，可根据不同的引擎初始化不同的Trace启动器实例
@@ -42,18 +45,21 @@ private[fire] object TraceDynamicLauncher extends TraceLauncher {
   /**
    * 热启动代码增强
    */
-  override def codeTraceStart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit =
-    this.launcher.codeTraceStart(isDistribute, ip, className, thresholdMs)
+  override def codeTraceStart(isDistribute: Boolean, ip: String, targets: util.List[TraceTarget]): Unit = {
+    this.launcher.codeTraceStart(isDistribute, ip, targets)
+  }
 
   /**
    * 热关闭代码增强
    */
-  override def codeTraceStop(isDistribute: Boolean, ip: String): Unit =
+  override def codeTraceStop(isDistribute: Boolean, ip: String): Unit = {
     this.launcher.codeTraceStop(isDistribute, ip)
+  }
 
   /**
    * 热重启代码增强
    */
-  override def codeTraceRestart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit =
-    this.launcher.codeTraceRestart(isDistribute, ip, className, thresholdMs)
+  override def codeTraceRestart(isDistribute: Boolean, ip: String, targets: util.List[TraceTarget]): Unit = {
+    this.launcher.codeTraceRestart(isDistribute, ip, targets)
+  }
 }

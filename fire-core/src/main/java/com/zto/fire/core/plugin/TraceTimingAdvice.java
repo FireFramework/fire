@@ -37,10 +37,11 @@ public final class TraceTimingAdvice {
 
     @Advice.OnMethodExit(onThrowable = Throwable.class)
     static void exit(@Advice.Enter long start,
-                     @Advice.Origin String origin,
+                     @Advice.Origin("#t") String declaringType,
+                     @Advice.Origin("#m") String methodName,
                      @Advice.AllArguments Object[] allArgs,
                      @Advice.Return(readOnly = true, typing = Assigner.Typing.DYNAMIC) Object result,
                      @Advice.Thrown(readOnly = true) Throwable thrown) {
-        TraceManager.printTraceLog(start, origin, allArgs, result, thrown);
+        TraceManager.printTraceLog(start, declaringType, methodName, allArgs, result, thrown);
     }
 }

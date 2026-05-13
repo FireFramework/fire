@@ -17,52 +17,35 @@
 
 package com.zto.fire.core.bean;
 
-import java.util.List;
+import java.io.Serializable;
 
 /**
- * POST /system/trace/performance 请求体
+ * 追踪目标：全限定类.方法名 或 类.*
  *
  * @author ChengLong
- * @since 3.0.0
+ * @since fire 3.0.0 2026-05-12 14:27:17
  */
-public class TraceParam {
-    private String command;
-    private Boolean distribute;
-    private String ip;
-    private List<TraceTarget> targets;
+public class TraceTarget implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private String pattern;
+    private Long thresholdMs;
 
-    public TraceParam() {
+    public TraceTarget() {
     }
 
-    public String getCommand() {
-        return command;
+    public String getPattern() {
+        return pattern;
     }
 
-    public void setCommand(String command) {
-        this.command = command;
+    public void setPattern(String pattern) {
+        this.pattern = pattern;
     }
 
-    public Boolean getDistribute() {
-        return distribute;
+    public Long getThresholdMs() {
+        return thresholdMs;
     }
 
-    public void setDistribute(Boolean distribute) {
-        this.distribute = distribute;
-    }
-
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
-    public List<TraceTarget> getTargets() {
-        return targets;
-    }
-
-    public void setTargets(List<TraceTarget> targets) {
-        this.targets = targets;
+    public void setThresholdMs(Long thresholdMs) {
+        this.thresholdMs = thresholdMs;
     }
 }

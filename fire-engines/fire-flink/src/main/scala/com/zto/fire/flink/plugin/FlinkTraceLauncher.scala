@@ -18,9 +18,12 @@
 package com.zto.fire.flink.plugin
 
 import com.zto.fire.common.util.OSUtils
+import com.zto.fire.core.bean.TraceTarget
 import com.zto.fire.core.plugin.{TraceLauncher, TraceManager}
 import com.zto.fire.flink.util.FlinkUtils
 import com.zto.fire.predef.{noEmpty, _}
+
+import java.util.{List => JList}
 
 /**
  * Flink Trace分布式启动器
@@ -41,18 +44,21 @@ private[fire] class FlinkTraceLauncher extends TraceLauncher {
   /**
    * 热启动代码增强
    */
-  override def codeTraceStart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit =
-    if (this.canDo(isDistribute, ip)) TraceManager.startCodeTrace(className, thresholdMs)
+  override def codeTraceStart(isDistribute: Boolean, ip: String, targets: JList[TraceTarget]): Unit = {
+    if (this.canDo(isDistribute, ip)) TraceManager.startCodeTrace(targets)
+  }
 
   /**
    * 热关闭代码增强
    */
-  override def codeTraceStop(isDistribute: Boolean, ip: String): Unit =
+  override def codeTraceStop(isDistribute: Boolean, ip: String): Unit = {
     if (this.canDo(isDistribute, ip)) TraceManager.stopCodeTrace()
+  }
 
   /**
    * 热重启代码增强
    */
-  override def codeTraceRestart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit =
-    if (this.canDo(isDistribute, ip)) TraceManager.restartCodeTrace(className, thresholdMs)
+  override def codeTraceRestart(isDistribute: Boolean, ip: String, targets: JList[TraceTarget]): Unit = {
+    if (this.canDo(isDistribute, ip)) TraceManager.restartCodeTrace(targets)
+  }
 }

@@ -36,8 +36,9 @@ public final class TraceConstructorTimingAdvice {
 
     @Advice.OnMethodExit
     static void exit(@Advice.Enter long start,
-                     @Advice.Origin String origin,
+                     @Advice.Origin("#t") String declaringType,
+                     @Advice.Origin("#m") String methodName,
                      @Advice.AllArguments Object[] allArgs) {
-        TraceManager.printTraceLog(start, origin, allArgs, null, null);
+        TraceManager.printTraceLog(start, declaringType, methodName, allArgs, null, null);
     }
 }

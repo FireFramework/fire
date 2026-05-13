@@ -18,6 +18,7 @@
 package com.zto.fire.core.plugin;
 
 import com.zto.fire.common.conf.FireFrameworkConf;
+import com.zto.fire.core.bean.TraceTarget;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.agent.builder.ResettableClassFileTransformer;
@@ -28,9 +29,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.lang.instrument.Instrumentation;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -39,113 +45,166 @@ import java.util.stream.Collectors;
  * Trace代码增强管理器，负责ByteBuddy运行时安装与卸载
  *
  * @author ChengLong
- * @since 3.0.0
+ * @since 3.0.0 2026-05-06 13:01:30
  */
 public final class TraceManager {
     private static final Logger logger = Logger.getLogger(TraceManager.class);
     private static final AtomicBoolean started = new AtomicBoolean(false);
-    private static final AtomicBoolean stopped = new AtomicBoolean(true);
     private static volatile ResettableClassFileTransformer resettable;
-    private static volatile long thresholdMs = 10L;
-    private static volatile String className = "";
+    // 存放 pattern → 耗时阈值（毫秒）
+    private static final ConcurrentHashMap<String, Long> thresholdByPatternMap = new ConcurrentHashMap<>();
 
-    /**
-     * 工具类禁止实例化
-     */
     private TraceManager() {
     }
 
     /**
-     * 启动代码增强
-     *
-     * @param resourceId     任务资源标识，例如 Spark driver/executor、Flink JobManager 或 container_xxx
-     * @param startContainer 为 true 时允许在含 container 的 resourceId 对应进程上启 Trace
-     */
-    public static void startCodeTrace(String resourceId, boolean startContainer) {
-        if (StringUtils.isBlank(resourceId)) {
-            throw new IllegalArgumentException("resourceId不能为空，Trace所监控的程序必须有标识！");
-        }
-        if (resourceId.contains("container") && !startContainer) {
-            return;
-        }
-        startCodeTrace();
-    }
-
-    /**
-     * 根据配置启动代码增强
+     * 任务启动时按框架配置开启 Trace：从 {@code fire.trace.codeTrace.class} 等配置解析出 {@link TraceTarget} 列表，
+     * 再转调 {@link #startCodeTrace(List)}，与 REST 动态下发共用同一套挂桩逻辑。
      */
     public static void startCodeTrace() {
-        startCodeTrace(FireFrameworkConf.traceCodeTraceClass(), FireFrameworkConf.traceCodeTraceThresholdMs());
+        // 配置项逗号分隔的「类.方法 / 类.*」→ 多条 TraceTarget（阈值取 fire.trace 配置）
+        List<TraceTarget> targetFromConf = buildTargetsFromFireConf();
+        if (targetFromConf.isEmpty()) {
+            logger.warn("Trace 配置目标为空，请配置 fire.trace.codeTrace.class");
+            return;
+        }
+        startCodeTrace(targetFromConf);
     }
 
     /**
-     * 启动代码增强
+     * 启动 Trace：将每条 target 转为pattern → 阈值
+     *
+     * @param targets 需要追踪的类/方法 pattern 及可选阈值
      */
-    public static void startCodeTrace(String className, Long thresholdMsParam) {
-        final String targetClass = StringUtils.defaultIfBlank(className, FireFrameworkConf.traceCodeTraceClass());
-        final long targetThresholdMs = thresholdMsParam == null ? FireFrameworkConf.traceCodeTraceThresholdMs() : Math.max(thresholdMsParam, 0L);
-        if (StringUtils.isBlank(targetClass)) {
-            logger.warn("Trace代码追踪目标类为空，请通过fire.trace.codeTrace.class进行配置");
+    public static void startCodeTrace(List<TraceTarget> targets) {
+        if (targets == null || targets.isEmpty()) {
+            logger.warn("Trace targets 为空，忽略启动");
             return;
         }
 
-        if (started.compareAndSet(false, true)) {
-            try {
-                stopped.compareAndSet(true, false);
-                TraceManager.className = targetClass;
-                TraceManager.thresholdMs = targetThresholdMs;
-                System.setProperty("jdk.attach.allowAttachSelf", "true");
+        // 单条 target 未显式指定阈值时，与配置启动一致，统一用框架配置默认值
+        final long defaultThresholdMs = FireFrameworkConf.traceCodeTraceThresholdMs();
+        // 过滤空项后保留请求顺序：每条变为 (pattern, 实际阈值) 便于后续拆成 list / map
+        List<AbstractMap.SimpleImmutableEntry<String, Long>> ordered = targets.stream()
+                .filter(target -> target != null && StringUtils.isNotBlank(target.getPattern()))
+                .map(target -> {
+                    String pattern = target.getPattern().trim();
+                    long thresholdMs = target.getThresholdMs() == null ? defaultThresholdMs : Math.max(target.getThresholdMs(), 0L);
+                    return new AbstractMap.SimpleImmutableEntry<>(pattern, thresholdMs);
+                })
+                .collect(Collectors.toList());
 
-                ByteBuddyAgent.install();
-                Instrumentation instrumentation = ByteBuddyAgent.getInstrumentation();
-                List<String> targets = parseTargets(targetClass);
-                String[] typeNames = distinctClassNames(targets);
-                ElementMatcher.Junction<MethodDescription> methodsOnly = buildMethodMatcher(targets);
-                ElementMatcher.Junction<MethodDescription> constructorsOnly = buildConstructorMatcher(targets);
-                AgentBuilder.Transformer.ForAdvice advice = newTimingAdviceTransformer()
-                        .advice(methodsOnly, TraceTimingAdvice.class.getName())
-                        .advice(constructorsOnly, TraceConstructorTimingAdvice.class.getName());
+        // 与 thresholdMap 的 key 顺序一致，供 ByteBuddy 匹配器与日志展示使用
+        List<String> patternList = ordered.stream()
+                .map(AbstractMap.SimpleImmutableEntry::getKey)
+                .collect(Collectors.toList());
 
-                resettable = new AgentBuilder.Default()
-                        .disableClassFormatChanges()
-                        .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                        .with(AgentBuilder.Listener.StreamWriting.toSystemError().withErrorsOnly())
-                        .type(ElementMatchers.namedOneOf(typeNames))
-                        .transform(advice)
-                        .installOn(instrumentation);
-                logger.warn(String.format("Trace代码增强服务已启动：className=%s thresholdMs=%dms", targetClass, targetThresholdMs));
-            } catch (Throwable e) {
-                started.compareAndSet(true, false);
-                stopped.compareAndSet(false, true);
-                logger.error(String.format("Trace代码增强服务启动失败：className=%s thresholdMs=%dms", targetClass, targetThresholdMs), e);
+        // LinkedHashMap：与 pattern 顺序一致，resolveThresholdMs 按 pattern key 查找
+        Map<String, Long> targetMap = ordered.stream()
+                .collect(Collectors.toMap(
+                        e -> buildThresholdKey(e.getKey()),
+                        AbstractMap.SimpleImmutableEntry::getValue,
+                        (a, b) -> b,
+                        LinkedHashMap::new));
+
+        // 日志展示：保留调用方传入的 pattern 顺序
+        String displayAgg = String.join(",", patternList);
+        installTrace(displayAgg, patternList, targetMap);
+    }
+
+    /**
+     * 冷启动的方式：从配置中读取目标类列表信息
+     */
+    private static List<TraceTarget> buildTargetsFromFireConf() {
+        String targetStr = FireFrameworkConf.traceCodeTraceClass();
+        if (StringUtils.isBlank(targetStr)) {
+            return new ArrayList<>();
+        }
+
+        // 从配置中读取阈值，没有接口的方式灵活，配置的方式只能设置一个统一的阈值
+        final long thresholdMs = FireFrameworkConf.traceCodeTraceThresholdMs();
+        return Arrays.stream(targetStr.split(","))
+                .map(String::trim)
+                .filter(StringUtils::isNotBlank)
+                .map(part -> {
+                    TraceTarget traceTarget = new TraceTarget();
+                    traceTarget.setPattern(part);
+                    traceTarget.setThresholdMs(thresholdMs);
+                    return traceTarget;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 按本次入参全量生效：若当前已挂桩则先 stop，再安装 ByteBuddy 并写入阈值表
+     *
+     * @param displayAgg   仅用于日志，为本次 pattern 按请求顺序逗号拼接
+     * @param patterns     供 ByteBuddy 构造匹配器与织入类型范围
+     * @param thresholdMap pattern 规范化 key → 阈值毫秒
+     */
+    private static void installTrace(String displayAgg, List<String> patterns,
+                                     Map<String, Long> thresholdMap) {
+        synchronized (TraceManager.class) {
+            if (started.get()) {
+                stopCodeTrace();
             }
-        } else {
-            if (!targetClass.equals(TraceManager.className)) {
-                logger.warn(String.format("Trace代码增强目标发生变化，自动重启：oldClassName=%s newClassName=%s", TraceManager.className, targetClass));
-                restartCodeTrace(targetClass, targetThresholdMs);
-            } else {
-                TraceManager.thresholdMs = targetThresholdMs;
-                logger.warn(String.format("Trace代码增强服务已处于启动状态，仅更新耗时阈值：className=%s thresholdMs=%dms", targetClass, targetThresholdMs));
+
+            if (started.compareAndSet(false, true)) {
+                try {
+                    thresholdByPatternMap.clear();
+                    thresholdByPatternMap.putAll(thresholdMap);
+                    System.setProperty("jdk.attach.allowAttachSelf", "true");
+                    ByteBuddyAgent.install();
+                    Instrumentation instrumentation = ByteBuddyAgent.getInstrumentation();
+                    ElementMatcher.Junction<MethodDescription> methodsOnly = buildMethodMatcher(patterns);
+                    AgentBuilder.Transformer.ForAdvice advice = newTimingAdviceTransformer()
+                            .advice(methodsOnly, TraceTimingAdvice.class.getName());
+
+                    String[] typeNames = distinctTargets(patterns);
+                    resettable = new AgentBuilder.Default()
+                            .disableClassFormatChanges()
+                            .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                            .with(AgentBuilder.Listener.StreamWriting.toSystemError().withErrorsOnly())
+                            .type(ElementMatchers.namedOneOf(typeNames))
+                            .transform(advice)
+                            .installOn(instrumentation);
+                    logger.warn(String.format("Trace 已启动：targets=%s confThresholdMs=%d", displayAgg, FireFrameworkConf.traceCodeTraceThresholdMs()));
+                } catch (Throwable e) {
+                    started.compareAndSet(true, false);
+                    thresholdByPatternMap.clear();
+                    logger.error(String.format("Trace 启动失败：targets=%s", displayAgg), e);
+                }
             }
         }
     }
 
     /**
-     * 停止代码增强
+     * 根据pattern处理，返回合法的key
+     */
+    private static String buildThresholdKey(String pattern) {
+        return pattern == null ? "" : pattern.trim();
+    }
+
+    /**
+     * 停止字节码增强
      */
     public static void stopCodeTrace() {
-        if (stopped.compareAndSet(false, true)) {
+        synchronized (TraceManager.class) {
+            if (!started.compareAndSet(true, false)) {
+                return;
+            }
+
             try {
                 if (resettable != null) {
                     Instrumentation instrumentation = ByteBuddyAgent.getInstrumentation();
                     resettable.reset(instrumentation, AgentBuilder.RedefinitionStrategy.RETRANSFORMATION);
                     resettable = null;
                 }
-                logger.warn("Trace代码增强服务已停止");
+                logger.warn("Trace 已停止");
             } catch (Throwable e) {
-                logger.error("Trace代码增强服务停止失败", e);
+                logger.error("Trace 停止失败", e);
             } finally {
-                started.compareAndSet(true, false);
+                thresholdByPatternMap.clear();
             }
         }
     }
@@ -153,25 +212,29 @@ public final class TraceManager {
     /**
      * 重启代码增强
      */
-    public static void restartCodeTrace(String className, Long thresholdMsParam) {
+    public static void restartCodeTrace(List<TraceTarget> targets) {
         stopCodeTrace();
-        startCodeTrace(className, thresholdMsParam);
+        startCodeTrace(targets);
     }
 
     /**
      * 打印耗时超过阈值的方法调用日志
      */
-    public static void printTraceLog(long start, String origin, Object[] allArgs, Object result, Throwable thrown) {
+    public static void printTraceLog(long start, String declaringType, String methodName,
+                                     Object[] allArgs, Object result, Throwable thrown) {
         long cost = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
-        if (cost < thresholdMs) {
+        long needMs = resolveThresholdMs(declaringType, methodName);
+        if (cost < needMs) {
             return;
         }
 
+        String origin = declaringType + "." + methodName;
         StringBuilder builder = new StringBuilder();
         builder.append("[TraceCode] 方法名称：").append(origin)
                 .append(" 参数：").append(allArgs == null ? "[]" : Arrays.deepToString(allArgs))
                 .append(" 返回值：").append(result)
                 .append(" 耗时：").append(cost).append("ms");
+
         if (thrown != null) {
             builder.append(" 异常：").append(thrown.getClass().getName()).append(": ").append(thrown.getMessage());
         }
@@ -179,16 +242,23 @@ public final class TraceManager {
     }
 
     /**
-     * 将配置中的多个追踪目标拆分成列表
-     *
-     * @param targets 追踪目标配置，多个以逗号分隔
-     * @return 追踪目标列表
+     * 根据pattern获取耗时阈值
      */
-    private static List<String> parseTargets(String targets) {
-        return Arrays.stream(targets.split(","))
-                .map(String::trim)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toList());
+    private static long resolveThresholdMs(String pattern, String methodName) {
+        String dt = pattern == null ? "" : pattern.trim();
+        String mn = methodName == null ? "" : methodName.trim();
+        Long threshold = thresholdByPatternMap.get(buildThresholdKey(dt + "." + mn));
+
+        if (threshold != null) {
+            return threshold;
+        }
+
+        threshold = thresholdByPatternMap.get(buildThresholdKey(dt + ".*"));
+        if (threshold != null) {
+            return threshold;
+        }
+
+        return FireFrameworkConf.traceCodeTraceThresholdMs();
     }
 
     /**
@@ -197,7 +267,7 @@ public final class TraceManager {
      * @param targets 追踪目标列表
      * @return 去重后的全限定类名数组
      */
-    private static String[] distinctClassNames(List<String> targets) {
+    private static String[] distinctTargets(List<String> targets) {
         return targets.stream()
                 .map(TraceManager::parseClassName)
                 .collect(Collectors.toCollection(LinkedHashSet::new))
@@ -207,34 +277,37 @@ public final class TraceManager {
     /**
      * 从单个追踪目标中解析类名
      *
-     * @param raw 单个追踪目标，格式为全限定类名.方法名或全限定类名.*
+     * @param pattern 单个追踪目标，格式为全限定类名.方法名或全限定类名.*
      * @return 全限定类名
      */
-    private static String parseClassName(String raw) {
-        return splitClassAndMethod(raw)[0];
+    private static String parseClassName(String pattern) {
+        return splitClassAndMethod(pattern)[0];
     }
 
     /**
      * 将追踪目标拆分为类名与方法名
      *
-     * @param raw 单个追踪目标，格式为全限定类名.方法名或全限定类名.*
+     * @param pattern 单个追踪目标，格式为全限定类名.方法名或全限定类名.*
      * @return 长度为2的数组，依次为类名、方法名
      */
-    private static String[] splitClassAndMethod(String raw) {
-        if (StringUtils.isBlank(raw)) {
+    private static String[] splitClassAndMethod(String pattern) {
+        if (StringUtils.isBlank(pattern)) {
             throw new IllegalArgumentException("target不能为空");
         }
-        String target = raw.trim();
+
+        String target = pattern.trim();
         int lastDot = target.lastIndexOf('.');
         if (lastDot <= 0) {
-            throw new IllegalArgumentException("必须是：全限定类名.方法名 或 全限定类名.*，例如 com.zto.fire.Student.print：" + raw);
+            throw new IllegalArgumentException("必须是：全限定类名.方法名 或 全限定类名.*：" + pattern);
         }
-        String className = target.substring(0, lastDot).trim();
+
+        String cName = target.substring(0, lastDot).trim();
         String methodSpec = target.substring(lastDot + 1).trim();
-        if (StringUtils.isBlank(className) || StringUtils.isBlank(methodSpec)) {
-            throw new IllegalArgumentException("类名或方法名不能为空：" + raw);
+        if (StringUtils.isBlank(cName) || StringUtils.isBlank(methodSpec)) {
+            throw new IllegalArgumentException("类名或方法名不能为空：" + pattern);
         }
-        return new String[]{className, methodSpec};
+
+        return new String[]{cName, methodSpec};
     }
 
     /**
@@ -251,42 +324,16 @@ public final class TraceManager {
     }
 
     /**
-     * 根据追踪目标构造构造器匹配器
-     *
-     * @param targets 追踪目标列表
-     * @return ByteBuddy构造器匹配器
-     */
-    private static ElementMatcher.Junction<MethodDescription> buildConstructorMatcher(List<String> targets) {
-        return targets.stream()
-                .map(TraceManager::methodMatcherForTargetConstructors)
-                .reduce(ElementMatcher.Junction::or)
-                .orElseGet(ElementMatchers::none);
-    }
-
-    /**
      * 构造单个追踪目标对应的普通方法匹配器
      *
-     * @param raw 单个追踪目标
+     * @param pattern 单个追踪目标
      * @return ByteBuddy普通方法匹配器
      */
-    private static ElementMatcher.Junction<MethodDescription> methodMatcherForTargetMethods(String raw) {
-        String[] classAndMethod = splitClassAndMethod(raw);
+    private static ElementMatcher.Junction<MethodDescription> methodMatcherForTargetMethods(String pattern) {
+        String[] classAndMethod = splitClassAndMethod(pattern);
         ElementMatcher.Junction<MethodDescription> onType = ElementMatchers.isMethod()
                 .and(ElementMatchers.isDeclaredBy(ElementMatchers.named(classAndMethod[0])));
         return "*".equals(classAndMethod[1]) ? onType : onType.and(ElementMatchers.named(classAndMethod[1]));
-    }
-
-    /**
-     * 构造单个追踪目标对应的构造器匹配器
-     *
-     * @param raw 单个追踪目标
-     * @return ByteBuddy构造器匹配器
-     */
-    private static ElementMatcher.Junction<MethodDescription> methodMatcherForTargetConstructors(String raw) {
-        String[] classAndMethod = splitClassAndMethod(raw);
-        ElementMatcher.Junction<MethodDescription> onType = ElementMatchers.isConstructor()
-                .and(ElementMatchers.isDeclaredBy(ElementMatchers.named(classAndMethod[0])));
-        return "*".equals(classAndMethod[1]) ? onType : ElementMatchers.none();
     }
 
     /**
@@ -300,10 +347,12 @@ public final class TraceManager {
         if (adviceClassLoader != null) {
             advice = advice.include(adviceClassLoader);
         }
+
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         if (contextClassLoader != null) {
             advice = advice.include(contextClassLoader);
         }
+
         return advice;
     }
 }

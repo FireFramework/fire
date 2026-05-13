@@ -18,9 +18,12 @@
 package com.zto.fire.spark.plugin
 
 import com.zto.fire.common.util.OSUtils
+import com.zto.fire.core.bean.TraceTarget
 import com.zto.fire.core.plugin.{TraceLauncher, TraceManager}
 import com.zto.fire.predef._
 import com.zto.fire.spark.sync.DistributeSyncManager
+
+import java.util.{List => JList}
 
 /**
  * Spark Trace分布式启动器
@@ -33,11 +36,11 @@ private[fire] class SparkTraceLauncher extends TraceLauncher {
   /**
    * 热启动代码增强
    */
-  override def codeTraceStart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit = {
-    TraceManager.startCodeTrace(className, thresholdMs)
+  override def codeTraceStart(isDistribute: Boolean, ip: String, targets: JList[TraceTarget]): Unit = {
+    TraceManager.startCodeTrace(targets)
     if (isDistribute) {
       DistributeSyncManager.sync({
-        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TraceManager.startCodeTrace(className, thresholdMs)
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TraceManager.startCodeTrace(targets)
       })
     }
   }
@@ -57,11 +60,11 @@ private[fire] class SparkTraceLauncher extends TraceLauncher {
   /**
    * 热重启代码增强
    */
-  override def codeTraceRestart(isDistribute: Boolean, ip: String, className: String, thresholdMs: Long): Unit = {
-    TraceManager.restartCodeTrace(className, thresholdMs)
+  override def codeTraceRestart(isDistribute: Boolean, ip: String, targets: JList[TraceTarget]): Unit = {
+    TraceManager.restartCodeTrace(targets)
     if (isDistribute) {
       DistributeSyncManager.sync({
-        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TraceManager.restartCodeTrace(className, thresholdMs)
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TraceManager.restartCodeTrace(targets)
       })
     }
   }

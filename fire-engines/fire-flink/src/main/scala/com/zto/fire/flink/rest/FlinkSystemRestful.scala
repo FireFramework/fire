@@ -52,7 +52,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/distributeSync", distributeSync))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/setConf", setConf))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/arthas", arthas))
-      .addRest(RestCase(RequestMethod.POST.toString, s"/system/trace", trace))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/trace/performance", tracePerformance))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/exception", exception))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/collectLineage", collectLineage))
   }
@@ -78,12 +78,12 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
   }
 
   /**
-   * 启用Trace代码增强进行耗时追踪
+   * Trace performance（TaskManager 经 distributeSync 同步同一 JSON）
    */
-  @Rest("/system/trace")
-  override def trace(request: Request, response: Response): AnyRef = {
-    logInfo(s"Ip address ${request.ip()} request /system/trace")
-    val retVal = super.trace(request, response)
+  @Rest(value = "/system/trace/performance", method = "post")
+  override def tracePerformance(request: Request, response: Response): AnyRef = {
+    logInfo(s"Ip address ${request.ip()} request /system/trace/performance")
+    val retVal = super.tracePerformance(request, response)
     val json = request.body()
     if (JSONUtils.getValue[Boolean](json, "distribute", false)) {
       this.distributeJson = JSONUtils.toJSONString(new DistributeBean(DistributeModule.TRACE, request.body))

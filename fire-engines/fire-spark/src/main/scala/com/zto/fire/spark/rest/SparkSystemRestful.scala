@@ -65,7 +65,7 @@ private[fire] class SparkSystemRestful(val baseSpark: BaseSpark) extends SystemR
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/datasource", datasource))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/lineage", lineage))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/arthas", arthas))
-      .addRest(RestCase(RequestMethod.POST.toString, s"/system/trace", trace))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/trace/performance", tracePerformance))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/exception", exception))
   }
 

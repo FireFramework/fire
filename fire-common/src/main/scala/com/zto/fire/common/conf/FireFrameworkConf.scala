@@ -480,7 +480,7 @@ private[fire] object FireFrameworkConf {
   /**
    * Trace代码增强打印日志的最小耗时阈值，单位 ms（与 REST 字段 thresholdMs 一致）
    */
-  def traceCodeTraceThresholdMs: Long = PropUtils.getLong(this.FIRE_TRACE_CODE_TRACE_THRESHOLD_MS, 10L)
+  lazy val traceCodeTraceThresholdMs = math.abs(PropUtils.getLong(this.FIRE_TRACE_CODE_TRACE_THRESHOLD_MS, 10L))
 
   /**
    * Trace启动器
