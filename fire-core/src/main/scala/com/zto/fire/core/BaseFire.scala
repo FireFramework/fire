@@ -23,7 +23,7 @@ import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.util.{FireUtils, _}
 import com.zto.fire.core.anno.lifecycle.{After, Before}
 import com.zto.fire.core.conf.AnnoManager
-import com.zto.fire.core.plugin.{ArthasManager, TraceManager}
+import com.zto.fire.core.plugin.{ArthasManager, TracePerformanceManager, TraceStandardManager}
 import com.zto.fire.core.rest.{RestServerManager, SystemRestful}
 import com.zto.fire.core.task.SchedulerManager
 import com.zto.fire.predef._
@@ -74,7 +74,8 @@ trait BaseFire extends Logging {
   private[fire] def boot(): Unit = {
     FireUtils.splash
     if (FireFrameworkConf.arthasEnable) ArthasManager.startArthas(this.resourceId, FireFrameworkConf.arthasContainerEnable)
-    if (FireFrameworkConf.traceCodeTraceEnable) TraceManager.startCodeTrace()
+    if (FireFrameworkConf.traceCodeTraceEnable) TracePerformanceManager.startTracePerformance()
+    if (FireFrameworkConf.traceCodeStandardEnable) TraceStandardManager.startTraceStandard()
     PropUtils.sliceKeys(FireFrameworkConf.FIRE_LOG_LEVEL_CONF_PREFIX).foreach(kv => Logger.getLogger(kv._1).setLevel(Level.toLevel(kv._2)))
     ExceptionBus.sendToMQ
   }

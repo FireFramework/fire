@@ -20,25 +20,18 @@ package com.zto.fire.core.plugin;
 import net.bytebuddy.asm.Advice;
 
 /**
- * ByteBuddy构造器耗时Advice，构造器不支持onThrowable捕获
+ * ByteBuddy代码规范检测Advice
  *
  * @author ChengLong
  * @since 3.0.0
  */
-public final class TraceConstructorTimingAdvice {
-    private TraceConstructorTimingAdvice() {
+public final class TraceStandardAdvice {
+    private TraceStandardAdvice() {
     }
 
     @Advice.OnMethodEnter
-    static long enter() {
-        return System.nanoTime();
-    }
-
-    @Advice.OnMethodExit
-    static void exit(@Advice.Enter long start,
-                     @Advice.Origin("#t") String declaringType,
-                     @Advice.Origin("#m") String methodName,
-                     @Advice.AllArguments Object[] allArgs) {
-        TraceManager.printTraceLog(start, declaringType, methodName, allArgs, null, null);
+    static void enter(@Advice.Origin("#t") String declaringType,
+                      @Advice.Origin("#m") String methodName) {
+        TraceStandardManager.printTraceStandardLog(declaringType, methodName);
     }
 }
