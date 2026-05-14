@@ -38,4 +38,14 @@ public class TraceTest {
             e.printStackTrace();
         }
     }
+
+    public void execute(long time) {
+        try {
+            logger.warn("调用execute方法");
+            long randomDelta = ThreadLocalRandom.current().nextLong(100);
+            Thread.sleep(time + randomDelta);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -338,6 +338,11 @@
             <artifactId>byte-buddy</artifactId>
             <version>1.14.10</version>
         </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>1.14.10</version>
+        </dependency>
         <!-- AspectJ：com.zto.fire.aspect 示例；运行需 -javaagent:aspectjweaver -->
         <dependency>
             <groupId>org.aspectj</groupId>
@@ -361,6 +366,14 @@
                 <configuration>
                     <source>8</source>
                     <target>8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>com.zto.fire.standard.NativeJdbcStandardDemoMain</mainClass>
                 </configuration>
             </plugin>
         </plugins>

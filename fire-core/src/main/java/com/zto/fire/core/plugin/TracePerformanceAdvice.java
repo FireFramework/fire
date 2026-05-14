@@ -21,13 +21,13 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
 /**
- * ByteBuddy普通方法耗时Advice
+ * ByteBuddy普通方法性能耗时Advice
  *
  * @author ChengLong
  * @since 3.0.0
  */
-public final class TraceTimingAdvice {
-    private TraceTimingAdvice() {
+public final class TracePerformanceAdvice {
+    private TracePerformanceAdvice() {
     }
 
     @Advice.OnMethodEnter
@@ -42,6 +42,6 @@ public final class TraceTimingAdvice {
                      @Advice.AllArguments Object[] allArgs,
                      @Advice.Return(readOnly = true, typing = Assigner.Typing.DYNAMIC) Object result,
                      @Advice.Thrown(readOnly = true) Throwable thrown) {
-        TraceManager.printTraceLog(start, declaringType, methodName, allArgs, result, thrown);
+        TracePerformanceManager.printTracePerformanceLog(start, declaringType, methodName, allArgs, result, thrown);
     }
 }

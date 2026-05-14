@@ -184,6 +184,11 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_TRACE_CODE_TRACE_ENABLE = "fire.trace.codeTrace.enable"
   lazy val FIRE_TRACE_CODE_TRACE_CLASS = "fire.trace.codeTrace.class"
   lazy val FIRE_TRACE_CODE_TRACE_THRESHOLD_MS = "fire.trace.codeTrace.thresholdMs"
+  lazy val FIRE_TRACE_CODE_STANDARD_ENABLE = "fire.trace.codeStandard.enable"
+  lazy val FIRE_TRACE_CODE_STANDARD_API = "fire.trace.codeStandard.api"
+  lazy val FIRE_TRACE_CODE_STANDARD_DURATION_MIN = "fire.trace.codeStandard.durationMin"
+  lazy val FIRE_TRACE_CODE_STANDARD_AUTO_EXIT = "fire.trace.codeStandard.autoExit"
+  lazy val FIRE_TRACE_CODE_STANDARD_STACK_SCAN_DEPTH = "fire.trace.codeStandard.stackScanDepth"
   lazy val FIRE_TRACE_LAUNCHER = "fire.trace.launcher"
 
   /**
@@ -481,6 +486,31 @@ private[fire] object FireFrameworkConf {
    * Trace代码增强打印日志的最小耗时阈值，单位 ms（与 REST 字段 thresholdMs 一致）
    */
   lazy val traceCodeTraceThresholdMs = math.abs(PropUtils.getLong(this.FIRE_TRACE_CODE_TRACE_THRESHOLD_MS, 10L))
+
+  /**
+   * 是否启用代码标准化分析
+   */
+  def traceCodeStandardEnable: Boolean = PropUtils.getBoolean(this.FIRE_TRACE_CODE_STANDARD_ENABLE, true)
+
+  /**
+   * 代码标准化分析的原生API与Fire封装API映射
+   */
+  def traceCodeStandardApi: String = PropUtils.getString(this.FIRE_TRACE_CODE_STANDARD_API, "")
+
+  /**
+   * 代码标准化分析时长，单位分钟
+   */
+  lazy val traceCodeStandardDurationMin: Long = math.abs(PropUtils.getLong(this.FIRE_TRACE_CODE_STANDARD_DURATION_MIN, 10L))
+
+  /**
+   * 一旦扫描到不合法API调用是否直接退出分析
+   */
+  lazy val traceCodeStandardAutoExit: Boolean = PropUtils.getBoolean(this.FIRE_TRACE_CODE_STANDARD_AUTO_EXIT, true)
+
+  /**
+   * 代码标准化分析调用栈扫描深度
+   */
+  lazy val traceCodeStandardStackScanDepth: Int = math.max(math.abs(PropUtils.getInt(this.FIRE_TRACE_CODE_STANDARD_STACK_SCAN_DEPTH, 28)), 1)
 
   /**
    * Trace启动器

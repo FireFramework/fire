@@ -30,6 +30,10 @@ import org.apache.flink.streaming.api.scala._
   """
     |fire.lineage.debug.enable=false
     |fire.debug.class.code.resource=com.fasterxml.jackson.annotation.JsonInclude,com.fasterxml.jackson.annotation.JsonInclude$Value,com.fasterxml.jackson.databind.ObjectMapper,com.fasterxml.jackson.databind.cfg.ConfigOverrides,com.fasterxml.jackson.core.JsonFactory
+    |fire.config_center.enable  =false
+    |fire.rest.url.show.enable  =true
+    |fire.rest.filter.enable    =false
+    |fire.lineage.send.mq.enable=false
     |""")
 @Streaming(interval = 10, disableOperatorChaining = true, parallelism = 2)
 object TraceTest extends FlinkStreaming {
@@ -40,6 +44,7 @@ object TraceTest extends FlinkStreaming {
       override def map(value: Int): Int = {
         val trace = new TraceTest
         trace.sleep(2000)
+        trace.execute(101)
         value
       }
     }).addSink(println _)

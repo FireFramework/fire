@@ -18,6 +18,7 @@
 package com.zto.fire.examples.spark.trace
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
 import com.zto.fire.core.anno.connector._
 import com.zto.fire.examples.bean.TraceTest
 import com.zto.fire.spark.SparkStreaming
@@ -29,6 +30,13 @@ import com.zto.fire.spark.anno.Streaming
  * @contact Fire框架技术交流群（钉钉）：35373471
  */
 @Hive("fat")
+@Config(
+  """
+    |fire.config_center.enable  =false
+    |fire.rest.url.show.enable  =true
+    |fire.rest.filter.enable    =false
+    |fire.lineage.send.mq.enable=false
+    |""")
 @Streaming(interval = 10)
 object TraceTest extends SparkStreaming {
 
@@ -39,6 +47,7 @@ object TraceTest extends SparkStreaming {
       rdd.repartition(4).foreachPartition(i => {
         val trace = new TraceTest
         trace.sleep(2000)
+        trace.execute(101)
       })
     })
   }

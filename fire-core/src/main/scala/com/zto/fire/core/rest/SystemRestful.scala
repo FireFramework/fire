@@ -24,8 +24,8 @@ import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.ErrorCode
 import com.zto.fire.common.util._
 import com.zto.fire.core.BaseFire
-import com.zto.fire.core.bean.{ArthasParam, TraceParam}
-import com.zto.fire.core.plugin.{ArthasDynamicLauncher, TraceDynamicLauncher}
+import com.zto.fire.core.bean.{ArthasParam, TracePerformanceParam}
+import com.zto.fire.core.plugin.{ArthasDynamicLauncher, TracePerformanceDynamicLauncher}
 import com.zto.fire.core.sync.SyncEngineConfHelper
 import com.zto.fire.predef.noEmpty
 import org.apache.commons.httpclient.Header
@@ -100,14 +100,14 @@ protected[fire] abstract class SystemRestful(engine: BaseFire) extends Logging {
   /**
    * 启用Trace代码增强进行耗时追踪
    */
-  @Rest(value = "/system/trace/performance", method = "post")
+  @Rest("/system/trace/performance")
   protected def tracePerformance(request: Request, response: Response): AnyRef = {
     val json = request.body
     try {
       logWarning(s"Ip address ${request.ip()} request /system/trace/performance")
       logWarning(s"请求执行 Trace performance：$json")
-      val traceParam = JSONUtils.parseObject[TraceParam](json)
-      TraceDynamicLauncher.command(traceParam)
+      val traceParam = JSONUtils.parseObject[TracePerformanceParam](json)
+      TracePerformanceDynamicLauncher.command(traceParam)
       logWarning(s"[tracePerformance] 命令${traceParam.getCommand}执行成功！")
       ResultMsg.buildSuccess("操作成功", "调用 Trace performance 接口成功！")
     } catch {

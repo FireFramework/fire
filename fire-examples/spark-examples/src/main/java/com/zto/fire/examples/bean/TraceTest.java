@@ -16,6 +16,8 @@
  */
 package com.zto.fire.examples.bean;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
  * 用于测试fire trace功能的虚拟api
  *
@@ -27,6 +29,15 @@ public class TraceTest {
     public void sleep(long time) {
         try {
             Thread.sleep(time);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void execute(long time) {
+        try {
+            long randomDelta = ThreadLocalRandom.current().nextLong(100);
+            Thread.sleep(time + randomDelta);
         } catch (Exception e) {
             e.printStackTrace();
         }

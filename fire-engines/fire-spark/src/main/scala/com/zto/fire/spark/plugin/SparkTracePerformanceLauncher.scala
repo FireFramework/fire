@@ -18,53 +18,53 @@
 package com.zto.fire.spark.plugin
 
 import com.zto.fire.common.util.OSUtils
-import com.zto.fire.core.bean.TraceTarget
-import com.zto.fire.core.plugin.{TraceLauncher, TraceManager}
+import com.zto.fire.core.bean.TracePerformanceTarget
+import com.zto.fire.core.plugin.{TracePerformanceLauncher, TracePerformanceManager}
 import com.zto.fire.predef._
 import com.zto.fire.spark.sync.DistributeSyncManager
 
 import java.util.{List => JList}
 
 /**
- * Spark Trace分布式启动器
+ * Spark Trace performance分布式启动器
  *
  * @author ChengLong
  * @since 3.0.0
  */
-private[fire] class SparkTraceLauncher extends TraceLauncher {
+private[fire] class SparkTracePerformanceLauncher extends TracePerformanceLauncher {
 
   /**
-   * 热启动代码增强
+   * 热启动性能代码增强
    */
-  override def codeTraceStart(isDistribute: Boolean, ip: String, targets: JList[TraceTarget]): Unit = {
-    TraceManager.startCodeTrace(targets)
+  override def tracePerformanceStart(isDistribute: Boolean, ip: String, targets: JList[TracePerformanceTarget]): Unit = {
+    TracePerformanceManager.startTracePerformance(targets)
     if (isDistribute) {
       DistributeSyncManager.sync({
-        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TraceManager.startCodeTrace(targets)
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TracePerformanceManager.startTracePerformance(targets)
       })
     }
   }
 
   /**
-   * 热关闭代码增强
+   * 热关闭性能代码增强
    */
-  override def codeTraceStop(isDistribute: Boolean, ip: String): Unit = {
-    TraceManager.stopCodeTrace()
+  override def tracePerformanceStop(isDistribute: Boolean, ip: String): Unit = {
+    TracePerformanceManager.stopTracePerformance()
     if (isDistribute) {
       DistributeSyncManager.sync({
-        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TraceManager.stopCodeTrace()
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TracePerformanceManager.stopTracePerformance()
       })
     }
   }
 
   /**
-   * 热重启代码增强
+   * 热重启性能代码增强
    */
-  override def codeTraceRestart(isDistribute: Boolean, ip: String, targets: JList[TraceTarget]): Unit = {
-    TraceManager.restartCodeTrace(targets)
+  override def tracePerformanceRestart(isDistribute: Boolean, ip: String, targets: JList[TracePerformanceTarget]): Unit = {
+    TracePerformanceManager.restartTracePerformance(targets)
     if (isDistribute) {
       DistributeSyncManager.sync({
-        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TraceManager.restartCodeTrace(targets)
+        if (isEmpty(ip) || ip.contains(OSUtils.getIp)) TracePerformanceManager.restartTracePerformance(targets)
       })
     }
   }

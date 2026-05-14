@@ -18,23 +18,23 @@
 package com.zto.fire.flink.plugin
 
 import com.zto.fire.common.util.OSUtils
-import com.zto.fire.core.bean.TraceTarget
-import com.zto.fire.core.plugin.{TraceLauncher, TraceManager}
+import com.zto.fire.core.bean.TracePerformanceTarget
+import com.zto.fire.core.plugin.{TracePerformanceLauncher, TracePerformanceManager}
 import com.zto.fire.flink.util.FlinkUtils
 import com.zto.fire.predef.{noEmpty, _}
 
 import java.util.{List => JList}
 
 /**
- * Flink Trace分布式启动器
+ * Flink Trace performance分布式启动器
  *
  * @author ChengLong
  * @since 3.0.0
  */
-private[fire] class FlinkTraceLauncher extends TraceLauncher {
+private[fire] class FlinkTracePerformanceLauncher extends TracePerformanceLauncher {
 
   /**
-   * 用于判断是否符合执行Trace命令的条件
+   * 用于判断是否符合执行Trace performance命令的条件
    */
   private[this] def canDo(isDistribute: Boolean, ip: String): Boolean = {
     if (FlinkUtils.isJobManager) return true
@@ -42,23 +42,23 @@ private[fire] class FlinkTraceLauncher extends TraceLauncher {
   }
 
   /**
-   * 热启动代码增强
+   * 热启动性能代码增强
    */
-  override def codeTraceStart(isDistribute: Boolean, ip: String, targets: JList[TraceTarget]): Unit = {
-    if (this.canDo(isDistribute, ip)) TraceManager.startCodeTrace(targets)
+  override def tracePerformanceStart(isDistribute: Boolean, ip: String, targets: JList[TracePerformanceTarget]): Unit = {
+    if (this.canDo(isDistribute, ip)) TracePerformanceManager.startTracePerformance(targets)
   }
 
   /**
-   * 热关闭代码增强
+   * 热关闭性能代码增强
    */
-  override def codeTraceStop(isDistribute: Boolean, ip: String): Unit = {
-    if (this.canDo(isDistribute, ip)) TraceManager.stopCodeTrace()
+  override def tracePerformanceStop(isDistribute: Boolean, ip: String): Unit = {
+    if (this.canDo(isDistribute, ip)) TracePerformanceManager.stopTracePerformance()
   }
 
   /**
-   * 热重启代码增强
+   * 热重启性能代码增强
    */
-  override def codeTraceRestart(isDistribute: Boolean, ip: String, targets: JList[TraceTarget]): Unit = {
-    if (this.canDo(isDistribute, ip)) TraceManager.restartCodeTrace(targets)
+  override def tracePerformanceRestart(isDistribute: Boolean, ip: String, targets: JList[TracePerformanceTarget]): Unit = {
+    if (this.canDo(isDistribute, ip)) TracePerformanceManager.restartTracePerformance(targets)
   }
 }

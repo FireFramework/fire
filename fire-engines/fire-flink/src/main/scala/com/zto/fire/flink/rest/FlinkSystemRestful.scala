@@ -80,7 +80,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
   /**
    * Trace performance（TaskManager 经 distributeSync 同步同一 JSON）
    */
-  @Rest(value = "/system/trace/performance", method = "post")
+  @Rest("/system/trace/performance")
   override def tracePerformance(request: Request, response: Response): AnyRef = {
     logInfo(s"Ip address ${request.ip()} request /system/trace/performance")
     val retVal = super.tracePerformance(request, response)

@@ -4,8 +4,8 @@ import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.util.{JSONUtils, PropUtils, ThreadUtils}
-import com.zto.fire.core.bean.{ArthasParam, TraceParam}
-import com.zto.fire.core.plugin.{ArthasDynamicLauncher, TraceDynamicLauncher}
+import com.zto.fire.core.bean.{ArthasParam, TracePerformanceParam}
+import com.zto.fire.core.plugin.{ArthasDynamicLauncher, TracePerformanceDynamicLauncher}
 import com.zto.fire.core.rest.SystemRestful
 import com.zto.fire.core.sync.{DistributeExecuteManagerHelper, SyncManager}
 import com.zto.fire.flink.bean.DistributeBean
@@ -51,7 +51,7 @@ private[fire] object DistributeSyncManager extends SyncManager {
             // 同步Arthas服务的命令
             case DistributeModule.ARTHAS => ArthasDynamicLauncher.command(JSONUtils.parseObject[ArthasParam](distribute.getJson))
             // 同步ByteBuddy agent服务的命令
-            case DistributeModule.TRACE => TraceDynamicLauncher.command(JSONUtils.parseObject[TraceParam](distribute.getJson))
+            case DistributeModule.TRACE => TracePerformanceDynamicLauncher.command(JSONUtils.parseObject[TracePerformanceParam](distribute.getJson))
           }
         }
         this.lastJsonConf = jsonConf
