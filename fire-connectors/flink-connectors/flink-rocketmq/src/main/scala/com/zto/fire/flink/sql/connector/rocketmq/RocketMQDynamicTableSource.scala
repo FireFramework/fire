@@ -33,7 +33,7 @@ import org.apache.flink.table.connector.source.{DynamicTableSource, ScanTableSou
 import org.apache.flink.table.data.RowData
 import org.apache.flink.table.types.DataType
 import org.apache.flink.table.types.utils.DataTypeUtils
-import org.apache.rocketmq.flink.common.serialization.{JsonDeserializationSchema, RowKeyValueDeserializationSchema}
+import org.apache.rocketmq.flink.common.serialization.{BinaryBodyFormatDeserializationSchema, JsonDeserializationSchema, RowKeyValueDeserializationSchema}
 import org.apache.rocketmq.flink.{RocketMQConfig, RocketMQSourceWithTag}
 
 import java.util
@@ -111,13 +111,22 @@ class RocketMQDynamicTableSource(physicalDataType: DataType,
     // val keyDeserialization = createDeserialization(context, keyDecodingFormat, keyProjection, keyPrefix)
     val valueDeserialization = createDeserialization(context, valueDecodingFormat, valueProjection, null)
 
+    val tableFormatId = Option(tableOptions.get("format")).map(_.trim).filter(_.nonEmpty).orNull
+
     if (valueDecodingFormat.toString.contains("Raw")) {
       SourceFunctionProvider.of(
         new RocketMQSourceWithTag(
           createKeyValueDeserializationSchema(JavaConversions.mapAsJavaMap(properties.toMap)), properties),
         false)
+    } else if (tableFormatId.equalsIgnoreCase("zto-deserialize")) {
+      //如果是zto-deserialize则使用flink的spi中的format处理
+      SourceFunctionProvider.of(
+        new RocketMQSourceWithTag(new BinaryBodyFormatDeserializationSchema(valueDeserialization), properties),
+        false)
     } else {
-      SourceFunctionProvider.of(new RocketMQSourceWithTag(new JsonDeserializationSchema(null, valueDeserialization), properties), false)
+      SourceFunctionProvider.of(
+        new RocketMQSourceWithTag(new JsonDeserializationSchema(null, valueDeserialization), properties),
+        false)
     }
   }
 
