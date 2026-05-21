@@ -24,7 +24,6 @@ import com.zto.fire.core.bean.TraceStandardApi;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.agent.builder.ResettableClassFileTransformer;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -34,7 +33,9 @@ import org.apache.log4j.Logger;
 import java.lang.instrument.Instrumentation;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,11 +49,12 @@ import java.util.stream.Collectors;
  */
 public final class TraceStandardManager extends TraceManager {
     private static final Logger logger = Logger.getLogger(TraceStandardManager.class);
-    private static final AtomicBoolean started = new AtomicBoolean(false);
-    private static final ConcurrentHashMap<String, TraceStandardApi> mappingCache = new ConcurrentHashMap<>();
-    private static volatile ResettableClassFileTransformer resettable;
-    private static volatile List<TraceStandardApi> apiMappings = Collections.emptyList();
     private static volatile long endNanos = Long.MAX_VALUE;
+    private static volatile ResettableClassFileTransformer resettable;
+    private static final AtomicBoolean started = new AtomicBoolean(false);
+    private static final ConcurrentHashMap<String, TraceStandardApi> apiMappingMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Boolean> shouldAnalyzeMap = new ConcurrentHashMap<>();
+    private static volatile Map<String, TraceStandardApi> sourcePatternMap = Collections.emptyMap();
 
     /**
      * 工具类不允许实例化
@@ -61,7 +63,7 @@ public final class TraceStandardManager extends TraceManager {
     }
 
     /**
-     * 任务启动时按框架配置开启 Trace standard：从 {@code fire.trace.codeStandard.api} 解析原生API与Fire封装映射
+     * 任务启动时按框架配置开启 Trace standard：从fire.trace.codeStandard.api配置中解析原生API与Fire封装映射
      */
     public static void startTraceStandard() {
         // 配置关闭时不安装 ByteBuddy transformer，避免无意义的增强开销
@@ -70,7 +72,7 @@ public final class TraceStandardManager extends TraceManager {
             return;
         }
 
-        // 从配置中解析「原生API -> Fire封装包」映射，作为后续类型匹配与栈过滤依据
+        // 从配置中解析「类.方法 -> Fire封装包」映射，作为后续方法匹配与栈过滤依据
         List<TraceStandardApi> mappings = buildApiMappingsFromFireConf();
         if (mappings.isEmpty()) {
             logger.warn("Trace standard api 配置为空，请配置 fire.trace.codeStandard.api");
@@ -82,7 +84,7 @@ public final class TraceStandardManager extends TraceManager {
     }
 
     /**
-     * 安装 Trace standard 检测：根据配置匹配原生API类型及其实现类，并织入进入方法时的检测逻辑
+     * 安装 Trace standard 检测：根据配置的「类.方法」或「类.*」织入目标方法，并在方法入口执行栈分析
      *
      * @param mappings 原生API与Fire封装包的映射列表
      */
@@ -96,27 +98,32 @@ public final class TraceStandardManager extends TraceManager {
 
             if (started.compareAndSet(false, true)) {
                 try {
-                    // 缓存本次配置，并清空类型到配置项的解析缓存，避免旧配置影响新一轮安装
-                    apiMappings = Collections.unmodifiableList(new ArrayList<>(mappings));
-                    mappingCache.clear();
+                    // 缓存本次配置，并清空运行时解析缓存，避免旧配置影响新一轮安装
+                    sourcePatternMap = buildSourcePatternMap(mappings);
+                    if (sourcePatternMap.isEmpty()) {
+                        started.compareAndSet(true, false);
+                        logger.warn("Trace standard api 配置无效，请检查 fire.trace.codeStandard.api 是否为「全限定类名.方法名」或「全限定类名.*」");
+                        return;
+                    }
+                    apiMappingMap.clear();
+                    shouldAnalyzeMap.clear();
                     long durationMin = Math.max(FireFrameworkConf.traceCodeStandardDurationMin(), 0L);
                     // 记录分析截止时间，超过 durationMin 后 Advice 将快速返回
                     endNanos = System.nanoTime() + TimeUnit.MINUTES.toNanos(durationMin);
 
+                    List<String> sourcePatterns = new ArrayList<>(sourcePatternMap.keySet());
                     Instrumentation instrumentation = installByteBuddyAgent();
-                    // 类型匹配：命中 source API 本身以及它的实现类/子类
-                    ElementMatcher.Junction<TypeDescription> apiTypes = buildTypeMatcher(mappings);
-                    // 方法匹配：只增强普通非抽象、非native方法，避免无方法体的方法织入失败或无意义
-                    ElementMatcher.Junction<MethodDescription> methodsOnly = ElementMatchers.isMethod()
+                    // 方法匹配：按配置的「类.方法」或「类.*」精确织入目标方法
+                    ElementMatcher.Junction<MethodDescription> methodMatcher = buildMethodMatcher(sourcePatterns)
                             .and(ElementMatchers.not(ElementMatchers.isAbstract()))
                             .and(ElementMatchers.not(ElementMatchers.isNative()));
 
                     // Advice会在目标方法入口执行，用于检查当前调用栈是否绕过Fire封装API
                     AgentBuilder.Transformer.ForAdvice advice = newAdviceTransformer(TraceStandardAdvice.class)
-                            .advice(methodsOnly, TraceStandardAdvice.class.getName());
+                            .advice(methodMatcher, TraceStandardAdvice.class.getName());
 
                     resettable = newDefaultAgentBuilder()
-                            .type(apiTypes)
+                            .type(ElementMatchers.namedOneOf(distinctClassNames(sourcePatterns)))
                             .transform(advice)
                             .installOn(instrumentation);
 
@@ -125,12 +132,30 @@ public final class TraceStandardManager extends TraceManager {
                 } catch (Throwable e) {
                     // 安装失败时回滚状态，保证后续可再次尝试启动
                     started.compareAndSet(true, false);
-                    apiMappings = Collections.emptyList();
-                    mappingCache.clear();
+                    sourcePatternMap = Collections.emptyMap();
+                    apiMappingMap.clear();
+                    shouldAnalyzeMap.clear();
                     logger.error("Trace standard 代码扫描服务启动失败", e);
                 }
             }
         }
+    }
+
+    /**
+     * 判断当前方法是否需要执行标准化分析，按「被增强类#方法名」去重，同一个原生API方法只分析一次。
+     *
+     * @param declaringType 当前被增强方法所属类名
+     * @param methodName    当前被增强方法名
+     * @return true表示首次命中且仍处于扫描窗口，需要继续分析
+     */
+    public static boolean shouldAnalyze(String declaringType, String methodName) {
+        if (!canScan()) {
+            return false;
+        }
+
+        // 构造方法级去重key，避免同一个原生API方法被重复分析
+        String methodKey = declaringType + "." + methodName;
+        return shouldAnalyzeMap.putIfAbsent(methodKey, Boolean.TRUE) == null;
     }
 
     /**
@@ -139,14 +164,9 @@ public final class TraceStandardManager extends TraceManager {
      * @param declaringType 当前被增强方法所属类名
      * @param methodName    当前被增强方法名
      */
-    public static void printTraceStandardLog(String declaringType, String methodName) {
-        // autoExit命中或超时后，Advice只做一次状态判断并快速返回
-        if (!canScan()) {
-            return;
-        }
-
-        // 根据当前实际被增强类解析其对应的source/target配置
-        TraceStandardApi mapping = resolveMapping(declaringType);
+    public static void analyzeCodeStandard(String declaringType, String methodName) {
+        // 根据当前被增强的类与方法解析其对应的source/target配置
+        TraceStandardApi mapping = resolveMapping(declaringType, methodName);
         if (mapping == null) {
             return;
         }
@@ -199,7 +219,7 @@ public final class TraceStandardManager extends TraceManager {
         }
 
         try {
-            // 配置格式为JSON数组，直接反序列化为List<TraceStandardApi>
+            // 配置格式为JSON数组，source为「全限定类名.方法名」或「全限定类名.*」
             return JSONUtils.newObjectMapperWithDefaultConf().readValue(json, new TypeReference<List<TraceStandardApi>>() {});
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -207,104 +227,84 @@ public final class TraceStandardManager extends TraceManager {
     }
 
     /**
-     * 构造ByteBuddy类型匹配器，匹配source API本身以及其实现类/子类
-     *
-     * @param mappings 原生API与Fire封装包映射列表
-     * @return ByteBuddy类型匹配器
+     * 将配置列表转换为 pattern -> mapping 映射，并过滤无效 pattern
      */
-    private static ElementMatcher.Junction<TypeDescription> buildTypeMatcher(List<TraceStandardApi> mappings) {
-        return mappings.stream()
-                .map(mapping -> ElementMatchers.named(mapping.getSource())
-                        .or(ElementMatchers.hasSuperType(ElementMatchers.named(mapping.getSource()))))
-                .reduce(ElementMatcher.Junction::or)
-                .orElseGet(ElementMatchers::none);
+    private static Map<String, TraceStandardApi> buildSourcePatternMap(List<TraceStandardApi> mappings) {
+        Map<String, TraceStandardApi> patternMap = new LinkedHashMap<>();
+        for (TraceStandardApi mapping : mappings) {
+            if (mapping == null || StringUtils.isBlank(mapping.getSource())) {
+                continue;
+            }
+
+            String sourcePattern = mapping.getSource().trim();
+            try {
+                splitClassAndMethod(sourcePattern);
+                patternMap.put(sourcePattern, mapping);
+            } catch (IllegalArgumentException e) {
+                logger.warn("忽略无效的 Trace standard api 配置: " + sourcePattern);
+            }
+        }
+        return Collections.unmodifiableMap(patternMap);
     }
 
     /**
-     * 根据当前被增强类名解析对应的API映射，并使用缓存避免重复进行类加载与继承关系判断
+     * 根据被增强的类名与方法名解析对应的API映射，支持精确匹配与「类.*」通配符
      *
      * @param declaringType 当前被增强方法所属类名
+     * @param methodName    当前被增强方法名
      * @return 匹配到的API映射，未匹配返回null
      */
-    private static TraceStandardApi resolveMapping(String declaringType) {
-        if (StringUtils.isBlank(declaringType)) {
+    private static TraceStandardApi resolveMapping(String declaringType, String methodName) {
+        if (StringUtils.isBlank(declaringType) || StringUtils.isBlank(methodName)) {
             return null;
         }
-        return mappingCache.computeIfAbsent(declaringType, TraceStandardManager::doResolveMapping);
+
+        String cacheKey = declaringType + "#" + methodName;
+        return apiMappingMap.computeIfAbsent(cacheKey, key -> lookupMapping(declaringType, methodName));
     }
 
     /**
-     * 实际执行API映射解析：优先精确匹配source类名，再判断source是否为当前类的父类或接口
-     *
-     * @param declaringType 当前被增强方法所属类名
-     * @return 匹配到的API映射，未匹配返回null
+     * 按「类.方法」优先、再回退「类.*」查询映射配置
      */
-    private static TraceStandardApi doResolveMapping(String declaringType) {
-        Class<?> declaringClass = loadClass(declaringType);
-        for (TraceStandardApi mapping : apiMappings) {
-            // 先处理source API本身被增强的情况
-            if (mapping.getSource().equals(declaringType)) {
-                return mapping;
-            }
-
-            // 再处理实现类/子类被增强的情况，例如具体JDBC Driver或KafkaProducer子类
-            Class<?> sourceClass = loadClass(mapping.getSource());
-            if (sourceClass != null && declaringClass != null && sourceClass.isAssignableFrom(declaringClass)) {
-                return mapping;
-            }
+    private static TraceStandardApi lookupMapping(String declaringType, String methodName) {
+        TraceStandardApi exact = sourcePatternMap.get(declaringType + "." + methodName);
+        if (exact != null) {
+            return exact;
         }
-        return null;
-    }
-
-    /**
-     * 安全加载指定类名，优先使用线程上下文ClassLoader，再回退到当前类的ClassLoader
-     *
-     * @param className 待加载的全限定类名
-     * @return 加载成功的Class，失败返回null
-     */
-    private static Class<?> loadClass(String className) {
-        try {
-            ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-            return Class.forName(className, false, contextClassLoader);
-        } catch (Throwable ignored) {
-            try {
-                return Class.forName(className, false, TraceStandardManager.class.getClassLoader());
-            } catch (Throwable ignoredAgain) {
-                return null;
-            }
-        }
+        return sourcePatternMap.get(declaringType + ".*");
     }
 
     /**
      * 查找第一个疑似业务调用方；如果调用栈中已经包含Fire封装包，则认为是合规调用并返回null
      *
-     * @param mapping       当前命中的API映射
+     * @param standardApi       当前命中的API映射
      * @param declaringType 当前被增强方法所属类名
      * @return 疑似业务调用栈帧，合规调用或未找到时返回null
      */
-    private static StackTraceElement firstIllegalCaller(TraceStandardApi mapping, String declaringType) {
+    private static StackTraceElement firstIllegalCaller(TraceStandardApi standardApi, String declaringType) {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        // 限制扫描深度，避免过深调用栈带来额外开销
         int limit = Math.min(stackTrace.length, FireFrameworkConf.traceCodeStandardStackScanDepth());
 
-        // 第一轮先判断是否已经经过Fire封装包，避免把框架内部调用误判为业务违规
-        for (int i = 0; i < limit; i++) {
-            String className = stackTrace[i].getClassName();
-            if (className.startsWith(mapping.getTarget())) {
-                return null;
-            }
-        }
-
-        // 第二轮跳过JDK、ByteBuddy、当前Advice/Manager以及source API自身栈帧，定位业务侧调用点
+        // 单次遍历同时完成两项判断：栈中是否经过Fire封装包、首个疑似业务调用方
+        boolean hasTarget = false;
+        StackTraceElement candidate = null;
         for (int i = 0; i < limit; i++) {
             StackTraceElement element = stackTrace[i];
             String className = element.getClassName();
-            if (isIgnoredStackClass(className, mapping, declaringType)) {
-                continue;
+
+            // 栈中任意位置出现target包即视为合规，不能仅凭浅层业务帧判定违规
+            if (className.startsWith(standardApi.getTarget())) {
+                hasTarget = true;
             }
-            return element;
+
+            // 记录第一个非忽略栈帧，作为疑似业务直连原生API的调用位置
+            if (candidate == null && !isIgnoredStackClass(className, standardApi, declaringType)) {
+                candidate = element;
+            }
         }
 
-        return null;
+        return hasTarget ? null : candidate;
     }
 
     /**
@@ -316,6 +316,7 @@ public final class TraceStandardManager extends TraceManager {
      * @return true表示忽略该栈帧
      */
     private static boolean isIgnoredStackClass(String className, TraceStandardApi mapping, String declaringType) {
+        String sourceClass = parseClassName(mapping.getSource());
         return className.startsWith("java.")
                 || className.startsWith("javax.")
                 || className.startsWith("jdk.")
@@ -324,21 +325,21 @@ public final class TraceStandardManager extends TraceManager {
                 || className.equals(TraceStandardAdvice.class.getName())
                 || className.equals(TraceStandardManager.class.getName())
                 || className.equals(declaringType)
-                || className.equals(mapping.getSource())
-                || isApiStackClass(className, mapping)
+                || className.equals(sourceClass)
+                || isApiStackClass(className, sourceClass)
                 || className.startsWith(mapping.getTarget());
     }
 
     /**
      * 判断调用栈类是否属于source API体系，包含source本身、实现类和子类
      *
-     * @param className 调用栈帧类名
-     * @param mapping   当前命中的API映射
+     * @param className       调用栈帧类名
+     * @param sourceClassName source pattern 对应的全限定类名
      * @return true表示该类属于source API体系
      */
-    private static boolean isApiStackClass(String className, TraceStandardApi mapping) {
+    private static boolean isApiStackClass(String className, String sourceClassName) {
         Class<?> stackClass = loadClass(className);
-        Class<?> sourceClass = loadClass(mapping.getSource());
+        Class<?> sourceClass = loadClass(sourceClassName);
         return stackClass != null && sourceClass != null && sourceClass.isAssignableFrom(stackClass);
     }
 

@@ -20,7 +20,7 @@ package com.zto.fire.core.bean;
 import java.io.Serializable;
 
 /**
- * 代码规范检测API映射：source 为原生API，target 为 Fire 封装包名前缀
+ * 代码规范检测API映射：source 为「全限定类名.方法名」或「全限定类名.*」，target 为 Fire 封装包名前缀
  *
  * @author ChengLong
  * @since fire 3.0.0

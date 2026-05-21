@@ -32,6 +32,12 @@ public final class TraceStandardAdvice {
     @Advice.OnMethodEnter
     static void enter(@Advice.Origin("#t") String declaringType,
                       @Advice.Origin("#m") String methodName) {
-        TraceStandardManager.printTraceStandardLog(declaringType, methodName);
+        // 对于需要拦截的方法，只分析一次堆栈，降低开销
+        if (!TraceStandardManager.shouldAnalyze(declaringType, methodName)) {
+            return;
+        }
+
+        // 分析执行堆栈，找出不规范的代码
+        TraceStandardManager.analyzeCodeStandard(declaringType, methodName);
     }
 }

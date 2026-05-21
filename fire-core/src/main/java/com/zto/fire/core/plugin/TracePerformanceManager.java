@@ -32,7 +32,6 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -148,7 +147,7 @@ public final class TracePerformanceManager extends TraceManager {
                     AgentBuilder.Transformer.ForAdvice advice = newAdviceTransformer(TracePerformanceAdvice.class)
                             .advice(methodsOnly, TracePerformanceAdvice.class.getName());
 
-                    String[] typeNames = distinctTargets(patterns);
+                    String[] typeNames = distinctClassNames(patterns);
                     resettable = newDefaultAgentBuilder()
                             .type(ElementMatchers.namedOneOf(typeNames))
                             .transform(advice)
@@ -245,56 +244,5 @@ public final class TracePerformanceManager extends TraceManager {
         }
 
         return FireFrameworkConf.traceCodeTraceThresholdMs();
-    }
-
-    /**
-     * 获取去重后的类名列表
-     */
-    private static String[] distinctTargets(List<String> targets) {
-        return targets.stream()
-                .map(TracePerformanceManager::parseClassName)
-                .collect(Collectors.toCollection(LinkedHashSet::new))
-                .toArray(new String[0]);
-    }
-
-    private static String parseClassName(String pattern) {
-        return splitClassAndMethod(pattern)[0];
-    }
-
-    /**
-     * 根据pattern拆分class和方法/通配符
-     */
-    private static String[] splitClassAndMethod(String pattern) {
-        if (StringUtils.isBlank(pattern)) {
-            throw new IllegalArgumentException("target不能为空");
-        }
-
-        String target = pattern.trim();
-        int lastDot = target.lastIndexOf('.');
-        if (lastDot <= 0) {
-            throw new IllegalArgumentException("必须是：全限定类名.方法名 或 全限定类名.*：" + pattern);
-        }
-
-        String cName = target.substring(0, lastDot).trim();
-        String methodSpec = target.substring(lastDot + 1).trim();
-        if (StringUtils.isBlank(cName) || StringUtils.isBlank(methodSpec)) {
-            throw new IllegalArgumentException("类名或方法名不能为空：" + pattern);
-        }
-
-        return new String[]{cName, methodSpec};
-    }
-
-    private static ElementMatcher.Junction<MethodDescription> buildMethodMatcher(List<String> targets) {
-        return targets.stream()
-                .map(TracePerformanceManager::methodMatcherForTargetMethods)
-                .reduce(ElementMatcher.Junction::or)
-                .orElseGet(ElementMatchers::none);
-    }
-
-    private static ElementMatcher.Junction<MethodDescription> methodMatcherForTargetMethods(String pattern) {
-        String[] classAndMethod = splitClassAndMethod(pattern);
-        ElementMatcher.Junction<MethodDescription> onType = ElementMatchers.isMethod()
-                .and(ElementMatchers.isDeclaredBy(ElementMatchers.named(classAndMethod[0])));
-        return "*".equals(classAndMethod[1]) ? onType : onType.and(ElementMatchers.named(classAndMethod[1]));
     }
 }
