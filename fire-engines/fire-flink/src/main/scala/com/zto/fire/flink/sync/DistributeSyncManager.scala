@@ -26,9 +26,13 @@ private[fire] object DistributeSyncManager extends SyncManager {
   private var lastJsonConf = ""
   private lazy val distributeSyncUrl = "/system/distributeSync"
   private lazy val lineageUrl = "/system/collectLineage"
+  private lazy val standardUrl = "/system/collectStandard"
   // 用于记录血缘解析运行的次数
   private lazy val lineageRunCount = new AtomicInteger()
   private lazy val lineageThread = ThreadUtils.createManagedThreadPool("LineageSyncThread", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
+  // 用于记录代码标准化检测结果采集运行的次数
+  private lazy val standardRunCount = new AtomicInteger()
+  private lazy val standardThread = ThreadUtils.createManagedThreadPool("StandardSyncThread", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
 
 
   /**
@@ -80,6 +84,29 @@ private[fire] object DistributeSyncManager extends SyncManager {
         LineageManager.printLog(s"完成Flink分布式血缘解析与采集：${lineageRunCount.get()}次")
       }
     }, FireFrameworkConf.lineageRunInitialDelay, FireFrameworkConf.lineageRunPeriod, TimeUnit.SECONDS)
+  }
+
+  /**
+   * 同步TaskManager端代码标准化检测结果到JobManager端累加器中
+   */
+  def collectStandard: Unit = {
+    standardThread.scheduleWithFixedDelay(new Runnable {
+      override def run(): Unit = {
+        logInfo(s"调用接口[$standardUrl]定时代码标准化检测采集任务已启动")
+        val standards = FlinkStandardAccumulatorManager.getAndReset
+        if (standards != null && !standards.isEmpty) {
+          val json = JSONUtils.toJSONString(standards)
+          logInfo(s"调用接口[$standardUrl]发送代码标准化检测json：$json")
+          SystemRestful.restInvoke(standardUrl, json)
+        }
+
+        if (standardRunCount.incrementAndGet() > FireFrameworkConf.traceCodeStandardRunCount) {
+          logInfo(s"Flink分布式代码标准化检测采集任务即将退出，总计运行：${standardRunCount.get()}次")
+          standardThread.shutdown()
+        }
+        logInfo(s"完成Flink分布式代码标准化检测采集：${standardRunCount.get()}次")
+      }
+    }, FireFrameworkConf.traceCodeStandardRunInitialDelay, FireFrameworkConf.traceCodeStandardRunPeriod, TimeUnit.SECONDS)
   }
 
   /**

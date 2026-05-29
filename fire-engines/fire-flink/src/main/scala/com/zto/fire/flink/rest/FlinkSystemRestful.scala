@@ -17,8 +17,10 @@
 
 package com.zto.fire.flink.rest
 
+import com.fasterxml.jackson.core.`type`.TypeReference
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
+import com.zto.fire.common.bean.standard.Standard
 import com.zto.fire.common.enu.{Datasource, ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
 import com.zto.fire.core.rest.{RestCase, RestServerManager, SystemRestful}
@@ -26,7 +28,7 @@ import com.zto.fire.flink.BaseFlink
 import com.zto.fire.common.lineage._
 import com.zto.fire.flink.bean.{CheckpointParams, DistributeBean}
 import com.zto.fire.flink.enu.DistributeModule
-import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
+import com.zto.fire.flink.sync.{FlinkLineageAccumulatorManager, FlinkStandardAccumulatorManager}
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
 import org.apache.flink.runtime.checkpoint.CheckpointCoordinator
@@ -55,6 +57,7 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/trace/performance", tracePerformance))
       .addRest(RestCase(RequestMethod.GET.toString, s"/system/exception", exception))
       .addRest(RestCase(RequestMethod.POST.toString, s"/system/collectLineage", collectLineage))
+      .addRest(RestCase(RequestMethod.POST.toString, s"/system/collectStandard", collectStandard))
   }
 
   /**
@@ -113,6 +116,31 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
       case e: Exception => {
         logError(s"[collectLineage] 设置血缘信息失败：json=$json", e)
         ResultMsg.buildError("设置血缘信息失败", ErrorCode.ERROR)
+      }
+    }
+  }
+
+  /**
+   * 用于引擎内部分布式采集代码标准化检测结果
+   */
+  @Rest("/system/collectStandard")
+  def collectStandard(request: Request, response: Response): AnyRef = {
+    val json = request.body
+
+    try {
+      logDebug(s"内部请求分布式更新代码标准化检测结果，ip：${request.ip()}")
+      logInfo(s"请求fire更新代码标准化检测结果：$json")
+      if (noEmpty(json)) {
+        val standards = JSONUtils.newObjectMapperWithDefaultConf.readValue(json, new TypeReference[JArrayList[Standard]]() {})
+        if (standards != null && !standards.isEmpty) {
+          FlinkStandardAccumulatorManager.add(standards)
+        }
+      }
+      ResultMsg.buildSuccess("代码标准化检测结果已更新", ErrorCode.SUCCESS.toString)
+    } catch {
+      case e: Exception => {
+        logError(s"[collectStandard] 设置代码标准化检测结果失败：json=$json", e)
+        ResultMsg.buildError("设置代码标准化检测结果失败", ErrorCode.ERROR)
       }
     }
   }

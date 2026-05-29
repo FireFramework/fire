@@ -23,7 +23,8 @@ import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.util.{JSONUtils, MQProducer}
 import com.zto.fire.core.task.FireInternalTask
 import com.zto.fire.spark.BaseSpark
-import com.zto.fire.spark.sync.SparkLineageAccumulatorManager
+import com.zto.fire.spark.sync.{SparkLineageAccumulatorManager, SparkStandardAccumulatorManager}
+import org.apache.commons.lang3.StringUtils
 
 /**
  * 定时任务调度器，用于定时执行Spark框架内部指定的任务
@@ -52,6 +53,21 @@ private[fire] class SparkInternalTask(baseSpark: BaseSpark) extends FireInternal
         val lineageJson = JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue)
         LineageManager.printLog("向kafka发送血缘json：" + lineageJson)
         MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, lineageJson, throwable = false)
+      }
+    }
+  }
+
+  /**
+   * 代码标准化检测结果发送定时任务，定时将不规范API调用信息发送到kafka中
+   */
+  @Scheduled(fixedInterval = 10000, initialDelay = 10000)
+  def standard: Unit = {
+    if (FireFrameworkConf.traceCodeStandardEnable && StringUtils.isNotBlank(FireFrameworkConf.traceCodeStandardSendMqUrl) && StringUtils.isNotBlank(FireFrameworkConf.traceCodeStandardSendMqTopic)) {
+      val standards = SparkStandardAccumulatorManager.getAndReset
+      if (standards != null && !standards.isEmpty) {
+        val standardJson = JSONUtils.toJSONString(standards)
+        LineageManager.printLog("向kafka发送代码规范检测json：" + standardJson)
+        MQProducer.sendKafka(FireFrameworkConf.traceCodeStandardSendMqUrl, FireFrameworkConf.traceCodeStandardSendMqTopic, standardJson, throwable = false)
       }
     }
   }

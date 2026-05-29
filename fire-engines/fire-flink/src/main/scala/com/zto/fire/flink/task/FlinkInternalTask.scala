@@ -23,7 +23,8 @@ import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.util.{JSONUtils, MQProducer}
 import com.zto.fire.core.task.FireInternalTask
 import com.zto.fire.flink.BaseFlink
-import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager
+import com.zto.fire.flink.sync.{FlinkLineageAccumulatorManager, FlinkStandardAccumulatorManager}
+import org.apache.commons.lang3.StringUtils
 
 /**
  * 定时任务调度器，用于定时执行Flink框架内部指定的任务
@@ -47,6 +48,21 @@ private[fire] class FlinkInternalTask(baseFlink: BaseFlink) extends FireInternal
         val lineageJson = JSONUtils.toJSONString(FlinkLineageAccumulatorManager.getValue)
         LineageManager.printLog("向kafka发送血缘json：" + lineageJson)
         MQProducer.sendKafka(FireFrameworkConf.lineageMQUrl, FireFrameworkConf.lineageTopic, lineageJson, throwable = false)
+      }
+    }
+  }
+
+  /**
+   * 代码标准化检测结果发送定时任务，定时将不规范API调用信息发送到kafka中
+   */
+  @Scheduled(fixedInterval = 120000, initialDelay = 60000)
+  def standard: Unit = {
+    if (FireFrameworkConf.traceCodeStandardEnable && StringUtils.isNotBlank(FireFrameworkConf.traceCodeStandardSendMqUrl) && StringUtils.isNotBlank(FireFrameworkConf.traceCodeStandardSendMqTopic)) {
+      val standards = FlinkStandardAccumulatorManager.getAndReset
+      if (standards != null && !standards.isEmpty) {
+        val standardJson = JSONUtils.toJSONString(standards)
+        LineageManager.printLog("向kafka发送代码规范检测json：" + standardJson)
+        MQProducer.sendKafka(FireFrameworkConf.traceCodeStandardSendMqUrl, FireFrameworkConf.traceCodeStandardSendMqTopic, standardJson, throwable = false)
       }
     }
   }

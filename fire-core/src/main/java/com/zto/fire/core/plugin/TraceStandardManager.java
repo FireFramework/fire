@@ -18,9 +18,11 @@
 package com.zto.fire.core.plugin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.zto.fire.common.bean.standard.Standard;
 import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.JSONUtils;
 import com.zto.fire.core.bean.TraceStandardApi;
+import com.zto.fire.core.sync.StandardAccumulatorManagerHelper;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.agent.builder.ResettableClassFileTransformer;
 import net.bytebuddy.description.method.MethodDescription;
@@ -179,6 +181,9 @@ public final class TraceStandardManager extends TraceManager {
 
         logger.warn(String.format("[TraceStandard] 检测到代码正在使用原生API：source=%s method=%s.%s；Fire已提供封装后的API，建议使用：%s；调用位置：class=%s method=%s line=%d",
                 mapping.getSource(), declaringType, methodName, mapping.getTarget(), caller.getClassName(), caller.getMethodName(), caller.getLineNumber()));
+
+        // 组装标准化检测结果，由各引擎实现负责汇总到 Driver/JobManager 后定时发送到 Kafka
+        StandardAccumulatorManagerHelper.add(buildStandard(mapping, declaringType, methodName, caller));
 
         // autoExit开启时，第一次命中后关闭扫描状态，后续Advice快速return，降低长期运行开销
         if (FireFrameworkConf.traceCodeStandardAutoExit() && started.compareAndSet(true, false)) {
@@ -341,6 +346,24 @@ public final class TraceStandardManager extends TraceManager {
         Class<?> stackClass = loadClass(className);
         Class<?> sourceClass = loadClass(sourceClassName);
         return stackClass != null && sourceClass != null && sourceClass.isAssignableFrom(stackClass);
+    }
+
+    /**
+     * 将命中的原生API与业务调用栈转换为标准化检测结果
+     *
+     * @param mapping       当前命中的API映射
+     * @param declaringType 当前被增强方法所属类名
+     * @param methodName    当前被增强方法名
+     * @param caller        疑似业务调用栈帧
+     * @return 标准化检测结果
+     */
+    private static Standard buildStandard(TraceStandardApi mapping, String declaringType, String methodName, StackTraceElement caller) {
+        String apiClassName = parseClassName(mapping.getSource());
+        int lastDot = apiClassName.lastIndexOf('.');
+        String apiPackage = lastDot > 0 ? apiClassName.substring(0, lastDot) : "";
+        String apiClass = lastDot > 0 ? apiClassName.substring(lastDot + 1) : apiClassName;
+
+        return new Standard(apiPackage, apiClass, methodName, caller.getClassName(), caller.getMethodName(), caller.getLineNumber(), mapping.getTarget());
     }
 
     /**

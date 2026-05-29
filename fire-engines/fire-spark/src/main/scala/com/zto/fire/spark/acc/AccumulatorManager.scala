@@ -19,6 +19,7 @@ package com.zto.fire.spark.acc
 
 import com.zto.fire.predef._
 import com.google.common.collect.HashBasedTable
+import com.zto.fire.common.bean.standard.Standard
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.conf.FireFrameworkConf.{lineageDistributeCollectPeriod, lineageRunCount, lineageRunInitialDelay, lineageRunPeriod}
 import com.zto.fire.common.enu.{Datasource, ThreadPoolType}
@@ -56,6 +57,10 @@ private[fire] object AccumulatorManager extends Logging  {
   private[this] val lineageAccumulatorLabel = "lineageAccumulator"
   private[fire] val lineageAccumulator = new LineageAccumulator
 
+  // 代码标准化检测累加器
+  private[this] val standardAccumulatorLabel = "standardAccumulator"
+  private[fire] val standardAccumulator = new StandardAccumulator
+
   // 同步累加器
   private[this] val syncAccumulatorLabel = "syncAccumulator"
   private[fire] val syncAccumulator = new SyncAccumulator
@@ -79,7 +84,8 @@ private[fire] object AccumulatorManager extends Logging  {
   // 累加器注册列表
   private[this] val accMap = Map(this.lineageAccumulatorLabel -> this.lineageAccumulator, this.syncAccumulatorLabel -> this.syncAccumulator,
     this.stringAccumulatorLabel -> this.stringAccumulator, this.logAccumulatorLabel -> this.logAccumulator, this.counterLabel -> this.counter,
-    this.multiCounterLabel -> this.multiCounter, this.multiTimerLabel -> this.multiTimer, this.envAccumulatorLabel -> this.envAccumulator)
+    this.multiCounterLabel -> this.multiCounter, this.multiTimerLabel -> this.multiTimer, this.envAccumulatorLabel -> this.envAccumulator,
+    this.standardAccumulatorLabel -> this.standardAccumulator)
 
   // 获取当前任务的全类名
   private[this] lazy val jobClassName = SparkEnv.get.conf.get(FireFrameworkConf.DRIVER_CLASS_NAME, "")
@@ -193,6 +199,25 @@ private[fire] object AccumulatorManager extends Logging  {
   }
 
   /**
+   * 将代码标准化检测结果添加到累加器中
+   */
+  private[fire] def addStandard(standard: Standard): Unit = {
+    if (standard == null) return
+    if (FireUtils.isSparkEngine) {
+      val env = SparkEnv.get
+      if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
+        val standardAccumulator = SparkEnv.get.conf.get(this.standardAccumulatorLabel, "")
+        if (StringUtils.isNotBlank(standardAccumulator)) {
+          val standardAcc: StandardAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(standardAccumulator)))
+          standardAcc.add(standard)
+        }
+      } else {
+        this.standardAccumulator.add(standard)
+      }
+    }
+  }
+
+  /**
    * 将字符串等累加到String累加器中
    *
    * @param str
@@ -262,6 +287,20 @@ private[fire] object AccumulatorManager extends Logging  {
    * 获取Fire采集到的血缘信息
    */
   def getLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = this.lineageAccumulator.value
+
+  /**
+   * 获取Fire采集到的代码标准化检测结果
+   */
+  def getStandard: ConcurrentLinkedQueue[Standard] = this.standardAccumulator.value
+
+  /**
+   * 获取并清空代码标准化检测结果，避免定时发送重复消息
+   */
+  def getAndResetStandard: JArrayList[Standard] = this.synchronized {
+    val standards = new JArrayList[Standard](this.standardAccumulator.value)
+    this.standardAccumulator.reset()
+    standards
+  }
 
   /**
    * 将运行时信息累加到env累加器中

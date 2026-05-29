@@ -189,6 +189,11 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_TRACE_CODE_STANDARD_DURATION_MIN = "fire.trace.codeStandard.durationMin"
   lazy val FIRE_TRACE_CODE_STANDARD_AUTO_EXIT = "fire.trace.codeStandard.autoExit"
   lazy val FIRE_TRACE_CODE_STANDARD_STACK_SCAN_DEPTH = "fire.trace.codeStandard.stackScanDepth"
+  lazy val FIRE_TRACE_CODE_STANDARD_RUN_INITIAL_DELAY = "fire.trace.codeStandard.run.initialDelay"
+  lazy val FIRE_TRACE_CODE_STANDARD_RUN_PERIOD = "fire.trace.codeStandard.run.period"
+  lazy val FIRE_TRACE_CODE_STANDARD_RUN_COUNT = "fire.trace.codeStandard.run.count"
+  lazy val FIRE_TRACE_CODE_STANDARD_SEND_MQ_URL = "fire.trace.codeStandard.send.mq.url"
+  lazy val FIRE_TRACE_CODE_STANDARD_SEND_MQ_TOPIC = "fire.trace.codeStandard.send.mq.topic"
   lazy val FIRE_TRACE_LAUNCHER = "fire.trace.launcher"
 
   /**
@@ -511,6 +516,34 @@ private[fire] object FireFrameworkConf {
    * 代码标准化分析调用栈扫描深度
    */
   lazy val traceCodeStandardStackScanDepth: Int = math.max(math.abs(PropUtils.getInt(this.FIRE_TRACE_CODE_STANDARD_STACK_SCAN_DEPTH, 28)), 1)
+
+  /**
+   * 代码标准化检测结果分布式采集的初始延迟，单位秒
+   */
+  def traceCodeStandardRunInitialDelay: Int = PropUtils.getInt(this.FIRE_TRACE_CODE_STANDARD_RUN_INITIAL_DELAY, 5)
+
+  /**
+   * 代码标准化检测结果分布式采集的执行周期，单位秒
+   */
+  def traceCodeStandardRunPeriod: Int = PropUtils.getInt(this.FIRE_TRACE_CODE_STANDARD_RUN_PERIOD, 5)
+
+  /**
+   * 代码标准化检测结果分布式采集的最大执行次数
+   */
+  def traceCodeStandardRunCount: Int = PropUtils.getInt(this.FIRE_TRACE_CODE_STANDARD_RUN_COUNT, 36000)
+
+  /**
+   * 代码标准化分析结果发送到指定的kafka集群
+   */
+  lazy val traceCodeStandardSendMqUrl = {
+    val url = PropUtils.getString(this.FIRE_TRACE_CODE_STANDARD_SEND_MQ_URL, "")
+    FireKafkaConf.kafkaBrokers(url)
+  }
+
+  /**
+   * 代码标准化分析结果发送到指定的kafka topic
+   */
+  lazy val traceCodeStandardSendMqTopic = PropUtils.getString(this.FIRE_TRACE_CODE_STANDARD_SEND_MQ_TOPIC, "")
 
   /**
    * Trace启动器

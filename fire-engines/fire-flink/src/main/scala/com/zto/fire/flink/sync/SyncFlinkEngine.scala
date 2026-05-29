@@ -72,8 +72,9 @@ private[fire] class SyncFlinkEngine extends SyncEngineConf  {
    * 同步引擎各个container的信息到累加器中
    */
   override def collect: Unit = {
-    if (!FireFrameworkConf.lineageEnable || !this.isCollect.compareAndSet(false, true)) return
+    if (!this.isCollect.compareAndSet(false, true)) return
 
-    DistributeSyncManager.collect
+    if (FireFrameworkConf.lineageEnable) DistributeSyncManager.collect
+    if (FireFrameworkConf.traceCodeStandardEnable) DistributeSyncManager.collectStandard
   }
 }
