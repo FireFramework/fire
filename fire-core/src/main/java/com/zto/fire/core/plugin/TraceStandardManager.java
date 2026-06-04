@@ -20,12 +20,14 @@ package com.zto.fire.core.plugin;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.zto.fire.common.bean.standard.Standard;
 import com.zto.fire.common.conf.FireFrameworkConf;
+import com.zto.fire.common.util.EncryptUtils;
 import com.zto.fire.common.util.JSONUtils;
 import com.zto.fire.core.bean.TraceStandardApi;
 import com.zto.fire.core.sync.StandardAccumulatorManagerHelper;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.agent.builder.ResettableClassFileTransformer;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -115,8 +117,8 @@ public final class TraceStandardManager extends TraceManager {
 
                     List<String> sourcePatterns = new ArrayList<>(sourcePatternMap.keySet());
                     Instrumentation instrumentation = installByteBuddyAgent();
-                    // 方法匹配：按配置的「类.方法」或「类.*」精确织入目标方法
-                    ElementMatcher.Junction<MethodDescription> methodMatcher = buildMethodMatcher(sourcePatterns)
+                    // 方法匹配：按方法名织入实现类（接口 API 由驱动/客户端具体类实现，不能用 isDeclaredBy 限定在接口上）
+                    ElementMatcher.Junction<MethodDescription> methodMatcher = buildStandardMethodMatcher(sourcePatterns)
                             .and(ElementMatchers.not(ElementMatchers.isAbstract()))
                             .and(ElementMatchers.not(ElementMatchers.isNative()));
 
@@ -124,8 +126,9 @@ public final class TraceStandardManager extends TraceManager {
                     AgentBuilder.Transformer.ForAdvice advice = newAdviceTransformer(TraceStandardAdvice.class)
                             .advice(methodMatcher, TraceStandardAdvice.class.getName());
 
+                    // 类型匹配：织入 source 接口/父类的所有实现类，而非仅匹配接口自身
                     resettable = newDefaultAgentBuilder()
-                            .type(ElementMatchers.namedOneOf(distinctClassNames(sourcePatterns)))
+                            .type(buildImplementorTypeMatcher(sourcePatterns))
                             .transform(advice)
                             .installOn(instrumentation);
 
@@ -213,22 +216,48 @@ public final class TraceStandardManager extends TraceManager {
     }
 
     /**
-     * 从配置项 {@code fire.trace.codeStandard.api} 中解析原生API与Fire封装API的映射关系
+     * 从配置项 {@code fire.trace.codeStandard.api} 中解析原生API与Fire封装API的映射关系。
+     * 配置值为 Base64 编码的 JSON 数组（避免 Flink on YARN 传递时双引号丢失），
+     * 仍兼容以 {@code [} 开头的明文 JSON。
      *
      * @return 规范检测API映射列表，配置为空时返回空列表
      */
     private static List<TraceStandardApi> buildApiMappingsFromFireConf() {
-        String json = FireFrameworkConf.traceCodeStandardApi();
+        String config = FireFrameworkConf.traceCodeStandardApi();
+        if (StringUtils.isBlank(config)) {
+            return Collections.emptyList();
+        }
+
+        String json = decodeTraceStandardApiConfig(config.trim());
         if (StringUtils.isBlank(json)) {
+            logger.warn("Trace standard api 配置解密后为空，请检查 fire.trace.codeStandard.api");
             return Collections.emptyList();
         }
 
         try {
-            // 配置格式为JSON数组，source为「全限定类名.方法名」或「全限定类名.*」
+            // JSON 数组中 source 为「全限定类名.方法名」或「全限定类名.*」
             return JSONUtils.newObjectMapperWithDefaultConf().readValue(json, new TypeReference<List<TraceStandardApi>>() {});
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            logger.error("Trace standard api 配置解析失败，请检查 fire.trace.codeStandard.api 是否为合法的 Base64(JSON)", e);
+            return Collections.emptyList();
         }
+    }
+
+    /**
+     * 将配置值还原为 JSON 字符串：优先按 Base64 解密，兼容明文 JSON。
+     */
+    private static String decodeTraceStandardApiConfig(String config) {
+        if (config.startsWith("[")) {
+            return config;
+        }
+
+        String decoded = EncryptUtils.base64Decrypt(config);
+        if (StringUtils.isNotBlank(decoded)) {
+            return decoded;
+        }
+
+        logger.warn("Trace standard api 配置 Base64 解密失败，请使用 EncryptUtils.base64Encrypt 生成配置值");
+        return config;
     }
 
     /**
@@ -269,14 +298,65 @@ public final class TraceStandardManager extends TraceManager {
     }
 
     /**
-     * 按「类.方法」优先、再回退「类.*」查询映射配置
+     * 按「类.方法」或「类.*」查询映射；Advice 中 declaringType 为运行时实现类，需回退到 source 接口/父类匹配
      */
     private static TraceStandardApi lookupMapping(String declaringType, String methodName) {
         TraceStandardApi exact = sourcePatternMap.get(declaringType + "." + methodName);
         if (exact != null) {
             return exact;
         }
-        return sourcePatternMap.get(declaringType + ".*");
+
+        TraceStandardApi wildcard = sourcePatternMap.get(declaringType + ".*");
+        if (wildcard != null) {
+            return wildcard;
+        }
+
+        Class<?> declaringClass = loadClass(declaringType);
+        if (declaringClass == null) {
+            return null;
+        }
+
+        for (Map.Entry<String, TraceStandardApi> entry : sourcePatternMap.entrySet()) {
+            String[] classAndMethod = splitClassAndMethod(entry.getKey());
+            if (!"*".equals(classAndMethod[1]) && !classAndMethod[1].equals(methodName)) {
+                continue;
+            }
+
+            Class<?> sourceClass = loadClass(classAndMethod[0]);
+            if (sourceClass != null && sourceClass.isAssignableFrom(declaringClass)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 匹配 source 接口/父类的所有实现类型
+     */
+    private static ElementMatcher.Junction<TypeDescription> buildImplementorTypeMatcher(List<String> patterns) {
+        return patterns.stream()
+                .map(TraceManager::parseClassName)
+                .distinct()
+                .map(className -> ElementMatchers.hasSuperType(ElementMatchers.named(className)))
+                .reduce(ElementMatcher.Junction::or)
+                .orElseGet(ElementMatchers::none);
+    }
+
+    /**
+     * 在已匹配的实现类上按方法名织入 Advice
+     */
+    private static ElementMatcher.Junction<MethodDescription> buildStandardMethodMatcher(List<String> patterns) {
+        return patterns.stream()
+                .map(pattern -> {
+                    String[] classAndMethod = splitClassAndMethod(pattern);
+                    ElementMatcher.Junction<MethodDescription> matcher = ElementMatchers.isMethod();
+                    if (!"*".equals(classAndMethod[1])) {
+                        matcher = matcher.and(ElementMatchers.named(classAndMethod[1]));
+                    }
+                    return matcher;
+                })
+                .reduce(ElementMatcher.Junction::or)
+                .orElseGet(ElementMatchers::none);
     }
 
     /**

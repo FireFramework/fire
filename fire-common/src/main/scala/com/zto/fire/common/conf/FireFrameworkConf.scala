@@ -498,7 +498,7 @@ private[fire] object FireFrameworkConf {
   def traceCodeStandardEnable: Boolean = PropUtils.getBoolean(this.FIRE_TRACE_CODE_STANDARD_ENABLE, true)
 
   /**
-   * 代码标准化分析的原生API与Fire封装API映射
+   * 代码标准化分析的原生API与Fire封装API映射（Base64编码的JSON数组）
    */
   def traceCodeStandardApi: String = PropUtils.getString(this.FIRE_TRACE_CODE_STANDARD_API, "")
 
