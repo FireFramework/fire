@@ -80,27 +80,28 @@ public class HttpClientUtils {
      * @return 调用结果
      */
     public static String doGet(String url, Header... headers) throws IOException {
-        String responseBody = "";
         GetMethod getMethod = new GetMethod();
         HttpClient httpClient = new HttpClient();
-        // 设置 get 请求超时为 5 秒
-        getMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 3000);
-        // 设置请求重试处理，用的是默认的重试处理：请求三次
-        getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler());
-        // 设置请求头
-        setHeaders(getMethod, headers);
+        try {
+            // 设置 get 请求超时为 5 秒
+            getMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 3000);
+            // 设置请求重试处理，用的是默认的重试处理：请求三次
+            getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler());
+            // 设置请求头
+            setHeaders(getMethod, headers);
 
-        getMethod.setURI(new URI(url, true, CHARSET));
-        int statusCode = httpClient.executeMethod(getMethod);
-        // 判断访问的状态码
-        if (statusCode != HttpStatus.SC_OK) {
-            logger.error("请求出错: {}", getMethod.getStatusLine());
+            getMethod.setURI(new URI(url, true, CHARSET));
+            int statusCode = httpClient.executeMethod(getMethod);
+            // 判断访问的状态码
+            if (statusCode != HttpStatus.SC_OK) {
+                logger.error("请求出错: {}", getMethod.getStatusLine());
+            }
+            // 读取 HTTP 响应内容，这里简单打印网页内容
+            return responseBody(getMethod);
+        } finally {
+            getMethod.releaseConnection();
+            httpClient.getHttpConnectionManager().closeIdleConnections(0);
         }
-        // 读取 HTTP 响应内容，这里简单打印网页内容
-        responseBody = responseBody(getMethod);
-        getMethod.releaseConnection();
-        httpClient.getHttpConnectionManager().closeIdleConnections(0);
-        return responseBody;
     }
 
     /**
@@ -110,55 +111,57 @@ public class HttpClientUtils {
      * @return 调用结果
      */
     public static String doPost(String url, String json, Header... headers) throws IOException {
-        String responses = "";
         PostMethod postMethod = new PostMethod();
         HttpClient httpClient = new HttpClient();
-        postMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 3000);
-        postMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler());
-        // 设置请求头
-        setHeaders(postMethod, headers);
-        postMethod.setURI(new URI(url, true, CHARSET));
-        postMethod.addRequestHeader("Content-Type", HEADER_JSON_VALUE);
-        if (json != null && StringUtils.isNotBlank(json.trim())) {
-            RequestEntity requestEntity = new StringRequestEntity(json, HEADER_JSON_VALUE, CHARSET);
-            postMethod.setRequestHeader("Content-Length", String.valueOf(requestEntity.getContentLength()));
-            postMethod.setRequestEntity(requestEntity);
+        try {
+            postMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 3000);
+            postMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler());
+            // 设置请求头
+            setHeaders(postMethod, headers);
+            postMethod.setURI(new URI(url, true, CHARSET));
+            postMethod.addRequestHeader("Content-Type", HEADER_JSON_VALUE);
+            if (json != null && StringUtils.isNotBlank(json.trim())) {
+                RequestEntity requestEntity = new StringRequestEntity(json, HEADER_JSON_VALUE, CHARSET);
+                postMethod.setRequestHeader("Content-Length", String.valueOf(requestEntity.getContentLength()));
+                postMethod.setRequestEntity(requestEntity);
+            }
+            httpClient.executeMethod(postMethod);
+            return responseBody(postMethod);
+        } finally {
+            postMethod.releaseConnection();
+            httpClient.getHttpConnectionManager().closeIdleConnections(0);
         }
-        httpClient.executeMethod(postMethod);
-        responses = responseBody(postMethod);
-        postMethod.releaseConnection();
-        httpClient.getHttpConnectionManager().closeIdleConnections(0);
-        return responses;
     }
 
     /**
-     * 发送一次post请求到指定的地址，不向上抛出异常
+     * 发送一次put请求到指定的地址，不向上抛出异常
      *
      * @param url 接口地址
      * @return 调用结果
      */
     public static String doPut(String url, String json, Header... headers) throws IOException {
-        String responseBody = "";
         PutMethod putMethod = new PutMethod();
-        HttpClient htpClient = new HttpClient();
-        putMethod.setURI(new URI(url, true, CHARSET));
-        putMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 3000);
-        putMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler());
-        // 设置请求头
-        setHeaders(putMethod, headers);
-        if (json != null && StringUtils.isNotBlank(json.trim())) {
-            RequestEntity requestEntity = new StringRequestEntity(json, HEADER_JSON_VALUE, CHARSET);
-            putMethod.setRequestHeader("Content-Length", String.valueOf(requestEntity.getContentLength()));
-            putMethod.setRequestEntity(requestEntity);
+        HttpClient httpClient = new HttpClient();
+        try {
+            putMethod.setURI(new URI(url, true, CHARSET));
+            putMethod.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, 3000);
+            putMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler());
+            // 设置请求头
+            setHeaders(putMethod, headers);
+            if (json != null && StringUtils.isNotBlank(json.trim())) {
+                RequestEntity requestEntity = new StringRequestEntity(json, HEADER_JSON_VALUE, CHARSET);
+                putMethod.setRequestHeader("Content-Length", String.valueOf(requestEntity.getContentLength()));
+                putMethod.setRequestEntity(requestEntity);
+            }
+            int statusCode = httpClient.executeMethod(putMethod);
+            if (statusCode != HttpStatus.SC_OK) {
+                return "";
+            }
+            return responseBody(putMethod);
+        } finally {
+            putMethod.releaseConnection();
+            httpClient.getHttpConnectionManager().closeIdleConnections(0);
         }
-        int statusCode = htpClient.executeMethod(putMethod);
-        if (statusCode != HttpStatus.SC_OK) {
-            return "";
-        }
-        responseBody = responseBody(putMethod);
-        putMethod.releaseConnection();
-        htpClient.getHttpConnectionManager().closeIdleConnections(0);
-        return responseBody;
     }
 
     /**
@@ -206,7 +209,6 @@ public class HttpClientUtils {
         } catch (Exception e) {
             logger.error("HTTP通用接口调用（Put）失败", e);
         }
-
         return response;
     }
 
