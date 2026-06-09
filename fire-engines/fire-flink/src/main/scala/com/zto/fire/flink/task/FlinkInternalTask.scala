@@ -18,6 +18,7 @@
 package com.zto.fire.flink.task
 
 import com.zto.fire.common.anno.Scheduled
+import com.zto.fire.common.bean.standard.Standard
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.util.{JSONUtils, MQProducer}
@@ -58,10 +59,10 @@ private[fire] class FlinkInternalTask(baseFlink: BaseFlink) extends FireInternal
   @Scheduled(fixedInterval = 120000, initialDelay = 60000)
   def standard: Unit = {
     if (FireFrameworkConf.traceCodeStandardEnable && StringUtils.isNotBlank(FireFrameworkConf.traceCodeStandardSendMqUrl) && StringUtils.isNotBlank(FireFrameworkConf.traceCodeStandardSendMqTopic)) {
-      val standards = FlinkStandardAccumulatorManager.getAndReset
-      if (standards != null && !standards.isEmpty) {
-        val standardJson = JSONUtils.toJSONString(standards)
-        logWarning("向kafka发送代码规范检测json：" + standardJson)
+      val results = FlinkStandardAccumulatorManager.getAndReset
+      if (results != null && !results.isEmpty) {
+        val standardJson = JSONUtils.toJSONString(Standard.wrapResults(results))
+        println("向kafka发送代码规范检测json：" + standardJson)
         MQProducer.sendKafka(FireFrameworkConf.traceCodeStandardSendMqUrl, FireFrameworkConf.traceCodeStandardSendMqTopic, standardJson, throwable = false)
       }
     }

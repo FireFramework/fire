@@ -17,7 +17,7 @@
 
 package com.zto.fire.spark.sync
 
-import com.zto.fire.common.bean.standard.Standard
+import com.zto.fire.common.bean.standard.StandardResult
 import com.zto.fire.core.sync.StandardAccumulatorManager
 import com.zto.fire.predef._
 import com.zto.fire.spark.acc.AccumulatorManager
@@ -35,16 +35,16 @@ object SparkStandardAccumulatorManager extends StandardAccumulatorManager {
   /**
    * 将代码标准化检测结果放到累加器中
    */
-  override def add(standard: Standard): Unit = {
-    AccumulatorManager.addStandard(standard)
+  override def add(result: StandardResult): Unit = {
+    AccumulatorManager.addStandard(result)
   }
 
   /**
    * 批量添加代码标准化检测结果
    */
-  override def add(standards: Collection[Standard]): Unit = {
-    if (standards != null && !standards.isEmpty) {
-      val iterator = standards.iterator()
+  override def add(results: Collection[StandardResult]): Unit = {
+    if (results != null && !results.isEmpty) {
+      val iterator = results.iterator()
       while (iterator.hasNext) {
         this.add(iterator.next())
       }
@@ -54,12 +54,12 @@ object SparkStandardAccumulatorManager extends StandardAccumulatorManager {
   /**
    * 获取收集到的代码标准化检测结果
    */
-  override def getValue: JList[Standard] = new JArrayList[Standard](AccumulatorManager.getStandard)
+  override def getValue: JSet[StandardResult] = new JLinkedHashSet[StandardResult](AccumulatorManager.getStandard)
 
   /**
    * 获取并清空收集到的代码标准化检测结果
    */
-  override def getAndReset: JList[Standard] = AccumulatorManager.getAndResetStandard
+  override def getAndReset: JSet[StandardResult] = AccumulatorManager.getAndResetStandard
 
   /**
    * 清空收集到的代码标准化检测结果

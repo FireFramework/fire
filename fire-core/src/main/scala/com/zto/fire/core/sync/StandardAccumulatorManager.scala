@@ -17,34 +17,33 @@
 
 package com.zto.fire.core.sync
 
-import com.zto.fire.common.bean.standard.Standard
+import com.zto.fire.common.bean.standard.StandardResult
 import com.zto.fire.predef._
 
 import java.util
-import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
- * 用于将各个container端代码标准化分析结果收集到master端
+ * 用于将各个 container 端代码标准化分析结果收集到 master 端，按 {@link StandardResult#equals} 去重。
  *
  * @author ChengLong
  * @since 3.0.0
  */
 trait StandardAccumulatorManager extends SyncManager {
-  private lazy val standardQueue = new ConcurrentLinkedQueue[Standard]()
+  private lazy val standardResults = java.util.Collections.synchronizedSet(new JLinkedHashSet[StandardResult]())
 
   /**
    * 添加单条代码标准化分析结果
    */
-  def add(standard: Standard): Unit = {
-    if (standard != null) this.standardQueue.add(standard)
+  def add(result: StandardResult): Unit = {
+    if (result != null) this.standardResults.add(result)
   }
 
   /**
    * 批量添加代码标准化分析结果
    */
-  def add(standards: util.Collection[Standard]): Unit = {
-    if (standards != null && !standards.isEmpty) {
-      val iterator = standards.iterator()
+  def add(results: util.Collection[StandardResult]): Unit = {
+    if (results != null && !results.isEmpty) {
+      val iterator = results.iterator()
       while (iterator.hasNext) {
         this.add(iterator.next())
       }
@@ -54,23 +53,19 @@ trait StandardAccumulatorManager extends SyncManager {
   /**
    * 获取当前已收集到的代码标准化分析结果
    */
-  def getValue: JList[Standard] = new JArrayList[Standard](this.standardQueue)
+  def getValue: JSet[StandardResult] = new JLinkedHashSet[StandardResult](this.standardResults)
 
   /**
    * 获取并清空当前已收集到的代码标准化分析结果，避免定时发送重复消息
    */
-  def getAndReset: JList[Standard] = this.synchronized {
-    val standards = new JArrayList[Standard]()
-    var standard = this.standardQueue.poll()
-    while (standard != null) {
-      standards.add(standard)
-      standard = this.standardQueue.poll()
-    }
-    standards
+  def getAndReset: JSet[StandardResult] = this.synchronized {
+    val results = new JLinkedHashSet[StandardResult](this.standardResults)
+    this.standardResults.clear()
+    results
   }
 
   /**
    * 清空已收集到的代码标准化分析结果
    */
-  def reset(): Unit = this.standardQueue.clear()
+  def reset(): Unit = this.standardResults.clear()
 }

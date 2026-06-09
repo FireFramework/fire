@@ -20,9 +20,13 @@ package com.zto.fire.common.bean.standard;
 import com.zto.fire.common.bean.FireTask;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
- * 用于封装 TraceStandard 采集到的代码规范检测信息
+ * 代码规范检测 Kafka 消息体：FireTask 公共字段 + 去重后的检测结果列表。
+ * 仅在 Driver/JobManager 发送 Kafka 前组装；Worker 端仅上报 {@link StandardResult}。
  *
  * @author ChengLong
  * @since 3.0.0
@@ -31,107 +35,31 @@ public class Standard extends FireTask implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 不建议使用的原生API包名
+     * 去重后的代码规范检测结果
      */
-    private String apiPackage;
-
-    /**
-     * 不建议使用的原生API类名
-     */
-    private String apiClass;
-
-    /**
-     * 不建议使用的原生API方法名
-     */
-    private String apiMethod;
-
-    /**
-     * 触发不规范调用的业务类名
-     */
-    private String callerClass;
-
-    /**
-     * 触发不规范调用的业务方法名
-     */
-    private String callerMethod;
-
-    /**
-     * 触发不规范调用的代码行号
-     */
-    private Integer lineNumber;
-
-    /**
-     * 建议替换使用的Fire封装API
-     */
-    private String suggestion;
+    private Set<StandardResult> results = new LinkedHashSet<>();
 
     public Standard() {
         super();
     }
 
-    public Standard(String apiPackage, String apiClass, String apiMethod, String callerClass, String callerMethod, Integer lineNumber, String suggestion) {
-        this.apiPackage = apiPackage;
-        this.apiClass = apiClass;
-        this.apiMethod = apiMethod;
-        this.callerClass = callerClass;
-        this.callerMethod = callerMethod;
-        this.lineNumber = lineNumber;
-        this.suggestion = suggestion;
+    /**
+     * 在 master 端将已汇总的检测结果包装为 Kafka 消息体
+     */
+    public static Standard wrapResults(Collection<StandardResult> results) {
+        Standard standard = new Standard();
+        if (results != null && !results.isEmpty()) {
+            standard.results = new LinkedHashSet<>(results);
+        }
+
+        return standard;
     }
 
-    public String getApiPackage() {
-        return apiPackage;
+    public Set<StandardResult> getResults() {
+        return results;
     }
 
-    public void setApiPackage(String apiPackage) {
-        this.apiPackage = apiPackage;
-    }
-
-    public String getApiClass() {
-        return apiClass;
-    }
-
-    public void setApiClass(String apiClass) {
-        this.apiClass = apiClass;
-    }
-
-    public String getApiMethod() {
-        return apiMethod;
-    }
-
-    public void setApiMethod(String apiMethod) {
-        this.apiMethod = apiMethod;
-    }
-
-    public String getCallerClass() {
-        return callerClass;
-    }
-
-    public void setCallerClass(String callerClass) {
-        this.callerClass = callerClass;
-    }
-
-    public String getCallerMethod() {
-        return callerMethod;
-    }
-
-    public void setCallerMethod(String callerMethod) {
-        this.callerMethod = callerMethod;
-    }
-
-    public Integer getLineNumber() {
-        return lineNumber;
-    }
-
-    public void setLineNumber(Integer lineNumber) {
-        this.lineNumber = lineNumber;
-    }
-
-    public String getSuggestion() {
-        return suggestion;
-    }
-
-    public void setSuggestion(String suggestion) {
-        this.suggestion = suggestion;
+    public void setResults(Set<StandardResult> results) {
+        this.results = results == null ? new LinkedHashSet<>() : new LinkedHashSet<>(results);
     }
 }

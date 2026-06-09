@@ -1,5 +1,6 @@
 package com.zto.fire.flink.sync
 
+import com.zto.fire.common.bean.standard.StandardResult
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.lineage.LineageManager
@@ -93,9 +94,9 @@ private[fire] object DistributeSyncManager extends SyncManager {
     standardThread.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = {
         logInfo(s"调用接口[$standardUrl]定时代码标准化检测采集任务已启动")
-        val standards = FlinkStandardAccumulatorManager.getAndReset
-        if (standards != null && !standards.isEmpty) {
-          val json = JSONUtils.toJSONString(standards)
+        val results = FlinkStandardAccumulatorManager.getAndReset
+        if (results != null && !results.isEmpty) {
+          val json = JSONUtils.toJSONString(new JArrayList[StandardResult](results))
           logInfo(s"调用接口[$standardUrl]发送代码标准化检测json：$json")
           SystemRestful.restInvoke(standardUrl, json)
         }

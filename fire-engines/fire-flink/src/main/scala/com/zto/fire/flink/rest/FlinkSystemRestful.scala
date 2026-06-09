@@ -20,7 +20,7 @@ package com.zto.fire.flink.rest
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
-import com.zto.fire.common.bean.standard.Standard
+import com.zto.fire.common.bean.standard.StandardResult
 import com.zto.fire.common.enu.{Datasource, ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
 import com.zto.fire.core.rest.{RestCase, RestServerManager, SystemRestful}
@@ -131,9 +131,9 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
       logDebug(s"内部请求分布式更新代码标准化检测结果，ip：${request.ip()}")
       logInfo(s"请求fire更新代码标准化检测结果：$json")
       if (noEmpty(json)) {
-        val standards = JSONUtils.newObjectMapperWithDefaultConf.readValue(json, new TypeReference[JArrayList[Standard]]() {})
-        if (standards != null && !standards.isEmpty) {
-          FlinkStandardAccumulatorManager.add(standards)
+        val results = JSONUtils.newObjectMapperWithDefaultConf.readValue(json, new TypeReference[JArrayList[StandardResult]]() {})
+        if (results != null && !results.isEmpty) {
+          FlinkStandardAccumulatorManager.add(results)
         }
       }
       ResultMsg.buildSuccess("代码标准化检测结果已更新", ErrorCode.SUCCESS.toString)

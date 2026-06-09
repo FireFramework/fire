@@ -17,12 +17,11 @@
 
 package com.zto.fire.spark.acc
 
-import com.zto.fire.common.bean.standard.Standard
+import com.zto.fire.common.bean.standard.StandardResult
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.util.Logging
+import com.zto.fire.predef._
 import org.apache.spark.util.AccumulatorV2
-
-import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * Fire框架代码标准化检测累加器，用于将Executor端采集到的不规范API调用汇总到Driver端
@@ -30,48 +29,30 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * @author ChengLong
  * @since 3.0.0
  */
-private[fire] class StandardAccumulator extends AccumulatorV2[Standard, ConcurrentLinkedQueue[Standard]] with Logging {
-  private val standardQueue = new ConcurrentLinkedQueue[Standard]()
+private[fire] class StandardAccumulator extends AccumulatorV2[StandardResult, JSet[StandardResult]] with Logging {
+  private val standardResults = java.util.Collections.synchronizedSet(new JLinkedHashSet[StandardResult]())
 
-  /**
-   * 判断累加器是否为空
-   */
-  override def isZero: Boolean = this.standardQueue.isEmpty
+  override def isZero: Boolean = this.standardResults.isEmpty
 
-  /**
-   * 用于复制累加器
-   */
-  override def copy(): AccumulatorV2[Standard, ConcurrentLinkedQueue[Standard]] = {
+  override def copy(): AccumulatorV2[StandardResult, JSet[StandardResult]] = {
     val accumulator = new StandardAccumulator
-    accumulator.value.addAll(this.standardQueue)
+    accumulator.value.addAll(this.standardResults)
     accumulator
   }
 
-  /**
-   * driver端执行有效，用于清空累加器
-   */
-  override def reset(): Unit = this.standardQueue.clear()
+  override def reset(): Unit = this.standardResults.clear()
 
-  /**
-   * 将新的代码标准化检测结果添加到累加器中
-   */
-  override def add(v: Standard): Unit = {
+  override def add(v: StandardResult): Unit = {
     if (FireFrameworkConf.accEnable && v != null) {
-      this.standardQueue.add(v)
+      this.standardResults.add(v)
     }
   }
 
-  /**
-   * executor端向driver端merge累加数据
-   */
-  override def merge(other: AccumulatorV2[Standard, ConcurrentLinkedQueue[Standard]]): Unit = {
+  override def merge(other: AccumulatorV2[StandardResult, JSet[StandardResult]]): Unit = {
     if (other != null && other.value != null && !other.value.isEmpty) {
-      this.standardQueue.addAll(other.value)
+      this.standardResults.addAll(other.value)
     }
   }
 
-  /**
-   * driver端获取累加器的值
-   */
-  override def value: ConcurrentLinkedQueue[Standard] = this.standardQueue
+  override def value: JSet[StandardResult] = this.standardResults
 }

@@ -17,7 +17,7 @@
 
 package com.zto.fire.flink.sync
 
-import com.zto.fire.common.bean.standard.Standard
+import com.zto.fire.common.bean.standard.StandardResult
 import com.zto.fire.core.sync.StandardAccumulatorManager
 
 import java.util
@@ -30,17 +30,11 @@ import java.util
  */
 object FlinkStandardAccumulatorManager extends StandardAccumulatorManager {
 
-  /**
-   * 将代码标准化检测结果放到JobManager端累加器中
-   */
-  override def add(standard: Standard): Unit = this.synchronized {
-    super.add(standard)
+  override def add(result: StandardResult): Unit = this.synchronized {
+    super.add(result)
   }
 
-  /**
-   * 批量将代码标准化检测结果放到JobManager端累加器中
-   */
-  override def add(standards: util.Collection[Standard]): Unit = this.synchronized {
-    super.add(standards)
+  override def add(results: util.Collection[StandardResult]): Unit = this.synchronized {
+    super.add(results)
   }
 }

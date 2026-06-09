@@ -18,7 +18,7 @@
 package com.zto.fire.core.plugin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.zto.fire.common.bean.standard.Standard;
+import com.zto.fire.common.bean.standard.StandardResult;
 import com.zto.fire.common.conf.FireFrameworkConf;
 import com.zto.fire.common.util.EncryptUtils;
 import com.zto.fire.common.util.JSONUtils;
@@ -186,7 +186,7 @@ public final class TraceStandardManager extends TraceManager {
                 mapping.getSource(), declaringType, methodName, mapping.getTarget(), caller.getClassName(), caller.getMethodName(), caller.getLineNumber()));
 
         // 组装标准化检测结果，由各引擎实现负责汇总到 Driver/JobManager 后定时发送到 Kafka
-        StandardAccumulatorManagerHelper.add(buildStandard(mapping, declaringType, methodName, caller));
+        StandardAccumulatorManagerHelper.add(buildStandardResult(mapping, declaringType, methodName, caller));
 
         // autoExit开启时，第一次命中后关闭扫描状态，后续Advice快速return，降低长期运行开销
         if (FireFrameworkConf.traceCodeStandardAutoExit() && started.compareAndSet(true, false)) {
@@ -437,13 +437,13 @@ public final class TraceStandardManager extends TraceManager {
      * @param caller        疑似业务调用栈帧
      * @return 标准化检测结果
      */
-    private static Standard buildStandard(TraceStandardApi mapping, String declaringType, String methodName, StackTraceElement caller) {
+    private static StandardResult buildStandardResult(TraceStandardApi mapping, String declaringType, String methodName, StackTraceElement caller) {
         String apiClassName = parseClassName(mapping.getSource());
         int lastDot = apiClassName.lastIndexOf('.');
         String apiPackage = lastDot > 0 ? apiClassName.substring(0, lastDot) : "";
         String apiClass = lastDot > 0 ? apiClassName.substring(lastDot + 1) : apiClassName;
 
-        return new Standard(apiPackage, apiClass, methodName, caller.getClassName(), caller.getMethodName(), caller.getLineNumber(), mapping.getTarget());
+        return new StandardResult(apiPackage, apiClass, methodName, caller.getClassName(), caller.getMethodName(), caller.getLineNumber(), mapping.getTarget());
     }
 
     /**

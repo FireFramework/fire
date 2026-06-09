@@ -19,7 +19,7 @@ package com.zto.fire.spark.acc
 
 import com.zto.fire.predef._
 import com.google.common.collect.HashBasedTable
-import com.zto.fire.common.bean.standard.Standard
+import com.zto.fire.common.bean.standard.StandardResult
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.conf.FireFrameworkConf.{lineageDistributeCollectPeriod, lineageRunCount, lineageRunInitialDelay, lineageRunPeriod}
 import com.zto.fire.common.enu.{Datasource, ThreadPoolType}
@@ -201,18 +201,18 @@ private[fire] object AccumulatorManager extends Logging  {
   /**
    * 将代码标准化检测结果添加到累加器中
    */
-  private[fire] def addStandard(standard: Standard): Unit = {
-    if (standard == null) return
+  private[fire] def addStandard(result: StandardResult): Unit = {
+    if (result == null) return
     if (FireUtils.isSparkEngine) {
       val env = SparkEnv.get
       if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
         val standardAccumulator = SparkEnv.get.conf.get(this.standardAccumulatorLabel, "")
         if (StringUtils.isNotBlank(standardAccumulator)) {
           val standardAcc: StandardAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(standardAccumulator)))
-          standardAcc.add(standard)
+          standardAcc.add(result)
         }
       } else {
-        this.standardAccumulator.add(standard)
+        this.standardAccumulator.add(result)
       }
     }
   }
@@ -291,15 +291,15 @@ private[fire] object AccumulatorManager extends Logging  {
   /**
    * 获取Fire采集到的代码标准化检测结果
    */
-  def getStandard: ConcurrentLinkedQueue[Standard] = this.standardAccumulator.value
+  def getStandard: JSet[StandardResult] = new JLinkedHashSet[StandardResult](this.standardAccumulator.value)
 
   /**
    * 获取并清空代码标准化检测结果，避免定时发送重复消息
    */
-  def getAndResetStandard: JArrayList[Standard] = this.synchronized {
-    val standards = new JArrayList[Standard](this.standardAccumulator.value)
+  def getAndResetStandard: JSet[StandardResult] = this.synchronized {
+    val results = new JLinkedHashSet[StandardResult](this.standardAccumulator.value)
     this.standardAccumulator.reset()
-    standards
+    results
   }
 
   /**
