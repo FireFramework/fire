@@ -62,7 +62,7 @@ private[fire] class FlinkInternalTask(baseFlink: BaseFlink) extends FireInternal
       val results = FlinkStandardAccumulatorManager.getAndReset
       if (results != null && !results.isEmpty) {
         val standardJson = JSONUtils.toJSONString(Standard.wrapResults(results))
-        println("向kafka发送代码规范检测json：" + standardJson)
+        logWarning("向kafka发送代码规范检测json：" + standardJson)
         MQProducer.sendKafka(FireFrameworkConf.traceCodeStandardSendMqUrl, FireFrameworkConf.traceCodeStandardSendMqTopic, standardJson, throwable = false)
       }
     }

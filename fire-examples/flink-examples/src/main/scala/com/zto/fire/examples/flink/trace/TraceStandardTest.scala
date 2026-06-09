@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-package com.zto.fire.examples.spark.jdbc
+package com.zto.fire.examples.flink.trace
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.spark.SparkStreaming
-import com.zto.fire.spark.anno.Streaming
+import com.zto.fire.core.anno.lifecycle.Process
+import com.zto.fire.flink.FlinkStreaming
+import com.zto.fire.flink.anno.Streaming
 
 import java.sql.DriverManager
 
@@ -30,16 +31,18 @@ import java.sql.DriverManager
     |fire.trace.codeStandard.send.mq.url=bigdata_test
     |fire.trace.codeStandard.send.mq.topic=sjzn_platform_realtime_codeStandard
     |""")
-object JdbcStandardTest extends SparkStreaming {
+object TraceStandardTest extends FlinkStreaming {
   val username = "root"
   val password = "root"
   val url = "jdbc:mysql://mysql-server:3306/fire2?useSSL=true"
   val driver = "com.mysql.jdbc.Driver"
 
-  override def process(): Unit = {
-    val dstream = this.fire.createRandomIntStream(10)
-    dstream.foreachRDD(rdd => {
-      Class.forName("com.mysql.jdbc.Driver")
+  @Process
+  def kafkaSource: Unit = {
+    val dstream = this.fire.createRandomIntStream(1)
+
+    dstream.addSink(t => {
+      Class.forName("com.mysql.cj.jdbc.Driver")
       val connection = DriverManager.getConnection(url, username, password)
       val statement = connection.prepareStatement("select * from spark_test where age>=0")
       val resultSet = statement.executeQuery()
