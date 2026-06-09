@@ -25,6 +25,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,10 +39,23 @@ import java.util.stream.Collectors;
  */
 public abstract class TraceManager {
 
+    private static final File INJECTION_FOLDER = createInjectionFolder();
+
     /**
      * 仅允许子类继承，禁止外部直接实例化基类
      */
     protected TraceManager() {
+    }
+
+    /**
+     * ByteBuddy bootstrap 注入使用的临时目录
+     */
+    private static File createInjectionFolder() {
+        File folder = new File(System.getProperty("java.io.tmpdir"), "fire-trace-bytebuddy");
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        return folder;
     }
 
     /**
@@ -65,15 +79,22 @@ public abstract class TraceManager {
     }
 
     /**
-     * 创建默认 {@link AgentBuilder}，统一重定义策略与错误监听，保证各类 Trace 增强行为一致
+     * 创建默认 {@link AgentBuilder}，统一重定义策略与错误监听，保证各类 Trace 增强行为一致。
+     * 使用 {@link AgentBuilder.InjectionStrategy.UsingInstrumentation} 将 Advice 注入 bootstrap，
+     * 避免 Spark/Flink 等引擎 ClassLoader 隔离导致织入第三方类（如 KafkaProducer）后找不到 fire 侧 Advice/Manager。
      *
+     * @param instrumentation 当前 JVM 的 Instrumentation
      * @return 已配置好的 AgentBuilder 实例
      */
-    protected static AgentBuilder newDefaultAgentBuilder() {
-        return new AgentBuilder.Default()
+    protected static AgentBuilder newDefaultAgentBuilder(Instrumentation instrumentation) {
+        AgentBuilder builder = new AgentBuilder.Default()
                 .disableClassFormatChanges()
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(AgentBuilder.Listener.StreamWriting.toSystemError().withErrorsOnly());
+        if (instrumentation != null) {
+            builder = builder.with(new AgentBuilder.InjectionStrategy.UsingInstrumentation(instrumentation, INJECTION_FOLDER));
+        }
+        return builder;
     }
 
     /**

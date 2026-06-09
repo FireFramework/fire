@@ -520,17 +520,17 @@ private[fire] object FireFrameworkConf {
   /**
    * 代码标准化检测结果分布式采集的初始延迟，单位秒
    */
-  def traceCodeStandardRunInitialDelay: Int = PropUtils.getInt(this.FIRE_TRACE_CODE_STANDARD_RUN_INITIAL_DELAY, 5)
+  def traceCodeStandardRunInitialDelay: Int = PropUtils.getInt(this.FIRE_TRACE_CODE_STANDARD_RUN_INITIAL_DELAY, 30)
 
   /**
    * 代码标准化检测结果分布式采集的执行周期，单位秒
    */
-  def traceCodeStandardRunPeriod: Int = PropUtils.getInt(this.FIRE_TRACE_CODE_STANDARD_RUN_PERIOD, 5)
+  def traceCodeStandardRunPeriod: Int = PropUtils.getInt(this.FIRE_TRACE_CODE_STANDARD_RUN_PERIOD, 60)
 
   /**
    * 代码标准化检测结果分布式采集的最大执行次数
    */
-  def traceCodeStandardRunCount: Int = PropUtils.getInt(this.FIRE_TRACE_CODE_STANDARD_RUN_COUNT, 36000)
+  def traceCodeStandardRunCount: Int = PropUtils.getInt(this.FIRE_TRACE_CODE_STANDARD_RUN_COUNT, 10)
 
   /**
    * 代码标准化分析结果发送到指定的kafka集群

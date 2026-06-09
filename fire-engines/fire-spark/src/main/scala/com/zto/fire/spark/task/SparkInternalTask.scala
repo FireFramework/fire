@@ -66,7 +66,7 @@ private[fire] class SparkInternalTask(baseSpark: BaseSpark) extends FireInternal
       val standards = SparkStandardAccumulatorManager.getAndReset
       if (standards != null && !standards.isEmpty) {
         val standardJson = JSONUtils.toJSONString(standards)
-        LineageManager.printLog("向kafka发送代码规范检测json：" + standardJson)
+        logWarning("向kafka发送代码规范检测json：" + standardJson)
         MQProducer.sendKafka(FireFrameworkConf.traceCodeStandardSendMqUrl, FireFrameworkConf.traceCodeStandardSendMqTopic, standardJson, throwable = false)
       }
     }

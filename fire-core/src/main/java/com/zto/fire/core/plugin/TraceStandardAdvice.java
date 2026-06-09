@@ -29,15 +29,19 @@ public final class TraceStandardAdvice {
     private TraceStandardAdvice() {
     }
 
-    @Advice.OnMethodEnter
+    @Advice.OnMethodEnter(suppress = Throwable.class)
     static void enter(@Advice.Origin("#t") String declaringType,
                       @Advice.Origin("#m") String methodName) {
-        // 对于需要拦截的方法，只分析一次堆栈，降低开销
-        if (!TraceStandardManager.shouldAnalyze(declaringType, methodName)) {
-            return;
-        }
+        try {
+            // 对于需要拦截的方法，只分析一次堆栈，降低开销
+            if (!TraceStandardManager.shouldAnalyze(declaringType, methodName)) {
+                return;
+            }
 
-        // 分析执行堆栈，找出不规范的代码
-        TraceStandardManager.analyzeCodeStandard(declaringType, methodName);
+            // 分析执行堆栈，找出不规范的代码
+            TraceStandardManager.analyzeCodeStandard(declaringType, methodName);
+        } catch (Throwable ignored) {
+            // Spark 等引擎中第三方类与 fire-core 可能不在同一 ClassLoader，检测失败时不影响业务调用
+        }
     }
 }

@@ -127,7 +127,7 @@ public final class TraceStandardManager extends TraceManager {
                             .advice(methodMatcher, TraceStandardAdvice.class.getName());
 
                     // 类型匹配：织入 source 接口/父类的所有实现类，而非仅匹配接口自身
-                    resettable = newDefaultAgentBuilder()
+                    resettable = newDefaultAgentBuilder(instrumentation)
                             .type(buildImplementorTypeMatcher(sourcePatterns))
                             .transform(advice)
                             .installOn(instrumentation);

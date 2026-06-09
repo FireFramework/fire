@@ -148,7 +148,7 @@ public final class TracePerformanceManager extends TraceManager {
                             .advice(methodsOnly, TracePerformanceAdvice.class.getName());
 
                     String[] typeNames = distinctClassNames(patterns);
-                    resettable = newDefaultAgentBuilder()
+                    resettable = newDefaultAgentBuilder(instrumentation)
                             .type(ElementMatchers.namedOneOf(typeNames))
                             .transform(advice)
                             .installOn(instrumentation);

@@ -30,18 +30,22 @@ public final class TracePerformanceAdvice {
     private TracePerformanceAdvice() {
     }
 
-    @Advice.OnMethodEnter
+    @Advice.OnMethodEnter(suppress = Throwable.class)
     static long enter() {
         return System.nanoTime();
     }
 
-    @Advice.OnMethodExit(onThrowable = Throwable.class)
+    @Advice.OnMethodExit(onThrowable = Throwable.class, suppress = Throwable.class)
     static void exit(@Advice.Enter long start,
                      @Advice.Origin("#t") String declaringType,
                      @Advice.Origin("#m") String methodName,
                      @Advice.AllArguments Object[] allArgs,
                      @Advice.Return(readOnly = true, typing = Assigner.Typing.DYNAMIC) Object result,
                      @Advice.Thrown(readOnly = true) Throwable thrown) {
-        TracePerformanceManager.printTracePerformanceLog(start, declaringType, methodName, allArgs, result, thrown);
+        try {
+            TracePerformanceManager.printTracePerformanceLog(start, declaringType, methodName, allArgs, result, thrown);
+        } catch (Throwable ignored) {
+            // 与 TraceStandard 相同，避免 ClassLoader 隔离导致增强逻辑拖垮业务方法
+        }
     }
 }
