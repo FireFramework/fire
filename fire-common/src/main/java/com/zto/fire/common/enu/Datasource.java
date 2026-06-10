@@ -34,7 +34,7 @@ public enum Datasource {
     // TODO: 添加新的数据源时务必在static代码块中添加与DatasourceDesc子类的映射关系
     HIVE("hive"), HBASE("hbase"), KAFKA("kafka"), UPSERT_KAFKA("upsert-kafka"),
     ROCKETMQ("rocketmq"), REDIS("redis"), KINESIS("kinesis"),
-    MYSQL("mysql"), TIDB("tidb"), ORACLE("oracle"), ADB("adb"),
+    MYSQL("mysql"), TIDB("tidb"), ORACLE("oracle"), ADB("adb"),OCEANBASE("oceanbase"),
     SQLSERVER("sqlserver"), DB2("db2"), CLICKHOUSE("clickhouse"),
     PRESTO("presto"), KYLIN("kylin"), DERBY("derby"),
     VIEW("view"), JDBC("jdbc"), FIRE_ROCKETMQ("fire_rocketmq"),
