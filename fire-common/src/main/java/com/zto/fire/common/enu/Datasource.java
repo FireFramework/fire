@@ -57,6 +57,7 @@ public enum Datasource {
         datasourceMap.put(TIDB, DBDatasource.class);
         datasourceMap.put(ORACLE, DBDatasource.class);
         datasourceMap.put(ADB, DBDatasource.class);
+        datasourceMap.put(OCEANBASE, DBDatasource.class);
         datasourceMap.put(SQLSERVER, DBDatasource.class);
         datasourceMap.put(DB2, DBDatasource.class);
         datasourceMap.put(CLICKHOUSE, DBDatasource.class);
