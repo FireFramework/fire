@@ -21,6 +21,7 @@ import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.util.Logging
 import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.hbase.conf.FireHBaseConf
 import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
 import com.zto.fire.spark.util.SparkUtils
@@ -121,6 +122,13 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    */
   def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutDS[E](tableName, dataset.asInstanceOf[Dataset[E]])
+  }
+
+  /**
+   * 多线程并发 Put Dataset 数据到 HBase
+   */
+  def hbasePutDSAsync[E <: HBaseBaseBean[E] : ClassTag](tableName: String, threadNum: Int, keyNum: Int = KeyNum._1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutDSAsync[E](tableName, threadNum, dataset.asInstanceOf[Dataset[E]])
   }
 
   /**

@@ -24,6 +24,7 @@ import com.zto.fire.common.enu.ThreadPoolType
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util._
 import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.hbase.conf.FireHBaseConf
 import com.zto.fire.spark.connector.{HBaseBulkConnector, HBaseSparkBridge}
 import com.zto.fire.spark.sync.SparkSharedThreadPoolManager
 import com.zto.fire.spark.util.{SparkConsumerOffsetManager, SparkSingletonFactory, SparkUtils}
@@ -234,6 +235,13 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    */
   def hbasePutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutRDD[T](tableName, rdd.asInstanceOf[RDD[T]])
+  }
+
+  /**
+   * 多线程并发 Put RDD 数据到 HBase
+   */
+  def hbasePutRDDAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, keyNum: Int = KeyNum._1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutRDDAsync[T](tableName, threadNum, rdd.asInstanceOf[RDD[T]])
   }
 
   /**

@@ -30,6 +30,7 @@ import com.zto.fire.flink.sink.{HBaseSink, JdbcSink, KafkaSink, RocketMQSink}
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.hbase.conf.FireHBaseConf
 import com.zto.fire.jdbc.JdbcConf
 import com.zto.fire.jdbc.conf.FireJdbcConf
 import com.zto.fire.jdbc.util.DBUtils
@@ -281,10 +282,38 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
                                                     flushInterval: Long = 3000,
                                                     keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
     HBaseConnector.checkClass[E]()
-    this.addSinkWrap(new HBaseSink[T, E](tableName, batch, flushInterval, keyNum) {
+    this.addSinkWrap(new HBaseSink[T, E](tableName, batch, flushInterval, keyNum = keyNum) {
       /**
        * 将数据构建成sink的格式
        */
+      override def map(value: T): E = fun(value)
+    })
+  }
+
+  /**
+   * hbase批量sink操作（多线程并发写入），DataStream[T]中的T必须是HBaseBaseBean的子类
+   */
+  def hbasePutDSAsync[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
+                                                        batch: Int = 100,
+                                                        flushInterval: Long = 3000,
+                                                        threadNum: Int = FireHBaseConf.hbaseThreadNum(),
+                                                        keyNum: Int = KeyNum._1): DataStreamSink[_] = {
+    this.hbasePutDS2Async[E](tableName, batch, flushInterval, threadNum = threadNum, keyNum = keyNum) {
+      value => value.asInstanceOf[E]
+    }
+  }
+
+  /**
+   * hbase批量sink操作（多线程并发写入），DataStream[T]中的T必须是HBaseBaseBean的子类
+   */
+  def hbasePutDS2Async[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
+                                                         batch: Int = 100,
+                                                         flushInterval: Long = 3000,
+                                                         threadNum: Int = FireHBaseConf.hbaseThreadNum(),
+                                                         keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
+    HBaseConnector.checkClass[E]()
+    require(threadNum > 0, s"hbasePutDS2Async线程数必须大于0，当前值：$threadNum")
+    this.addSinkWrap(new HBaseSink[T, E](tableName, batch, flushInterval, threadNum, keyNum) {
       override def map(value: T): E = fun(value)
     })
   }

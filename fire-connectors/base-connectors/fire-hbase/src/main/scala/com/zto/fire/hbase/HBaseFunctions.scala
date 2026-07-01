@@ -112,6 +112,20 @@ private[hbase] trait HBaseFunctions {
   }
 
   /**
+   * 多线程并发 Put（Bean 映射）
+   */
+  def insertAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, beans: Seq[T], keyNum: Int = KeyNum._1): Unit = {
+    HBaseConnector(keyNum = keyNum).insertAsync[T](tableName, threadNum, beans)
+  }
+
+  /**
+   * 多线程并发 Put
+   */
+  def insertAsync(tableName: String, threadNum: Int, puts: Seq[Put], keyNum: Int): Unit = {
+    HBaseConnector(keyNum = keyNum).insertAsync(tableName, threadNum, puts: _*)
+  }
+
+  /**
    * 从HBase批量Get数据，并将结果封装到JavaBean中
    *
    * @param tableName 表名
@@ -131,6 +145,21 @@ private[hbase] trait HBaseFunctions {
    */
   def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, gets: ListBuffer[Get], keyNum: Int): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).get[T](tableName, gets: _*)
+  }
+
+  /**
+   * 多线程并发 Get
+   */
+  def getAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int = 5, rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[T] = {
+    HBaseConnector(keyNum = keyNum).getAsync[T](tableName, threadNum, rowKeys: _*)
+  }
+
+  /**
+   * 多线程并发 Get
+   */
+  def getAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, gets: ListBuffer[Get], keyNum: Int): ListBuffer[T] = {
+    implicit val canOverload: Boolean = true
+    HBaseConnector(keyNum = keyNum).getAsync[T](tableName, threadNum, gets: _*)
   }
 
   /**
@@ -202,6 +231,20 @@ private[hbase] trait HBaseFunctions {
    */
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).scan[T](tableName, scan)
+  }
+
+  /**
+   * 多线程并发 Scan（rowKey 区间）
+   */
+  def scanAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int = 5, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[T] = {
+    HBaseConnector(keyNum = keyNum).scanAsync[T](tableName, threadNum, startRow, endRow)
+  }
+
+  /**
+   * 多线程并发 Scan
+   */
+  def scanAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, scan: Scan, keyNum: Int): ListBuffer[T] = {
+    HBaseConnector(keyNum = keyNum).scanAsync[T](tableName, threadNum, scan)
   }
 
   /**

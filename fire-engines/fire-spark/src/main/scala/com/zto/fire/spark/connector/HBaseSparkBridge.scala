@@ -91,6 +91,39 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
   }
 
   /**
+   * 多线程并发 Put RDD 数据（每个 Spark 分区内并发写入 HBase）
+   */
+  def hbasePutRDDAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, rdd: RDD[T]): Unit = {
+    checkGeneric[T]("HBaseSparkBridge.hbasePutRDDAsync")
+    rdd.foreachPartition(it => {
+      val list = it.toList
+      if (list.nonEmpty) HBaseConnector(keyNum = this.keyNum).insertAsync[T](tableName, threadNum, list)
+    })
+  }
+
+  /**
+   * 多线程并发 Put DataFrame 数据
+   */
+  def hbasePutDFAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, df: DataFrame): Unit = {
+    val clazz = getGeneric[T]("HBaseSparkBridge.hbasePutDFAsync")
+    df.mapPartitions(row => SparkUtils.sparkRowToBean(row, clazz))(Encoders.bean(clazz)).foreachPartition((it: Iterator[T]) => {
+      val list = it.toList
+      if (list.nonEmpty) HBaseConnector(keyNum = this.keyNum).insertAsync[T](tableName, threadNum, list)
+    })
+  }
+
+  /**
+   * 多线程并发 Put Dataset 数据
+   */
+  def hbasePutDSAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, ds: Dataset[T]): Unit = {
+    checkGeneric[T]("HBaseSparkBridge.hbasePutDSAsync")
+    ds.foreachPartition((it: Iterator[T]) => {
+      val list = it.toList
+      if (list.nonEmpty) HBaseConnector(keyNum = this.keyNum).insertAsync[T](tableName, threadNum, list)
+    })
+  }
+
+  /**
    * Scan指定HBase表的数据，并映射为DataFrame
    *
    * @param tableName
@@ -328,6 +361,13 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
   }
 
   /**
+   * 多线程并发 Scan
+   */
+  def hbaseScanListAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, scan: Scan): Seq[T] = {
+    HBaseConnector(keyNum = this.keyNum).scanAsync[T](tableName, threadNum, scan)
+  }
+
+  /**
    * Scan指定HBase表的数据，并映射为List
    *
    * @param tableName
@@ -341,6 +381,13 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
    */
   def hbaseScanList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String): Seq[T] = {
     this.hbaseScanList[T](tableName, HBaseConnector.buildScan(startRow, stopRow))
+  }
+
+  /**
+   * 多线程并发 Scan（rowKey 区间）
+   */
+  def hbaseScanList2Async[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, startRow: String, stopRow: String): Seq[T] = {
+    HBaseConnector(keyNum = this.keyNum).scanAsync[T](tableName, threadNum, startRow, stopRow)
   }
 
   /**
@@ -424,6 +471,13 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
   }
 
   /**
+   * 多线程并发 Put 集合数据
+   */
+  def hbasePutListAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, seq: Seq[T]): Unit = {
+    HBaseConnector(keyNum = this.keyNum).insertAsync[T](tableName, threadNum, seq)
+  }
+
+  /**
    * 根据rowKey查询数据，并转为List[T]
    *
    * @param tableName
@@ -435,6 +489,14 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
    */
   def hbaseGetList[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[Get]): Seq[T] = {
     HBaseConnector(keyNum = this.keyNum).get[T](tableName, seq: _*)
+  }
+
+  /**
+   * 多线程并发 Get
+   */
+  def hbaseGetListAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, seq: Seq[Get]): Seq[T] = {
+    implicit val canOverload: Boolean = true
+    HBaseConnector(keyNum = this.keyNum).getAsync[T](tableName, threadNum, seq: _*)
   }
 
   /**
@@ -454,6 +516,13 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
     })
 
     this.hbaseGetList[T](tableName, getList)
+  }
+
+  /**
+   * 多线程并发 Get（rowKey）
+   */
+  def hbaseGetList2Async[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, seq: Seq[String]): Seq[T] = {
+    HBaseConnector(keyNum = this.keyNum).getAsync[T](tableName, threadNum, seq: _*)
   }
 
   /**

@@ -41,11 +41,36 @@ private[fire] object HBaseUtils {
   }
 
   /**
+   * 将 rowKey 区间切分为多个子区间，用于 scan 并发。
+   * 优先按数值型 rowKey 均分；非数值型 rowKey 无法安全切分时返回原区间。
+   */
+  def splitRowKeyRange(startRow: String, stopRow: String, partitions: Int): Seq[(String, String)] = {
+    if (partitions <= 1 || StringUtils.isBlank(startRow) || StringUtils.isBlank(stopRow)) {
+      return Seq((startRow, stopRow))
+    }
+    try {
+      val start = BigInt(startRow)
+      val stop = BigInt(stopRow)
+      if (start >= stop) return Seq((startRow, stopRow))
+      val range = stop - start
+      if (range < BigInt(partitions)) {
+        return (0.toInt.to(range.toInt)).map(i => {
+          val key = (start + BigInt(i)).toString
+          (key, key)
+        })
+      }
+      (0 until partitions).map { i =>
+        val s = start + range * BigInt(i) / BigInt(partitions)
+        val e = if (i == partitions - 1) stop else start + range * BigInt(i + 1) / BigInt(partitions) - 1
+        (s.toString, e.toString)
+      }
+    } catch {
+      case _: NumberFormatException => Seq((startRow, stopRow))
+    }
+  }
+
+  /**
     * 将给定的字符串补齐指定的位数
-    *
-    * @param str
-    * @param length
-    * @return
     */
   def appendString(str: String, char: String, length: Int): String = {
     if (StringUtils.isNotBlank(str) && StringUtils.isNotBlank(char) && length > str.length) {

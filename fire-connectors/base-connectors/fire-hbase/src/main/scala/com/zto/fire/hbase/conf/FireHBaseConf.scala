@@ -33,6 +33,7 @@ import com.zto.fire.predef._
  */
 private[fire] object FireHBaseConf {
   lazy val HBASE_BATCH = "fire.hbase.batch.size"
+  lazy val FIRE_HBASE_THREAD_NUM = "fire.hbase.thread.num"
   lazy val HBBASE_COLUMN_FAMILY_KEY = "hbase.column.family"
   lazy val HBASE_MAX_RETRY = "hbase.max.retry"
   lazy val HBASE_CLUSTER_URL = "hbase.cluster"
@@ -70,6 +71,8 @@ private[fire] object FireHBaseConf {
   def tableExistCachePeriod(keyNum: Int = KeyNum._1): Long = PropUtils.getLong(this.TABLE_EXISTS_CACHE_PERIOD, 600, keyNum)
   // HBase操作默认的批次大小
   def hbaseBatchSize(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.HBASE_BATCH, 10000, keyNum)
+  // HBase Java API 并发线程数（Connection 线程安全，多线程共享同一 Connection）
+  def hbaseThreadNum(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.FIRE_HBASE_THREAD_NUM, 5, keyNum)
   // hbase默认的列族名称，如果使用FieldName指定，则会被覆盖
   def familyName(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.HBBASE_COLUMN_FAMILY_KEY, "info", keyNum)
   // hbase操作失败最大重试次数

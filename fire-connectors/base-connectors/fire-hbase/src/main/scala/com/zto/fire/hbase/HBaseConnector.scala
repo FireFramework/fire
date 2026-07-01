@@ -29,6 +29,8 @@ import com.zto.fire.hbase.HBaseConnector.addHBaseDatasource
 import com.zto.fire.hbase.anno.HConfig
 import com.zto.fire.hbase.bean.{HBaseBaseBean, MultiVersionsBean}
 import com.zto.fire.hbase.conf.FireHBaseConf
+import com.zto.fire.hbase.utils.HBaseUtils
+import com.zto.fire.hbase.conf.FireHBaseConf
 import com.zto.fire.hbase.conf.FireHBaseConf._
 import com.zto.fire.predef._
 import org.apache.commons.lang3.StringUtils
@@ -123,6 +125,44 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   }
 
   /**
+   * 多线程并发 Put，底层共享 HBase Connection，每个分组独立获取 Table 执行写入
+   *
+   * 注意：
+   * 1. `threadNum=1` 时等价于单线程 `insert`
+   * 2. 同 rowKey 并发写入不保证顺序
+   * 3. HBase Connection 线程安全，无需独立连接池
+   */
+  def insertAsync(tableName: String, threadNum: Int, puts: Put*): Unit = {
+    require(threadNum > 0, s"线程数量必须大于0，当前值：$threadNum")
+    if (puts == null || puts.isEmpty) return
+    if (threadNum <= 1 || puts.size <= 1) {
+      this.insert(tableName, puts: _*)
+      return
+    }
+
+    val parallelism = math.min(threadNum, puts.size)
+    ThreadUtils.parallelProcess(puts, parallelism) { partition =>
+      this.insert(tableName, partition: _*)
+    }
+  }
+
+  /**
+   * 多线程并发 Put（Bean 映射），底层共享 HBase Connection
+   */
+  def insertAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, beans: Seq[T]): Unit = {
+    require(threadNum > 0, s"线程数量必须大于0，当前值：$threadNum")
+    if (beans == null || beans.isEmpty) return
+    if (threadNum <= 1 || beans.size <= 1) {
+      this.insert[T](tableName, beans: _*)
+      return
+    }
+    val parallelism = math.min(threadNum, beans.size)
+    ThreadUtils.parallelProcess(beans, parallelism) { partition =>
+      this.insert[T](tableName, partition: _*)
+    }
+  }
+
+  /**
    * 从HBase批量Get数据，并将结果封装到JavaBean中
    *
    * @param tableName 表名
@@ -150,6 +190,38 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       val resultList = this.getResult(tableName, gets: _*)
       if (this.getMultiVersion[T]) this.hbaseMultiRow2Bean[T](resultList, clazz) else this.hbaseRow2Bean[T](resultList)
     }(this.logger, catchLog = s"批量 get ${hbaseClusterUrl(keyNum)}.${tableName}执行失败")
+  }
+
+  /**
+   * 多线程并发 Get，底层共享 HBase Connection（默认线程数）
+   */
+  def getAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, gets: Get*)(implicit canOverload: Boolean = true): ListBuffer[T] = {
+    this.getAsync[T](tableName, FireHBaseConf.hbaseThreadNum(this.keyNum), gets: _*)
+  }
+
+  /**
+   * 多线程并发 Get，底层共享 HBase Connection
+   */
+  def getAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, gets: Get*)(implicit canOverload: Boolean): ListBuffer[T] = {
+    require(threadNum > 0, s"线程数量必须大于0，当前值：$threadNum")
+    if (gets == null || gets.isEmpty) return ListBuffer.empty[T]
+    if (threadNum <= 1 || gets.size <= 1) return this.get[T](tableName, gets: _*)
+
+    val parallelism = math.min(threadNum, gets.size)
+    val result = ListBuffer[T]()
+    ThreadUtils.parallelProcess(gets, parallelism) { partition =>
+      this.get[T](tableName, partition: _*)
+    }.foreach(result ++= _)
+    result
+  }
+
+  /**
+   * 多线程并发 Get（rowKey），底层共享 HBase Connection
+   */
+  def getAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, rowKeys: String*): ListBuffer[T] = {
+    if (rowKeys == null || rowKeys.isEmpty) return ListBuffer.empty[T]
+    implicit def canOverload: Boolean = true
+    this.getAsync[T](tableName, threadNum, rowKeys.map(rowKey => HBaseConnector.buildGet(rowKey)): _*)
   }
 
   /**
@@ -291,6 +363,51 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     }(this.logger, "HBase scan",
       s"scan ${hbaseClusterUrl(keyNum)}.${tableName}执行失败",
       "关闭HBase table对象或ResultScanner失败")
+  }
+
+  /**
+   * 多线程并发 Scan（rowKey 区间），按数值型 rowKey 切分子区间后并行 scan
+   */
+  def scanAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, startRow: String, endRow: String): ListBuffer[T] = {
+    require(threadNum > 0, s"线程数量必须大于0，当前值：$threadNum")
+    if (threadNum <= 1) return this.scan[T](tableName, startRow, endRow)
+
+    val ranges = HBaseUtils.splitRowKeyRange(startRow, endRow, threadNum)
+    if (ranges.size <= 1) return this.scan[T](tableName, startRow, endRow)
+
+    val result = ListBuffer[T]()
+    ThreadUtils.parallelProcess(ranges, ranges.size) { partition =>
+      partition.flatMap { case (s, e) => this.scan[T](tableName, s, e) }
+    }.foreach(result ++= _)
+    result
+  }
+
+  /**
+   * 多线程并发 Scan，当 Scan 含 start/stop row 时按区间切分；否则退化为单线程 scan
+   */
+  def scanAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, scan: Scan): ListBuffer[T] = {
+    require(threadNum > 0, s"线程数量必须大于0，当前值：$threadNum")
+    if (threadNum <= 1) return this.scan[T](tableName, scan)
+
+    val startRow = if (scan.getStartRow != null) Bytes.toString(scan.getStartRow) else ""
+    val stopRow = if (scan.getStopRow != null) Bytes.toString(scan.getStopRow) else ""
+    if (StringUtils.isBlank(startRow) || StringUtils.isBlank(stopRow)) {
+      return this.scan[T](tableName, scan)
+    }
+
+    val ranges = HBaseUtils.splitRowKeyRange(startRow, stopRow, threadNum)
+    if (ranges.size <= 1) return this.scan[T](tableName, scan)
+
+    val result = ListBuffer[T]()
+    ThreadUtils.parallelProcess(ranges, ranges.size) { partition =>
+      partition.flatMap { case (s, e) =>
+        val subScan = new Scan(scan)
+        subScan.setStartRow(Bytes.toBytes(s))
+        subScan.setStopRow(Bytes.toBytes(e))
+        this.scan[T](tableName, subScan)
+      }
+    }.foreach(result ++= _)
+    result
   }
 
   /**

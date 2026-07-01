@@ -21,6 +21,7 @@ import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.hbase.conf.FireHBaseConf
 import com.zto.fire.spark.connector.HBaseSparkBridge
 import org.apache.hadoop.hbase.client.{Get, Scan}
 import org.apache.spark.rdd.RDD
@@ -302,5 +303,61 @@ trait HBaseConnectorProvider extends SparkProvider {
    */
   def hbaseDeleteDS(tableName: String, dataset: Dataset[String], keyNum: Int = KeyNum._1): Unit = {
     dataset.hbaseDeleteDS(tableName, keyNum)
+  }
+
+  /**
+   * 多线程并发 Put 集合
+   */
+  def hbasePutListAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, seq: Seq[T], keyNum: Int = KeyNum._1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutListAsync[T](tableName, threadNum, seq)
+  }
+
+  /**
+   * 多线程并发 Put DataFrame
+   */
+  def hbasePutDFAsync[E <: HBaseBaseBean[E] : ClassTag](tableName: String, threadNum: Int, df: DataFrame, keyNum: Int = KeyNum._1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutDFAsync[E](tableName, threadNum, df)
+  }
+
+  /**
+   * 多线程并发 Put Dataset
+   */
+  def hbasePutDSAsync[E <: HBaseBaseBean[E] : ClassTag](tableName: String, threadNum: Int, dataset: Dataset[E], keyNum: Int = KeyNum._1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutDSAsync[E](tableName, threadNum, dataset)
+  }
+
+  /**
+   * 多线程并发 Put RDD
+   */
+  def hbasePutRDDAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, rdd: RDD[T], keyNum: Int = KeyNum._1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutRDDAsync[T](tableName, threadNum, rdd)
+  }
+
+  /**
+   * 多线程并发 Get
+   */
+  def hbaseGetListAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, seq: Seq[Get], keyNum: Int = KeyNum._1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetListAsync[T](tableName, threadNum, seq)
+  }
+
+  /**
+   * 多线程并发 Get（rowKey）
+   */
+  def hbaseGetList2Async[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, seq: Seq[String], keyNum: Int = KeyNum._1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetList2Async[T](tableName, threadNum, seq)
+  }
+
+  /**
+   * 多线程并发 Scan
+   */
+  def hbaseScanListAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, scan: Scan, keyNum: Int = KeyNum._1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanListAsync[T](tableName, threadNum, scan)
+  }
+
+  /**
+   * 多线程并发 Scan（rowKey 区间）
+   */
+  def hbaseScanList2Async[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanList2Async[T](tableName, threadNum, startRow, stopRow)
   }
 }

@@ -23,6 +23,7 @@ import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
 import com.zto.fire.common.lineage.parser.connector.HudiConnectorParser
 import com.zto.fire.common.util.{LogUtils, Logging, SQLUtils, ThreadUtils, ValueUtils}
 import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.hbase.conf.FireHBaseConf
 import com.zto.fire.hudi.conf.FireHudiConf
 import com.zto.fire.hudi.enu.{HoodieOperationType, HoodieTableType}
 import com.zto.fire.hudi.util.HudiUtils
@@ -417,6 +418,13 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    */
   def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutDF[E](tableName, this.dataFrame)
+  }
+
+  /**
+   * 多线程并发 Put DataFrame 数据到 HBase
+   */
+  def hbasePutDFAsync[E <: HBaseBaseBean[E] : ClassTag](tableName: String, threadNum: Int, keyNum: Int = KeyNum._1): Unit = {
+    HBaseSparkBridge(keyNum = keyNum).hbasePutDFAsync[E](tableName, threadNum, this.dataFrame)
   }
 
   /**

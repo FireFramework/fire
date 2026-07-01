@@ -23,6 +23,7 @@ import com.zto.fire.flink.sink.HBaseSink
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
+import com.zto.fire.hbase.conf.FireHBaseConf
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
@@ -219,6 +220,41 @@ class TableExt(table: Table) {
     import com.zto.fire._
     HBaseConnector.checkClass[T]()
     this.table.toRetractStreamSingle.addSinkWrap(new HBaseSink[Row, T](tableName, batch, flushInterval, keyNum) {
+      override def map(value: Row): T = fun(value)
+    }).name("fire hbase sink")
+  }
+
+  /**
+   * table的hbase批量sink操作（多线程并发写入）
+   */
+  def hbasePutTableAsync[T <: HBaseBaseBean[T]: ClassTag](tableName: String,
+                                                          batch: Int = 100,
+                                                          flushInterval: Long = 3000,
+                                                          keyNum: Int = KeyNum._1,
+                                                          threadNum: Int = FireHBaseConf.hbaseThreadNum()): DataStreamSink[_] = {
+    import com.zto.fire._
+    this.table.hbasePutTable2Async[T](tableName, batch, flushInterval, keyNum = keyNum, threadNum = threadNum) {
+      val schema = table.getTableSchema
+      row => {
+        val hbaseBean = row.rowToBean(schema, getGeneric[T]("TableExt.hbasePutTableAsync"))
+        if (!hbaseBean.isInstanceOf[HBaseBaseBean[T]]) throw new IllegalArgumentException("clazz参数必须是HBaseBaseBean的子类")
+        hbaseBean
+      }
+    }
+  }
+
+  /**
+   * table的hbase批量sink操作（多线程并发写入）
+   */
+  def hbasePutTable2Async[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
+                                                            batch: Int = 100,
+                                                            flushInterval: Long = 3000,
+                                                            keyNum: Int = KeyNum._1,
+                                                            threadNum: Int = FireHBaseConf.hbaseThreadNum())(fun: Row => T): DataStreamSink[_] = {
+    import com.zto.fire._
+    HBaseConnector.checkClass[T]()
+    require(threadNum > 0, s"hbasePutTable2Async线程数必须大于0，当前值：$threadNum")
+    this.table.toRetractStreamSingle.addSinkWrap(new HBaseSink[Row, T](tableName, batch, flushInterval, threadNum, keyNum) {
       override def map(value: Row): T = fun(value)
     }).name("fire hbase sink")
   }
