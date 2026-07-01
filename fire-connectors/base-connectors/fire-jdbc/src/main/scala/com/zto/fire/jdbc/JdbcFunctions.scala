@@ -193,6 +193,20 @@ trait JdbcFunctions {
   }
 
   /**
+   * 使用固定大小线程池并发执行查询操作，并将结果合并返回
+   */
+  def queryListAsync[T <: Object : ClassTag](sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5, keyNum: Int = KeyNum._1): List[T] = {
+    JdbcConnector(keyNum = keyNum).queryListAsync(sql, paramsList, threadNum)
+  }
+
+  /**
+   * 使用固定大小线程池并发执行查询操作
+   */
+  def queryAsync[T](sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5, keyNum: Int = KeyNum._1)(callback: ResultSet => T): List[T] = {
+    JdbcConnector(keyNum = keyNum).queryAsync(sql, paramsList, threadNum)(callback)
+  }
+
+  /**
    * 执行查询操作
    *
    * @param sql

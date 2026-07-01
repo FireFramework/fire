@@ -373,6 +373,62 @@ class JdbcConnector(conf: JdbcConf = null, keyNum: Int = KeyNum._1) extends Fire
   }
 
   /**
+   * 使用固定大小线程池并发执行查询操作，并将结果合并返回
+   *
+   * 该方法会将 paramsList 按线程数自动切分为多个分组，每个分组使用单独的
+   * jdbc 连接执行一次 `queryList`，最后阻塞等待所有分组执行结束并合并结果
+   *
+   * 注意：
+   * 1. `threadNum=1` 时等价于单线程 `queryList`
+   * 2. 当 `paramsList` 为空时，会执行一次无参查询
+   * 3. 每个分组使用独立连接，适用于同一 SQL 多组参数并行查询
+   *
+   * @param sql
+   * 查询语句
+   * @param paramsList
+   * 多组 sql 执行参数，每组参数对应一次独立查询
+   * @param threadNum
+   * 并发任务数，实际并发度不会超过连接池大小
+   */
+  def queryListAsync[T <: Object : ClassTag](sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5): List[T] = {
+    require(threadNum > 0, s"线程数量必须大于0，当前值：$threadNum")
+
+    val finalParamsList = if (paramsList == null || paramsList.isEmpty) Seq(Seq.empty[Any]) else paramsList
+    val poolSize = FireJdbcConf.maxPoolSize(this.keyNum)
+    require(poolSize > 0, s"数据库连接池最大连接数必须大于0，当前值：$poolSize keyNum=${this.keyNum}")
+    val parallelism = math.min(math.min(threadNum, poolSize), finalParamsList.size)
+
+    ThreadUtils.parallelProcess(finalParamsList, parallelism, this.executor) { partition =>
+      partition.flatMap(params => this.queryList[T](sql, params))
+    }.flatten.toList
+  }
+
+  /**
+   * 使用固定大小线程池并发执行查询操作
+   *
+   * @param sql
+   * 查询语句
+   * @param paramsList
+   * 多组 sql 执行参数
+   * @param threadNum
+   * 并发任务数
+   * @param callback
+   * 查询回调
+   */
+  def queryAsync[T](sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5)(callback: ResultSet => T): List[T] = {
+    require(threadNum > 0, s"线程数量必须大于0，当前值：$threadNum")
+
+    val finalParamsList = if (paramsList == null || paramsList.isEmpty) Seq(Seq.empty[Any]) else paramsList
+    val poolSize = FireJdbcConf.maxPoolSize(this.keyNum)
+    require(poolSize > 0, s"数据库连接池最大连接数必须大于0，当前值：$poolSize keyNum=${this.keyNum}")
+    val parallelism = math.min(math.min(threadNum, poolSize), finalParamsList.size)
+
+    ThreadUtils.parallelProcess(finalParamsList, parallelism, this.executor) { partition =>
+      partition.map(params => this.query[T](sql, params, callback))
+    }.flatten.toList
+  }
+
+  /**
    * 执行查询操作，以JavaBean方式返回结果集
    *
    * @param sql

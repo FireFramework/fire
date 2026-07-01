@@ -139,6 +139,20 @@ private[fire] trait JdbcConnectorBridge {
   }
 
   /**
+   * 多线程并发查询，并将结果合并返回
+   */
+  def jdbcQueryListAsync[T <: Object : ClassTag](sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5, keyNum: Int = KeyNum._1): List[T] = {
+    JdbcConnector.queryListAsync[T](sql, paramsList, threadNum, keyNum)
+  }
+
+  /**
+   * 多线程并发查询
+   */
+  def jdbcQueryAsync[T](sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5, keyNum: Int = KeyNum._1)(callback: ResultSet => T): List[T] = {
+    JdbcConnector.queryAsync[T](sql, paramsList, threadNum, keyNum)(callback)
+  }
+
+  /**
    * 执行查询操作，并在QueryCallback对结果集进行处理
    *
    * @param sql

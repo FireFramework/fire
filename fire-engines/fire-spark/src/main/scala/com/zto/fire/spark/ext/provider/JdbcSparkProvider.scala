@@ -231,4 +231,22 @@ trait JdbcSparkProvider extends SparkProvider {
     require(dataFrame != null && StringUtils.isNotBlank(sql), "执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
     dataFrame.jdbcUpdateBatchAsync(sql, fields, autoConvert, threadNum, keyNum)
   }
+
+  /**
+   * 多线程并发查询，以 DataFrame 方式返回（多组参数查询结果 union）
+   */
+  def jdbcQueryDFAsync(sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5, keyNum: Int = KeyNum._1): DataFrame = {
+    val finalParamsList = if (paramsList == null || paramsList.isEmpty) Seq(Seq.empty[Any]) else paramsList
+    val dfs = JdbcConnector.queryAsync(sql, finalParamsList, threadNum, keyNum) { rs =>
+      SparkUtils.resultSet2DataFrame(rs, keyNum)
+    }
+    if (dfs.isEmpty) this.spark.emptyDataFrame else dfs.reduce(_.union(_)).persist(StorageLevel.fromString(FireJdbcConf.jdbcStorageLevel))
+  }
+
+  /**
+   * 多线程并发查询，以 RDD 方式返回
+   */
+  def jdbcQueryRDDAsync(sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5, keyNum: Int = KeyNum._1): RDD[Row] = {
+    this.jdbcQueryDFAsync(sql, paramsList, threadNum, keyNum).rdd
+  }
 }
