@@ -18,6 +18,7 @@
 
 package org.apache.flink.runtime.checkpoint;
 
+import com.zto.fire.common.exception.FireNoHaCheckPointException;
 import com.zto.fire.common.util.FireEngineUtils;
 import com.zto.fire.common.util.TimeExpression;
 import org.apache.flink.annotation.VisibleForTesting;
@@ -1942,10 +1943,14 @@ public class CheckpointCoordinator {
             CompletedCheckpoint latest = completedCheckpointStore.getLatestCheckpoint();
 
             if (latest == null) {
-                LOG.info("No checkpoint found during restore.");
+                LOG.info("No checkpoint found during restore.judge need throw Exception,{}",errorIfNoCheckpoint);
 
                 if (errorIfNoCheckpoint) {
-                    throw new IllegalStateException("No completed checkpoint available");
+                    //throw new IllegalStateException("No completed checkpoint available");
+                    // TODO: ------------ start：二次开发代码 --------------- //
+                    // 抛出固定异常用于ApplicationDispatcherBootstrap捕获，用以判断是否需要直接终止flink任务，避免无意义的重试
+                    throw new FireNoHaCheckPointException();
+                    // TODO: ------------ end：二次开发代码 --------------- //
                 }
 
                 LOG.debug("Resetting the master hooks.");
