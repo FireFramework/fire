@@ -17,9 +17,10 @@
 
 package com.zto.fire.flink.sync
 
-import com.zto.fire.common.analysis.MemoryAnalysis
+import com.zto.fire.common.analysis.{MemoryAnalysis, ThreadAnalysis}
 import com.zto.fire.common.util.FireUtils
 import com.zto.fire.core.sync.DistributeExecuteManager
+import com.zto.fire.flink.util.FlinkUtils
 
 /**
  * Flink分布式执行器，分布式执行指定的代码逻辑
@@ -38,5 +39,9 @@ private object FlinkDistributeExecuteManager extends DistributeExecuteManager {
     FireUtils.printCodeResource()
     // 启动内存监控工具
     MemoryAnalysis.startMemoryMonitor()
+    // TaskManager 端启动线程卡死监控
+    if (FlinkUtils.isTaskManager) {
+      ThreadAnalysis.startThreadStuckMonitor()
+    }
   }
 }

@@ -185,6 +185,14 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_TRACE_CODE_TRACE_CLASS = "fire.trace.codeTrace.class"
   lazy val FIRE_TRACE_CODE_TRACE_THRESHOLD_MS = "fire.trace.codeTrace.thresholdMs"
   lazy val FIRE_TRACE_LAUNCHER = "fire.trace.launcher"
+  lazy val FIRE_THREAD_STUCK_ENABLE = "fire.analysis.thread.stuck.enable"
+  lazy val FIRE_THREAD_STUCK_INTERVAL = "fire.analysis.thread.stuck.interval"
+  lazy val FIRE_THREAD_STUCK_DEADLOCK_ENABLE = "fire.analysis.thread.stuck.deadlock.enable"
+  lazy val FIRE_THREAD_STUCK_DEADLOCK_EXIT_DELAY = "fire.analysis.thread.stuck.deadlock.exit.delay"
+  lazy val FIRE_THREAD_STUCK_THREAD_NAMES = "fire.analysis.thread.stuck.thread.names"
+  lazy val FIRE_THREAD_STUCK_THREAD_EXIT_DELAY = "fire.analysis.thread.stuck.thread.exit.delay"
+  lazy val FIRE_THREAD_STUCK_THREAD_STATES = "fire.analysis.thread.stuck.thread.states"
+  lazy val FIRE_THREAD_STUCK_THREAD_STACK_KEYWORDS = "fire.analysis.thread.stuck.thread.stack.keywords"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -486,4 +494,68 @@ private[fire] object FireFrameworkConf {
    * Trace启动器
    */
   lazy val traceLauncher = PropUtils.getString(this.FIRE_TRACE_LAUNCHER)
+
+  /**
+   * 是否启用线程卡死检测（TaskManager 端周期性检测，命中后退出 JVM）
+   */
+  def threadStuckEnable: Boolean = PropUtils.getBoolean(this.FIRE_THREAD_STUCK_ENABLE, false)
+
+  /**
+   * 线程卡死检测周期（ms）
+   */
+  def threadStuckIntervalMs: Long = math.max(PropUtils.getLong(this.FIRE_THREAD_STUCK_INTERVAL, 60000L), 1000L)
+
+  /**
+   * 是否启用 JVM 死锁检测
+   */
+  def threadStuckDeadlockEnable: Boolean = PropUtils.getBoolean(this.FIRE_THREAD_STUCK_DEADLOCK_ENABLE, true)
+
+  /**
+   * 检测到死锁后持续多久（ms）触发 JVM 退出
+   */
+  def threadStuckDeadlockExitDelayMs: Long = PropUtils.getLong(this.FIRE_THREAD_STUCK_DEADLOCK_EXIT_DELAY, 300000L)
+
+  /**
+   * 卡住线程名称关键字，多个以分号分隔，线程名包含任一关键字即命中
+   */
+  def threadStuckThreadNamePatterns: Array[String] = {
+    val raw = PropUtils.getString(this.FIRE_THREAD_STUCK_THREAD_NAMES, "")
+    if (StringUtils.isBlank(raw)) Array.empty[String]
+    else raw.split(";").map(_.trim).filter(StringUtils.isNotBlank)
+  }
+
+  /**
+   * 卡住线程命中后持续多久（ms）触发 JVM 退出
+   */
+  def threadStuckThreadExitDelayMs: Long = PropUtils.getLong(this.FIRE_THREAD_STUCK_THREAD_EXIT_DELAY, 300000L)
+
+  /**
+   * 卡住线程检测关注的线程状态，多个以逗号分隔，默认 BLOCKED
+   */
+  def threadStuckThreadStates: java.util.Set[Thread.State] = {
+    val raw = PropUtils.getString(this.FIRE_THREAD_STUCK_THREAD_STATES, "BLOCKED")
+    val states = new java.util.HashSet[Thread.State]()
+    if (StringUtils.isBlank(raw)) {
+      states.add(Thread.State.BLOCKED)
+      return states
+    }
+    raw.split(",").map(_.trim).filter(StringUtils.isNotBlank).foreach { name =>
+      try {
+        states.add(Thread.State.valueOf(name.toUpperCase))
+      } catch {
+        case _: IllegalArgumentException =>
+      }
+    }
+    if (states.isEmpty) states.add(Thread.State.BLOCKED)
+    states
+  }
+
+  /**
+   * 卡住线程堆栈关键字，多个以分号分隔；配置后仅当堆栈包含任一关键字时才判定为卡死
+   */
+  def threadStuckThreadStackKeywords: Array[String] = {
+    val raw = PropUtils.getString(this.FIRE_THREAD_STUCK_THREAD_STACK_KEYWORDS, "")
+    if (StringUtils.isBlank(raw)) Array.empty[String]
+    else raw.split(";").map(_.trim).filter(StringUtils.isNotBlank)
+  }
 }
