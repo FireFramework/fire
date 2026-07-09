@@ -26,7 +26,7 @@ import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.lineage.parser.connector.MQDatasource
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util._
-import com.zto.fire.flink.sink.{HBaseSink, JdbcSink, KafkaSink, RocketMQSink}
+import com.zto.fire.flink.sink.{HBaseAsyncSink, HBaseSink, JdbcAsyncSink, JdbcSink, KafkaSink, RocketMQSink}
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
@@ -166,8 +166,6 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
-   * @param threadNum
-   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    */
@@ -176,9 +174,8 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
                       fields: Seq[String],
                       batch: Int = 100,
                       flushInterval: Long = 1000,
-                      threadNum: Int = 1,
                       keyNum: Int = KeyNum._1): DataStreamSink[T] = {
-    this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, threadNum = threadNum, keyNum = keyNum) {
+    this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       var fieldMap: java.util.Map[String, Field] = _
       var clazz: Class[_] = _
 
@@ -220,8 +217,6 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
-   * @param threadNum
-   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    * @param fun
@@ -231,12 +226,69 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
   def jdbcBatchUpdate2(sql: String,
                        batch: Int = 100,
                        flushInterval: Long = 1000,
-                       threadNum: Int = 1,
                        keyNum: Int = KeyNum._1)(fun: T => Seq[Any]): DataStreamSink[T] = {
-    this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum, threadNum = threadNum) {
+    this.addSinkWrap(new JdbcSink[T](sql, batch = batch, flushInterval = flushInterval, keyNum = keyNum) {
       override def map(value: T): Seq[Any] = {
         fun(value)
       }
+    })
+  }
+
+  /**
+   * jdbc批量sink操作（多线程并发写入），根据用户指定的DataStream中字段的顺序，依次填充到sql中的占位符所对应的位置
+   */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
+  def jdbcBatchUpdateAsync(sql: String,
+                           fields: Seq[String],
+                           batch: Int = 100,
+                           flushInterval: Long = 1000,
+                           threadNum: Int = FireJdbcConf.jdbcThreadNum(),
+                           keyNum: Int = KeyNum._1): DataStreamSink[T] = {
+    this.addSinkWrap(new JdbcAsyncSink[T](sql, batch = batch, flushInterval = flushInterval, threadNum, keyNum = keyNum) {
+      var fieldMap: java.util.Map[String, Field] = _
+      var clazz: Class[_] = _
+
+      override def map(value: T): Seq[Any] = {
+        requireNonEmpty(sql)("sql语句不能为空")
+
+        val params = ListBuffer[Any]()
+        if (value.isInstanceOf[Row] || value.isInstanceOf[Tuple2[Boolean, Row]]) {
+          // 如果是Row类型的DataStream[Row]
+          val row = if (value.isInstanceOf[Row]) value.asInstanceOf[Row] else value.asInstanceOf[Tuple2[Boolean, Row]]._2
+          for (i <- 0 until row.getArity) {
+            params += row.getField(i)
+          }
+        } else {
+          requireNonEmpty(fields)("字段列表不能为空！需按照sql中的占位符顺序依次指定当前DataStream中数据字段的名称")
+
+          if (clazz == null && value != null) {
+            clazz = value.getClass
+            fieldMap = ReflectionUtils.getAllFields(clazz)
+          }
+
+          fields.foreach(fieldName => {
+            val field = this.fieldMap.get(StringUtils.trim(fieldName))
+            requireNonEmpty(field)(s"当前DataStream中不存在该列名$fieldName，请检查！")
+            params += field.get(value)
+          })
+        }
+        params
+      }
+    })
+  }
+
+  /**
+   * jdbc批量sink操作（多线程并发写入）
+   */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
+  def jdbcBatchUpdateAsync2(sql: String,
+                            batch: Int = 100,
+                            flushInterval: Long = 1000,
+                            threadNum: Int = FireJdbcConf.jdbcThreadNum(),
+                            keyNum: Int = KeyNum._1)(fun: T => Seq[Any]): DataStreamSink[T] = {
+    require(threadNum > 0, s"jdbcBatchUpdateAsync2线程数必须大于0，当前值：$threadNum")
+    this.addSinkWrap(new JdbcAsyncSink[T](sql, batch = batch, flushInterval = flushInterval, threadNum, keyNum) {
+      override def map(value: T): Seq[Any] = fun(value)
     })
   }
 
@@ -282,7 +334,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
                                                     flushInterval: Long = 3000,
                                                     keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
     HBaseConnector.checkClass[E]()
-    this.addSinkWrap(new HBaseSink[T, E](tableName, batch, flushInterval, keyNum = keyNum) {
+    this.addSinkWrap(new HBaseSink[T, E](tableName, batch, flushInterval, keyNum) {
       /**
        * 将数据构建成sink的格式
        */
@@ -298,7 +350,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
                                                         flushInterval: Long = 3000,
                                                         threadNum: Int = FireHBaseConf.hbaseThreadNum(),
                                                         keyNum: Int = KeyNum._1): DataStreamSink[_] = {
-    this.hbasePutDS2Async[E](tableName, batch, flushInterval, threadNum = threadNum, keyNum = keyNum) {
+    this.hbasePutDSAsync2[E](tableName, batch, flushInterval, threadNum = threadNum, keyNum = keyNum) {
       value => value.asInstanceOf[E]
     }
   }
@@ -306,14 +358,14 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
   /**
    * hbase批量sink操作（多线程并发写入），DataStream[T]中的T必须是HBaseBaseBean的子类
    */
-  def hbasePutDS2Async[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
+  def hbasePutDSAsync2[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
                                                          batch: Int = 100,
                                                          flushInterval: Long = 3000,
                                                          threadNum: Int = FireHBaseConf.hbaseThreadNum(),
                                                          keyNum: Int = KeyNum._1)(fun: T => E): DataStreamSink[_] = {
     HBaseConnector.checkClass[E]()
-    require(threadNum > 0, s"hbasePutDS2Async线程数必须大于0，当前值：$threadNum")
-    this.addSinkWrap(new HBaseSink[T, E](tableName, batch, flushInterval, threadNum, keyNum) {
+    require(threadNum > 0, s"hbasePutDSAsync2线程数必须大于0，当前值：$threadNum")
+    this.addSinkWrap(new HBaseAsyncSink[T, E](tableName, batch, flushInterval, threadNum, keyNum) {
       override def map(value: T): E = fun(value)
     })
   }

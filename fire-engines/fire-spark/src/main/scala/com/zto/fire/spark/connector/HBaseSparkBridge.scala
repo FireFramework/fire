@@ -386,7 +386,7 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
   /**
    * 多线程并发 Scan（rowKey 区间）
    */
-  def hbaseScanList2Async[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, startRow: String, stopRow: String): Seq[T] = {
+  def hbaseScanListAsync2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, startRow: String, stopRow: String): Seq[T] = {
     HBaseConnector(keyNum = this.keyNum).scanAsync[T](tableName, threadNum, startRow, stopRow)
   }
 
@@ -521,7 +521,7 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
   /**
    * 多线程并发 Get（rowKey）
    */
-  def hbaseGetList2Async[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, seq: Seq[String]): Seq[T] = {
+  def hbaseGetListAsync2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, seq: Seq[String]): Seq[T] = {
     HBaseConnector(keyNum = this.keyNum).getAsync[T](tableName, threadNum, seq: _*)
   }
 

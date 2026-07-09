@@ -31,19 +31,23 @@ import scala.reflect.ClassTag
  * @author ChengLong 2020-5-25 16:06:15
  * @since 1.1.0
  */
-abstract class HBaseSink[IN, T <: HBaseBaseBean[T] : ClassTag](tableName: String,
-                                                               batch: Int = 100,
-                                                               flushInterval: Long = 5000,
-                                                               keyNum: Int = KeyNum._1) extends BaseSink[IN, T](batch, flushInterval) {
+abstract class HBaseAsyncSink[IN, T <: HBaseBaseBean[T] : ClassTag](tableName: String,
+                                                                    batch: Int = 100,
+                                                                    flushInterval: Long = 5000,
+                                                                    threadNum: Int = 2,
+                                                                    keyNum: Int = KeyNum._1) extends HBaseSink[IN, T](tableName, batch, flushInterval, keyNum) {
 
-  // hbase操作失败时允许最大重试次数
-  this.maxRetry = FireHBaseConf.hbaseMaxRetry()
+  require(threadNum > 0, s"HBaseSink线程数必须大于0，当前值：$threadNum")
 
   /**
    * 将数据sink到hbase
    * 该方法会被flush方法自动调用
    */
   override def sink(dataList: List[T]): Unit = {
-    HBaseConnector.insert[T](this.tableName, dataList, this.keyNum)
+    if (threadNum > 1) {
+      HBaseConnector.insertAsync[T](this.tableName, threadNum, dataList, this.keyNum)
+    } else {
+      HBaseConnector.insert[T](this.tableName, dataList, this.keyNum)
+    }
   }
 }

@@ -72,7 +72,7 @@ private[fire] object FireHBaseConf {
   // HBase操作默认的批次大小
   def hbaseBatchSize(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.HBASE_BATCH, 10000, keyNum)
   // HBase Java API 并发线程数（Connection 线程安全，多线程共享同一 Connection）
-  def hbaseThreadNum(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.FIRE_HBASE_THREAD_NUM, 5, keyNum)
+  def hbaseThreadNum(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.FIRE_HBASE_THREAD_NUM, 2, keyNum)
   // hbase默认的列族名称，如果使用FieldName指定，则会被覆盖
   def familyName(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.HBBASE_COLUMN_FAMILY_KEY, "info", keyNum)
   // hbase操作失败最大重试次数

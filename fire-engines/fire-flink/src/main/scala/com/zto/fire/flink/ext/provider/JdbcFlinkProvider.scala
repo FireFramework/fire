@@ -19,6 +19,7 @@ package com.zto.fire.flink.ext.provider
 
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.jdbc.conf.FireJdbcConf
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.api.Table
@@ -59,9 +60,9 @@ trait JdbcFlinkProvider {
                                fields: Seq[String],
                                batch: Int = 100,
                                flushInterval: Long = 1000,
-                               threadNum: Int = 1,
+                               threadNum: Int = FireJdbcConf.jdbcThreadNum(),
                                keyNum: Int = KeyNum._1): DataStreamSink[T] = {
-    stream.jdbcBatchUpdate(sql, fields, batch, flushInterval, threadNum, keyNum)
+    stream.jdbcBatchUpdateAsync(sql, fields, batch, flushInterval, threadNum, keyNum)
   }
 
   /**
@@ -85,9 +86,9 @@ trait JdbcFlinkProvider {
                                 sql: String,
                                 batch: Int = 100,
                                 flushInterval: Long = 1000,
-                                threadNum: Int = 1,
+                                threadNum: Int = FireJdbcConf.jdbcThreadNum(),
                                 keyNum: Int = KeyNum._1)(fun: T => Seq[Any]): DataStreamSink[T] = {
-    stream.jdbcBatchUpdate2(sql, batch, flushInterval, threadNum, keyNum)(fun)
+    stream.jdbcBatchUpdateAsync2(sql, batch, flushInterval, threadNum, keyNum)(fun)
   }
 
   /**
@@ -113,9 +114,9 @@ trait JdbcFlinkProvider {
                            batch: Int = 100,
                            flushInterval: Long = 1000,
                            isMerge: Boolean = true,
-                           threadNum: Int = 1,
+                           threadNum: Int = FireJdbcConf.jdbcThreadNum(),
                            keyNum: Int = KeyNum._1): DataStreamSink[Row] = {
-    table.jdbcBatchUpdate(sql, batch, flushInterval, isMerge, threadNum, keyNum)
+    table.jdbcBatchUpdateAsync(sql, batch, flushInterval, isMerge, threadNum, keyNum)
   }
 
   /**
@@ -138,9 +139,9 @@ trait JdbcFlinkProvider {
                             batch: Int = 100,
                             flushInterval: Long = 1000,
                             isMerge: Boolean = true,
-                            threadNum: Int = 1,
+                            threadNum: Int = FireJdbcConf.jdbcThreadNum(),
                             keyNum: Int = KeyNum._1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
-    table.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, threadNum, keyNum)(fun)
+    table.jdbcBatchUpdateAsync2(sql, batch, flushInterval, isMerge, threadNum, keyNum)(fun)
   }
 
 }

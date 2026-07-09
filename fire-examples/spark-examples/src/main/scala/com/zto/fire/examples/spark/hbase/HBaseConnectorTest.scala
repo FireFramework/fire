@@ -41,6 +41,10 @@ import scala.collection.mutable.ListBuffer
 object HBaseConnectorTest extends SparkCore {
   private val tableName1 = "fire_test_1"
   private val tableName2 = "fire_test_2"
+  private val tableName13 = "fire_test_13"
+  private val tableName14 = "fire_test_14"
+  private val tableName15 = "fire_test_15"
+  private val tableName16 = "fire_test_16"
 
   /**
     * 使用HBaseConnector插入一个集合，可以是list、set等集合
@@ -226,6 +230,69 @@ object HBaseConnectorTest extends SparkCore {
   }
 
   /**
+   * 多线程并发 Put 集合
+   */
+  def testHbasePutListAsync(threadNum: Int): Unit = {
+    HBaseConnector.truncateTable(this.tableName13)
+    val studentList = Student.newStudentList()
+    this.fire.hbasePutListAsync[Student](this.tableName13, threadNum, studentList)
+  }
+
+  /**
+   * 多线程并发 Put RDD
+   */
+  def testHbasePutRDDAsync(threadNum: Int): Unit = {
+    HBaseConnector.truncateTable(this.tableName14)
+    val studentList = Student.newStudentList()
+    val studentRDD = this.fire.createRDD(studentList, 2)
+    studentRDD.hbasePutRDDAsync[Student](this.tableName14, threadNum)
+  }
+
+  /**
+   * 多线程并发 Put DataFrame
+   */
+  def testHBasePutDFAsync(threadNum: Int): Unit = {
+    HBaseConnector.truncateTable(this.tableName15)
+    val studentList = Student.newStudentList()
+    val studentDF = this.fire.createDataFrame(studentList, classOf[Student])
+    studentDF.hbasePutDFAsync[Student](this.tableName15, threadNum)
+  }
+
+  /**
+   * 多线程并发 Put Dataset
+   */
+  def testHBasePutDSAsync(threadNum: Int): Unit = {
+    HBaseConnector.truncateTable(this.tableName16)
+    val studentList = Student.newStudentList()
+    val studentDS = this.fire.createDataset(studentList)(Encoders.bean(classOf[Student]))
+    studentDS.hbasePutDSAsync[Student](this.tableName16, threadNum)
+  }
+
+  /**
+   * 多线程并发 Get
+   */
+  def testHbaseGetListAsync(tableName: String, threadNum: Int): Unit = {
+    println("===========testHbaseGetListAsync===========")
+    val rowKeys = Seq("1", "2", "3", "5", "6")
+    val studentList = this.fire.hbaseGetListAsync2[Student](tableName, threadNum, rowKeys)
+    studentList.foreach(println)
+
+    val getList = ListBuffer[Get]()
+    rowKeys.foreach(rowKey => getList += new Get(rowKey.getBytes(StandardCharsets.UTF_8)))
+    val studentList2 = this.fire.hbaseGetListAsync[Student](tableName, threadNum, getList)
+    studentList2.foreach(println)
+  }
+
+  /**
+   * 多线程并发 Scan
+   */
+  def testHbaseScanListAsync(tableName: String, threadNum: Int): Unit = {
+    println("===========testHbaseScanListAsync===========")
+    val list = this.fire.hbaseScanListAsync2[Student](tableName, threadNum, "1", "6")
+    list.foreach(println)
+  }
+
+  /**
     * Spark处理过程
     * 注：此方法会被自动调用
     */
@@ -237,7 +304,7 @@ object HBaseConnectorTest extends SparkCore {
     HBaseConnector.truncateTable(this.tableName1)
     HBaseConnector.truncateTable(this.tableName2, keyNum = 2)
 
-    this.testHbasePutRDD
+    /*this.testHbasePutRDD
     this.testHbasePutList
     this.testHBasePutDS
     this.testHbaseGetDF
@@ -254,6 +321,27 @@ object HBaseConnectorTest extends SparkCore {
     this.testHbaseScanDF
     val getList = ListBuffer(HBaseConnector.buildGet("1"))
     val student = HBaseConnector.get[Student](this.tableName1, getList, 1)
-    println(student.toString())
+    println(student.toString())*/
+
+    this.testHbasePutListAsync(3)
+    this.testHbasePutRDDAsync(2)
+    this.testHBasePutDFAsync(3)
+    this.testHBasePutDSAsync(3)
+
+    println("------------tableName13----------------")
+    this.testHbaseGetListAsync(this.tableName13, 2)
+    this.testHbaseScanListAsync(this.tableName13, 2)
+
+    println("------------tableName14----------------")
+    this.testHbaseGetListAsync(this.tableName14, 2)
+    this.testHbaseScanListAsync(this.tableName14, 2)
+
+    println("------------tableName15----------------")
+    this.testHbaseGetListAsync(this.tableName14, 2)
+    this.testHbaseScanListAsync(this.tableName14, 2)
+
+    println("------------tableName16----------------")
+    this.testHbaseGetListAsync(this.tableName14, 2)
+    this.testHbaseScanListAsync(this.tableName14, 2)
   }
 }

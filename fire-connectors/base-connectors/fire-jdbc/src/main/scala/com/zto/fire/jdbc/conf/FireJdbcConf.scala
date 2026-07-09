@@ -52,6 +52,7 @@ private[fire] object FireJdbcConf {
   lazy val FIRE_JDBC_STORAGE_LEVEL = "fire.jdbc.storage.level"
   // 通过JdbcConnector查询后将数据集放到多少个分区中，需根据实际的结果集做配置
   lazy val FIRE_JDBC_QUERY_REPARTITION = "fire.jdbc.query.partitions"
+  lazy val FIRE_JDBC_THREAD_NUM = "fire.jdbc.thread.num"
 
   // 默认的事务隔离级别
   lazy val jdbcIsolationLevel = "READ_UNCOMMITTED"
@@ -63,6 +64,8 @@ private[fire] object FireJdbcConf {
   lazy val jdbcQueryPartition = PropUtils.getInt(this.FIRE_JDBC_QUERY_REPARTITION, 10)
 
   def jdbcPartition(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.FIRE_JDBC_QUERY_REPARTITION, "-1", keyNum = keyNum)
+  // jdbc并发写线程数
+  def jdbcThreadNum(keyNum: Int = KeyNum._1): Int = PropUtils.getInt(this.FIRE_JDBC_THREAD_NUM, 2, keyNum)
   // db.jdbc.url
   def url(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.JDBC_URL, "", keyNum)
   // jdbc url与别名映射

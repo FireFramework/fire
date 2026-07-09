@@ -19,11 +19,12 @@ package com.zto.fire.flink.ext.stream
 
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.flink.bean.FlinkTableSchema
-import com.zto.fire.flink.sink.HBaseSink
+import com.zto.fire.flink.sink.{HBaseAsyncSink, HBaseSink}
 import com.zto.fire.flink.util.FlinkSingletonFactory
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.hbase.conf.FireHBaseConf
+import com.zto.fire.jdbc.conf.FireJdbcConf
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
@@ -121,8 +122,6 @@ class TableExt(table: Table) {
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
-   * @param threadNum
-   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    */
@@ -131,10 +130,9 @@ class TableExt(table: Table) {
                       batch: Int = 100,
                       flushInterval: Long = 1000,
                       isMerge: Boolean = true,
-                      threadNum: Int = 1,
                       keyNum: Int = KeyNum._1): DataStreamSink[Row] = {
 
-    this.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, threadNum, keyNum) {
+    this.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, keyNum) {
       row => {
         val param = ListBuffer[Any]()
         for (i <- 0 until row.getArity) {
@@ -154,8 +152,6 @@ class TableExt(table: Table) {
    * 每次sink最大的记录数
    * @param flushInterval
    * 多久flush一次（毫秒）
-   * @param threadNum
-   * jdbc并发写线程数，默认为1，即单线程串行写入
    * @param keyNum
    * 配置文件中的key后缀
    */
@@ -164,11 +160,49 @@ class TableExt(table: Table) {
                        batch: Int = 100,
                        flushInterval: Long = 1000,
                        isMerge: Boolean = true,
-                       threadNum: Int = 1,
                        keyNum: Int = KeyNum._1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
     import com.zto.fire._
     if (!isMerge) throw new IllegalArgumentException("该jdbc sink api暂不支持非merge语义，delete操作需单独实现")
-    this.table.toRetractStreamSingle.jdbcBatchUpdate2(sql, batch, flushInterval, threadNum, keyNum) {
+    this.table.toRetractStreamSingle.jdbcBatchUpdate2(sql, batch, flushInterval, keyNum) {
+      row => fun(row)
+    }.name("fire jdbc sink")
+  }
+
+  /**
+   * table的jdbc批量sink操作（多线程并发写入），根据用户指定的Row中字段的顺序，依次填充到sql中的占位符所对应的位置
+   */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
+  def jdbcBatchUpdateAsync(sql: String,
+                           batch: Int = 100,
+                           flushInterval: Long = 1000,
+                           isMerge: Boolean = true,
+                           threadNum: Int = FireJdbcConf.jdbcThreadNum(),
+                           keyNum: Int = KeyNum._1): DataStreamSink[Row] = {
+    this.jdbcBatchUpdateAsync2(sql, batch, flushInterval, isMerge, threadNum, keyNum) {
+      row => {
+        val param = ListBuffer[Any]()
+        for (i <- 0 until row.getArity) {
+          param += row.getField(i)
+        }
+        param
+      }
+    }
+  }
+
+  /**
+   * table的jdbc批量sink操作（多线程并发写入），该api需用户定义row的取数规则，并与sql中的占位符对等
+   */
+  @deprecated("use stream.sinkJdbc", "fire 2.3.3")
+  def jdbcBatchUpdateAsync2(sql: String,
+                            batch: Int = 100,
+                            flushInterval: Long = 1000,
+                            isMerge: Boolean = true,
+                            threadNum: Int = FireJdbcConf.jdbcThreadNum(),
+                            keyNum: Int = KeyNum._1)(fun: Row => Seq[Any]): DataStreamSink[Row] = {
+    import com.zto.fire._
+    if (!isMerge) throw new IllegalArgumentException("该jdbc sink api暂不支持非merge语义，delete操作需单独实现")
+    require(threadNum > 0, s"jdbcBatchUpdateAsync2线程数必须大于0，当前值：$threadNum")
+    this.table.toRetractStreamSingle.jdbcBatchUpdateAsync2(sql, batch, flushInterval, threadNum, keyNum) {
       row => fun(row)
     }.name("fire jdbc sink")
   }
@@ -230,10 +264,10 @@ class TableExt(table: Table) {
   def hbasePutTableAsync[T <: HBaseBaseBean[T]: ClassTag](tableName: String,
                                                           batch: Int = 100,
                                                           flushInterval: Long = 3000,
-                                                          keyNum: Int = KeyNum._1,
-                                                          threadNum: Int = FireHBaseConf.hbaseThreadNum()): DataStreamSink[_] = {
+                                                          threadNum: Int = FireHBaseConf.hbaseThreadNum(),
+                                                          keyNum: Int = KeyNum._1): DataStreamSink[_] = {
     import com.zto.fire._
-    this.table.hbasePutTable2Async[T](tableName, batch, flushInterval, keyNum = keyNum, threadNum = threadNum) {
+    this.table.hbasePutTableAsync2[T](tableName, batch, flushInterval, threadNum = threadNum, keyNum = keyNum) {
       val schema = table.getTableSchema
       row => {
         val hbaseBean = row.rowToBean(schema, getGeneric[T]("TableExt.hbasePutTableAsync"))
@@ -246,15 +280,15 @@ class TableExt(table: Table) {
   /**
    * table的hbase批量sink操作（多线程并发写入）
    */
-  def hbasePutTable2Async[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
+  def hbasePutTableAsync2[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
                                                             batch: Int = 100,
                                                             flushInterval: Long = 3000,
-                                                            keyNum: Int = KeyNum._1,
-                                                            threadNum: Int = FireHBaseConf.hbaseThreadNum())(fun: Row => T): DataStreamSink[_] = {
+                                                            threadNum: Int = FireHBaseConf.hbaseThreadNum(),
+                                                            keyNum: Int = KeyNum._1)(fun: Row => T): DataStreamSink[_] = {
     import com.zto.fire._
     HBaseConnector.checkClass[T]()
-    require(threadNum > 0, s"hbasePutTable2Async线程数必须大于0，当前值：$threadNum")
-    this.table.toRetractStreamSingle.addSinkWrap(new HBaseSink[Row, T](tableName, batch, flushInterval, threadNum, keyNum) {
+    require(threadNum > 0, s"hbasePutTableAsync2线程数必须大于0，当前值：$threadNum")
+    this.table.toRetractStreamSingle.addSinkWrap(new HBaseAsyncSink[Row, T](tableName, batch, flushInterval, threadNum, keyNum) {
       override def map(value: Row): T = fun(value)
     }).name("fire hbase sink")
   }

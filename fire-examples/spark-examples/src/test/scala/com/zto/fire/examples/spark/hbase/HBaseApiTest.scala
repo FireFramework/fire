@@ -27,6 +27,8 @@ import com.zto.fire.spark.SparkCore
 import org.junit.Assert._
 import org.junit.Test
 
+import scala.collection.mutable.ListBuffer
+
 /**
  * 用于单元测试HBaseConnector中的API
  *
@@ -129,5 +131,53 @@ class HBaseApiTest extends SparkCore with HBaseTester {
     HBaseConnector(2).insert[Student](this.tableName2, studentList: _*)
     val students = HBaseConnector(2).get[Student](this.tableName2, "1", "2")
     assertEquals(students.size, 2)
+  }
+
+  /**
+   * 多线程并发 Put
+   */
+  @Test
+  @TestStep(step = 6, desc = "insertAsync测试")
+  def testInsertAsync: Unit = {
+    val studentList = Student.newStudentList().toSeq
+    HBaseConnector.insertAsync[Student](this.tableName1, 3, studentList)
+
+    val rowKeyList = Seq("1", "2", "3", "4", "5", "6")
+    val getStudentList = HBaseConnector.get[Student](this.tableName1, rowKeyList)
+    assertEquals(getStudentList.size, 6)
+  }
+
+  /**
+   * 多线程并发 Get（rowKey / Get 对象）
+   */
+  @Test
+  @TestStep(step = 7, desc = "getAsync测试")
+  def testGetAsync: Unit = {
+    this.putData
+
+    val rowKeys = Seq("1", "2", "3", "5", "6")
+    val getStudentList = HBaseConnector.getAsync[Student](this.tableName1, 3, rowKeys)
+    assertEquals(getStudentList.size, 5)
+
+    val getList = rowKeys.map(rowKey => HBaseConnector.buildGet(rowKey)).to[ListBuffer]
+    val getStudentList2 = HBaseConnector.getAsync[Student](this.tableName1, 3, getList, keyNum = 1)
+    assertEquals(getStudentList2.size, 5)
+  }
+
+  /**
+   * 多线程并发 Scan（rowKey 区间 / Scan 对象）
+   */
+  @Test
+  @TestStep(step = 8, desc = "scanAsync测试")
+  def testScanAsync: Unit = {
+    this.putData
+
+    val syncScanList = HBaseConnector.scan[Student](this.tableName1, "2", "6")
+    val asyncScanList = HBaseConnector.scanAsync[Student](this.tableName1, 3, "2", "6")
+    assertEquals(asyncScanList.size, syncScanList.size)
+
+    val scan = HBaseConnector.buildScan("2", "6")
+    val asyncScanList2 = HBaseConnector.scanAsync[Student](this.tableName1, 3, scan, keyNum = 1)
+    assertEquals(asyncScanList2.size, syncScanList.size)
   }
 }

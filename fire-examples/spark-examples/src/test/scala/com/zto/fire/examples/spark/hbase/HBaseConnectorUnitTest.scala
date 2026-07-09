@@ -198,4 +198,89 @@ class HBaseConnectorUnitTest extends SparkCore with HBaseTester {
     dataFrame.show
     assert(dataFrame.count() == 4)
   }
+
+  /**
+   * 多线程并发 Put 集合
+   */
+  @Test
+  @TestStep(step = 8, desc = "testHbasePutListAsync")
+  def testHbasePutListAsync: Unit = {
+    val studentList = Student.newStudentList()
+    this.fire.hbasePutListAsync[Student](this.tableName1, 3, studentList)
+
+    val rowKeys = Seq("1", "2", "3", "5", "6")
+    val resultList = this.fire.hbaseGetListAsync2[Student](this.tableName1, 3, rowKeys)
+    assert(resultList.size == 5)
+  }
+
+  /**
+   * 多线程并发 Put RDD
+   */
+  @Test
+  @TestStep(step = 9, desc = "testHbasePutRDDAsync")
+  def testHbasePutRDDAsync: Unit = {
+    val studentList = Student.newStudentList()
+    val studentRDD = this.fire.createRDD(studentList, 2)
+    studentRDD.hbasePutRDDAsync[Student](this.tableName1, 3)
+
+    val getList = Seq("1", "2", "3", "5", "6")
+    val getRDD = this.fire.createRDD(getList, 2)
+    val resultRDD = this.fire.hbaseGetRDD[Student](this.tableName1, getRDD)
+    assert(resultRDD.count() == 5)
+  }
+
+  /**
+   * 多线程并发 Put DataFrame
+   */
+  @Test
+  @TestStep(step = 10, desc = "testHBasePutDFAsync")
+  def testHBasePutDFAsync: Unit = {
+    val studentList = Student.newStudentList()
+    val studentDF = this.fire.createDataFrame(studentList, classOf[Student])
+    studentDF.hbasePutDFAsync[Student](this.tableName1, 3)
+
+    val getList = Seq("1", "2", "3", "4", "5", "6")
+    val getRDD = this.fire.createRDD(getList, 3)
+    val resultDF = this.fire.hbaseGetDF[Student](this.tableName1, getRDD)
+    assert(resultDF.count() == 6)
+  }
+
+  /**
+   * 多线程并发 Put Dataset
+   */
+  @Test
+  @TestStep(step = 11, desc = "testHBasePutDSAsync")
+  def testHBasePutDSAsync: Unit = {
+    val studentList = Student.newStudentList()
+    val studentDS = this.fire.createDataset(studentList)(Encoders.bean(classOf[Student]))
+    studentDS.hbasePutDSAsync[Student](this.tableName1, 3)
+
+    val getList = Seq("1", "2", "3", "4", "5", "6")
+    val getRDD = this.fire.createRDD(getList, 2)
+    val resultDS = this.fire.hbaseGetDS[Student](this.tableName1, getRDD)
+    assert(resultDS.count() == 6)
+  }
+
+  /**
+   * 多线程并发 Get / Scan
+   */
+  @Test
+  @TestStep(step = 12, desc = "testHbaseGetAndScanAsync")
+  def testHbaseGetAndScanAsync: Unit = {
+    this.putData
+
+    val rowKeys = Seq("1", "2", "3", "5", "6")
+    val getList = ListBuffer[Get]()
+    rowKeys.foreach(rowKey => getList += new Get(rowKey.getBytes(StandardCharsets.UTF_8)))
+
+    val resultList = this.fire.hbaseGetListAsync[Student](this.tableName1, 3, getList)
+    assert(resultList.size == 5)
+
+    val resultList2 = this.fire.hbaseGetListAsync2[Student](this.tableName1, 3, rowKeys)
+    assert(resultList2.size == 5)
+
+    val syncScanList = this.fire.hbaseScanList2[Student](this.tableName1, "2", "6")
+    val asyncScanList = this.fire.hbaseScanListAsync2[Student](this.tableName1, 3, "2", "6")
+    assert(asyncScanList.size == syncScanList.size)
+  }
 }

@@ -23,23 +23,7 @@ import com.zto.fire.jdbc.JdbcConnector
 import com.zto.fire.jdbc.conf.FireJdbcConf
 
 /**
- * Flink jdbc sink组件，底层基于JdbcConnector。
- *
- * 当 `threadNum=1` 时，使用原有单线程批量写逻辑；
- * 当 `threadNum>1` 时，使用 `JdbcConnector.updateBatchAsync` 进行并发分组写入。
- *
- * 调用示例：
- * {{{
- *   stream.addSinkWrap(new JdbcSink[Student](
- *     sql = "insert into student(name, age) values(?, ?)",
- *     batch = 200,
- *     flushInterval = 1000,
- *     threadNum = 4,
- *     keyNum = 1
- *   ) {
- *     override def map(value: Student): Seq[Any] = Seq(value.name, value.age)
- *   })
- * }}}
+ * Flink jdbc sink组件，底层基于JdbcConnector
  *
  * @author ChengLong 2020-05-22 10:37
  * @since 1.1.0
@@ -47,24 +31,16 @@ import com.zto.fire.jdbc.conf.FireJdbcConf
 abstract class JdbcSink[IN](sql: String,
                             batch: Int = 100,
                             flushInterval: Long = 5000,
-                            threadNum: Int = 1,
-                            keyNum: Int = KeyNum._1
-                            ) extends BaseSink[IN, Seq[Any]](batch, flushInterval) {
+                            keyNum: Int = KeyNum._1) extends BaseSink[IN, Seq[Any]](batch, flushInterval) {
 
   // jdbc操作失败时允许最大重试次数
   this.maxRetry = FireJdbcConf.maxRetry(keyNum)
-  require(threadNum > 0, s"JdbcSink线程数必须大于0，当前值：$threadNum")
 
   /**
    * 将数据sink到jdbc
-   * 该方法会被flush方法自动调用。
-   * 当 `threadNum > 1` 时，每次flush会将当前批次数据拆分后并发写入数据库。
+   * 该方法会被flush方法自动调用
    */
   override def sink(dataList: List[Seq[Any]]): Unit = {
-    if (threadNum > 1) {
-      JdbcConnector.updateBatchAsync(sql, dataList, threadNum = math.min(threadNum, FireJdbcConf.maxPoolSize(keyNum)), keyNum = keyNum)
-    } else {
-      JdbcConnector.updateBatch(sql, dataList, keyNum = keyNum)
-    }
+    JdbcConnector.updateBatch(sql, dataList, keyNum = keyNum)
   }
 }

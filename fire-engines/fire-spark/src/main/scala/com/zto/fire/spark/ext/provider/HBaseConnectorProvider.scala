@@ -343,8 +343,8 @@ trait HBaseConnectorProvider extends SparkProvider {
   /**
    * 多线程并发 Get（rowKey）
    */
-  def hbaseGetList2Async[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, seq: Seq[String], keyNum: Int = KeyNum._1): Seq[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseGetList2Async[T](tableName, threadNum, seq)
+  def hbaseGetListAsync2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, seq: Seq[String], keyNum: Int = KeyNum._1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetListAsync2[T](tableName, threadNum, seq)
   }
 
   /**
@@ -357,7 +357,7 @@ trait HBaseConnectorProvider extends SparkProvider {
   /**
    * 多线程并发 Scan（rowKey 区间）
    */
-  def hbaseScanList2Async[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): Seq[T] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseScanList2Async[T](tableName, threadNum, startRow, stopRow)
+  def hbaseScanListAsync2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): Seq[T] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanListAsync2[T](tableName, threadNum, startRow, stopRow)
   }
 }
