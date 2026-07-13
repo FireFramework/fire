@@ -322,7 +322,7 @@ stream.jdbcBatchUpdateAsync2(sql, threadNum = 3, keyNum = 2) { v => Seq(v.getNam
 
 　　深度集成Arthas，可对运行中的任务动态进行性能诊断。fire为arthas诊断提供rest接口，可通过接口调用的方式选择为driver、jobmanager或executor、taskmanager动态开启与关闭arthas诊断线程，然后向统一的arthas tunnel服务注册，即可在网页端输入arthas命令进行性能诊断。
 
-![arthas-shell](img/arthas-shell.png)
+![arthas-shell](./docs/img/arthas-shell.png)
 
 ### **3.11 sql在线调试**
 
