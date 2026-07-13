@@ -228,12 +228,12 @@ this.fire.hbasePutDF(hTableName2, studentDF, classOf[Student], keyNum=2)	// keyN
 
 　　支持 Kafka、RocketMQ、Paimon、Redis、HBase、JDBC、ClickHouse、Hive、TiDB、ADB 等常见 Connector；同时深度集成两大湖存储格式：
 
-| Connector | 引擎 | 能力概要 | 文档 |
-| --- | --- | --- | --- |
-| **HBase** | Spark / Flink | 同步读写 + **Fire 3.0 多线程 `Async` API** | [HBase Connector](./connector/hbase.md) |
-| **JDBC** | Spark / Flink | 一行批量写 + **Fire 3.0 多线程 `Async` API** | [JDBC Connector](./connector/jdbc.md) |
-| **Hudi** | Spark / Flink | Streaming 实时入湖、`df.sinkHudi`、`@Hudi` 注解、Flink SQL `connector='hudi'` | [Hudi Connector](./connector/hudi.md) |
-| **Paimon** | Spark / Flink | 自动注册 Catalog、`PaimonCore`/`PaimonStreaming` 父类、`@Paimon` 注解 | [Paimon Connector](./connector/paimon.md) |
+| Connector  | 引擎          | 能力概要                                                     | 文档                                           |
+| ---------- | ------------- | ------------------------------------------------------------ | ---------------------------------------------- |
+| **HBase**  | Spark / Flink | 同步读写 + **Fire 3.0 多线程 `Async` API**                   | [HBase Connector](./docs/connector/hbase.md)   |
+| **JDBC**   | Spark / Flink | 一行批量写 + **Fire 3.0 多线程 `Async` API**                 | [JDBC Connector](./docs/connector/jdbc.md)     |
+| **Hudi**   | Spark / Flink | Streaming 实时入湖、`df.sinkHudi`、`@Hudi` 注解、Flink SQL `connector='hudi'` | [Hudi Connector](./docs/connector/hudi.md)     |
+| **Paimon** | Spark / Flink | 自动注册 Catalog、`PaimonCore`/`PaimonStreaming` 父类、`@Paimon` 注解 | [Paimon Connector](./docs/connector/paimon.md) |
 
 > HBase / JDBC 多线程特性详见亮点 **[3.6 HBase / JDBC 多线程 API](#36-hbase--jdbc-多线程-apifire-30)**。
 
@@ -269,7 +269,7 @@ object PaimonDemo extends PaimonCore {
 }
 ```
 
-详细 API、配置与示例见 [hudi.md](./connector/hudi.md) 与 [paimon.md](./connector/paimon.md)。
+详细 API、配置与示例见 [hudi.md](./docs/connector/hudi.md) 与 [paimon.md](./docs/connector/paimon.md)。
 
 ### **3.6 HBase / JDBC 多线程 API（Fire 3.0）**
 
@@ -304,7 +304,7 @@ stream.hbasePutDSAsync2(tableName, threadNum = 3) { value => value }
 stream.jdbcBatchUpdateAsync2(sql, threadNum = 3, keyNum = 2) { v => Seq(v.getName, v.getAge) }
 ```
 
-**详细文档：** [HBase 多线程 API](./connector/hbase.md#14-多线程-api) · [JDBC 多线程 API](./connector/jdbc.md#22-spark-多线程-api) · [配置参数](./properties.md#四jdbc-连接器)
+**详细文档：** [HBase 多线程 API](./docs/connector/hbase.md#14-多线程-api) · [JDBC 多线程 API](./docs/connector/jdbc.md#22-spark-多线程-api) · [配置参数](./docs/properties.md#四jdbc-连接器)
 
 ### **3.7 [checkpoint热修改](./docs/highlight/checkpoint.md)**
 
