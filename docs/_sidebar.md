@@ -36,7 +36,9 @@ under the License.
         - [1.3.6 Oracle  Connector](connector/oracle.md)
         - [1.3.7 Clickhouse  Connector](connector/clickhouse.md)
         - [1.3.8 ADB  Connector](connector/adb.md)
-        - [1.3.9 Kudu  Connector](#)
+        - [1.3.9 Hudi Connector](connector/hudi.md)
+        - [1.3.10 Paimon Connector](connector/paimon.md)
+        - [1.3.11 Kudu  Connector](#)
 
     - [1.4 累加器](accumulator.md)
     - [1.5 定时任务](schedule.md)
