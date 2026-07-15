@@ -19,8 +19,10 @@ package com.zto.fire.common.analysis
 
 import com.zto.fire.predef._
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.util.{Logging, ProcessExitUtils, ThreadDumpUtils}
+import com.zto.fire.common.exception.FireException
+import com.zto.fire.common.util.{ExceptionBus, Logging, ProcessExitUtils, ThreadDumpUtils}
 import org.apache.commons.lang3.StringUtils
+import org.apache.flink.util.ExceptionUtils
 
 import java.lang.management.{ManagementFactory, ThreadInfo, ThreadMXBean}
 import java.util.concurrent.atomic.AtomicBoolean
@@ -197,9 +199,10 @@ class ThreadHangMonitor extends Serializable with Logging {
    * 输出单线程告警日志，包含持续时长与问题说明
    */
   private def logHangThread(info: ThreadInfo, category: String, durationMs: Long, problem: String): Unit = {
-    logWarning(
-      s"""[ThreadHangMonitor][$category] thread="${info.getThreadName}" id=${info.getThreadId} state=${info.getThreadState} durationMs=$durationMs problem=$problem
-         |${ThreadDumpUtils.formatThreadInfo(info)}""".stripMargin)
+    val deadlockLog = s"""[ThreadHangMonitor][$category] thread="${info.getThreadName}" id=${info.getThreadId} state=${info.getThreadState} durationMs=$durationMs problem=$problem
+                 |${ThreadDumpUtils.formatThreadInfo(info)}""".stripMargin
+    logWarning(deadlockLog)
+    ExceptionBus.post(new FireException(deadlockLog))
   }
 
   /**
