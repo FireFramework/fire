@@ -165,7 +165,44 @@ under the License.
 | fire.analysis.log.exception.send.mq.topic | — | 异常 MQ topic |
 | fire.analysis.log.exception.send.mq.message.max.size | 1048576 | 消息体大小阈值（字节） |
 
-## 3.3 代码 Trace 与标准化（fire.trace.*）
+## 3.3 线程死锁与夯住检测（fire.analysis.thread.*）
+
+container 端（如 Flink TaskManager）周期性检测 JVM 死锁与配置的夯住线程。总开关关闭时整套检测不启动。
+
+命名约定：
+
+- **总开关**：`fire.analysis.thread.enable`
+- **死锁**：`fire.analysis.thread.deadlock.*`
+- **夯住**：`fire.analysis.thread.hang.*`
+
+| 参数 | 默认值 | 含义 |
+| --- | --- | --- |
+| fire.analysis.thread.enable | false | 线程诊断分析总开关 |
+| fire.analysis.thread.interval | 60000 | 检测周期（ms，最小 1000） |
+| fire.analysis.thread.deadlock.enable | true | 是否检测 JVM 死锁 |
+| fire.analysis.thread.deadlock.exit.enable | true | 死锁持续超阈值后是否退出 JVM（false 仅告警） |
+| fire.analysis.thread.deadlock.exit.delay | 300000 | 死锁持续多久触发退出（ms） |
+| fire.analysis.thread.hang.enable | true | 是否检测夯住线程 |
+| fire.analysis.thread.hang.names | — | 夯住线程名关键字，分号分隔 |
+| fire.analysis.thread.hang.states | BLOCKED | 关注的线程状态，逗号分隔 |
+| fire.analysis.thread.hang.stack.keywords | — | 堆栈关键字，分号分隔（可选） |
+| fire.analysis.thread.hang.exit.enable | true | 夯住线程持续超阈值后是否退出 JVM（false 仅告警） |
+| fire.analysis.thread.hang.exit.delay | 300000 | 夯住线程持续多久触发退出（ms） |
+
+```properties
+# 示例：开启检测，发现 DataStreamer 长时间 BLOCKED 时仅告警不杀进程
+fire.analysis.thread.enable=true
+fire.analysis.thread.interval=30000
+fire.analysis.thread.deadlock.enable=true
+fire.analysis.thread.deadlock.exit.enable=true
+fire.analysis.thread.hang.enable=true
+fire.analysis.thread.hang.names=DataStreamer
+fire.analysis.thread.hang.states=BLOCKED,WAITING,TIMED_WAITING
+fire.analysis.thread.hang.exit.enable=false
+fire.analysis.thread.hang.exit.delay=300000
+```
+
+## 3.4 代码 Trace 与标准化（fire.trace.*）
 
 | 参数 | 默认值 | 含义 |
 | --- | --- | --- |

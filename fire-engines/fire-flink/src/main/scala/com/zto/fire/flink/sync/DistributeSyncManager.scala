@@ -1,5 +1,6 @@
 package com.zto.fire.flink.sync
 
+import com.zto.fire.common.analysis.ThreadAnalysis
 import com.zto.fire.common.bean.standard.StandardResult
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.ThreadPoolType
@@ -43,24 +44,25 @@ private[fire] object DistributeSyncManager extends SyncManager {
    */
   def sync: Unit = {
     ThreadUtils.scheduleWithFixedDelay({
-      // 分布式调用
-      DistributeExecuteManagerHelper.distributeExecute
-      if (!FireFlinkConf.distributeSyncEnabled) return
-      val jsonConf = SystemRestful.restInvoke(this.distributeSyncUrl)
-      if (!this.lastJsonConf.equals(jsonConf)) {
-        if (JSONUtils.isJson(jsonConf)) {
-          val distribute = JSONUtils.parseObject[DistributeBean](jsonConf)
-          distribute.getModule match {
-            // 同步配置信息
-            case DistributeModule.CONF => this.syncConf(distribute.getJson)
-            // 同步Arthas服务的命令
-            case DistributeModule.ARTHAS => ArthasDynamicLauncher.command(JSONUtils.parseObject[ArthasParam](distribute.getJson))
-            // 同步ByteBuddy agent服务的命令
-            case DistributeModule.TRACE => TracePerformanceDynamicLauncher.command(JSONUtils.parseObject[TracePerformanceParam](distribute.getJson))
+      // 先同步 JobManager 配置，再执行分布式逻辑，避免 ThreadAnalysis 等在 enable=false 时提前启动
+      if (FireFlinkConf.distributeSyncEnabled) {
+        val jsonConf = SystemRestful.restInvoke(this.distributeSyncUrl)
+        if (!this.lastJsonConf.equals(jsonConf)) {
+          if (JSONUtils.isJson(jsonConf)) {
+            val distribute = JSONUtils.parseObject[DistributeBean](jsonConf)
+            distribute.getModule match {
+              // 同步配置信息
+              case DistributeModule.CONF => this.syncConf(distribute.getJson)
+              // 同步Arthas服务的命令
+              case DistributeModule.ARTHAS => ArthasDynamicLauncher.command(JSONUtils.parseObject[ArthasParam](distribute.getJson))
+              // 同步ByteBuddy agent服务的命令
+              case DistributeModule.TRACE => TracePerformanceDynamicLauncher.command(JSONUtils.parseObject[TracePerformanceParam](distribute.getJson))
+            }
           }
+          this.lastJsonConf = jsonConf
         }
-        this.lastJsonConf = jsonConf
       }
+      DistributeExecuteManagerHelper.distributeExecute
     }, 60, 30, TimeUnit.SECONDS)
   }
 

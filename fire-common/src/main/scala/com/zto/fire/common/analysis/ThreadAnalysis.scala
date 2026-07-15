@@ -24,23 +24,24 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * 线程卡死分析入口，在 Flink TaskManager 等 container 端启动周期性检测任务
+ * 线程诊断分析入口，在 Flink TaskManager 等 container 端启动周期性检测任务
  *
  * @author ChengLong 2026-07-07 10:26:12
  * @since fire-3.0.0
  */
 object ThreadAnalysis extends Logging {
-  private val monitor = new ThreadStuckMonitor()
+  private val monitor = new ThreadHangMonitor()
   private val started = new AtomicBoolean(false)
 
   /**
-   * 启动线程卡死监控（幂等）
+   * 启动线程诊断分析监控（幂等）
    *
-   * 仅在 Linux 非 local 模式且 fire.analysis.thread.stuck.enable=true 时生效
-   * 检测周期由 fire.analysis.thread.stuck.interval 控制
+   * 仅在 Linux 非 local 模式且 fire.analysis.thread.enable=true 时生效。
+   * 检测周期由 fire.analysis.thread.interval 控制。
+   * 死锁检测、夯住线程（hang）检测及各自是否退出 JVM，分别由对应 enable / exit.enable 参数控制。
    */
-  def startThreadStuckMonitor(): Unit = {
-    if (!FireFrameworkConf.threadStuckEnable || !OSUtils.isLinux || FireUtils.isLocalRunMode) {
+  def startThreadAnalysisMonitor(): Unit = {
+    if (!FireFrameworkConf.threadAnalysisEnable || !OSUtils.isLinux || FireUtils.isLocalRunMode) {
       return
     }
 
@@ -48,8 +49,15 @@ object ThreadAnalysis extends Logging {
       return
     }
 
-    val intervalMs = FireFrameworkConf.threadStuckIntervalMs
-    ThreadUtils.scheduleWithFixedDelay(() => monitor.check(), intervalMs, intervalMs, TimeUnit.MILLISECONDS)
-    logWarning(s"Fire Thread stuck monitor started, interval=${intervalMs}ms")
+    val intervalMs = FireFrameworkConf.threadAnalysisIntervalMs
+    ThreadUtils.scheduleWithFixedDelay({
+      this.monitor.check()
+    }, intervalMs, intervalMs, TimeUnit.MILLISECONDS)
+    logWarning(
+      s"Fire Thread analysis monitor started, interval=${intervalMs}ms, " +
+        s"deadlock.enable=${FireFrameworkConf.threadAnalysisDeadlockEnable}, " +
+        s"deadlock.exit.enable=${FireFrameworkConf.threadAnalysisDeadlockExitEnable}, " +
+        s"hang.enable=${FireFrameworkConf.threadAnalysisHangEnable}, " +
+        s"hang.exit.enable=${FireFrameworkConf.threadAnalysisHangExitEnable}")
   }
 }

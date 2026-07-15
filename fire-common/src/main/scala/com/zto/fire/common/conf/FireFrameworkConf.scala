@@ -195,14 +195,29 @@ private[fire] object FireFrameworkConf {
   lazy val FIRE_TRACE_CODE_STANDARD_SEND_MQ_URL = "fire.trace.codeStandard.send.mq.url"
   lazy val FIRE_TRACE_CODE_STANDARD_SEND_MQ_TOPIC = "fire.trace.codeStandard.send.mq.topic"
   lazy val FIRE_TRACE_LAUNCHER = "fire.trace.launcher"
-  lazy val FIRE_THREAD_STUCK_ENABLE = "fire.analysis.thread.stuck.enable"
-  lazy val FIRE_THREAD_STUCK_INTERVAL = "fire.analysis.thread.stuck.interval"
-  lazy val FIRE_THREAD_STUCK_DEADLOCK_ENABLE = "fire.analysis.thread.stuck.deadlock.enable"
-  lazy val FIRE_THREAD_STUCK_DEADLOCK_EXIT_DELAY = "fire.analysis.thread.stuck.deadlock.exit.delay"
-  lazy val FIRE_THREAD_STUCK_THREAD_NAMES = "fire.analysis.thread.stuck.thread.names"
-  lazy val FIRE_THREAD_STUCK_THREAD_EXIT_DELAY = "fire.analysis.thread.stuck.thread.exit.delay"
-  lazy val FIRE_THREAD_STUCK_THREAD_STATES = "fire.analysis.thread.stuck.thread.states"
-  lazy val FIRE_THREAD_STUCK_THREAD_STACK_KEYWORDS = "fire.analysis.thread.stuck.thread.stack.keywords"
+
+  // 线程诊断分析总开关
+  lazy val FIRE_THREAD_ANALYSIS_ENABLE = "fire.analysis.thread.enable"
+  // 线程分析的执行频率
+  lazy val FIRE_THREAD_ANALYSIS_INTERVAL = "fire.analysis.thread.interval"
+  // 是否检测线程死锁
+  lazy val FIRE_THREAD_ANALYSIS_DEADLOCK_ENABLE = "fire.analysis.thread.deadlock.enable"
+  // 检测到线程死锁是否退出container
+  lazy val FIRE_THREAD_ANALYSIS_DEADLOCK_EXIT_ENABLE = "fire.analysis.thread.deadlock.exit.enable"
+  // 检测到死锁后持续多久（ms）触发 JVM 退出
+  lazy val FIRE_THREAD_ANALYSIS_DEADLOCK_EXIT_DELAY = "fire.analysis.thread.deadlock.exit.delay"
+  // 是否检测线程夯住
+  lazy val FIRE_THREAD_ANALYSIS_HANG_ENABLE = "fire.analysis.thread.hang.enable"
+  // 检测哪些夯住的线程
+  lazy val FIRE_THREAD_ANALYSIS_HANG_NAMES = "fire.analysis.thread.hang.names"
+  // 检测到线程夯住是否退出container
+  lazy val FIRE_THREAD_ANALYSIS_HANG_EXIT_ENABLE = "fire.analysis.thread.hang.exit.enable"
+  // 夯住线程命中后持续多久（ms）触发 JVM 退出
+  lazy val FIRE_THREAD_ANALYSIS_HANG_EXIT_DELAY = "fire.analysis.thread.hang.exit.delay"
+  // 检测哪些线程状态（BLOCKED/RUNNABLE等）
+  lazy val FIRE_THREAD_ANALYSIS_HANG_STATES = "fire.analysis.thread.hang.states"
+  // 夯住线程堆栈关键字，多个以分号分隔
+  lazy val FIRE_THREAD_ANALYSIS_HANG_STACK_KEYWORDS = "fire.analysis.thread.hang.stack.keywords"
 
   /**
    * 用于jdbc url的识别，当无法通过driver class识别数据源时，将从url中的端口号进行区分
@@ -559,49 +574,68 @@ private[fire] object FireFrameworkConf {
   lazy val traceLauncher = PropUtils.getString(this.FIRE_TRACE_LAUNCHER)
 
   /**
-   * 是否启用线程卡死检测（TaskManager 端周期性检测，命中后退出 JVM）
+   * 是否启用线程诊断分析总开关（container 端周期性检测，覆盖 deadlock + hang）
    */
-  def threadStuckEnable: Boolean = PropUtils.getBoolean(this.FIRE_THREAD_STUCK_ENABLE, false)
+  def threadAnalysisEnable: Boolean = PropUtils.getBoolean(this.FIRE_THREAD_ANALYSIS_ENABLE, false)
 
   /**
-   * 线程卡死检测周期（ms）
+   * 线程诊断分析检测周期（ms）
    */
-  def threadStuckIntervalMs: Long = math.max(PropUtils.getLong(this.FIRE_THREAD_STUCK_INTERVAL, 60000L), 1000L)
+  def threadAnalysisIntervalMs: Long = math.max(PropUtils.getLong(this.FIRE_THREAD_ANALYSIS_INTERVAL, 60000L), 1000L)
 
   /**
    * 是否启用 JVM 死锁检测
    */
-  def threadStuckDeadlockEnable: Boolean = PropUtils.getBoolean(this.FIRE_THREAD_STUCK_DEADLOCK_ENABLE, true)
+  def threadAnalysisDeadlockEnable: Boolean = PropUtils.getBoolean(this.FIRE_THREAD_ANALYSIS_DEADLOCK_ENABLE, true)
 
   /**
-   * 检测到死锁后持续多久（ms）触发 JVM 退出
+   * 检测到死锁持续超过阈值后，是否退出 JVM（false 时仅告警）
    */
-  def threadStuckDeadlockExitDelayMs: Long = PropUtils.getLong(this.FIRE_THREAD_STUCK_DEADLOCK_EXIT_DELAY, 300000L)
+  def threadAnalysisDeadlockExitEnable: Boolean = PropUtils.getBoolean(this.FIRE_THREAD_ANALYSIS_DEADLOCK_EXIT_ENABLE, true)
 
   /**
-   * 卡住线程名称关键字，多个以分号分隔，线程名包含任一关键字即命中
+   * 检测到死锁后持续多久（ms）触发 JVM 退出（仅当 deadlock.exit.enable=true 时生效）
    */
-  def threadStuckThreadNamePatterns: Array[String] = {
-    val raw = PropUtils.getString(this.FIRE_THREAD_STUCK_THREAD_NAMES, "")
-    if (StringUtils.isBlank(raw)) Array.empty[String]
-    else raw.split(";").map(_.trim).filter(StringUtils.isNotBlank)
+  def threadAnalysisDeadlockExitDelayMs: Long = PropUtils.getLong(this.FIRE_THREAD_ANALYSIS_DEADLOCK_EXIT_DELAY, 300000L)
+
+  /**
+   * 是否启用夯住线程检测（按线程名/状态/堆栈关键字匹配）
+   */
+  def threadAnalysisHangEnable: Boolean = PropUtils.getBoolean(this.FIRE_THREAD_ANALYSIS_HANG_ENABLE, true)
+
+  /**
+   * 夯住线程名称关键字，多个以分号分隔，线程名包含任一关键字即命中
+   */
+  def threadAnalysisHangNamePatterns: Array[String] = {
+    val raw = PropUtils.getString(this.FIRE_THREAD_ANALYSIS_HANG_NAMES, "")
+    if (StringUtils.isBlank(raw)) {
+      Array.empty[String]
+    } else {
+      raw.split(";").map(_.trim).filter(StringUtils.isNotBlank)
+    }
   }
 
   /**
-   * 卡住线程命中后持续多久（ms）触发 JVM 退出
+   * 检测到夯住线程持续超过阈值后，是否退出 JVM（false 时仅告警）
    */
-  def threadStuckThreadExitDelayMs: Long = PropUtils.getLong(this.FIRE_THREAD_STUCK_THREAD_EXIT_DELAY, 300000L)
+  def threadAnalysisHangExitEnable: Boolean = PropUtils.getBoolean(this.FIRE_THREAD_ANALYSIS_HANG_EXIT_ENABLE, true)
 
   /**
-   * 卡住线程检测关注的线程状态，多个以逗号分隔，默认 BLOCKED
+   * 夯住线程命中后持续多久（ms）触发 JVM 退出（仅当 hang.exit.enable=true 时生效）
    */
-  def threadStuckThreadStates: java.util.Set[Thread.State] = {
-    val raw = PropUtils.getString(this.FIRE_THREAD_STUCK_THREAD_STATES, "BLOCKED")
+  def threadAnalysisHangExitDelayMs: Long = PropUtils.getLong(this.FIRE_THREAD_ANALYSIS_HANG_EXIT_DELAY, 300000L)
+
+  /**
+   * 夯住线程检测关注的线程状态，多个以逗号分隔，默认 BLOCKED
+   */
+  def threadAnalysisHangStates: java.util.Set[Thread.State] = {
+    val raw = PropUtils.getString(this.FIRE_THREAD_ANALYSIS_HANG_STATES, "BLOCKED")
     val states = new java.util.HashSet[Thread.State]()
     if (StringUtils.isBlank(raw)) {
       states.add(Thread.State.BLOCKED)
       return states
     }
+
     raw.split(",").map(_.trim).filter(StringUtils.isNotBlank).foreach { name =>
       try {
         states.add(Thread.State.valueOf(name.toUpperCase))
@@ -614,11 +648,14 @@ private[fire] object FireFrameworkConf {
   }
 
   /**
-   * 卡住线程堆栈关键字，多个以分号分隔；配置后仅当堆栈包含任一关键字时才判定为卡死
+   * 夯住线程堆栈关键字，多个以分号分隔；配置后仅当堆栈包含任一关键字时才判定为夯住
    */
-  def threadStuckThreadStackKeywords: Array[String] = {
-    val raw = PropUtils.getString(this.FIRE_THREAD_STUCK_THREAD_STACK_KEYWORDS, "")
-    if (StringUtils.isBlank(raw)) Array.empty[String]
-    else raw.split(";").map(_.trim).filter(StringUtils.isNotBlank)
+  def threadAnalysisHangStackKeywords: Array[String] = {
+    val raw = PropUtils.getString(this.FIRE_THREAD_ANALYSIS_HANG_STACK_KEYWORDS, "")
+    if (StringUtils.isBlank(raw)) {
+      Array.empty[String]
+    } else {
+      raw.split(";").map(_.trim).filter(StringUtils.isNotBlank)
+    }
   }
 }

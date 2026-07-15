@@ -39,9 +39,7 @@ private object FlinkDistributeExecuteManager extends DistributeExecuteManager {
     FireUtils.printCodeResource()
     // 启动内存监控工具
     MemoryAnalysis.startMemoryMonitor()
-    // TaskManager 端启动线程卡死监控
-    if (FlinkUtils.isTaskManager) {
-      ThreadAnalysis.startThreadStuckMonitor()
-    }
+    // TaskManager 端启动线程诊断分析监控
+    ThreadAnalysis.startThreadAnalysisMonitor()
   }
 }

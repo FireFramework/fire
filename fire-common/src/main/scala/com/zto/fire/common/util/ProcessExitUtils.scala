@@ -33,7 +33,7 @@ object ProcessExitUtils extends Logging {
    * @param exitCode 退出码，非 0 表示异常退出
    */
   def forceExit(exitCode: Int): Unit = {
-    logError(s"Fire thread stuck monitor is forcing JVM exit, exitCode=$exitCode")
+    logError(s"Fire thread monitor is forcing JVM exit, exitCode=$exitCode")
     try {
       val clazz = Class.forName(FLINK_SECURITY_MANAGER)
       val method = clazz.getMethod("forceProcessExit", classOf[Int])
@@ -43,7 +43,7 @@ object ProcessExitUtils extends Logging {
         logWarning("FlinkSecurityManager.forceProcessExit unavailable, fallback to Runtime.halt", e)
     }
 
-    // forceProcessExit 正常不应返回；halt 作为最终兜底，避免 shutdown hook 在卡死场景下再次阻塞
+    // forceProcessExit 正常不应返回；halt 作为最终兜底，避免 shutdown hook 在 hang 场景下再次阻塞
     Runtime.getRuntime.halt(exitCode)
   }
 }

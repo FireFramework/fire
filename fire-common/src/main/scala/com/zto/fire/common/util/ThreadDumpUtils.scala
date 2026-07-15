@@ -37,7 +37,7 @@ object ThreadDumpUtils {
     // lockedMonitors=true, lockedSynchronizers=true，便于分析 BLOCKED / 死锁场景
     threadMxBean.dumpAllThreads(true, true)
       .filter(_ != null)
-      .map(formatThreadInfo)
+      .map(this.formatThreadInfo)
       .mkString("\n")
   }
 
@@ -51,6 +51,7 @@ object ThreadDumpUtils {
    */
   def formatThreadInfo(info: ThreadInfo): String = {
     val builder = new StringBuilder(512)
+
     builder.append('"').append(info.getThreadName).append('"')
       .append(" Id=").append(info.getThreadId)
       .append(' ').append(info.getThreadState)
@@ -80,6 +81,7 @@ object ThreadDumpUtils {
         builder.append('\t').append("- ").append(synchronizer).append('\n')
       }
     }
+
     builder.toString
   }
 }
