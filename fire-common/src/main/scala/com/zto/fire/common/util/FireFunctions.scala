@@ -197,6 +197,18 @@ trait FireFunctions extends Serializable with Logging  {
   /**
    * 以人类可读的方式计算耗时（ms）
    *
+   * @param startTime
+   * 开始时间
+   * @param endTime
+   * 结束时间
+   * @return
+   * 耗时
+   */
+  def elapsed(startTime: Long, endTime: Long): String = readable(endTime - startTime, TimeUnitEnum.MS)
+
+  /**
+   * 以人类可读的方式计算耗时（ms）
+   *
    * @param beginTime
    * 开始时间
    * @return

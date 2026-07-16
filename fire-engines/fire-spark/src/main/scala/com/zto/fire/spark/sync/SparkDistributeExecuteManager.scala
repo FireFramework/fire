@@ -17,7 +17,7 @@
 
 package com.zto.fire.spark.sync
 
-import com.zto.fire.common.analysis.MemoryAnalysis
+import com.zto.fire.common.analysis.{MemoryAnalysis, ThreadAnalysis}
 import com.zto.fire.common.util.FireUtils
 import com.zto.fire.core.sync.DistributeExecuteManager
 
@@ -38,5 +38,7 @@ private object SparkDistributeExecuteManager extends DistributeExecuteManager {
     FireUtils.printCodeResource()
     // 启动内存监控工具
     MemoryAnalysis.startMemoryMonitor()
+    // Executor / Driver 端启动线程诊断分析监控（与 FlinkDistributeExecuteManager 对齐）
+    ThreadAnalysis.startThreadAnalysisMonitor()
   }
 }

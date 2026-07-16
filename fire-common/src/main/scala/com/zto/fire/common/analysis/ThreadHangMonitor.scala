@@ -22,7 +22,6 @@ import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.exception.FireException
 import com.zto.fire.common.util.{ExceptionBus, Logging, ProcessExitUtils, ThreadDumpUtils}
 import org.apache.commons.lang3.StringUtils
-import org.apache.flink.util.ExceptionUtils
 
 import java.lang.management.{ManagementFactory, ThreadInfo, ThreadMXBean}
 import java.util.concurrent.atomic.AtomicBoolean
@@ -108,11 +107,11 @@ class ThreadHangMonitor extends Serializable with Logging {
     }
 
     if (durationMs >= this.deadlockExitDelayMs) {
-      val reason = s"检测到 JVM 死锁已持续 $durationMs ms（阈值 ${this.deadlockExitDelayMs} ms），涉及 ${deadlockedIds.length} 个线程"
+      val reason = s"检测到 JVM 死锁已持续 ${elapsed(firstSeen, now)}（阈值 ${this.deadlockExitDelayMs} ms），涉及 ${deadlockedIds.length} 个线程"
       if (this.deadlockExitEnable) {
         shutdownContainer(reason)
       } else {
-        logWarning(s"[ThreadHangMonitor] $reason，但 fire.analysis.thread.deadlock.exit.enable=false，仅告警不退出 JVM")
+        logWarning(s"[ThreadHangMonitor] $reason，但 fire.analysis.thread.deadlock.exit.enable=false，仅警告不退出 JVM")
       }
     }
   }

@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * 线程诊断分析入口，在 Flink TaskManager 等 container 端启动周期性检测任务
+ * 线程诊断分析入口，在 Flink TaskManager / Spark Executor 等 container 端启动周期性检测任务
  *
  * @author ChengLong 2026-07-07 10:26:12
  * @since fire-3.0.0

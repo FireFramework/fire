@@ -167,7 +167,7 @@ under the License.
 
 ## 3.3 线程死锁与夯住检测（fire.analysis.thread.*）
 
-container 端（如 Flink TaskManager）周期性检测 JVM 死锁与配置的夯住线程。总开关关闭时整套检测不启动。
+container 端（Flink TaskManager、Spark Executor/Driver）周期性检测 JVM 死锁与配置的夯住线程。总开关关闭时整套检测不启动。由各引擎 `DistributeExecuteManager` 自动拉起，业务代码无需手动调用。
 
 命名约定：
 
