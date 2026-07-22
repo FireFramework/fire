@@ -56,6 +56,7 @@ private[fire] object FireRocketMQConf {
   lazy val ROCKET_SINK_PARALLELISM = "rocket.sink.parallelism"
   lazy val ROCKET_SINK_BATCH = "rocket.sink.batch"
   lazy val ROCKET_SINK_FLUSH_INTERVAL = "rocket.sink.flashInterval"
+  lazy val ROCKET_IGNORE_PARSE_ERRORS = "rocket.ignore-parse-errors"
 
   // 是否使状态中存放的offset不生效（请谨慎配置，用于rocketmq集群迁移等不正常状况的运维）
   lazy val ROCKET_OVERWRITE_STATE_OFFSET = "rocket.force.overwrite.stateOffset.enable"
@@ -108,5 +109,12 @@ private[fire] object FireRocketMQConf {
    */
   def rocketNameServer(url: String): String = {
     this.rocketClusterMap.getOrElse(url, url)
+  }
+
+  /**
+   * 是否忽略解析失败的数据
+   */
+  def rocketIgnoreParseErrors(keyNum: Int = KeyNum._1): Boolean = {
+    PropUtils.getBoolean(this.ROCKET_IGNORE_PARSE_ERRORS, false)
   }
 }
