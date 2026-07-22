@@ -20,6 +20,7 @@ package com.zto.fire.spark.ext.core
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
+import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.lineage.parser.connector.HudiConnectorParser
 import com.zto.fire.common.util.{LogUtils, Logging, SQLUtils, ThreadUtils, ValueUtils}
 import com.zto.fire.hbase.bean.HBaseBaseBean
@@ -218,6 +219,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * 对应配置文件中指定的数据源编号
    */
   def jdbcUpdateBatch(sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, keyNum: Int = KeyNum._1): Unit = {
+    LineageManager.addApiLineage("jdbcUpdateBatch")
     requireNonEmpty(sql)("执行jdbcBatchUpdate失败，sql语句不能为空")
     val finalFields = if (noEmpty(fields)) fields else SQLUtils.parsePlaceholder(sql).map(column => if (autoConvert) column.toHump else column)
 
@@ -328,6 +330,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * 对应配置文件中指定的数据源编号
    */
   def jdbcUpdateBatchAsync(sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, threadNum: Int = 5, keyNum: Int = KeyNum._1): Unit = {
+    LineageManager.addApiLineage("jdbcUpdateBatchAsync")
     requireNonEmpty(sql)("执行jdbcUpdateBatchAsync失败，sql语句不能为空")
     if (threadNum <= 1 || dataFrame.isStreaming) {
       this.jdbcUpdateBatch(sql, fields, autoConvert, keyNum)

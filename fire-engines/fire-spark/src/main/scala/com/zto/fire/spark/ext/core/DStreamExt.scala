@@ -112,6 +112,7 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
    * 当重试多次仍失败时是否退出
    */
   def foreachRDDAtLeastOnce(process: RDD[T] => Unit)(implicit reTry: Int = 3, duration: Long = 3000, autoCommit: Boolean = true, exitOnFailure: Boolean = true): Unit = {
+    LineageManager.addApiLineage("foreachRDDAtLeastOnce")
     this.stream.foreachRDD((rdd, batchTime) => {
       // 用户的业务逻辑处理，对于处理失败的RDD重试指定的次数
       val retValue = Try {

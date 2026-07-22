@@ -18,6 +18,7 @@
 package com.zto.fire.jdbc
 
 import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.common.lineage.LineageManager
 
 import java.sql.{Connection, ResultSet}
 import scala.reflect.ClassTag
@@ -98,6 +99,7 @@ private[fire] trait JdbcConnectorBridge {
    * 影响的记录数
    */
   def jdbcUpdateBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Long = {
+    LineageManager.addApiLineage("jdbcUpdateBatch")
     JdbcConnector.updateBatch(sql, paramsList, connection, commit, closeConnection, keyNum)
   }
 
@@ -116,6 +118,7 @@ private[fire] trait JdbcConnectorBridge {
    * 影响的记录数
    */
   def jdbcUpdateBatchAsync(sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 1, keyNum: Int = KeyNum._1): Long = {
+    LineageManager.addApiLineage("jdbcUpdateBatchAsync")
     JdbcConnector.updateBatchAsync(sql, paramsList, threadNum, keyNum)
   }
 

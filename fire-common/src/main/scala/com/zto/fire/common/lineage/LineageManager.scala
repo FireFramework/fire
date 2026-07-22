@@ -18,7 +18,7 @@
 package com.zto.fire.common.lineage
 
 import com.zto.fire.common.anno.Internal
-import com.zto.fire.common.bean.lineage.{Lineage, SQLTable, SQLTablePartitions}
+import com.zto.fire.common.bean.lineage.{ApiLineage, Lineage, LineageCollectData, SQLTable, SQLTablePartitions}
 import com.zto.fire.common.conf.FireFrameworkConf._
 import com.zto.fire.common.conf.{FireHiveConf, FireKafkaConf, FirePS1Conf, FireRocketMQConf}
 import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
@@ -28,6 +28,7 @@ import com.zto.fire.common.lineage.parser.connector._
 import com.zto.fire.common.util._
 import com.zto.fire.predef._
 
+import java.util
 import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.JavaConversions
@@ -42,12 +43,15 @@ import scala.collection.JavaConversions
 private[fire] class LineageManager extends Logging {
   // 用于存放当前任务用到的数据源信息
   private[fire] lazy val lineageMap = new ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
+  // 用于存放当前 JVM（Driver/Executor 或 JM/TM）观测到的 Fire API 使用血缘，按 apiName 去重
+  private[fire] lazy val apiLineageMap = new ConcurrentHashMap[String, ApiLineage]()
   // 用于收集来自不同数据源的sql语句，后续会异步进行SQL解析，考虑到分布式场景下会有很多重复的SQL执行，因此使用了线程不安全的队列即可满足需求
   private lazy val dbSqlQueue = new ConcurrentLinkedQueue[DBSqlSource]()
   // 用于解析数据源的异步定时调度线程
   private lazy val parserExecutor = ThreadUtils.createManagedThreadPool("LineageManager", ThreadPoolType.SCHEDULED).asInstanceOf[ScheduledExecutorService]
   private lazy val parseCount = new AtomicInteger()
   private lazy val addDBCount = new AtomicInteger()
+  private[fire] lazy val addApiCount = new AtomicInteger()
   // 用于收集各实时引擎执行的sql语句
   this.lineageParse()
 
@@ -264,6 +268,99 @@ object LineageManager extends Logging {
    */
   private[fire] def addDatasource(sourceType: Datasource, datasourceDesc: DatasourceDesc): Unit = {
     this.manager.add(sourceType, datasourceDesc)
+  }
+
+  /**
+   * 采集 Fire API 使用血缘（按 apiName 去重，同一 JVM 仅记录首次调用）。
+   * module / sinceVersion 从 {@link ApiMetaRegistry} 补齐，埋点处只需传 API 名称。
+   *
+   * @param apiName
+   * API 名称，需与 ApiMetaRegistry 中登记名一致，如 jdbcUpdateBatch
+   */
+  def addApiLineage(apiName: String): Unit = {
+    if (!lineageEnable || isEmpty(apiName)) return
+    if (this.manager.apiLineageMap.size() >= lineageMaxSize) return
+
+    val name = apiName.trim
+    // putIfAbsent：仅首次调用写入
+    if (!this.manager.apiLineageMap.containsKey(name)) {
+      val meta = ApiMetaRegistry.getOrUnknown(name)
+      if (!ApiMetaRegistry.contains(name)) {
+        printLog(s"API 未在 ApiMetaRegistry 登记，仍采集用量：name=$name")
+      }
+      val apiLineage = new ApiLineage(name, meta.module, meta.sinceVersion, Long.box(System.currentTimeMillis()))
+      val prev = this.manager.apiLineageMap.putIfAbsent(name, apiLineage)
+      if (prev == null) {
+        this.manager.addApiCount.incrementAndGet()
+        printLog(s"采集到 Fire API 血缘：$apiLineage")
+      }
+    }
+  }
+
+  /**
+   * 获取本 JVM 采集到的 API 血缘（按 name 去重后的列表）
+   */
+  private[fire] def getApiLineage: util.List[ApiLineage] = {
+    new util.ArrayList[ApiLineage](this.manager.apiLineageMap.values())
+  }
+
+  /**
+   * 获取本 JVM 的完整采集载荷（datasource + apis），用于分布式上报
+   */
+  private[fire] def getLineageCollectData: LineageCollectData = {
+    val data = new LineageCollectData()
+    data.setDatasource(this.getDatasourceLineage.asInstanceOf[JConcurrentHashMap[_, _]])
+    data.setApis(this.getApiLineage)
+    data
+  }
+
+  /**
+   * 合并 API 血缘：按 name 去重，保留更早的 firstSeen
+   */
+  private[fire] def mergeApiLineage(current: util.Map[String, ApiLineage], target: util.Collection[ApiLineage]): Unit = {
+    if (target == null || target.isEmpty) return
+    target.foreach(api => {
+      if (api != null && noEmpty(api.getName)) {
+        val name = api.getName
+        val existing = current.get(name)
+        if (existing == null) {
+          current.put(name, api)
+        } else if (api.getFirstSeen != null && (existing.getFirstSeen == null || api.getFirstSeen < existing.getFirstSeen)) {
+          current.put(name, api)
+        }
+      }
+    })
+  }
+
+  /**
+   * 合并两个 API 血缘列表
+   */
+  private[fire] def mergeApiLineageList(current: util.List[ApiLineage], target: util.List[ApiLineage]): util.List[ApiLineage] = {
+    val map = new ConcurrentHashMap[String, ApiLineage]()
+    mergeApiLineage(map, current)
+    mergeApiLineage(map, target)
+    new util.ArrayList[ApiLineage](map.values())
+  }
+
+  /**
+   * 合并分布式采集载荷到目标载荷
+   */
+  private[fire] def mergeLineageCollectData(current: LineageCollectData, target: LineageCollectData): LineageCollectData = {
+    if (current == null) return target
+    if (target == null || target.isEmpty) return current
+
+    val dsCurrent = if (current.getDatasource == null) new JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
+    else current.getDatasource.asInstanceOf[JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]]
+    val dsTarget = if (target.getDatasource == null) new JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
+    else target.getDatasource.asInstanceOf[JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]]
+    this.mergeLineageMap(dsCurrent, dsTarget)
+    current.setDatasource(dsCurrent.asInstanceOf[JConcurrentHashMap[_, _]])
+
+    val apiMap = new ConcurrentHashMap[String, ApiLineage]()
+    mergeApiLineage(apiMap, current.getApis)
+    mergeApiLineage(apiMap, target.getApis)
+    current.setApis(new util.ArrayList[ApiLineage](apiMap.values()))
+    current
   }
 
   /**
@@ -928,10 +1025,21 @@ object LineageManager extends Logging {
   private[fire] def getDatasourceLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = this.manager.get
 
   /**
-   * 获取完整的实时血缘信息
+   * 获取完整的实时血缘信息（含 API 血缘；对外 Kafka 仅新增 apis 字段）
    */
   private[fire] def getLineage: Lineage = {
-    new Lineage(this.getDatasourceLineage, SQLLineageManager.getSQLLineage)
+    new Lineage(this.getDatasourceLineage, SQLLineageManager.getSQLLineage, this.getApiLineage)
+  }
+
+  /**
+   * 从分布式采集载荷构建对外 Lineage（兼容旧结构：datasource/sql 不变，仅附加 apis）
+   */
+  private[fire] def toLineage(collectData: LineageCollectData): Lineage = {
+    val datasource = if (collectData == null || collectData.getDatasource == null) this.getDatasourceLineage
+    else collectData.getDatasource
+    val apis = if (collectData == null || collectData.getApis == null) this.getApiLineage
+    else this.mergeApiLineageList(collectData.getApis, this.getApiLineage)
+    new Lineage(datasource, SQLLineageManager.getSQLLineage, apis)
   }
 
   /**

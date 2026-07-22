@@ -20,6 +20,7 @@ package com.zto.fire.spark.acc
 import com.zto.fire.predef._
 import com.google.common.collect.HashBasedTable
 import com.zto.fire.common.bean.standard.StandardResult
+import com.zto.fire.common.bean.lineage.LineageCollectData
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.conf.FireFrameworkConf.{lineageDistributeCollectPeriod, lineageRunCount, lineageRunInitialDelay, lineageRunPeriod}
 import com.zto.fire.common.enu.{Datasource, ThreadPoolType}
@@ -180,20 +181,31 @@ private[fire] object AccumulatorManager extends Logging  {
   }
 
   /**
-   * 将血缘信息添加到累加器中
+   * 将血缘信息添加到累加器中（兼容旧签名：仅 datasource map）
    */
   private[fire] def addLineage(lineageMap: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
     if (isEmpty(lineageMap)) return
+    val data = new LineageCollectData()
+    data.setDatasource(lineageMap.asInstanceOf[JConcurrentHashMap[_, _]])
+    data.setApis(LineageManager.getApiLineage)
+    this.addLineage(data)
+  }
+
+  /**
+   * 将完整血缘采集载荷（datasource + apis）添加到累加器中
+   */
+  private[fire] def addLineage(collectData: LineageCollectData): Unit = {
+    if (collectData == null || collectData.isEmpty) return
     if (FireUtils.isSparkEngine) {
       val env = SparkEnv.get
       if (env != null && !"driver".equalsIgnoreCase(SparkEnv.get.executorId)) {
         val lineageAccumulator = SparkEnv.get.conf.get(this.lineageAccumulatorLabel, "")
         if (StringUtils.isNotBlank(lineageAccumulator)) {
           val lineageAcc: LineageAccumulator = SparkEnv.get.closureSerializer.newInstance.deserialize(ByteBuffer.wrap(StringsUtils.toByteArray(lineageAccumulator)))
-          lineageAcc.add(lineageMap)
+          lineageAcc.add(collectData)
         }
       } else {
-        this.lineageAccumulator.add(lineageMap)
+        this.lineageAccumulator.add(collectData)
       }
     }
   }
@@ -284,9 +296,18 @@ private[fire] object AccumulatorManager extends Logging  {
   def getSync: ConcurrentLinkedQueue[String] = this.syncAccumulator.value
 
   /**
-   * 获取Fire采集到的血缘信息
+   * 获取Fire采集到的血缘信息（datasource，兼容旧调用）
    */
-  def getLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = this.lineageAccumulator.value
+  def getLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = {
+    val ds = this.lineageAccumulator.value.getDatasource
+    if (ds == null) new JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
+    else ds.asInstanceOf[JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]]
+  }
+
+  /**
+   * 获取完整血缘采集载荷（datasource + apis）
+   */
+  def getLineageCollect: LineageCollectData = this.lineageAccumulator.value
 
   /**
    * 获取Fire采集到的代码标准化检测结果
@@ -484,11 +505,11 @@ private[fire] object AccumulatorManager extends Logging  {
   private[fire] def collectDistributeLineage(isAsync: Boolean = true): Unit = {
     if (!FireFrameworkConf.accEnable || !FireFrameworkConf.lineageEnable || SparkUtils.isContextStopped) return
 
-    // driver端采集
-    addLineage(LineageManager.getDatasourceLineage)
+    // driver端采集（datasource + apis）
+    addLineage(LineageManager.getLineageCollectData)
     // executor端分布式采集
     DistributeSyncManager.sync({
-      addLineage(LineageManager.getDatasourceLineage)
+      addLineage(LineageManager.getLineageCollectData)
     }, isAsync)
     LineageManager.printLog(s"完成分布式血缘采集分析：${JSONUtils.toJSONString(SparkLineageAccumulatorManager.getValue)}")
   }

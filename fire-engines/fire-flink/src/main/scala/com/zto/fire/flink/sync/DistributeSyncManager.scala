@@ -73,9 +73,9 @@ private[fire] object DistributeSyncManager extends SyncManager {
     lineageThread.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = {
         LineageManager.printLog(s"调用接口[$lineageUrl]定时任务已启动")
-        val lineageMap = LineageManager.getDatasourceLineage
-        if (noEmpty(lineageMap)) {
-          val json = JSONUtils.toJSONString(lineageMap)
+        val collectData = LineageManager.getLineageCollectData
+        if (collectData != null && !collectData.isEmpty) {
+          val json = JSONUtils.toJSONString(collectData)
           LineageManager.printLog(s"调用接口[$lineageUrl]发送血缘json：$json")
           SystemRestful.restInvoke(lineageUrl, json)
         }

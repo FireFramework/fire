@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.`type`.TypeReference
 import com.zto.fire.common.anno.Rest
 import com.zto.fire.common.bean.rest.ResultMsg
 import com.zto.fire.common.bean.standard.StandardResult
+import com.zto.fire.common.bean.lineage.LineageCollectData
 import com.zto.fire.common.enu.{Datasource, ErrorCode, RequestMethod}
 import com.zto.fire.common.util._
 import com.zto.fire.core.rest.{RestCase, RestServerManager, SystemRestful}
@@ -96,7 +97,10 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
   }
 
   /**
-   * 用于引擎内部分布式采集血缘信息
+   * 用于引擎内部分布式采集血缘信息。
+   * 兼容两种上报格式：
+   * 1) 旧格式：直接为 datasource Map
+   * 2) 新格式：LineageCollectData（含 payloadVersion / datasource / apis）
    */
   @Rest("/system/collectLineage")
   def collectLineage(request: Request, response: Response): AnyRef = {
@@ -106,9 +110,17 @@ private[fire] class FlinkSystemRestful(var baseFlink: BaseFlink, val restfulRegi
       logDebug(s"内部请求分布式更新血缘信息，ip：${request.ip()}")
       LineageManager.printLog(s"请求fire更新血缘信息：$json")
       if (noEmpty(json)) {
-        val lineageMap = JSONUtils.parseObject[JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]](json)
-        if (ValueUtils.noEmpty(lineageMap)) {
-          FlinkLineageAccumulatorManager.add(lineageMap)
+        if (json.contains("\"payloadVersion\"") || json.contains("\"apis\"")) {
+          val collectData = JSONUtils.parseObject[LineageCollectData](json)
+          if (collectData != null && !collectData.isEmpty) {
+            FlinkLineageAccumulatorManager.add(collectData)
+          }
+        } else {
+          // 兼容旧版本 TaskManager：仅上报 datasource Map
+          val lineageMap = JSONUtils.parseObject[JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]](json)
+          if (ValueUtils.noEmpty(lineageMap)) {
+            FlinkLineageAccumulatorManager.add(lineageMap)
+          }
         }
       }
       ResultMsg.buildSuccess("血缘信息已更新", ErrorCode.SUCCESS.toString)

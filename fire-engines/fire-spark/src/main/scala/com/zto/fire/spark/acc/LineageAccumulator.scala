@@ -17,72 +17,73 @@
 
 package com.zto.fire.spark.acc
 
-import com.zto.fire._
+import com.zto.fire.common.bean.lineage.LineageCollectData
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
-import com.zto.fire.common.util.{Logging}
-import com.zto.fire.predef.JHashSet
+import com.zto.fire.common.lineage.LineageManager
+import com.zto.fire.common.util.Logging
 import org.apache.spark.util.AccumulatorV2
 
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
+import java.util.concurrent.ConcurrentHashMap
 
 /**
-  * Fire框架实时血缘累加器，用于采集实时任务用到的数据源信息、SQL血缘信息等
-  * 支持：SQL、JDBC、Kafka、RocketMQ、HBase等组件的血缘信息解析与采集
-  *
-  * @author ChengLong 2022-08-29 09:21:48
-  * @since 2.3.2
-  */
-private[fire] class LineageAccumulator extends AccumulatorV2[ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]], ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]] with Logging {
-  // 用于存放字符串的队列
-  private val lineageMap = new ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
+ * Fire框架实时血缘累加器，用于采集实时任务用到的数据源信息、SQL血缘信息、Fire API 使用血缘等
+ * 支持：SQL、JDBC、Kafka、RocketMQ、HBase 等组件的血缘信息解析与采集，以及 API 用量分布式汇总
+ *
+ * @author ChengLong 2022-08-29 09:21:48
+ * @since 2.3.2
+ */
+private[fire] class LineageAccumulator extends AccumulatorV2[LineageCollectData, LineageCollectData] with Logging {
+  // 用于存放数据源 + API 血缘的采集载荷
+  private val collectData = new LineageCollectData()
 
   /**
-    * 判断累加器是否为空
-    */
-  override def isZero: Boolean = this.lineageMap.isEmpty
+   * 判断累加器是否为空
+   */
+  override def isZero: Boolean = this.collectData.isEmpty
 
   /**
-    * 用于复制累加器
-    */
-  override def copy(): AccumulatorV2[ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]], ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]] = {
-    val strAcc = new LineageAccumulator
-    LineageManager.mergeLineageMap(strAcc.value, this.lineageMap)
-    strAcc
+   * 用于复制累加器
+   */
+  override def copy(): AccumulatorV2[LineageCollectData, LineageCollectData] = {
+    val acc = new LineageAccumulator
+    LineageManager.mergeLineageCollectData(acc.value, this.collectData)
+    acc
   }
 
   /**
-    * driver端执行有效，用于清空累加器
-    */
-  override def reset(): Unit = this.lineageMap.clear()
+   * driver端执行有效，用于清空累加器
+   */
+  override def reset(): Unit = {
+    this.collectData.setDatasource(new ConcurrentHashMap())
+    this.collectData.setApis(new java.util.ArrayList())
+  }
 
   /**
    * 将新的血缘信息添加到累加器中
    */
-  override def add(v: ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
-    if (FireFrameworkConf.accEnable && v.nonEmpty) {
-      LineageManager.mergeLineageMap(this.lineageMap, v)
+  override def add(v: LineageCollectData): Unit = {
+    if (FireFrameworkConf.accEnable && v != null && !v.isEmpty) {
+      LineageManager.mergeLineageCollectData(this.collectData, v)
     }
   }
 
   /**
-    * executor端向driver端merge累加数据
-    *
-    * @param other
-    * executor端累加结果
-    */
-  override def merge(other: AccumulatorV2[ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]], ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]]): Unit = {
-    if (other != null && other.value.size() > 0) {
-      LineageManager.mergeLineageMap(this.lineageMap, other.value)
+   * executor端向driver端merge累加数据
+   *
+   * @param other
+   * executor端累加结果
+   */
+  override def merge(other: AccumulatorV2[LineageCollectData, LineageCollectData]): Unit = {
+    if (other != null && other.value != null && !other.value.isEmpty) {
+      LineageManager.mergeLineageCollectData(this.collectData, other.value)
     }
   }
 
   /**
-    * driver端获取累加器的值
-    *
-    * @return
-    * 收集到的日志信息
-    */
-  override def value: ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = this.lineageMap
+   * driver端获取累加器的值
+   *
+   * @return
+   * 收集到的血缘信息
+   */
+  override def value: LineageCollectData = this.collectData
 }

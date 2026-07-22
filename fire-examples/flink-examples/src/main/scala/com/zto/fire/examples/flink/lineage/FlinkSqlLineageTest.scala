@@ -4,7 +4,6 @@ import com.zto.fire._
 import com.zto.fire.common.util.{JSONUtils, ThreadUtils}
 import com.zto.fire.core.anno.connector.Hive
 import com.zto.fire.core.anno.lifecycle.{Step1, Step2, Step3, Step4, Step5}
-import com.zto.fire.examples.flink.Test.sql
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Streaming
 import com.zto.fire.flink.sync.FlinkLineageAccumulatorManager

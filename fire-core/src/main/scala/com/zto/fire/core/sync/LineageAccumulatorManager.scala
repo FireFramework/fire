@@ -21,6 +21,7 @@ import com.zto.fire.common.bean.lineage.Lineage
 import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.lineage.DatasourceDesc
+import com.zto.fire.common.bean.lineage.LineageCollectData
 import com.zto.fire.predef._
 
 import java.util.concurrent.ConcurrentHashMap
@@ -37,11 +38,20 @@ trait LineageAccumulatorManager extends SyncManager {
   private lazy val longCounter = new AtomicLong()
 
   /**
-   * 将消息放到累加器中
+   * 将消息放到累加器中（兼容旧签名：仅 datasource）
    */
   def add(lineage: ConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
-    if (FireFrameworkConf.accEnable) this.accumulator.putAll(lineage)
+    if (FireFrameworkConf.accEnable) {
+      val data = new LineageCollectData()
+      data.setDatasource(lineage.asInstanceOf[ConcurrentHashMap[_, _]])
+      this.add(data)
+    }
   }
+
+  /**
+   * 将完整采集载荷（datasource + apis）放到累加器中
+   */
+  def add(collectData: LineageCollectData): Unit
 
   /**
    * 累加Long类型数据

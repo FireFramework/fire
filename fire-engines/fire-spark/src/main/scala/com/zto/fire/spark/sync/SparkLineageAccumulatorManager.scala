@@ -17,10 +17,9 @@
 
 package com.zto.fire.spark.sync
 
-import com.zto.fire.common.bean.lineage.Lineage
+import com.zto.fire.common.bean.lineage.{Lineage, LineageCollectData}
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.enu.Datasource
-import com.zto.fire.common.lineage.{DatasourceDesc, SQLLineageManager}
+import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
 import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.core.sync.LineageAccumulatorManager
 import com.zto.fire.predef._
@@ -42,10 +41,10 @@ object SparkLineageAccumulatorManager extends LineageAccumulatorManager {
 
 
   /**
-   * 将血缘信息放到累加器中
+   * 将完整血缘采集载荷放到累加器中（datasource + apis）
    */
-  override def add(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
-    AccumulatorManager.addLineage(lineage)
+  override def add(collectData: LineageCollectData): Unit = {
+    AccumulatorManager.addLineage(collectData)
   }
 
   /**
@@ -54,10 +53,13 @@ object SparkLineageAccumulatorManager extends LineageAccumulatorManager {
   override def add(value: Long): Unit = AccumulatorManager.addCounter(value)
 
   /**
-   * 获取收集到的血缘消息
+   * 获取收集到的血缘消息（对外结构兼容：仅新增 apis）
    */
   override def getValue: Lineage = {
-    new Lineage(AccumulatorManager.getLineage, SQLLineageManager.getSQLLineage)
+    val collect = AccumulatorManager.getLineageCollect
+    // 再合并 driver 本地尚未上报的 API / datasource
+    LineageManager.mergeLineageCollectData(collect, LineageManager.getLineageCollectData)
+    new Lineage(collect.getDatasource, SQLLineageManager.getSQLLineage, collect.getApis)
   }
 
   /**

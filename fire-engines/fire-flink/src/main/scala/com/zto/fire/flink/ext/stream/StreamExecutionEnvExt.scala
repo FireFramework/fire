@@ -22,6 +22,7 @@ import com.zto.fire.common.bean.Generator
 import com.zto.fire.common.conf.{FireKafkaConf, FireRocketMQConf, KeyNum}
 import com.zto.fire.common.enu.Datasource._
 import com.zto.fire.common.enu.{Operation => FOperation}
+import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.lineage.parser.connector.{CustomizeConnectorParser, KafkaConnectorParser, RocketmqConnectorParser}
 import com.zto.fire.common.util.MQType.MQType
 import com.zto.fire.common.util._
@@ -460,6 +461,7 @@ class StreamExecutionEnvExt(env: StreamExecutionEnvironment) extends StreamExecu
    * DataStream[T]
    */
   def createRandomLongStream(qps: Long = 1000): DataStream[Long] = {
+    LineageManager.addApiLineage("createRandomLongStream")
     this.addCustomizeSource(new RandomLongConnector(qps))
   }
 

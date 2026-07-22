@@ -19,8 +19,14 @@ package com.zto.fire.common.bean.lineage;
 
 import com.zto.fire.common.bean.FireTask;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * 用于封装采集到的实时血缘信息
+ * 用于封装采集到的实时血缘信息。
+ * <p>
+ * 对外 Kafka JSON 仅做字段新增（apis），不修改既有 datasource / sql / FireTask 字段，以兼容下游实时平台。
+ * </p>
  *
  * @author ChengLong 2022-08-30 15:31:32
  * @since 2.3.2
@@ -37,6 +43,13 @@ public class Lineage extends FireTask {
      */
     private SQLLineage sql;
 
+    /**
+     * Fire API 使用血缘（新增字段，旧消费者可忽略）
+     *
+     * @since 3.0.0
+     */
+    private List<ApiLineage> apis;
+
     public Lineage() {
         super();
     }
@@ -49,6 +62,12 @@ public class Lineage extends FireTask {
     public Lineage(Object lineage, SQLLineage sql) {
         this.datasource = lineage;
         this.sql = sql;
+    }
+
+    public Lineage(Object lineage, SQLLineage sql, List<ApiLineage> apis) {
+        this.datasource = lineage;
+        this.sql = sql;
+        this.apis = apis;
     }
 
     public Object getDatasource() {
@@ -65,5 +84,23 @@ public class Lineage extends FireTask {
 
     public void setSql(SQLLineage sql) {
         this.sql = sql;
+    }
+
+    public List<ApiLineage> getApis() {
+        return apis;
+    }
+
+    public void setApis(List<ApiLineage> apis) {
+        this.apis = apis;
+    }
+
+    /**
+     * 确保 apis 非 null，便于序列化与合并
+     */
+    public List<ApiLineage> apisOrEmpty() {
+        if (this.apis == null) {
+            this.apis = new ArrayList<>();
+        }
+        return this.apis;
     }
 }

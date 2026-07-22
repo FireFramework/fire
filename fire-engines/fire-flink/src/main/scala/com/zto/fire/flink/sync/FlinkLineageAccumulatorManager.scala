@@ -18,12 +18,13 @@
 package com.zto.fire.flink.sync
 
 import com.zto.fire._
-import com.zto.fire.common.bean.lineage.Lineage
+import com.zto.fire.common.bean.lineage.{ApiLineage, Lineage, LineageCollectData}
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.sync.LineageAccumulatorManager
 
+import java.util
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -34,10 +35,11 @@ import java.util.concurrent.atomic.AtomicLong
  */
 object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
   private lazy val lineageMap = new JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]()
+  private lazy val apiMap = new JConcurrentHashMap[String, ApiLineage]()
   private lazy val counter = new AtomicLong()
 
   /**
-   * 去重合并血缘信息
+   * 去重合并血缘信息（datasource）
    */
   private def mergeLineage(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
     // 合并来自各个TaskManager端的血缘信息
@@ -84,10 +86,28 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
   }
 
   /**
-   * 将血缘信息放到累加器中
+   * 合并 API 血缘
    */
-  override def add(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = this.synchronized {
-    if (lineage.nonEmpty) this.mergeLineage(lineage)
+  private def mergeApis(apis: util.List[ApiLineage]): Unit = {
+    LineageManager.mergeApiLineage(this.apiMap, apis)
+    LineageManager.mergeApiLineage(this.apiMap, LineageManager.getApiLineage)
+  }
+
+  /**
+   * 将完整血缘采集载荷放到累加器中
+   */
+  override def add(collectData: LineageCollectData): Unit = this.synchronized {
+    if (collectData == null || collectData.isEmpty) return
+    val ds = collectData.getDatasource
+    if (ds != null && !ds.isEmpty) {
+      this.mergeLineage(ds.asInstanceOf[JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]])
+    }
+    if (collectData.getApis != null && !collectData.getApis.isEmpty) {
+      this.mergeApis(collectData.getApis)
+    } else {
+      // 即使无上报 apis，也合并本进程本地采集
+      LineageManager.mergeApiLineage(this.apiMap, LineageManager.getApiLineage)
+    }
   }
 
   /**
@@ -96,9 +116,10 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
   override def add(value: Long): Unit = this.counter.addAndGet(value)
 
   /**
-   * 获取收集到的血缘消息
+   * 获取收集到的血缘消息（对外仅新增 apis，兼容旧结构）
    */
   override def getValue: Lineage = {
-    new Lineage(this.lineageMap, SQLLineageManager.getSQLLineage)
+    LineageManager.mergeApiLineage(this.apiMap, LineageManager.getApiLineage)
+    new Lineage(this.lineageMap, SQLLineageManager.getSQLLineage, new util.ArrayList[ApiLineage](this.apiMap.values()))
   }
 }
