@@ -177,9 +177,9 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                                 if (debugEnable) LOG.info("反序列化后的消息：{}", data);
 
                                 if (data == null) {
-                                    LOG.error("RocketMQ消息反序列化失败，消息为空！");
+                                    LOG.error("RocketMQ消息反序列化失败，消息为空！反序列化前的消息：{}", msg);
                                     if (!ignoreParseErrors) {
-                                        consumerException = new RuntimeException("RocketMQ消息反序列化失败，消息为空！");
+                                        consumerException = new RuntimeException("RocketMQ消息反序列化失败，消息为空！反序列化前的消息：" + msg);
                                     }
                                 }
 
