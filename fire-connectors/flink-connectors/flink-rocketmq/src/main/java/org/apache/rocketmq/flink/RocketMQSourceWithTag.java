@@ -83,6 +83,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
     private ScheduledExecutorService discoveryService;
     private String consumerLogInfo;
     private boolean debugEnable = false;
+    private boolean ignoreParseErrors = false;
     private Exception consumerException;
     private transient AtomicInteger brokerBusyRetryCount = new AtomicInteger(0);
 
@@ -96,7 +97,8 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
         LOG.info("RocketMQ Connector source open....");
         Validate.notEmpty(props, "Consumer properties can not be empty");
         Validate.notNull(schema, "TagKeyValueDeserializationSchema can not be null");
-        debugEnable = FireRocketMQConf.rocketLoggerDebugEnable(1);
+        this.debugEnable = FireRocketMQConf.rocketLoggerDebugEnable(1);
+        this.ignoreParseErrors = FireRocketMQConf.rocketIgnoreParseErrors(1);
 
         this.topic = props.getProperty(RocketMQConfig.CONSUMER_TOPIC);
         this.group = props.getProperty(RocketMQConfig.CONSUMER_GROUP);
@@ -176,7 +178,9 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
 
                                 if (data == null) {
                                     LOG.error("RocketMQ消息反序列化失败，消息为空！");
-                                    consumerException = new RuntimeException("RocketMQ消息反序列化失败，消息为空！");
+                                    if (!ignoreParseErrors) {
+                                        consumerException = new RuntimeException("RocketMQ消息反序列化失败，消息为空！");
+                                    }
                                 }
 
                                 // output and state update are atomic
