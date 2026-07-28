@@ -28,6 +28,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.net.URL;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
@@ -639,5 +642,163 @@ public class ReflectionUtils {
         }
 
         return isContains;
+    }
+
+    /**
+     * 使用标准 JavaBeans Introspector 获取属性描述，不包含 {@link Object} 上的属性。
+     *
+     * @param clazz Bean 类型
+     * @return 属性描述数组
+     */
+    public static PropertyDescriptor[] introspect(Class<?> clazz) {
+        try {
+            BeanInfo beanInfo = Introspector.getBeanInfo(clazz, Object.class);
+            return beanInfo.getPropertyDescriptors();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to introspect bean: " + clazz.getName(), e);
+        }
+    }
+
+    /**
+     * 收集指定 JavaBean 的属性描述
+     *
+     * @param clazz    Bean 类型
+     * @param readable true 收集有 getter 的属性；false 收集有 setter 的属性
+     * @return 属性名 → {@link PropertyDescriptor}
+     */
+    public static Map<String, PropertyDescriptor> beanProperties(Class<?> clazz, boolean readable) {
+        Map<String, PropertyDescriptor> map = new HashMap<>();
+        for (PropertyDescriptor descriptor : introspect(clazz)) {
+            String name = descriptor.getName();
+            if ("class".equals(name)) {
+                continue;
+            }
+            Method accessor = readable ? descriptor.getReadMethod() : descriptor.getWriteMethod();
+            if (accessor == null) {
+                continue;
+            }
+            map.put(name, descriptor);
+        }
+        return map;
+    }
+
+    /**
+     * 判断 fromType 能否赋给 toType
+     * 支持：完全相同、基本类与包装类型、子类与父类（引用类型）
+     */
+    public static boolean isCompatible(Class<?> fromType, Class<?> toType) {
+        if (fromType == null || toType == null) {
+            return false;
+        }
+        if (fromType.equals(toType)) {
+            return true;
+        }
+
+        Class<?> fromWrapped = wrap(fromType);
+        Class<?> toWrapped = wrap(toType);
+        if (fromWrapped.equals(toWrapped)) {
+            return true;
+        }
+
+        return toType.isAssignableFrom(fromType);
+    }
+
+    /**
+     * 基本类型 → 对应包装类型；非基本类型原样返回
+     */
+    public static Class<?> wrap(Class<?> type) {
+        if (type == null || !type.isPrimitive()) {
+            return type;
+        }
+        if (type == Integer.TYPE) {
+            return Integer.class;
+        }
+        if (type == Long.TYPE) {
+            return Long.class;
+        }
+        if (type == Boolean.TYPE) {
+            return Boolean.class;
+        }
+        if (type == Double.TYPE) {
+            return Double.class;
+        }
+        if (type == Float.TYPE) {
+            return Float.class;
+        }
+        if (type == Short.TYPE) {
+            return Short.class;
+        }
+        if (type == Byte.TYPE) {
+            return Byte.class;
+        }
+        if (type == Character.TYPE) {
+            return Character.class;
+        }
+        return type;
+    }
+
+    /**
+     * 包装类型 → 对应基本类型；无法识别则原样返回。
+     */
+    public static Class<?> unwrap(Class<?> type) {
+        if (type == Integer.class) {
+            return Integer.TYPE;
+        }
+        if (type == Long.class) {
+            return Long.TYPE;
+        }
+        if (type == Boolean.class) {
+            return Boolean.TYPE;
+        }
+        if (type == Double.class) {
+            return Double.TYPE;
+        }
+        if (type == Float.class) {
+            return Float.TYPE;
+        }
+        if (type == Short.class) {
+            return Short.TYPE;
+        }
+        if (type == Byte.class) {
+            return Byte.TYPE;
+        }
+        if (type == Character.class) {
+            return Character.TYPE;
+        }
+        return type;
+    }
+
+    /**
+     * 基本类型对应的拆箱方法名，如 {@code int} → {@code intValue}。
+     *
+     * @param primitive 基本类型（{@code Integer.TYPE} 等）
+     * @return 包装类上的拆箱方法名
+     */
+    public static String unboxMethodName(Class<?> primitive) {
+        if (primitive == Integer.TYPE) {
+            return "intValue";
+        }
+        if (primitive == Long.TYPE) {
+            return "longValue";
+        }
+        if (primitive == Boolean.TYPE) {
+            return "booleanValue";
+        }
+        if (primitive == Double.TYPE) {
+            return "doubleValue";
+        }
+        if (primitive == Float.TYPE) {
+            return "floatValue";
+        }
+        if (primitive == Short.TYPE) {
+            return "shortValue";
+        }
+        if (primitive == Byte.TYPE) {
+            return "byteValue";
+        }
+        if (primitive == Character.TYPE) {
+            return "charValue";
+        }
+        throw new IllegalArgumentException("Unsupported primitive type: " + primitive);
     }
 }

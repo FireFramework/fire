@@ -108,6 +108,12 @@
             <version>1.18.26</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>${byte-buddy.version}</version>
+            <scope>${maven.scope}</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
