@@ -47,13 +47,21 @@ private[fire] object FireHDFSConf {
   lazy val hdfsUrl = PropUtils.getString(this.HDFS_URL)
 
   /**
-   * 读取HDFS高可用相关配置信息
+   * 读取指定集群别名下的 HDFS 高可用配置（如 hdfs.ha.conf.fat.*）
+   *
+   * @param cluster
+   * 集群别名，如 fat、batch、test
    */
-  def hdfsHAConf: Map[String, String] = {
-    if (this.hdfsHAEnable) {
-      PropUtils.sliceKeys(s"${this.HDFS_HA_PREFIX}${FireHiveConf.hiveCluster}.")
+  def hdfsHAConfByCluster(cluster: String): Map[String, String] = {
+    if (this.hdfsHAEnable && noEmpty(cluster)) {
+      PropUtils.sliceKeys(s"${this.HDFS_HA_PREFIX}${cluster}.")
     } else Map.empty
   }
+
+  /**
+   * 读取当前 Hive 集群别名对应的 HDFS 高可用相关配置信息
+   */
+  def hdfsHAConf: Map[String, String] = this.hdfsHAConfByCluster(FireHiveConf.hiveCluster)
 
   /**
    * 读取HDFS高可用相关配置信息

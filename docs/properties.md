@@ -269,6 +269,7 @@ fire.analysis.thread.hang.exit.delay=300000
 | hbase.durability | — | WAL durability | 否 |
 | fire.hbase.batch.size | 10000 | 单批次读写记录数 | 否 |
 | fire.hbase.thread.num | 2 | HBase Java API 多线程并发数 | 否 |
+| fire.hbase.bulkload.stagingDir | — | BulkLoad HFile staging 目录前缀（必填，无默认值） | 否 |
 | fire.hbase.storage.level | memory_and_disk_ser | scan 结果缓存策略 | 否 |
 | fire.hbase.scan.partitions | -1 | scan 后 repartition 分区数（-1 不生效） | 否 |
 | fire.hbase.scan.repartitions | 1200 | scan 分区数（已废弃，fallback） | 是 |
@@ -359,7 +360,7 @@ fire.analysis.thread.hang.exit.delay=300000
 | 参数 | 默认值 | 含义 |
 | --- | --- | --- |
 | hdfs.ha.enable | true | 是否启用 HDFS HA |
-| hdfs.ha.conf.{cluster}.{hdfsKey} | — | HA 配置（前缀+集群名） |
+| hdfs.ha.conf.{cluster}.{hdfsKey} | — | HA 配置（前缀+集群名）；@Hive / @HBase 按别名共用 |
 | hdfs.user | hadoop | HDFS 访问用户 |
 | hdfs.url | — | HDFS URL 前缀 |
 | hdfs.conf.{key} | — | 通用 HDFS 配置（前缀） |

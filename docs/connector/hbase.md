@@ -178,6 +178,19 @@ def testHbaseBulkPutRDD: Unit = {
 }
 
 /**
+  * BulkLoad：写 HFile 并 LoadIncrementalHFiles 入库
+  * 需配置 fire.hbase.bulkload.stagingDir（或 @HConfig.bulkLoadStagingDir）
+  * staging 需为 HBase 侧 HDFS URI；@HBase("alias") 会自动加载 hdfs.ha.conf.alias.*
+  */
+def testHbaseBulkLoadRDD: Unit = {
+    val rdd = this.fire.createRDD(Student.newStudentList(), 2)
+    // 方式一
+    this.fire.hbaseBulkLoadRDD[Student](this.tableName20, rdd)
+    // 方式二
+    // rdd.hbaseBulkLoadRDD[Student](this.tableName20)
+}
+
+/**
   * 使用bulk的方式将DataFrame写入到hbase
   */
 def testHbaseBulkPutDF: Unit = {
@@ -690,10 +703,23 @@ fire.hbase.conf.hbase.rpc.timeout										=				60000ms
 fire.hbase.conf.hbase.client.scanner.timeout.period	=				60000ms
 ```
 
+### HDFS HA（与 @Hive 共用）
+
+`@HBase("fat")` 会按集群别名自动加载 `cluster.properties` 中的 `hdfs.ha.conf.fat.*`（规则与 `@Hive("fat")` 相同），写入 HBase Configuration，供 BulkLoad 等需要访问 HBase 侧 HDFS 的场景使用。无需在任务里再手写 HA。
+
+```properties
+# cluster.properties（别名 fat 与 fire.hbase.cluster.map.fat / fire.hive.cluster.map.fat 对应）
+hdfs.ha.conf.fat.fs.defaultFS=hdfs://fat-batch
+hdfs.ha.conf.fat.dfs.nameservices=fat-batch
+hdfs.ha.conf.fat.dfs.ha.namenodes.fat-batch=nn1,nn2
+...
+```
+
 | 参数名称                                    | 引擎  | 含义                                                   |
 | ------------------------------------------- | ----- | ------------------------------------------------------ |
 | fire.hbase.batch.size                       | 通用  | insert的批次大小，用于限制单个task一次最多sink的记录数 |
 | fire.hbase.thread.num                       | 通用  | HBase Java API 多线程读写并发线程数，默认 2            |
+| fire.hbase.bulkload.stagingDir              | spark | BulkLoad HFile staging 目录前缀（必填，无默认值）      |
 | hbase.column.family                         | 通用  | 用于配置列族名称，默认info                             |
 | hbase.max.retry                             | flink | 当插入失败后，重试多少次                               |
 | hbase.cluster                               | 通用  | 所需读写的Hbase集群url或别名                           |

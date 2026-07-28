@@ -390,6 +390,13 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
   }
 
   /**
+   * BulkLoad：将 DataFrame 转为 HFile 并导入 HBase
+   */
+  def hbaseBulkLoadDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
+    HBaseBulkConnector.bulkLoadDF[T](tableName, dataFrame, stagingDir, keyNum)
+  }
+
+  /**
    * 以spark 方式批量将DataFrame数据写入到hbase中
    * 注：此方法与hbaseHadoopPutDF不同之处在于，它不强制要求该DataFrame一定要与HBaseBaseBean的子类对应
    * 但需要指定rowKey的构建规则，相对与hbaseHadoopPutDF来说，少了中间的两次转换，性能会更高

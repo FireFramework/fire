@@ -84,6 +84,13 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
   }
 
   /**
+   * BulkLoad：将 Dataset 转为 HFile 并导入 HBase
+   */
+  def hbaseBulkLoadDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
+    HBaseBulkConnector.bulkLoadDS[T](tableName, dataset.asInstanceOf[Dataset[T]], stagingDir, keyNum)
+  }
+
+  /**
    * 根据Dataset[String]批量删除，Dataset是rowkey的集合
    * 类型为String
    *

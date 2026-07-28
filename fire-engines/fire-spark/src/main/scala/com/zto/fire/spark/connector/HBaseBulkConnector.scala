@@ -30,12 +30,14 @@ import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.util.{SparkSingletonFactory, SparkUtils}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles
+import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapreduce.TableOutputFormat
 import org.apache.hadoop.hbase.spark.HBaseContext
-import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -65,6 +67,12 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
   private[this] lazy val sparkSession = SparkSingletonFactory.getSparkSession
   @transient
   private[this] lazy val tableConfMap = new JConcurrentHashMap[String, Configuration]()
+
+  /**
+   * bulkLoad 会把 HBaseContext 序列化到 Executor；直接 this.bulkLoad 会带上 HBaseBulkConnector 子类，
+   * yarn-client 下易因 Driver/Executor jar 不一致触发 InvalidClassException。
+   */
+  private def plainHBaseContext(conf: Configuration = this.config): HBaseContext = new HBaseContext(this.sc, conf)
 
   /**
    * 根据RDD[String]批量删除，rdd是rowkey的集合
@@ -346,6 +354,97 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
     requireNonEmpty(tableName, dataset)
 
     this.bulkPutRDD[T](tableName, dataset.rdd)
+  }
+
+  /**
+   * BulkLoad 核心写入：将自定义 JavaBean 的 RDD 先写出 HFile，再通过
+   * LoadIncrementalHFiles 导入 HBase 表。适用于跨集群或大数据量场景，
+   * 性能通常优于 bulkPut。内部会完成字段映射与血缘采集。
+   * stagingDir 需指向 HBase 所在 HDFS 的完整 URI，相关 HA 请通过 fire.hbase.conf.* 配置。
+   * <p>
+   * staging 目录解析优先级（高 → 低）：
+   * fire.hbase.bulkload.stagingDir > @HConfig.bulkLoadStagingDir > 方法入参 stagingDir
+   * 最终路径为：{base}/fire_bulkload_{tableName}；写入前会清空该目录，避免残留 HFile
+   *
+   * @param tableName
+   * HBase表名
+   * @param rdd
+   * 数据集合，类型需继承自HBaseBaseBean
+   * @param stagingDir
+   * HFile 临时目录前缀，默认为空（优先使用配置/注解）
+   * @tparam T
+   * 数据类型为HBaseBaseBean的子类
+   */
+  def bulkLoadRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], stagingDir: String = ""): Unit = {
+    checkGeneric[T]("HBaseBulkConnector.bulkLoadRDD")
+    requireNonEmpty(tableName, rdd)
+
+    tryWithLog {
+      val hbaseConnector = HBaseConnector(keyNum = this.keyNum)
+      // 解析 staging 完整路径（配置/注解优先于方法入参，按表名固定子目录）
+      val finalStagingDir = hbaseConnector.resolveBulkLoadStagingDir[T](tableName, stagingDir)
+      val stagingPath = new Path(finalStagingDir)
+      // 使用 HBase Configuration；stagingDir 需为 HBase 侧 HDFS 完整 URI，HA 等通过 fire.hbase.conf.* 配置
+      val conf = new Configuration(hbaseConnector.getConfiguration)
+      val table = TableName.valueOf(tableName)
+      val keyNumCapture = this.keyNum
+      val fs = FileSystem.get(stagingPath.toUri, conf)
+      // 固定目录复用：先清理旧 HFile，避免与上次残留冲突
+      if (fs.exists(stagingPath)) {
+        fs.delete(stagingPath, true)
+      }
+
+      // 1. 将 Bean 转为 cell，按 region 分区排序后写出 HFile 到 stagingDir
+      plainHBaseContext(conf).bulkLoad[T](rdd, table, new HBaseBulkLoadConverter[T](keyNumCapture), finalStagingDir)
+
+      // 2. 调用 LoadIncrementalHFiles，将 staging 下的 HFile 导入目标表
+      val conn = hbaseConnector.getConnection
+      val admin = conn.getAdmin
+      val hTable = conn.getTable(table)
+      val locator = conn.getRegionLocator(table)
+      try {
+        new LoadIncrementalHFiles(conf).doBulkLoad(stagingPath, admin, hTable, locator)
+      } finally {
+        hTable.close()
+        locator.close()
+        admin.close()
+        // 导入后清理 staging，避免目录堆积
+        if (fs.exists(stagingPath)) {
+          fs.delete(stagingPath, true)
+        }
+      }
+
+      // 3. 采集 HBase 写入血缘
+      addHBaseDatasource(tableName, FOperation.INSERT, keyNum)
+    }(this.logger, s"execute bulkLoadRDD(tableName: ${tableName}) success. keyNum: ${keyNum}")
+  }
+
+  /**
+   * BulkLoad：将 DataFrame 转为 Bean 后写入 HBase
+   */
+  def bulkLoadDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, stagingDir: String = ""): Unit = {
+    val clazz = getGeneric[T]("HBaseBulkConnector.bulkLoadDF")
+    requireNonEmpty(tableName, dataFrame, clazz)
+    val rdd = dataFrame.rdd.mapPartitions(it => SparkUtils.sparkRowToBean(it, clazz))
+    this.bulkLoadRDD[T](tableName, rdd, stagingDir)
+  }
+
+  /**
+   * BulkLoad：将 Dataset 写入 HBase
+   */
+  def bulkLoadDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], stagingDir: String = ""): Unit = {
+    requireNonEmpty(tableName, dataset)
+    this.bulkLoadRDD[T](tableName, dataset.rdd, stagingDir)
+  }
+
+  /**
+   * BulkLoad：将 Seq 转为 RDD 后写入 HBase
+   */
+  def bulkLoadSeq[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], stagingDir: String = ""): Unit = {
+    checkGeneric[T]("HBaseBulkConnector.bulkLoadSeq")
+    requireNonEmpty(tableName, seq)
+    val rdd = this.sc.parallelize(seq, math.max(1, math.min(seq.length / 2, FireSparkConf.parallelism)))
+    this.bulkLoadRDD[T](tableName, rdd, stagingDir)
   }
 
   /**

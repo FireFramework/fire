@@ -174,6 +174,27 @@ trait HBaseBulkProvider extends SparkProvider {
   }
 
   /**
+   * BulkLoad：将 Bean RDD 转为 HFile 并导入 HBase
+   */
+  def hbaseBulkLoadRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
+    rdd.hbaseBulkLoadRDD[T](tableName, stagingDir, keyNum)
+  }
+
+  /**
+   * BulkLoad：将 DataFrame 转为 HFile 并导入 HBase
+   */
+  def hbaseBulkLoadDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
+    dataFrame.hbaseBulkLoadDF[T](tableName, stagingDir, keyNum)
+  }
+
+  /**
+   * BulkLoad：将 Dataset 转为 HFile 并导入 HBase
+   */
+  def hbaseBulkLoadDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
+    dataset.hbaseBulkLoadDS[T](tableName, stagingDir, keyNum)
+  }
+
+  /**
    * DStrea数据实时写入
    *
    * @param tableName

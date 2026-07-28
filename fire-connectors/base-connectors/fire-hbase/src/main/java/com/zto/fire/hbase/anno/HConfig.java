@@ -45,4 +45,10 @@ public @interface HConfig {
      * 默认获取的版本数
      */
     int versions() default 1;
+
+    /**
+     * BulkLoad 的 HFile staging 目录前缀（不含表名与时间戳后缀）
+     * 优先级低于配置 fire.hbase.bulkload.stagingDir，高于方法入参
+     */
+    String bulkLoadStagingDir() default "";
 }

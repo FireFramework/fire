@@ -19,7 +19,7 @@ package com.zto.fire.hbase
 
 import com.google.common.collect.Maps
 import com.zto.fire.common.anno.{FieldName, Internal}
-import com.zto.fire.common.conf.{FireFrameworkConf, KeyNum}
+import com.zto.fire.common.conf.{FireFrameworkConf, FireHDFSConf, KeyNum}
 import com.zto.fire.common.enu.Datasource.HBASE
 import com.zto.fire.common.enu.{Operation => FOperation}
 import com.zto.fire.common.lineage.parser.connector.HbaseConnectorParser
@@ -803,6 +803,32 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   }
 
   /**
+   * 获取类注解HConfig中的bulkLoadStagingDir
+   */
+  @Internal
+  private[fire] def getBulkLoadStagingDir[T <: HBaseBaseBean[T] : ClassTag]: String = {
+    val hConfig = this.getHConfig[T]
+    if (hConfig == null) return ""
+    hConfig.bulkLoadStagingDir()
+  }
+
+  /**
+   * 解析 BulkLoad staging 完整路径
+   * 优先级：fire.hbase.bulkload.stagingDir > @HConfig.bulkLoadStagingDir > 方法入参
+   * 最终路径：{base}/fire_bulkload_{tableName}（固定目录，便于复用与清理，避免时间戳目录堆积）
+   */
+  @Internal
+  private[fire] def resolveBulkLoadStagingDir[T <: HBaseBaseBean[T] : ClassTag](tableName: String, stagingDirParam: String = ""): String = {
+    val fromConf = FireHBaseConf.bulkLoadStagingDir(this.keyNum)
+    val fromAnno = this.getBulkLoadStagingDir[T]
+    val base = Seq(fromConf, fromAnno, stagingDirParam).find(StringUtils.isNotBlank).getOrElse {
+      throw new IllegalArgumentException(
+        s"未配置 BulkLoad staging 目录，请设置 fire.hbase.bulkload.stagingDir（或 @HConfig.bulkLoadStagingDir / 方法入参 stagingDir），keyNum=${this.keyNum}")
+    }
+    s"${base.replaceAll("/+$", "")}/fire_bulkload_${tableName}"
+  }
+
+  /**
    * 获取类上声明的HConfig注解
    */
   @Internal
@@ -1143,7 +1169,14 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     val url = hbaseClusterUrl(keyNum)
     if (StringUtils.isNotBlank(url)) finalConf.set("hbase.zookeeper.quorum", url)
 
-    // 以spark.fire.hbase.conf.xxx[keyNum]开头的配置信息
+    // 加载hdfs HA相关配置信息，支持跨集群bulk load
+    val clusterAlias = FireHBaseConf.hbaseCluster(keyNum)
+    FireHDFSConf.hdfsHAConfByCluster(clusterAlias).foreach(kv => {
+      logInfo(s"hbase load hdfs.ha.conf.${clusterAlias}: key=${kv._1} value=${kv._2}")
+      finalConf.set(kv._1, kv._2)
+    })
+
+    // 以 spark.fire.hbase.conf.xxx[keyNum] 开头的配置（可覆盖上方 HA 项）
     PropUtils.sliceKeysByNum(hbaseConfPrefix, keyNum).foreach(kv => {
       logInfo(s"hbase configuration: key=${kv._1} value=${kv._2}")
       finalConf.set(kv._1, kv._2)

@@ -39,6 +39,7 @@ import org.apache.spark.sql.{Encoders, Row}
 object HBaseBulkTest extends SparkCore {
   private val tableName3 = "fire_test_3"
   private val tableName5 = "fire_test_5"
+  private val tableName20 = "fire_test_20"
 
   /**
     * 使用id作为rowKey
@@ -201,13 +202,24 @@ object HBaseBulkTest extends SparkCore {
     // this.fire.hbaseBulkDeleteDS(this.tableName1, rowKeyRdd)
   }
 
+  /**
+    * 测试 BulkLoad API（需配置 fire.hbase.bulkload.stagingDir）
+    * 写完 HFile 后如需赋权：hdfs dfs -chmod -R 777 <stagingDir>
+    */
+  def testHBaseBulkLoad: Unit = {
+    val rdd = this.fire.createRDD(Student.newStudentList(), 2)
+    this.fire.hbaseBulkLoadRDD[Student](this.tableName20, rdd, "hdfs://fat-batch/tmp/hbase/blukload")
+    // 用 Java API 在 Driver 侧校验，避免 hbaseBulkGet 序列化 HBaseBulkConnector（yarn-client 易 InvalidClassException）
+    HBaseConnector.get[Student](this.tableName20, Seq("1", "2", "3")).foreach(println)
+  }
+
 
   /**
     * Spark处理过程
     * 注：此方法会被自动调用
     */
   override def process: Unit = {
-    this.testHBaseBulkDeleteRDD
+    /*this.testHBaseBulkDeleteRDD
     HBaseConnector.truncateTable(this.tableName3, keyNum = 2)
     HBaseConnector.truncateTable(this.tableName5)
     // this.testHBaseBulkDeleteDS
@@ -225,6 +237,10 @@ object HBaseBulkTest extends SparkCore {
     println("=========scan========")
     this.testHbaseBulkScanRDD
     this.testHbaseBulkScanDF
-    this.testHbaseBulkScanDS
+    this.testHbaseBulkScanDS*/
+
+    println("=========bulkLoad========")
+    HBaseConnector.truncateTable(this.tableName20)
+    this.testHBaseBulkLoad
   }
 }

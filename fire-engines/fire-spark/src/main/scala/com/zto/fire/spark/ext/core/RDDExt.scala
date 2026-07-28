@@ -173,6 +173,13 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
   }
 
   /**
+   * BulkLoad：将 Bean RDD 转为 HFile 并导入 HBase
+   */
+  def hbaseBulkLoadRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
+    HBaseBulkConnector.bulkLoadRDD[T](tableName, rdd.asInstanceOf[RDD[T]], stagingDir, keyNum)
+  }
+
+  /**
    * 使用Spark API的方式将RDD中的数据分多个批次插入到HBase中
    *
    * @param tableName

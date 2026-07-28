@@ -241,6 +241,34 @@ trait HBaseBulkFunctions {
   }
 
   /**
+   * BulkLoad：将 Bean RDD 转为 HFile 并导入 HBase
+   */
+  def bulkLoadRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rdd: RDD[T], stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
+    HBaseBulkConnector(keyNum = keyNum).bulkLoadRDD[T](tableName, rdd, stagingDir)
+  }
+
+  /**
+   * BulkLoad：将 DataFrame 转为 HFile 并导入 HBase
+   */
+  def bulkLoadDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
+    HBaseBulkConnector(keyNum = keyNum).bulkLoadDF[T](tableName, dataFrame, stagingDir)
+  }
+
+  /**
+   * BulkLoad：将 Dataset 转为 HFile 并导入 HBase
+   */
+  def bulkLoadDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataset: Dataset[T], stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
+    HBaseBulkConnector(keyNum = keyNum).bulkLoadDS[T](tableName, dataset, stagingDir)
+  }
+
+  /**
+   * BulkLoad：将 Seq 转为 HFile 并导入 HBase
+   */
+  def bulkLoadSeq[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[T], stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
+    HBaseBulkConnector(keyNum = keyNum).bulkLoadSeq[T](tableName, seq, stagingDir)
+  }
+
+  /**
    * 用于已经映射为指定类型的DStream实时
    * 批量写入至HBase表中
    *
