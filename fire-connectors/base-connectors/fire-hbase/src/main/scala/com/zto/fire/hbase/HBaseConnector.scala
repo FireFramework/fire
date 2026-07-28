@@ -813,6 +813,20 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   }
 
   /**
+   * 是否在 BulkLoad 前后删除 staging 目录
+   * 优先级：fire.hbase.bulkload.deleteStagingDir（显式配置）> @HConfig.bulkLoadDeleteStagingDir > 默认 false
+   */
+  @Internal
+  private[fire] def resolveBulkLoadDeleteStagingDir[T <: HBaseBaseBean[T] : ClassTag]: Boolean = {
+    val confRaw = PropUtils.getString(FireHBaseConf.HBASE_BULKLOAD_DELETE_STAGING_DIR, "", this.keyNum)
+    if (StringUtils.isNotBlank(confRaw)) {
+      return confRaw.toBoolean
+    }
+    val hConfig = this.getHConfig[T]
+    if (hConfig != null) hConfig.bulkLoadDeleteStagingDir() else false
+  }
+
+  /**
    * 解析 BulkLoad staging 完整路径
    * 优先级：fire.hbase.bulkload.stagingDir > @HConfig.bulkLoadStagingDir > 方法入参
    * 最终路径：{base}/fire_bulkload_{tableName}（固定目录，便于复用与清理，避免时间戳目录堆积）

@@ -364,7 +364,8 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * <p>
    * staging 目录解析优先级（高 → 低）：
    * fire.hbase.bulkload.stagingDir > @HConfig.bulkLoadStagingDir > 方法入参 stagingDir
-   * 最终路径为：{base}/fire_bulkload_{tableName}；写入前会清空该目录，避免残留 HFile
+   * 最终路径为：{base}/fire_bulkload_{tableName}
+   * 是否删除 staging：fire.hbase.bulkload.deleteStagingDir > @HConfig.bulkLoadDeleteStagingDir > 默认 false
    *
    * @param tableName
    * HBase表名
@@ -384,13 +385,15 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       // 解析 staging 完整路径（配置/注解优先于方法入参，按表名固定子目录）
       val finalStagingDir = hbaseConnector.resolveBulkLoadStagingDir[T](tableName, stagingDir)
       val stagingPath = new Path(finalStagingDir)
-      // 使用 HBase Configuration；stagingDir 需为 HBase 侧 HDFS 完整 URI，HA 等通过 fire.hbase.conf.* 配置
+      val deleteStaging = hbaseConnector.resolveBulkLoadDeleteStagingDir[T]
+
+      // 使用 HBase Configuration；stagingDir 需为 HBase 侧 HDFS 路径，HA 由 @HBase 别名加载 hdfs.ha.conf.*
       val conf = new Configuration(hbaseConnector.getConfiguration)
       val table = TableName.valueOf(tableName)
       val keyNumCapture = this.keyNum
       val fs = FileSystem.get(stagingPath.toUri, conf)
-      // 固定目录复用：先清理旧 HFile，避免与上次残留冲突
-      if (fs.exists(stagingPath)) {
+      // 可选：写入前清理旧 HFile，避免与上次残留冲突
+      if (deleteStaging && fs.exists(stagingPath)) {
         fs.delete(stagingPath, true)
       }
 
@@ -408,8 +411,8 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
         hTable.close()
         locator.close()
         admin.close()
-        // 导入后清理 staging，避免目录堆积
-        if (fs.exists(stagingPath)) {
+        // 可选：导入后清理 staging
+        if (deleteStaging && fs.exists(stagingPath)) {
           fs.delete(stagingPath, true)
         }
       }

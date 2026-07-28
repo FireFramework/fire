@@ -270,6 +270,7 @@ fire.analysis.thread.hang.exit.delay=300000
 | fire.hbase.batch.size | 10000 | 单批次读写记录数 | 否 |
 | fire.hbase.thread.num | 2 | HBase Java API 多线程并发数 | 否 |
 | fire.hbase.bulkload.stagingDir | — | BulkLoad HFile staging 目录前缀（必填，无默认值） | 否 |
+| fire.hbase.bulkload.deleteStagingDir | false | BulkLoad 前后是否删除 staging 目录 | 否 |
 | fire.hbase.storage.level | memory_and_disk_ser | scan 结果缓存策略 | 否 |
 | fire.hbase.scan.partitions | -1 | scan 后 repartition 分区数（-1 不生效） | 否 |
 | fire.hbase.scan.repartitions | 1200 | scan 分区数（已废弃，fallback） | 是 |

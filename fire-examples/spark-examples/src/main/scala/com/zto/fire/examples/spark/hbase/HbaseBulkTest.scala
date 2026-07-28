@@ -208,7 +208,7 @@ object HBaseBulkTest extends SparkCore {
     */
   def testHBaseBulkLoad: Unit = {
     val rdd = this.fire.createRDD(Student.newStudentList(), 2)
-    this.fire.hbaseBulkLoadRDD[Student](this.tableName20, rdd, "hdfs://fat-batch/tmp/hbase/blukload")
+    this.fire.hbaseBulkLoadRDD[Student](this.tableName20, rdd, "/tmp/hbase/blukload")
     // 用 Java API 在 Driver 侧校验，避免 hbaseBulkGet 序列化 HBaseBulkConnector（yarn-client 易 InvalidClassException）
     HBaseConnector.get[Student](this.tableName20, Seq("1", "2", "3")).foreach(println)
   }

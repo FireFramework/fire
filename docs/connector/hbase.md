@@ -720,6 +720,7 @@ hdfs.ha.conf.fat.dfs.ha.namenodes.fat-batch=nn1,nn2
 | fire.hbase.batch.size                       | 通用  | insert的批次大小，用于限制单个task一次最多sink的记录数 |
 | fire.hbase.thread.num                       | 通用  | HBase Java API 多线程读写并发线程数，默认 2            |
 | fire.hbase.bulkload.stagingDir              | spark | BulkLoad HFile staging 目录前缀（必填，无默认值）      |
+| fire.hbase.bulkload.deleteStagingDir        | spark | BulkLoad 前后是否删除 staging 目录，默认 false         |
 | hbase.column.family                         | 通用  | 用于配置列族名称，默认info                             |
 | hbase.max.retry                             | flink | 当插入失败后，重试多少次                               |
 | hbase.cluster                               | 通用  | 所需读写的Hbase集群url或别名                           |

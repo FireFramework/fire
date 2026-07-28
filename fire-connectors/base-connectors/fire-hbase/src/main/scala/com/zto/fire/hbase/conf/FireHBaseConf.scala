@@ -47,6 +47,8 @@ private[fire] object FireHBaseConf {
   lazy val FIRE_HBASE_SCAN_PARTITIONS = "fire.hbase.scan.partitions"
   // BulkLoad HFile staging 目录前缀（必填，无默认值）
   lazy val HBASE_BULKLOAD_STAGING_DIR = "fire.hbase.bulkload.stagingDir"
+  // BulkLoad 前后是否删除 staging 目录，默认 false
+  lazy val HBASE_BULKLOAD_DELETE_STAGING_DIR = "fire.hbase.bulkload.deleteStagingDir"
   // hbase集群映射配置前缀
   lazy val hbaseClusterMapPrefix = "fire.hbase.cluster.map."
   // 是否开启HBase表存在判断的缓存
@@ -115,4 +117,10 @@ private[fire] object FireHBaseConf {
    * 无默认值，未配置时返回空字符串
    */
   def bulkLoadStagingDir(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.HBASE_BULKLOAD_STAGING_DIR, "", keyNum)
+
+  /**
+   * BulkLoad 前后是否删除 staging 目录，对应 fire.hbase.bulkload.deleteStagingDir
+   * 默认 false（不删除）
+   */
+  def bulkLoadDeleteStagingDir(keyNum: Int = KeyNum._1): Boolean = PropUtils.getBoolean(this.HBASE_BULKLOAD_DELETE_STAGING_DIR, false, keyNum)
 }

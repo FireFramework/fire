@@ -47,8 +47,14 @@ public @interface HConfig {
     int versions() default 1;
 
     /**
-     * BulkLoad 的 HFile staging 目录前缀（不含表名与时间戳后缀）
+     * BulkLoad 的 HFile staging 目录前缀（不含表名后缀）
      * 优先级低于配置 fire.hbase.bulkload.stagingDir，高于方法入参
      */
     String bulkLoadStagingDir() default "";
+
+    /**
+     * BulkLoad 前后是否删除 staging 目录
+     * 优先级低于配置 fire.hbase.bulkload.deleteStagingDir，默认 false（不删除）
+     */
+    boolean bulkLoadDeleteStagingDir() default false;
 }
