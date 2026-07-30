@@ -402,7 +402,9 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       }
 
       // 1. 将 Bean 转为 cell，按 region 分区排序后写出 HFile 到 stagingDir
-      this.bulkLoadHBaseContext.bulkLoad[T](rdd, table, new HBaseBulkLoadConverter[T](keyNumCapture), finalStagingDir)
+      elapsed(s"HBase bulkLoad：生成HFile并推送到${finalStagingDir}", this.logger) {
+        this.bulkLoadHBaseContext.bulkLoad[T](rdd, table, new HBaseBulkLoadConverter[T](keyNumCapture), finalStagingDir)
+      }
 
       // 2. 调用 LoadIncrementalHFiles，将 staging 下的 HFile 导入目标表
       val conn = hbaseConnector.getConnection
@@ -410,7 +412,9 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       val hTable = conn.getTable(table)
       val locator = conn.getRegionLocator(table)
       try {
-        new LoadIncrementalHFiles(conf).doBulkLoad(stagingPath, admin, hTable, locator)
+        elapsed("HBase bulkLoad：将HFile load到HBase", this.logger) {
+          new LoadIncrementalHFiles(conf).doBulkLoad(stagingPath, admin, hTable, locator)
+        }
       } finally {
         hTable.close()
         locator.close()
