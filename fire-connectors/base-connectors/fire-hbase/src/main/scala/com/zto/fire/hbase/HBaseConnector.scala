@@ -822,14 +822,13 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     if (StringUtils.isNotBlank(confRaw)) {
       return confRaw.toBoolean
     }
+
     val hConfig = this.getHConfig[T]
     if (hConfig != null) hConfig.bulkLoadDeleteStagingDir() else false
   }
 
   /**
    * 解析 BulkLoad staging 完整路径
-   * 优先级：fire.hbase.bulkload.stagingDir > @HConfig.bulkLoadStagingDir > 方法入参
-   * 最终路径：{base}/fire_bulkload_{tableName}（固定目录，便于复用与清理，避免时间戳目录堆积）
    */
   @Internal
   private[fire] def resolveBulkLoadStagingDir[T <: HBaseBaseBean[T] : ClassTag](tableName: String, stagingDirParam: String = ""): String = {
@@ -839,7 +838,10 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       throw new IllegalArgumentException(
         s"未配置 BulkLoad staging 目录，请设置 fire.hbase.bulkload.stagingDir（或 @HConfig.bulkLoadStagingDir / 方法入参 stagingDir），keyNum=${this.keyNum}")
     }
-    s"${base.replaceAll("/+$", "")}/fire_bulkload_${tableName}"
+
+    // 将表名中的namespace统一替换，hdfs路径不允许出现冒号等非法字符
+    val safeTableName = tableName.replace(':', '_')
+    s"${base.replaceAll("/+$", "")}/fire_bulkload_${safeTableName}"
   }
 
   /**

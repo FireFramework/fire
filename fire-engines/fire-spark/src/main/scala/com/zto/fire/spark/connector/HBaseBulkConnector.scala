@@ -69,10 +69,10 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
   private[this] lazy val tableConfMap = new JConcurrentHashMap[String, Configuration]()
 
   /**
-   * bulkLoad 会把 HBaseContext 序列化到 Executor；直接 this.bulkLoad 会带上 HBaseBulkConnector 子类，
-   * yarn-client 下易因 Driver/Executor jar 不一致触发 InvalidClassException。
+   * Streaming 中复用同一实例，避免每个 batch 新建 Context / broadcast
    */
-  private def plainHBaseContext(conf: Configuration = this.config): HBaseContext = new HBaseContext(this.sc, conf)
+  @transient
+  private lazy val bulkLoadHBaseContext: HBaseContext = new HBaseContext(this.sc, this.config)
 
   /**
    * 根据RDD[String]批量删除，rdd是rowkey的集合
@@ -364,7 +364,7 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
    * <p>
    * staging 目录解析优先级（高 → 低）：
    * fire.hbase.bulkload.stagingDir > @HConfig.bulkLoadStagingDir > 方法入参 stagingDir
-   * 最终路径为：{base}/fire_bulkload_{tableName}
+   * 最终路径为：{base}/fire_bulkload_{safeTableName}（namespace 表名中的 ':' 会转为 '_'）
    * 是否删除 staging：fire.hbase.bulkload.deleteStagingDir > @HConfig.bulkLoadDeleteStagingDir > 默认 false
    *
    * @param tableName
@@ -391,14 +391,18 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
       val conf = new Configuration(hbaseConnector.getConfiguration)
       val table = TableName.valueOf(tableName)
       val keyNumCapture = this.keyNum
-      val fs = FileSystem.get(stagingPath.toUri, conf)
-      // 可选：写入前清理旧 HFile，避免与上次残留冲突
-      if (deleteStaging && fs.exists(stagingPath)) {
-        fs.delete(stagingPath, true)
+
+      // 是否删除staging目录及hfile文件
+      if (deleteStaging) {
+        val fs = FileSystem.get(stagingPath.toUri, conf)
+        // 可选：写入前清理旧 HFile，避免与上次残留冲突
+        if (fs.exists(stagingPath)) {
+          fs.delete(stagingPath, true)
+        }
       }
 
       // 1. 将 Bean 转为 cell，按 region 分区排序后写出 HFile 到 stagingDir
-      plainHBaseContext(conf).bulkLoad[T](rdd, table, new HBaseBulkLoadConverter[T](keyNumCapture), finalStagingDir)
+      this.bulkLoadHBaseContext.bulkLoad[T](rdd, table, new HBaseBulkLoadConverter[T](keyNumCapture), finalStagingDir)
 
       // 2. 调用 LoadIncrementalHFiles，将 staging 下的 HFile 导入目标表
       val conn = hbaseConnector.getConnection
@@ -411,10 +415,6 @@ class HBaseBulkConnector(@scala.transient sc: SparkContext, @scala.transient con
         hTable.close()
         locator.close()
         admin.close()
-        // 可选：导入后清理 staging
-        if (deleteStaging && fs.exists(stagingPath)) {
-          fs.delete(stagingPath, true)
-        }
       }
 
       // 3. 采集 HBase 写入血缘
