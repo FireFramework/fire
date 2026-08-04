@@ -18,25 +18,27 @@
 package com.zto.fire.common.util;
 
 /**
- * 高性能 Bean 属性拷贝器接口
+ * 按名称取值的函数式源接口
  * <p>
- * 实现类由 {@link BeanCopierFactory} 通过 ByteBuddy 在运行时生成：
- * {@code copy} 方法体内是对已有 getter/setter（或 {@link NamedValueSource#getObject} + setter）的直接调用，
- * 而不是再生成一套 get/set，也不走反射
+ * 用于将非标准 JavaBean（如仅提供 {@code getObject(String)} 的数据结构）
+ * 作为 {@link BeanUtils#copyProperties(NamedValueSource, Object)} 的拷贝源，
+ * 而无需 fire-common 依赖具体实现类型。
+ * </p>
+ * <p>
+ * 典型用法：{@code BeanUtils.copyProperties(inputData::getObject, targetClass)}
  * </p>
  *
  * @author ChengLong
  * @since 3.0.0
  */
-public interface BeanCopier {
+@FunctionalInterface
+public interface NamedValueSource {
 
     /**
-     * 将 source 中与 target 匹配且类型兼容的属性拷贝到 target
-     * （匹配规则在生成该 Copier 时已固化：精确同名，或忽略大小写与下划线；
-     * NamedValue 路径下 source 为 {@link NamedValueSource}）
+     * 按属性名取值
      *
-     * @param source 源对象（标准 Bean 或 {@link NamedValueSource}）
-     * @param target 目标对象
+     * @param name 属性名（与目标 JavaBean 属性名一致）
+     * @return 对应值，不存在时可返回 null
      */
-    void copy(Object source, Object target);
+    Object getObject(String name);
 }

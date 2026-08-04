@@ -23,7 +23,9 @@ import org.junit.Test;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * {@link BeanUtils} 单元测试
@@ -147,6 +149,219 @@ public class BeanUtilsTest {
     @Test(expected = NullPointerException.class)
     public void testNullSource() {
         BeanUtils.copyProperties(null, new TargetBean());
+    }
+
+    /**
+     * NamedValueSource：按属性精确名从 Map 取值并写入 target setter
+     */
+    @Test
+    public void testNamedValueCopySameName() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "fire");
+        map.put("age", Integer.valueOf(18));
+        map.put("active", Boolean.TRUE);
+
+        TargetBean target = BeanUtils.copyProperties(map::get, TargetBean.class);
+
+        Assert.assertEquals("fire", target.getName());
+        Assert.assertEquals(18, target.getAge());
+        Assert.assertTrue(target.isActive());
+    }
+
+    /**
+     * NamedValueSource：包装类型拆箱写入基本类型 setter
+     */
+    @Test
+    public void testNamedValueWrapperToPrimitive() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("count", Integer.valueOf(9));
+        map.put("flag", Boolean.TRUE);
+
+        PrimitiveTarget target = new PrimitiveTarget();
+        BeanUtils.copyProperties(map::get, target);
+
+        Assert.assertEquals(9, target.getCount());
+        Assert.assertTrue(target.isFlag());
+    }
+
+    /**
+     * NamedValueSource：null 不覆盖 primitive（跳过赋值，保留默认值）
+     */
+    @Test
+    public void testNamedValueNullSkipsPrimitive() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("count", null);
+        map.put("flag", null);
+        map.put("name", "ok");
+
+        NamedPrimitiveTarget target = new NamedPrimitiveTarget();
+        target.setCount(42);
+        target.setFlag(true);
+        target.setName("old");
+
+        BeanUtils.copyProperties(map::get, target);
+
+        Assert.assertEquals(42, target.getCount());
+        Assert.assertTrue(target.isFlag());
+        Assert.assertEquals("ok", target.getName());
+    }
+
+    /**
+     * NamedValueSource：null 可写入引用类型 setter
+     */
+    @Test
+    public void testNamedValueNullClearsReference() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", null);
+
+        TargetBean target = new TargetBean();
+        target.setName("old");
+        BeanUtils.copyProperties(map::get, target);
+
+        Assert.assertNull(target.getName());
+    }
+
+    /**
+     * NamedValueSource：ignoreCaseAndUnderline 重载可用，首版仍按精确属性名 getObject
+     */
+    @Test
+    public void testNamedValueIgnoreCaseAndUnderlineUsesExactName() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("userName", "alice");
+        map.put("user_name", "should-not-be-used");
+
+        CamelTarget target = BeanUtils.copyProperties(map::get, CamelTarget.class, true);
+
+        Assert.assertEquals("alice", target.getUserName());
+    }
+
+    @Test
+    public void testNamedValueCopyToExistingTarget() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "existing");
+        map.put("age", Integer.valueOf(5));
+
+        TargetBean target = new TargetBean();
+        BeanUtils.copyProperties(map::get, target);
+
+        Assert.assertEquals("existing", target.getName());
+        Assert.assertEquals(5, target.getAge());
+    }
+
+    /**
+     * 默认 false：属性名不完全一致时不拷贝（与历史行为一致）
+     */
+    @Test
+    public void testIgnoreCaseAndUnderlineDefaultOff() {
+        SnakeSource source = new SnakeSource();
+        source.setUser_name("alice");
+        source.setUSER("u1");
+        source.setUSER_NAME("should-not-affect-userName-when-off");
+
+        CamelTarget target = new CamelTarget();
+        target.setUserName("keep");
+        target.setUser("keep-user");
+
+        BeanUtils.copyProperties(source, target);
+
+        Assert.assertEquals("keep", target.getUserName());
+        Assert.assertEquals("keep-user", target.getUser());
+    }
+
+    /**
+     * ignoreCaseAndUnderline=true：下划线字段与驼峰字段互相拷贝
+     */
+    @Test
+    public void testCopySnakeToCamel() {
+        SnakeSource source = new SnakeSource();
+        source.setUser_name("alice");
+        source.setAge_value(30);
+
+        CamelTarget target = new CamelTarget();
+        BeanUtils.copyProperties(source, target, true);
+
+        Assert.assertEquals("alice", target.getUserName());
+        Assert.assertEquals(30, target.getAgeValue());
+    }
+
+    /**
+     * ignoreCaseAndUnderline=true：纯大写 / 大写+下划线 与驼峰/小写视为同一字段
+     */
+    @Test
+    public void testCopyUpperCaseToCamel() {
+        UpperSource source = new UpperSource();
+        source.setUSER("bob");
+        source.setUSER_NAME("bob-full");
+
+        CamelTarget target = new CamelTarget();
+        BeanUtils.copyProperties(source, target, true);
+
+        Assert.assertEquals("bob", target.getUser());
+        Assert.assertEquals("bob-full", target.getUserName());
+    }
+
+    /**
+     * ignoreCaseAndUnderline=true：驼峰 → 下划线
+     */
+    @Test
+    public void testCopyCamelToSnake() {
+        CamelTarget source = new CamelTarget();
+        source.setUserName("carol");
+        source.setAgeValue(22);
+        source.setUser("c");
+
+        SnakeTarget target = new SnakeTarget();
+        BeanUtils.copyProperties(source, target, true);
+
+        Assert.assertEquals("carol", target.getUser_name());
+        Assert.assertEquals(22, target.getAge_value());
+        Assert.assertEquals("c", target.getUSER());
+    }
+
+    /**
+     * 开启兼容匹配时，同名字段仍正常拷贝，且与命名兼容字段可同时生效
+     */
+    @Test
+    public void testFlexibleMatchWithExactName() {
+        MixedSource source = new MixedSource();
+        source.setName("exact");
+        source.setUser_name("flex");
+
+        MixedTarget target = new MixedTarget();
+        BeanUtils.copyProperties(source, target, true);
+
+        Assert.assertEquals("exact", target.getName());
+        Assert.assertEquals("flex", target.getUserName());
+    }
+
+    /**
+     * 创建新实例的重载同样支持 ignoreCaseAndUnderline
+     */
+    @Test
+    public void testCopyToNewInstanceWithFlexibleMatch() {
+        SnakeSource source = new SnakeSource();
+        source.setUser_name("dave");
+        source.setAge_value(40);
+
+        CamelTarget target = BeanUtils.copyProperties(source, CamelTarget.class, true);
+        Assert.assertNotNull(target);
+        Assert.assertEquals("dave", target.getUserName());
+        Assert.assertEquals(40, target.getAgeValue());
+    }
+
+    /**
+     * 精确匹配优先：source 同时存在 userName 与 user_name 时，同名 userName 优先生效
+     */
+    @Test
+    public void testExactNamePreferredOverNormalized() {
+        AmbiguousSource source = new AmbiguousSource();
+        source.setUserName("exact-win");
+        source.setUser_name("normalized-lose");
+
+        CamelTarget target = new CamelTarget();
+        BeanUtils.copyProperties(source, target, true);
+
+        Assert.assertEquals("exact-win", target.getUserName());
     }
 
     /**
@@ -344,6 +559,37 @@ public class BeanUtilsTest {
         }
     }
 
+    /** NamedValue 用例：同时含 primitive 与引用类型 */
+    public static class NamedPrimitiveTarget {
+        private int count;
+        private boolean flag;
+        private String name;
+
+        public int getCount() {
+            return count;
+        }
+
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        public boolean isFlag() {
+            return flag;
+        }
+
+        public void setFlag(boolean flag) {
+            this.flag = flag;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
     public static class ParentValue {
         private String name;
 
@@ -423,6 +669,194 @@ public class BeanUtilsTest {
 
         public void setExtra(String extra) {
             this.extra = extra;
+        }
+    }
+
+    /** 下划线命名源 Bean */
+    public static class SnakeSource {
+        private String user_name;
+        private int age_value;
+        private String USER;
+        private String USER_NAME;
+
+        public String getUser_name() {
+            return user_name;
+        }
+
+        public void setUser_name(String user_name) {
+            this.user_name = user_name;
+        }
+
+        public int getAge_value() {
+            return age_value;
+        }
+
+        public void setAge_value(int age_value) {
+            this.age_value = age_value;
+        }
+
+        public String getUSER() {
+            return USER;
+        }
+
+        public void setUSER(String USER) {
+            this.USER = USER;
+        }
+
+        public String getUSER_NAME() {
+            return USER_NAME;
+        }
+
+        public void setUSER_NAME(String USER_NAME) {
+            this.USER_NAME = USER_NAME;
+        }
+    }
+
+    /** 纯大写命名源 Bean */
+    public static class UpperSource {
+        private String USER;
+        private String USER_NAME;
+
+        public String getUSER() {
+            return USER;
+        }
+
+        public void setUSER(String USER) {
+            this.USER = USER;
+        }
+
+        public String getUSER_NAME() {
+            return USER_NAME;
+        }
+
+        public void setUSER_NAME(String USER_NAME) {
+            this.USER_NAME = USER_NAME;
+        }
+    }
+
+    /** 驼峰命名目标 Bean */
+    public static class CamelTarget {
+        private String userName;
+        private int ageValue;
+        private String user;
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public void setUserName(String userName) {
+            this.userName = userName;
+        }
+
+        public int getAgeValue() {
+            return ageValue;
+        }
+
+        public void setAgeValue(int ageValue) {
+            this.ageValue = ageValue;
+        }
+
+        public String getUser() {
+            return user;
+        }
+
+        public void setUser(String user) {
+            this.user = user;
+        }
+    }
+
+    /** 下划线 / 大写命名目标 Bean */
+    public static class SnakeTarget {
+        private String user_name;
+        private int age_value;
+        private String USER;
+
+        public String getUser_name() {
+            return user_name;
+        }
+
+        public void setUser_name(String user_name) {
+            this.user_name = user_name;
+        }
+
+        public int getAge_value() {
+            return age_value;
+        }
+
+        public void setAge_value(int age_value) {
+            this.age_value = age_value;
+        }
+
+        public String getUSER() {
+            return USER;
+        }
+
+        public void setUSER(String USER) {
+            this.USER = USER;
+        }
+    }
+
+    public static class MixedSource {
+        private String name;
+        private String user_name;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getUser_name() {
+            return user_name;
+        }
+
+        public void setUser_name(String user_name) {
+            this.user_name = user_name;
+        }
+    }
+
+    public static class MixedTarget {
+        private String name;
+        private String userName;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public void setUserName(String userName) {
+            this.userName = userName;
+        }
+    }
+
+    /** 同时含同名与归一化等价字段，用于验证精确匹配优先 */
+    public static class AmbiguousSource {
+        private String userName;
+        private String user_name;
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public void setUserName(String userName) {
+            this.userName = userName;
+        }
+
+        public String getUser_name() {
+            return user_name;
+        }
+
+        public void setUser_name(String user_name) {
+            this.user_name = user_name;
         }
     }
 }

@@ -33,8 +33,11 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -60,11 +63,13 @@ final class BeanCopierFactory {
 
     /**
      * 为指定 source/target 类型对生成拷贝器实例
+     *
+     * @param ignoreCaseAndUnderline 为 true 时按忽略大小写与下划线的规则匹配字段
      */
-    static BeanCopier create(Class<?> sourceClass, Class<?> targetClass) {
-        // 1. 用 Introspector 找出可拷贝的同名属性
-        List<PropertyMapping> mappings = resolveMappings(sourceClass, targetClass);
-        String className = buildClassName(sourceClass, targetClass);
+    static BeanCopier create(Class<?> sourceClass, Class<?> targetClass, boolean ignoreCaseAndUnderline) {
+        // 1. 用 Introspector 找出可拷贝的属性映射
+        List<PropertyMapping> mappings = resolveMappings(sourceClass, targetClass, ignoreCaseAndUnderline);
+        String className = buildClassName(sourceClass, targetClass, ignoreCaseAndUnderline);
 
         try {
             // 2. 生成实现 BeanCopier.copy 的动态类，方法体由 CopyImplementation 生成字节码
@@ -91,36 +96,107 @@ final class BeanCopierFactory {
     }
 
     /**
-     * 解析同名且类型兼容的属性映射
-     * 条件：source 有 public getter、target 有 public setter、属性名相同、类型兼容
+     * 为 {@link NamedValueSource} → target 生成拷贝器：
+     * {@code target.setXxx(convert(source.getObject("xxx")))}
+     * <p>
+     * {@code ignoreCaseAndUnderline} 目前不影响取值名（始终用 target 的 JavaBean 属性名调用
+     * {@link NamedValueSource#getObject(String)}），保留参数以便与 Bean→Bean 路径 API 对齐及后续扩展。
+     * </p>
      */
-    static List<PropertyMapping> resolveMappings(Class<?> sourceClass, Class<?> targetClass) {
+    static BeanCopier createNamedValue(Class<?> targetClass, boolean ignoreCaseAndUnderline) {
+        List<NamedValueMapping> mappings = resolveNamedValueMappings(targetClass, ignoreCaseAndUnderline);
+        String className = buildNamedValueClassName(targetClass, ignoreCaseAndUnderline);
+
+        try {
+            DynamicType.Unloaded<Object> unloaded = new ByteBuddy()
+                    .subclass(Object.class)
+                    .name(className)
+                    .implement(BeanCopier.class)
+                    .method(ElementMatchers.named("copy").and(ElementMatchers.takesArguments(2)))
+                    .intercept(new NamedValueCopyImplementation(targetClass, mappings))
+                    .make();
+
+            ClassLoader classLoader = resolveClassLoader(NamedValueSource.class, targetClass);
+            Class<? extends BeanCopier> copierClass = unloaded
+                    .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
+                    .getLoaded()
+                    .asSubclass(BeanCopier.class);
+
+            return copierClass.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "Failed to generate NamedValue BeanCopier for " + targetClass.getName(), e);
+        }
+    }
+
+    /**
+     * 解析类型兼容的属性映射
+     * <p>
+     * 条件：source 有 public getter、target 有 public setter、类型兼容；
+     * 属性名默认须完全一致；{@code ignoreCaseAndUnderline=true} 时先精确匹配，再按归一化名匹配
+     * （去掉下划线并转小写，如 {@code user_name}/{@code USER_NAME}/{@code userName} → {@code username}）
+     * </p>
+     */
+    static List<PropertyMapping> resolveMappings(Class<?> sourceClass, Class<?> targetClass,
+                                                 boolean ignoreCaseAndUnderline) {
         Map<String, PropertyDescriptor> sourceProps = ReflectionUtils.beanProperties(sourceClass, true);
         Map<String, PropertyDescriptor> targetProps = ReflectionUtils.beanProperties(targetClass, false);
         List<PropertyMapping> mappings = new ArrayList<>();
+        // 已占用的 source / target 属性名，避免同一端被重复映射
+        Set<String> mappedSourceNames = new HashSet<>();
+        Set<String> mappedTargetNames = new HashSet<>();
 
+        // 第一遍：精确同名匹配（始终优先）
         for (Map.Entry<String, PropertyDescriptor> entry : sourceProps.entrySet()) {
             String name = entry.getKey();
             PropertyDescriptor targetProp = targetProps.get(name);
             if (targetProp == null) {
                 continue;
             }
+            PropertyMapping mapping = tryCreateMapping(entry.getValue(), targetProp);
+            if (mapping != null) {
+                mappings.add(mapping);
+                mappedSourceNames.add(name);
+                mappedTargetNames.add(name);
+            }
+        }
 
-            Method getter = entry.getValue().getReadMethod();
-            Method setter = targetProp.getWriteMethod();
-            if (getter == null || setter == null) {
+        if (!ignoreCaseAndUnderline) {
+            return mappings;
+        }
+
+        // 第二遍：归一化名匹配（忽略大小写与下划线），跳过已精确匹配的两端属性
+        Map<String, PropertyDescriptor> targetByNormalized = new HashMap<>();
+        for (Map.Entry<String, PropertyDescriptor> entry : targetProps.entrySet()) {
+            if (mappedTargetNames.contains(entry.getKey())) {
                 continue;
             }
+            targetByNormalized.putIfAbsent(normalizePropertyName(entry.getKey()), entry.getValue());
+        }
 
-            // 只拷贝 public 访问器，保证生成的 invokevirtual/invokeinterface 合法
-            if (!Modifier.isPublic(getter.getModifiers()) || !Modifier.isPublic(setter.getModifiers())) {
+        Set<String> usedNormalizedNames = new HashSet<>();
+        for (Map.Entry<String, PropertyDescriptor> entry : sourceProps.entrySet()) {
+            String sourceName = entry.getKey();
+            if (mappedSourceNames.contains(sourceName)) {
                 continue;
             }
-
-            Class<?> fromType = getter.getReturnType();
-            Class<?> toType = setter.getParameterTypes()[0];
-            if (ReflectionUtils.isCompatible(fromType, toType)) {
-                mappings.add(new PropertyMapping(getter, setter, fromType, toType));
+            String normalized = normalizePropertyName(sourceName);
+            if (!usedNormalizedNames.add(normalized)) {
+                continue;
+            }
+            PropertyDescriptor targetProp = targetByNormalized.get(normalized);
+            if (targetProp == null) {
+                continue;
+            }
+            String targetName = targetProp.getName();
+            if (mappedTargetNames.contains(targetName)) {
+                continue;
+            }
+            PropertyMapping mapping = tryCreateMapping(entry.getValue(), targetProp);
+            if (mapping != null) {
+                mappings.add(mapping);
+                mappedSourceNames.add(sourceName);
+                mappedTargetNames.add(targetName);
             }
         }
 
@@ -128,14 +204,88 @@ final class BeanCopierFactory {
     }
 
     /**
+     * 尝试根据 getter/setter 与类型兼容性创建一条映射，不满足条件时返回 null
+     */
+    private static PropertyMapping tryCreateMapping(PropertyDescriptor sourceProp, PropertyDescriptor targetProp) {
+        Method getter = sourceProp.getReadMethod();
+        Method setter = targetProp.getWriteMethod();
+        if (getter == null || setter == null) {
+            return null;
+        }
+
+        // 只拷贝 public 访问器，保证生成的 invokevirtual/invokeinterface 合法
+        if (!Modifier.isPublic(getter.getModifiers()) || !Modifier.isPublic(setter.getModifiers())) {
+            return null;
+        }
+
+        Class<?> fromType = getter.getReturnType();
+        Class<?> toType = setter.getParameterTypes()[0];
+        if (!ReflectionUtils.isCompatible(fromType, toType)) {
+            return null;
+        }
+        return new PropertyMapping(getter, setter, fromType, toType);
+    }
+
+    /**
+     * 解析 NamedValue → target 的属性映射：以 target 可写属性为准，
+     * 取值名始终为 JavaBean 属性原名（与业务侧 {@code field.getName()} 一致）
+     * <p>
+     * {@code ignoreCaseAndUnderline} 首版不改变匹配行为，仅保留以对齐 API。
+     * </p>
+     */
+    static List<NamedValueMapping> resolveNamedValueMappings(Class<?> targetClass, boolean ignoreCaseAndUnderline) {
+        Map<String, PropertyDescriptor> targetProps = ReflectionUtils.beanProperties(targetClass, false);
+        List<NamedValueMapping> mappings = new ArrayList<>(targetProps.size());
+        for (Map.Entry<String, PropertyDescriptor> entry : targetProps.entrySet()) {
+            PropertyDescriptor descriptor = entry.getValue();
+            Method setter = descriptor.getWriteMethod();
+            if (setter == null || !Modifier.isPublic(setter.getModifiers())) {
+                continue;
+            }
+            Class<?> toType = setter.getParameterTypes()[0];
+            Method getter = descriptor.getReadMethod();
+            if (getter != null && !Modifier.isPublic(getter.getModifiers())) {
+                getter = null;
+            }
+            // ignoreCaseAndUnderline 预留：当前始终按属性精确名 getObject
+            mappings.add(new NamedValueMapping(entry.getKey(), setter, getter, toType));
+        }
+        return mappings;
+    }
+
+    /**
+     * 字段名归一化：去掉下划线并转为小写，用于忽略命名风格差异后的等价判断
+     */
+    static String normalizePropertyName(String name) {
+        if (name == null || name.isEmpty()) {
+            return name;
+        }
+        StringBuilder sb = new StringBuilder(name.length());
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c != '_') {
+                sb.append(Character.toLowerCase(c));
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
      * 生成动态类全名，与 {@link BeanCopier} 同包，避免跨包接口可见性问题
      */
-    private static String buildClassName(Class<?> sourceClass, Class<?> targetClass) {
+    private static String buildClassName(Class<?> sourceClass, Class<?> targetClass, boolean ignoreCaseAndUnderline) {
         return "com.zto.fire.common.util.BeanCopier$"
                 + sanitize(sourceClass.getName())
                 + "_To_"
                 + sanitize(targetClass.getName())
-                + "_"
+                + (ignoreCaseAndUnderline ? "_Flex_" : "_Exact_")
+                + SEQUENCE.incrementAndGet();
+    }
+
+    private static String buildNamedValueClassName(Class<?> targetClass, boolean ignoreCaseAndUnderline) {
+        return "com.zto.fire.common.util.BeanCopier$NamedValue_To_"
+                + sanitize(targetClass.getName())
+                + (ignoreCaseAndUnderline ? "_Flex_" : "_Exact_")
                 + SEQUENCE.incrementAndGet();
     }
 
@@ -177,6 +327,24 @@ final class BeanCopierFactory {
             this.getter = getter;
             this.setter = setter;
             this.fromType = fromType;
+            this.toType = toType;
+        }
+    }
+
+    /**
+     * NamedValue 单条映射：{@code source.getObject(propertyName)} → {@code target.setter}
+     * {@code getter} 可选：primitive 且值为 null 时用 getter 当前值作为回退，实现「跳过覆盖」
+     */
+    static final class NamedValueMapping {
+        final String propertyName;
+        final Method setter;
+        final Method getter;
+        final Class<?> toType;
+
+        NamedValueMapping(String propertyName, Method setter, Method getter, Class<?> toType) {
+            this.propertyName = propertyName;
+            this.setter = setter;
+            this.getter = getter;
             this.toType = toType;
         }
     }
@@ -342,6 +510,149 @@ final class BeanCopierFactory {
                 // 子类赋给父类，无需额外指令
                 return;
             }
+        }
+    }
+
+    /**
+     * NamedValueSource → Bean 的 ByteBuddy 实现（无跳转，避免手工 stackmap）：
+     * <ul>
+     *   <li>引用类型：{@code target.setXxx((T) source.getObject(name))}，允许 null</li>
+     *   <li>基本类型：{@code target.setXxx(NamedValueAssigns.toX(v, target.getXxx()))}，null 时保留原值</li>
+     * </ul>
+     */
+    private static final class NamedValueCopyImplementation implements Implementation {
+
+        private final Class<?> targetClass;
+        private final List<NamedValueMapping> mappings;
+
+        NamedValueCopyImplementation(Class<?> targetClass, List<NamedValueMapping> mappings) {
+            this.targetClass = targetClass;
+            this.mappings = mappings;
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return new ByteCodeAppender() {
+                /**
+                 * 局部变量表：
+                 * <pre>
+                 *   slot 0 : this
+                 *   slot 1 : source（Object）
+                 *   slot 2 : target（Object）
+                 *   slot 3 : NamedValueSource
+                 *   slot 4 : Target
+                 * </pre>
+                 */
+                @Override
+                public Size apply(MethodVisitor methodVisitor, Context implementationContext,
+                                  MethodDescription instrumentedMethod) {
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+                    methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(NamedValueSource.class));
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 3);
+
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(targetClass));
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 4);
+
+                    for (NamedValueMapping mapping : mappings) {
+                        emitNamedValueCopy(methodVisitor, mapping);
+                    }
+
+                    methodVisitor.visitInsn(Opcodes.RETURN);
+                    // 栈深：target + value + fallback(primitive 时 getter 返回值，long/double 占 2 槽) ≈ 4
+                    return new Size(4, 5);
+                }
+            };
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        private void emitNamedValueCopy(MethodVisitor mv, NamedValueMapping mapping) {
+            if (mapping.toType.isPrimitive()) {
+                emitPrimitiveAssign(mv, mapping);
+            } else {
+                emitReferenceAssign(mv, mapping);
+            }
+        }
+
+        /**
+         * {@code target.setXxx((T) source.getObject("xxx"));}
+         */
+        private void emitReferenceAssign(MethodVisitor mv, NamedValueMapping mapping) {
+            mv.visitVarInsn(Opcodes.ALOAD, 4);
+            mv.visitVarInsn(Opcodes.ALOAD, 3);
+            mv.visitLdcInsn(mapping.propertyName);
+            mv.visitMethodInsn(
+                    Opcodes.INVOKEINTERFACE,
+                    Type.getInternalName(NamedValueSource.class),
+                    "getObject",
+                    "(Ljava/lang/String;)Ljava/lang/Object;",
+                    true);
+            mv.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(mapping.toType));
+            invokeMethod(mv, mapping.setter);
+        }
+
+        /**
+         * {@code target.setXxx(NamedValueAssigns.toInt(source.getObject("xxx"), target.getXxx()));}
+         * 无 getter 时 fallback 用类型默认值（0 / false）
+         */
+        private void emitPrimitiveAssign(MethodVisitor mv, NamedValueMapping mapping) {
+            Class<?> primitive = mapping.toType;
+            mv.visitVarInsn(Opcodes.ALOAD, 4);
+
+            // arg1: source.getObject(name)
+            mv.visitVarInsn(Opcodes.ALOAD, 3);
+            mv.visitLdcInsn(mapping.propertyName);
+            mv.visitMethodInsn(
+                    Opcodes.INVOKEINTERFACE,
+                    Type.getInternalName(NamedValueSource.class),
+                    "getObject",
+                    "(Ljava/lang/String;)Ljava/lang/Object;",
+                    true);
+
+            // arg2: fallback = getter() or default
+            if (mapping.getter != null) {
+                mv.visitVarInsn(Opcodes.ALOAD, 4);
+                invokeMethod(mv, mapping.getter);
+            } else {
+                pushPrimitiveDefault(mv, primitive);
+            }
+
+            mv.visitMethodInsn(
+                    Opcodes.INVOKESTATIC,
+                    Type.getInternalName(NamedValueAssigns.class),
+                    NamedValueAssigns.methodName(primitive),
+                    Type.getMethodDescriptor(Type.getType(primitive), Type.getType(Object.class), Type.getType(primitive)),
+                    false);
+            invokeMethod(mv, mapping.setter);
+        }
+
+        private void pushPrimitiveDefault(MethodVisitor mv, Class<?> primitive) {
+            if (primitive == Long.TYPE) {
+                mv.visitInsn(Opcodes.LCONST_0);
+            } else if (primitive == Double.TYPE) {
+                mv.visitInsn(Opcodes.DCONST_0);
+            } else if (primitive == Float.TYPE) {
+                mv.visitInsn(Opcodes.FCONST_0);
+            } else {
+                // boolean/byte/short/char/int
+                mv.visitInsn(Opcodes.ICONST_0);
+            }
+        }
+
+        private void invokeMethod(MethodVisitor mv, Method method) {
+            Class<?> declaringClass = method.getDeclaringClass();
+            boolean iface = declaringClass.isInterface();
+            int opcode = iface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL;
+            mv.visitMethodInsn(
+                    opcode,
+                    Type.getInternalName(declaringClass),
+                    method.getName(),
+                    Type.getMethodDescriptor(method),
+                    iface);
         }
     }
 }
