@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * 用于封装采集到的实时血缘信息。
  * <p>
- * 对外 Kafka JSON 仅做字段新增（apis），不修改既有 datasource / sql / FireTask 字段，以兼容下游实时平台。
+ * 对外 Kafka JSON 仅做字段新增（apis）
  * </p>
  *
  * @author ChengLong 2022-08-30 15:31:32

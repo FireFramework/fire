@@ -17,9 +17,10 @@
 
 package com.zto.fire.spark.sync
 
-import com.zto.fire.common.bean.lineage.{Lineage, LineageCollectData}
+import com.zto.fire.common.bean.lineage.{ApiLineage, Lineage}
 import com.zto.fire.common.conf.FireFrameworkConf
-import com.zto.fire.common.lineage.{LineageManager, SQLLineageManager}
+import com.zto.fire.common.enu.Datasource
+import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
 import com.zto.fire.common.util.ReflectionUtils
 import com.zto.fire.core.sync.LineageAccumulatorManager
 import com.zto.fire.predef._
@@ -28,6 +29,8 @@ import com.zto.fire.spark.conf.FireSparkConf
 import com.zto.fire.spark.sql.SparkSqlParser
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.ui.SparkListenerSQLExecutionEnd
+
+import java.util
 
 /**
  * 用于将各个executor端数据收集到driver端
@@ -39,12 +42,18 @@ object SparkLineageAccumulatorManager extends LineageAccumulatorManager {
 
   val SPARK_LISTENER_CLASS = "org.apache.spark.sql.execution.ui.SparkListenerSQLExecutionEnd"
 
+  /**
+   * 将数据源血缘放到累加器中
+   */
+  override def add(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = {
+    AccumulatorManager.addLineage(lineage)
+  }
 
   /**
-   * 将完整血缘采集载荷放到累加器中（datasource + apis）
+   * 将 API 血缘放到独立累加器中
    */
-  override def add(collectData: LineageCollectData): Unit = {
-    AccumulatorManager.addLineage(collectData)
+  override def addApis(apis: util.List[ApiLineage]): Unit = {
+    AccumulatorManager.addApiLineage(apis)
   }
 
   /**
@@ -53,13 +62,15 @@ object SparkLineageAccumulatorManager extends LineageAccumulatorManager {
   override def add(value: Long): Unit = AccumulatorManager.addCounter(value)
 
   /**
-   * 获取收集到的血缘消息（对外结构兼容：仅新增 apis）
+   * 获取收集到的血缘消息：apis 与 datasource 同级，不包额外一层
    */
   override def getValue: Lineage = {
-    val collect = AccumulatorManager.getLineageCollect
-    // 再合并 driver 本地尚未上报的 API / datasource
-    LineageManager.mergeLineageCollectData(collect, LineageManager.getLineageCollectData)
-    new Lineage(collect.getDatasource, SQLLineageManager.getSQLLineage, collect.getApis)
+    val datasource = AccumulatorManager.getLineage
+    LineageManager.mergeLineageMap(datasource, LineageManager.getDatasourceLineage)
+
+    val apiMap = AccumulatorManager.getApiLineageMap
+    LineageManager.mergeApiLineage(apiMap, LineageManager.getApiLineage)
+    new Lineage(datasource, SQLLineageManager.getSQLLineage, new util.ArrayList[ApiLineage](apiMap.values()))
   }
 
   /**

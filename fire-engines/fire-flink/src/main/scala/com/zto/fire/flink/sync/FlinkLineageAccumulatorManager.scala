@@ -18,7 +18,7 @@
 package com.zto.fire.flink.sync
 
 import com.zto.fire._
-import com.zto.fire.common.bean.lineage.{ApiLineage, Lineage, LineageCollectData}
+import com.zto.fire.common.bean.lineage.{ApiLineage, Lineage}
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
 import com.zto.fire.common.util.JSONUtils
@@ -86,28 +86,18 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
   }
 
   /**
-   * 合并 API 血缘
+   * 将数据源血缘放到累加器中
    */
-  private def mergeApis(apis: util.List[ApiLineage]): Unit = {
-    LineageManager.mergeApiLineage(this.apiMap, apis)
-    LineageManager.mergeApiLineage(this.apiMap, LineageManager.getApiLineage)
+  override def add(lineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]): Unit = this.synchronized {
+    if (lineage.nonEmpty) this.mergeLineage(lineage)
   }
 
   /**
-   * 将完整血缘采集载荷放到累加器中
+   * 合并 API 血缘（与 datasource 分开，不包一层）
    */
-  override def add(collectData: LineageCollectData): Unit = this.synchronized {
-    if (collectData == null || collectData.isEmpty) return
-    val ds = collectData.getDatasource
-    if (ds != null && !ds.isEmpty) {
-      this.mergeLineage(ds.asInstanceOf[JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]]])
-    }
-    if (collectData.getApis != null && !collectData.getApis.isEmpty) {
-      this.mergeApis(collectData.getApis)
-    } else {
-      // 即使无上报 apis，也合并本进程本地采集
-      LineageManager.mergeApiLineage(this.apiMap, LineageManager.getApiLineage)
-    }
+  override def addApis(apis: util.List[ApiLineage]): Unit = this.synchronized {
+    LineageManager.mergeApiLineage(this.apiMap, apis)
+    LineageManager.mergeApiLineage(this.apiMap, LineageManager.getApiLineage)
   }
 
   /**
@@ -116,7 +106,7 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
   override def add(value: Long): Unit = this.counter.addAndGet(value)
 
   /**
-   * 获取收集到的血缘消息（对外仅新增 apis，兼容旧结构）
+   * 获取收集到的血缘消息：apis 与 datasource
    */
   override def getValue: Lineage = {
     LineageManager.mergeApiLineage(this.apiMap, LineageManager.getApiLineage)

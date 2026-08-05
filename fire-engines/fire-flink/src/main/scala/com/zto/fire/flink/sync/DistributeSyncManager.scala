@@ -28,6 +28,7 @@ private[fire] object DistributeSyncManager extends SyncManager {
   private var lastJsonConf = ""
   private lazy val distributeSyncUrl = "/system/distributeSync"
   private lazy val lineageUrl = "/system/collectLineage"
+  private lazy val apiLineageUrl = "/system/collectApiLineage"
   private lazy val standardUrl = "/system/collectStandard"
   // 用于记录血缘解析运行的次数
   private lazy val lineageRunCount = new AtomicInteger()
@@ -73,11 +74,19 @@ private[fire] object DistributeSyncManager extends SyncManager {
     lineageThread.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = {
         LineageManager.printLog(s"调用接口[$lineageUrl]定时任务已启动")
-        val collectData = LineageManager.getLineageCollectData
-        if (collectData != null && !collectData.isEmpty) {
-          val json = JSONUtils.toJSONString(collectData)
+        val lineageMap = LineageManager.getDatasourceLineage
+        if (noEmpty(lineageMap)) {
+          val json = JSONUtils.toJSONString(lineageMap)
           LineageManager.printLog(s"调用接口[$lineageUrl]发送血缘json：$json")
           SystemRestful.restInvoke(lineageUrl, json)
+        }
+
+        // api血缘采集
+        val apis = LineageManager.getApiLineage
+        if (apis != null && !apis.isEmpty) {
+          val apiJson = JSONUtils.toJSONString(apis)
+          LineageManager.printLog(s"调用接口[$apiLineageUrl]发送API血缘json：$apiJson")
+          SystemRestful.restInvoke(apiLineageUrl, apiJson)
         }
 
         if (lineageRunCount.incrementAndGet() > FireFrameworkConf.lineageRunCount) {
