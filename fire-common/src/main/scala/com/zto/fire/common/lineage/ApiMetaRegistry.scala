@@ -42,28 +42,23 @@ case class ApiMeta(name: String,
                    changes: Seq[ApiChange] = Nil)
 
 /**
- * Fire API 元数据集中注册表。
- * <p>
- * API 行为变更时：在同一次提交中更新对应实现，并在本注册表追加 {@link ApiChange}。
- * 运行时埋点仅调用 {@code LineageManager.addApiLineage(name)}，由本表补齐 module / sinceVersion。
- * </p>
+ * Fire API 元数据集中注册表
  *
  * @author ChengLong
  * @since 3.0.0
  */
 object ApiMetaRegistry {
-
-  val MODULE_JDBC = "JDBC"
-  val MODULE_STREAMING = "Streaming"
-  val MODULE_UNKNOWN = "UNKNOWN"
+  val JDBC = "JDBC"
+  val STREAMING = "Streaming"
+  val UNKNOWN = "UNKNOWN"
 
   /** 未知 API 时的兜底元数据 */
-  def unknown(name: String): ApiMeta = ApiMeta(name, MODULE_UNKNOWN, "", Set.empty)
+  def unknown(name: String): ApiMeta = ApiMeta(name, UNKNOWN, "", Set.empty)
 
   private lazy val metas: Map[String, ApiMeta] = Map(
     "jdbcUpdateBatch" -> ApiMeta(
       name = "jdbcUpdateBatch",
-      module = MODULE_JDBC,
+      module = JDBC,
       sinceVersion = "2.3.3",
       engines = Set("spark", "flink"),
       changes = Seq(
@@ -73,7 +68,7 @@ object ApiMetaRegistry {
     ),
     "jdbcBatchUpdate" -> ApiMeta(
       name = "jdbcBatchUpdate",
-      module = MODULE_JDBC,
+      module = JDBC,
       sinceVersion = "2.0.0",
       engines = Set("spark", "flink"),
       changes = Seq(
@@ -82,25 +77,29 @@ object ApiMetaRegistry {
     ),
     "jdbcUpdateBatchAsync" -> ApiMeta(
       name = "jdbcUpdateBatchAsync",
-      module = MODULE_JDBC,
+      module = JDBC,
       sinceVersion = "3.0.0",
       engines = Set("spark")
     ),
     "createRandomLongStream" -> ApiMeta(
       name = "createRandomLongStream",
-      module = MODULE_STREAMING,
+      module = STREAMING,
       sinceVersion = "2.0.0",
-      engines = Set("spark", "flink")
+      engines = Set("spark", "flink"),
+      changes = Seq(
+        ApiChange("3.0.0", "2026-08-01", "调整内部逻辑"),
+        ApiChange("3.0.2", "2026-08-20", "测试api血缘")
+      )
     ),
     "foreachRDDAtLeastOnce" -> ApiMeta(
       name = "foreachRDDAtLeastOnce",
-      module = MODULE_STREAMING,
+      module = STREAMING,
       sinceVersion = "2.0.0",
       engines = Set("spark")
     ),
     "foreachPartitionAsync" -> ApiMeta(
       name = "foreachPartitionAsync",
-      module = MODULE_STREAMING,
+      module = STREAMING,
       sinceVersion = "2.0.0",
       engines = Set("spark", "flink")
     )

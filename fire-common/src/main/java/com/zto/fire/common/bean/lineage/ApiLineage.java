@@ -45,19 +45,13 @@ public class ApiLineage implements Serializable {
      */
     private String sinceVersion;
 
-    /**
-     * 本任务首次观测到该 API 调用的时间戳（毫秒）
-     */
-    private Long firstSeen;
-
     public ApiLineage() {
     }
 
-    public ApiLineage(String name, String module, String sinceVersion, Long firstSeen) {
+    public ApiLineage(String name, String module, String sinceVersion) {
         this.name = name;
         this.module = module;
         this.sinceVersion = sinceVersion;
-        this.firstSeen = firstSeen;
     }
 
     public String getName() {
@@ -84,14 +78,6 @@ public class ApiLineage implements Serializable {
         this.sinceVersion = sinceVersion;
     }
 
-    public Long getFirstSeen() {
-        return firstSeen;
-    }
-
-    public void setFirstSeen(Long firstSeen) {
-        this.firstSeen = firstSeen;
-    }
-
     @Override
     public boolean equals(Object object) {
         if (this == object) {
@@ -115,7 +101,6 @@ public class ApiLineage implements Serializable {
                 "name='" + name + '\'' +
                 ", module='" + module + '\'' +
                 ", sinceVersion='" + sinceVersion + '\'' +
-                ", firstSeen=" + firstSeen +
                 '}';
     }
 }

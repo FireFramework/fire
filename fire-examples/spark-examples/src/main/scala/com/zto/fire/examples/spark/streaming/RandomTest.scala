@@ -18,6 +18,8 @@
 package com.zto.fire.examples.spark.streaming
 
 import com.zto.fire._
+import com.zto.fire.common.anno.Config
+import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.spark.SparkStreaming
 import com.zto.fire.spark.anno.Streaming
 
@@ -29,11 +31,18 @@ import com.zto.fire.spark.anno.Streaming
  * @Date 2025/12/31 10:46
  * @version 2.3.
  */
+@Config(
+  """
+    |fire.lineage.enable=true
+    |fire.lineage.api.enable=true
+    |fire.lineage.debug.print=true
+    |""")
 @Streaming(10)
 object RandomTest extends SparkStreaming {
 
   override def process(): Unit = {
     val dstream = this.fire.createRandomLongStream(100)
     dstream.print(1)
+    LineageManager.show(10)
   }
 }

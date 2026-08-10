@@ -288,7 +288,7 @@ object LineageManager extends Logging {
       if (!ApiMetaRegistry.contains(name)) {
         printLog(s"API 未在 ApiMetaRegistry 登记，仍采集用量：name=$name")
       }
-      val apiLineage = new ApiLineage(name, meta.module, meta.sinceVersion, Long.box(System.currentTimeMillis()))
+      val apiLineage = new ApiLineage(name, meta.module, meta.sinceVersion)
       val prev = this.manager.apiLineageMap.putIfAbsent(name, apiLineage)
       if (prev == null) {
         this.manager.addApiCount.incrementAndGet()
@@ -305,19 +305,13 @@ object LineageManager extends Logging {
   }
 
   /**
-   * 合并 API 血缘：按 name 去重，保留更早的 firstSeen
+   * 合并 API 血缘：按 name 去重
    */
   private[fire] def mergeApiLineage(current: util.Map[String, ApiLineage], target: util.Collection[ApiLineage]): Unit = {
     if (target == null || target.isEmpty) return
     target.foreach(api => {
       if (api != null && noEmpty(api.getName)) {
-        val name = api.getName
-        val existing = current.get(name)
-        if (existing == null) {
-          current.put(name, api)
-        } else if (api.getFirstSeen != null && (existing.getFirstSeen == null || api.getFirstSeen < existing.getFirstSeen)) {
-          current.put(name, api)
-        }
+        current.putIfAbsent(api.getName, api)
       }
     })
   }
