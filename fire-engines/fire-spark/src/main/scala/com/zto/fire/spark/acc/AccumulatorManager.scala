@@ -210,6 +210,7 @@ private[fire] object AccumulatorManager extends Logging  {
    * 将 API 使用血缘添加到独立累加器中
    */
   private[fire] def addApiLineage(apis: util.List[ApiLineage]): Unit = {
+    if (!FireFrameworkConf.lineageEnable || !FireFrameworkConf.lineageApiEnable) return
     if (apis == null || apis.isEmpty) return
     if (FireUtils.isSparkEngine) {
       val env = SparkEnv.get

@@ -19,6 +19,7 @@ package com.zto.fire.flink.sync
 
 import com.zto.fire._
 import com.zto.fire.common.bean.lineage.{ApiLineage, Lineage}
+import com.zto.fire.common.conf.FireFrameworkConf
 import com.zto.fire.common.enu.Datasource
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager, SQLLineageManager}
 import com.zto.fire.common.util.JSONUtils
@@ -96,6 +97,7 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
    * 合并 API 血缘（与 datasource 分开，不包一层）
    */
   override def addApis(apis: util.List[ApiLineage]): Unit = this.synchronized {
+    if (!FireFrameworkConf.lineageEnable || !FireFrameworkConf.lineageApiEnable) return
     LineageManager.mergeApiLineage(this.apiMap, apis)
     LineageManager.mergeApiLineage(this.apiMap, LineageManager.getApiLineage)
   }
@@ -106,10 +108,13 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
   override def add(value: Long): Unit = this.counter.addAndGet(value)
 
   /**
-   * 获取收集到的血缘消息：apis 与 datasource
+   * 获取收集到的血缘消息：apis 与 datasource 同级
    */
   override def getValue: Lineage = {
-    LineageManager.mergeApiLineage(this.apiMap, LineageManager.getApiLineage)
-    new Lineage(this.lineageMap, SQLLineageManager.getSQLLineage, new util.ArrayList[ApiLineage](this.apiMap.values()))
+    val apis = if (FireFrameworkConf.lineageEnable && FireFrameworkConf.lineageApiEnable) {
+      LineageManager.mergeApiLineage(this.apiMap, LineageManager.getApiLineage)
+      new util.ArrayList[ApiLineage](this.apiMap.values())
+    } else null
+    new Lineage(this.lineageMap, SQLLineageManager.getSQLLineage, apis)
   }
 }

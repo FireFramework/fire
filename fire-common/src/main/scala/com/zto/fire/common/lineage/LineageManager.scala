@@ -278,7 +278,7 @@ object LineageManager extends Logging {
    * API 名称，需与 ApiMetaRegistry 中登记名一致，如 jdbcUpdateBatch
    */
   def addApiLineage(apiName: String): Unit = {
-    if (!lineageEnable || isEmpty(apiName)) return
+    if (!lineageEnable || !lineageApiEnable || isEmpty(apiName)) return
     if (this.manager.apiLineageMap.size() >= lineageMaxSize) return
 
     val name = apiName.trim
@@ -997,7 +997,8 @@ object LineageManager extends Logging {
    * 获取完整的实时血缘信息（含 API 血缘；apis 与 datasource 同级）
    */
   private[fire] def getLineage: Lineage = {
-    new Lineage(this.getDatasourceLineage, SQLLineageManager.getSQLLineage, this.getApiLineage)
+    val apis = if (lineageEnable && lineageApiEnable) this.getApiLineage else null
+    new Lineage(this.getDatasourceLineage, SQLLineageManager.getSQLLineage, apis)
   }
 
   /**

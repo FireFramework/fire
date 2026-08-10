@@ -83,7 +83,7 @@ private[fire] object DistributeSyncManager extends SyncManager {
 
         // api血缘采集
         val apis = LineageManager.getApiLineage
-        if (apis != null && !apis.isEmpty) {
+        if (FireFrameworkConf.lineageApiEnable && apis != null && !apis.isEmpty) {
           val apiJson = JSONUtils.toJSONString(apis)
           LineageManager.printLog(s"调用接口[$apiLineageUrl]发送API血缘json：$apiJson")
           SystemRestful.restInvoke(apiLineageUrl, apiJson)

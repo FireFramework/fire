@@ -68,9 +68,12 @@ object SparkLineageAccumulatorManager extends LineageAccumulatorManager {
     val datasource = AccumulatorManager.getLineage
     LineageManager.mergeLineageMap(datasource, LineageManager.getDatasourceLineage)
 
-    val apiMap = AccumulatorManager.getApiLineageMap
-    LineageManager.mergeApiLineage(apiMap, LineageManager.getApiLineage)
-    new Lineage(datasource, SQLLineageManager.getSQLLineage, new util.ArrayList[ApiLineage](apiMap.values()))
+    val apis = if (FireFrameworkConf.lineageEnable && FireFrameworkConf.lineageApiEnable) {
+      val apiMap = AccumulatorManager.getApiLineageMap
+      LineageManager.mergeApiLineage(apiMap, LineageManager.getApiLineage)
+      new util.ArrayList[ApiLineage](apiMap.values())
+    } else null
+    new Lineage(datasource, SQLLineageManager.getSQLLineage, apis)
   }
 
   /**
