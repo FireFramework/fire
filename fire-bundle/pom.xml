@@ -78,6 +78,11 @@
             <version>${jackson.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${scala.binary.version}</artifactId>
             <version>${kafka.version}</version>
@@ -418,6 +423,8 @@
                             <include>org.quartz-scheduler:*</include>
                             <include>com.fasterxml.jackson.module:*</include>
                             <include>com.fasterxml.jackson.core:*</include>
+                            <include>com.fasterxml.jackson.dataformat:*</include>
+                            <include>org.yaml:snakeyaml</include>
                             <include>org.apache.rocketmq:*</include>
                             <!-- rocketmq需要引入，否则报：Could not initialize class Could not initialize class org.apache.rocketmq.common.message.MessageClientIDSetter -->
                             <include>commons-validator:*</include>

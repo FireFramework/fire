@@ -1,0 +1,59 @@
+#
+# Fire API 血缘元数据注册表，所有涉及到api的变更均需登记到该配置文件中
+#
+# 字段说明：
+#   name         - API 名称，与 LineageManager.addApiLineage 埋点名一致（唯一）
+#   module       - 模块：JDBC / Streaming / HBase 等
+#   sinceVersion - 该 API 首次引入的 fire 版本
+#   engines      - 适用引擎，缺省为 [spark, flink]
+#   changes      - 行为变更史（仅注册表维护，不随运行时血缘 JSON 下发）
+#
+
+apis:
+  - name: jdbcUpdateBatch
+    module: JDBC
+    sinceVersion: "2.3.3"
+    engines: [spark, flink]
+    changes:
+      - version: "3.0.0"
+        date: "2025-01-01"
+        summary: "fire-1286: partition 共用连接，中间批 commit=false"
+      - version: "3.0.0"
+        date: "2025-01-01"
+        summary: "fire-1309: 恢复中间批默认 commit=true，避免 batchSize 整数倍静默丢数"
+
+  - name: jdbcBatchUpdate
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+    changes:
+      - version: "2.3.3"
+        date: "2022-01-01"
+        summary: "deprecated，请使用 jdbcUpdateBatch"
+
+  - name: jdbcUpdateBatchAsync
+    module: JDBC
+    sinceVersion: "3.0.0"
+    engines: [spark]
+
+  - name: createRandomLongStream
+    module: Streaming
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+    changes:
+      - version: "3.0.0"
+        date: "2026-08-01"
+        summary: "调整内部逻辑"
+      - version: "3.0.2"
+        date: "2026-08-20"
+        summary: "测试api血缘"
+
+  - name: foreachRDDAtLeastOnce
+    module: Streaming
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: foreachPartitionAsync
+    module: Streaming
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
