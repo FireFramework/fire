@@ -317,7 +317,7 @@ private[fire] object AccumulatorManager extends Logging  {
   def getLineage: JConcurrentHashMap[Datasource, JHashSet[DatasourceDesc]] = this.lineageAccumulator.value
 
   /**
-   * 获取 API 血缘累加结果（name → ApiLineage）
+   * 获取 API 血缘累加结果（class#api → ApiLineage）
    */
   def getApiLineageMap: ConcurrentHashMap[String, ApiLineage] = this.apiLineageAccumulator.value
 

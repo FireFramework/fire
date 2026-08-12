@@ -271,25 +271,29 @@ object LineageManager extends Logging {
   }
 
   /**
-   * 采集 Fire API 使用血缘（按 apiName 去重，同一 JVM 仅记录首次调用）。
-   * module / sinceVersion 从 {@link ApiMetaRegistry} 补齐，埋点处只需传 API 名称。
+   * 采集 Fire API 使用血缘（按 class#api 去重，同一 JVM 仅记录首次调用）
+   * module / sinceVersion 从 ApiMetaRegistry 补齐
    *
+   * @param className
+   * API 声明类全限定名
    * @param apiName
-   * API 名称，需与 ApiMetaRegistry 中登记名一致，如 jdbcUpdateBatch
+   * API 名称，需与 ApiMetaRegistry 中登记名一致
    */
-  def addApiLineage(apiName: String): Unit = {
+  def addApiLineage(className: String, apiName: String): Unit = {
     if (!lineageEnable || !lineageApiEnable || isEmpty(apiName)) return
     if (this.manager.apiLineageMap.size() >= lineageMaxSize) return
 
-    val name = apiName.trim
+    val api = apiName.trim
+    val clazz = if (isEmpty(className)) "" else className.trim
+    val key = clazz + "#" + api
     // putIfAbsent：仅首次调用写入
-    if (!this.manager.apiLineageMap.containsKey(name)) {
-      val meta = ApiMetaRegistry.getOrUnknown(name)
-      if (!ApiMetaRegistry.contains(name)) {
-        printLog(s"API 未在 ApiMetaRegistry 登记，仍采集用量：name=$name")
+    if (!this.manager.apiLineageMap.containsKey(key)) {
+      val meta = ApiMetaRegistry.getOrUnknown(clazz, api)
+      if (!ApiMetaRegistry.contains(clazz, api) && !ApiMetaRegistry.contains(api)) {
+        printLog(s"API 未在 ApiMetaRegistry 登记，仍采集用量：class=$clazz api=$api")
       }
-      val apiLineage = new ApiLineage(name, meta.module, meta.sinceVersion)
-      val prev = this.manager.apiLineageMap.putIfAbsent(name, apiLineage)
+      val apiLineage = new ApiLineage(clazz, api, meta.module, meta.sinceVersion)
+      val prev = this.manager.apiLineageMap.putIfAbsent(key, apiLineage)
       if (prev == null) {
         this.manager.addApiCount.incrementAndGet()
         printLog(s"采集到 Fire API 血缘：$apiLineage")
@@ -298,20 +302,20 @@ object LineageManager extends Logging {
   }
 
   /**
-   * 获取本 JVM 采集到的 API 血缘（按 name 去重后的列表）
+   * 获取本 JVM 采集到的 API 血缘（按 class#api 去重后的列表）
    */
   private[fire] def getApiLineage: util.List[ApiLineage] = {
     new util.ArrayList[ApiLineage](this.manager.apiLineageMap.values())
   }
 
   /**
-   * 合并 API 血缘：按 name 去重
+   * 合并 API 血缘：按 class#api 去重
    */
   private[fire] def mergeApiLineage(current: util.Map[String, ApiLineage], target: util.Collection[ApiLineage]): Unit = {
     if (target == null || target.isEmpty) return
     target.foreach(api => {
-      if (api != null && noEmpty(api.getName)) {
-        current.putIfAbsent(api.getName, api)
+      if (api != null && noEmpty(api.getApi)) {
+        current.putIfAbsent(api.identityKey(), api)
       }
     })
   }

@@ -17,6 +17,8 @@
 
 package com.zto.fire.common.bean.lineage;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,18 +55,36 @@ public class ApiLineageConfig {
      * 单条 API 元数据（对应 yaml 中 apis 列表元素）
      */
     public static class ApiMetaItem {
-        private String name;
+        /**
+         * API 所在类全限定名；YAML 字段名为 class
+         */
+        @JsonProperty("class")
+        private String clazz;
+
+        /** API 名称 */
+        private String api;
+
         private String module;
         private String sinceVersion;
         private List<String> engines;
         private List<ApiChangeItem> changes;
 
-        public String getName() {
-            return name;
+        @JsonProperty("class")
+        public String getClazz() {
+            return clazz;
         }
 
-        public void setName(String name) {
-            this.name = name;
+        @JsonProperty("class")
+        public void setClazz(String clazz) {
+            this.clazz = clazz;
+        }
+
+        public String getApi() {
+            return api;
+        }
+
+        public void setApi(String api) {
+            this.api = api;
         }
 
         public String getModule() {

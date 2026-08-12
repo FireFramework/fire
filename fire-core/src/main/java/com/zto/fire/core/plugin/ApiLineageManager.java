@@ -156,17 +156,20 @@ public final class ApiLineageManager extends TraceManager {
         if (!FireFrameworkConf.lineageEnable() || !FireFrameworkConf.lineageApiEnable()) {
             return;
         }
-        String apiName = resolveApiName(declaringType, methodName);
-        if (StringUtils.isNotBlank(apiName)) {
-            LineageManager.addApiLineage(apiName);
+        String[] resolved = resolveApi(declaringType, methodName);
+        if (resolved != null && StringUtils.isNotBlank(resolved[1])) {
+            LineageManager.addApiLineage(resolved[0], resolved[1]);
         }
     }
 
-    static String resolveApiName(String declaringType, String methodName) {
+    /**
+     * @return [0]=API 声明类全限定名，[1]=api 名称；无法解析时返回 null
+     */
+    static String[] resolveApi(String declaringType, String methodName) {
         if (StringUtils.isNotBlank(declaringType)) {
             String mapped = apiNameByPattern.get(declaringType + "." + methodName);
             if (StringUtils.isNotBlank(mapped)) {
-                return mapped;
+                return new String[]{declaringType, mapped};
             }
             for (Map.Entry<String, String> e : apiNameByPattern.entrySet()) {
                 String[] cm = splitClassAndMethod(e.getKey());
@@ -176,12 +179,20 @@ public final class ApiLineageManager extends TraceManager {
                 Class<?> holder = loadClass(cm[0]);
                 Class<?> runtime = loadClass(declaringType);
                 if (holder != null && runtime != null && holder.isAssignableFrom(runtime)) {
-                    return e.getValue();
+                    // 优先记录 holder（注解所在类），而非运行时实现类
+                    return new String[]{cm[0], e.getValue()};
                 }
             }
         }
         String value = findApiLineageValue(declaringType, methodName);
-        return StringUtils.isNotBlank(value) ? value.trim() : methodName;
+        String api = StringUtils.isNotBlank(value) ? value.trim() : methodName;
+        String clazz = StringUtils.isNotBlank(declaringType) ? declaringType : "";
+        return new String[]{clazz, api};
+    }
+
+    static String resolveApiName(String declaringType, String methodName) {
+        String[] resolved = resolveApi(declaringType, methodName);
+        return resolved == null ? methodName : resolved[1];
     }
 
     private static void installTransformer(List<String> patterns) throws Exception {
