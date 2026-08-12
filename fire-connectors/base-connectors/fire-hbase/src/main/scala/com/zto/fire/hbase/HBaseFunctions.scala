@@ -134,6 +134,43 @@ private[hbase] trait HBaseFunctions {
   }
 
   /**
+   * 从HBase Get单条数据，并将结果封装为Map（单版本）
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   * 无记录时返回 null
+   *
+   * @param tableName 表名
+   * @param rowKey    指定的rowKey
+   * @return Map结果
+   */
+  def getMap(tableName: String, rowKey: String, keyNum: Int = KeyNum._1): Map[String, String] = {
+    HBaseConnector(keyNum = keyNum).getMap(tableName, rowKey)
+  }
+
+  /**
+   * 从HBase批量Get数据，并将结果封装为Map列表（单版本）
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   *
+   * @param tableName 表名
+   * @param rowKeys   指定的多个rowKey
+   * @return Map结果集
+   */
+  def getMapList(tableName: String, rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).getMapList(tableName, rowKeys: _*)
+  }
+
+  /**
+   * 从HBase批量Get数据，并将结果封装为Map列表（单版本）
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   *
+   * @param tableName 表名
+   * @param gets      指定的多个get对象
+   * @return Map结果集
+   */
+  def getMapList(tableName: String, gets: ListBuffer[Get], keyNum: Int): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).getMapList(tableName, gets: _*)
+  }
+
+  /**
    * 通过HBase Seq[Get]获取多条数据
    *
    * @param tableName 表名
@@ -202,6 +239,31 @@ private[hbase] trait HBaseFunctions {
    */
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).scan[T](tableName, scan)
+  }
+
+  /**
+   * 表扫描，将查询后的数据转为Map列表（单版本）
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   *
+   * @param tableName 表名
+   * @param startRow  开始行
+   * @param endRow    结束行
+   * @return Map结果集
+   */
+  def scanMapList(tableName: String, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).scanMapList(tableName, startRow, endRow)
+  }
+
+  /**
+   * 表扫描，将查询后的数据转为Map列表（单版本）
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   *
+   * @param tableName 表名
+   * @param scan      HBase scan对象
+   * @return Map结果集
+   */
+  def scanMapList(tableName: String, scan: Scan, keyNum: Int): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).scanMapList(tableName, scan)
   }
 
   /**

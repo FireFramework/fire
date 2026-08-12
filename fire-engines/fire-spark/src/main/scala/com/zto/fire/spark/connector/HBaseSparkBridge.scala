@@ -42,6 +42,7 @@ import scala.reflect.ClassTag
  *
  * @author ChengLong 2019-5-10 14:39:39
  */
+@SerialVersionUID(-7991499232030950852L)
 class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = keyNum) {
   private[this] lazy val spark = SparkSingletonFactory.getSparkSession
 
@@ -454,6 +455,42 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
     })
 
     this.hbaseGetList[T](tableName, getList)
+  }
+
+  /**
+   * 根据单个rowKey查询，并转为Map（单版本）
+   * 无结果时返回空 Map
+   */
+  def hbaseGetMap(tableName: String, rowKey: String): Map[String, String] = {
+    HBaseConnector(keyNum = this.keyNum).getMap(tableName, rowKey)
+  }
+
+  /**
+   * 根据Get集合批量查询，并转为Map列表（单版本）
+   */
+  def hbaseGetMapList(tableName: String, seq: Seq[Get]): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).getMapList(tableName, seq: _*)
+  }
+
+  /**
+   * 根据rowKey集合批量查询，并转为Map列表（单版本）
+   */
+  def hbaseGetMapList2(tableName: String, seq: Seq[String]): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).getMapList(tableName, seq: _*)
+  }
+
+  /**
+   * Scan指定HBase表，并转为Map列表（单版本）
+   */
+  def hbaseScanMapList(tableName: String, scan: Scan): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).scanMapList(tableName, scan)
+  }
+
+  /**
+   * Scan指定HBase表（rowKey区间），并转为Map列表（单版本）
+   */
+  def hbaseScanMapList2(tableName: String, startRow: String, stopRow: String): ListBuffer[Map[String, String]] = {
+    this.hbaseScanMapList(tableName, HBaseConnector.buildScan(startRow, stopRow))
   }
 
   /**

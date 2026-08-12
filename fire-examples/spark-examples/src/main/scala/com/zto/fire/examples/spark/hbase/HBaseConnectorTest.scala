@@ -17,8 +17,8 @@
 
 package com.zto.fire.examples.spark.hbase
 
-import java.nio.charset.StandardCharsets
 import com.zto.fire._
+import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.{HBase, HBase2}
 import com.zto.fire.examples.bean.Student
 import com.zto.fire.hbase.HBaseConnector
@@ -26,6 +26,7 @@ import com.zto.fire.spark.SparkCore
 import org.apache.hadoop.hbase.client.Get
 import org.apache.spark.sql.Encoders
 
+import java.nio.charset.StandardCharsets
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -100,6 +101,25 @@ object HBaseConnectorTest extends SparkCore {
   }
 
   /**
+   * 使用HBaseConnector get数据，并将结果以map方式返回
+   */
+  def testHbaseGetMap: Unit = {
+    println("===========testHbaseGetMap===========")
+    val rowKeys = Seq("1", "2", "3", "5", "6")
+
+    val map = this.fire.hbaseGetMap(this.tableName1, "1")
+    println("-----------------单条get--------------------")
+    println(JSONUtils.getScalaMapper.writeValueAsString(map))
+
+    val mapList = this.fire.hbaseGetMapList2(this.tableName1, rowKeys)
+    println("------------批量get-------------")
+    mapList.foreach(map => {
+      println(JSONUtils.getScalaMapper.writeValueAsString(map))
+      println("---------------------")
+    })
+  }
+
+  /**
     * 使用HBaseConnector get数据，并将结果以RDD方式返回
     */
   def testHbaseGetRDD: Unit = {
@@ -142,6 +162,20 @@ object HBaseConnectorTest extends SparkCore {
     println("===========testHbaseScanList===========")
     val list = this.fire.hbaseScanList2[Student](this.tableName1, "1", "6")
     list.foreach(println)
+  }
+
+  /**
+   * 使用HBaseConnector scan数据，并以list[map]方式返回
+   */
+  def testHbaseScanMapList: Unit = {
+    println("===========testHbaseScanMapList===========")
+    val mapList = this.fire.hbaseScanMapList2(this.tableName1, "1", "6")
+
+    println("------------批量scan-------------")
+    mapList.foreach(map => {
+      println(JSONUtils.getScalaMapper.writeValueAsString(map))
+      println("---------------------")
+    })
   }
 
   /**
@@ -232,6 +266,9 @@ object HBaseConnectorTest extends SparkCore {
   override def process: Unit = {
     // 指定是否以多版本的形式读写
     // this.testHBaseDeleteRDD
+    this.testHbasePutRDD
+    this.testHbaseGetMap
+    this.testHbaseScanMapList
 
     this.testHbaseDeleteDS
     HBaseConnector.truncateTable(this.tableName1)

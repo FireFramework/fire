@@ -44,7 +44,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import java.lang.reflect.Field
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInt, Long => JLong, Short => JShort, String => JString}
 import java.math.{BigDecimal => JBigDecimal}
-import java.nio.charset.StandardCharsets
+import java.nio.charset.{CharacterCodingException, StandardCharsets}
 import java.util.concurrent.{TimeUnit, ConcurrentHashMap => JConcurrentHashMap}
 import java.util.{Map => JMap}
 import scala.collection.mutable.ListBuffer
@@ -150,6 +150,51 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       val resultList = this.getResult(tableName, gets: _*)
       if (this.getMultiVersion[T]) this.hbaseMultiRow2Bean[T](resultList, clazz) else this.hbaseRow2Bean[T](resultList)
     }(this.logger, catchLog = s"批量 get ${hbaseClusterUrl(keyNum)}.${tableName}执行失败")
+  }
+
+  /**
+   * 从HBase Get单条数据，并将结果封装为Map（单版本）
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   * 无记录时返回 null
+   *
+   * @param tableName 表名
+   * @param rowKey    指定的rowKey
+   * @return Map结果
+   */
+  def getMap(tableName: String, rowKey: String): Map[String, String] = {
+    requireNonEmpty(tableName, rowKey)("参数不合法，无法进行HBase getMap操作")
+    val maps = this.getMapList(tableName, Seq(rowKey): _*)
+    if (maps == null || maps.isEmpty) Map.empty else maps.head
+  }
+
+  /**
+   * 从HBase批量Get数据，并将结果封装为Map列表（单版本）
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   *
+   * @param tableName 表名
+   * @param rowKeys   指定的多个rowKey
+   * @return Map结果集
+   */
+  def getMapList(tableName: String, rowKeys: String*): ListBuffer[Map[String, String]] = {
+    val getList = for (rowKey <- rowKeys) yield HBaseConnector.buildGet(rowKey)
+    this.getMapList(tableName, getList: _*)
+  }
+
+  /**
+   * 从HBase批量Get数据，并将结果封装为Map列表（单版本）
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   *
+   * @param tableName 表名
+   * @param gets      指定的多个get对象
+   * @return Map结果集
+   */
+  def getMapList(tableName: String, gets: Get*)(implicit canOverload: Boolean = true): ListBuffer[Map[String, String]] = {
+    requireNonNull(tableName, gets)("参数不合法，无法进行HBase getMapList操作")
+    tryWithReturn {
+      val resultList = this.getResult(tableName, gets: _*)
+      this.hbaseRow2Map(resultList)
+    }(this.logger, s"HBase getMapList ${hbaseClusterUrl(keyNum)}.${tableName}",
+      s"批量 getMapList ${hbaseClusterUrl(keyNum)}.${tableName}执行失败")
   }
 
   /**
@@ -290,6 +335,51 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       this.closeResultScanner(rsScanner)
     }(this.logger, "HBase scan",
       s"scan ${hbaseClusterUrl(keyNum)}.${tableName}执行失败",
+      "关闭HBase table对象或ResultScanner失败")
+  }
+
+  /**
+   * 表扫描，将查询后的数据转为Map列表（单版本）
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   *
+   * @param tableName 表名
+   * @param startRow  开始行
+   * @param endRow    结束行
+   * @return Map结果集
+   */
+  def scanMapList(tableName: String, startRow: String, endRow: String): ListBuffer[Map[String, String]] = {
+    requireNonEmpty(tableName, startRow, endRow)
+    val scan = HBaseConnector.buildScan(startRow, endRow)
+    this.scanMapList(tableName, scan)
+  }
+
+  /**
+   * 表扫描，将查询后的数据转为Map列表（单版本）
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   *
+   * @param tableName 表名
+   * @param scan      HBase scan对象
+   * @return Map结果集
+   */
+  def scanMapList(tableName: String, scan: Scan): ListBuffer[Map[String, String]] = {
+    requireNonEmpty(tableName, scan)(s"参数不合法，scanMapList ${hbaseClusterUrl(keyNum)}.${tableName}失败.")
+
+    val list = ListBuffer[Map[String, String]]()
+    var rsScanner: ResultScanner = null
+    tryFinallyWithReturn {
+      rsScanner = this.scanResultScanner(tableName, scan)
+      if (rsScanner != null) {
+        rsScanner.foreach(rs => {
+          val map = this.hbaseRow2Map(rs)
+          if (map.isDefined) list += map.get
+        })
+      }
+      logInfo(s"HBase scanMapList ${hbaseClusterUrl(keyNum)}.${tableName}执行成功, 总计${list.size}条")
+      list
+    } {
+      this.closeResultScanner(rsScanner)
+    }(this.logger, "HBase scanMapList",
+      s"scanMapList ${hbaseClusterUrl(keyNum)}.${tableName}执行失败",
       "关闭HBase table对象或ResultScanner失败")
   }
 
@@ -481,6 +571,53 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     val fieldMap = this.getFieldNameMap[T]
     requireNonEmpty(fieldMap)(s"未声明任何成员变量或成员变量未声明注解@FieldName")
     this.cell2Field[T](fieldMap, rs)
+  }
+
+  /**
+   * 将单版本 Result 映射为 Map
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   *
+   * @param rs HBase查询结果集
+   * @return Map结果，空行返回 None
+   */
+  @Internal
+  private[fire] def hbaseRow2Map(rs: Result): Option[Map[String, String]] = {
+    requireNonNull(rs)("参数不合法，HBase Row转为Map失败.")
+    if (rs.isEmpty) return None
+    val cells = rs.rawCells()
+    if (cells == null || cells.isEmpty) return None
+
+    val builder = Map.newBuilder[String, String]
+    var rowKey = ""
+    cells.filter(_ != null).foreach(cell => {
+      rowKey = new String(CellUtil.cloneRow(cell), StandardCharsets.UTF_8)
+      val family = new String(CellUtil.cloneFamily(cell), StandardCharsets.UTF_8)
+      val qualifier = new String(CellUtil.cloneQualifier(cell), StandardCharsets.UTF_8)
+      val valueBytes = CellUtil.cloneValue(cell)
+      builder += ((family + ":" + qualifier) -> HBaseConnector.bytesToMapValue(valueBytes))
+    })
+
+    if (StringUtils.isNotBlank(rowKey)) {
+      builder += ("rowKey" -> rowKey)
+      Some(builder.result())
+    } else None
+  }
+
+  /**
+   * 将多条 Result 映射为 Map 列表
+   *
+   * @param rsArr HBase查询结果集
+   * @return Map结果集
+   */
+  @Internal
+  private[fire] def hbaseRow2Map(rsArr: ListBuffer[Result]): ListBuffer[Map[String, String]] = {
+    requireNonNull(rsArr)("参数不合法，HBase Row转为Map失败.")
+    val mapList = ListBuffer[Map[String, String]]()
+    rsArr.filter(rs => rs != null && !rs.isEmpty).foreach(rs => {
+      val map = this.hbaseRow2Map(rs)
+      if (map.isDefined) mapList += map.get
+    })
+    mapList
   }
 
   /**
@@ -1081,6 +1218,59 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
  * 每个HBaseConnector实例使用keyNum作为标识，并且与每个HBase集群一一对应
  */
 object HBaseConnector extends ConnectorFactory[HBaseConnector] with HBaseFunctions {
+
+  /**
+   * 无 schema 时：合法可读 UTF-8 优先按字符串；否则按定长二进制 Boolean/Short/Int/Long，再尝试 BigDecimal
+   */
+  private[fire] def bytesToMapValue(valueBytes: Array[Byte]): String = {
+    if (valueBytes == null || valueBytes.isEmpty) return null
+
+    // HBase Bytes.toBytes(boolean): true=-1(0xFF), false=0 —— 须优先于字符串判断（0xFF 会被误当成字符）
+    if (valueBytes.length == 1 && (valueBytes(0) == 0 || valueBytes(0) == -1)) {
+      return String.valueOf(Bytes.toBoolean(valueBytes))
+    }
+
+    // 短字符串（如 "root"/"java"）长度恰好为 2/4/8，必须先按文本识别，避免被当成 Short/Int/Long
+    if (isLikelyUtf8Text(valueBytes)) return Bytes.toString(valueBytes)
+
+    val decoded: Object = valueBytes.length match {
+      case 1 => Boolean.box(Bytes.toBoolean(valueBytes))
+      case 2 => Short.box(Bytes.toShort(valueBytes))
+      case 4 => JInt.valueOf(Bytes.toInt(valueBytes))
+      case 8 => JLong.valueOf(Bytes.toLong(valueBytes))
+      case _ =>
+        // Bytes.toBytes(BigDecimal) = 4字节scale + unscaled；scale 通常较小
+        try {
+          val scale = Bytes.toInt(valueBytes)
+          if (scale >= 0 && scale <= 100 && valueBytes.length > 4) Bytes.toBigDecimal(valueBytes)
+          else Bytes.toString(valueBytes)
+        } catch {
+          case _: Throwable => Bytes.toString(valueBytes)
+        }
+    }
+
+    if (decoded == null) null else String.valueOf(decoded)
+  }
+
+  /**
+   * 判断是否为合法可读 UTF-8 文本（排除控制字符；非法 UTF-8 不算文本）
+   */
+  private[this] def isLikelyUtf8Text(bytes: Array[Byte]): Boolean = {
+    if (bytes == null || bytes.isEmpty) return false
+    if (bytes.exists { b =>
+      val c = b & 0xff
+      c < 0x09 || (c > 0x0d && c < 0x20) || c == 0x7f
+    }) return false
+    try {
+      val decoder = StandardCharsets.UTF_8.newDecoder()
+      decoder.onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+      decoder.onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
+      decoder.decode(java.nio.ByteBuffer.wrap(bytes))
+      true
+    } catch {
+      case _: CharacterCodingException => false
+    }
+  }
 
   /**
    * 创建HBaseConnector

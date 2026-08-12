@@ -9,6 +9,7 @@ import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.println
+import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.streaming.api.scala.DataStream
 
 import scala.collection.mutable.ListBuffer
@@ -107,6 +108,21 @@ object HBaseTest extends FlinkStreaming {
     HBaseConnector.deleteRows(this.tableName, Seq("1"))
   }
 
+  /**
+   * 测试getMap相关api
+   */
+  def testGetMap(): Unit = {
+    val rowKeys = Seq("1", "2", "3", "5", "6")
+    val stream2 = this.fire.fromCollection(rowKeys)
+    stream2.map(new RichMapFunction[String, String] {
+      override def map(rowKey: String): JString = {
+        val map: Map[String, String] = HBaseConnector.getMap(tableName, rowKey)
+        Thread.sleep(10000)
+        JSONUtils.getScalaMapper.writeValueAsString(map)
+      }
+    }).print
+  }
+
 
   override def process: Unit = {
     val stream = this.fire.createKafkaDirectStream().filter(t => JSONUtils.isLegal(t)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(1)
@@ -119,5 +135,6 @@ object HBaseTest extends FlinkStreaming {
     this.testStreamHBaseSink2(stream)
     this.testTableHBaseSink2(stream)
     this.testHBase
+    // this.testGetMap
   }
 }

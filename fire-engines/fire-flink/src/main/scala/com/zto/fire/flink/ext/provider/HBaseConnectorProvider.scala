@@ -19,12 +19,15 @@ package com.zto.fire.flink.ext.provider
 
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
+import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import org.apache.flink.streaming.api.datastream.DataStreamSink
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.api.Table
 import org.apache.flink.types.Row
+import org.apache.hadoop.hbase.client.{Get, Scan}
 
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /**
@@ -116,5 +119,41 @@ trait HBaseConnectorProvider {
                      flushInterval: Long = 3000,
                      keyNum: Int = KeyNum._1)(fun: Row => T): DataStreamSink[_] = {
     table.hbasePutTable2[T](tableName, batch, flushInterval, keyNum)(fun)
+  }
+
+  /**
+   * 根据单个rowKey查询，并转为Map（单版本）
+   * 无结果时返回空 Map
+   */
+  def hbaseGetMap(tableName: String, rowKey: String, keyNum: Int = KeyNum._1): Map[String, String] = {
+    HBaseConnector(keyNum = keyNum).getMap(tableName, rowKey)
+  }
+
+  /**
+   * 根据Get集合批量查询，并转为Map列表（单版本）
+   */
+  def hbaseGetMapList(tableName: String, seq: Seq[Get], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).getMapList(tableName, seq: _*)
+  }
+
+  /**
+   * 根据rowKey集合批量查询，并转为Map列表（单版本）
+   */
+  def hbaseGetMapList2(tableName: String, seq: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).getMapList(tableName, seq: _*)
+  }
+
+  /**
+   * Scan指定HBase表，并转为Map列表（单版本）
+   */
+  def hbaseScanMapList(tableName: String, scan: Scan, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).scanMapList(tableName, scan)
+  }
+
+  /**
+   * Scan指定HBase表（rowKey区间），并转为Map列表（单版本）
+   */
+  def hbaseScanMapList2(tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).scanMapList(tableName, startRow, stopRow)
   }
 }
