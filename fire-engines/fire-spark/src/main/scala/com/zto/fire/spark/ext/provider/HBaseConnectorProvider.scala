@@ -294,6 +294,7 @@ trait HBaseConnectorProvider extends SparkProvider {
    * 根据单个rowKey查询，并转为Map（单版本）
    * 无结果时返回空 Map
    */
+  @API
   def hbaseGetMap(tableName: String, rowKey: String, keyNum: Int = KeyNum._1): Map[String, String] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseGetMap(tableName, rowKey)
   }
@@ -301,6 +302,7 @@ trait HBaseConnectorProvider extends SparkProvider {
   /**
    * 根据Get集合批量查询，并转为Map列表（单版本）
    */
+  @API
   def hbaseGetMapList(tableName: String, seq: Seq[Get], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseGetMapList(tableName, seq)
   }
@@ -308,22 +310,57 @@ trait HBaseConnectorProvider extends SparkProvider {
   /**
    * 根据rowKey集合批量查询，并转为Map列表（单版本）
    */
+  @API
   def hbaseGetMapList2(tableName: String, seq: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseGetMapList2(tableName, seq)
   }
 
   /**
+   * 多线程并发 GetMapList
+   */
+  @API
+  def hbaseGetMapListAsync(tableName: String, threadNum: Int, seq: Seq[Get], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetMapListAsync(tableName, threadNum, seq)
+  }
+
+  /**
+   * 多线程并发 GetMapList（rowKey）
+   */
+  @API
+  def hbaseGetMapListAsync2(tableName: String, threadNum: Int, seq: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetMapListAsync2(tableName, threadNum, seq)
+  }
+
+  /**
    * Scan指定HBase表，并转为Map列表（单版本）
    */
+  @API
   def hbaseScanMapList(tableName: String, scan: Scan, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseScanMapList(tableName, scan)
   }
 
   /**
+   * 多线程并发 ScanMapList
+   */
+  @API
+  def hbaseScanMapListAsync(tableName: String, threadNum: Int, scan: Scan, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanMapListAsync(tableName, threadNum, scan)
+  }
+
+  /**
    * Scan指定HBase表（rowKey区间），并转为Map列表（单版本）
    */
+  @API
   def hbaseScanMapList2(tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseScanMapList2(tableName, startRow, stopRow)
+  }
+
+  /**
+   * 多线程并发 ScanMapList（rowKey 区间）
+   */
+  @API
+  def hbaseScanMapListAsync2(tableName: String, threadNum: Int, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanMapListAsync2(tableName, threadNum, startRow, stopRow)
   }
 
   /**

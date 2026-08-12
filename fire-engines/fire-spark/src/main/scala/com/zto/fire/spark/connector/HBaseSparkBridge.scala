@@ -42,6 +42,7 @@ import scala.reflect.ClassTag
  *
  * @author ChengLong 2019-5-10 14:39:39
  */
+@SerialVersionUID(-7991499232030950852L)
 class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = keyNum) {
   private[this] lazy val spark = SparkSingletonFactory.getSparkSession
 
@@ -523,6 +524,71 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
    */
   def hbaseGetListAsync2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, seq: Seq[String]): Seq[T] = {
     HBaseConnector(keyNum = this.keyNum).getAsync[T](tableName, threadNum, seq: _*)
+  }
+
+  /**
+   * 根据单个rowKey查询，并转为Map（单版本）
+   * 无结果时返回空 Map
+   */
+  def hbaseGetMap(tableName: String, rowKey: String): Map[String, String] = {
+    HBaseConnector(keyNum = this.keyNum).getMap(tableName, rowKey)
+  }
+
+  /**
+   * 根据Get集合批量查询，并转为Map列表（单版本）
+   */
+  def hbaseGetMapList(tableName: String, seq: Seq[Get]): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).getMapList(tableName, seq: _*)
+  }
+
+  /**
+   * 根据rowKey集合批量查询，并转为Map列表（单版本）
+   */
+  def hbaseGetMapList2(tableName: String, seq: Seq[String]): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).getMapList(tableName, seq: _*)
+  }
+
+  /**
+   * 多线程并发 GetMapList
+   */
+  def hbaseGetMapListAsync(tableName: String, threadNum: Int, seq: Seq[Get]): ListBuffer[Map[String, String]] = {
+    implicit val canOverload: Boolean = true
+    HBaseConnector(keyNum = this.keyNum).getMapListAsync(tableName, threadNum, seq: _*)
+  }
+
+  /**
+   * 多线程并发 GetMapList（rowKey）
+   */
+  def hbaseGetMapListAsync2(tableName: String, threadNum: Int, seq: Seq[String]): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).getMapListAsync(tableName, threadNum, seq: _*)
+  }
+
+  /**
+   * Scan指定HBase表，并转为Map列表（单版本）
+   */
+  def hbaseScanMapList(tableName: String, scan: Scan): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).scanMapList(tableName, scan)
+  }
+
+  /**
+   * 多线程并发 ScanMapList
+   */
+  def hbaseScanMapListAsync(tableName: String, threadNum: Int, scan: Scan): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).scanMapListAsync(tableName, threadNum, scan)
+  }
+
+  /**
+   * Scan指定HBase表（rowKey区间），并转为Map列表（单版本）
+   */
+  def hbaseScanMapList2(tableName: String, startRow: String, stopRow: String): ListBuffer[Map[String, String]] = {
+    this.hbaseScanMapList(tableName, HBaseConnector.buildScan(startRow, stopRow))
+  }
+
+  /**
+   * 多线程并发 ScanMapList（rowKey 区间）
+   */
+  def hbaseScanMapListAsync2(tableName: String, threadNum: Int, startRow: String, stopRow: String): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).scanMapListAsync(tableName, threadNum, startRow, stopRow)
   }
 
   /**

@@ -9,12 +9,14 @@ import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.println
+import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.hadoop.hbase.client.Get
 
 import java.nio.charset.StandardCharsets
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
+import java.lang.{String => JString}
 
 /**
  * flink hbase sink
@@ -114,6 +116,21 @@ object HBaseTest extends FlinkStreaming {
     HBaseConnector.deleteRows(this.tableName, Seq("1"))
   }
 
+  /**
+   * 测试getMap相关api
+   */
+  def testGetMap(): Unit = {
+    val rowKeys = Seq("1", "2", "3", "5", "6")
+    val stream2 = this.fire.fromCollection(rowKeys)
+    stream2.map(new RichMapFunction[String, String] {
+      override def map(rowKey: String): JString = {
+        val map: Map[String, String] = HBaseConnector.getMap(tableName, rowKey)
+        Thread.sleep(10000)
+        JSONUtils.getScalaMapper.writeValueAsString(map)
+      }
+    }).print
+  }
+
 
   /**
    * 多线程并发 Put DataStream
@@ -181,12 +198,36 @@ object HBaseTest extends FlinkStreaming {
     list.foreach(println)
   }
 
-  private def studentStream(parallelism: Int = 2): DataStream[Student] = {
-    this.fire.parallelize(Student.newStudentList().asScala.toSeq).setParallelism(parallelism)
+  /**
+   * 多线程并发 GetMap
+   */
+  def testHbaseGetMapListAsync(tableName: String, threadNum: Int): Unit = {
+    println("===========testHbaseGetMapListAsync===========")
+    val rowKeys = Seq("1", "2", "3", "5", "6")
+    val mapList = this.fire.hbaseGetMapListAsync2(tableName, threadNum, rowKeys)
+    mapList.foreach(map => println(JSONUtils.getScalaMapper.writeValueAsString(map)))
+
+    val getList = ListBuffer[Get]()
+    rowKeys.foreach(rowKey => getList += new Get(rowKey.getBytes(StandardCharsets.UTF_8)))
+    val mapList2 = this.fire.hbaseGetMapListAsync(tableName, threadNum, getList)
+    mapList2.foreach(map => println(JSONUtils.getScalaMapper.writeValueAsString(map)))
   }
 
+  /**
+   * 多线程并发 ScanMap
+   */
+  def testHbaseScanMapListAsync(tableName: String, threadNum: Int): Unit = {
+    println("===========testHbaseScanMapListAsync===========")
+    val mapList = this.fire.hbaseScanMapListAsync2(tableName, threadNum, "1", "6")
+    mapList.foreach(map => println(JSONUtils.getScalaMapper.writeValueAsString(map)))
+  }
+
+  /*private def studentStream(parallelism: Int = 2): DataStream[Student] = {
+    this.fire.parallelize(Student.newStudentList().asScala.toSeq).setParallelism(parallelism)
+  }*/
+
   override def process: Unit = {
-    val stream = this.fire.createRandomIntStream(1).flatMap(t => Student.newStudentList()).setParallelism(1)
+    /*val stream = this.fire.createRandomIntStream(1).flatMap(t => Student.newStudentList()).setParallelism(1)
     /*HBaseConnector.truncateTable(this.tableName)
     HBaseConnector.truncateTable(this.tableName2)
     HBaseConnector.truncateTable(this.tableName3)
@@ -202,21 +243,31 @@ object HBaseTest extends FlinkStreaming {
     this.testStreamHBaseSinkAsync(stream, 3)
     this.testHbaseGetListAsync(this.tableName13, 2)
     this.testHbaseScanListAsync(this.tableName13, 2)
+    this.testHbaseGetMapListAsync(this.tableName13, 2)
+    this.testHbaseScanMapListAsync(this.tableName13, 2)
 
     // stream/table 异步 sink 在 job 启动后写入，Get/Scan 前用集合并发 Put 准备数据
     println("------------tableName14----------------")
     this.fire.hbasePutListAsync[Student](this.tableName14, 2, Student.newStudentList().asScala)
     this.testHbaseGetListAsync(this.tableName14, 2)
     this.testHbaseScanListAsync(this.tableName14, 2)
+    this.testHbaseGetMapListAsync(this.tableName14, 2)
+    this.testHbaseScanMapListAsync(this.tableName14, 2)
 
     println("------------tableName15----------------")
     this.fire.hbasePutListAsync[Student](this.tableName15, 2, Student.newStudentList().asScala)
     this.testHbaseGetListAsync(this.tableName15, 2)
     this.testHbaseScanListAsync(this.tableName15, 2)
+    this.testHbaseGetMapListAsync(this.tableName15, 2)
+    this.testHbaseScanMapListAsync(this.tableName15, 2)
 
     println("------------tableName16----------------")
     this.fire.hbasePutListAsync[Student](this.tableName16, 2, Student.newStudentList().asScala)
     this.testHbaseGetListAsync(this.tableName16, 2)
     this.testHbaseScanListAsync(this.tableName16, 2)
+    this.testHbaseGetMapListAsync(this.tableName16, 2)
+    this.testHbaseScanMapListAsync(this.tableName16, 2)*/
+
+    this.testGetMap
   }
 }

@@ -327,6 +327,39 @@ object HBaseConnectorTest extends SparkCore {
   }
 
   /**
+   * 多线程并发 GetMap
+   */
+  def testHbaseGetMapListAsync(tableName: String, threadNum: Int): Unit = {
+    println("===========testHbaseGetMapListAsync===========")
+    val rowKeys = Seq("1", "2", "3", "5", "6")
+    val mapList = this.fire.hbaseGetMapListAsync2(tableName, threadNum, rowKeys)
+    mapList.foreach(map => {
+      println(JSONUtils.getScalaMapper.writeValueAsString(map))
+      println("---------------------")
+    })
+
+    val getList = ListBuffer[Get]()
+    rowKeys.foreach(rowKey => getList += new Get(rowKey.getBytes(StandardCharsets.UTF_8)))
+    val mapList2 = this.fire.hbaseGetMapListAsync(tableName, threadNum, getList)
+    mapList2.foreach(map => {
+      println(JSONUtils.getScalaMapper.writeValueAsString(map))
+      println("---------------------")
+    })
+  }
+
+  /**
+   * 多线程并发 ScanMap
+   */
+  def testHbaseScanMapListAsync(tableName: String, threadNum: Int): Unit = {
+    println("===========testHbaseScanMapListAsync===========")
+    val mapList = this.fire.hbaseScanMapListAsync2(tableName, threadNum, "1", "6")
+    mapList.foreach(map => {
+      println(JSONUtils.getScalaMapper.writeValueAsString(map))
+      println("---------------------")
+    })
+  }
+
+  /**
     * Spark处理过程
     * 注：此方法会被自动调用
     */
@@ -368,17 +401,25 @@ object HBaseConnectorTest extends SparkCore {
     println("------------tableName13----------------")
     this.testHbaseGetListAsync(this.tableName13, 2)
     this.testHbaseScanListAsync(this.tableName13, 2)
+    this.testHbaseGetMapListAsync(this.tableName13, 2)
+    this.testHbaseScanMapListAsync(this.tableName13, 2)
 
     println("------------tableName14----------------")
     this.testHbaseGetListAsync(this.tableName14, 2)
     this.testHbaseScanListAsync(this.tableName14, 2)
+    this.testHbaseGetMapListAsync(this.tableName14, 2)
+    this.testHbaseScanMapListAsync(this.tableName14, 2)
 
     println("------------tableName15----------------")
-    this.testHbaseGetListAsync(this.tableName14, 2)
-    this.testHbaseScanListAsync(this.tableName14, 2)
+    this.testHbaseGetListAsync(this.tableName15, 2)
+    this.testHbaseScanListAsync(this.tableName15, 2)
+    this.testHbaseGetMapListAsync(this.tableName15, 2)
+    this.testHbaseScanMapListAsync(this.tableName15, 2)
 
     println("------------tableName16----------------")
-    this.testHbaseGetListAsync(this.tableName14, 2)
-    this.testHbaseScanListAsync(this.tableName14, 2)
+    this.testHbaseGetListAsync(this.tableName16, 2)
+    this.testHbaseScanListAsync(this.tableName16, 2)
+    this.testHbaseGetMapListAsync(this.tableName16, 2)
+    this.testHbaseScanMapListAsync(this.tableName16, 2)
   }
 }
