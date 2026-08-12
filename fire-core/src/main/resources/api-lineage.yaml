@@ -30,6 +30,7 @@ holders:
   - com.zto.fire.spark.ext.provider.HBaseHadoopProvider
   - com.zto.fire.spark.ext.provider.HBaseBulkProvider
   - com.zto.fire.jdbc.JdbcConnectorBridge
+  - com.zto.fire.jdbc.JdbcFunctions
   - com.zto.fire.hbase.HBaseFunctions
 
 
@@ -317,6 +318,100 @@ apis:
     module: JDBC
     sinceVersion: "2.0.0"
     engines: [spark, flink]
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: getConnection
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: closeConnection
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: update
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: updateBatch
+    module: JDBC
+    sinceVersion: "2.3.3"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: updateBatchAsync
+    module: JDBC
+    sinceVersion: "3.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: queryList
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: queryListAsync
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: queryAsync
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: query
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: executeUpdate
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+    changes:
+      - version: "2.3.3"
+        date: "2022-01-01"
+        summary: "deprecated，请使用 update"
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: executeBatch
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+    changes:
+      - version: "2.3.3"
+        date: "2022-01-01"
+        summary: "deprecated，请使用 updateBatch"
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: executeQueryList
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+    changes:
+      - version: "2.3.3"
+        date: "2022-01-01"
+        summary: "deprecated，请使用 queryList"
+
+  - class: com.zto.fire.jdbc.JdbcFunctions
+    api: executeQuery
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+    changes:
+      - version: "2.3.3"
+        date: "2022-01-01"
+        summary: "deprecated，请使用 query"
 
 
 # ----------------------------------------------- < HBase > ------------------------------------------------ #
@@ -963,109 +1058,133 @@ apis:
     engines: [spark]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseInsert
+    api: insert
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseInsertAsync
+    api: insertAsync
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseGet
+    api: get
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseGetAsync
+    api: getAsync
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseGetResult
+    api: getResult
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseScanResultScanner
+    api: scanResultScanner
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseScan
+    api: scan
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseScanAsync
+    api: scanAsync
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseCreateTable
+    api: buildGet
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseDropTable
+    api: buildScan
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseEnableTable
+    api: getConnection
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseDisableTable
+    api: getConfiguration
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseTruncateTable
+    api: createTable
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseTableExists
+    api: dropTable
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseIsExists
+    api: enableTable
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseDeleteRows
+    api: disableTable
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseDeleteFamilies
+    api: truncateTable
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]
 
   - class: com.zto.fire.hbase.HBaseFunctions
-    api: hbaseDeleteQualifiers
+    api: tableExists
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.hbase.HBaseFunctions
+    api: isExists
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.hbase.HBaseFunctions
+    api: deleteRows
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.hbase.HBaseFunctions
+    api: deleteFamilies
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - class: com.zto.fire.hbase.HBaseFunctions
+    api: deleteQualifiers
     module: HBase
     sinceVersion: "2.0.0"
     engines: [spark, flink]

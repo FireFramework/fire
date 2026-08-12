@@ -47,6 +47,7 @@ private[hbase] trait HBaseFunctions {
    * @param family    列族名称
    * @param qualifier 表的qualifier名称
    */
+  @API
   def buildGet(rowKey: String,
                family: String = null,
                qualifier: String = "",
@@ -72,6 +73,7 @@ private[hbase] trait HBaseFunctions {
    * @param filterList 过滤器
    * @return scan实例
    */
+  @API
   def buildScan(startRow: String, endRow: String,
                 family: String = null,
                 qualifier: String = "",
@@ -98,7 +100,7 @@ private[hbase] trait HBaseFunctions {
    * @param tableName 表名
    * @param beans     HBaseBaseBean子类集合
    */
-  @API("hbaseInsert")
+  @API
   def insert[T <: HBaseBaseBean[T] : ClassTag](tableName: String, beans: Seq[T], keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).insert[T](tableName, beans: _*)
   }
@@ -109,7 +111,7 @@ private[hbase] trait HBaseFunctions {
    * @param tableName 表名
    * @param puts      Put集合
    */
-  @API("hbaseInsert")
+  @API
   def insert(tableName: String, puts: Seq[Put], keyNum: Int): Unit = {
     HBaseConnector(keyNum = keyNum).insert(tableName, puts: _*)
   }
@@ -117,7 +119,7 @@ private[hbase] trait HBaseFunctions {
   /**
    * 多线程并发 Put（Bean 映射）
    */
-  @API("hbaseInsertAsync")
+  @API
   def insertAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, beans: Seq[T], keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).insertAsync[T](tableName, threadNum, beans)
   }
@@ -125,7 +127,7 @@ private[hbase] trait HBaseFunctions {
   /**
    * 多线程并发 Put
    */
-  @API("hbaseInsertAsync")
+  @API
   def insertAsync(tableName: String, threadNum: Int, puts: Seq[Put], keyNum: Int): Unit = {
     HBaseConnector(keyNum = keyNum).insertAsync(tableName, threadNum, puts: _*)
   }
@@ -137,7 +139,7 @@ private[hbase] trait HBaseFunctions {
    * @param rowKeys   指定的多个rowKey
    * @return 目标对象实例
    */
-  @API("hbaseGet")
+  @API
   def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).get[T](tableName, rowKeys: _*)
   }
@@ -149,7 +151,7 @@ private[hbase] trait HBaseFunctions {
    * @param gets      指定的多个get对象
    * @return 目标对象实例
    */
-  @API("hbaseGet")
+  @API
   def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, gets: ListBuffer[Get], keyNum: Int): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).get[T](tableName, gets: _*)
   }
@@ -157,7 +159,7 @@ private[hbase] trait HBaseFunctions {
   /**
    * 多线程并发 Get
    */
-  @API("hbaseGetAsync")
+  @API
   def getAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int = 5, rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).getAsync[T](tableName, threadNum, rowKeys: _*)
   }
@@ -165,7 +167,7 @@ private[hbase] trait HBaseFunctions {
   /**
    * 多线程并发 Get
    */
-  @API("hbaseGetAsync")
+  @API
   def getAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, gets: ListBuffer[Get], keyNum: Int): ListBuffer[T] = {
     implicit val canOverload: Boolean = true
     HBaseConnector(keyNum = keyNum).getAsync[T](tableName, threadNum, gets: _*)
@@ -179,7 +181,7 @@ private[hbase] trait HBaseFunctions {
    * @return
    * HBase Result
    */
-  @API("hbaseGetResult")
+  @API
   def getResult(tableName: String, getList: Seq[Get], keyNum: Int): ListBuffer[Result] = {
     HBaseConnector(keyNum = keyNum).getResult(tableName, getList: _*)
   }
@@ -191,7 +193,7 @@ private[hbase] trait HBaseFunctions {
    * @return
    * HBase Result
    */
-  @API("hbaseGetResult")
+  @API
   def getResult[T: ClassTag](tableName: String, rowKeyList: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Result] = {
     HBaseConnector(keyNum = keyNum).getResult[T](tableName, rowKeyList: _*)
   }
@@ -204,7 +206,7 @@ private[hbase] trait HBaseFunctions {
    * @param scan      HBase scan对象
    * @return 指定类型的List
    */
-  @API("hbaseScanResultScanner")
+  @API
   def scanResultScanner(tableName: String, scan: Scan, keyNum: Int): ResultScanner = {
     HBaseConnector(keyNum = keyNum).scanResultScanner(tableName, scan)
   }
@@ -218,7 +220,7 @@ private[hbase] trait HBaseFunctions {
    * @param endRow    结束行
    * @return 指定类型的List
    */
-  @API("hbaseScanResultScanner")
+  @API
   def scanResultScanner(tableName: String, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ResultScanner = {
     HBaseConnector(keyNum = keyNum).scanResultScanner(tableName, startRow, endRow)
   }
@@ -231,7 +233,7 @@ private[hbase] trait HBaseFunctions {
    * @param endRow    结束行
    * @return 指定类型的List
    */
-  @API("hbaseScan")
+  @API
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).scan[T](tableName, startRow, endRow)
   }
@@ -243,7 +245,7 @@ private[hbase] trait HBaseFunctions {
    * @param scan      HBase scan对象
    * @return 指定类型的List
    */
-  @API("hbaseScan")
+  @API
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).scan[T](tableName, scan)
   }
@@ -251,7 +253,7 @@ private[hbase] trait HBaseFunctions {
   /**
    * 多线程并发 Scan（rowKey 区间）
    */
-  @API("hbaseScanAsync")
+  @API
   def scanAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int = 5, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).scanAsync[T](tableName, threadNum, startRow, endRow)
   }
@@ -259,7 +261,7 @@ private[hbase] trait HBaseFunctions {
   /**
    * 多线程并发 Scan
    */
-  @API("hbaseScanAsync")
+  @API
   def scanAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, scan: Scan, keyNum: Int): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).scanAsync[T](tableName, threadNum, scan)
   }
@@ -267,6 +269,7 @@ private[hbase] trait HBaseFunctions {
   /**
    * 根据keyNum获取指定HBase集群的connection
    */
+  @API
   def getConnection(keyNum: Int = KeyNum._1): Connection = HBaseConnector(keyNum = keyNum).getConnection
 
   /**
@@ -277,7 +280,7 @@ private[hbase] trait HBaseFunctions {
    * @param families
    * 列族
    */
-  @API("hbaseCreateTable")
+  @API
   def createTable(tableName: String, families: Seq[String], keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).createTable(tableName, families: _*)
   }
@@ -287,7 +290,7 @@ private[hbase] trait HBaseFunctions {
    *
    * @param tableName 表名
    */
-  @API("hbaseDropTable")
+  @API
   def dropTable(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).dropTable(tableName)
   }
@@ -297,7 +300,7 @@ private[hbase] trait HBaseFunctions {
    *
    * @param tableName 表名
    */
-  @API("hbaseEnableTable")
+  @API
   def enableTable(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).enableTable(tableName)
   }
@@ -307,7 +310,7 @@ private[hbase] trait HBaseFunctions {
    *
    * @param tableName 表名
    */
-  @API("hbaseDisableTable")
+  @API
   def disableTable(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).disableTable(tableName)
   }
@@ -319,7 +322,7 @@ private[hbase] trait HBaseFunctions {
    *                       表名
    * @param preserveSplits 是否保留所有的split信息
    */
-  @API("hbaseTruncateTable")
+  @API
   def truncateTable(tableName: String, preserveSplits: Boolean = true, keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).truncateTable(tableName, preserveSplits)
   }
@@ -327,7 +330,7 @@ private[hbase] trait HBaseFunctions {
   /**
    * 用于判断HBase表是否存在
    */
-  @API("hbaseTableExists")
+  @API
   def tableExists(tableName: String, keyNum: Int = KeyNum._1): Boolean = {
     HBaseConnector(keyNum = keyNum).tableExists(tableName)
   }
@@ -335,7 +338,7 @@ private[hbase] trait HBaseFunctions {
   /**
    * 用于判断HBase表是否存在（走缓存）
    */
-  @API("hbaseIsExists")
+  @API
   def isExists(tableName: String, keyNum: Int = KeyNum._1): Boolean = {
     HBaseConnector(keyNum = keyNum).isExists(tableName)
   }
@@ -346,7 +349,7 @@ private[hbase] trait HBaseFunctions {
    * @param tableName 表名
    * @param rowKeys   待删除的rowKey集合
    */
-  @API("hbaseDeleteRows")
+  @API
   def deleteRows(tableName: String, rowKeys: Seq[String], keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).deleteRows(tableName, rowKeys: _*)
   }
@@ -358,7 +361,7 @@ private[hbase] trait HBaseFunctions {
    * @param rowKey    rowKey
    * @param families  多个列族
    */
-  @API("hbaseDeleteFamilies")
+  @API
   def deleteFamilies(tableName: String, rowKey: String, families: Seq[String], keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).deleteFamilies(tableName, rowKey, families: _*)
   }
@@ -371,7 +374,7 @@ private[hbase] trait HBaseFunctions {
    * @param family     列族
    * @param qualifiers 列名
    */
-  @API("hbaseDeleteQualifiers")
+  @API
   def deleteQualifiers(tableName: String, rowKey: String, family: String, qualifiers: Seq[String], keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).deleteQualifiers(tableName, rowKey, family, qualifiers: _*)
   }
@@ -381,11 +384,13 @@ private[hbase] trait HBaseFunctions {
    *
    * @return HBase Configuration对象
    */
+  @API
   def getConfiguration(keyNum: Int = KeyNum._1): Configuration = HBaseConnector(keyNum = keyNum).getConfiguration
 
   /**
    * 校验类型合法性，class必须是HBaseBaseBean的子类
    */
+  @Internal
   def checkClass[T: ClassTag](clazz: Class[_] = null): Unit = {
     val finalClazz = if (clazz != null) clazz else getGeneric[T]("HBaseFunctions.checkClass")
     if (finalClazz == null || finalClazz.getSuperclass != classOf[HBaseBaseBean[_]]) throw new IllegalArgumentException("请指定泛型类型，该泛型必须是HBaseBaseBean的子类，如：this.fire.hbasePutTable[JavaBean]")
