@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.client.{Get, Scan}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset}
 
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /**
@@ -287,6 +288,42 @@ trait HBaseConnectorProvider extends SparkProvider {
   @API
   def hbaseGetList2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, seq: Seq[String], keyNum: Int = KeyNum._1): Seq[T] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseGetList2[T](tableName, seq)
+  }
+
+  /**
+   * 根据单个rowKey查询，并转为Map（单版本）
+   * 无结果时返回空 Map
+   */
+  def hbaseGetMap(tableName: String, rowKey: String, keyNum: Int = KeyNum._1): Map[String, String] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetMap(tableName, rowKey)
+  }
+
+  /**
+   * 根据Get集合批量查询，并转为Map列表（单版本）
+   */
+  def hbaseGetMapList(tableName: String, seq: Seq[Get], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetMapList(tableName, seq)
+  }
+
+  /**
+   * 根据rowKey集合批量查询，并转为Map列表（单版本）
+   */
+  def hbaseGetMapList2(tableName: String, seq: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetMapList2(tableName, seq)
+  }
+
+  /**
+   * Scan指定HBase表，并转为Map列表（单版本）
+   */
+  def hbaseScanMapList(tableName: String, scan: Scan, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanMapList(tableName, scan)
+  }
+
+  /**
+   * Scan指定HBase表（rowKey区间），并转为Map列表（单版本）
+   */
+  def hbaseScanMapList2(tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanMapList2(tableName, startRow, stopRow)
   }
 
   /**
