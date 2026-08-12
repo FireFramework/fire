@@ -1,15 +1,157 @@
 #
-# Fire API 血缘元数据注册表，所有涉及到api的变更均需登记到该配置文件中
+# Fire API 血缘元数据注册表，所有涉及到 API 的变更均需登记到该配置文件中
+# 加载位置：classpath:api-lineage.yaml（与 fire.properties 同目录）
 #
-# 字段说明：
+# holders      - 声明了 @API 的扩展类，供 ByteBuddy 发现 class.method；加载失败则跳过
+# apis 字段说明：
 #   name         - API 名称，与 LineageManager.addApiLineage 埋点名一致（唯一）
-#   module       - 模块：JDBC / Streaming / HBase 等
+#   module       - 模块：JDBC / HBase / Streaming 等
 #   sinceVersion - 该 API 首次引入的 fire 版本
 #   engines      - 适用引擎，缺省为 [spark, flink]
 #   changes      - 行为变更史（仅注册表维护，不随运行时血缘 JSON 下发）
 #
 
+holders:
+  - com.zto.fire.flink.ext.stream.StreamExecutionEnvExt
+  - com.zto.fire.flink.ext.stream.DataStreamExt
+  - com.zto.fire.flink.ext.stream.TableExt
+  - com.zto.fire.flink.ext.provider.JdbcFlinkProvider
+  - com.zto.fire.flink.ext.provider.HBaseConnectorProvider
+  - com.zto.fire.spark.ext.core.SparkSessionExt
+  - com.zto.fire.spark.ext.core.DataFrameExt
+  - com.zto.fire.spark.ext.core.DatasetExt
+  - com.zto.fire.spark.ext.core.RDDExt
+  - com.zto.fire.spark.ext.core.DStreamExt
+  - com.zto.fire.spark.ext.core.SQLContextExt
+  - com.zto.fire.spark.ext.provider.JdbcSparkProvider
+  - com.zto.fire.spark.ext.provider.HBaseConnectorProvider
+  - com.zto.fire.spark.ext.provider.HBaseHadoopProvider
+  - com.zto.fire.spark.ext.provider.HBaseBulkProvider
+  - com.zto.fire.jdbc.JdbcConnectorBridge
+  - com.zto.fire.hbase.HBaseFunctions
+
 apis:
+
+# ----------------------------------------------- < JDBC > ------------------------------------------------ #
+  - name: jdbcBatchUpdate
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+    changes:
+      - version: "2.3.3"
+        date: "2022-01-01"
+        summary: "deprecated，请使用 jdbcUpdateBatch"
+
+  - name: jdbcBatchUpdate2
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: jdbcBatchUpdateAsync
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: jdbcBatchUpdateAsync2
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: jdbcBatchUpdateDF
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: jdbcBatchUpdateStream
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: jdbcBatchUpdateStream2
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: jdbcBatchUpdateTable
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: jdbcBatchUpdateTable2
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: jdbcQuery
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: jdbcQueryAsync
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: jdbcQueryDF
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: jdbcQueryDFAsync
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: jdbcQueryList
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: jdbcQueryListAsync
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: jdbcQueryRDD
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: jdbcQueryRDDAsync
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: jdbcSqlLoad
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: jdbcTableLoad
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: jdbcTableLoadAll
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: jdbcTableLoadBound
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: jdbcTableSave
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: jdbcUpdate
+    module: JDBC
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
   - name: jdbcUpdateBatch
     module: JDBC
     sinceVersion: "2.3.3"
@@ -22,20 +164,450 @@ apis:
         date: "2025-01-01"
         summary: "fire-1309: 恢复中间批默认 commit=true，避免 batchSize 整数倍静默丢数"
 
-  - name: jdbcBatchUpdate
-    module: JDBC
-    sinceVersion: "2.0.0"
-    engines: [spark, flink]
-    changes:
-      - version: "2.3.3"
-        date: "2022-01-01"
-        summary: "deprecated，请使用 jdbcUpdateBatch"
-
   - name: jdbcUpdateBatchAsync
     module: JDBC
     sinceVersion: "3.0.0"
     engines: [spark]
 
+  - name: jdbcUpdateBatchDF
+    module: JDBC
+    sinceVersion: "3.0.0"
+    engines: [spark]
+
+  - name: jdbcUpdateBatchDFAsync
+    module: JDBC
+    sinceVersion: "3.0.0"
+    engines: [spark]
+
+  - name: sinkJdbc
+    module: JDBC
+    sinceVersion: "3.0.0"
+    engines: [flink]
+
+  - name: sinkJdbcExactlyOnce
+    module: JDBC
+    sinceVersion: "3.0.0"
+    engines: [flink]
+
+
+# ----------------------------------------------- < HBase > ------------------------------------------------ #
+  - name: hbaseBulkDeleteDS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkDeleteRDD
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkGetDF
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkGetDS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkGetRDD
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkGetSeq
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkLoadDF
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkLoadDS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkLoadRDD
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkPutDF
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkPutDS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkPutRDD
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkPutStream
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkScanDF
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkScanDF2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkScanDS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkScanDS2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkScanRDD
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseBulkScanRDD2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseCreateTable
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseDeleteDS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseDeleteFamilies
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseDeleteList
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseDeleteQualifiers
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseDeleteRDD
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseDeleteRows
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseDisableTable
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseDropTable
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseEnableTable
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseGet
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseGetAsync
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseGetDF
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseGetDS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseGetList
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseGetList2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseGetListAsync
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseGetListAsync2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseGetRDD
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseGetResult
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseHadoopPutDF
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseHadoopPutDFRow
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseHadoopPutDS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseHadoopPutRDD
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseHadoopScanDF
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseHadoopScanDF2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseHadoopScanDS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseHadoopScanDS2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseHadoopScanRDD
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseHadoopScanRDD2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseHadoopScanRS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseHadoopScanRS2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseInsert
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseInsertAsync
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseIsExists
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbasePutDF
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbasePutDFAsync
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbasePutDS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbasePutDS2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: hbasePutDSAsync
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbasePutDSAsync2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: hbasePutList
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbasePutListAsync
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbasePutRDD
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbasePutRDDAsync
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbasePutTable
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: hbasePutTable2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: hbasePutTableAsync
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: hbasePutTableAsync2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [flink]
+
+  - name: hbaseScan
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseScanAsync
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseScanDF
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseScanDF2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseScanDS
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseScanDS2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseScanList
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseScanList2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseScanListAsync
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseScanListAsync2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseScanRDD
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseScanRDD2
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark]
+
+  - name: hbaseScanResultScanner
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseTableExists
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+  - name: hbaseTruncateTable
+    module: HBase
+    sinceVersion: "2.0.0"
+    engines: [spark, flink]
+
+
+# ----------------------------------------------- < Streaming > ------------------------------------------------ #
   - name: createRandomLongStream
     module: Streaming
     sinceVersion: "2.0.0"
@@ -48,12 +620,12 @@ apis:
         date: "2026-08-20"
         summary: "测试api血缘"
 
-  - name: foreachRDDAtLeastOnce
+  - name: foreachPartitionAsync
     module: Streaming
     sinceVersion: "2.0.0"
     engines: [spark]
 
-  - name: foreachPartitionAsync
+  - name: foreachRDDAtLeastOnce
     module: Streaming
     sinceVersion: "2.0.0"
-    engines: [spark, flink]
+    engines: [spark]

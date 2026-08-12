@@ -17,6 +17,7 @@
 
 package com.zto.fire.flink.ext.provider
 
+import com.zto.fire.common.anno.API
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.jdbc.conf.FireJdbcConf
@@ -54,6 +55,7 @@ trait JdbcFlinkProvider {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateStream[T](stream: DataStream[T],
                                sql: String,
@@ -81,6 +83,7 @@ trait JdbcFlinkProvider {
    * @param fun
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateStream2[T](stream: DataStream[T],
                                 sql: String,
@@ -108,6 +111,7 @@ trait JdbcFlinkProvider {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateTable(table: Table,
                            sql: String,
@@ -133,6 +137,7 @@ trait JdbcFlinkProvider {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateTable2(table: Table,
                             sql: String,

@@ -21,6 +21,7 @@ import com.zto.fire._
 import com.zto.fire.common.conf.{FireFrameworkConf, FireHiveConf}
 import com.zto.fire.common.enu.JobType
 import com.zto.fire.common.util.{FireUtils, PropUtils}
+import com.zto.fire.core.plugin.ApiLineageManager
 import com.zto.fire.flink.conf.FireFlinkConf
 import com.zto.fire.flink.util.{FlinkSingletonFactory, FlinkUtils}
 import org.apache.commons.lang3.StringUtils
@@ -94,6 +95,7 @@ trait AbstractFlinkStreaming extends BaseFlink {
    */
   override def init(conf: Any = null, args: Array[String] = null): Unit = {
     super.init(conf, args)
+    ApiLineageManager.ensureStarted()
     this.processAll
     if (FireFrameworkConf.jobAutoStart) this.fire.start
   }

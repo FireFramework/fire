@@ -17,6 +17,7 @@
 
 package com.zto.fire.flink.ext.stream
 
+import com.zto.fire.common.anno.API
 import com.zto.fire._
 import com.zto.fire.common.anno.Internal
 import com.zto.fire.common.bean.MQRecord
@@ -169,6 +170,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate(sql: String,
                       fields: Seq[String],
@@ -222,6 +224,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    * @param fun
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate2(sql: String,
                        batch: Int = 100,
@@ -237,6 +240,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
   /**
    * jdbc批量sink操作（多线程并发写入），根据用户指定的DataStream中字段的顺序，依次填充到sql中的占位符所对应的位置
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateAsync(sql: String,
                            fields: Seq[String],
@@ -280,6 +284,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
   /**
    * jdbc批量sink操作（多线程并发写入）
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateAsync2(sql: String,
                             batch: Int = 100,
@@ -304,6 +309,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @API
   def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
                                                    batch: Int = 100,
                                                    flushInterval: Long = 3000,
@@ -329,6 +335,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    * @param fun
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
+  @API
   def hbasePutDS2[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
                                                     batch: Int = 100,
                                                     flushInterval: Long = 3000,
@@ -345,6 +352,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
   /**
    * hbase批量sink操作（多线程并发写入），DataStream[T]中的T必须是HBaseBaseBean的子类
    */
+  @API
   def hbasePutDSAsync[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
                                                         batch: Int = 100,
                                                         flushInterval: Long = 3000,
@@ -358,6 +366,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
   /**
    * hbase批量sink操作（多线程并发写入），DataStream[T]中的T必须是HBaseBaseBean的子类
    */
+  @API
   def hbasePutDSAsync2[E <: HBaseBaseBean[E] : ClassTag](tableName: String,
                                                          batch: Int = 100,
                                                          flushInterval: Long = 3000,
@@ -625,6 +634,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    * @param keyNum
    * 数据源配置索引
    */
+  @API
   def sinkJdbc(sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, keyNum: Int = 1): DataStreamSink[T] = {
     val (jdbcConf: JdbcConf, connectionTimeout: Int, columnList: Seq[String]) = this.preparedJdbcSinkParam(sql, fields, autoConvert, keyNum)
 
@@ -671,6 +681,7 @@ class DataStreamExt[T](stream: DataStream[T]) extends DataStreamHelperImpl[T](st
    * @param keyNum
    * 数据源配置索引
    */
+  @API
   def sinkJdbcExactlyOnce(sql: String, fields: Seq[String] = null, autoConvert: Boolean = true,
                           dbType: Datasource = Datasource.MYSQL,
                           transactionPerConnection: Boolean = true, maxCommitAttempts: Int = 3,

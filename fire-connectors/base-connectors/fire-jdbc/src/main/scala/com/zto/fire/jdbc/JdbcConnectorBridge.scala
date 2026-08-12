@@ -17,8 +17,8 @@
 
 package com.zto.fire.jdbc
 
+import com.zto.fire.common.anno.API
 import com.zto.fire.common.conf.KeyNum
-import com.zto.fire.common.lineage.LineageManager
 
 import java.sql.{Connection, ResultSet}
 import scala.reflect.ClassTag
@@ -51,6 +51,7 @@ private[fire] trait JdbcConnectorBridge {
    * @return
    * 影响的记录数
    */
+  @API
   def jdbcUpdate(sql: String, params: Seq[Any] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Long = {
     JdbcConnector.update(sql, params, connection, commit, closeConnection, keyNum)
   }
@@ -74,6 +75,7 @@ private[fire] trait JdbcConnectorBridge {
    * @return
    * 影响的记录数
    */
+  @API
   @deprecated("use jdbcUpdateBatch", "fire 2.3.3")
   def jdbcBatchUpdate(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Long = {
     JdbcConnector.updateBatch(sql, paramsList, connection, commit, closeConnection, keyNum)
@@ -98,8 +100,8 @@ private[fire] trait JdbcConnectorBridge {
    * @return
    * 影响的记录数
    */
+  @API
   def jdbcUpdateBatch(sql: String, paramsList: Seq[Seq[Any]] = null, connection: Connection = null, commit: Boolean = true, closeConnection: Boolean = true, keyNum: Int = KeyNum._1): Long = {
-    LineageManager.addApiLineage("jdbcUpdateBatch")
     JdbcConnector.updateBatch(sql, paramsList, connection, commit, closeConnection, keyNum)
   }
 
@@ -117,8 +119,8 @@ private[fire] trait JdbcConnectorBridge {
    * @return
    * 影响的记录数
    */
+  @API
   def jdbcUpdateBatchAsync(sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 1, keyNum: Int = KeyNum._1): Long = {
-    LineageManager.addApiLineage("jdbcUpdateBatchAsync")
     JdbcConnector.updateBatchAsync(sql, paramsList, threadNum, keyNum)
   }
 
@@ -137,6 +139,7 @@ private[fire] trait JdbcConnectorBridge {
    * @return
    * 查询结果集
    */
+  @API
   def jdbcQueryList[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, keyNum: Int = KeyNum._1): List[T] = {
     JdbcConnector.queryList[T](sql, params, keyNum)
   }
@@ -144,6 +147,7 @@ private[fire] trait JdbcConnectorBridge {
   /**
    * 多线程并发查询，并将结果合并返回
    */
+  @API
   def jdbcQueryListAsync[T <: Object : ClassTag](sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5, keyNum: Int = KeyNum._1): List[T] = {
     JdbcConnector.queryListAsync[T](sql, paramsList, threadNum, keyNum)
   }
@@ -151,6 +155,7 @@ private[fire] trait JdbcConnectorBridge {
   /**
    * 多线程并发查询
    */
+  @API
   def jdbcQueryAsync[T](sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5, keyNum: Int = KeyNum._1)(callback: ResultSet => T): List[T] = {
     JdbcConnector.queryAsync[T](sql, paramsList, threadNum, keyNum)(callback)
   }
@@ -168,6 +173,7 @@ private[fire] trait JdbcConnectorBridge {
    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    */
+  @API
   def jdbcQuery[T](sql: String, params: Seq[Any] = null, callback: ResultSet => T, keyNum: Int = KeyNum._1): T = {
     JdbcConnector.query(sql, params, callback, keyNum)
   }

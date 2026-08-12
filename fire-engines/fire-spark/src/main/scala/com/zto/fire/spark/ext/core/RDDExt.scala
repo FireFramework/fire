@@ -17,6 +17,7 @@
 
 package com.zto.fire.spark.ext.core
 
+import com.zto.fire.common.anno.API
 import com.zto.fire._
 import com.zto.fire.common.bean.MQRecord
 import com.zto.fire.common.conf.KeyNum
@@ -101,6 +102,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * @param tableName
    * HBase表名
    */
+  @API
   def hbaseBulkDeleteRDD[T <: String : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]], keyNum)
   }
@@ -111,6 +113,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * @param tableName
    * rowKey集合
    */
+  @API
   def hbaseDeleteRDD(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbaseDeleteRDD(tableName, rdd.asInstanceOf[RDD[String]])
   }
@@ -125,6 +128,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * @return
    * 结果集
    */
+  @API
   def hbaseBulkGetRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): RDD[E] = {
     HBaseBulkConnector.bulkGetRDD[E](tableName, rdd.asInstanceOf[RDD[String]], keyNum)
   }
@@ -141,6 +145,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * @return
    * 自定义JavaBean的对象结果集
    */
+  @API
   def hbaseBulkGetDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): DataFrame = {
     HBaseBulkConnector.bulkGetDF[E](tableName, rdd.asInstanceOf[RDD[String]], keyNum)
   }
@@ -157,6 +162,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * @return
    * 自定义JavaBean的对象结果集
    */
+  @API
   def hbaseBulkGetDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Dataset[E] = {
     HBaseBulkConnector.bulkGetDS[E](tableName, rdd.asInstanceOf[RDD[String]], keyNum)
   }
@@ -168,6 +174,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * HBase表名
    * 数据集合，继承自HBaseBaseBean
    */
+  @API
   def hbaseBulkPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkPutRDD[T](tableName, rdd.asInstanceOf[RDD[T]], keyNum)
   }
@@ -175,6 +182,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
   /**
    * BulkLoad：将 Bean RDD 转为 HFile 并导入 HBase
    */
+  @API
   def hbaseBulkLoadRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkLoadRDD[T](tableName, rdd.asInstanceOf[RDD[T]], stagingDir, keyNum)
   }
@@ -185,6 +193,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * @param tableName
    * HBase表名
    */
+  @API
   def hbaseHadoopPutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.hadoopPut[T](tableName, rdd.asInstanceOf[RDD[T]], keyNum)
   }
@@ -200,6 +209,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * 目标类型
    * @return
    */
+  @API
   def hbaseGetRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): RDD[T] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseGetRDD[T](tableName, rdd.asInstanceOf[RDD[String]])
   }
@@ -215,6 +225,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * 目标类型
    * @return
    */
+  @API
   def hbaseGetDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Dataset[T] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseGetDS[T](tableName, rdd.asInstanceOf[RDD[String]])
   }
@@ -230,6 +241,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * 目标类型
    * @return
    */
+  @API
   def hbaseGetDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): DataFrame = {
     HBaseSparkBridge(keyNum = keyNum).hbaseGetDF[T](tableName, rdd.asInstanceOf[RDD[String]])
   }
@@ -240,6 +252,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * @param tableName
    * HBase表名
    */
+  @API
   def hbasePutRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutRDD[T](tableName, rdd.asInstanceOf[RDD[T]])
   }
@@ -247,6 +260,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
   /**
    * 多线程并发 Put RDD 数据到 HBase
    */
+  @API
   def hbasePutRDDAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutRDDAsync[T](tableName, threadNum, rdd.asInstanceOf[RDD[T]])
   }
@@ -358,6 +372,7 @@ class RDDExt[T: ClassTag](rdd: RDD[T]) extends Logging {
    * @param fun
    * 对每个分组数据的处理逻辑
    */
+  @API
   def foreachPartitionAsync(fun: Seq[T] => Unit)(implicit threadNum: Int = 5, useSharedThreadPool: Boolean = true): Unit = {
     require(threadNum > 0, s"线程数必须大于0，当前值：$threadNum")
     this.rdd.foreachPartition(it => {

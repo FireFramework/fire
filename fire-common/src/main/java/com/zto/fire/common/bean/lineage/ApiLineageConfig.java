@@ -21,14 +21,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 用于api血缘变更日志反序列化
+ * 用于 api-lineage.yaml 反序列化
  *
  * @author ChengLong
  * @since 3.0.2
  */
 public class ApiLineageConfig {
 
+    /** 声明了 @API 的扩展类，供 ByteBuddy 发现织入目标 */
+    private List<String> holders = new ArrayList<>();
+
     private List<ApiMetaItem> apis = new ArrayList<>();
+
+    public List<String> getHolders() {
+        return holders;
+    }
+
+    public void setHolders(List<String> holders) {
+        this.holders = holders != null ? holders : new ArrayList<>();
+    }
 
     public List<ApiMetaItem> getApis() {
         return apis;

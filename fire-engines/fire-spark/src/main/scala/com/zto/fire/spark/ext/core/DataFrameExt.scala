@@ -17,10 +17,10 @@
 
 package com.zto.fire.spark.ext.core
 
+import com.zto.fire.common.anno.API
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.enu.{Datasource, Operation, ThreadPoolType}
-import com.zto.fire.common.lineage.LineageManager
 import com.zto.fire.common.lineage.parser.connector.HudiConnectorParser
 import com.zto.fire.common.util.{LogUtils, Logging, SQLUtils, ThreadUtils, ValueUtils}
 import com.zto.fire.hbase.bean.HBaseBaseBean
@@ -104,6 +104,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    * @return
    */
+  @API
   def jdbcTableSave(tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): Unit = {
     dataFrame.write.mode(saveMode).jdbc(FireJdbcConf.jdbcUrl(keyNum), tableName, DBUtils.getJdbcProps(jdbcProps, keyNum))
   }
@@ -122,6 +123,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
+  @API
   @deprecated("use jdbcUpdateBatch", "fire 2.3.3")
   def jdbcBatchUpdate(sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = KeyNum._1): Unit = {
     if (ValueUtils.isEmpty(sql)) {
@@ -218,8 +220,8 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
+  @API
   def jdbcUpdateBatch(sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, keyNum: Int = KeyNum._1): Unit = {
-    LineageManager.addApiLineage("jdbcUpdateBatch")
     requireNonEmpty(sql)("执行jdbcBatchUpdate失败，sql语句不能为空")
     val finalFields = if (noEmpty(fields)) fields else SQLUtils.parsePlaceholder(sql).map(column => if (autoConvert) column.toHump else column)
 
@@ -329,8 +331,8 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
+  @API
   def jdbcUpdateBatchAsync(sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, threadNum: Int = 5, keyNum: Int = KeyNum._1): Unit = {
-    LineageManager.addApiLineage("jdbcUpdateBatchAsync")
     requireNonEmpty(sql)("执行jdbcUpdateBatchAsync失败，sql语句不能为空")
     if (threadNum <= 1 || dataFrame.isStreaming) {
       this.jdbcUpdateBatch(sql, fields, autoConvert, keyNum)
@@ -385,6 +387,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @tparam T
    * 数据类型为HBaseBaseBean的子类
    */
+  @API
   def hbaseBulkPutDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkPutDF[T](tableName, dataFrame, keyNum)
   }
@@ -392,6 +395,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
   /**
    * BulkLoad：将 DataFrame 转为 HFile 并导入 HBase
    */
+  @API
   def hbaseBulkLoadDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkLoadDF[T](tableName, dataFrame, stagingDir, keyNum)
   }
@@ -406,6 +410,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @tparam T
    * JavaBean类型
    */
+  @API
   def hbaseHadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, buildRowKey: (Row) => String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.hadoopPutDFRow[T](tableName, dataFrame, buildRowKey, keyNum)
   }
@@ -416,6 +421,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @param tableName
    * HBase表名
    */
+  @API
   def hbaseHadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.hadoopPutDF[E](tableName, dataFrame, keyNum)
   }
@@ -426,6 +432,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
    * @param tableName
    * HBase表名
    */
+  @API
   def hbasePutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutDF[E](tableName, this.dataFrame)
   }
@@ -433,6 +440,7 @@ class DataFrameExt(dataFrame: DataFrame) extends Logging {
   /**
    * 多线程并发 Put DataFrame 数据到 HBase
    */
+  @API
   def hbasePutDFAsync[E <: HBaseBaseBean[E] : ClassTag](tableName: String, threadNum: Int, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutDFAsync[E](tableName, threadNum, this.dataFrame)
   }

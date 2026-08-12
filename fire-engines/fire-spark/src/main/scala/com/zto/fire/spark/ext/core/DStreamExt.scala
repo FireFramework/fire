@@ -17,6 +17,7 @@
 
 package com.zto.fire.spark.ext.core
 
+import com.zto.fire.common.anno.API
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.enu.Operation
@@ -54,6 +55,7 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
    * @param tableName
    * HBase表名
    */
+  @API
   def hbaseBulkPutStream[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkPutStream[T](tableName, stream.asInstanceOf[DStream[T]], keyNum)
   }
@@ -111,8 +113,8 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
    * @param exitOnFailure
    * 当重试多次仍失败时是否退出
    */
+  @API
   def foreachRDDAtLeastOnce(process: RDD[T] => Unit)(implicit reTry: Int = 3, duration: Long = 3000, autoCommit: Boolean = true, exitOnFailure: Boolean = true): Unit = {
-    LineageManager.addApiLineage("foreachRDDAtLeastOnce")
     this.stream.foreachRDD((rdd, batchTime) => {
       // 用户的业务逻辑处理，对于处理失败的RDD重试指定的次数
       val retValue = Try {

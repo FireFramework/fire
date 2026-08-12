@@ -25,6 +25,7 @@ import com.zto.fire.common.bean.lineage.ApiLineageConfig
 import com.zto.fire.common.util.Logging
 import org.apache.commons.lang3.StringUtils
 
+import java.util.{List => JList}
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
@@ -60,25 +61,40 @@ case class ApiMeta(name: String,
  */
 object ApiMetaRegistry extends Logging {
   val JDBC = "JDBC"
+  val HBASE = "HBase"
   val STREAMING = "Streaming"
   val UNKNOWN = "UNKNOWN"
 
   // api血缘变更日志记录文件
   private val RESOURCE_NAME = "api-lineage.yaml"
 
+  private case class LoadedYaml(metas: Map[String, ApiMeta], holders: Seq[String])
+
   def unknown(name: String): ApiMeta = ApiMeta(name, UNKNOWN, "", Set.empty)
 
-  private lazy val metas: Map[String, ApiMeta] = this.loadFromYaml()
+  private lazy val loaded: LoadedYaml = this.loadFromYaml()
+
+  private def metas: Map[String, ApiMeta] = loaded.metas
+
+  /**
+   * 声明了 @API 的扩展类列表（来自 yaml holders）
+   */
+  def holders: Seq[String] = loaded.holders
+
+  /**
+   * Java 侧读取 holders
+   */
+  def holdersJava: JList[String] = loaded.holders.asJava
 
   /**
    * 从 classpath 加载 api-lineage.yaml
    */
-  private def loadFromYaml(): Map[String, ApiMeta] = {
+  private def loadFromYaml(): LoadedYaml = {
     val classLoader = Option(Thread.currentThread().getContextClassLoader).getOrElse(getClass.getClassLoader)
     val stream = classLoader.getResourceAsStream(RESOURCE_NAME)
     if (stream == null) {
       logError(s"未找到 classpath 资源 $RESOURCE_NAME，API 元数据注册表为空（请确认 fire-core 已打入运行包）")
-      return Map.empty
+      return LoadedYaml(Map.empty, Nil)
     }
 
     try {
@@ -89,9 +105,21 @@ object ApiMetaRegistry extends Logging {
 
       // 加载yaml配置文件并映射成ApiLineageConfig类型，便于后续使用
       val config = mapper.readValue(stream, classOf[ApiLineageConfig])
-      if (config == null || config.getApis == null || config.getApis.isEmpty) {
+      if (config == null) {
+        logWarning(s"$RESOURCE_NAME 解析结果为空")
+        return LoadedYaml(Map.empty, Nil)
+      }
+
+      val holders = parseHolders(config)
+      if (holders.isEmpty) {
+        logWarning(s"$RESOURCE_NAME 未配置 holders，API 血缘织入将无法发现目标类")
+      } else {
+        logInfo(s"已从 $RESOURCE_NAME 加载 holders ${holders.size} 条")
+      }
+
+      if (config.getApis == null || config.getApis.isEmpty) {
         logWarning(s"$RESOURCE_NAME 未配置任何 API 元数据")
-        return Map.empty
+        return LoadedYaml(Map.empty, holders)
       }
 
       // 将加载到的配置文件映射成map结构
@@ -109,13 +137,26 @@ object ApiMetaRegistry extends Logging {
       })
       logInfo(s"已从 $RESOURCE_NAME 加载 API 元数据 ${map.size} 条")
 
-      map.toMap
+      LoadedYaml(map.toMap, holders)
     } catch {
       case e: Throwable =>
         logError(s"解析 $RESOURCE_NAME 失败，API 元数据注册表为空", e)
-        Map.empty
+        LoadedYaml(Map.empty, Nil)
     } finally {
       try stream.close() catch { case _: Throwable => }
+    }
+  }
+
+  private def parseHolders(config: ApiLineageConfig): Seq[String] = {
+    if (config.getHolders == null || config.getHolders.isEmpty) {
+      Nil
+    } else {
+      config.getHolders.asScala
+        .filter(_ != null)
+        .map(_.trim)
+        .filter(StringUtils.isNotBlank)
+        .toList
+        .distinct
     }
   }
 

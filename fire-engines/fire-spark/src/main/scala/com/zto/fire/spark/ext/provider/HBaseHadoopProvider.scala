@@ -18,6 +18,7 @@
 package com.zto.fire.spark.ext.provider
 
 import com.zto.fire._
+import com.zto.fire.common.anno.API
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.HBaseSparkBridge
@@ -43,6 +44,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * @param tableName
    * HBase表名
    */
+  @API
   def hbaseHadoopPutRDD[E <: HBaseBaseBean[E] : ClassTag](tableName: String, rdd: RDD[E], keyNum: Int = KeyNum._1): Unit = {
     rdd.hbaseHadoopPutRDD[E](tableName, keyNum)
   }
@@ -53,6 +55,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * @param tableName
    * HBase表名
    */
+  @API
   def hbaseHadoopPutDF[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataFrame: DataFrame, keyNum: Int = KeyNum._1): Unit = {
     dataFrame.hbaseHadoopPutDF[E](tableName, keyNum)
   }
@@ -65,6 +68,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * @param dataset
    * JavaBean类型，待插入到hbase的数据集
    */
+  @API
   def hbaseHadoopPutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, dataset: Dataset[E], keyNum: Int = KeyNum._1): Unit = {
     dataset.hbaseHadoopPutDS[E](tableName, keyNum)
   }
@@ -77,6 +81,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * @tparam T
    * JavaBean类型
    */
+  @API
   def hbaseHadoopPutDFRow[T <: HBaseBaseBean[T] : ClassTag](tableName: String, dataFrame: DataFrame, buildRowKey: (Row) => String, keyNum: Int = KeyNum._1): Unit = {
     dataFrame.hbaseHadoopPutDFRow[T](tableName, buildRowKey, keyNum)
   }
@@ -91,6 +96,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * 目标类型
    * @return
    */
+  @API
   def hbaseHadoopScanRS(tableName: String, scan: Scan, keyNum: Int = KeyNum._1): RDD[(ImmutableBytesWritable, Result)] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseHadoopScanRS(tableName, scan)
   }
@@ -107,6 +113,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * 目标类型
    * @return
    */
+  @API
   def hbaseHadoopScanRS2(tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): RDD[(ImmutableBytesWritable, Result)] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseHadoopScanRS2(tableName, startRow, stopRow)
   }
@@ -121,6 +128,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * 目标类型
    * @return
    */
+  @API
   def hbaseHadoopScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int = KeyNum._1): RDD[T] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseHadoopScanRDD[T](tableName, scan)
   }
@@ -137,6 +145,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * 目标类型
    * @return
    */
+  @API
   def hbaseHadoopScanRDD2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): RDD[T] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseHadoopScanRDD2[T](tableName, startRow, stopRow)
   }
@@ -151,6 +160,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * 目标类型
    * @return
    */
+  @API
   def hbaseHadoopScanDF[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int = KeyNum._1): DataFrame = {
     HBaseSparkBridge(keyNum = keyNum).hbaseHadoopScanDF[T](tableName, scan)
   }
@@ -167,6 +177,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * 目标类型
    * @return
    */
+  @API
   def hbaseHadoopScanDF2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): DataFrame = {
     HBaseSparkBridge(keyNum = keyNum).hbaseHadoopScanDF2[T](tableName, startRow, stopRow)
   }
@@ -181,6 +192,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * 目标类型
    * @return
    */
+  @API
   def hbaseHadoopScanDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int = KeyNum._1): Dataset[T] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseHadoopScanDS[T](tableName, scan)
   }
@@ -197,6 +209,7 @@ trait HBaseHadoopProvider extends SparkProvider {
    * 目标类型
    * @return
    */
+  @API
   def hbaseHadoopScanDS2[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): Dataset[T] = {
     HBaseSparkBridge(keyNum = keyNum).hbaseHadoopScanDS2[T](tableName, startRow, stopRow)
   }

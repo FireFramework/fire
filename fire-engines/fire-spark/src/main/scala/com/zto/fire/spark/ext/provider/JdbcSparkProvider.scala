@@ -17,6 +17,7 @@
 
 package com.zto.fire.spark.ext.provider
 
+import com.zto.fire.common.anno.API
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.jdbc.JdbcConnector
@@ -51,6 +52,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    * @return 查询结果集
    */
+  @API
   def jdbcQueryRDD[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, keyNum: Int = KeyNum._1): RDD[Row] = {
     this.jdbcQueryDF(sql, params, keyNum).rdd
   }
@@ -67,6 +69,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    * @return 查询结果集
    */
+  @API
   def jdbcQueryDF[T <: Object : ClassTag](sql: String, params: Seq[Any] = null, keyNum: Int = KeyNum._1): DataFrame = {
     JdbcConnector.executeQuery(sql, params, keyNum = keyNum, callback = rs => {
       SparkUtils.resultSet2DataFrame(rs, keyNum)
@@ -85,6 +88,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * 配置文件中数据源配置的数字后缀，用于应对多数据源的情况，如果仅一个数据源，可不填
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    */
+  @API
   def jdbcTableSave(dataFrame: DataFrame, tableName: String, saveMode: SaveMode = SaveMode.Append, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): Unit = {
     dataFrame.jdbcTableSave(tableName, saveMode, jdbcProps, keyNum)
   }
@@ -103,6 +107,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * @return
    * DataFrame
    */
+  @API
   def jdbcTableLoadAll(tableName: String, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): DataFrame = {
     this.spark.sqlContext.jdbcTableLoadAll(tableName, jdbcProps, keyNum)
   }
@@ -122,6 +127,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * @return
    * DataFrame
    */
+  @API
   def jdbcSqlLoad(querySql: String, jdbcProps: Properties = null, numPartitions: Int = 10, keyNum: Int = KeyNum._1): DataFrame = {
     this.spark.sqlContext.jdbcSqlLoad(querySql, jdbcProps,numPartitions, keyNum)
   }
@@ -140,6 +146,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * @return
    * 查询结果集
    */
+  @API
   def jdbcTableLoad(tableName: String, predicates: Array[String], jdbcProps: Properties = null, keyNum: Int = KeyNum._1): DataFrame = {
     this.spark.sqlContext.jdbcTableLoad(tableName, predicates, jdbcProps, keyNum)
   }
@@ -162,6 +169,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * 比如需要操作另一个数据库，那么配置文件中key需携带相应的数字后缀：spark.db.jdbc.url2，那么此处方法调用传参为3，以此类推
    * @return
    */
+  @API
   def jdbcTableLoadBound(tableName: String, columnName: String, lowerBound: Long, upperBound: Long, numPartitions: Int = 10, jdbcProps: Properties = null, keyNum: Int = KeyNum._1): DataFrame = {
     this.spark.sqlContext.jdbcTableLoadBound(tableName, columnName, lowerBound, upperBound, keyNum, jdbcProps, keyNum)
   }
@@ -182,6 +190,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
+  @API
   @deprecated("use jdbcUpdateBatchDF", "fire 2.3.3")
   def jdbcBatchUpdateDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, batch: Int = FireJdbcConf.batchSize(), keyNum: Int = KeyNum._1): Unit = {
     require(dataFrame != null && StringUtils.isNotBlank(sql), "执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
@@ -204,6 +213,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
+  @API
   def jdbcUpdateBatchDF(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, keyNum: Int = KeyNum._1): Unit = {
     require(dataFrame != null && StringUtils.isNotBlank(sql), "执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
     dataFrame.jdbcUpdateBatch(sql, fields, autoConvert, keyNum)
@@ -227,6 +237,7 @@ trait JdbcSparkProvider extends SparkProvider {
    * @param keyNum
    * 对应配置文件中指定的数据源编号
    */
+  @API
   def jdbcUpdateBatchDFAsync(dataFrame: DataFrame, sql: String, fields: Seq[String] = null, autoConvert: Boolean = true, threadNum: Int = 5, keyNum: Int = KeyNum._1): Unit = {
     require(dataFrame != null && StringUtils.isNotBlank(sql), "执行jdbcBatchUpdateDF失败，dataFrame或sql为空")
     dataFrame.jdbcUpdateBatchAsync(sql, fields, autoConvert, threadNum, keyNum)
@@ -235,6 +246,7 @@ trait JdbcSparkProvider extends SparkProvider {
   /**
    * 多线程并发查询，以 DataFrame 方式返回（多组参数查询结果 union）
    */
+  @API
   def jdbcQueryDFAsync(sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5, keyNum: Int = KeyNum._1): DataFrame = {
     val finalParamsList = if (paramsList == null || paramsList.isEmpty) Seq(Seq.empty[Any]) else paramsList
     val dfs = JdbcConnector.queryAsync(sql, finalParamsList, threadNum, keyNum) { rs =>
@@ -246,6 +258,7 @@ trait JdbcSparkProvider extends SparkProvider {
   /**
    * 多线程并发查询，以 RDD 方式返回
    */
+  @API
   def jdbcQueryRDDAsync(sql: String, paramsList: Seq[Seq[Any]] = null, threadNum: Int = 5, keyNum: Int = KeyNum._1): RDD[Row] = {
     this.jdbcQueryDFAsync(sql, paramsList, threadNum, keyNum).rdd
   }

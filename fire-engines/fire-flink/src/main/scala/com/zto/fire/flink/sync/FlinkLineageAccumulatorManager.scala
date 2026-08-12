@@ -109,8 +109,10 @@ object FlinkLineageAccumulatorManager extends LineageAccumulatorManager {
 
   /**
    * 获取收集到的血缘消息：apis 与 datasource 同级
+   * 对齐 Spark：合并 JM 本地 LineageManager，避免 yarn-application 下 process 侧血缘在 show 中为空
    */
   override def getValue: Lineage = {
+    LineageManager.mergeLineageMap(this.lineageMap, LineageManager.getDatasourceLineage)
     val apis = if (FireFrameworkConf.lineageEnable && FireFrameworkConf.lineageApiEnable) {
       LineageManager.mergeApiLineage(this.apiMap, LineageManager.getApiLineage)
       new util.ArrayList[ApiLineage](this.apiMap.values())

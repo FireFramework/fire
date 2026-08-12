@@ -17,6 +17,7 @@
 
 package com.zto.fire.flink.ext.provider
 
+import com.zto.fire.common.anno.API
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.hbase.HBaseConnector
@@ -52,6 +53,7 @@ trait HBaseConnectorProvider {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @API
   def hbasePutDS[T <: HBaseBaseBean[T]: ClassTag](stream: DataStream[T],
                                         tableName: String,
                                         batch: Int = 100,
@@ -74,6 +76,7 @@ trait HBaseConnectorProvider {
    * @param fun
    * 将dstream中的数据映射为该sink组件所能处理的数据
    */
+  @API
   def hbasePutDS2[T <: HBaseBaseBean[T] : ClassTag](stream: DataStream[T],
                                                     tableName: String,
                                                     batch: Int = 100,
@@ -94,6 +97,7 @@ trait HBaseConnectorProvider {
    * @param keyNum
    *                     配置文件中的key后缀
    */
+  @API
   def hbasePutTable[T <: HBaseBaseBean[T]: ClassTag](table: Table,
                                            tableName: String,
                                            batch: Int = 100,
@@ -114,6 +118,7 @@ trait HBaseConnectorProvider {
    * @param keyNum
    *                     配置文件中的key后缀
    */
+  @API
   def hbasePutTable2[T <: HBaseBaseBean[T]: ClassTag](table: Table,
                                            tableName: String,
                                            batch: Int = 100,
@@ -125,6 +130,7 @@ trait HBaseConnectorProvider {
   /**
    * stream hbase sink（多线程并发写入）
    */
+  @API
   def hbasePutDSAsync[T <: HBaseBaseBean[T]: ClassTag](stream: DataStream[T],
                                                        tableName: String,
                                                        batch: Int = 100,
@@ -137,6 +143,7 @@ trait HBaseConnectorProvider {
   /**
    * stream hbase sink（多线程并发写入）
    */
+  @API
   def hbasePutDSAsync2[T <: HBaseBaseBean[T] : ClassTag](stream: DataStream[T],
                                                          tableName: String,
                                                          batch: Int = 100,
@@ -149,6 +156,7 @@ trait HBaseConnectorProvider {
   /**
    * table hbase sink（多线程并发写入）
    */
+  @API
   def hbasePutTableAsync[T <: HBaseBaseBean[T]: ClassTag](table: Table,
                                                           tableName: String,
                                                           batch: Int = 100,
@@ -161,6 +169,7 @@ trait HBaseConnectorProvider {
   /**
    * table hbase sink（多线程并发写入）
    */
+  @API
   def hbasePutTableAsync2[T <: HBaseBaseBean[T]: ClassTag](table: Table,
                                                            tableName: String,
                                                            batch: Int = 100,
@@ -173,6 +182,7 @@ trait HBaseConnectorProvider {
   /**
    * 多线程并发 Get
    */
+  @API
   def hbaseGetListAsync[T <: HBaseBaseBean[T]: ClassTag](tableName: String, threadNum: Int, gets: Seq[Get],
                                                          keyNum: Int = KeyNum._1): Seq[T] = {
     HBaseConnector.getAsync[T](tableName, threadNum, ListBuffer(gets: _*), keyNum)
@@ -181,6 +191,7 @@ trait HBaseConnectorProvider {
   /**
    * 多线程并发 Get（rowKey）
    */
+  @API
   def hbaseGetListAsync2[T <: HBaseBaseBean[T]: ClassTag](tableName: String, threadNum: Int, rowKeys: Seq[String],
                                                           keyNum: Int = KeyNum._1): Seq[T] = {
     HBaseConnector.getAsync[T](tableName, threadNum, rowKeys, keyNum)
@@ -189,6 +200,7 @@ trait HBaseConnectorProvider {
   /**
    * 多线程并发 Scan
    */
+  @API
   def hbaseScanListAsync[T <: HBaseBaseBean[T]: ClassTag](tableName: String, threadNum: Int, scan: org.apache.hadoop.hbase.client.Scan,
                                                           keyNum: Int = KeyNum._1): Seq[T] = {
     HBaseConnector.scanAsync[T](tableName, threadNum, scan, keyNum)
@@ -197,6 +209,7 @@ trait HBaseConnectorProvider {
   /**
    * 多线程并发 Scan（rowKey 区间）
    */
+  @API
   def hbaseScanListAsync2[T <: HBaseBaseBean[T]: ClassTag](tableName: String, threadNum: Int, startRow: String, stopRow: String,
                                                            keyNum: Int = KeyNum._1): Seq[T] = {
     HBaseConnector.scanAsync[T](tableName, threadNum, startRow, stopRow, keyNum)
@@ -205,6 +218,7 @@ trait HBaseConnectorProvider {
   /**
    * 多线程并发 Put 集合
    */
+  @API
   def hbasePutListAsync[T <: HBaseBaseBean[T]: ClassTag](tableName: String, threadNum: Int, seq: Seq[T], keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector.insertAsync[T](tableName, threadNum, seq, keyNum)
   }

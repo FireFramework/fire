@@ -17,6 +17,7 @@
 
 package com.zto.fire.spark.ext.core
 
+import com.zto.fire.common.anno.API
 import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.util.Logging
@@ -79,6 +80,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    * @tparam T
    * 数据类型为HBaseBaseBean的子类
    */
+  @API
   def hbaseBulkPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkPutDS[T](tableName, dataset.asInstanceOf[Dataset[T]], keyNum)
   }
@@ -86,6 +88,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
   /**
    * BulkLoad：将 Dataset 转为 HFile 并导入 HBase
    */
+  @API
   def hbaseBulkLoadDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, stagingDir: String = "", keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkLoadDS[T](tableName, dataset.asInstanceOf[Dataset[T]], stagingDir, keyNum)
   }
@@ -97,6 +100,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    * @param tableName
    * HBase表名
    */
+  @API
   def hbaseBulkDeleteDS(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.bulkDeleteDS(tableName, dataset.asInstanceOf[Dataset[String]], keyNum)
   }
@@ -107,6 +111,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    * @param tableName
    * rowKey集合
    */
+  @API
   def hbaseDeleteDS(tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbaseDeleteDS(tableName, dataset.asInstanceOf[Dataset[String]])
   }
@@ -117,6 +122,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    * @param tableName
    * HBase表名
    */
+  @API
   def hbaseHadoopPutDS[T <: HBaseBaseBean[T] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseBulkConnector.hadoopPutDS[T](tableName, dataset.asInstanceOf[Dataset[T]], keyNum)
   }
@@ -127,6 +133,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
    * @param tableName
    * HBase表名
    */
+  @API
   def hbasePutDS[E <: HBaseBaseBean[E] : ClassTag](tableName: String, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutDS[E](tableName, dataset.asInstanceOf[Dataset[E]])
   }
@@ -134,6 +141,7 @@ class DatasetExt[T: ClassTag](dataset: Dataset[T]) extends Logging {
   /**
    * 多线程并发 Put Dataset 数据到 HBase
    */
+  @API
   def hbasePutDSAsync[E <: HBaseBaseBean[E] : ClassTag](tableName: String, threadNum: Int, keyNum: Int = KeyNum._1): Unit = {
     HBaseSparkBridge(keyNum = keyNum).hbasePutDSAsync[E](tableName, threadNum, dataset.asInstanceOf[Dataset[E]])
   }

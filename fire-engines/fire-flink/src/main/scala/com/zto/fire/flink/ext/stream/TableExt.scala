@@ -17,6 +17,7 @@
 
 package com.zto.fire.flink.ext.stream
 
+import com.zto.fire.common.anno.API
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.flink.bean.FlinkTableSchema
 import com.zto.fire.flink.sink.{HBaseAsyncSink, HBaseSink}
@@ -125,13 +126,13 @@ class TableExt(table: Table) {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate(sql: String,
                       batch: Int = 100,
                       flushInterval: Long = 1000,
                       isMerge: Boolean = true,
                       keyNum: Int = KeyNum._1): DataStreamSink[Row] = {
-
     this.jdbcBatchUpdate2(sql, batch, flushInterval, isMerge, keyNum) {
       row => {
         val param = ListBuffer[Any]()
@@ -155,6 +156,7 @@ class TableExt(table: Table) {
    * @param keyNum
    * 配置文件中的key后缀
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdate2(sql: String,
                        batch: Int = 100,
@@ -171,6 +173,7 @@ class TableExt(table: Table) {
   /**
    * table的jdbc批量sink操作（多线程并发写入），根据用户指定的Row中字段的顺序，依次填充到sql中的占位符所对应的位置
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateAsync(sql: String,
                            batch: Int = 100,
@@ -192,6 +195,7 @@ class TableExt(table: Table) {
   /**
    * table的jdbc批量sink操作（多线程并发写入），该api需用户定义row的取数规则，并与sql中的占位符对等
    */
+  @API
   @deprecated("use stream.sinkJdbc", "fire 2.3.3")
   def jdbcBatchUpdateAsync2(sql: String,
                             batch: Int = 100,
@@ -219,6 +223,7 @@ class TableExt(table: Table) {
    * @param keyNum
    *                     配置文件中的key后缀
    */
+  @API
   def hbasePutTable[T <: HBaseBaseBean[T]: ClassTag](tableName: String,
                                            batch: Int = 100,
                                            flushInterval: Long = 3000,
@@ -247,6 +252,7 @@ class TableExt(table: Table) {
    * @param keyNum
    *                     配置文件中的key后缀
    */
+  @API
   def hbasePutTable2[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
                      batch: Int = 100,
                      flushInterval: Long = 3000,
@@ -261,6 +267,7 @@ class TableExt(table: Table) {
   /**
    * table的hbase批量sink操作（多线程并发写入）
    */
+  @API
   def hbasePutTableAsync[T <: HBaseBaseBean[T]: ClassTag](tableName: String,
                                                           batch: Int = 100,
                                                           flushInterval: Long = 3000,
@@ -280,6 +287,7 @@ class TableExt(table: Table) {
   /**
    * table的hbase批量sink操作（多线程并发写入）
    */
+  @API
   def hbasePutTableAsync2[T <: HBaseBaseBean[T] : ClassTag](tableName: String,
                                                             batch: Int = 100,
                                                             flushInterval: Long = 3000,
