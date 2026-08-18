@@ -208,7 +208,7 @@ trait BaseFire extends Logging {
       logInfo(s"总耗时：${FirePS1Conf.wrap(s"${elapsed(launchTime)} ", FirePS1Conf.RED)} The end...")
       if (FireFrameworkConf.shutdownExit) {
         val exitStatus = if (FireUtils.isStreamingJob) -1 else 0
-        System.exit(exitStatus)
+        FireUtils.exit(exitStatus)
       }
     }
   }
