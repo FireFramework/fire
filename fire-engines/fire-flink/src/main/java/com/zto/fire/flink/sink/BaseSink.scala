@@ -18,7 +18,7 @@
 package com.zto.fire.flink.sink
 
 import com.zto.fire._
-import com.zto.fire.common.util.Logging
+import com.zto.fire.common.util.{FireUtils, Logging}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.runtime.state.{FunctionInitializationContext, FunctionSnapshotContext}
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction
@@ -97,7 +97,7 @@ abstract class BaseSink[IN, OUT](batch: Int, flushInterval: Long) extends RichSi
     } finally {
       super.close()
       this.checkFlushException()
-      System.exit(-1)
+      // FireUtils.exit(-1)
     }
   }
 

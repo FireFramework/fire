@@ -177,11 +177,23 @@ private[fire] object FireUtils extends Serializable with Logging {
   def mainClass: String = FireFrameworkConf.driverClassName
 
   /**
-   * 退出jvm
+   * 退出jvm，并打印调用堆栈
+   *
    * @param status
    * 状态码
    */
-  def exit(status: Int): Unit = System.exit(status)
+  def exit(status: Int): Unit = {
+    try {
+      val callStack = new RuntimeException(s"FireUtils.exit($status) call stack")
+      val msg = s"主动执行System.exit($status)，thread=${Thread.currentThread().getName}"
+      logError(msg, callStack)
+      System.err.println(msg)
+      callStack.getStackTrace.foreach(frame => System.err.println(s"\tat $frame"))
+      System.err.flush()
+    } finally {
+      System.exit(status)
+    }
+  }
 
   /**
    * 正常退出jvm

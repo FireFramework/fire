@@ -22,7 +22,7 @@ import com.zto.fire._
 import com.zto.fire.common.conf.KeyNum
 import com.zto.fire.common.enu.Operation
 import com.zto.fire.common.lineage.{DatasourceDesc, LineageManager}
-import com.zto.fire.common.util.{ExceptionBus, Logging}
+import com.zto.fire.common.util.{ExceptionBus, FireUtils, Logging}
 import com.zto.fire.core.util.ErrorToleranceAcc
 import com.zto.fire.hbase.bean.HBaseBaseBean
 import com.zto.fire.spark.connector.HBaseBulkConnector
@@ -163,7 +163,7 @@ class DStreamExt[T: ClassTag](stream: DStream[T]) extends Logging {
       try {
         SparkSingletonFactory.getStreamingContext.stop(SparkUtils.isContextStarted, false)
       } finally {
-        System.exit(-1)
+        FireUtils.exit(-1)
       }
     }
   }

@@ -17,6 +17,7 @@ import com.alibaba.fastjson.JSON;
 import com.esotericsoftware.minlog.Log;
 import com.zto.fire.common.conf.FireRocketMQConf;
 import com.zto.fire.common.conf.FireRocketMQConf$;
+import com.zto.fire.common.util.FireUtils;
 import org.apache.commons.collections.map.LinkedMap;
 import org.apache.commons.lang.Validate;
 import org.apache.flink.api.common.state.ListState;
@@ -398,7 +399,7 @@ public class RocketMQSourceWithTag<OUT> extends RichParallelSourceFunction<OUT>
                         } else {
                             if (!totalQueues.equals(currentTotalbMessageQueue)) {
                                 LOG.error("{} 检测到MessageQueue发生变化，Topic：{} subTaskIndex：{}, \n before:{}\n after:{}", consumerLogInfo, topic, subtaskId, JSON.toJSONString(totalQueues), JSON.toJSONString(currentTotalbMessageQueue));
-                                System.exit(-1);
+                                FireUtils.exit(-1);
                             }
                         }
                     } catch (Exception e) {
