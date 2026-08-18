@@ -1090,7 +1090,7 @@
             <id>fire-plus</id>
             <properties>
                 <build.dest>zto</build.dest>
-                <fire.plus.version>1.0.0-SNAPSHOT</fire.plus.version>
+                <fire.plus.version>1.0.2-SNAPSHOT</fire.plus.version>
             </properties>
             <activation>
                 <activeByDefault>false</activeByDefault>
