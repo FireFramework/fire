@@ -12,6 +12,31 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
+    <profiles>
+        <!-- include fire plus 仅用于中通内部，社区版本不要激活该profile，否则编译报错 -->
+        <profile>
+            <id>fire-plus</id>
+            <properties>
+                <build.dest>zto</build.dest>
+            </properties>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>com.zto.bigdata</groupId>
+                    <artifactId>cluster-env</artifactId>
+                    <version>${cluster-env.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.zto.bigdata</groupId>
+                    <artifactId>fire-spark-plus_${spark.reference}</artifactId>
+                    <version>${fire.plus.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
     <dependencies>
         <!-- 用于解决spark2.3在local模式下netty冲突问题 -->
         <dependency>
