@@ -57,4 +57,9 @@ public @interface HConfig {
      * 优先级低于配置 fire.hbase.bulkload.deleteStagingDir，默认 false（不删除）
      */
     boolean bulkLoadDeleteStagingDir() default false;
+
+    /**
+     * 是否开启按 JavaBean 字段投影查询以降低scan、get的开销
+     */
+    boolean projection() default false;
 }

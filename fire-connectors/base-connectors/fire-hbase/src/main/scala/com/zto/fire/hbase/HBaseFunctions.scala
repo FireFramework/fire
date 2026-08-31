@@ -100,7 +100,6 @@ private[hbase] trait HBaseFunctions {
    * @param tableName 表名
    * @param beans     HBaseBaseBean子类集合
    */
-  @API
   def insert[T <: HBaseBaseBean[T] : ClassTag](tableName: String, beans: Seq[T], keyNum: Int = KeyNum._1): Unit = {
     HBaseConnector(keyNum = keyNum).insert[T](tableName, beans: _*)
   }
@@ -117,29 +116,12 @@ private[hbase] trait HBaseFunctions {
   }
 
   /**
-   * 多线程并发 Put（Bean 映射）
-   */
-  @API
-  def insertAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, beans: Seq[T], keyNum: Int = KeyNum._1): Unit = {
-    HBaseConnector(keyNum = keyNum).insertAsync[T](tableName, threadNum, beans)
-  }
-
-  /**
-   * 多线程并发 Put
-   */
-  @API
-  def insertAsync(tableName: String, threadNum: Int, puts: Seq[Put], keyNum: Int): Unit = {
-    HBaseConnector(keyNum = keyNum).insertAsync(tableName, threadNum, puts: _*)
-  }
-
-  /**
    * 从HBase批量Get数据，并将结果封装到JavaBean中
    *
    * @param tableName 表名
    * @param rowKeys   指定的多个rowKey
    * @return 目标对象实例
    */
-  @API
   def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).get[T](tableName, rowKeys: _*)
   }
@@ -151,26 +133,8 @@ private[hbase] trait HBaseFunctions {
    * @param gets      指定的多个get对象
    * @return 目标对象实例
    */
-  @API
   def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, gets: ListBuffer[Get], keyNum: Int): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).get[T](tableName, gets: _*)
-  }
-
-  /**
-   * 多线程并发 Get
-   */
-  @API
-  def getAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int = 5, rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[T] = {
-    HBaseConnector(keyNum = keyNum).getAsync[T](tableName, threadNum, rowKeys: _*)
-  }
-
-  /**
-   * 多线程并发 Get
-   */
-  @API
-  def getAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, gets: ListBuffer[Get], keyNum: Int): ListBuffer[T] = {
-    implicit val canOverload: Boolean = true
-    HBaseConnector(keyNum = keyNum).getAsync[T](tableName, threadNum, gets: _*)
   }
 
   /**
@@ -178,56 +142,45 @@ private[hbase] trait HBaseFunctions {
    * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
    * 无记录时返回 null
    *
-   * @param tableName 表名
-   * @param rowKey    指定的rowKey
+   * @param tableName   表名
+   * @param qualifiers  列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   * @param rowKey      指定的rowKey
+   * @param keyNum      配置文件中的key后缀
    * @return Map结果
    */
   @API
-  def getMap(tableName: String, rowKey: String, keyNum: Int = KeyNum._1): Map[String, String] = {
-    HBaseConnector(keyNum = keyNum).getMap(tableName, rowKey)
+  def getMap(tableName: String, qualifiers: Seq[String], rowKey: String, keyNum: Int = KeyNum._1): Map[String, String] = {
+    HBaseConnector(keyNum = keyNum).getMap(tableName, qualifiers, rowKey)
   }
 
   /**
    * 从HBase批量Get数据，并将结果封装为Map列表（单版本）
    * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
    *
-   * @param tableName 表名
-   * @param rowKeys   指定的多个rowKey
+   * @param tableName   表名
+   * @param qualifiers  列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   * @param rowKeys     指定的多个rowKey
+   * @param keyNum      配置文件中的key后缀
    * @return Map结果集
    */
   @API
-  def getMapList(tableName: String, rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = keyNum).getMapList(tableName, rowKeys: _*)
+  def getMapList(tableName: String, qualifiers: Seq[String], rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).getMapList(tableName, qualifiers, rowKeys: _*)
   }
 
   /**
    * 从HBase批量Get数据，并将结果封装为Map列表（单版本）
    * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
    *
-   * @param tableName 表名
-   * @param gets      指定的多个get对象
+   * @param tableName   表名
+   * @param qualifiers  列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   * @param gets        指定的多个get对象
+   * @param keyNum      配置文件中的key后缀
    * @return Map结果集
    */
   @API
-  def getMapList(tableName: String, gets: ListBuffer[Get], keyNum: Int): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = keyNum).getMapList(tableName, gets: _*)
-  }
-
-  /**
-   * 多线程并发 GetMapList（rowKey）
-   */
-  @API
-  def getMapListAsync(tableName: String, threadNum: Int = 5, rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = keyNum).getMapListAsync(tableName, threadNum, rowKeys: _*)
-  }
-
-  /**
-   * 多线程并发 GetMapList
-   */
-  @API
-  def getMapListAsync(tableName: String, threadNum: Int, gets: ListBuffer[Get], keyNum: Int): ListBuffer[Map[String, String]] = {
-    implicit val canOverload: Boolean = true
-    HBaseConnector(keyNum = keyNum).getMapListAsync(tableName, threadNum, gets: _*)
+  def getMapList(tableName: String, qualifiers: Seq[String], gets: ListBuffer[Get], keyNum: Int): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).getMapList(tableName, qualifiers, gets: _*)
   }
 
   /**
@@ -250,7 +203,6 @@ private[hbase] trait HBaseFunctions {
    * @return
    * HBase Result
    */
-  @API
   def getResult[T: ClassTag](tableName: String, rowKeyList: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Result] = {
     HBaseConnector(keyNum = keyNum).getResult[T](tableName, rowKeyList: _*)
   }
@@ -290,7 +242,6 @@ private[hbase] trait HBaseFunctions {
    * @param endRow    结束行
    * @return 指定类型的List
    */
-  @API
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).scan[T](tableName, startRow, endRow)
   }
@@ -302,68 +253,39 @@ private[hbase] trait HBaseFunctions {
    * @param scan      HBase scan对象
    * @return 指定类型的List
    */
-  @API
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan, keyNum: Int): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).scan[T](tableName, scan)
   }
 
   /**
-   * 多线程并发 Scan（rowKey 区间）
+   * 表扫描，将查询后的数据转为Map列表（单版本）
+   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
+   *
+   * @param tableName   表名
+   * @param qualifiers  列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   * @param startRow    开始行
+   * @param endRow      结束行
+   * @param keyNum      配置文件中的key后缀
+   * @return Map结果集
    */
   @API
-  def scanAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int = 5, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[T] = {
-    HBaseConnector(keyNum = keyNum).scanAsync[T](tableName, threadNum, startRow, endRow)
-  }
-
-  /**
-   * 多线程并发 Scan
-   */
-  @API
-  def scanAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, scan: Scan, keyNum: Int): ListBuffer[T] = {
-    HBaseConnector(keyNum = keyNum).scanAsync[T](tableName, threadNum, scan)
+  def scanMapList(tableName: String, qualifiers: Seq[String], startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).scanMapList(tableName, qualifiers, startRow, endRow)
   }
 
   /**
    * 表扫描，将查询后的数据转为Map列表（单版本）
    * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
    *
-   * @param tableName 表名
-   * @param startRow  开始行
-   * @param endRow    结束行
+   * @param tableName   表名
+   * @param qualifiers  列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   * @param scan        HBase scan对象
+   * @param keyNum      配置文件中的key后缀
    * @return Map结果集
    */
   @API
-  def scanMapList(tableName: String, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = keyNum).scanMapList(tableName, startRow, endRow)
-  }
-
-  /**
-   * 表扫描，将查询后的数据转为Map列表（单版本）
-   * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
-   *
-   * @param tableName 表名
-   * @param scan      HBase scan对象
-   * @return Map结果集
-   */
-  @API
-  def scanMapList(tableName: String, scan: Scan, keyNum: Int): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = keyNum).scanMapList(tableName, scan)
-  }
-
-  /**
-   * 多线程并发 ScanMapList（rowKey 区间）
-   */
-  @API
-  def scanMapListAsync(tableName: String, threadNum: Int = 5, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = keyNum).scanMapListAsync(tableName, threadNum, startRow, endRow)
-  }
-
-  /**
-   * 多线程并发 ScanMapList
-   */
-  @API
-  def scanMapListAsync(tableName: String, threadNum: Int, scan: Scan, keyNum: Int): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = keyNum).scanMapListAsync(tableName, threadNum, scan)
+  def scanMapList(tableName: String, qualifiers: Seq[String], scan: Scan, keyNum: Int): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).scanMapList(tableName, qualifiers, scan)
   }
 
   /**
@@ -490,7 +412,6 @@ private[hbase] trait HBaseFunctions {
   /**
    * 校验类型合法性，class必须是HBaseBaseBean的子类
    */
-  @Internal
   def checkClass[T: ClassTag](clazz: Class[_] = null): Unit = {
     val finalClazz = if (clazz != null) clazz else getGeneric[T]("HBaseFunctions.checkClass")
     if (finalClazz == null || finalClazz.getSuperclass != classOf[HBaseBaseBean[_]]) throw new IllegalArgumentException("请指定泛型类型，该泛型必须是HBaseBaseBean的子类，如：this.fire.hbasePutTable[JavaBean]")
