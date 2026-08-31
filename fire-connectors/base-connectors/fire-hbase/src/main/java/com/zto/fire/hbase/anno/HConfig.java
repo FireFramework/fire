@@ -45,4 +45,9 @@ public @interface HConfig {
      * 默认获取的版本数
      */
     int versions() default 1;
+
+    /**
+     * 是否开启按 JavaBean 字段投影查询以降低scan、get的开销
+     */
+    boolean projection() default false;
 }

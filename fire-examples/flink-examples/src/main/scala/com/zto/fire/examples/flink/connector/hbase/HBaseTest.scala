@@ -4,7 +4,7 @@ import com.zto.fire._
 import org.apache.flink.api.scala._
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.{HBase, HBase2, HBase3, Kafka}
-import com.zto.fire.examples.bean.Student
+import com.zto.fire.examples.bean.{Student, StudentProjection}
 import com.zto.fire.flink.FlinkStreaming
 import com.zto.fire.flink.anno.Checkpoint
 import com.zto.fire.hbase.HBaseConnector
@@ -111,30 +111,48 @@ object HBaseTest extends FlinkStreaming {
   /**
    * 测试getMap相关api
    */
-  def testGetMap(): Unit = {
-    val rowKeys = Seq("1", "2", "3", "5", "6")
-    val stream2 = this.fire.fromCollection(rowKeys)
-    stream2.map(new RichMapFunction[String, String] {
-      override def map(rowKey: String): JString = {
-        val map: Map[String, String] = HBaseConnector.getMap(tableName, rowKey)
-        Thread.sleep(10000)
-        JSONUtils.getScalaMapper.writeValueAsString(map)
+  def testGetMap(stream: DataStream[Student]): Unit = {
+    val rowKey = "1"
+    val qualifiers: Seq[String] = Seq("name", "age")
+
+    stream.map(new RichMapFunction[Student, String] {
+      override def map(value: Student): JString = {
+        // 部分列投影查询
+        val map: Map[String, String] = HBaseConnector.getMap(tableName, qualifiers, rowKey)
+        val mapJson = JSONUtils.getScalaMapper.writeValueAsString(map)
+        // 打印结果：基于Map查询方式打印：{"info:age":"12","info:name":"admin","rowKey":"1"}
+        println("基于Map查询方式打印：" + mapJson)
+
+        // 通过指定泛型的方式部分列投影查询
+        val stu = HBaseConnector.get[StudentProjection](tableName, Seq(rowKey))
+        if (stu.nonEmpty) {
+          // 打印结果：基于泛型查询方式打印：{"rowKey":"1","className":"StudentProjection","id":1,"name":"admin","age":null,"createTime":null}
+          println("基于泛型查询方式打印：" + stu.head)
+        }
+        mapJson
       }
     }).print
   }
 
 
   override def process: Unit = {
-    val stream = this.fire.createKafkaDirectStream().filter(t => JSONUtils.isLegal(t)).map(json => JSONUtils.parseObject[Student](json)).setParallelism(1)
+    this.testHBase
+
     HBaseConnector.truncateTable(this.tableName)
     HBaseConnector.truncateTable(this.tableName2)
     HBaseConnector.truncateTable(this.tableName3)
     HBaseConnector.truncateTable(this.tableName5)
+
+    val stream = this.fire.createRandomLongStream(1)
+      .flatMap(t => Student.newStudentList())
+      .map(t => JSONUtils.toJSONString(t))
+      .filter(t => JSONUtils.isLegal(t))
+      .map(json => JSONUtils.parseObject[Student](json)).setParallelism(1)
+
     this.testTableHBaseSink(stream)
     this.testStreamHBaseSink(stream)
     this.testStreamHBaseSink2(stream)
     this.testTableHBaseSink2(stream)
-    this.testHBase
-    // this.testGetMap
+    this.testGetMap(stream)
   }
 }

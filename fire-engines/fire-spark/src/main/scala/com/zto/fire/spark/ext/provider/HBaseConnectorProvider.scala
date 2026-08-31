@@ -274,37 +274,47 @@ trait HBaseConnectorProvider extends SparkProvider {
   /**
    * 根据单个rowKey查询，并转为Map（单版本）
    * 无结果时返回空 Map
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseGetMap(tableName: String, rowKey: String, keyNum: Int = KeyNum._1): Map[String, String] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseGetMap(tableName, rowKey)
+  def hbaseGetMap(tableName: String, qualifiers: Seq[String], rowKey: String, keyNum: Int = KeyNum._1): Map[String, String] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetMap(tableName, qualifiers, rowKey)
   }
 
   /**
    * 根据Get集合批量查询，并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseGetMapList(tableName: String, seq: Seq[Get], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseGetMapList(tableName, seq)
+  def hbaseGetMapList(tableName: String, qualifiers: Seq[String], seq: Seq[Get], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetMapList(tableName, qualifiers, seq)
   }
 
   /**
    * 根据rowKey集合批量查询，并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseGetMapList2(tableName: String, seq: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseGetMapList2(tableName, seq)
+  def hbaseGetMapList2(tableName: String, qualifiers: Seq[String], seq: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseGetMapList2(tableName, qualifiers, seq)
   }
 
   /**
    * Scan指定HBase表，并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseScanMapList(tableName: String, scan: Scan, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseScanMapList(tableName, scan)
+  def hbaseScanMapList(tableName: String, qualifiers: Seq[String], scan: Scan, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanMapList(tableName, qualifiers, scan)
   }
 
   /**
    * Scan指定HBase表（rowKey区间），并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseScanMapList2(tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseSparkBridge(keyNum = keyNum).hbaseScanMapList2(tableName, startRow, stopRow)
+  def hbaseScanMapList2(tableName: String, qualifiers: Seq[String], startRow: String, stopRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseSparkBridge(keyNum = keyNum).hbaseScanMapList2(tableName, qualifiers, startRow, stopRow)
   }
 
   /**

@@ -19,7 +19,7 @@ package com.zto.fire.examples.spark.hbase
 
 import com.zto.fire._
 import com.zto.fire.core.anno.connector.{HBase, HBase2, Hive}
-import com.zto.fire.examples.bean.Student
+import com.zto.fire.examples.bean.{Student, StudentProjection}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.SparkCore
 import org.apache.spark.sql.{Encoders, Row}
@@ -97,7 +97,7 @@ object HBaseBulkTest extends SparkCore {
     // 方式一：使用rowKey集合读取hbase中的数据
     val seq = Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString)
     val studentRDD = this.fire.hbaseBulkGetSeq[Student](this.tableName5, seq)
-    studentRDD.foreach(println)
+    studentRDD.collect().foreach(println)
     // 方式二：使用this.fire.hbaseBulkGetRDD
     /*val studentRDD2 = this.fire.hbaseBulkGetSeq[Student](this.tableName2, seq)
     studentRDD2.foreach(println)*/
@@ -111,7 +111,7 @@ object HBaseBulkTest extends SparkCore {
     // 方式一：使用rowKey读取hbase中的数据，rowKeyRdd类型为String
     val rowKeyRdd = this.fire.createRDD(Seq(1.toString, 2.toString, 3.toString, 5.toString, 6.toString), 2)
     val studentRDD = rowKeyRdd.hbaseBulkGetRDD[Student](this.tableName3, keyNum = 2)
-    studentRDD.foreach(println)
+    studentRDD.collect().foreach(println)
     // 方式二：使用this.fire.hbaseBulkGetRDD
     // val studentRDD2 = this.fire.hbaseBulkGetRDD(this.tableName2, rowKeyRdd, classOf[Student])
     // studentRDD2.foreach(println)
@@ -152,7 +152,8 @@ object HBaseBulkTest extends SparkCore {
     println("===========testHbaseBulkScanRDD===========")
     // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为RDD[Student]
     val scanRDD = this.fire.hbaseBulkScanRDD2[Student](this.tableName5, "1", "6")
-    scanRDD.foreach(println)
+    println("scanRDD.count=" + scanRDD.count())
+    scanRDD.collect().foreach(println)
   }
 
   /**
@@ -162,6 +163,7 @@ object HBaseBulkTest extends SparkCore {
     println("===========testHbaseBulkScanDF===========")
     // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为DataFrame
     val scanDF = this.fire.hbaseBulkScanDF2[Student](this.tableName5, "1", "6")
+    println("scanDF.count=" + scanDF.count())
     scanDF.show(100, false)
   }
 
@@ -173,6 +175,23 @@ object HBaseBulkTest extends SparkCore {
     // scan操作，指定rowKey的起止或直接传入自己构建的scan对象实例，返回类型为Dataset[Student]
     val scanDS = this.fire.hbaseBulkScanDS[Student](this.tableName5, HBaseConnector.buildScan("1", "6"))
     scanDS.show(100, false)
+  }
+
+  /**
+   * Bean 投影查询：Student 写入全列，StudentProjection（projection=true）只查部分列
+   */
+  def testHbaseBulkProjection: Unit = {
+    println("===========testHbaseBulkProjection===========")
+    val rowKeys = Seq("1", "2", "3", "5", "6")
+
+    println("------------全列 bulkGet[Student]-------------")
+    this.fire.hbaseBulkGetSeq[Student](this.tableName5, rowKeys).collect().foreach(println)
+
+    println("------------投影 bulkGet[StudentProjection]-------------")
+    this.fire.hbaseBulkGetSeq[StudentProjection](this.tableName5, rowKeys).collect().foreach(println)
+
+    println("------------投影 bulkScan[StudentProjection]-------------")
+    this.fire.hbaseBulkScanRDD2[StudentProjection](this.tableName5, "1", "6").collect().foreach(println)
   }
 
   /**
@@ -226,5 +245,10 @@ object HBaseBulkTest extends SparkCore {
     this.testHbaseBulkScanRDD
     this.testHbaseBulkScanDF
     this.testHbaseBulkScanDS
+
+    println("=========projection========")
+    this.testHbaseBulkProjection
+
+    Thread.currentThread().join()
   }
 }

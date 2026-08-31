@@ -124,36 +124,46 @@ trait HBaseConnectorProvider {
   /**
    * 根据单个rowKey查询，并转为Map（单版本）
    * 无结果时返回空 Map
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseGetMap(tableName: String, rowKey: String, keyNum: Int = KeyNum._1): Map[String, String] = {
-    HBaseConnector(keyNum = keyNum).getMap(tableName, rowKey)
+  def hbaseGetMap(tableName: String, qualifiers: Seq[String], rowKey: String, keyNum: Int = KeyNum._1): Map[String, String] = {
+    HBaseConnector(keyNum = keyNum).getMap(tableName, qualifiers, rowKey)
   }
 
   /**
    * 根据Get集合批量查询，并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseGetMapList(tableName: String, seq: Seq[Get], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = keyNum).getMapList(tableName, seq: _*)
+  def hbaseGetMapList(tableName: String, qualifiers: Seq[String], seq: Seq[Get], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).getMapList(tableName, qualifiers, seq: _*)
   }
 
   /**
    * 根据rowKey集合批量查询，并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseGetMapList2(tableName: String, seq: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = keyNum).getMapList(tableName, seq: _*)
+  def hbaseGetMapList2(tableName: String, qualifiers: Seq[String], seq: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).getMapList(tableName, qualifiers, seq: _*)
   }
 
   /**
    * Scan指定HBase表，并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseScanMapList(tableName: String, scan: Scan, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = keyNum).scanMapList(tableName, scan)
+  def hbaseScanMapList(tableName: String, qualifiers: Seq[String], scan: Scan, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).scanMapList(tableName, qualifiers, scan)
   }
 
   /**
    * Scan指定HBase表（rowKey区间），并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseScanMapList2(tableName: String, startRow: String, stopRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = keyNum).scanMapList(tableName, startRow, stopRow)
+  def hbaseScanMapList2(tableName: String, qualifiers: Seq[String], startRow: String, stopRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).scanMapList(tableName, qualifiers, startRow, stopRow)
   }
 }

@@ -190,6 +190,7 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
    */
   def hbaseHadoopScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan): RDD[T] = {
     checkGeneric[T]("HBaseSparkBridge.hbaseHadoopScanRDD")
+    HBaseConnector(keyNum = this.keyNum).applyBeanColumns[T](scan)
     val rdd = this.hbaseHadoopScanRS(tableName, scan)
     rdd.mapPartitions(it => HBaseConnector(keyNum = keyNum).hbaseRow2BeanList[T](it))
   }
@@ -301,7 +302,9 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
    */
   def hbaseScanRDD[T <: HBaseBaseBean[T] : ClassTag](tableName: String, scan: Scan): RDD[T] = {
     checkGeneric[T]("HBaseSparkBridge.hbaseScanRDD")
-    HBaseConnector(keyNum = this.keyNum).setScanMaxVersions[T](scan)
+    val connector = HBaseConnector(keyNum = this.keyNum)
+    connector.applyBeanColumns[T](scan)
+    connector.setScanMaxVersions[T](scan)
     val hbaseRDD = this.hbaseHadoopScanRS(tableName, scan)
     val scanRDD = hbaseRDD.mapPartitions(it => {
       if (HBaseConnector(keyNum = this.keyNum).getMultiVersion[T]) {
@@ -460,37 +463,47 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
   /**
    * 根据单个rowKey查询，并转为Map（单版本）
    * 无结果时返回空 Map
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseGetMap(tableName: String, rowKey: String): Map[String, String] = {
-    HBaseConnector(keyNum = this.keyNum).getMap(tableName, rowKey)
+  def hbaseGetMap(tableName: String, qualifiers: Seq[String], rowKey: String): Map[String, String] = {
+    HBaseConnector(keyNum = this.keyNum).getMap(tableName, qualifiers, rowKey)
   }
 
   /**
    * 根据Get集合批量查询，并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseGetMapList(tableName: String, seq: Seq[Get]): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = this.keyNum).getMapList(tableName, seq: _*)
+  def hbaseGetMapList(tableName: String, qualifiers: Seq[String], seq: Seq[Get]): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).getMapList(tableName, qualifiers, seq: _*)
   }
 
   /**
    * 根据rowKey集合批量查询，并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseGetMapList2(tableName: String, seq: Seq[String]): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = this.keyNum).getMapList(tableName, seq: _*)
+  def hbaseGetMapList2(tableName: String, qualifiers: Seq[String], seq: Seq[String]): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).getMapList(tableName, qualifiers, seq: _*)
   }
 
   /**
    * Scan指定HBase表，并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseScanMapList(tableName: String, scan: Scan): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = this.keyNum).scanMapList(tableName, scan)
+  def hbaseScanMapList(tableName: String, qualifiers: Seq[String], scan: Scan): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).scanMapList(tableName, qualifiers, scan)
   }
 
   /**
    * Scan指定HBase表（rowKey区间），并转为Map列表（单版本）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseScanMapList2(tableName: String, startRow: String, stopRow: String): ListBuffer[Map[String, String]] = {
-    this.hbaseScanMapList(tableName, HBaseConnector.buildScan(startRow, stopRow))
+  def hbaseScanMapList2(tableName: String, qualifiers: Seq[String], startRow: String, stopRow: String): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).scanMapList(tableName, qualifiers, startRow, stopRow)
   }
 
   /**

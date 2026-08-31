@@ -70,6 +70,8 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   // --------------------------------------- 反射缓存 --------------------------------------- //
   private[this] var configuration: Configuration = _
   private[this] lazy val cacheFieldMap = new JConcurrentHashMap[Class[_], JMap[String, Field]]()
+  // Bean 可查询列 (family, qualifier) 字节缓存，供内部 buildGet/buildScan 投影使用
+  private[this] lazy val cacheQueryableColumns = new JConcurrentHashMap[Class[_], Array[(Array[Byte], Array[Byte])]]()
   private[this] lazy val cacheHConfigMap = new JConcurrentHashMap[Class[_], HConfig]()
   private[this] lazy val cacheTableExistsMap = new JConcurrentHashMap[String, Boolean]()
   private[this] lazy val connection: Connection = this.initConnection
@@ -130,7 +132,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * @return 目标对象实例
    */
   def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, rowKeys: String*): ListBuffer[T] = {
-    val getList = for (rowKey <- rowKeys) yield HBaseConnector.buildGet(rowKey)
+    val getList = for (rowKey <- rowKeys) yield this.buildGet[T](rowKey)
     this.get[T](tableName, getList: _*)
   }
 
@@ -146,6 +148,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     requireNonNull(tableName, clazz, gets)("参数不合法，无法进行HBase Get操作")
 
     tryWithReturn {
+      gets.foreach(get => this.applyBeanColumns[T](get))
       this.getMaxVersions[T](gets: _*)
       val resultList = this.getResult(tableName, gets: _*)
       if (this.getMultiVersion[T]) this.hbaseMultiRow2Bean[T](resultList, clazz) else this.hbaseRow2Bean[T](resultList)
@@ -157,13 +160,14 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
    * 无记录时返回 null
    *
-   * @param tableName 表名
-   * @param rowKey    指定的rowKey
+   * @param tableName   表名
+   * @param qualifiers  列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   * @param rowKey      指定的rowKey
    * @return Map结果
    */
-  def getMap(tableName: String, rowKey: String): Map[String, String] = {
+  def getMap(tableName: String, qualifiers: Seq[String], rowKey: String): Map[String, String] = {
     requireNonEmpty(tableName, rowKey)("参数不合法，无法进行HBase getMap操作")
-    val maps = this.getMapList(tableName, Seq(rowKey): _*)
+    val maps = this.getMapList(tableName, qualifiers, rowKey)
     if (maps == null || maps.isEmpty) Map.empty else maps.head
   }
 
@@ -171,25 +175,28 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * 从HBase批量Get数据，并将结果封装为Map列表（单版本）
    * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
    *
-   * @param tableName 表名
-   * @param rowKeys   指定的多个rowKey
+   * @param tableName   表名
+   * @param qualifiers  列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   * @param rowKeys     指定的多个rowKey
    * @return Map结果集
    */
-  def getMapList(tableName: String, rowKeys: String*): ListBuffer[Map[String, String]] = {
+  def getMapList(tableName: String, qualifiers: Seq[String], rowKeys: String*): ListBuffer[Map[String, String]] = {
     val getList = for (rowKey <- rowKeys) yield HBaseConnector.buildGet(rowKey)
-    this.getMapList(tableName, getList: _*)
+    this.getMapList(tableName, qualifiers, getList: _*)
   }
 
   /**
    * 从HBase批量Get数据，并将结果封装为Map列表（单版本）
    * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
    *
-   * @param tableName 表名
-   * @param gets      指定的多个get对象
+   * @param tableName   表名
+   * @param qualifiers  列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   * @param gets        指定的多个get对象
    * @return Map结果集
    */
-  def getMapList(tableName: String, gets: Get*)(implicit canOverload: Boolean = true): ListBuffer[Map[String, String]] = {
+  def getMapList(tableName: String, qualifiers: Seq[String], gets: Get*)(implicit canOverload: Boolean = true): ListBuffer[Map[String, String]] = {
     requireNonNull(tableName, gets)("参数不合法，无法进行HBase getMapList操作")
+    gets.foreach(get => this.applyMapQualifiers(get, qualifiers: _*))
     tryWithReturn {
       val resultList = this.getResult(tableName, gets: _*)
       this.hbaseRow2Map(resultList)
@@ -298,7 +305,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    */
   def scan[T <: HBaseBaseBean[T] : ClassTag](tableName: String, startRow: String, endRow: String): ListBuffer[T] = {
     requireNonEmpty(tableName, startRow, endRow)
-    val scan = HBaseConnector.buildScan(startRow, endRow)
+    val scan = this.buildScan[T](startRow, endRow)
     this.scan[T](tableName, scan)
   }
 
@@ -316,6 +323,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
     val list = ListBuffer[T]()
     var rsScanner: ResultScanner = null
     tryFinallyWithReturn {
+      this.applyBeanColumns[T](scan)
       this.setScanMaxVersions[T](scan)
       rsScanner = this.scanResultScanner(tableName, scan)
       if (rsScanner != null) {
@@ -342,27 +350,30 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
    * 表扫描，将查询后的数据转为Map列表（单版本）
    * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
    *
-   * @param tableName 表名
-   * @param startRow  开始行
-   * @param endRow    结束行
+   * @param tableName   表名
+   * @param qualifiers  列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   * @param startRow    开始行
+   * @param endRow      结束行
    * @return Map结果集
    */
-  def scanMapList(tableName: String, startRow: String, endRow: String): ListBuffer[Map[String, String]] = {
+  def scanMapList(tableName: String, qualifiers: Seq[String], startRow: String, endRow: String): ListBuffer[Map[String, String]] = {
     requireNonEmpty(tableName, startRow, endRow)
     val scan = HBaseConnector.buildScan(startRow, endRow)
-    this.scanMapList(tableName, scan)
+    this.scanMapList(tableName, qualifiers, scan)
   }
 
   /**
    * 表扫描，将查询后的数据转为Map列表（单版本）
    * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
    *
-   * @param tableName 表名
-   * @param scan      HBase scan对象
+   * @param tableName   表名
+   * @param qualifiers  列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   * @param scan        HBase scan对象
    * @return Map结果集
    */
-  def scanMapList(tableName: String, scan: Scan): ListBuffer[Map[String, String]] = {
+  def scanMapList(tableName: String, qualifiers: Seq[String], scan: Scan): ListBuffer[Map[String, String]] = {
     requireNonEmpty(tableName, scan)(s"参数不合法，scanMapList ${hbaseClusterUrl(keyNum)}.${tableName}失败.")
+    this.applyMapQualifiers(scan, qualifiers: _*)
 
     val list = ListBuffer[Map[String, String]]()
     var rsScanner: ResultScanner = null
@@ -415,6 +426,135 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   def getConnection: Connection = this.connection
 
   /**
+   * 内部使用：按 JavaBean 字段构建 Get，仅投影有效列（跳过 @FieldName(disuse=true)）
+   */
+  @Internal
+  private[this] def buildGet[T <: HBaseBaseBean[T] : ClassTag](rowKey: String): Get = {
+    val get = HBaseConnector.buildGet(rowKey)
+    this.applyBeanColumns[T](get)
+    get
+  }
+
+  /**
+   * 内部使用：按 JavaBean 字段构建 Scan，仅投影有效列（跳过 @FieldName(disuse=true)）
+   */
+  @Internal
+  private[this] def buildScan[T <: HBaseBaseBean[T] : ClassTag](startRow: String, endRow: String): Scan = {
+    val scan = HBaseConnector.buildScan(startRow, endRow)
+    this.applyBeanColumns[T](scan)
+    scan
+  }
+
+  /**
+   * 若 Get 尚未指定列族/列，则按 Map qualifiers 投影部分列
+   */
+  @Internal
+  private[this] def applyMapQualifiers(get: Get, qualifiers: String*): Unit = {
+    if (get == null || qualifiers == null || qualifiers.isEmpty) return
+    val familyMap = get.getFamilyMap
+    if (familyMap != null && !familyMap.isEmpty) return
+    qualifiers.foreach { column =>
+      val (family, qualifier) = this.parseFamilyQualifier(column)
+      if (StringUtils.isNotBlank(family) && StringUtils.isNotBlank(qualifier)) {
+        get.addColumn(family.getBytes(StandardCharsets.UTF_8), qualifier.getBytes(StandardCharsets.UTF_8))
+      }
+    }
+  }
+
+  /**
+   * 若 Scan 尚未指定列族/列，则按 Map qualifiers 投影部分列
+   */
+  @Internal
+  private[this] def applyMapQualifiers(scan: Scan, qualifiers: String*): Unit = {
+    if (scan == null || qualifiers == null || qualifiers.isEmpty) return
+    val familyMap = scan.getFamilyMap
+    if (familyMap != null && !familyMap.isEmpty) return
+    qualifiers.foreach { column =>
+      val (family, qualifier) = this.parseFamilyQualifier(column)
+      if (StringUtils.isNotBlank(family) && StringUtils.isNotBlank(qualifier)) {
+        scan.addColumn(family.getBytes(StandardCharsets.UTF_8), qualifier.getBytes(StandardCharsets.UTF_8))
+      }
+    }
+  }
+
+  @Internal
+  private[this] def parseFamilyQualifier(column: String): (String, String) = {
+    if (StringUtils.isBlank(column)) return (null, null)
+    val idx = column.indexOf(':')
+    if (idx > 0 && idx < column.length - 1) {
+      (column.substring(0, idx), column.substring(idx + 1))
+    } else {
+      (familyName(keyNum), column)
+    }
+  }
+
+  /**
+   * 若 Get 尚未指定列族/列，则按 Bean 字段投影部分列
+   */
+  @Internal
+  private[fire] def applyBeanColumns[T <: HBaseBaseBean[T] : ClassTag](get: Get): Unit = {
+    if (get == null || !this.getProjection[T]) return
+    val familyMap = get.getFamilyMap
+    if (familyMap != null && !familyMap.isEmpty) return
+    this.queryableColumns[T]().foreach { case (family, qualifier) =>
+      get.addColumn(family, qualifier)
+    }
+  }
+
+  /**
+   * 若 Scan 尚未指定列族/列，则按 Bean 字段投影部分列
+   */
+  @Internal
+  private[fire] def applyBeanColumns[T <: HBaseBaseBean[T] : ClassTag](scan: Scan): Unit = {
+    if (scan == null || !this.getProjection[T]) return
+    val familyMap = scan.getFamilyMap
+    if (familyMap != null && !familyMap.isEmpty) return
+    this.queryableColumns[T]().foreach { case (family, qualifier) =>
+      scan.addColumn(family, qualifier)
+    }
+  }
+
+  /**
+   * 解析并缓存 Bean 对应的可查询列（复用 getFieldNameMap，按 Class 缓存）
+   */
+  @Internal
+  private[this] def queryableColumns[T <: HBaseBaseBean[T] : ClassTag](): Array[(Array[Byte], Array[Byte])] = {
+    val clazz = getGeneric[T]("HBaseConnector.queryableColumns")
+    var columns = this.cacheQueryableColumns.get(clazz)
+    if (columns == null) {
+      val fieldMap = this.getFieldNameMap[T]()
+      val multiVersion = this.getMultiVersion[T]
+      val builder = ListBuffer[(Array[Byte], Array[Byte])]()
+      val it = fieldMap.entrySet().iterator()
+
+      while (it.hasNext) {
+        val entry = it.next()
+        val field = entry.getValue
+        val decl = field.getDeclaringClass
+        // getFieldNameMap 会把 MultiVersionsBean 的字段一并并入，投影时需过滤：
+        // 1) decl.isAssignableFrom(clazz)：字段声明在 T 或其父类上（如 Student / HBaseBaseBean），应投影
+        // 2) 仅当开启 multiVersion 时，才投影 MultiVersionsBean 上的列（如 multiFields），避免单版本查询多拉无关列
+        val include = decl.isAssignableFrom(clazz) || (multiVersion && (decl == classOf[MultiVersionsBean] || classOf[MultiVersionsBean].isAssignableFrom(decl)))
+        if (include) {
+          // fieldMap 的 key 格式为 "family:qualifier"，拆成列族与列名后转为字节，供 Get/Scan.addColumn 使用
+          val fq = entry.getKey
+          val idx = fq.indexOf(':')
+          if (idx > 0 && idx < fq.length - 1) {
+            val family = fq.substring(0, idx)
+            val qualifier = fq.substring(idx + 1)
+            builder += ((family.getBytes(StandardCharsets.UTF_8), qualifier.getBytes(StandardCharsets.UTF_8)))
+          }
+        }
+      }
+
+      columns = builder.toArray
+      val existing = this.cacheQueryableColumns.putIfAbsent(clazz, columns)
+      if (existing != null) columns = existing
+    }
+    columns
+  }
+
+  /**
    * 将class中的field转为map映射
    *
    * @return 名称与字段的映射map
@@ -432,16 +572,14 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
         if (allFields != null) {
           allFields.values.filter(_ != null).foreach(field => {
             val fieldName = field.getAnnotation(classOf[FieldName])
-            var family = ""
-            var qualifier = ""
-            if (fieldName != null) {
-              family = fieldName.family
-              qualifier = fieldName.value
+            // 与 Put 一致：显式 disuse=true 的字段不参与映射与列投影
+            if (fieldName == null || !fieldName.disuse) {
+              var family = if (fieldName != null) fieldName.family else ""
+              var qualifier = if (fieldName != null) fieldName.value else ""
+              if (StringUtils.isBlank(family)) family = familyName(keyNum)
+              if (StringUtils.isBlank(qualifier)) qualifier = field.getName
+              fieldMap.put(family + ":" + qualifier, field)
             }
-
-            if (StringUtils.isBlank(family)) family = familyName(keyNum)
-            if (StringUtils.isBlank(qualifier)) qualifier = field.getName
-            fieldMap.put(family + ":" + qualifier, field)
           })
         }
         cacheFieldMap.put(clazz, fieldMap)
@@ -823,11 +961,21 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
   }
 
   /**
-   * 获取类上声明的HConfig注解
+   * 获取类注解 HConfig 中的 projection（是否开启 Bean 字段投影查询）
+   */
+  @Internal
+  private[fire] def getProjection[T <: HBaseBaseBean[T] : ClassTag]: Boolean = {
+    val hConfig = this.getHConfig[T]
+    if (hConfig == null) return false
+    hConfig.projection()
+  }
+
+  /**
+   * 获取类上声明的HConfig注解，并加入缓存以降低反射带来的性能开销
    */
   @Internal
   private[fire] def getHConfig[T <: HBaseBaseBean[T] : ClassTag]: HConfig = {
-    val clazz = classTag[T].runtimeClass
+    val clazz = getGeneric[T]("HBaseConnector.getHConfig")
     if (!this.cacheHConfigMap.containsKey(clazz)) {
       val hConfig = clazz.getAnnotation(classOf[HConfig])
       if (hConfig != null) {
@@ -1218,6 +1366,9 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
  * 每个HBaseConnector实例使用keyNum作为标识，并且与每个HBase集群一一对应
  */
 object HBaseConnector extends ConnectorFactory[HBaseConnector] with HBaseFunctions {
+
+  /** 用于区分 getMapList(rowKeys*) 与 getMapList(gets*) 的重载 */
+  implicit val canOverload: Boolean = true
 
   /**
    * 无 schema 时：合法可读 UTF-8 优先按字符串；否则按定长二进制 Boolean/Short/Int/Long，再尝试 BigDecimal

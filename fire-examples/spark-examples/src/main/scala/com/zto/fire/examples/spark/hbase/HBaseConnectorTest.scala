@@ -20,7 +20,7 @@ package com.zto.fire.examples.spark.hbase
 import com.zto.fire._
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.{HBase, HBase2}
-import com.zto.fire.examples.bean.Student
+import com.zto.fire.examples.bean.{Student, StudentProjection}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.SparkCore
 import org.apache.hadoop.hbase.client.Get
@@ -107,13 +107,17 @@ object HBaseConnectorTest extends SparkCore {
     println("===========testHbaseGetMap===========")
     val rowKeys = Seq("1", "2", "3", "5", "6")
 
-    val map = this.fire.hbaseGetMap(this.tableName1, "1")
+    // 查询全部列
+    val map = this.fire.hbaseGetMap(this.tableName1, Nil, "1")
     println("-----------------单条get--------------------")
+    // 输出值带family：{"info:age":"12","info:id":"1","rowKey":"1","info:length":"12.1","info:createTime":"2026-08-31 09:13:21","info:sex":"true","info:name":"admin"}
     println(JSONUtils.getScalaMapper.writeValueAsString(map))
 
-    val mapList = this.fire.hbaseGetMapList2(this.tableName1, rowKeys)
+    // 查询指定列
+    val mapList = this.fire.hbaseGetMapList2(this.tableName1, qualifiers = Seq("rowkey", "id", "name"), rowKeys)
     println("------------批量get-------------")
     mapList.foreach(map => {
+      // 输出值：{"info:id":"1","info:name":"admin","rowKey":"1"}
       println(JSONUtils.getScalaMapper.writeValueAsString(map))
       println("---------------------")
     })
@@ -169,10 +173,12 @@ object HBaseConnectorTest extends SparkCore {
    */
   def testHbaseScanMapList: Unit = {
     println("===========testHbaseScanMapList===========")
-    val mapList = this.fire.hbaseScanMapList2(this.tableName1, "1", "6")
+    // qualifiers 传参Nil或null表示查询所有列
+    val mapList = this.fire.hbaseScanMapList2(this.tableName1, qualifiers = null, "1", "6")
 
     println("------------批量scan-------------")
     mapList.foreach(map => {
+      // 输出值：{"info:id":"1","info:name":"admin","rowKey":"1"}
       println(JSONUtils.getScalaMapper.writeValueAsString(map))
       println("---------------------")
     })
@@ -184,7 +190,8 @@ object HBaseConnectorTest extends SparkCore {
   def testHbaseScanRDD: Unit = {
     println("===========testHbaseScanRDD===========")
     val rdd = this.fire.hbaseScanRDD2[Student](this.tableName1, "1", "6")
-    rdd.repartition(3).printEachPartition
+    println("testHbaseScanRDD.rdd.count=" + rdd.count())
+    rdd.repartition(3).collect().foreach(t => JSONUtils.toJSONString(t))
   }
 
   /**
@@ -193,6 +200,7 @@ object HBaseConnectorTest extends SparkCore {
   def testHbaseScanDF: Unit = {
     println("===========testHbaseScanDF===========")
     val dataFrame = this.fire.hbaseScanDF2[Student](this.tableName1, "1", "6")
+    println("dataFrame.rdd.count=" + dataFrame.count())
     dataFrame.repartition(3).show(100, false)
   }
 
@@ -232,6 +240,28 @@ object HBaseConnectorTest extends SparkCore {
   }
 
   /**
+   * Bean 投影查询：以 Student 写入全部列，以 StudentProjection（@HConfig(projection=true)）只查部分列
+   * StudentProjection 有效字段：id、name、createTime；age 标记 @FieldName(disuse=true) 不参与投影
+   * 注：getList/scanList 走 Driver 侧 Java API；getRDD/scanDF 走 Spark 分布式，需 executor 能连 HBase
+   */
+  def testHbaseProjection: Unit = {
+    println("===========testHbaseProjection===========")
+    val rowKeys = Seq("1", "2", "3", "5", "6")
+
+    // 对照：全列 get（Student，projection=false）
+    println("------------全列 get[Student]-------------")
+    this.fire.hbaseGetList2[Student](this.tableName1, rowKeys).foreach(println)
+
+    // 投影 get：仅拉 id/name/createTime
+    println("------------投影 get[StudentProjection]-------------")
+    this.fire.hbaseGetList2[StudentProjection](this.tableName1, rowKeys).foreach(println)
+
+    // 投影 scan
+    println("------------投影 scan[StudentProjection]-------------")
+    this.fire.hbaseScanList2[StudentProjection](this.tableName1, "1", "6").foreach(println)
+  }
+
+  /**
    * 多版本get与scan
    */
   def testMutiVersion: Unit = {
@@ -266,9 +296,13 @@ object HBaseConnectorTest extends SparkCore {
   override def process: Unit = {
     // 指定是否以多版本的形式读写
     // this.testHBaseDeleteRDD
+    HBaseConnector.truncateTable(this.tableName1)
+    // 以 Student 写入全部列
     this.testHbasePutRDD
     this.testHbaseGetMap
     this.testHbaseScanMapList
+    // 以 StudentProjection 做部分列投影查询
+    this.testHbaseProjection
 
     this.testHbaseDeleteDS
     HBaseConnector.truncateTable(this.tableName1)
@@ -289,8 +323,7 @@ object HBaseConnectorTest extends SparkCore {
     this.testHbaseScanList
     this.testHbaseScanRDD
     this.testHbaseScanDF
-    val getList = ListBuffer(HBaseConnector.buildGet("1"))
-    val student = HBaseConnector.get[Student](this.tableName1, getList, 1)
-    println(student.toString())
+
+    Thread.currentThread().join()
   }
 }

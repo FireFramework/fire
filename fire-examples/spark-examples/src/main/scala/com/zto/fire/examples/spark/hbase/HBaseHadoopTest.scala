@@ -19,7 +19,8 @@ package com.zto.fire.examples.spark.hbase
 
 import com.zto.fire._
 import com.zto.fire.common.anno.Config
-import com.zto.fire.examples.bean.Student
+import com.zto.fire.core.anno.connector.{HBase, HBase2}
+import com.zto.fire.examples.bean.{Student, StudentProjection}
 import com.zto.fire.hbase.HBaseConnector
 import com.zto.fire.spark.SparkCore
 import org.apache.spark.sql.{Encoders, Row}
@@ -40,6 +41,8 @@ import org.apache.spark.sql.{Encoders, Row}
     |spark.fire.hbase.scan.partitions   =       3
     |spark.fire.hbase.storage.level     =       DISK_ONLY
     |""")
+@HBase("fat")
+@HBase2(cluster = "fat", scanPartitions = 3, storageLevel = "DISK_ONLY")
 object HBaseHadoopTest extends SparkCore {
   private val tableName6 = "fire_test_6"
   private val tableName7 = "fire_test_7"
@@ -124,6 +127,36 @@ object HBaseHadoopTest extends SparkCore {
   }
 
   /**
+   * Bean 投影查询：Student 写入全列，StudentProjection（projection=true）只查部分列
+   * 注：本地 IDEA 跑时优先用 Driver 侧 hbaseScanList2 验证投影；分布式 hadoopScan 需 executor 能连 HBase/ZK
+   */
+  def testHbaseHadoopProjection: Unit = {
+    println("===========testHbaseHadoopProjection===========")
+
+    println("------------全列 scanList[Student]（Driver 侧）-------------")
+    this.fire.hbaseScanList2[Student](this.tableName7, "1", "6").foreach(println)
+
+    println("------------投影 scanList[StudentProjection]（Driver 侧）-------------")
+    this.fire.hbaseScanList2[StudentProjection](this.tableName7, "1", "6").foreach(println)
+  }
+
+  /**
+   * 分布式 Hadoop Scan（TableInputFormat），需在 YARN/集群环境且 executor 可访问 HBase 时使用
+   */
+  def testHbaseHadoopScanDistributed: Unit = {
+    println("===========testHbaseHadoopScanDistributed===========")
+    this.testHBaseHadoopScanRDD
+    this.testHBaseHadoopScanDF
+    this.testHBaseHadoopScanDS
+
+    println("------------全列 hadoopScan[Student]-------------")
+    this.fire.hbaseHadoopScanRDD2[Student](this.tableName7, "1", "6").foreach(println)
+
+    println("------------投影 hadoopScan[StudentProjection]-------------")
+    this.fire.hbaseHadoopScanRDD2[StudentProjection](this.tableName7, "1", "6").foreach(println)
+  }
+
+  /**
     * Spark处理过程
     * 注：此方法会被自动调用
     */
@@ -135,8 +168,12 @@ object HBaseHadoopTest extends SparkCore {
     // this.testHbaseHadoopPutDS
     this.testHbaseHadoopPutDFRow
 
-    this.testHBaseHadoopScanRDD
-    this.testHBaseHadoopScanDF
-    this.testHBaseHadoopScanDS
+    // 分布式 hadoopScan 在本地 IDEA 常因 executor 连不上 HBase/ZK 而空结果，默认不跑
+    // this.testHbaseHadoopScanDistributed
+
+    println("=========projection========")
+    this.testHbaseHadoopProjection
+
+    Thread.currentThread().join()
   }
 }
