@@ -39,6 +39,8 @@ private[fire] object FireHBaseConf {
   lazy val HBASE_CLUSTER_URL = "hbase.cluster"
   lazy val HBASE_USER = "hbase.user"
   lazy val HBASE_DURABILITY = "hbase.durability"
+  // Bean 写 HBase 是否强制 @HConfig(timestampField) 且能解析出业务 Put 时间戳，默认 true
+  lazy val HBASE_PUT_TIMESTAMP_REQUIRED = "fire.hbase.put.timestamp.required"
   // fire框架针对hbase操作后数据集的缓存策略，配置列表详见：StorageLevel.scala（配置不区分大小写）
   lazy val FIRE_HBASE_STORAGE_LEVEL = "fire.hbase.storage.level"
   // 通过HBase scan后repartition的分区数
@@ -102,6 +104,9 @@ private[fire] object FireHBaseConf {
   }
 
   def hbaseDurability(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.HBASE_DURABILITY, "", keyNum)
+
+  /** Bean 转 Put 是否强制配置并可解析 @HConfig.timestampField */
+  lazy val hbasePutTimestampRequired: Boolean = PropUtils.getBoolean(this.HBASE_PUT_TIMESTAMP_REQUIRED, true)
 
   // HBase结果集的缓存策略配置
   def hbaseStorageLevel(keyNum: Int = KeyNum._1): String = PropUtils.getString(this.FIRE_HBASE_STORAGE_LEVEL, "memory_and_disk_ser", keyNum).toUpperCase
