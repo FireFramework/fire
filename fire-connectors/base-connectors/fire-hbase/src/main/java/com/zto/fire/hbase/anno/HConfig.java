@@ -50,4 +50,9 @@ public @interface HConfig {
      * 是否开启按 JavaBean 字段投影查询以降低scan、get的开销
      */
     boolean projection() default false;
+
+    /**
+     * 指定 Bean 上用作 Put 版本号（HBase cell timestamp）的字段名，用于排序，可避免后到的数据被覆盖
+     */
+    String timestampField() default "";
 }

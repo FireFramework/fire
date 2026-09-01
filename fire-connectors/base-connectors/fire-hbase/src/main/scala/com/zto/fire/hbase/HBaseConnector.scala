@@ -884,8 +884,14 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
       val allFields = ReflectionUtils.getAllFields(clazz)
       requireNonEmpty(allFields)(s"在${clazz}中未找到任何成员变量，请检查！")
       val rowKey = rowKeyObj.toString.getBytes(StandardCharsets.UTF_8)
-      val put = new Put(rowKey)
+      // 若 @HConfig.timestampField 指定了业务单调字段，则用作 Put/cell 版本号，避免旧数据后写覆盖新数据
+      val timestampOpt = this.resolveTimestamp(tmpObj, clazz)
+      val put = timestampOpt match {
+        case Some(ts) => new Put(rowKey, ts)
+        case None => new Put(rowKey)
+      }
       put.setDurability(this.durability)
+
       allFields.values().foreach(field => {
         val objValue = field.get(obj)
         // 将objValue插入的两种情况：1. 允许插入为空的值；2. 不允许插入为空的值，并且objValue不为空
@@ -918,15 +924,71 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
                 case fieldType if fieldType eq classOf[JShort] => Bytes.toBytes(JShort.parseShort(objValueStr))
                 case _ => Bytes.toBytes(objValueStr)
               }
-              put.addColumn(familyByte, qualifierByte, toBytes)
+              // 显式带 ts，确保部分列更新时各 cell 也使用业务时间戳，而非墙钟 LATEST_TIMESTAMP
+              timestampOpt match {
+                case Some(ts) => put.addColumn(familyByte, qualifierByte, ts, toBytes)
+                case None => put.addColumn(familyByte, qualifierByte, toBytes)
+              }
             } else {
-              put.addColumn(familyByte, qualifierByte, null)
+              timestampOpt match {
+                case Some(ts) => put.addColumn(familyByte, qualifierByte, ts, null)
+                case None => put.addColumn(familyByte, qualifierByte, null)
+              }
             }
           }
         }
       })
       put
     }(this.logger, catchLog = "将JavaBean转为HBase Put对象过程中出现异常.")
+  }
+
+  /**
+   * 从 @HConfig.timestampField 指定的 Bean 字段解析业务时间戳（Put 版本号）
+   */
+  @Internal
+  private[fire] def resolveTimestamp(obj: AnyRef, clazz: Class[_ <: HBaseBaseBean[_]]): Option[Long] = {
+    val hConfig = clazz.getAnnotation(classOf[HConfig])
+    if (hConfig == null || StringUtils.isBlank(hConfig.timestampField())) {
+      return this.rejectMissingPutTimestamp(clazz, "未配置 @HConfig(timestampField=...)")
+    }
+
+    val field = ReflectionUtils.getFieldByName(clazz, hConfig.timestampField())
+    if (field == null) {
+      logWarning(s"@HConfig.timestampField=${hConfig.timestampField()} 在 ${clazz.getName} 中不存在")
+      return this.rejectMissingPutTimestamp(clazz, s"@HConfig.timestampField=${hConfig.timestampField()} 在 Bean 中不存在")
+    }
+
+    val timestamp = field.get(obj)
+    if (timestamp == null) {
+      return this.rejectMissingPutTimestamp(clazz, s"@HConfig.timestampField=${hConfig.timestampField()} 值为 null")
+    }
+
+    // 适配int、long、number以及可以强转为long类型的string
+    timestamp match {
+      case n: JLong => Some(n.longValue())
+      case n: JInt => Some(n.longValue())
+      case n: Number => Some(n.longValue())
+      case s: String if StringUtils.isNotBlank(s) =>
+        try Some(JLong.parseLong(s.trim)) catch {
+          case _: NumberFormatException =>
+            logWarning(s"@HConfig.timestampField=${hConfig.timestampField()} 值[$s]无法解析为 long")
+            this.rejectMissingPutTimestamp(clazz, s"@HConfig.timestampField=${hConfig.timestampField()} 值[$s] 无法解析为 long")
+        }
+      case _ =>
+        logWarning(s"@HConfig.timestampField=${hConfig.timestampField()} 类型不支持: ${timestamp.getClass.getName}")
+        this.rejectMissingPutTimestamp(clazz,
+          s"@HConfig.timestampField=${hConfig.timestampField()} 类型不支持: ${timestamp.getClass.getName}")
+    }
+  }
+
+  /**
+   * fire.hbase.put.timestamp.required=true 时拒绝无业务时间戳的 Put
+   */
+  private[this] def rejectMissingPutTimestamp(clazz: Class[_ <: HBaseBaseBean[_]], detail: String): Option[Long] = {
+    if (FireHBaseConf.hbasePutTimestampRequired) {
+      throw new IllegalArgumentException(s"${clazz.getName}: $detail。Bean 写 HBase 须配置 @HConfig(timestampField=...) 且字段值为单调递增 long 类型数据")
+    }
+    None
   }
 
   /**
