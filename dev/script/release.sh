@@ -45,19 +45,22 @@ mkdir -p $MVN_TEMP_REPO
 rm -rf $MVN_TEMP_REPO/com/zto/fire
 
 # 3. build in MVN_TEMP_REPO
+# build-spark / build-flink：分别启用 Spark、Flink 相关引擎与 connector / bundle 模块
+# 发布需同时激活两者，确保 Spark 与 Flink 产物一并安装到临时本地仓
+COMMON_PROFILES="hadoop-2.7,hudi-0.9,deploy-ossrh-repo,build-spark,build-flink"
 set -e
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.12,spark-2.3,hudi-0.9,deploy-ossrh-repo -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.13,spark-2.4,hudi-0.9,deploy-ossrh-repo -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.11,flink-1.14,spark-2.4,hudi-0.9,deploy-ossrh-repo -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -P${COMMON_PROFILES},scala-2.11,flink-1.12,spark-2.3 -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -P${COMMON_PROFILES},scala-2.11,flink-1.13,spark-2.4 -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -P${COMMON_PROFILES},scala-2.11,flink-1.14,spark-2.4 -U -T40C
 
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.12,spark-2.4,hudi-0.9,deploy-ossrh-repo -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.13,spark-3.0,hudi-0.9,deploy-ossrh-repo -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.14,spark-3.1,hudi-0.9,deploy-ossrh-repo -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.15,spark-3.2,hudi-0.9,deploy-ossrh-repo -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.16,spark-3.3,hudi-0.9,deploy-ossrh-repo -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.17,spark-3.3,hudi-0.9,deploy-ossrh-repo -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.18,spark-3.4,hudi-0.9,deploy-ossrh-repo -U -T40C
-$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -Phadoop-2.7,scala-2.12,flink-1.19,spark-3.5,hudi-0.9,deploy-ossrh-repo -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -P${COMMON_PROFILES},scala-2.12,flink-1.12,spark-2.4 -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -P${COMMON_PROFILES},scala-2.12,flink-1.13,spark-3.0 -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -P${COMMON_PROFILES},scala-2.12,flink-1.14,spark-3.1 -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -P${COMMON_PROFILES},scala-2.12,flink-1.15,spark-3.2 -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -P${COMMON_PROFILES},scala-2.12,flink-1.16,spark-3.3 -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -P${COMMON_PROFILES},scala-2.12,flink-1.17,spark-3.3 -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -P${COMMON_PROFILES},scala-2.12,flink-1.18,spark-3.4 -U -T40C
+$MVN -Dmaven.repo.local=$MVN_TEMP_REPO -DskipTests -s $MVN_SETTINGS clean install -P${COMMON_PROFILES},scala-2.12,flink-1.19,spark-3.5 -U -T40C
 set +e
 
 # 4. ready to uploading file
