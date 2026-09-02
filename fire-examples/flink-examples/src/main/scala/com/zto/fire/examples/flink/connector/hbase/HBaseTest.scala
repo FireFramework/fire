@@ -1,15 +1,13 @@
 package com.zto.fire.examples.flink.connector.hbase
 
-import com.zto.fire._
-import org.apache.flink.api.scala._
 import com.zto.fire.common.util.JSONUtils
 import com.zto.fire.core.anno.connector.{HBase, HBase2, HBase3, Kafka}
-import com.zto.fire.examples.bean.{Student, StudentProjection}
+import com.zto.fire.examples.bean.{StuTest, Student, StudentProjection}
 import com.zto.fire.flink.FlinkStreaming
-import com.zto.fire.flink.anno.Checkpoint
 import com.zto.fire.hbase.HBaseConnector
-import com.zto.fire.println
+import com.zto.fire._
 import org.apache.flink.api.common.functions.RichMapFunction
+import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.hadoop.hbase.client.Get
 
@@ -25,7 +23,6 @@ import java.lang.{String => JString}
  * @since 1.1.0
  * @create 2020-5-25 16:32:50
  */
-@Checkpoint(30)
 @HBase("fat")
 @HBase2("fat") // 对应keyNum=2的Hbase集群地址
 @HBase3("fat") // 对应keyNum=3的Hbase集群地址
@@ -142,6 +139,13 @@ object HBaseTest extends FlinkStreaming {
     }).print
   }
 
+  private def testTimestampField(): Unit = {
+    HBaseConnector.truncateTable(this.tableName2)
+    this.fire.setParallelism(1)
+    val seq = StuTest.newStudentList()
+    val stuStream = this.fire.fromCollection(seq)
+    stuStream.setParallelism(1).hbasePutDS[StuTest](this.tableName2)
+  }
 
   /**
    * 多线程并发 Put DataStream
@@ -238,18 +242,17 @@ object HBaseTest extends FlinkStreaming {
   }*/
 
   override def process: Unit = {
+    // 测试排序列字段
+    this.testTimestampField()
     this.testHBase
 
     HBaseConnector.truncateTable(this.tableName)
-    HBaseConnector.truncateTable(this.tableName2)
     HBaseConnector.truncateTable(this.tableName3)
     HBaseConnector.truncateTable(this.tableName5)
 
     val stream = this.fire.createRandomLongStream(1)
-      .flatMap(t => Student.newStudentList())
-      .map(t => JSONUtils.toJSONString(t))
-      .filter(t => JSONUtils.isLegal(t))
-      .map(json => JSONUtils.parseObject[Student](json)).setParallelism(1)
+      .flatMap(t => Student.newStudentList()).setParallelism(1)
+    stream.addSink(t => println(t))
 
     this.testTableHBaseSink(stream)
     this.testStreamHBaseSink(stream)
