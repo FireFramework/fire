@@ -34,7 +34,7 @@ import java.util.*;
  *
  * @author ChengLong 2019-6-20 16:06:16
  */
-@HConfig(nullable = true, multiVersion = false, versions = 3)
+@HConfig(nullable = true, multiVersion = false, versions = 3, timestampField = "orderField")
 public class Student extends HBaseBaseBean<Student> implements Generator<Student>, Serializable {
     @FieldName(disuse = true)
     private static final long serialVersionUID = 1L;
@@ -48,6 +48,9 @@ public class Student extends HBaseBaseBean<Student> implements Generator<Student
     //@FieldName(family = "data", value = "length1")
     protected BigDecimal length;
     protected Boolean sex;
+    // 通过@HConfig(timestampField = "createTime")配置后，该字段的业务时间将作为HBase排序字段，避免乱序
+    // 若不在意乱序问题，可通过参数禁用：fire.hbase.put.timestamp.required=false
+    private Long orderField = System.currentTimeMillis();
 
     /**
      * rowkey的构建
@@ -141,6 +144,14 @@ public class Student extends HBaseBaseBean<Student> implements Generator<Student
 
     public void setAge(Integer age) {
         this.age = age;
+    }
+
+    public Long getOrderField() {
+        return orderField;
+    }
+
+    public void setOrderField(Long orderField) {
+        this.orderField = orderField;
     }
 
     @Override

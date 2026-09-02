@@ -42,7 +42,6 @@ import scala.reflect.ClassTag
  *
  * @author ChengLong 2019-5-10 14:39:39
  */
-@SerialVersionUID(-7991499232030950852L)
 class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = keyNum) {
   private[this] lazy val spark = SparkSingletonFactory.getSparkSession
 

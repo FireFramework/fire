@@ -20,6 +20,7 @@ package com.zto.fire.examples.bean;
 import com.zto.fire.common.anno.FieldName;
 import com.zto.fire.common.bean.Generator;
 import com.zto.fire.common.util.JSONUtils;
+import com.zto.fire.hbase.anno.HConfig;
 import com.zto.fire.hbase.bean.HBaseBaseBean;
 import com.zto.fire.common.util.DateFormatUtils;
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ import java.util.*;
  *
  * @author ChengLong 2019-6-20 16:06:16
  */
+@HConfig(nullable = true, multiVersion = false, versions = 3, timestampField = "orderField")
 public class Student extends HBaseBaseBean<Student> implements Generator<Student> {
     @FieldName(value = "Student", disuse = true)
     protected static final transient Logger logger = LoggerFactory.getLogger(Student.class);
@@ -46,6 +48,9 @@ public class Student extends HBaseBaseBean<Student> implements Generator<Student
     // @FieldName(family = "info", value = "length1")
     private BigDecimal length;
     private Boolean sex;
+    // 通过@HConfig(timestampField = "createTime")配置后，该字段的业务时间将作为HBase排序字段，避免乱序
+    // 若不在意乱序问题，可通过参数禁用：fire.hbase.put.timestamp.required=false
+    private Long orderField = System.currentTimeMillis();
 
     /**
      * rowkey的构建
@@ -140,6 +145,14 @@ public class Student extends HBaseBaseBean<Student> implements Generator<Student
         this.age = age;
     }
 
+    public Long getOrderField() {
+        return orderField;
+    }
+
+    public void setOrderField(Long orderField) {
+        this.orderField = orderField;
+    }
+
     public void setClassName(String name) {}
 
     @Override
@@ -173,55 +186,6 @@ public class Student extends HBaseBaseBean<Student> implements Generator<Student
                 new Student(9L, "streaming", 10, BigDecimal.valueOf(10.1), true, dateTime),
                 new Student(10L, "sql", 12, BigDecimal.valueOf(12.1), true, dateTime)
         );
-    }
-
-    /**
-     * 构建student集合
-     *
-     * @return
-     */
-    public static List<Student> buildStudentList() {
-        List<Student> studentList = new LinkedList<>();
-        try {
-            for (int i = 1; i <= 1; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(1L, "root", i + 1, BigDecimal.valueOf((long) 1 + i), true, DateFormatUtils.formatCurrentDateTime());
-                studentList.add(stu);
-            }
-
-            for (int i = 1; i <= 2; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(2L, "admin", i + 2, BigDecimal.valueOf(2019.05180919 + i), false, DateFormatUtils.formatCurrentDateTime());
-                studentList.add(stu);
-            }
-
-            for (int i = 1; i <= 3; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(3L, "spark", i + 3, BigDecimal.valueOf(33.1415926 + i));
-                studentList.add(stu);
-            }
-
-            for (int i = 1; i <= 3; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(4L, "flink", i + 4, BigDecimal.valueOf(4.2 + i), true, DateFormatUtils.formatCurrentDateTime());
-                studentList.add(stu);
-            }
-
-            for (int i = 1; i <= 3; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(5L, "hadoop", i + 5, BigDecimal.valueOf(5.5 + i), false, DateFormatUtils.formatCurrentDateTime());
-                studentList.add(stu);
-            }
-            for (int i = 1; i <= 3; i++) {
-                Thread.sleep(500);
-                Student stu = new Student(6L, "hbase", i + 6, BigDecimal.valueOf(66.66 + i), true, DateFormatUtils.formatCurrentDateTime());
-                studentList.add(stu);
-            }
-        } catch (Exception e) {
-            logger.error("Sleep线程异常", e);
-        }
-
-        return studentList;
     }
 
     @Override
