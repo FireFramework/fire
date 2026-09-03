@@ -558,17 +558,21 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
 
   /**
    * 多线程并发 GetMapList
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseGetMapListAsync(tableName: String, threadNum: Int, seq: Seq[Get]): ListBuffer[Map[String, String]] = {
+  def hbaseGetMapListAsync(tableName: String, qualifiers: Seq[String], threadNum: Int, seq: Seq[Get]): ListBuffer[Map[String, String]] = {
     implicit val canOverload: Boolean = true
-    HBaseConnector(keyNum = this.keyNum).getMapListAsync(tableName, threadNum, seq: _*)
+    HBaseConnector(keyNum = this.keyNum).getMapListAsync(tableName, qualifiers, threadNum, seq: _*)
   }
 
   /**
    * 多线程并发 GetMapList（rowKey）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseGetMapListAsync2(tableName: String, threadNum: Int, seq: Seq[String]): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = this.keyNum).getMapListAsync(tableName, threadNum, seq: _*)
+  def hbaseGetMapListAsync2(tableName: String, qualifiers: Seq[String], threadNum: Int, seq: Seq[String]): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).getMapListAsync(tableName, qualifiers, threadNum, seq: _*)
   }
 
   /**
@@ -582,9 +586,11 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
 
   /**
    * 多线程并发 ScanMapList
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseScanMapListAsync(tableName: String, threadNum: Int, scan: Scan): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = this.keyNum).scanMapListAsync(tableName, threadNum, scan)
+  def hbaseScanMapListAsync(tableName: String, qualifiers: Seq[String], threadNum: Int, scan: Scan): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).scanMapListAsync(tableName, qualifiers, threadNum, scan)
   }
 
   /**
@@ -598,9 +604,11 @@ class HBaseSparkBridge(keyNum: Int = KeyNum._1) extends FireConnector(keyNum = k
 
   /**
    * 多线程并发 ScanMapList（rowKey 区间）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def hbaseScanMapListAsync2(tableName: String, threadNum: Int, startRow: String, stopRow: String): ListBuffer[Map[String, String]] = {
-    HBaseConnector(keyNum = this.keyNum).scanMapListAsync(tableName, threadNum, startRow, stopRow)
+  def hbaseScanMapListAsync2(tableName: String, qualifiers: Seq[String], threadNum: Int, startRow: String, stopRow: String): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = this.keyNum).scanMapListAsync(tableName, qualifiers, threadNum, startRow, stopRow)
   }
 
   /**

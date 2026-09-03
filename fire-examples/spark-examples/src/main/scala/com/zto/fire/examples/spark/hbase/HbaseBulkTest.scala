@@ -238,7 +238,7 @@ object HBaseBulkTest extends SparkCore {
     * 注：此方法会被自动调用
     */
   override def process: Unit = {
-    /*this.testHBaseBulkDeleteRDD
+    this.testHBaseBulkDeleteRDD
     HBaseConnector.truncateTable(this.tableName3, keyNum = 2)
     HBaseConnector.truncateTable(this.tableName5)
     // this.testHBaseBulkDeleteDS
@@ -256,7 +256,7 @@ object HBaseBulkTest extends SparkCore {
     println("=========scan========")
     this.testHbaseBulkScanRDD
     this.testHbaseBulkScanDF
-    this.testHbaseBulkScanDS*/
+    this.testHbaseBulkScanDS
 
     println("=========bulkLoad========")
     HBaseConnector.truncateTable(this.tableName20)
@@ -264,5 +264,7 @@ object HBaseBulkTest extends SparkCore {
 
     println("=========projection========")
     this.testHbaseBulkProjection
+
+    Thread.currentThread().join()
   }
 }

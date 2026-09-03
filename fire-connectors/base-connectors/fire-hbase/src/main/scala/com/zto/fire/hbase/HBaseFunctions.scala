@@ -116,6 +116,22 @@ private[hbase] trait HBaseFunctions {
   }
 
   /**
+   * 多线程并发 Put（Bean 映射）
+   */
+  @API
+  def insertAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, beans: Seq[T], keyNum: Int = KeyNum._1): Unit = {
+    HBaseConnector(keyNum = keyNum).insertAsync[T](tableName, threadNum, beans)
+  }
+
+  /**
+   * 多线程并发 Put
+   */
+  @API
+  def insertAsync(tableName: String, threadNum: Int, puts: Seq[Put], keyNum: Int): Unit = {
+    HBaseConnector(keyNum = keyNum).insertAsync(tableName, threadNum, puts: _*)
+  }
+
+  /**
    * 从HBase批量Get数据，并将结果封装到JavaBean中
    *
    * @param tableName 表名
@@ -135,6 +151,23 @@ private[hbase] trait HBaseFunctions {
    */
   def get[T <: HBaseBaseBean[T] : ClassTag](tableName: String, gets: ListBuffer[Get], keyNum: Int): ListBuffer[T] = {
     HBaseConnector(keyNum = keyNum).get[T](tableName, gets: _*)
+  }
+
+  /**
+   * 多线程并发 Get
+   */
+  @API
+  def getAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int = 5, rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[T] = {
+    HBaseConnector(keyNum = keyNum).getAsync[T](tableName, threadNum, rowKeys: _*)
+  }
+
+  /**
+   * 多线程并发 Get
+   */
+  @API
+  def getAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, gets: ListBuffer[Get], keyNum: Int): ListBuffer[T] = {
+    implicit val canOverload: Boolean = true
+    HBaseConnector(keyNum = keyNum).getAsync[T](tableName, threadNum, gets: _*)
   }
 
   /**
@@ -181,6 +214,27 @@ private[hbase] trait HBaseFunctions {
   @API
   def getMapList(tableName: String, qualifiers: Seq[String], gets: ListBuffer[Get], keyNum: Int): ListBuffer[Map[String, String]] = {
     HBaseConnector(keyNum = keyNum).getMapList(tableName, qualifiers, gets: _*)
+  }
+
+  /**
+   * 多线程并发 GetMapList（rowKey）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   */
+  @API
+  def getMapListAsync(tableName: String, qualifiers: Seq[String], threadNum: Int = 5, rowKeys: Seq[String], keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).getMapListAsync(tableName, qualifiers, threadNum, rowKeys: _*)
+  }
+
+  /**
+   * 多线程并发 GetMapList
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   */
+  @API
+  def getMapListAsync(tableName: String, qualifiers: Seq[String], threadNum: Int, gets: ListBuffer[Get], keyNum: Int): ListBuffer[Map[String, String]] = {
+    implicit val canOverload: Boolean = true
+    HBaseConnector(keyNum = keyNum).getMapListAsync(tableName, qualifiers, threadNum, gets: _*)
   }
 
   /**
@@ -258,6 +312,22 @@ private[hbase] trait HBaseFunctions {
   }
 
   /**
+   * 多线程并发 Scan（rowKey 区间）
+   */
+  @API
+  def scanAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int = 5, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[T] = {
+    HBaseConnector(keyNum = keyNum).scanAsync[T](tableName, threadNum, startRow, endRow)
+  }
+
+  /**
+   * 多线程并发 Scan
+   */
+  @API
+  def scanAsync[T <: HBaseBaseBean[T] : ClassTag](tableName: String, threadNum: Int, scan: Scan, keyNum: Int): ListBuffer[T] = {
+    HBaseConnector(keyNum = keyNum).scanAsync[T](tableName, threadNum, scan)
+  }
+
+  /**
    * 表扫描，将查询后的数据转为Map列表（单版本）
    * Map结构：rowKey + family:qualifier -> value（启发式还原后转为 String）
    *
@@ -286,6 +356,26 @@ private[hbase] trait HBaseFunctions {
   @API
   def scanMapList(tableName: String, qualifiers: Seq[String], scan: Scan, keyNum: Int): ListBuffer[Map[String, String]] = {
     HBaseConnector(keyNum = keyNum).scanMapList(tableName, qualifiers, scan)
+  }
+
+  /**
+   * 多线程并发 ScanMapList（rowKey 区间）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   */
+  @API
+  def scanMapListAsync(tableName: String, qualifiers: Seq[String], threadNum: Int = 5, startRow: String, endRow: String, keyNum: Int = KeyNum._1): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).scanMapListAsync(tableName, qualifiers, threadNum, startRow, endRow)
+  }
+
+  /**
+   * 多线程并发 ScanMapList
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
+   */
+  @API
+  def scanMapListAsync(tableName: String, qualifiers: Seq[String], threadNum: Int, scan: Scan, keyNum: Int): ListBuffer[Map[String, String]] = {
+    HBaseConnector(keyNum = keyNum).scanMapListAsync(tableName, qualifiers, threadNum, scan)
   }
 
   /**

@@ -164,12 +164,10 @@ object HBaseHadoopTest extends SparkCore {
     HBaseConnector.truncateTable(this.tableName6, keyNum = 2)
     HBaseConnector.truncateTable(this.tableName7)
     this.testHbaseHadoopPutRDD
-    // this.testHbaseHadoopPutDF
-    // this.testHbaseHadoopPutDS
+    this.testHbaseHadoopPutDF
+    this.testHbaseHadoopPutDS
     this.testHbaseHadoopPutDFRow
-
-    // 分布式 hadoopScan 在本地 IDEA 常因 executor 连不上 HBase/ZK 而空结果，默认不跑
-    // this.testHbaseHadoopScanDistributed
+    this.testHbaseHadoopScanDistributed
 
     println("=========projection========")
     this.testHbaseHadoopProjection

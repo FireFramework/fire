@@ -278,34 +278,40 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
 
   /**
    * 多线程并发 GetMapList，底层共享 HBase Connection（默认线程数）
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def getMapListAsync(tableName: String, gets: Get*)(implicit canOverload: Boolean = true): ListBuffer[Map[String, String]] = {
-    this.getMapListAsync(tableName, FireHBaseConf.hbaseThreadNum(this.keyNum), gets: _*)
+  def getMapListAsync(tableName: String, qualifiers: Seq[String], gets: Get*)(implicit canOverload: Boolean = true): ListBuffer[Map[String, String]] = {
+    this.getMapListAsync(tableName, qualifiers, FireHBaseConf.hbaseThreadNum(this.keyNum), gets: _*)
   }
 
   /**
    * 多线程并发 GetMapList，底层共享 HBase Connection
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def getMapListAsync(tableName: String, threadNum: Int, gets: Get*)(implicit canOverload: Boolean): ListBuffer[Map[String, String]] = {
+  def getMapListAsync(tableName: String, qualifiers: Seq[String], threadNum: Int, gets: Get*)(implicit canOverload: Boolean): ListBuffer[Map[String, String]] = {
     require(threadNum > 0, s"线程数量必须大于0，当前值：$threadNum")
     if (gets == null || gets.isEmpty) return ListBuffer.empty[Map[String, String]]
-    if (threadNum <= 1 || gets.size <= 1) return this.getMapList(tableName, gets: _*)
+    if (threadNum <= 1 || gets.size <= 1) return this.getMapList(tableName, qualifiers, gets: _*)
 
     val parallelism = math.min(threadNum, gets.size)
     val result = ListBuffer[Map[String, String]]()
     ThreadUtils.parallelProcess(gets, parallelism) { partition =>
-      this.getMapList(tableName, partition: _*)
+      this.getMapList(tableName, qualifiers, partition: _*)
     }.foreach(result ++= _)
     result
   }
 
   /**
    * 多线程并发 GetMapList（rowKey），底层共享 HBase Connection
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def getMapListAsync(tableName: String, threadNum: Int, rowKeys: String*): ListBuffer[Map[String, String]] = {
+  def getMapListAsync(tableName: String, qualifiers: Seq[String], threadNum: Int, rowKeys: String*): ListBuffer[Map[String, String]] = {
     if (rowKeys == null || rowKeys.isEmpty) return ListBuffer.empty[Map[String, String]]
     implicit def canOverload: Boolean = true
-    this.getMapListAsync(tableName, threadNum, rowKeys.map(rowKey => HBaseConnector.buildGet(rowKey)): _*)
+    this.getMapListAsync(tableName, qualifiers, threadNum, rowKeys.map(rowKey => HBaseConnector.buildGet(rowKey)): _*)
   }
 
   /**
@@ -500,36 +506,40 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
 
   /**
    * 多线程并发 ScanMapList（rowKey 区间），按数值型 rowKey 切分子区间后并行 scan
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def scanMapListAsync(tableName: String, threadNum: Int, startRow: String, endRow: String): ListBuffer[Map[String, String]] = {
+  def scanMapListAsync(tableName: String, qualifiers: Seq[String], threadNum: Int, startRow: String, endRow: String): ListBuffer[Map[String, String]] = {
     require(threadNum > 0, s"线程数量必须大于0，当前值：$threadNum")
-    if (threadNum <= 1) return this.scanMapList(tableName, startRow, endRow)
+    if (threadNum <= 1) return this.scanMapList(tableName, qualifiers, startRow, endRow)
 
     val ranges = HBaseUtils.splitRowKeyRange(startRow, endRow, threadNum)
-    if (ranges.size <= 1) return this.scanMapList(tableName, startRow, endRow)
+    if (ranges.size <= 1) return this.scanMapList(tableName, qualifiers, startRow, endRow)
 
     val result = ListBuffer[Map[String, String]]()
     ThreadUtils.parallelProcess(ranges, ranges.size) { partition =>
-      partition.flatMap { case (s, e) => this.scanMapList(tableName, s, e) }
+      partition.flatMap { case (s, e) => this.scanMapList(tableName, qualifiers, s, e) }
     }.foreach(result ++= _)
     result
   }
 
   /**
    * 多线程并发 ScanMapList，当 Scan 含 start/stop row 时按区间切分；否则退化为单线程 scanMapList
+   *
+   * @param qualifiers 列限定符，支持 family:qualifier 或 qualifier（默认列族）；Nil 则拉整行
    */
-  def scanMapListAsync(tableName: String, threadNum: Int, scan: Scan): ListBuffer[Map[String, String]] = {
+  def scanMapListAsync(tableName: String, qualifiers: Seq[String], threadNum: Int, scan: Scan): ListBuffer[Map[String, String]] = {
     require(threadNum > 0, s"线程数量必须大于0，当前值：$threadNum")
-    if (threadNum <= 1) return this.scanMapList(tableName, scan)
+    if (threadNum <= 1) return this.scanMapList(tableName, qualifiers, scan)
 
     val startRow = if (scan.getStartRow != null) Bytes.toString(scan.getStartRow) else ""
     val stopRow = if (scan.getStopRow != null) Bytes.toString(scan.getStopRow) else ""
     if (StringUtils.isBlank(startRow) || StringUtils.isBlank(stopRow)) {
-      return this.scanMapList(tableName, scan)
+      return this.scanMapList(tableName, qualifiers, scan)
     }
 
     val ranges = HBaseUtils.splitRowKeyRange(startRow, stopRow, threadNum)
-    if (ranges.size <= 1) return this.scanMapList(tableName, scan)
+    if (ranges.size <= 1) return this.scanMapList(tableName, qualifiers, scan)
 
     val result = ListBuffer[Map[String, String]]()
     ThreadUtils.parallelProcess(ranges, ranges.size) { partition =>
@@ -537,7 +547,7 @@ class HBaseConnector(val conf: Configuration = null, val keyNum: Int = KeyNum._1
         val subScan = new Scan(scan)
         subScan.setStartRow(Bytes.toBytes(s))
         subScan.setStopRow(Bytes.toBytes(e))
-        this.scanMapList(tableName, subScan)
+        this.scanMapList(tableName, qualifiers, subScan)
       }
     }.foreach(result ++= _)
     result

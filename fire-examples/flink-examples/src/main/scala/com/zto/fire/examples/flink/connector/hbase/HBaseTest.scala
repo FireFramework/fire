@@ -219,12 +219,13 @@ object HBaseTest extends FlinkStreaming {
   def testHbaseGetMapListAsync(tableName: String, threadNum: Int): Unit = {
     println("===========testHbaseGetMapListAsync===========")
     val rowKeys = Seq("1", "2", "3", "5", "6")
-    val mapList = this.fire.hbaseGetMapListAsync2(tableName, threadNum, rowKeys)
+    val qualifiers = Seq("name", "age")
+    val mapList = this.fire.hbaseGetMapListAsync2(tableName, qualifiers, threadNum, rowKeys)
     mapList.foreach(map => println(JSONUtils.getScalaMapper.writeValueAsString(map)))
 
     val getList = ListBuffer[Get]()
     rowKeys.foreach(rowKey => getList += new Get(rowKey.getBytes(StandardCharsets.UTF_8)))
-    val mapList2 = this.fire.hbaseGetMapListAsync(tableName, threadNum, getList)
+    val mapList2 = this.fire.hbaseGetMapListAsync(tableName, qualifiers, threadNum, getList)
     mapList2.foreach(map => println(JSONUtils.getScalaMapper.writeValueAsString(map)))
   }
 
@@ -233,7 +234,7 @@ object HBaseTest extends FlinkStreaming {
    */
   def testHbaseScanMapListAsync(tableName: String, threadNum: Int): Unit = {
     println("===========testHbaseScanMapListAsync===========")
-    val mapList = this.fire.hbaseScanMapListAsync2(tableName, threadNum, "1", "6")
+    val mapList = this.fire.hbaseScanMapListAsync2(tableName, Seq("name", "age"), threadNum, "1", "6")
     mapList.foreach(map => println(JSONUtils.getScalaMapper.writeValueAsString(map)))
   }
 
@@ -252,7 +253,6 @@ object HBaseTest extends FlinkStreaming {
 
     val stream = this.fire.createRandomLongStream(1)
       .flatMap(t => Student.newStudentList()).setParallelism(1)
-    stream.addSink(t => println(t))
 
     this.testTableHBaseSink(stream)
     this.testStreamHBaseSink(stream)
