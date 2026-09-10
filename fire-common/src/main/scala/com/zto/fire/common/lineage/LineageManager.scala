@@ -552,6 +552,26 @@ object LineageManager extends Logging {
   }
 
   /**
+   * 添加数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addObLineage(tableName: String, keyNum: Int, operations: Operation*): Unit = {
+    this.addDBLineage(Datasource.OCEANBASE, tableName, keyNum, operations: _*)
+  }
+
+  /**
+   * 添加数据库数据源信息
+   *
+   * @param operations
+   * 操作类型
+   */
+  def addObLineage2(cluster: String, tableName: String, username: String, operations: Operation*): Unit = {
+    this.addDBLineage2(Datasource.OCEANBASE, cluster, tableName, username, operations: _*)
+  }
+
+  /**
    * 添加tidb数据库数据源信息
    *
    * @param operations
