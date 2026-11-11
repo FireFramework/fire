@@ -24,7 +24,7 @@ object HiveRW extends SparkStreaming {
   // {"age":16,"className":"Student","createTime":"2020-08-03 17:23:05","id":6,"length":15.0,"name":"root","sex":true}
   // {"age":16,"className":"Student","createTime":"2020-08-03 17:23:05","id":6,"length":15.0,"name":"root","sex":true}
   override def process: Unit = {
-    // this.ddl
+    this.ddl
     this.streaming
     // this.batch
   }

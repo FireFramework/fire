@@ -296,7 +296,7 @@ fire.analysis.thread.hang.exit.delay=300000
 | hive.catalog.name | hive | Hive catalog 名称 |
 | fire.hive.default.database.name | tmp | 默认 Hive 库名 |
 | fire.hive.table.default.partition.name | ds | 默认分区字段名 |
-| fire.hive.metastore.url.random.enable | true | Metastore URL 随机选择 |
+| fire.hive.metastore.url.random.enable | true | 是否打乱 Metastore URL 顺序（分摊压力，单个地址故障时自动切换） |
 | fire.hive.cluster.map.{alias} | — | Metastore 地址别名映射（前缀） |
 | fire.hive.site.path.map.{alias} | — | hive-site.xml 路径映射（前缀） |
 

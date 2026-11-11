@@ -22,7 +22,6 @@ import com.zto.fire.flink.anno.Streaming
     |flink.checkpoint.adaptive.delay_start=20
     |flink.checkpoint.adaptive.active_trigger.interval=13:14~13:15, 14:00~15:00
     |flink.checkpoint.adaptive.active_trigger.duration=20000
-    |fire.debug.class.code.resource=com.fasterxml.jackson.databind.JsonMappingException,com.fasterxml.jackson.databind.ObjectMapper
     |""")
 // 以上注解支持别名或url两种方式如：@Hive(thrift://hive:9083)，别名映射需配置到cluster.properties中
 object HiveRW extends FlinkStreaming {

@@ -19,7 +19,11 @@ package com.zto.fire.common.util;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -277,5 +281,31 @@ public class StringsUtils {
         String[] metastores = strs.split(delimiter);
         if (metastores.length == 0) throw new IllegalArgumentException("未能根据指定的分隔符[" + delimiter + "]分隔字符串：" + strs);
         return StringUtils.trim(metastores[(int) (System.currentTimeMillis() % metastores.length)]);
+    }
+
+    /**
+     * 将给定的字符串按照指定的分隔符分隔后随机打乱顺序，再以指定的分隔符重新拼接返回
+     *
+     * @param strs      以分隔符分隔的多个字符串，如：thrift://a:9083,thrift://b:9083
+     * @param delimiter 分隔符，为空时默认为","
+     * @return 打乱顺序后重新拼接的字符串，如：thrift://b:9083,thrift://a:9083
+     */
+    public static String shuffleSplit(String strs, String delimiter) {
+        if (StringUtils.isBlank(strs)) throw new IllegalArgumentException("Hive Thrift Server url不能为空!");
+        if (StringUtils.isBlank(delimiter)) delimiter = ",";
+        String[] metastores = strs.split(delimiter);
+        if (metastores.length == 0) throw new IllegalArgumentException("未能根据指定的分隔符[" + delimiter + "]分隔字符串：" + strs);
+
+        List<String> urls = new ArrayList<>(metastores.length);
+        for (String metastore : metastores) {
+            String url = StringUtils.trim(metastore);
+            // 过滤空字符串，如出现了连续分隔符或末尾多余的逗号
+            if (StringUtils.isNotBlank(url)) urls.add(url);
+        }
+
+        if (urls.isEmpty()) throw new IllegalArgumentException("未能根据指定的分隔符[" + delimiter + "]分隔字符串：" + strs);
+        // 打乱地址顺序后再拼接，避免所有任务都默认请求第一个metastore地址
+        Collections.shuffle(urls, ThreadLocalRandom.current());
+        return String.join(delimiter, urls);
     }
 }

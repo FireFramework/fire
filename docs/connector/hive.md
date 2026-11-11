@@ -52,6 +52,8 @@ this.fire.sql("select * from hive.tableName").show
 
 ### 四、高可用
 
+　　hive thrift server支持配置多个地址，多个地址之间以逗号分隔。fire在初始化hive catalog时，默认会将配置的多个地址的顺序随机打乱后再交给hive客户端（由fire.hive.metastore.url.random.enable控制，默认为true，关闭后按配置的顺序返回）。这样做的目的一方面是避免所有任务都请求同一个thrift server，起到分摊压力的作用；另一方面当其中的某个地址挂掉后，hive客户端会自动尝试列表中的其他地址，从而避免任务直接失败。
+
 　　NameNode主备切换会导致那些读写hive的spark streaming任务挂掉。为了提高灵活性，避免将core-site.xml与hdfs-site.xml放到工程的resources目录下，fire提供了配置的方式，将Name Node HA信息通过配置文件进行指定。每项配置中的batch对应fire.hive.cluster.map.batch所指定的别名：batch，其他信息根据集群不同进行单独配置。如果有多个hive集群，可以配置多套HA配置。
 
 ```properties

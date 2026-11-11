@@ -59,10 +59,14 @@ private[fire] object FireHiveConf {
 
   /**
    * 根据hive集群名称获取metastore地址
+   *
+   * 注：当fire.hive.metastore.url.random.enable为true时，会将配置的多个metastore地址的顺序随机打乱
+   * 比如原url：thrift://a:9083,thrift://b:9083,thrift://c:9083,thrift://d:9083
+   * 打乱后url：thrift://c:9083,thrift://a:9083,thrift://d:9083,thrift://b:9083
    */
   def getMetastoreUrl: String = {
     val confUrl = this.hiveMetastoreMap.getOrElse(hiveCluster, hiveCluster)
-    if (StringUtils.isNotBlank(confUrl) && FireFrameworkConf.hiveMetastoreUrlRandomEnable) StringsUtils.randomSplit(confUrl, ",") else confUrl
+    if (StringUtils.isNotBlank(confUrl) && FireFrameworkConf.hiveMetastoreUrlRandomEnable) StringsUtils.shuffleSplit(confUrl, ",") else confUrl
   }
 
   /**

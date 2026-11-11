@@ -49,6 +49,7 @@ under the License.
 
     - [2.1 集成方案](platform.md)
     - [2.2 内置接口](restful.md)
+    - [2.3 API 血缘对接](api-lineage.md)
 
 - 三、配置与调优
 
