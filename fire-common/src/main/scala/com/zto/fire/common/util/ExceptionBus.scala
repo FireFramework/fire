@@ -45,6 +45,10 @@ object ExceptionBus extends Logging {
   private[fire] lazy val exceptionCount = new AtomicLong(0)
   private[this] lazy val isStarted = new AtomicBoolean(false)
   private[this] lazy val kafkaConfMap = Map[String, String]("max.request.size" -> FireFrameworkConf.exceptionTraceMQMessageMaxSize.toString)
+  /** 异常链最大展开层数 */
+  private[this] val MAX_CAUSE_DEPTH = 10
+  /** 单条堆栈最大字符数，防止 StackOverflowError 这类超长栈撑爆消息体 */
+  private[this] val MAX_STACK_LENGTH = 32768
   this.sendToMQ
 
   /**
@@ -122,9 +126,20 @@ object ExceptionBus extends Logging {
   def stackTrace(t: Throwable): String = {
     if (t == null) return ""
     val stackTraceInfo = new StringBuilder()
-    stackTraceInfo.append(t.toString + "\n")
-    t.getStackTrace.foreach(trace => stackTraceInfo.append("\tat " + trace + "\n"))
-    FirePS1Conf.wrap(stackTraceInfo.toString, FirePS1Conf.RED)
+    var cur = t
+    var depth = 0
+    while (cur != null && depth < MAX_CAUSE_DEPTH) {
+      if (depth > 0) stackTraceInfo.append("Caused by: ")
+      stackTraceInfo.append(cur.toString + "\n")
+      cur.getStackTrace.foreach(trace => stackTraceInfo.append("\tat " + trace + "\n"))
+      val next = cur.getCause
+      //防止自引用引发死循环
+      cur = if (next eq cur) null else next
+      depth += 1
+    }
+    val info = stackTraceInfo.toString
+    val safeStackTrace = if (info.length > MAX_STACK_LENGTH) info.substring(0, MAX_STACK_LENGTH) + "\n... 堆栈超长已截断" else info
+    FirePS1Conf.wrap(safeStackTrace, FirePS1Conf.RED)
   }
 
 }
