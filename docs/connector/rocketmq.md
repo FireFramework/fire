@@ -75,6 +75,9 @@ spark.rocket.pull.max.speed.per.partition					=			15000
 spark.rocket.consumer.tag													=			*
 # 以spark.rocket.conf开头的配置支持所有rocket client的配置
 spark.rocket.conf.pull.max.speed.per.partition		=   	5000
+# 开启后，单个broker不可用（如运维维护、宕机）时仅跳过该broker上的队列，不影响其他broker的消费，
+# 该broker恢复后其队列会自动恢复消费，无需重启任务（默认false，即保持原有逻辑：任一broker不可用则任务失败）
+spark.rocket.conf.broker.unavailable.skip					=			true
 ```
 
 ### 三、多RocketMQ多topic消费
@@ -203,6 +206,7 @@ String[] config() default "";
 | rocket.topics                       | 通用  | 主题名称                                                     |
 | rocket.group.id                     | 通用  | 消费者id                                                     |
 | rocket.failOnDataLoss               | 通用  | 丢失数据是否失败                                             |
+| rocket.conf.broker.unavailable.skip | 通用  | 是否跳过不可用的broker（默认false，开启后broker维护不导致任务失败） |
 | rocket.forceSpecial                 | 通用  | 如果 forceSpecial 为true，rocketmq 无论如何都会从特定的可用偏移量开始消费 |
 | rocket.enable.auto.commit           | 通用  | 是否自动提交offset                                           |
 | rocket.starting.offsets             | 通用  | RocketMQ起始消费位点                                         |

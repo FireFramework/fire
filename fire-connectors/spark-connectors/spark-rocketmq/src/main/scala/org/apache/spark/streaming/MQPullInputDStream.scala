@@ -19,8 +19,10 @@ package org.apache.spark.streaming
 
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer
 import org.apache.rocketmq.client.consumer.store.ReadOffsetType
+import org.apache.rocketmq.client.exception.MQClientException
 import org.apache.rocketmq.common.MixAll
 import org.apache.rocketmq.common.message.{MessageExt, MessageQueue}
+import org.apache.rocketmq.remoting.exception.RemotingException
 import org.apache.rocketmq.spark._
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.dstream.{DStream, DStreamCheckpointData, InputDStream}
@@ -73,6 +75,51 @@ class MQPullInputDStream(
 
   private val maxRateLimitPerPartition = optionParams.getOrDefault(RocketMQConfig.MAX_PULL_SPEED_PER_PARTITION,
     "-1").toInt
+
+  /**
+    * 是否跳过不可用的broker，默认为false（保持原有逻辑）
+    * 开启后，当某个broker不可用（如运维维护、宕机）时，仅跳过该broker上的队列，不影响其他broker的消费；
+    * 待该broker恢复后，其队列会自动恢复消费
+    */
+  private val skipUnavailableBroker = optionParams.getOrDefault(RocketMQConfig.BROKER_UNAVAILABLE_SKIP, "false").toBoolean
+
+  /**
+    * 最近一次成功获取到的队列信息
+    * 注：用于broker维护期间nameserver路由查询失败时兜底，避免整个流因路由查询异常而停止
+    */
+  private var lastMessageQueues: ju.HashSet[MessageQueue] = null
+
+  /**
+    * 执行指定队列的位点相关操作
+    *
+    * 注：未开启跳过不可用broker时，直接执行，异常向上抛出（保持原有逻辑）；
+    * 开启后，捕获broker不可用相关异常并记录日志，返回异常信息，由调用方跳过该队列
+    *
+    * @param mq 消息队列
+    * @param f  位点相关操作
+    * @return None：成功 Some(e)：该队列所在broker不可用，已跳过
+    */
+  private def tryQueue(mq: MessageQueue)(f: => Unit): Option[Throwable] = {
+    if (!skipUnavailableBroker) {
+      f
+      None
+    } else {
+      try {
+        f
+        None
+      } catch {
+        case e: MQClientException => this.skipQueueLog(mq, e)
+          Some(e)
+        case e: RemotingException => this.skipQueueLog(mq, e)
+          Some(e)
+      }
+    }
+  }
+
+  private def skipQueueLog(mq: MessageQueue, e: Throwable): Unit = {
+    logWarning(s"broker不可用，本次跳过该队列：topic=${mq.getTopic}, queueId=${mq.getQueueId}, " +
+      s"broker=${mq.getBrokerName}, reason=${e.getMessage}")
+  }
   
   @transient private var kc: DefaultMQPullConsumer = null
 
@@ -87,17 +134,32 @@ class MQPullInputDStream(
       kc = RocketMqUtils.mkPullConsumerInstance(groupId, optionParams, "driver")
       val messageQueues = fetchSubscribeMessageQueues(topics)
       val iter = messageQueues.iterator
+      // 成功初始化的队列数以及最后一个被跳过的异常，用于开启跳过不可用broker时避免任务空转
+      var successCount = 0
+      var lastException: Option[Throwable] = None
       while (iter.hasNext){
         val messageQueue = iter.next
-        val offset = computePullFromWhere(messageQueue)
-        val topicQueueId = new TopicQueueId(messageQueue.getTopic, messageQueue.getQueueId)
-        if (!currentOffsets.contains(topicQueueId)) {
-          currentOffsets += topicQueueId -> Map(messageQueue.getBrokerName -> offset)
-        } else {
-          if (!currentOffsets(topicQueueId).contains(messageQueue.getBrokerName)){
-            currentOffsets(topicQueueId) += messageQueue.getBrokerName -> offset
+        val error = this.tryQueue(messageQueue) {
+          val offset = computePullFromWhere(messageQueue)
+          val topicQueueId = new TopicQueueId(messageQueue.getTopic, messageQueue.getQueueId)
+          if (!currentOffsets.contains(topicQueueId)) {
+            currentOffsets += topicQueueId -> Map(messageQueue.getBrokerName -> offset)
+          } else {
+            if (!currentOffsets(topicQueueId).contains(messageQueue.getBrokerName)){
+              currentOffsets(topicQueueId) += messageQueue.getBrokerName -> offset
+            }
           }
         }
+        if (error.isEmpty) {
+          successCount += 1
+        } else {
+          lastException = error
+        }
+      }
+
+      // 极端情况下：所有队列所在broker均不可用时，保持原有失败语义，让任务快速失败
+      if (skipUnavailableBroker && successCount == 0 && lastException.nonEmpty) {
+        throw lastException.get
       }
 
       // timer persist
@@ -118,13 +180,23 @@ class MQPullInputDStream(
   }
 
   private def fetchSubscribeMessageQueues(topics : ju.Collection[jl.String]): ju.HashSet[MessageQueue] = {
-    val messageQueueSet = new ju.HashSet[MessageQueue]
-
-    val iter = topics.iterator
-    while (iter.hasNext){
-      messageQueueSet.addAll(kc.fetchSubscribeMessageQueues(iter.next))
+    try {
+      val messageQueueSet = new ju.HashSet[MessageQueue]
+      val iter = topics.iterator
+      while (iter.hasNext){
+        messageQueueSet.addAll(kc.fetchSubscribeMessageQueues(iter.next))
+      }
+      // 缓存最近一次成功获取的队列信息，用于nameserver/路由异常时兜底
+      if (!messageQueueSet.isEmpty) this.lastMessageQueues = messageQueueSet
+      messageQueueSet
+    } catch {
+      case e: MQClientException if skipUnavailableBroker =>
+        // 注：4.8.0的fetchSubscribeMessageQueues每次都会向nameserver查路由，broker维护期间可能返回空而抛异常，
+        // 此时使用上一次成功的队列信息继续消费，其中不可用的broker由队列级容错跳过
+        logWarning(s"获取RocketMQ队列信息失败，本次使用上次的队列信息：reason=${e.getMessage}")
+        if (this.lastMessageQueues == null) throw e
+        this.lastMessageQueues
     }
-    messageQueueSet
   }
 
   private def computePullFromWhere(mq: MessageQueue): Long = {
@@ -219,8 +291,16 @@ class MQPullInputDStream(
     val lastOffset = offsetStore.readOffset(mq, ReadOffsetType.READ_FROM_STORE)
     val minOffset = kc.minOffset(mq)
     if (lastOffset < minOffset) {
-      reportDataLoss(s"MessageQueue $mq's checkpoint offset $lastOffset is smaller than minOffset $minOffset")
-      minOffset
+      if (skipUnavailableBroker) {
+        // 注：readOffset在broker不可用等异常场景下会返回-2，此时并非真的数据丢失，
+        // 开启跳过后统一按minOffset处理并告警，避免failOnDataLoss=true时直接终止流
+        logWarning(s"MessageQueue $mq's checkpoint offset $lastOffset is smaller than minOffset $minOffset，" +
+          s"已开启${RocketMQConfig.BROKER_UNAVAILABLE_SKIP}，本次从minOffset $minOffset 开始消费")
+        minOffset
+      } else {
+        reportDataLoss(s"MessageQueue $mq's checkpoint offset $lastOffset is smaller than minOffset $minOffset")
+        minOffset
+      }
     } else {
       lastOffset
     }
@@ -331,31 +411,63 @@ class MQPullInputDStream(
     val iter = messageQueues.iterator
     while (iter.hasNext) {
       val messageQueue = iter.next
-      logDebug(s"${messageQueue.toString} min: ${c.minOffset(messageQueue)}  max: ${c.maxOffset(messageQueue)}")
       val topicQueueId = new TopicQueueId(messageQueue.getTopic, messageQueue.getQueueId)
+      // 先记录本次路由中存在的队列，避免该队列因broker不可用被跳过时误判为分区丢失
       fetchTopicQueues.add(topicQueueId)
-      if (!currentOffsets.contains(topicQueueId)){
-        currentOffsets += topicQueueId -> Map(messageQueue.getBrokerName -> firstConsumerOffset(messageQueue))
-      }else{
-        if (!currentOffsets(topicQueueId).contains(messageQueue.getBrokerName))
-          currentOffsets(topicQueueId) += messageQueue.getBrokerName -> firstConsumerOffset(messageQueue)
+      val error = this.tryQueue(messageQueue) {
+        logDebug(s"${messageQueue.toString} min: ${c.minOffset(messageQueue)}  max: ${c.maxOffset(messageQueue)}")
+        if (!currentOffsets.contains(topicQueueId)){
+          currentOffsets += topicQueueId -> Map(messageQueue.getBrokerName -> firstConsumerOffset(messageQueue))
+        }else{
+          if (!currentOffsets(topicQueueId).contains(messageQueue.getBrokerName))
+            currentOffsets(topicQueueId) += messageQueue.getBrokerName -> firstConsumerOffset(messageQueue)
+        }
+        if (!maxOffsets.contains(topicQueueId)) {
+          maxOffsets += topicQueueId -> Map(messageQueue.getBrokerName -> c.maxOffset(messageQueue))
+        }else{
+          if (!maxOffsets(topicQueueId).contains(messageQueue.getBrokerName)) {
+            val tempMap = maxOffsets(topicQueueId) + (messageQueue.getBrokerName -> c.maxOffset(messageQueue))
+            maxOffsets += topicQueueId -> tempMap
+          }
+        }
       }
-      if (!maxOffsets.contains(topicQueueId)) {
-        maxOffsets += topicQueueId -> Map(messageQueue.getBrokerName -> c.maxOffset(messageQueue))
-      }else{
-        if (!maxOffsets(topicQueueId).contains(messageQueue.getBrokerName)) {
-          val tempMap = maxOffsets(topicQueueId) + (messageQueue.getBrokerName -> c.maxOffset(messageQueue))
-          maxOffsets += topicQueueId -> tempMap
+      // 该队列所在broker不可用：仅清理当前broker上的位点信息，
+      // 注：TopicQueueId只包含topic和queueId，不同broker上相同queueId是不同队列，
+      // 因此不能按TopicQueueId整体删除，否则会误删其他broker上该队列的位点
+      if (error.nonEmpty) {
+        currentOffsets.get(topicQueueId).foreach { brokerOffsets =>
+          val remainOffsets = brokerOffsets - messageQueue.getBrokerName
+          if (remainOffsets.isEmpty) currentOffsets -= topicQueueId
+          else currentOffsets += topicQueueId -> remainOffsets
         }
       }
     }
 
     val deletedPartitions = lastTopicQueues.diff(fetchTopicQueues)
     if (deletedPartitions.size > 0){
-      reportDataLoss(
-        s"Cannot find offsets of ${deletedPartitions}. Some data may have been missed")
+      if (skipUnavailableBroker) {
+        // 开启跳过不可用broker时，路由中消失的分区按broker不可用处理：清理位点并告警，避免任务失败
+        logWarning(s"Cannot find offsets of ${deletedPartitions}. Some data may have been missed. " +
+          s"由于已开启${RocketMQConfig.BROKER_UNAVAILABLE_SKIP}，本次跳过这些分区")
+        deletedPartitions.foreach(topicQueueId => currentOffsets -= topicQueueId)
+      } else {
+        reportDataLoss(
+          s"Cannot find offsets of ${deletedPartitions}. Some data may have been missed")
+      }
     }
-    maxOffsets
+    if (skipUnavailableBroker) {
+      // 过滤掉位点信息不完整的队列，避免下游clamp/compute取值时抛NoSuchElementException导致整个流异常停止
+      val validOffsets = maxOffsets.filter { case (topicQueueId, brokerOffsets) =>
+        val brokerCurrentOffsets = currentOffsets.getOrElse(topicQueueId, Map.empty[String, Long])
+        brokerOffsets.forall { case (brokerName, _) => brokerCurrentOffsets.contains(brokerName) }
+      }
+      if (validOffsets.size < maxOffsets.size) {
+        logWarning(s"存在位点信息不完整的队列，本次跳过：${maxOffsets.keySet.diff(validOffsets.keySet)}")
+      }
+      validOffsets
+    } else {
+      maxOffsets
+    }
   }
 
   /**
@@ -418,7 +530,10 @@ class MQPullInputDStream(
         uo.map { case (name, until) =>
           val offset = currentOffsets(tp)(name) - 1
           val mq = new MessageQueue(tp.topic, name, tp.queueId)
-          kc.updateConsumeOffset(mq, offset)
+          // 位点提交失败（如broker不可用）时不阻断批处理，由队列级容错记录日志
+          this.tryQueue(mq) {
+            kc.updateConsumeOffset(mq, offset)
+          }
         }
       }
     } else {

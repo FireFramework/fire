@@ -115,6 +115,13 @@ public class RocketMQConfig {
      */
     public static final String PULL_TIMEOUT_MS = "pull.timeout.ms";
 
+    /**
+     * 是否跳过不可用的broker，默认为"false"（即保持原有逻辑：任一broker不可用则任务失败）
+     * 开启后，当某个broker不可用时（如运维维护、宕机），仅跳过该broker上的队列，
+     * 其他broker的队列继续消费；待该broker恢复后，其队列会自动恢复消费，无需重启任务
+     */
+    public static final String BROKER_UNAVAILABLE_SKIP = "broker.unavailable.skip";
+
     // the following configs for consumer cache
     public static final String PULL_CONSUMER_CACHE_INIT_CAPACITY = "pull.consumer.cache.initialCapacity";
     public static final String PULL_CONSUMER_CACHE_MAX_CAPACITY = "pull.consumer.cache.maxCapacity";
